@@ -12,7 +12,7 @@
 ##   | lo fancu   | lo smuni                                                                      |
 ##   |------------|-------------------------------------------------------------------------------|
 ##   | `runDrive` | zbasu je pilno ro cipra .e le crepu ne'i `Chromium`                           |
-##   |            | .i li pa va'o lo nu fliba                                                     |
+##   |            | .i li 1 va'o lo nu fliba                                                     |
 ##   |------------|-------------------------------------------------------------------------------|
 ##
 ## ni'o le cipra pe lo mivyselci'a ge'u .e le cipra pe le papri cu rapfau ne'i pa papri poi lo javni
@@ -25,7 +25,7 @@
 ##   .i ro cipra cu vasru le cripu ta'i le samtci poi selbe'i
 ##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
 ##       ke'a
-##   .i pa remoi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e pa fancu
+##   .i 12moi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e pa fancu
 ##       pe le remoi cu selcme pa cmene
 ##   .i le gunka pe le cipra pe lo mivyselci'a cu selkra le judri ta'i lo nu le gunka pe le samtci
 ##       cu selkra le judri be le samtci
@@ -135,7 +135,7 @@ const
     ## le samtci pe `Chromium` ge'u zi'e noi zvati le vreji poi se kalri
   SENTENCES_LIVE = 12
     ## lo du'u xo kau jufra pe `Tatoeba` seljo'e fi pa selci'a pe le cipra pe lo mivyselci'a
-    ##   .i le samtci cu tcidu ro valsi ta'i pa pagbu gi'e nitcu lo temci poi pilji li ji'i cize le
+    ##   .i le samtci cu tcidu ro valsi ta'i pa pagbu gi'e nitcu lo temci poi pilji li ji'i 37 le
     ##       temci pe le jbezba ku'o gi'e tcidu le selci'a re roi
   TEXTS_LIVE = [
     # zo si vimcu zo cadzu .e zo do .e zo .i
@@ -301,7 +301,7 @@ proc runSuite(chromium, name, mode: string): int =
   ## pilno pa cipra ne'i pa papri pe le cipra
   ##   .i le papri cu dunda pa tadji le cipra sepi'o pa ckaji pe `body`
   ##   .i ciska ro linji poi le cipra cu cusku ke'a
-  ##   .i dunda li pa va'o lo nu le cipra cu fliba
+  ##   .i dunda li 1 va'o lo nu le cipra cu fliba
   let
     script = "<script src=\"/drive/" & name & ".js\"></script>"
     headers = (if mode == MODE_REFUSED: @[POLICY_REFUSED] else: @[])
@@ -317,7 +317,7 @@ proc runSuitePage(chromium, page, mode: string): int =
   ## pilno le cipra pe le papri ne'i pa papri poi selzba sepi'o le cipra
   ##   .i le papri cu dunda pa tadji le cipra sepi'o pa ckaji pe `body`
   ##   .i ciska ro linji poi le cipra cu cusku ke'a
-  ##   .i dunda li pa va'o lo nu le cipra cu fliba
+  ##   .i dunda li 1 va'o lo nu le cipra cu fliba
   let
     headers = (if mode == MODE_REFUSED: @[POLICY_REFUSED] else: @[])
     hosted = SKELETON_HOSTED[0] & mode & SKELETON_HOSTED[1] & page & SKELETON_HOSTED[2]
@@ -362,7 +362,7 @@ proc collectPages(chromium: string, faces: Table[string, string]): int =
   ##   .i va'o lo nu `koch drive` cu ba'o ciska pa tropapri kei tcidu ji'a le tropapri
   ##   .i ciska lo se tcidu be le crepu fi `written.json`
   ##   .i ro lertai poi le papri cu cusku ke'a selci'a fi pa datnyvei pe vo'a
-  ##   .i dunda li pa va'o lo nu le crepu cu fliba .a lo nu le tropapri cu cusku pa lertai
+  ##   .i dunda li 1 va'o lo nu le crepu cu fliba .a lo nu le tropapri cu cusku pa lertai
   removeDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
   createDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
   var written = newJObject()
@@ -401,7 +401,7 @@ proc runDrive*(): int =
   ## zbasu le samtci .e le papri .e lo cipra .e le crepu
   ##   .i ciska lo selci'a .e lo se cipra pe lo cipra
   ##   .i ba bo pilno ro cipra .e le crepu ne'i `Chromium`
-  ##   .i dunda li pa va'o lo nu su'o nu zbasu .a su'o cipra .a le crepu cu fliba
+  ##   .i dunda li 1 va'o lo nu su'o nu zbasu .a su'o cipra .a le crepu cu fliba
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
   let faces = fontFaces()
   writeFile(PATH_PAGE, builtPage(compiledPage(), faces))

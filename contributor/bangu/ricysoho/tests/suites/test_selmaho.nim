@@ -59,7 +59,7 @@ const
   FLOOR_UNLISTED = 3000
     ## lo mecrailai be le galfi poi no liste cu vasru ke'a
     ##   .i le mecrai cu ralte lo nu lo se cipra cu vasru lo valsi poi no liste cu vasru ke'a
-    ##   .i ca lo nu lo tsiju cu du `0` kei cixavoso le galfi cu se kancu
+    ##   .i ca lo nu lo tsiju cu du `0` kei 3649 le galfi cu se kancu
   COUNT_COMPOUNDS = 472
     ## lo klani be lo linji poi ciska lo ma'orgunma ta'i pa valsi ne'i `cmavo.txt`
     ##   .i le cipra cu jdice lo du'u le klani cu stodi

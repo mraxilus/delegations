@@ -10,7 +10,7 @@
 ##   | `head`         | raptcidu `gismu.txt` .e `lujvo.txt` .e `cmavo.txt`                      |
 ##   |                | .i karbi ro snina'u lo stodi pe le snina'u                         |
 ##   |                | .i karbi le re datnyvei poi selzba ku'o le selpu'i                      |
-##   |                | .i sisti sepi'o li pa va'o lo nu su'o da frica                          |
+##   |                | .i sisti sepi'o li 1 va'o lo nu su'o da frica                          |
 ##   |                | .i le nu frica cu sinxa lo nu `Debian` pu galfi lo liste       |
 ##   | `cll`          | tcidu lo papri be `CLL 1.1` noi selra'e ne'i pa vasru         |
 ##   |                | .i lo cmene be le vasru cu se lidne le minde                               |
@@ -46,10 +46,10 @@
 ##   | `system`       | cusku lo bakfu poi lo minde .e lo cipra cu nitcu ke'a                      |
 ##   |                | .i ro linji cu cusku pa bakfu                                              |
 ##   |----------------|----------------------------------------------------------------------------|
-## ni'o le jitro samtci cu sisti sepi'o li no va'o lo nu le minde cu mulno
-##   .i le jitro samtci cu sisti sepi'o li pa va'o lo nu le minde cu fliba .a lo nu lo liste cu
+## ni'o le jitro samtci cu sisti sepi'o li 0 va'o lo nu le minde cu mulno
+##   .i le jitro samtci cu sisti sepi'o li 1 va'o lo nu le minde cu fliba .a lo nu lo liste cu
 ##       frica .a lo nu pa cipra cu fliba
-##   .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
+##   .i le jitro samtci cu sisti sepi'o li 2 va'o lo nu lo nu pilno cu srera
 ##
 ## ni'o lo minde po'u `lists` .e `head` pe `rictadni/tools/build.nim` tunba le vi minde gi'e
 ##     pilno le mitytadji ne'i lo liste pe `rictadni` gi'e tcidu le mitkra ja'i le mintu stodi
@@ -139,7 +139,7 @@ proc writeLists(): int =
 proc compareLists(): int =
   ## karbi ro snina'u lo stodi pe le snina'u
   ##   .i karbi le re datnyvei poi selzba ku'o le re datnyvei poi selpu'i
-  ##   .i jarco li pa va'o lo nu su'o da frica
+  ##   .i jarco li 1 va'o lo nu su'o da frica
   let
     gismu = readSource("gismu.txt")
     lujvo = readSource("lujvo.txt")

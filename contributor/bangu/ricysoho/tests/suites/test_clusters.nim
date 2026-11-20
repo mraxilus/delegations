@@ -1,5 +1,5 @@
 ## rapyzba lo zunsna gunma pe `CLL 3` gi'e cipra lo du'u `clusters.nim` mapti le selzba
-##   .i lo se cipra cu du le paze zunsna
+##   .i lo se cipra cu du le 17 zunsna
 ##   .i se ki'u bo ro zunsna remei .e ro zunsna cimei cu se liste to `Article IX.3` toi
 ##   .i le vi cipra cu rapsku le javni ja'i lo selci'a pe `CLL` gi'e na pilno lo liste poi
 ##       `clusters.nim` zbasu ke'a
@@ -16,7 +16,7 @@ import ../../src/ricysoho/clusters
 
 
 const
-  ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## le paze zunsna ta'i lo porsi pe `CLL 3.1`
+  ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## le 17 zunsna ta'i lo porsi pe `CLL 3.1`
   VOICED = "bdgjvz"  ## lo voksa zunsna pe le liste pe `CLL 3.6`
   UNVOICED = "cfkpstx"  ## lo na'e voksa zunsna pe le liste pe `CLL 3.6`
   LUT_UNVOICED_BY_VOICED = [('b', 'p'), ('d', 't'), ('g', 'k'), ('v', 'f'), ('j', 'c'), ('z', 's')]
@@ -36,7 +36,7 @@ suite "Chapter 3":
   test "Section 3.6":
     var count_permissible = 0
     for a in ORDER_CONSONANTS:
-      for b in ORDER_CONSONANTS:  # ro le rebiso zunsna remei
+      for b in ORDER_CONSONANTS:  # ro le 289 zunsna remei
         let
           is_doubled = a == b
           is_voicing_mixed = (a in VOICED and b in UNVOICED) or (a in UNVOICED and b in VOICED)
@@ -69,7 +69,7 @@ suite "Chapter 3":
   test "Section 3.7":
     var count_initial = 0
     for a in ORDER_CONSONANTS:
-      for b in ORDER_CONSONANTS:  # ro le rebiso zunsna remei
+      for b in ORDER_CONSONANTS:  # ro le 289 zunsna remei
         if not isPairInitial(a, b): continue
         inc count_initial
         # ja'i `CLL 3.7` ro zunsna remei poi ka'e krasi lo valsi cu selcru ja'i `CLL 3.6`
@@ -88,10 +88,10 @@ suite "Chapter 3":
       check isPairInitial(pair[0], pair[1])  # `CLL 3.7`
     for a in ORDER_CONSONANTS:
       for b in ORDER_CONSONANTS:
-        for c in ORDER_CONSONANTS:  # ro le vosopaci zunsna cimei
+        for c in ORDER_CONSONANTS:  # ro le 4913 zunsna cimei
           let is_expected = isPairPermissible(a, b) and isPairInitial(b, c) and
               a & b & c notin ["ndj", "ndz", "ntc", "nts"]
-          check isTriplePermissible(a, b, c) == is_expected  # le ci cimei javni pe `CLL 3.7`
+          check isTriplePermissible(a, b, c) == is_expected  # le 33mei javni pe `CLL 3.7`
     for triple in ["ndj", "ndz", "ntc", "nts"]:
       check isPairPermissible(triple[0], triple[1]) and isPairInitial(triple[1], triple[2])
       # `CLL 3.7` cusku le zunsna cimei gi'e to'e curmi ri

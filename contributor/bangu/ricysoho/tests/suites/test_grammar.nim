@@ -243,8 +243,8 @@ func textJoined(): string =
   ##   .i lo sinxa be lo ju'agri .a lo jufra be'o poi krasi le ju'agri cu selvi'u
   ##   .i zo ni'o zvati lo jbini be ro re lamji ju'agri
   ##
-  ## ni'o le recimoi ju'agri pe le prosa cu selfa'o zo tu'e
-  ##   .i le resomoi ju'agri cu vasru zo tu'u po'o gi'e na se tcidu
+  ## ni'o le 23moi ju'agri pe le prosa cu selfa'o zo tu'e
+  ##   .i le 29moi ju'agri cu vasru zo tu'u po'o gi'e na se tcidu
   ##   .i se ki'u bo zo tu'e cu ca'o kalri vi le fanmo be le selci'a
   var paragraphs: seq[string]
   for paragraph in PARAGRAPHS_WIKIPEDIA:
@@ -429,7 +429,7 @@ suite "Internal: Grammar":
         let tree = text.treeRead
         check tree.isSome
         if tree.isNone: continue
-        # le javni pe li no
+        # le javni pe li 0
         check tree.get.rule == "text" and tree.get.number == 0  # `CLL 21.1`
         check tree.get.leaves == toSeq(0 ..< text.occurrencesRead.len)  # `#815`
         inc count

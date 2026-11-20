@@ -9,7 +9,7 @@
 ##
 ## ni'o lo ju'agri cu du pa linji pe lo sapselci'a gi'e du lo jonselci'a poi vasru su'o re jufra
 ##   .i le cipra cu tcidu le ju'agri ta'i pa selci'a pe `CLL 21.1`
-##   .i lo ju'agri poi traji lo ka ce'u clani cu vasru vomubi valsi
+##   .i lo ju'agri poi traji lo ka ce'u clani cu vasru 458 valsi
 ##
 ## ni'o lo linji poi pagbu lo jufra poi cfari ne'i lo pu linji cu se tcidu ta'i lo sepselci'a
 ##   .i mupli fa lo pagbu be lo liste
@@ -36,14 +36,14 @@ const KEYS_REFUSED = [
   #     pamoi linji
   #   .i va'o lo nu le linji cu sepli kei lo selci'a poi vasru `.e` jo'u lo sumti cu na me
   #       `fragment`
-  ("cmaci", 2),  # le javni pe li reno
+  ("cmaci", 2),  # le javni pe li 20
   # le linji .e le remoi linji cu pagbu le jufra poi cfari ne'i le pamoi linji
-  ("cmaci", 3),  # le javni pe li reno
+  ("cmaci", 3),  # le javni pe li 20
   # lo remoi be zo kei pe `keikei` cu fanmo no da
   #   .i ki'u bo zo cu poi lidne zo cipra .e zo nandu cu fanmo le re jufra poi zo nu krasi ke'a
   ("cmaci", 18),  # `CLL 11.1`
   # `zei` jongau `fermat` `ro` po'o
-  #   .i se ki'u bo `moi` se lidne no namcu to le javni pe li pamure toi
+  #   .i se ki'u bo `moi` se lidne no namcu to le javni pe li 152 toi
   ("cmaci", 22),  # `CLL 4.6`
   # no cmene cu vasru `la` poi lo karsna cu lidne ke'a
   #   .i le ju'agri cu vasru `paulas`
@@ -57,9 +57,9 @@ const KEYS_REFUSED = [
   # `(` na'e lerfu la lojban.
   #   .i lo cukla grile'u cu sruri `to ... toi`
   ("lo jbobau", 9),  # `CLL 3.1`
-  # `tu'u` fanmo `tu'e` pe le recimoi linji
+  # `tu'u` fanmo `tu'e` pe le 23moi linji
   #   .i va'o lo nu sepli kei `tu'u` fanmo no da
-  ("lo jbobau", 29),  # le javni pe li pavo
+  ("lo jbobau", 29),  # le javni pe li 14
   # lo brale'u po'u `L` pe `Lojban` sinxa no slaka .e no karsna
   ("lo jbobau", 30),  # `CLL 3.9`
 ]

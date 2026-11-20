@@ -79,7 +79,7 @@
 ##   .i se ki'u bo le tadji be lo nu fendi cu selfi'i le genturfa'i gi'e selzba fi lo javni pe
 ##       `CLL 3.9` .e `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
 ##   .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da
-##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li ci
+##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li 3
 ##   .i di'u se kanpe
 ##   .i lo valsi poi selci'a ta'i lo nu sepli cu cliva le tadji
 ##
@@ -189,7 +189,7 @@ type
     pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
       ## le slaka karsna poi lo brale'u cu sinxa lo nu basna be ke'a
-      ##   .i li no cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
+      ##   .i li 0 cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
       ##   .i slaka bu cu fendi lo karsna
       ##   .i no da va'o lo nu le selci'a cu sinxa no nu basna
     breaks*: seq[int]
@@ -233,7 +233,7 @@ type
     pauses: int  ## lo mecrailai be lo denpa pe lo ve fendi poi le valsi cu fanmo ke'a
     ties: int
       ## lo klani be lo ve fendi poi le valsi cu fanmo ke'a gi'e nitcu lo mecraide'a
-      ##   .i li re cu sinxa li su'o re
+      ##   .i li 2 cu sinxa li su'o re
     befores: seq[int]
       ## lo krasi be lo valsi poi lidne le valsi ne'i ro ve fendi poi nitcu lo mecraide'a
       ##   .i no da va'o lo nu le valsi cu pamoi
@@ -245,8 +245,8 @@ type
       ##   .i no denpa cu seljdi
     count: int
       ## lo klani be lo ve fendi poi nitcu lo mecraide'a
-      ##   .i li no .a li pa .a li re
-      ##   .i li re cu sinxa li su'o re
+      ##   .i li 0 .a li 1 .a li 2
+      ##   .i li 2 cu sinxa li su'o re
 
 
 const
@@ -418,7 +418,7 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
   ##       ke'a to `CLL 3.3` .e `CLL 4.9` toi
   ##   .i no denpa cu zvati lo stuzi be slaka bu
   ##   .i kancu lo ve fendi poi nitcu lo mecraide'a
-  ##   .i li re cu sinxa li su'o re
+  ##   .i li 2 cu sinxa li su'o re
   ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
   ##
   ## ni'o `words[j][i]` vasru lo valsi pe lo lerfu po'u `j ..< i`

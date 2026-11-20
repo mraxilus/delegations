@@ -28,7 +28,7 @@ const
   STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
-    ##   .i lo flalu pu tcidu revoci selci'a ca lo nu le cipra cu se jmina
+    ##   .i lo flalu pu tcidu 243 selci'a ca lo nu le cipra cu se jmina
   EXAMPLE_ERROR = (
     # `CLL 6.2`
     text: "mi klama le .i ko",  # zo le krasi pa sumti poi no valsi cu fanmo ke'a
@@ -36,8 +36,8 @@ const
     rule: "ne'i sumti-6",
   )
     ## pa selci'a .e lo selsku be le tanxe pe le selci'a
-    ##   .i le gerna cu sisti bu'u zo .i noi zvati lo stuzi pe li paci ku'o ne'i `sumti-6` noi du le
-    ##       javni pe li soze
+    ##   .i le gerna cu sisti bu'u zo .i noi zvati lo stuzi pe li 13 ku'o ne'i `sumti-6` noi du le
+    ##       javni pe li 97
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
     "(FOO 8 10 \"do\")\n"
     ## lo selci'a be fi `NIF` be'o poi le tcita be le remoi jgena be ke'a cu cmene no selma'o
@@ -197,7 +197,7 @@ suite "Internal: Drawing of live text":
       for place in node.laidOut.places:
         if place.kind == KindPlace.Rule: lines.add place.lines
     check @["sumti-6", "… terms 80 (11)"] in lines  # le krasi be `draw.nim` to le cmene po'o toi
-    check @["sentence", "… text 0 (9)"] in lines  # selkra `text` pe li no gi'e vasru so javni
+    check @["sentence", "… text 0 (9)"] in lines  # selkra `text` pe li 0 gi'e vasru so javni
 
 
   test "Error node draws box at byte grammar stops, naming its rule and what it needs":
@@ -222,9 +222,9 @@ suite "Internal: Drawing of live text":
     #   .i le tanxe cu katna le krasi be le se ciska be ri
     #   .i se ki'u bo le tanxe na jarco le stuzi
     let texts = [
-      "cu",  # le gerna cu sisti bu'u li no
-      EXAMPLE_ERROR.text,  # le gerna cu sisti bu'u li paci
-      "mi klama le zarci .i ".repeat(60) & EXAMPLE_ERROR.text,  # bu'u lo namcu poi zmadu li pa ki'o
+      "cu",  # le gerna cu sisti bu'u li 0
+      EXAMPLE_ERROR.text,  # le gerna cu sisti bu'u li 13
+      "mi klama le zarci .i ".repeat(60) & EXAMPLE_ERROR.text,  # bu'u lo namcu poi zmadu li 1 ki'o
     ]
     for text in texts:
       let drawing = drawn(readTextParts(text).reading.toNifParts, "")
@@ -242,10 +242,10 @@ suite "Internal: Drawing of live text":
     let
       text = "mi klama le zarci .i do klama le zarci .i ko klama le zarci"
       drawing = drawn(readTextParts(text).reading.toNifParts, "")
-    check drawing.count_words >= 10  # lo namcu poi vasru re lerfu pe li pano
+    check drawing.count_words >= 10  # lo namcu poi vasru re lerfu pe li 10
     check drawing.status.startsWith(
       $drawing.count_parts & " pagbu · " & $drawing.count_words & " valsi · 0 srera · "
-    )  # lo lerfu pe li pano cu sinxa lo cmavo pe `CLL 18.2`
+    )  # lo lerfu pe li 10 cu sinxa lo cmavo pe `CLL 18.2`
 
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let

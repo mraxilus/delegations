@@ -61,7 +61,7 @@
 ##   .i `CLL 19.80` cusku lo du'u lo genturfa'i cu to'e curmi lo'u zo .djan. si .djordj. le'u
 ##   .i lo nu sitna cu se tcidu pu lo nu vimcu kei gi'e no roi rapseltcidu ba lo nu vimcu
 ##
-## ni'o jdima fa lo nu `CLL 20` .e le javni pe li papanopa pe `CLL 21.1` cusku lo du'u lo selku'e be
+## ni'o jdima fa lo nu `CLL 20` .e le javni pe li 1101 pe `CLL 21.1` cusku lo du'u lo selku'e be
 ##     zo sa cu du pa selsku kei .e lo du'u lo selku'e be zo su cu du pa selci'a
 ##   .i le tcidu cu cuxna le valsi poi `CLL 19.13` skicu ke'a ku'o ki'u lo nu pa prenu cu ciska le
 ##       mulselci'a
@@ -70,15 +70,15 @@
 ##     valsi to `CLL 4.6` toi
 ##   .i lo porsi be lo me zo zei cu jmina ro le valsi fo pa genvla
 ##   .i no le re valsi cu ka'e du lo cmavo poi `CLL 19.16` cusku lo du'u zo zei na galfi ke'a
-##   .i su'o pa cmavo be `BAhE` cu tcita le bavla'i valsi to le javni pe li papanono toi
+##   .i su'o pa cmavo be `BAhE` cu tcita le bavla'i valsi to le javni pe li 1100 toi
 ##   .i su'o pa me zo bu cu zbasu pa lervla fi le valsi poi lidne le me zo bu me'u to `CLL 17.4` toi
 ##
 ## ni'o lo cnivla cu tcita le valsi poi lidne le cinmo valsi to `CLL 13.9` .e le javni pe li
-##     papanono toi
+##     1100 toi
 ##   .i lo cmavo be `UI` .a `CAI` cu cnivla
 ##   .i ro le cmavo cu kansa zo nai va'o lo nu zo nai se lidne le cmavo
 ##   .i zo y .e zo da'o .e zo fu'e .e zo fu'o cinmo valsi ji'a
-##   .i lo cnivla poi krasi lo selci'a cu selsni lo genvla poi le javni pe li no cu tcidu ke'a
+##   .i lo cnivla poi krasi lo selci'a cu selsni lo genvla poi le javni pe li 0 cu tcidu ke'a
 ##
 ## ni'o lo nu to'e curmi cu cmene lo stuzi poi lo nu tcidu cu sisti bu'u ke'a
 ##   .i le stuzi cu du le stuzi pe le valsi poi se to'e curmi ku'o gi'a du le krasi be le pagbu poi
@@ -543,7 +543,7 @@ func marked(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
   ## dunda ro porsi be lo cmavo be `BAhE` le spisa poi se lidne le porsi
-  ##   .i le genvla pe le spisa cu stali to le javni pe li papanono toi
+  ##   .i le genvla pe le spisa cu stali to le javni pe li 1100 toi
   ##   .i dunda no da va'o lo nu lo cmavo be `BAhE` cu fanmo le selci'a gi'a lidne zo su poi fanmo
   ##       le selci'a
   ##   .i ba bo `offender` cmene le cmavo
@@ -596,7 +596,7 @@ func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piec
   ##       `CLL 19.16` toi
   ##
   ## ni'o lo cnivla poi krasi le selci'a cu stali ta'i lo spisa pe vo'a
-  ##   .i le javni pe li no cu tcidu le spisa
+  ##   .i le javni pe li 0 cu tcidu le spisa
   ##   .i lo cnivla poi se lidne zo su stali ta'i lo spisa pe vo'a ji'a
   ##   .i zo su krasi lo selci'a
   var

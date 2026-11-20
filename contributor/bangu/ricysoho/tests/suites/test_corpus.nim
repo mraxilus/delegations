@@ -61,7 +61,7 @@ const
     ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
   COUNT_DIGITS_LEAST = 200
     ## lo mecrailai be lo mupli poi vasru lo cmavo pe `CLL 18.2` gi'e se tcidu
-    ##   .i ca lo nu jmina le flalu kei renobi mupli cu se tcidu
+    ##   .i ca lo nu jmina le flalu kei 208 mupli cu se tcidu
   NUMBERS_WRONG = [
     # zoi gy. reserved for experimental purposes .gy.
     #   .i claxu lo selma'o
@@ -75,10 +75,10 @@ const
     ## lo mupli poi le cukta cu cusku lo du'u ke'a na drani ku'o .a lo mupli poi gliju'a
     ##   .i ro mupli cu se kansa le nu to'e curmi pe vo'a
   EXAMPLES_BROKEN = [
-    # le javni pe li pano
+    # le javni pe li 10
     #   .i `.i` basti `.ije`
     ("14.27", "la djan. .i la .alis. klama le zarci"),  # `CLL 14.6`
-    # le javni pe li bipa
+    # le javni pe li 81
     #   .i `pe'e` lidne lo me `joik` me'u .a lo me `jek`
     #   .i se ki'u bo `je` basti `.e` noi me `ek`
     (
@@ -88,29 +88,29 @@ const
     (
       "14.131",
       "nu'i mi ce'e bau la lojban. pe'e joi do ce'e bau la gliban. nu'u casnu",
-    # le javni pe li bimu
+    # le javni pe li 85
     #   .i `nu'u` fanmo lo me `termset` me'u ba `nu'i` po'o
     ),  # `CLL 14.15`
-    # le javni pe li bimu
+    # le javni pe li 85
     #   .i lo me `termset` cu jorne no pagbu sepi'o `fa'u` poi se lidne `nu'u`
     #   .i `pe'e fa'u` jorne
     (
       "14.133",
       "la djan. fa'u la frank. cusku nu'i bau la lojban. pe'e fa'u bai tu'a la djordj. nu'u",
     ),  # `CLL 14.15`
-    # le javni pe li cizepa
+    # le javni pe li 371
     #   .i `gu'e` basti `ge`
     ("14.152", "li re gu'e su'i gi pi'i re du li vo"),  # `CLL 14.17`
-    # le javni pe li soze
+    # le javni pe li 97
     #   .i zo xi poi se lidne lo lerpoi cu nitcu zo boi
     ("17.38", "xy. boi xi ky."),  # `CLL 17.11`
-    # le javni pe li cizepa
+    # le javni pe li 371
     #   .i mintu `CLL 14.152`
     ("18.118", "li re gu'e su'i gi pi'i re du li vo"),  # `CLL 18.17`
-    # le javni pe li binoxa
+    # le javni pe li 806
     #   .i `GAhO` re roi
     ("18.122", "li pimu su'i ni'upimu ke'i bi'o ke'i ma'upimu"),  # `CLL 18.17`
-    # le javni pe li soze
+    # le javni pe li 97
     #   .i mintu `CLL 17.38`
     ("18.123", "xy. boi xi vei by. ce'o dy. ve'o"),  # `CLL 18.17`
   ]

@@ -65,8 +65,8 @@ type
 
 const
   DIGEST_WIKIPEDIA* = "6bbe766025354f3dd9e7335ccd779cc868dbaddd9d8f2071eeb9680a0a3d0c21"
-    ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li vonovovo .a li paso .a li
-    ##     zeno
+    ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li 4044 .a li 19 .a li
+    ##     70
     ##   .i le danfu cu selra'e de'i `2026-11-06`
   URL_API* = "https://jbo.wikipedia.org/w/api.php"
     ## le judri be `API` poi le danfu cu selkra ke'a

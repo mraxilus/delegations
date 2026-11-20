@@ -28,7 +28,7 @@
 ##
 ## ni'o lo gacri be lo srejge cu mecrai
 ##   .i no genvla poi le gacri cu cliva ke'a se tcidu ta'i pa mulselci'a
-##   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+##   .i 02 spisa poi lamji cu se tcidu ta'i pa `text`
 ##   .i ki'u bo va'o lo nu pa jimca cu kuspe le genvla .a le re spisa kei le gacri cu cliva lo
 ##       mecygenvla gi'a pilno lo me'aspi
 ##
@@ -72,25 +72,25 @@ type
 const
   COUNT_READ_LEAST = 1800
     ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi se tcidu
-    ##   .i le selci'aste cu vasru pasovopa selci'a
+    ##   .i le selci'aste cu vasru 1941 selci'a
     ##   .i le flalu cu tcidu ro le selci'a sepi'o `readTextMarked`
   COUNT_REFUSED_LEAST = 100
     ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi `readText` to'e curmi ke'a
-    ##   .i le selci'aste cu vasru pasovopa selci'a
-    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` to'e curmi papano selci'a
+    ##   .i le selci'aste cu vasru 1941 selci'a
+    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` to'e curmi 110 selci'a
   COUNT_COVERS_LEAST = 90
     ## lo mecraiterkancu be lo srejge poi vasru lo jimca ku'o ne'i ro selci'a poi se to'e curmi
     ##   .i le selci'a cu cmima le selci'aste .a lo selci'a poi selfi'i
-    ##   .i ca lo nu jmina le flalu pe lo gacri kei sovo lo srejge cu vasru lo jimca
+    ##   .i ca lo nu jmina le flalu pe lo gacri kei 94 lo srejge cu vasru lo jimca
   COUNT_EXPECTED = 24
     ## lo te kancu be lo nu sisti poi le flalu pe `expects` tcidu ke'a
     ##   .i le flalu cu tcidu le pamoi se ciska poi le gerna cu to'e curmi ke'a
     ##   .i le selci'a pe le selci'aste cu lidne le selci'a poi selfi'i
     ##   .i lo nu sisti pe ro le selci'a cu se lidne lo genvla
     ##   .i lo te kancu be le gerna valsi cu na zmadu `STOP_EXPECTED_MOST`
-    ##   .i muze selci'a cu mapti
+    ##   .i 57 selci'a cu mapti
     ##
-    ## ni'o ro le parevo klesi zo'u le flalu cu tcidu le selci'a bu'u le stuzi pa roi
+    ## ni'o ro le 124 klesi zo'u le flalu cu tcidu le selci'a bu'u le stuzi pa roi
     ##   .i le nu tcidu cu nitcu lo temci poi jibni `2 s` ne'i lo cikryzba
   STOP_EXPECTED_MOST = 8
     ## lo rairterkancu be lo genvla poi lidne lo nu sisti ku'o ne'i le flalu pe `expects`
@@ -115,7 +115,7 @@ const
     # zo su poi fanmo lo selci'a poi vasru lo srera
     "si su mi klama", "mi html su klama", "lu mi su do li'u",
     "mi viska 3 .i do cadzu", "de'i li 1987 so'o goi gy gunka cu fendi lo girzu",
-      # lo selci'a poi vasru lo lerfu pe li pano gi'e se to'e curmi gi'e vasru lo jimca
+      # lo selci'a poi vasru lo lerfu pe li 10 gi'e se to'e curmi gi'e vasru lo jimca
   ]
     ## lo selci'a poi selfi'i fi ro velru'e poi to'e curmi ku'o .e ro stuzi poi le gerna cu sisti
     ##     bu'u ke'a
@@ -171,7 +171,7 @@ const
         "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 20 25 \"klama\")) (tail_terms))))",
     ),  # zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a to `CLL 19.9` .e `#859` toi
-    # le gerna cu sisti bu'u le fanmo be le selci'a ne'i `sumti-6` noi ckini li soze gi'e denpa
+    # le gerna cu sisti bu'u le fanmo be le selci'a ne'i `sumti-6` noi ckini li 97 gi'e denpa
     (
       text: "mi klama le",
       module: "(srera 11 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
@@ -509,7 +509,7 @@ suite "Internal: Marks":
           let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
           check not terminals[span].readGrammar.is_read
             # ja'i le krapinka pe `grammar.nim` lo gacri cu pilno lo mecraispi
-            #   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+            #   .i 02 spisa poi lamji cu se tcidu ta'i pa `text`
         inc count
     check count >= COUNT_COVERS_LEAST  # ja'i `IX.3` lo bandu cu ralte lo gacri
 

@@ -236,7 +236,7 @@ type
     after: int
       ## lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
       ##   .i le stuzi cu se lidne lo koivla pe zo zoi
-      ##   .i li no va'o lo nu le kravla cu na du zo zoi
+      ##   .i li 0 va'o lo nu le kravla cu na du zo zoi
     delimiter: string
       ## lo koivla pe zo zoi ge'u zi'e noi fanmo le nu sitna
       ##   .i le koivla cu kunti va'o lo nu le kravla cu na du zo zoi

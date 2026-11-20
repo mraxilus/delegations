@@ -38,16 +38,16 @@ const
   FLOOR_COMMA_READ = 11000
     ## lo mecrailai be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu tcidu ke'a ta'i lo nu
     ##     fendi lo slaka
-    ##   .i papamusore lerfu cu se tcidu ne'i le re liste .e lo lujvo poi selcu'a ca lo nu lo tsiju
+    ##   .i 11592 lerfu cu se tcidu ne'i le re liste .e lo lujvo poi selcu'a ca lo nu lo tsiju
     ##       cu du `1`
   FLOOR_COMMA_REFUSED = 4000
     ## lo mecrailai be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu to'e curmi ke'a
-    ##   .i vorerepa lerfu cu se tcidu ne'i le mi'uvla
+    ##   .i 4221 lerfu cu se tcidu ne'i le mi'uvla
   FLOOR_STRESS_REFUSED = 3900
     ## lo mecrailai be lo brale'u poi na zvati le slaka poi lidne le romoi slaka pe lo brivla ku'o
     ##     gi'e se to'e curmi le genturfa'i
     ##   .i le genturfa'i na tcidu lo datyvla fi le brale'u
-    ##   .i vopacino brale'u cu se tcidu ne'i le gimste .e lo lujvo poi selcu'a ca lo nu lo tsiju cu
+    ##   .i 4130 brale'u cu se tcidu ne'i le gimste .e lo lujvo poi selcu'a ca lo nu lo tsiju cu
     ##       du `1`
     ##   .i ne'i le se cipra ro drata brivla cu nitcu lo barda lerfu to `D3 a` pe `#811` toi
   SAMPLES_JOINED = 4000
@@ -58,16 +58,16 @@ const
   FLOOR_JOINED = 2500
     ## lo mecrailai be lo porsi poi lo nu basna pe ke'a mapti ro brivla zi'e poi le genturfa'i cu
     ##     tcidu le mi'uvla fi ke'a
-    ##   .i rezemuze porsi cu se tcidu ca lo nu lo tsiju cu du `2`
+    ##   .i 2757 porsi cu se tcidu ca lo nu lo tsiju cu du `2`
   FLOOR_JOINED_OTHER = 800
     ## lo mecrailai be lo porsi poi lo nu basna pe ke'a mapti no brivla
-    ##   .i bibimu porsi cu se tcidu ca lo nu lo tsiju cu du `2`
+    ##   .i 885 porsi cu se tcidu ca lo nu lo tsiju cu du `2`
   COUNT_COMMA_MARKED = 88
     ## lo lerfu po'u slaka bu poi le flalu pe lo valsi poi claxu lo brale'u cu tcidu ke'a
     ##   .i ro stuzi poi na lamji zoi gy. ' .gy. ne'i ro valsi pe `WORDS_BORROWED` .e `WORDS_NAMED`
   FLOOR_COMMA_KEPT = 65
     ## lo mecrailai be le lerfu po'u slaka bu poi za'o se tcidu
-    ##   .i zepa lerfu cu se tcidu
+    ##   .i 71 lerfu cu se tcidu
   WORDS_GROUPED = ["meiin", "iuain", "dauarnold", "meiris", "vauensas", "uiliam", "xuakin"]
     ## lo cmene poi slaka bu ka'e fendi lo karsna pe ke'a
     ##   .i le cmene cu du lo cmene pe `Example 3.6` .e `Example 3.7` ge'u .e re cmene poi lo nu
@@ -82,21 +82,21 @@ const
     ##   .i le flalu pe slaka bu ne'i lo denpa cu cuxna le remei
   FLOOR_COMMA_PAUSE = 190
     ## lo mecrailai be le remei poi nitcu lo denpa poi zvati lo jbini be le re cmavo
-    ##   .i renopa remei cu se tcidu ca lo nu lo tsiju cu du `4`
+    ##   .i 2012mei cu se tcidu ca lo nu lo tsiju cu du `4`
   FLOOR_GLIDE_READ = 40
     ## lo mecrailai be lo brale'u poi le flalu pe lo sakli karsna cu tcidu ke'a ta'i pa brivla
-    ##   .i vono brale'u cu se tcidu bu'u le slaka poi lidne le romoi slaka
+    ##   .i 40 brale'u cu se tcidu bu'u le slaka poi lidne le romoi slaka
     ##   .i ro sakli karsna cu zvati vo greku poi vasru re slaka .a ci slaka
   FLOOR_STRESS_OTHER = 200
     ## lo mecrailai be lo brale'u poi na zvati le slaka poi lidne le romoi slaka pe lo brivla ku'o
     ##     gi'e se tcidu ta'i lo datyvla
-    ##   .i rerebi brale'u cu se tcidu
+    ##   .i 228 brale'u cu se tcidu
     ##   .i mupli fa lo nu le genturfa'i cu tcidu `xlusni pa` fi `xlUsnipa`
   FLOOR_STRESS = 800
     ## lo mecrailai be lo denpa poi le flalu pe lo nu basna cu facki ke'a ba lo romoi slaka poi se
     ##     basna
     ##   .i no datyjva cu nitcu le denpa
-    ##   .i bivore denpa cu se tcidu ca lo nu lo tsiju cu du `0`
+    ##   .i 842 denpa cu se tcidu ca lo nu lo tsiju cu du `0`
   VOWELS_SYLLABLE = "aeiouy"
     ## lo lerfu poi zbasu lo slaka
     ##   .i lo karsna pe `CLL 3.1` ge'u .e `y` to `CLL 3.4` .e `CLL 3.9` toi
@@ -143,10 +143,10 @@ const
     ##   .i le mupli cu selfi'i
   COUNT_NAME_CAPITALS = 12
     ## lo slaka pe ro karsna gunma pe lo cmene ne'i ro greku
-    ##   .i li pare du li re pi'i vei pa su'i pa su'i re su'i re
+    ##   .i li 12 du li 2 pi'i vei pa su'i pa su'i re su'i re
   COUNT_GLIDE_CAPITALS = 100
     ## lo slaka pe ro sakli karsna ne'i ro greku
-    ##   .i li panono du li pano pi'i vei pa su'i re su'i re su'i re su'i ci
+    ##   .i li 100 du li 10 pi'i vei pa su'i re su'i re su'i re su'i ci
 
 
 
@@ -373,7 +373,7 @@ proc drawStreams(): seq[seq[string]] =
   ## cuxna lo porsi be lo valsi sepi'o lo tsiju
   ##   .i le klani be le porsi cu du `SAMPLES`
   ##   .i ro porsi cu vasru lo valsi
-  ##   .i le klani be le valsi cu cmima li pa bi'o `COUNT_WORDS_MAX`
+  ##   .i le klani be le valsi cu cmima li 1 bi'o `COUNT_WORDS_MAX`
   ##
   ## ni'o ro valsi cu gismu ja cmavo ja lujvo gi'e selcu'a fi ro valsi pe lo girzu pe vo'a
   ##   .i le ci klesi cu mintu lo ka selcu'a ta'i lo nu cunso
@@ -414,7 +414,7 @@ suite "Chapter 3":
     for c in ['H', 'Q', 'W']:
       # zoi gy. h .gy. .e zoi gy. q .gy. .e zoi gy. w .gy. na cmima lo lerste pe `CLL 3.1`
       check (c & "a").refusalRead == some((Refusal.Letter, 0))  # `CLL 3.1`
-    for c in char.low .. char.high:  # ro le remuxa lerfu
+    for c in char.low .. char.high:  # ro le 256 lerfu
       # ro lerfu pe `0` bi'o `9` cu sinxa pa cmavo pe `PA`
       #   .i ki'u bo le flalu cu bavykla le lerfu
       if c in tanru.LETTERS or c in MARKS_STREAM or c in {'0' .. '9'}: continue
@@ -708,20 +708,20 @@ suite "Internal: Stream":
         text = "li " & digit
         cmavo = LUT_CMAVO_BY_DIGIT[ord(digit) - ord('0')].readWord
       checkpoint text
-      # pa valsi pe `PA` cu sinxa ro lerfu pe li pano
+      # pa valsi pe `PA` cu sinxa ro lerfu pe li 10
       check text.wordsRead == some(@["li", $digit])  # `CLL 18.2`
       check text.selmahoRead == some(@[some(Selmaho.Li), cmavo.selmaho])  # `CLL 18.2`
       check text.startsRead == some(@[0, 3])
-    # lo lerfu pe li pano cu fendi lo valsi poi lo lerfu pe la lojban. cu ciska ke'a
+    # lo lerfu pe li 10 cu fendi lo valsi poi lo lerfu pe la lojban. cu ciska ke'a
     check "li 1987".wordsRead == some(@["li", "1", "9", "8", "7"])
     check "li 1987".startsRead == some(@[0, 3, 4, 5, 6])
     check "li 1987".isSpanned
     check "li 1987".stressesRead == some(none(int).repeat(5))
     check "le 10moi".wordsRead == some(@["le", "1", "0", "moi"])
     check "pa3".wordsRead == some(@["pa", "3"])
-    # slaka bu poi zvati lo jbini be re lerfu pe li pano cu se to'e curmi to `CLL 3.3` toi
+    # slaka bu poi zvati lo jbini be re lerfu pe li 10 cu se to'e curmi to `CLL 3.3` toi
     check "li 1,000".refusalRead == some((Refusal.Comma, 4))  # `CLL 3.3`
-    # denpa bu poi zvati lo jbini be re lerfu pe li pano cu sinxa lo denpa to `CLL 3.3` toi
+    # denpa bu poi zvati lo jbini be re lerfu pe li 10 cu sinxa lo denpa to `CLL 3.3` toi
     check "li 3.14".pausesRead ==
       some(@[Pause.Absent, Pause.Absent, Pause.Written, Pause.Absent])  # `CLL 3.3`
 

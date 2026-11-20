@@ -13,9 +13,9 @@
 ##   .i lo fu'ivla cu basna le slaka
 ##
 ## ni'o jdima fa lo nu le vlagunma cu fendi le selci'a pa roi bu'u ro lerfu
-##   .i le cipra po'u `slinku'i test` fendi lo bimu valsi poi seljo'e ku'o ta'i lo lujvo
+##   .i le cipra po'u `slinku'i test` fendi lo 85 valsi poi seljo'e ku'o ta'i lo lujvo
 ##   .i ro cmavo poi seltai `CV` krasi pa le valsi
-##   .i se ki'u bo lo temci be le cipra cu du lo temci be lo bimu nu pilno `splitLujvo`
+##   .i se ki'u bo lo temci be le cipra cu du lo temci be lo 85 nu pilno `splitLujvo`
 ##   .i di'u se kanpe
 
 {.experimental: "strictFuncs".}
@@ -65,7 +65,7 @@ func slinkuhi*(text: string): Option[string] =
   ## facki lo lujvo poi selzba lo nu lo cmavo poi seltai `CV` lidne le selci'a
   ##   .i `CLL 4.7` na curmi lo nu lo cmavo poi seltai `CV` gi'e lidne lo fu'ivla cu zbasu lo lujvo
   ##       to lo cipra po'u `slinku'i test` toi
-  ##   .i jarco no da va'o lo nu ro lo bimu cmavo poi seltai `CV` zbasu no lujvo fi le selci'a
+  ##   .i jarco no da va'o lo nu ro lo 85 cmavo poi seltai `CV` zbasu no lujvo fi le selci'a
   for consonant in CONSONANTS:
     for vowel in VOWELS:
       let joined = consonant & vowel & text

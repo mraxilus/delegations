@@ -107,7 +107,7 @@ const
     ## lo stuzi poi lo selci'a pe lo claju'a cu cfari bu'u ke'a ba `text: ` pe le datnypau
   INDENT_CONTINUED = 10
     ## lo stuzi poi ro linji pe le selci'a zi'e poi na pamoi cu cfari bu'u ke'a
-    ##   .i le stuzi cu zmadu le cfastu be le linji pe le datnypau fo li vo
+    ##   .i le stuzi cu zmadu le cfastu be le linji pe le datnypau fo li 4
 
 
 

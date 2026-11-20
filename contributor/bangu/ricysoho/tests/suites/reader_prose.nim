@@ -16,7 +16,7 @@
 ## ni'o ro samtci pagbu cu se tcidu ta'i pa cmene
 ##   .i le vi datnyvei cu sitna le samtci pagbu sepi'o zo la'o pu lo nu le genturfa'i cu tcidu le
 ##       samtci pagbu
-##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le soze moi javni pe
+##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le 97 moi javni pe
 ##       `CLL 21.1`
 ##   .i `Architect` jdice di'u bu'u `#818` ta'i `D1 a`
 ##   .i zo zo poi lidne lo samtci pagbu cu se to'e curmi ki'u lo nu zo zo ka'e sitna zo la'o poi le
@@ -83,7 +83,7 @@ type
   Place* = object
     ## lo stuzi be pa lerfu ne'i lo datnyvei
     ##   .i le stuzi cu du lo namcu pe lo linji ge'u .e lo namcu pe lo lerfu ne'i le linji
-    ##   .i ro le re namcu cu selkra li pa
+    ##   .i ro le re namcu cu selkra li 1
     line*: int  ## lo namcu pe le linji
     column*: int  ## lo namcu pe le lerfu ne'i le linji
 
@@ -218,7 +218,7 @@ func isCarrying(line: string): bool =
 
 func markerLen(line: string): int =
   ## tcidu lo ni clani be lo stesni poi krasi le linji
-  ##   .i li no jalge va'o lo nu no stesni cu krasi le linji
+  ##   .i li 0 jalge va'o lo nu no stesni cu krasi le linji
   ##   .i fukpi `markerLen` pe `english.nim`
   if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
   var i = 0

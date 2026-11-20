@@ -75,7 +75,7 @@
 ##       ku'o ta'i lo nu `drawn` kancu
 ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei no pagbu cu selxra
 ##   .i le linji cu cusku lo namcu pe le jgena poi se to'e curmi ku'o .e lo krinu
-##   .i li pa cu krasi lo nu kancu le jgena
+##   .i li 1 cu krasi lo nu kancu le jgena
 ##
 ## ni'o le papri cu dunda lo tarmi ro klesi be lo pagbu be le pixra
 ##   .i le pixra cu cusku no skari
@@ -101,7 +101,7 @@ type
     y*: int  ## lo galkoi poi selmre fo `pixel`
     height*: int
       ## lo ni le selpu'i cu gapru le karda kei ta'i lo pinpoi
-      ##   .i li no va'o lo nu le selpu'i cu karda
+      ##   .i li 0 va'o lo nu le selpu'i cu karda
     first*: int  ## lo rajypau pe le pamoi karda poi cnita le selpu'i
     last*: int  ## lo rajypau pe le romoi karda poi cnita le selpu'i
     lines*: seq[string]
@@ -115,7 +115,7 @@ type
       ##   .i li ni'u pa va'o le genja
     words*: int
       ## lo du'u le karda cu vasru xo kau valsi
-      ##   .i li no va'o lo nu le selpu'i cu tanxe
+      ##   .i li 0 va'o lo nu le selpu'i cu tanxe
 
   PartDrawn* = object  ## lo selpu'i pe pa pagbu poi selxra ku'o .e lo ni le pixra cu barda
     places*: seq[Place]

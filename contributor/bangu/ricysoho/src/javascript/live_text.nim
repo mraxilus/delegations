@@ -16,7 +16,7 @@
 ##   |                   | .i lo selbe'i cu lidne le rebla                                        |
 ##   | `isWorker`        | lo du'u lo nu tcidu cu fasnu ne'i lo gunka                              |
 ##   | `countRead`       | lo sumji be lo stuzi poi le paprycilta cu tcidu                        |
-##   |                   | .i li no ne'i lo gunka                                                  |
+##   |                   | .i li 0 ne'i lo gunka                                                  |
 ##   | `countTurns`      | lo nu `event loop` carna kei poi tcidu ne'i lo cilta pe le papri     |
 ##   |-------------------|-------------------------------------------------------------------------|
 ##
@@ -58,7 +58,7 @@
 ##
 ## ni'o se to'e cuxna fa lo nu tcidu ro spisa ca pa nu carna ne'i lo paprycilta
 ##   .i ki'u bo le papri cu denpa ca lo temci be lo nu tcidu le selci'a pe le spisa
-##   .i le temci cu jibni lo pilji be li cize bei lo temci be lo nu le jbezba cu tcidu le se ciska
+##   .i le temci cu jibni lo pilji be li 37 bei lo temci be lo nu le jbezba cu tcidu le se ciska
 ##       to lu le se zbasu pe `JavaScript` li'u pe `PROVENANCE.md` toi
 ##
 ## ni'o ro nu cpedu cu selspu ta'i le porsi be lo nu cpedu

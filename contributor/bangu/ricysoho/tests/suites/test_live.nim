@@ -41,7 +41,7 @@
 ##     ka clani
 ##   .i va'o lo nu ro valsi pe lo seljonju'a pe `Tatoeba` spisa kei lo stuzi poi se tcidu cu na
 ##       zmadu lo pilji be `COST_MOST` bei lo stuzi pe le jufra
-##   .i va'o lo nu le selci'a cu clani re roi kei lo stuzi poi se tcidu cu du lo pilji be li re bei
+##   .i va'o lo nu le selci'a cu clani re roi kei lo stuzi poi se tcidu cu du lo pilji be li 2 bei
 ##       lo stuzi poi pu se tcidu
 ##
 ## ni'o lo mupli cu jarco lo cenba pe ro spisa
@@ -102,12 +102,12 @@ const
     ## lo stuzi pe lo cunspi be lo selci'a pe le selci'aste cu na zmadu le stodi
     ##   .i lo selci'a poi vasru pa jufra cu selraptcidu ca ro spisa
     ##   .i se ki'u bo da'i va'o lo nu ro valsi cu spisa kei lo jdima cu du `100 s` ne'i lo cikryzba
-    ##   .i le temci cu du lo pilji be li pavo bei lo temci be lo nu tcidu le selci'aste ta'i lo
+    ##   .i le temci cu du lo pilji be li 14 bei lo temci be lo nu tcidu le selci'aste ta'i lo
     ##       mulno
   COUNT_CORPORA_LEAST = 950
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo mivyselci'a
-    ##   .i ro remoi se ciska pe le pasovopa selci'a cu se tcidu
-    ##   .i ki'u bo lo jdima be ro selci'a cu du lo pilji be li ci bei lo jdima be lo nu tcidu le
+    ##   .i ro remoi se ciska pe le 1941 selci'a cu se tcidu
+    ##   .i ki'u bo lo jdima be ro selci'a cu du lo pilji be li 3 bei lo jdima be lo nu tcidu le
     ##       selci'a ta'i lo mulno
     ##   .i lo jdima be lo nu tcidu lo xadba be le selci'aste cu jibni `12 s` ne'i lo cikryzba
 
@@ -117,13 +117,13 @@ const
   COUNT_SENTENCES_CORPORA_LEAST = 450
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo nu tcidu ro jufra pe ke'a ta'i lo
     ##     porsi
-    ##   .i ro vomoi se ciska pe le pasovopa selci'a cu se tcidu
+    ##   .i ro vomoi se ciska pe le 1941 selci'a cu se tcidu
     ##   .i le flalu poi tcidu ro remoi se ciska cu na tcidu le selci'a
     ##   .i di'u selcu'a ki'u lo jdima be le cipra
   COUNT_SENTENCES_LEAST = 600
     ## lo jufra poi le porsi be lo valsi cu tcidu ke'a po'o zi'e noi le flalu pe le nu katna cu
     ##     cipra ke'a ne'i lo selci'a poi selzba
-    ##   .i ca lo nu le flalu cu se jmina kei le jufra cu xazeze mei
+    ##   .i ca lo nu le flalu cu se jmina kei le jufra cu 677 mei
     ##   .i ki'u bo pa jufra po'o cu ka'e katna lo valsi gi'a krasi ne'i lo nu sitna
   SENTENCES_COST = 30
     ## lo seljonju'a pe `Tatoeba`
@@ -131,7 +131,7 @@ const
     ##       roi
   COST_MOST = 12.0
     ## lo zmaraifrinu be lo stuzi poi se tcidu bei lo stuzi pe le selci'a ca lo nu ro valsi cu spisa
-    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li bi pi re
+    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 8 pi re
     ##   .i ki'u bo ro spisa cu raptcidu lo jufra poi ca'o kalri
   COST_TWICE_MOST = 2.2
     ## lo zmaraifrinu be lo stuzi poi le selci'a poi re roi clani cu tcidu ke'a bei lo stuzi poi le

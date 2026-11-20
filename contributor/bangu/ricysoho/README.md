@@ -137,7 +137,7 @@ ni'o ro javni poi selcme cu jgena gi'e vasru lo cmene be le javni be'o .e lo jge
 ni'o lo porsi be lo javni poi simsa cu jgena
   .i lo tcita be lo jgena cu cmene lo javni poi fanmo lo porsi
   .i lo namcu pe lo jgena cu du lo namcu pe lo javni poi krasi lo porsi
-  .i se ki'u bo `(sumti_6 0 ...)` jgena lo porsi poi selkra `text` noi ckini li no ku'o gi'e selfa'o
+  .i se ki'u bo `(sumti_6 0 ...)` jgena lo porsi poi selkra `text` noi ckini li 0 ku'o gi'e selfa'o
       `sumti-6`
 
 ni'o ne'i `CLL 21.1` le re fanmo cu jarco pa porsi
@@ -145,15 +145,15 @@ ni'o ne'i `CLL 21.1` le re fanmo cu jarco pa porsi
   .i lo jgena poi vasru no namcu cu krasi no porsi
 
 ni'o lo cmene be lo javni cu jarco lo namcu pe lo javni
-  .i ki'u bo `CLL 21.1` dunda pa cmene .e pa namcu ro lo bibi javni
+  .i ki'u bo `CLL 21.1` dunda pa cmene .e pa namcu ro lo 88 javni
   .i se ki'u bo lo jgena cu ciska no namcu pe lo javni poi fanmo lo porsi
   .i `Architect` jdice di'u bu'u `#859` to `comment 6805527878` toi
-  .i `LUT_NUMBER_BY_RULE` jarco lo namcu mu'u li soze pe `sumti-6`
+  .i `LUT_NUMBER_BY_RULE` jarco lo namcu mu'u li 97 pe `sumti-6`
 
 ni'o ro genvla cu vasru lo klesi be ri mu'u `LI` .a `PA`
   .i ba bo le genvla cu vasru lo namcu pe lo krasi be ro valsi ge'u .e lo namcu pe lo fanmo be le
       valsi ge'u .e lo lerfu be le valsi
-  .i se ki'u bo `(LI 0 4 "meho")` jorne zo me'o lo selci'apau poi krasi li no gi'e fanmo li vo
+  .i se ki'u bo `(LI 0 4 "meho")` jorne zo me'o lo selci'apau poi krasi li 0 gi'e fanmo li 4
   .i lo javni poi selcme cu vasru no namcu pe lo selci'apau ki'u lo nu lo pezli be le javni cu jarco
       lo pagbu
 
@@ -200,10 +200,10 @@ ni'o le genturfa'i cu to'e curmi zoi gy. 1987 .gy. ca lo nu tcidu lo vlapoi
       gi'e lidne lo brirebla
 
 ni'o le selci'a cu fanmo ba zo le
-  .i se ki'u bo le gerna cu sisti bu'u lo stuzi poi ckini li paxa ku'o ne'i `sumti-6` noi denpa lo
+  .i se ki'u bo le gerna cu sisti bu'u lo stuzi poi ckini li 16 ku'o ne'i `sumti-6` noi denpa lo
       selbri pe zo le
   .i le jgena cu ciska lo cmene be le javni po'o
-  .i ki'u bo lo cmene cu jarco li soze noi ckini le javni
+  .i ki'u bo lo cmene cu jarco li 97 noi ckini le javni
 
 ni'o le srejge cu vasru lu mi klama li'u noi jufra ku'o gi'e ba bo vasru zo le po'o
   .i va'o lo nu no srera cu zvati kei le re se tcidu cu mintu
@@ -279,7 +279,7 @@ finish: cut back to 160, byte 27
   out  (sumti_6 0 (KOhA 27 29 "ko"))
 ```
 
-ni'o li reci cu namcu lo fanmo be le re minde
+ni'o li 23 cu namcu lo fanmo be le re minde
   .i lu mi klama li'u selbe'i ca lo nu lo'u .i do le'u cfari
   .i le ci valsi po'u zo si vimcu lo'u klama .i do le'u
   .i se ki'u bo le selci'a be fi `NIF` cu selka'a bu'u lo fanmo be le re minde
@@ -327,7 +327,7 @@ ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
 (text_1 0 (I 16 17 "i") (sumti_6 4 (KOhA 18 20 "ko")))
 ```
 
-ni'o le ci pagbu be le pamoi selci'a cu selvau re `paragraph` ja'i le javni pe li vo pe `CLL 21.1`
+ni'o le ci pagbu be le pamoi selci'a cu selvau re `paragraph` ja'i le javni pe li 4 pe `CLL 21.1`
   .i `Architect` cuxna le selci'a be fi `NIF` pe le nu tcidu le mulselci'a kei to `D1 b` bu'u `#859`
       toi gi'e ba bo cuxna lo nu jmina poi to'e curmi no srera
   .i le se tcidu poi sinxa ro srera cu jarco lo stuzi be ro srera
@@ -351,7 +351,7 @@ ni'o lo pagbu poi lidne zo su noi romoi cu stali va'o lo nu le genturfa'i cu tci
   .i lo jmina be lo'u le su mi klama le'u cu ralte no zo le
   .i lo nu jmina cu to'e curmi lo selci'a be fi `NIF` po'o poi na se tcidu gi'a vasru lo tarmi poi
       le ciska be fi `NIF` na ciska ke'a
-  .i ba bo lo nu jmina cu cusku lo namcu be lo jgena be'o noi krasi li no ba le re minde ku'o .e lo
+  .i ba bo lo nu jmina cu cusku lo namcu be lo jgena be'o noi krasi li 0 ba le re minde ku'o .e lo
       krinu to `suites/test_merge.nim` toi
 
 ni'o lo minde po'u `javascript` zbasu `build/ricysoho.js` noi samtci be fi `JavaScript` le
@@ -417,7 +417,7 @@ ni'o lo cipra be le samtci cu cipra ro jdice pe le mupli pe `Tatoeba`
 
 ni'o le vi selgu'a cu fukpi `The Complete Lojban Language` noi `John Woldemar Cowan` ciska ke'a
   .i `Logical Language Group` dunda `CLL`
-  .i le vi selgu'a cu jersi `1.1` noi selzba de'i li renopaxa pi'e bi pi'e rexa gi'e romoi bu'u
+  .i le vi selgu'a cu jersi `1.1` noi selzba de'i li 2016 pi'e bi pi'e 26 gi'e romoi bu'u
       `lojban.org/publications/cll/`
 
 ni'o `CLL 3` ciska lo lerfu .e lo zunsna gunma .e lo slaka .e lo nu basna .e lo sinxa be lo vlapoi
@@ -553,7 +553,7 @@ ni'o lo cipra cu cipra lo du'u ro pagbu cu mapti `CLL`
   .i le genturfa'i cu tcidu ro mupli poi selna'u ne'i `CLL 1.1` gi'e drani ja'i le cukta
   .i lo jufra poi vasru lo sinxa poi na lojbo cu selvi'u
 
-ni'o le cukta cu jarco pano mupli poi vasru lo na'e lojbo sinxa po'o
+ni'o le cukta cu jarco 10 mupli poi vasru lo na'e lojbo sinxa po'o
   .i le cukta cu cusku lo du'u ci mupli na drani
   .i pa datmupli cu gliju'a
   .i xa mupli cu ciska pa mekso po'o
@@ -564,15 +564,15 @@ ni'o so mupli cu na'e mapti su'o javni pe `CLL 21.1`
   .i `Architect` jdice di'u bu'u `#815`
   .i `PROVENANCE.md` cmene le javni poi ro le so mupli cu na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu paxavoxaso lo pazevosomu jufra pe `Tatoeba`
+ni'o le genturfa'i cu tcidu 16469 lo 17495 jufra pe `Tatoeba`
   .i ro klesi be lo drata cu na'e mapti su'o javni pe `CLL 1.1`
   .i `PROVENANCE.md` cmene ro klesi .e lo javni .e lo namcu pe le klesi
   .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
       na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu xaso lo bixa pagbu be le ci prosa
-  .i lo traji be lo ka clani cu vasru vomubi valsi
-  .i le genturfa'i cu tcidu zebici lo bimuxa pagbu be `Alice` be'o .e muxa lo pazeci clapau be `Oz`
+ni'o le genturfa'i cu tcidu 69 lo 86 pagbu be le ci prosa
+  .i lo traji be lo ka clani cu vasru 458 valsi
+  .i le genturfa'i cu tcidu 783 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
   .i ro le nu to'e curmi cu drani ja'i `CLL`
 
 ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le genturfa'i cu tcidu
