@@ -1251,6 +1251,10 @@ newest first. It demands that the commit immediately before every `fix` is a `te
 scope, one test to one fix, with nothing between them. So the priority of the Architect,
 "every mistake becomes a test", holds by a check and not by prose alone.
 
+- The subjects keep each line of history together (`git log --topo-order`). In order of date, a
+  merge of a branch built at the same time puts its commits between a test and its fix. Verified
+  by `suites/test_tree.nim`, with two branches whose dates interleave.
+
 - Rejected: any earlier `test` of the scope on the branch. One token test then satisfies every
   later fix, so it measures the order of kinds and nothing of the pairing.
 - Rejected: a match across the history of `main`, which needs the whole log. It would still
