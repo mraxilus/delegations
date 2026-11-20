@@ -62,6 +62,8 @@ type
     kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
                    ##   whose own name pass answers with its result, kind unread.
     name*: string  ## Qualified name, e.g. `system.float`.
+    section*: string  ## Command section line answers, e.g. `def` or `use`.
+    signature*: string  ## Type of symbol as compiler spells it, which tells overloads apart.
     file*: string  ## Absolute path of definition, separators written `/` (`slashed`).
     line*: int  ## One-based line of definition.
     column*: int  ## Zero-based byte column of definition.
@@ -70,6 +72,7 @@ type
     path*: string  ## Repository-relative path.
     sites*: seq[(int, int)]  ## One-based line and zero-based byte column of each name.
     names*: seq[string]  ## Names whose global declarations to list.
+    usages*: seq[(int, int)]  ## Site of each name whose every use to list (`use`).
 
   Request* = object  ## Define query of one file, and where and with what toolchain it runs.
     query*: Query
@@ -86,6 +89,8 @@ type
     reason*: string  ## Why file stays unresolved; empty where it compiled.
     symbols*: Table[(int, int), Symbol]  ## Symbol each site resolves to; absent where none.
     globals*: Table[string, seq[Symbol]]  ## Global declarations of each name, any module.
+    usages*: Table[(int, int), seq[Symbol]]
+      ## Every line answering `use` at each site: definition and each use, of each symbol there.
 
   Entry = object  ## Define one `nimsuggest` run: where, on what, for which files.
     root: string  ## Absolute directory query paths are relative to.
@@ -143,6 +148,8 @@ func toSymbol*(line: string): Option[Symbol] =
       Symbol(
         kind: fields[1],
         name: fields[2],
+        section: fields[0],
+        signature: fields[3],
         file: fields[4].slashed,
         line: fields[5].parseInt,
         column: fields[6].parseInt,
