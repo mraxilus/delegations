@@ -4,8 +4,9 @@
 ##     comment group as outline groups them.
 ##   Commented code holds no prose: `#` comment whose first line stands at even step, or reads as
 ##     code (`isCode`). Nor does line without step (`isStepless`), aligned column or deeper line
-##     that continues it, or `#` line that reads as code. Generated doc stands in string, so rule
-##     reads none, as Architect ruled on rule 2 of #443.
+##     that continues it, or `#` line that reads as code. Two spaces after closing mark, comma or
+##     semicolon space prose, and align no column. Generated doc stands in string, so rule reads
+##     none, as Architect ruled on rule 2 of #443.
 ##   Bare span takes backticks. Path is word with file extension (`EXTENSIONS_FILE`), as
 ##     `cayleys.nim`, or folder that slash closes, as `draw/`; backticks replace its double
 ##     quotes. Capitalised name with extension and no folder, as Node.js, names product. Literal
@@ -297,7 +298,7 @@ func spans(text: string, names: Names): seq[Span] =
 
 func isAligned(text: string): bool =
   ## Decide whether text holds aligned column: two spaces or more between words, outside
-  ##   backticks and quotes, after no closing mark.
+  ##   backticks and quotes, after no closing mark, comma or semicolon, which space prose.
   let (masked, _) = text.masks
   var k = 0
   while k < text.len:
@@ -306,8 +307,9 @@ func isAligned(text: string): bool =
       continue
     var after = k
     while after < text.len and text[after] == ' ' and not masked[after]: inc after
-    if after - k > 1 and k > 0 and after < text.len and
-        text[0 ..< k].strip(leading = false, chars = CHARS_CLOSER + {'`'})[^1] notin MARKS_CLOSING:
+    let before = text[0 ..< k].strip(leading = false, chars = CHARS_CLOSER + {'`'})
+    if after - k > 1 and before.len > 0 and after < text.len and
+        before[^1] notin MARKS_CLOSING + MARKS_LISTED:
       return true
     k = after
 
