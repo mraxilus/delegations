@@ -381,9 +381,11 @@ const
   PIPE_ESCAPED = "\\" & PIPE
     ## Pipe as cell of table must write it; cell and claim each read it as `PIPE` (7022872980).
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
-  SEPARATOR_LABEL_BOLD = ":" & BOLD & " "
-    ## Mark after label of claim in bold, as in `**Judgement:** `: colon inside bold, then space
-    ##   (7022872980).
+  FORMS_LABEL = [("***", ":*** "), (BOLD, ":" & BOLD & " "), (BOLD, BOLD & ": "),
+    ("__", ":__ "), ("", SEPARATOR_LABEL)]
+    ## Opening and closing of label of claim, longest opening first: bold with colon inside, as
+    ##   in `**Judgement:** ` (7022872980), bold with colon outside, bold of underscores, and bold
+    ##   and italic (7027197745), or plain, as in `Judgement: `.
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
     ##   (7017902016).
@@ -2126,16 +2128,18 @@ func isPercentage(text: string, at: int): bool =
 
 
 func labelClaim(claim: string): string =
-  ## Read label that opens claim, with its `: `: run with no space whose first character is
-  ##   capital letter, as `Judgement: `, `Q1: ` or `Follow-up: `, or such run and its colon in
-  ##   bold, then space, as `**Judgement:** ` (7022872980); empty where claim opens with none.
-  ##   Run ends at first separator after its capital; capital is `A` to `Z` alone.
-  let
-    start = (if claim.startsWith(BOLD): BOLD.len else: 0)  # First character of run.
-    separator = (if start > 0: SEPARATOR_LABEL_BOLD else: SEPARATOR_LABEL)
-  if start >= claim.len or claim[start] notin UppercaseLetters: return ""
-  let stop = claim.find(separator, start + 1)  # End of run.
-  if stop < 0 or ' ' in claim[start ..< stop]: "" else: claim[0 ..< stop + separator.len]
+  ## Read label that opens claim, with its closing: run with no space whose first character is
+  ##   capital letter, as `Judgement: `, `Q1: ` or `Follow-up: `, plain or in form of bold of
+  ##   `FORMS_LABEL`, as `**Judgement:** ` (7022872980) or `__Judgement:__ ` (7027197745);
+  ##   empty where claim opens with none.
+  ##   Run ends at first closing of its form after its capital; capital is `A` to `Z` alone.
+  for (opening, closing) in FORMS_LABEL:
+    let start = opening.len  # First character of run.
+    if not claim.startsWith(opening) or start >= claim.len or claim[start] notin UppercaseLetters:
+      continue
+    let stop = claim.find(closing, start + 1)  # End of run.
+    if stop >= 0 and ' ' notin claim[start ..< stop]: return claim[0 ..< stop + closing.len]
+  ""
 
 
 func stopClaim(text: string): int =
