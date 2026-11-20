@@ -312,7 +312,8 @@ func outcome*(
   ##   Conversion goes where answer of semantic pass for path settles it (`resolveConversions`), and
   ##   rename where its plan writes path (`planRenames`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
-  ##   it by path as named (`nimblesNearest`); path it lacks has none above.
+  ##   it by path as named (`nimblesNearest`); path it lacks has none above. Branch on what build
+  ##   fixes reads constants each module of run exports, by that nimble file (`constantsPackage`).
   let
     formatting = files.nimblesFormatting(nimbles)
     constants = files.constantsPackage(nimbles)

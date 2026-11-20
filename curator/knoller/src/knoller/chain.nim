@@ -20,7 +20,7 @@
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent; compile-time family of module after them, whose pragmas widen or narrow
-##     head that wrapping lays out;
+##     head that wrapping lays out, then branch on what build fixes, whose `when` widens its line;
 ##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
 ##     since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
@@ -35,10 +35,11 @@
 ##   - stage comment last: placeholder above paragraph that lacks one, once comment above has
 ##     moved, since comment it moves can open paragraph.
 ##   Chain is list of steps: fixer guarded on every line, widener (`reports.nim`), i.e. tab,
-##     comment, message, condition, spacing, continuation and trailing separator fixers, which
-##     read held lines, prover step, needless parentheses, which reads answers of parser, or
-##     placed fixer, i.e. stub keys, profiler import and blank lines of tests, which reads nimble
-##     file nearest file.
+##     comment, message, condition, compile-time family, spacing, continuation and trailing
+##     separator fixers, which read held lines, prover step, needless parentheses, which reads
+##     answers of parser, placed fixer, i.e. stub keys, profiler import and blank lines of tests,
+##     which reads nimble file nearest file, or reading fixer, i.e. branch on what build fixes,
+##     which reads constants other modules of package export (`constants`), as caller passes them.
 ##   Chain stays pure: it takes answers parser gave (`Proofs`), and each source prover step
 ##     read without answer is in `Fix.asked`, for caller to ask compiler and run chain again
 ##     (`proofs.nim`). Same source and same answers give same output.

@@ -29,6 +29,8 @@
 ##   Caller names nimble file nearest each file, written as its path is, empty where none stands
 ##     above (`nimble`); placed fixer takes it (`Placed`), as prover step takes answers. Lookup
 ##     reads file system, so caller makes it, and every rule here stays pure.
+##   Caller names constants other modules of package export, too (`constants`), and reading
+##     fixer takes them (`Reader`): rule reads one file, and caller reads its package.
 ##   Stub is read as testament reads category (#443), i.e. directory directly under `tests` of
 ##     package, whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
 ##     `testament/categories.nim`): file there is stub where its source opens with testament
