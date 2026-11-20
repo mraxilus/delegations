@@ -187,9 +187,9 @@ const
   TEXTS_SA_PARTED = [
     # le cuncipra pe le flalu pe lo mivyselci'a cu facki le selci'a
     #   .i zo sa na selraptcidu
-    "ni'o .i sa 1987 zo .i si",
-    "mi klama .i sa 1987 zo .i si do",  # lo valsi poi se lidne zo si
-    "ni'o .i sa 1987 1988 zo .i si",  # re valsi poi le porsi be lo valsi cu to'e curmi ke'a
+    "ni'o .i sa html zo .i si",
+    "mi klama .i sa html zo .i si do",  # lo valsi poi se lidne zo si
+    "ni'o .i sa html http zo .i si",  # re valsi poi le porsi be lo valsi cu to'e curmi ke'a
     # le cuncipra pe le flalu pe lo mivyselci'a cu facki le selci'a
     #   .i zo bu .e ba bo zo ba'e se to'e curmi
     "ui lo sa bu ba'e le si",
@@ -257,9 +257,9 @@ const
     ##   .i le romoi cu pu se tcidu ta'i lo srera ca lo nu zo su pu vimcu lo selci'a poi lidne zo su
   CUTS_ENDED = [
     (text: "tu'u si fa'o lo", cuts: toSeq(1 .. 14)),
-    (text: "gy ku xyz ba'e gy si fa'o zo sa 1987", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
+    (text: "gy ku xyz ba'e gy si fa'o zo sa html", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
     (
-      text: "cu sa'a sa'a li'u si fa'o ni'o 1987 .i",
+      text: "cu sa'a sa'a li'u si fa'o ni'o html .i",
       cuts: @[4, 5, 8, 13, 19, 23, 25, 26, 31, 36],
     ),
   ]
@@ -316,11 +316,11 @@ const
     #   .i se ki'u bo `NIF` selka'a bu'u le jufra poi pu vasru zo klama
     ),  # `CLL 19.13`
     (
-      pieces: @["mi 1987 klama .i ", "su ko "],
+      pieces: @["mi html klama .i ", "su ko "],
       changes: @[
         (
           28, 0, "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
-            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
+            "(rivbi Stream Letter 3 7 \"html\") (bridi_tail_3 50 " &
             "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))\n",
           "(text_1 0 (I 15 16 \"i\"))\n",
         ),

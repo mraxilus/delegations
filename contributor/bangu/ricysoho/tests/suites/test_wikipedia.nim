@@ -39,45 +39,24 @@ const KEYS_REFUSED = [
   ("cmaci", 2),  # le javni pe li reno
   # le linji .e le remoi linji cu pagbu le jufra poi cfari ne'i le pamoi linji
   ("cmaci", 3),  # le javni pe li reno
-  # lo nacle'u po'u `3` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `3000moi`
-  ("cmaci", 13),  # `CLL 3.1`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `16moi`
-  ("cmaci", 16),  # `CLL 3.1`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `19xyxy`
-  ("cmaci", 18),  # `CLL 3.1`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `193xymoi`
-  ("cmaci", 21),  # `CLL 3.1`
+  # lo remoi be zo kei pe `keikei` cu fanmo no da
+  #   .i ki'u bo zo cu poi lidne zo cipra .e zo nandu cu fanmo le re jufra poi zo nu krasi ke'a
+  ("cmaci", 18),  # `CLL 11.1`
   # `zei` jongau `fermat` `ro` po'o
   #   .i se ki'u bo `moi` se lidne no namcu to le javni pe li pamure toi
   ("cmaci", 22),  # `CLL 4.6`
   # no cmene cu vasru `la` poi lo karsna cu lidne ke'a
   #   .i le ju'agri cu vasru `paulas`
   ("eliogabalus", 18),  # `CLL 4.8`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `1987`
-  ("lo jbobau", 1),  # `CLL 3.1`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `1987`
-  ("lo jbobau", 3),  # `CLL 3.1`
-  # lo nacle'u po'u `2` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `27`
-  ("lo jbobau", 5),  # `CLL 3.1`
-  # lo nacle'u po'u `2` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `26`
-  ("lo jbobau", 6),  # `CLL 3.1`
+  # le re namcu po'u `1987` .e zo so'o cu nitcu zo boi poi zvati lo jbini be le re namcu
+  #   .i va'o lo drata le gerna cu tcidu le re namcu ta'i pa namcu
+  ("lo jbobau", 3),  # `CLL 18.6`
+  # zoi gy. a'y .gy. mapti no tarmi be lo cmavo
+  #   .i le ju'agri cu vasru `me'o .a'y`
+  ("lo jbobau", 5),  # `CLL 4.2`
   # `(` na'e lerfu la lojban.
   #   .i lo cukla grile'u cu sruri `to ... toi`
   ("lo jbobau", 9),  # `CLL 3.1`
-  # lo nacle'u po'u `6` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `630`
-  ("lo jbobau", 13),  # `CLL 3.1`
-  # lo nacle'u po'u `1` na'e lerfu la lojban.
-  #   .i le ju'agri cu vasru `1400`
-  ("lo jbobau", 14),  # `CLL 3.1`
   # `tu'u` fanmo `tu'e` pe le recimoi linji
   #   .i va'o lo nu sepli kei `tu'u` fanmo no da
   ("lo jbobau", 29),  # le javni pe li pavo

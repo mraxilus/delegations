@@ -19,7 +19,7 @@ const
   WORDS_BUILT = [
     "mi", "do", "ko", "klama", "cadzu", "zarci", "broda", "le", "lo", "ku", "cu", "je", "bo", "nai",
     ".i", ".i", "ni'o", "si", "sa", "su", "zo", "lo'u", "le'u", "zoi", "gy", "la'o", "lu", "li'u",
-    "to", "toi", "tu'e", "tu'u", "zei", "bu", "ba'e", "ui", "fa'o", "sa'a", "su'i", "xyz", "1987",
+    "to", "toi", "tu'e", "tu'u", "zei", "bu", "ba'e", "ui", "fa'o", "sa'a", "su'i", "xyz", "html",
   ]
     ## lo valsi poi lo selci'a poi selzba cu vasru ke'a
     ##   .i su'o le valsi cu galfi lo pu valsi gi'a krasi ja fanmo lo nu sitna .a lo selci'a poi

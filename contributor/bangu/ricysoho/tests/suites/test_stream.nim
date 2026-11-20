@@ -29,6 +29,8 @@ import ../../src/ricysoho/lists/[cmavo, gismu]
 
 
 const
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
   SAMPLES = 1000
     ## lo cunpoi poi lo flalu cu cuxna ke'a sepi'o lo tsiju ku'o .e lo cunjvo poi le girzu cu cuxna
     ##     ke'a
@@ -413,7 +415,9 @@ suite "Chapter 3":
       # zoi gy. h .gy. .e zoi gy. q .gy. .e zoi gy. w .gy. na cmima lo lerste pe `CLL 3.1`
       check (c & "a").refusalRead == some((Refusal.Letter, 0))  # `CLL 3.1`
     for c in char.low .. char.high:  # ro le remuxa lerfu
-      if c in tanru.LETTERS or c in MARKS_STREAM: continue
+      # ro lerfu pe `0` bi'o `9` cu sinxa pa cmavo pe `PA`
+      #   .i ki'u bo le flalu cu bavykla le lerfu
+      if c in tanru.LETTERS or c in MARKS_STREAM or c in {'0' .. '9'}: continue
       # ja'i lo lerste pe `CLL 3.1`
       check ("mi " & c & "a").refusalRead == some((Refusal.Letter, 3))  # `CLL 3.1`
     # ja'i `CLL 3.1` lo brale'u cu sinxa lo nu basna po'o
@@ -698,6 +702,30 @@ suite "Chapter 4":
 
 
 suite "Internal: Stream":
+  test "Each digit reads as word of PA that names it in 18.2, one word for each digit":
+    for digit in '0' .. '9':
+      let
+        text = "li " & digit
+        cmavo = LUT_CMAVO_BY_DIGIT[ord(digit) - ord('0')].readWord
+      checkpoint text
+      # pa valsi pe `PA` cu sinxa ro lerfu pe li pano
+      check text.wordsRead == some(@["li", $digit])  # `CLL 18.2`
+      check text.selmahoRead == some(@[some(Selmaho.Li), cmavo.selmaho])  # `CLL 18.2`
+      check text.startsRead == some(@[0, 3])
+    # lo lerfu pe li pano cu fendi lo valsi poi lo lerfu pe la lojban. cu ciska ke'a
+    check "li 1987".wordsRead == some(@["li", "1", "9", "8", "7"])
+    check "li 1987".startsRead == some(@[0, 3, 4, 5, 6])
+    check "li 1987".isSpanned
+    check "li 1987".stressesRead == some(none(int).repeat(5))
+    check "le 10moi".wordsRead == some(@["le", "1", "0", "moi"])
+    check "pa3".wordsRead == some(@["pa", "3"])
+    # slaka bu poi zvati lo jbini be re lerfu pe li pano cu se to'e curmi to `CLL 3.3` toi
+    check "li 1,000".refusalRead == some((Refusal.Comma, 4))  # `CLL 3.3`
+    # denpa bu poi zvati lo jbini be re lerfu pe li pano cu sinxa lo denpa to `CLL 3.3` toi
+    check "li 3.14".pausesRead ==
+      some(@[Pause.Absent, Pause.Absent, Pause.Written, Pause.Absent])  # `CLL 3.3`
+
+
   test "Words joined by spaces read as readWord reads each, at byte where each opens":
     var count = 0
     for words in STREAMS_RANDOM:

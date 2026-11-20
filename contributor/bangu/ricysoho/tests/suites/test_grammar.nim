@@ -165,7 +165,7 @@ const
     ##   .i le flalu cu tcidu ro cimoi selci'a ki'u lo jdima be le cipra
   SEED_KEPT = 975
     ## lo tsiju be lo cunso stuzi poi le flalu pe lo mulcmi poi stali cu vimcu lo genvla bu'u ke'a
-  COUNT_PARTS_JOINED = 64
+  COUNT_PARTS_JOINED = 81
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
 

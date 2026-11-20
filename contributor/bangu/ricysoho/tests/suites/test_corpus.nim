@@ -52,11 +52,16 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/ricysoho/prose
+import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 import ../cll/examples
 
 
 const
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
+  COUNT_DIGITS_LEAST = 200
+    ## lo mecrailai be lo mupli poi vasru lo cmavo pe `CLL 18.2` gi'e se tcidu
+    ##   .i ca lo nu jmina le flalu kei renobi mupli cu se tcidu
   NUMBERS_WRONG = [
     # zoi gy. reserved for experimental purposes .gy.
     #   .i claxu lo selma'o
@@ -143,6 +148,29 @@ func isNotation(row: string): bool =
   row.anyIt(it in {'0'..'9', '(', ')', ':', '-'}) or "…" in row
 
 
+func shapeTree(node: Node, units: seq[Unit]): string =
+  ## ciska lo javni .e lo klesi be lo genvla pe le tricu ta'i lo porsi
+  ##   .i le se ciska cu claxu lo lerfu .e lo stuzi
+  if node.is_terminal: return $units[node.at].terminal
+  result = "(" & node.rule
+  for child in node.children: result.add " " & child.shapeTree(units)
+  result.add ")"
+
+
+func withDigits(text: string): string =
+  ## lo lerfu pe `0` bi'o `9` cu basti ro valsi pe `CLL 18.2` poi le selci'a cu vasru ke'a
+  ##   .i va'o lo nu le porsi be lo valsi cu se to'e curmi kei dunda le selci'a
+  let stream = text.readStream
+  result = text
+  if not stream.is_read: return
+  for k in countdown(stream.occurrences.high, 0):
+    let
+      word = stream.occurrences[k]
+      digit = LUT_CMAVO_BY_DIGIT.find(word.text)
+    if digit < 0 or not word.reading.is_word or word.reading.selmaho != some(Selmaho.Pa): continue
+    result[word.start ..< word.finish] = $digit
+
+
 func variants(text: string): seq[string] =
   ## ciska le selci'a re roi
   ##   .i le pamoi cu vasru lo valsi poi lo kurfa grile'u cu sinxa ke'a
@@ -204,6 +232,26 @@ suite "Chapters 1-19":
     check count_notation == COUNT_NOTATION  # `Article IX.3`
     # le bandu cu cipra lo du'u le linji po'o poi le bandu cu cmene ke'a na'e se tcidu
     check count_rows_notation == COUNT_ROWS_NOTATION  # `Article IX.3`
+
+
+  test "Each example writing cmavo of 18.2 reads to same tree with digit in place of each":
+    var count = 0
+    for example in EXAMPLES_CLL:
+      let text = example.rows.filterIt(not it.isNotation).join(" ").variants[0]
+      if ',' in text: continue
+      let reading = text.readText
+      if not reading.is_read: continue
+      let digits = text.withDigits
+      if digits == text: continue
+      checkpoint "Example " & example.number & ": " & digits
+      let read = digits.readText
+      # lo lerfu pe `0` bi'o `9` cu sinxa lo cmavo pe `CLL 18.2`
+      check read.is_read  # `CLL 18.2`
+      if not read.is_read: continue
+      # le tricu cu mintu ro javni .e ro klesi be lo genvla
+      check read.tree.shapeTree(read.units) == reading.tree.shapeTree(reading.units)
+      inc count
+    check count >= COUNT_DIGITS_LEAST  # `Article IX.3`
 
 
   test "Each example of mex alone reads after li":
