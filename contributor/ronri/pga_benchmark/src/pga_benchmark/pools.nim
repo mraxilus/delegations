@@ -96,10 +96,14 @@ func namePoolLibrary*(kind: Kind, grade: Option[int], is_typed = false): string 
   ##   or typed image where measurand reads operand at its own type.
   ##   Branches as `if` rather than `case`, since algebras without typed kinds leave
   ##   typed branch unreachable and compiler would say so.
+  ##   Motor alone has typed pool, so typed name of any other kind stops build; `$kind` is
+  ##     compared since conformal kinds hold no motor.
   if kind == Kind.General:
     if grade.isSome: "POOL_GRADED[" & $grade.get & "]" else: "POOL_GENERAL"
   elif kind == Kind.Scalar: "POOL_SCALAR"
-  elif is_typed: "POOL_" & toUpperAscii($kind) & "_TYPED"
+  elif is_typed:
+    doAssert $kind == "Motor", "Typed pool exists for motor alone; got `" & $kind & "`."
+    "POOL_" & toUpperAscii($kind) & "_TYPED"
   else: "POOL_" & toUpperAscii($kind) & "_WIDENED"
 
 
