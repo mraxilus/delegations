@@ -843,6 +843,13 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
   ##       cnino
+  ##
+  ## ni'o lo temci pe lo nu karbi lo genvla cu zensmi lo te kancu be lo genvla poi stali
+  ##   .i lo temci pe lo nu fukpi lo genvla cu zensmi lo te kancu be lo genvla poi cnino
+  ##   .i `setLen` cu cpacu lo ninstu va'o lo nu le mulcmi cu zenba po'o
+  ##   .i le nu tcidu le romoi selcmi poi stali cu tcidu ro cmima pe ri pa roi
+  ##   .i lo na'e zmiku cipra cu tcidu lo samtci pe `C` .e `JavaScript` pe le vi pagbu
+  ##   .i ne'i `JavaScript` lo nu tcidu pa cmima cu fukpi le ci namcu pe ri
 
   template key(item: Item): int =
     ## lo namcu poi sinxa le cmima ne'i le ca selcmi
@@ -888,7 +895,8 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   chart.completions.setLen(chart.count_completed)
   chart.choices.setLen(min(chart.choices.len, first))
   chart.choices.setLen(terminals.len + 1)
-  chart.terminals = @terminals
+  chart.terminals.setLen(same)
+  for i in same ..< terminals.len: chart.terminals.add terminals[i]
   if first == 0:
     chart.predicted = newSeqWith(count_nonterminals, -1)
     chart.predicted[GRAMMAR_EBNF.start] = 0
