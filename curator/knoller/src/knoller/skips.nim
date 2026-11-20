@@ -3,8 +3,10 @@
 ##   rule 17 of #443. No fix, since no text gives reason.
 ##   Test is `test "…":` and lines deeper than it, in file under `tests` of its package. Reason of
 ##     skip trails it on its line, as STYLE.md §6 writes it, or stands on comment line right above
-##     it at its indent, or in echo of text there, which run prints. Placeholder, whose code is
-##     `skip()` alone, gives its reason in name opening with `TODO:`.
+##     it at its indent, or in echo of text there, which run prints. Skip that is whole body of
+##     branch may give it above head of that branch, as `when IS_CONFORMAL: skip()` on one line
+##     gives it above itself. Placeholder, whose code is `skip()` alone, gives its reason in name
+##     opening with `TODO:`.
 ##   TODO inside test that runs names gap run never shows, so it reports; TODO giving reason of
 ##     skip is none, and test whose body skips at its own level never runs, so it holds no gap.
 ##   Test under `when` with no other branch leaves run under that configuration, so it reports;
@@ -100,13 +102,15 @@ func checkSkips*(path, source, nimble: string): seq[Report] =
 
     # Each skip gives its reason; comment that gives it names no gap.
     var reasons: seq[int]
-    for k in steps:
+    for at, k in steps:
       if not code[k].isSkip: continue
-      # Reason of skip that is whole body of branch may stand above that branch.
-      let is_branch = k - 1 > i and lines[k - 1].indentWidth < lines[k].indentWidth and
-        code[k - 1].strip.endsWith(":") and
-        BRANCHES.anyIt(code[k - 1].strip.startsWith(it))
+      # Reason of skip that is whole body of branch may stand above that branch: next step leaves
+      #   branch, or none follows.
       let
+        is_head = k - 1 > i and lines[k - 1].indentWidth < lines[k].indentWidth and
+          code[k - 1].strip.endsWith(":") and BRANCHES.anyIt(code[k - 1].strip.startsWith(it))
+        is_branch = is_head and
+          (at + 1 == steps.len or lines[steps[at + 1]].indentWidth <= lines[k - 1].indentWidth)
         line = if is_branch: k - 1 else: k
         above = line - 1
         is_above_same = above > i and lines[above].indentWidth == lines[line].indentWidth
