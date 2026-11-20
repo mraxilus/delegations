@@ -200,7 +200,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
-| `compile-time-family` | Each routine of a compile-time family carries `compileTime`. |
+| `compile-time-family` | A compile-time family carries `compileTime`, and no runtime pragma. |
 | `when-static` | A branch on what the build fixes is `when`, never `if`. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
 | `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
