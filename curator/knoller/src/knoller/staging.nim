@@ -19,14 +19,26 @@
 ##     each runtime pragma and puts `compileTime` among bare pragmas in dictionary order (X.10),
 ##     or opens `{.compileTime.}` before `=` of body. It widens line, so it is widener: off held
 ##     line it writes freely and wrapping lays line out after; on held line it keeps width guard.
-##   Module (`.nim`) alone takes both rules: script and nimble file run in VM alone.
-##   Checks of branch report nothing yet, and their fixer changes nothing yet.
+##   Branch on what build fixes is `if` whose condition, and each `elif` of its chain, read only
+##     literals, operators, type after `is`, constants, static and typedesc parameters and
+##     placeholders of routine around it, calls build answers (`CALLS_BUILD`), and `CALLS_VALUE`
+##     of static value. Constant is name `const` binds at module level of file, local `const`
+##     above branch in its routine, or name caller passes. Any other name reads as runtime, so
+##     its chain passes.
+##   `if` in value of `const`, macro, `static:` block or compile-time routine passes: it is no
+##     runtime branch, and Nim 2.4.0 cannot read static parameter of macro in `when`.
+##   Fix writes `when` for `if`, each `elif` and `else` kept. Branch declaring name stays for
+##     hand, since `when` opens no scope (STYLE.md §1), and so does line fix would widen past
+##     `LINE_MAX`.
 ##   Branch reads constants of other modules of its package from caller (`constants`), since rule
 ##     reads one file; `constantsExported` reads those of one module.
+##   Module (`.nim`) alone takes both rules: script and nimble file run in VM alone.
 ##
 ##   Cost: use is read as word of code on its line, so field or binding of member's name reads as
 ##     use there, and keeps routine out of family: fewer findings, never false one.
 ##   Cost: pragma block spanning lines is unread, so its runtime pragma stays for hand.
+##   Cost: condition spanning lines is unread, and constant of package run does not read reads as
+##     runtime: fewer findings, never false one.
 
 {.experimental: "strictFuncs".}
 
