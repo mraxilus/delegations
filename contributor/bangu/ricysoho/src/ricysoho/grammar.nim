@@ -114,7 +114,7 @@
 ##
 ## ni'o ca lo nu fanva kei le genturfa'i cu facki ro porsi be lo javni be'o poi `CLL 21.1` curmi
 ##     ke'a
-##   .i lo cipra cu cipra lo du'u ro re fanmo cu dunda pa porsi po'o
+##   .i lo cipra cu cipra lo du'u ro boi remei be lo fanmo cu dunda pa porsi po'o
 ##   .i se ki'u bo `nif.nim` ciska ro porsi sepi'o le re fanmo be le porsi po'o
 ##   .i lo nu raptcidu cu dunda le multricu
 ##
@@ -662,7 +662,8 @@ func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string
   ##   .i ro jgena pe le porsi cu vasru le bavla'i po'o
   ##   .i lo namcu pe le javni poi krasi le porsi ku'o .e lo namcu pe le javni poi fanmo le porsi cu
   ##       ckiku le porsi
-  ##   .i cipra lo du'u ro re fanmo cu dunda pa porsi po'o kei .e lo du'u no porsi cu xruti
+  ##   .i cipra lo du'u ro boi remei be lo fanmo cu dunda pa porsi po'o kei .e lo du'u no porsi cu
+  ##       xruti
   ##
   ## ni'o va'o lo nu lo basyjva pe lo javni poi selcme cu binxo pa javni po'o kei le javni poi
   ##     selcme cu vasru le pa javni po'o
@@ -777,7 +778,7 @@ func isHeld(head: int, terminals: openArray[Terminal], at: int): bool =
   ## jdice lo du'u xu kau le jvasni cu na ka'e mulno bu'u le stuzi pe `at`
   ##   .i lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
   ##   .i se ki'u bo ro porsi be lo valsi pe `PA` cu du pa namcu
-  ##   .i mupli fa lo nu le genturfa'i cu tcidu lo'u le pano moi le'u ta'i le pamoi be li 10
+  ##   .i mupli fa lo nu le genturfa'i cu tcidu lo'u le pano moi le'u ta'i lo 10moi
   ##   .i zo boi fendi re namcu poi lamji mu'u lo'u le pa boi no moi le'u
   ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D3 a`
   head == HEAD_NUMBER and terminals.isPaAt(at)
