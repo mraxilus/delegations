@@ -748,9 +748,10 @@ proc resolveMarkers(
   ##   files name, keyed by path as named. Pass reads every Nim file git lists in project of
   ##   file, nearest directory holding nimble file, and asks each module some file there opens
   ##   with `{.all.}` in entry of that file, with toolchain `bin` gives, as project alone compiles
-  ##   it, since command line names no define (`symbols.nim`). Each `{.all.}` pass finds reaching
-  ##   nothing must check clean without it too, else it reaches what pass cannot read, as
-  ##   symbol macro declares; file checking clean on no backend confirms nothing.
+  ##   it, since command line names no define (`symbols.nim`). Each module opened checks with
+  ##   hints, so symbol compiler hints none of is used by module, as Q2 reads it. Each `{.all.}`
+  ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
+  ##   cannot read, as symbol macro declares; file checking clean on no backend confirms nothing.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
@@ -784,10 +785,17 @@ proc resolveMarkers(
             bin: bin,
           ))
           for answer in resolve(requests): answers.add (importer, answer)
-        uses = usesPackage(scope, answers, project)
+
+        # Read hints of each module opened, as compiler confirms which symbol it never uses.
+        let compiler = if bin.len == 0: NIM else: bin / NIM
+        var unused = initTable[string, seq[(int, string)]]()
+        for module in opened.mapIt(it[1]).deduplicate:
+          let (hinted, _) =
+            checkedBackend(texts[module], (project / module).parentDir, compiler, [], true)
+          if hinted.is_clean: unused[module] = hinted.unused
+        uses = usesPackage(scope, answers, project, unused)
 
         # Confirm each `{.all.}` reaching nothing: file checks clean without it, where with it.
-        let compiler = if bin.len == 0: NIM else: bin / NIM
         for importer in opened.mapIt(it[0]).deduplicate:
           if importer notin uses: continue
           let

@@ -260,6 +260,53 @@ func isTest(path: string): bool =
   path.split('/')[0] == FOLDER_TESTS
 
 
+func comment(tokens: openArray[Token]; line: int; source: string): int =
+  ## Read index of comment token trailing zero-based line after code; `-1` where none does.
+  result = -1
+  for k, t in tokens:
+    if t.line > line: break
+    if t.line == line and t.kind == KindToken.Comment and k > 0 and tokens[k - 1].line == line:
+      return k
+
+
+func pragmaHead(
+  tokens: openArray[Token]; partners: openArray[int]; name: int; keyword, source: string
+): tuple[open, insert, line: int] =
+  ## Read index of `{.` opening pragma block of declaration whose name token is `name`, or byte
+  ##   offset `{.used.}` opens at where none, with zero-based line of either: after name and its
+  ##   placeholders, and for routine after parameters and return type too, before `=`, `:` of
+  ##   binding, or line end.
+  var k = name + 1
+  result = (-1, tokens[name].after, tokens[name].line)
+  while k < tokens.len:
+    let s = tokens[k].spelling(source)
+    if tokens[k].kind == KindToken.Comment or tokens[k].line > tokens[k - 1].line: break
+    if s == "{.": return (k, -1, tokens[partners[k].max(k)].line)
+    if s == "=" or (s == ":" and keyword notin KEYWORDS_ROUTINE): break
+    if tokens[k].kind == KindToken.Open and partners[k] > k:
+      if s == "(" and keyword notin KEYWORDS_ROUTINE: break
+      k = partners[k]
+    elif keyword notin KEYWORDS_ROUTINE: break
+    (result.insert, result.line) = (tokens[k].after, tokens[k].line)
+    inc k
+
+
+func isMarked(
+  tokens: openArray[Token]; partners: openArray[int]; private: Private; source: string
+): bool =
+  ## Decide whether pragma block of private symbol holds `used`.
+  let head = pragmaHead(tokens, partners, private.index, private.keyword, source)
+  if head.open < 0: return false
+  for m in head.open .. partners[head.open]:
+    if tokens[m].spelling(source) == PRAGMA_USED: return true
+
+
+func named(siblings: openArray[string]): string =
+  ## Render siblings for comment: `` `a.nim` ``, or `` `a.nim` and `b.nim` ``.
+  let quoted = siblings.mapIt("`" & it & "`")
+  if quoted.len < 2: quoted.join else: quoted[0 ..< ^1].join(", ") & " and " & quoted[^1]
+
+
 func itemsOpened(files: openArray[(string, string)]): seq[(string, ImportAll, string)] =
   ## Read each item `{.all.}` opens in files of package, as importer, item, and module of package
   ##   it names; module that file of package includes is none, since it is no module.
@@ -279,12 +326,19 @@ func modulesOpened*(files: openArray[(string, string)]): seq[(string, string)] =
 
 
 func usesPackage*(
-  files: openArray[(string, string)]; answers: openArray[(string, Answer)]; root: string
+  files: openArray[(string, string)];
+  answers: openArray[(string, Answer)];
+  root: string;
+  unused = initTable[string, seq[(int, string)]](),
 ): Table[string, Uses] =
   ## Read uses of each file of package from answers of semantic pass, by path relative to root.
   ##   Files are path and text of every Nim file of package; each answer is importer's, as path
   ##   of file whose entry it ran in, and its module's uses, every configuration counting. File
   ##   whose answer holds reason resolves nothing, and says why.
+  ##   Own use reads from hints compiler gives of each module too (`unused`), by path, as line
+  ##   and name of each symbol it hints is declared and never used: unmarked symbol of module
+  ##   it holds that it hints none of is used there, as use pass cannot read, inside braces
+  ##   strformat parses, counts. Module it lacks reads uses of pass alone.
   let
     paths = files.mapIt(it[0])
     opened = files.itemsOpened
@@ -325,6 +379,17 @@ func usesPackage*(
   for key, files_using in users.pairs:
     let (module, at) = key
     var use = UsePrivate(is_own: module in files_using)
+    if module in unused:
+      let
+        source = texts[module]
+        tokens = source.tokens
+        partners = tokens.partners
+      for private in source.privatesTop:
+        if (private.line, private.column) != at: continue
+        let name = private.name.strip(chars = {'`'})
+        if not isMarked(tokens, partners, private, source) and
+            (private.line, name) notin unused[module]:
+          use.is_own = true
     for file in files_using:
       if file != module and not file.isTest: use.siblings.add file.extractFilename
     use.siblings = use.siblings.deduplicate.sorted
@@ -341,43 +406,6 @@ func usesPackage*(
     result.mgetOrPut(importer, Uses()).imports[(item.line, item.column)] = is_reaching
 
 
-func comment(tokens: openArray[Token]; line: int; source: string): int =
-  ## Read index of comment token trailing zero-based line after code; `-1` where none does.
-  result = -1
-  for k, t in tokens:
-    if t.line > line: break
-    if t.line == line and t.kind == KindToken.Comment and k > 0 and tokens[k - 1].line == line:
-      return k
-
-
-func pragmaHead(
-  tokens: openArray[Token]; partners: openArray[int]; name: int; keyword, source: string
-): tuple[open, insert, line: int] =
-  ## Read index of `{.` opening pragma block of declaration whose name token is `name`, or byte
-  ##   offset `{.used.}` opens at where none, with zero-based line of either: after name and its
-  ##   placeholders, and for routine after parameters and return type too, before `=`, `:` of
-  ##   binding, or line end.
-  var k = name + 1
-  result = (-1, tokens[name].after, tokens[name].line)
-  while k < tokens.len:
-    let s = tokens[k].spelling(source)
-    if tokens[k].kind == KindToken.Comment or tokens[k].line > tokens[k - 1].line: break
-    if s == "{.": return (k, -1, tokens[partners[k].max(k)].line)
-    if s == "=" or (s == ":" and keyword notin KEYWORDS_ROUTINE): break
-    if tokens[k].kind == KindToken.Open and partners[k] > k:
-      if s == "(" and keyword notin KEYWORDS_ROUTINE: break
-      k = partners[k]
-    elif keyword notin KEYWORDS_ROUTINE: break
-    (result.insert, result.line) = (tokens[k].after, tokens[k].line)
-    inc k
-
-
-func named(siblings: openArray[string]): string =
-  ## Render siblings for comment: `` `a.nim` ``, or `` `a.nim` and `b.nim` ``.
-  let quoted = siblings.mapIt("`" & it & "`")
-  if quoted.len < 2: quoted.join else: quoted[0 ..< ^1].join(", ") & " and " & quoted[^1]
-
-
 func marking(source: string; uses: Uses): seq[(Private, UsePrivate, bool, bool)] =
   ## Read each private symbol sibling reaches and its own module never uses, with whether it
   ##   carries `{.used.}`, and whether comment on line of its pragma names each sibling.
@@ -390,12 +418,9 @@ func marking(source: string; uses: Uses): seq[(Private, UsePrivate, bool, bool)]
     if at notin uses.privates: continue
     let use = uses.privates[at]
     if use.siblings.len == 0 or use.is_own: continue
-    let head = pragmaHead(tokens, partners, private.index, private.keyword, source)
-    var is_marked = false
-    if head.open >= 0:
-      for m in head.open .. partners[head.open]:
-        if tokens[m].spelling(source) == PRAGMA_USED: is_marked = true
     let
+      head = pragmaHead(tokens, partners, private.index, private.keyword, source)
+      is_marked = isMarked(tokens, partners, private, source)
       remark = tokens.comment(head.line, source)
       text = if remark < 0: "" else: tokens[remark].spelling(source)
     result.add (private, use, is_marked, use.siblings.allIt(it in text))

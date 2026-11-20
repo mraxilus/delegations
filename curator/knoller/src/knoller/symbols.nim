@@ -102,6 +102,9 @@ type
 
   Checked* = object  ## Define what compiler says of text it checks from stdin.
     errors*: seq[(int, string)]  ## One-based line in text, and message, of each error there.
+    unused*: seq[(int, string)]
+      ## One-based line in text, and name, of each symbol compiler hints is declared and never
+      ##   used there; read where caller asks hints.
     is_clean*: bool  ## Compiler ran, and reported no error.
     reason*: string  ## Why compiler did not run; empty where it ran.
 
@@ -129,6 +132,8 @@ const
   FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
   CODES_MISSING = [126, 127]  ## Exit codes of shell where compiler did not start.
   MARK_ERROR = " Error: "  ## Text between place and message of error line of compiler.
+  MARK_UNUSED = "is declared but not used [XDeclaredButNotUsed]"
+    ## Closing of hint compiler gives of private symbol its module never uses.
   TEMP_COMMANDS = ".commands"  ## Extension of file run reads commands from.
   TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
@@ -378,14 +383,34 @@ func toErrors(output: string): seq[(int, string)] =
     except ValueError: discard
 
 
-proc checked*(text, directory, nim: string; defines: openArray[string]): Checked =
+func toUnused(output: string): seq[(int, string)] =
+  ## Read line and name of each symbol compiler hints is declared and never used in text it read
+  ##   from stdin: `stdinfile.nim(L, C) Hint: 'name' is declared but not used […]`.
+  for line in output.splitLines:
+    if not line.startsWith(FILE_STDIN & "(") or not line.endsWith(MARK_UNUSED): continue
+    let
+      close = line.find(')')
+      first = line.find('\'', close)
+      last = line.rfind('\'', 0, line.len - MARK_UNUSED.len)
+    if close < 0 or first < 0 or last <= first: continue
+    try: result.add (line[FILE_STDIN.len + 1 ..< close].split(',')[0].strip.parseInt,
+                     line[first + 1 ..< last])
+    except ValueError: discard
+
+
+proc checked*(
+  text, directory, nim: string; defines: openArray[string]; is_hinting = false
+): Checked =
   ## Check text by compiler `nim` under defines, read from stdin in directory, so its imports and
   ##   configuration resolve as for file there and nothing is written there; cache sits in
-  ##   private temporary directory removed after. Reason says why compiler did not run.
+  ##   private temporary directory removed after. Reason says why compiler did not run. Where
+  ##   caller asks hints (`is_hinting`), each symbol hint names declared and never used reads too.
   let cache = createTempDir("knoller_check_", "")
   defer: removeDir(cache)
-  let command = (@[nim, "check", "--hints:off", "--warnings:off", "--nimcache:" & cache] &
-    @defines & @["-"]).mapIt(it.quoteShell).join(" ")
+  let
+    hints = if is_hinting: "--hints:on" else: "--hints:off"
+    command = (@[nim, "check", hints, "--warnings:off", "--nimcache:" & cache] & @defines &
+      @["-"]).mapIt(it.quoteShell).join(" ")
   let (output, code) =
     try:
       execCmdEx(
@@ -397,16 +422,17 @@ proc checked*(text, directory, nim: string; defines: openArray[string]): Checked
     result.reason = "compiler did not run: " & last
     return
   result.errors = output.toErrors
+  if is_hinting: result.unused = output.toUnused
   result.is_clean = code == 0 and result.errors.len == 0
   if not result.is_clean and result.errors.len == 0: result.errors.add (0, last)
 
 
 proc checkedBackend*(
-  text, directory, nim: string; defines: openArray[string]
+  text, directory, nim: string; defines: openArray[string]; is_hinting = false
 ): tuple[checked: Checked, defines: seq[string]] =
   ## Check text as `checked` does, on C backend, else on JavaScript where C refuses it, as
   ##   semantic pass asks file C rejects; defines name backend that answered.
-  result = (checked(text, directory, nim, defines), @defines)
+  result = (checked(text, directory, nim, defines, is_hinting), @defines)
   if result.checked.is_clean or result.checked.reason.len > 0: return
-  let js = checked(text, directory, nim, @defines & @[BACKEND_JS])
+  let js = checked(text, directory, nim, @defines & @[BACKEND_JS], is_hinting)
   if js.is_clean: result = (js, @defines & @[BACKEND_JS])
