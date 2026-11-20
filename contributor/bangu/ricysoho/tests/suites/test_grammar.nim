@@ -561,6 +561,21 @@ suite "Internal: Grammar":
     check count >= COUNT_KEPT_LEAST  # `Article IX.3`
 
 
+  test "Chart filled in one mode and then in the other is chart filled anew":
+    # lo catlu be le mulcmi poi stali cu facki le srera
+    #   .i le pamoi tadji cu tisna le mulcmi
+    #   .i ba bo le drata tadji cu tisna le mulcmi
+    #   .i ku'i le mulcmi cu ralte lo selcmi pe le pamoi tadji
+    for text in TEXTS_PASSES:
+      let read = text.terminalsRead.get
+      var whole_first, islands_first, whole_fresh, everywhere_fresh: Chart
+      discard whole_first.readWhole(read)
+      let islands = whole_first.islands(read, 0, read.len).mapIt(it.shape)
+      check islands == everywhere_fresh.islands(read, 0, read.len).mapIt(it.shape)
+      discard islands_first.islands(read, 0, read.len)
+      check islands_first.readWhole(read).shape == whole_fresh.readWhole(read).shape
+
+
   test "Passes read text of article joined part by part, its open tu'e too":
     let terminals = textJoined().terminalsRead.get
     check terminals.toParts(0, terminals.len).parts.len == COUNT_PARTS_JOINED  # `#849`
