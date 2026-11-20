@@ -3,6 +3,8 @@
 ##   Body is lines below `=` that ends signature, deeper than head, of each routine kind; and
 ##     lines below `test "…":`, deeper than it. Routine nested in body is no stage of routine
 ##     holding it: its lines cut paragraph there, and its body reads as its own (STYLE.md §1).
+##     Paragraph of routines on one line is helpers too, and comment right above helper is
+##     helper's, so neither opens stage of routine holding it.
 ##   Paragraph is run of lines with text and no blank line between, at any depth of body, so
 ##     inside loop or branch too. Line inside string or comment spanning lines opens no
 ##     paragraph, and blank line there ends none. Code under `quote do:` is generator's, so it
@@ -168,6 +170,13 @@ func stages(source: string): seq[Stage] =
       if first == b.first:
         while first <= last and isDoc(first): inc first
         if first > last: continue
+      let
+        heads = toSeq(first .. last).filterIt(not isComment(it) and not isDoc(it))
+        is_helper =
+          if heads.len == 0: j <= b.last and excluded[j - b.first]
+          else:
+            heads.allIt(firsts[it] >= 0 and tokens[firsts[it]].spelling(source) in KEYWORDS_ROUTINE)
+      if is_helper: continue  # helpers, and comment right above them, are no stage (STYLE.md §1)
       if isComment(first):
         is_commented_any = true
         continue
