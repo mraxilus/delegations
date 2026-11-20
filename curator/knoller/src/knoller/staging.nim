@@ -1,13 +1,14 @@
 ## Enforce staging of compile time, and fix it (`koch fix`): each routine of compile-time family
 ##   carries `compileTime` alike, and none carries runtime pragma (STYLE.md §2); branch on what
 ##   build fixes is `when`, never `if` (STYLE.md §3).
-##   Member of family is routine compile time alone runs: one `Head.is_compile_time` reads, i.e.
-##     its pragmas hold `compileTime`, or it nests in macro, `static:` or compile-time routine
+##   Member of family is routine compile time alone runs: one `Head.is_compile_time` reads, that
+##     is, its pragmas hold `compileTime`, or it nests in macro, `static:` or compile-time routine
 ##     (`declared.nim`, as `action-verb` reads it); or private routine every use of which lies in
-##     member, macro, `static:` block or value of `const`, i.e. incidental const evaluation. Use
-##     is read by name; operator has no name use spells, so it is read by mentions of type of its
-##     first parameter, where mention in `type` section, iterator or template defines that type's
-##     interface and is no use. Greatest such set holds, so members calling each other stay.
+##     member, macro, `static:` block or value of `const`, that is, incidental const evaluation.
+##     Rule reads use by name; operator has no name use spells, so rule reads its uses by mentions
+##     of type of its first parameter, where mention in `type` section, iterator or template
+##     defines that type's interface and is no use. Greatest such set holds, so members calling
+##     each other stay.
 ##   Body of `quote` or `genAst` is code macro emits, which runs where macro puts it: use there
 ##     is runtime, and routine declared there is no member, though it nests in macro.
 ##   Family is members of one module, staged where one routine carries its own `compileTime`;
@@ -34,11 +35,17 @@
 ##     reads one file; `constantsExported` reads those of one module.
 ##   Module (`.nim`) alone takes both rules: script and nimble file run in VM alone.
 ##
-##   Cost: use is read as word of code on its line, so field or binding of member's name reads as
-##     use there, and keeps routine out of family: fewer findings, never false one.
-##   Cost: pragma block spanning lines is unread, so its runtime pragma stays for hand.
+##   Cost: rule reads use as word of code on its line, so field or binding of member's name reads
+##     as use there, and keeps routine out of family: fewer findings, never false one.
+##   Cost: runtime use of operator through field names no type of it, so operator reads as
+##     member and fix stages routine runtime calls: false finding, which build refuses.
+##   Cost: pair of private routines calling each other, used nowhere else, reads as members.
+##   Cost: module staging nothing passes, so routine nesting in its macro keeps runtime pragma.
+##   Cost: pragma block spanning lines is unread, so its routine stays for hand.
 ##   Cost: condition spanning lines is unread, and constant of package run does not read reads as
 ##     runtime: fewer findings, never false one.
+##   Cost: constant counts in each file of its package, imported or not, so runtime name of same
+##     spelling from dependency reads as fixed: false finding, which build refuses.
 
 {.experimental: "strictFuncs".}
 
@@ -277,7 +284,7 @@ func depthAt(lines: openArray[string], first, line: int): int =
 
 
 func checkFamilies*(path, source: string): seq[Report] =
-  ## Report member of compile-time family lacking `compileTime`, and compile-time routine
+  ## Report member of compile-time family lacking `compileTime`, and member of staged family
   ##   carrying runtime pragma (STYLE.md §2), at line its pragmas stand on.
   let lines = source.splitLines
   for member in source.members:
