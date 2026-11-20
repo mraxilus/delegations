@@ -63,8 +63,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, conversions, edits, fences, names, parentheses, pins, proofs, reports, rewrites,
-  rules, symbols,
+  chain, compilers, conversions, edits, fences, messages, names, parentheses, pins, proofs, reports,
+  rewrites, rules, symbols,
 ]
 
 
@@ -177,12 +177,14 @@ func part(
   answer: Answer;
   plans: openArray[Plan];
   nimble: string;
+  has_format_value: bool;
 ): Part =
   ## Fix one file of Nim dialect, as `outcome` does: what file writes and reports, and what it
   ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
   ##   are written first, from source as given; file whose candidate pass could not resolve
   ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
   ##   Rules of tests, stubs and umbrella read nimble file nearest file, read whole as path is.
+  ##   Interpolated strings join only where package declares no `formatValue` (`has_format_value`).
   let
     dialect = path.dialect.get
     layout = path.toAbsolute(directory)
@@ -221,7 +223,9 @@ func part(
     let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
     base = source.applied(renamed & edits)
     rewritten.add reports.shownAs(path)
-  let fix = formatted(layout, base, dialect, proofs, nimble = nimble_layout)
+  let fix = formatted(
+    layout, base, dialect, proofs, nimble = nimble_layout, has_format_value = has_format_value
+  )
   result.asked.add fix.asked
   var after = checkSource(layout, fix.source, dialect, proofs, nimble = nimble_layout)
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
@@ -258,6 +262,15 @@ func joined(parts: openArray[Part], is_check: bool, failures: openArray[string])
   result.asked = result.asked.deduplicate
 
 
+func nimblesFormatting(
+  files: openArray[(string, string)], nimbles: Table[string, string]
+): seq[string] =
+  ## Read nimble file of each package whose file of run declares `formatValue`, as `nimbles` holds
+  ##   it; empty name stands for files with no nimble file above.
+  for (path, source) in files:
+    if path.dialect.isSome and source.isDeclaringFormatValue: result.add nimbles.getOrDefault(path)
+
+
 func outcome*(
   files: openArray[(string, string)],
   locked: openArray[string],
@@ -278,6 +291,7 @@ func outcome*(
   ##   rename where its plan writes path (`planRenames`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
   ##   it by path as named (`nimblesNearest`); path it lacks has none above.
+  let formatting = files.nimblesFormatting(nimbles)
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
@@ -290,6 +304,7 @@ func outcome*(
       answers.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
+      nimbles.getOrDefault(path) in formatting,
     )
   parts.joined(is_check, [failure])
 
@@ -310,7 +325,9 @@ proc outcomeProven*(
   ##   since two compilers can read one source otherwise. File that asked nothing read only
   ##   sources answered, and answer once held never changes, so fixing it again would give
   ##   same part.
-  let read = files.filterIt(it[0].dialect.isSome and it[0] notin locked)
+  let
+    read = files.filterIt(it[0].dialect.isSome and it[0] notin locked)
+    formatting = files.nimblesFormatting(nimbles)
   var
     proofs = newSeq[Proofs](batches.len)
     failures = newSeq[string](batches.len)
@@ -333,6 +350,7 @@ proc outcomeProven*(
       answers.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
+      nimbles.getOrDefault(path) in formatting,
     )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
@@ -359,6 +377,7 @@ proc outcomeProven*(
         answers.getOrDefault(path),
         plans,
         nimbles.getOrDefault(path),
+        nimbles.getOrDefault(path) in formatting,
       )
   parts.joined(is_check, failures)
 

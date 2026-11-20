@@ -68,6 +68,8 @@ type
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
     proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
+    formatting: seq[string]
+      ## Nimble file of each project declaring `formatValue`, whose interpolated strings never join.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
@@ -237,7 +239,7 @@ func initContext*(
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
   ##   of each abbreviation and case in entries, refused where it would write file entries
-  ##   leave out.
+  ##   leave out; and project of each file declaring `formatValue`.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -245,6 +247,9 @@ func initContext*(
       sources.add e.content
     if e.path.isCalling: suites.add e.content
   result.dead = exportsDead(paths, sources, suites).deduplicate
+  for e in tree:
+    if e.path.endsWith(".nim") and e.content.isDeclaringFormatValue:
+      result.formatting.add e.path.nimbleProject
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked):
@@ -300,7 +305,8 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  #   Articles stay in file of project keeping its own prose (`isProseOwn`).
+  #   Articles stay in file of project keeping its own prose (`isProseOwn`), and interpolated
+  #   strings stay split in project declaring `formatValue`.
   let fix = formatted(
     path,
     base,
@@ -308,6 +314,7 @@ func fixSource(
     context.proofs.getOrDefault(path),
     should_drop_articles = not path.isProseOwn,
     nimble = path.nimbleProject,
+    has_format_value = path.nimbleProject in context.formatting,
   )
   result.source = fix.source
   result.asked = fix.asked

@@ -28,7 +28,7 @@
 
 import std/[algorithm, sequtils, strutils]
 from std/unicode import runeLen
-import ./[form, precedence, reports, tokens]
+import ./[declared, form, precedence, reports, tokens]
 
 
 type
@@ -547,6 +547,14 @@ func joins(source: string): seq[Join] =
         part = @[]
       else: part.add e
     result.add part.joining(tokens, partners, source)
+
+
+func isDeclaringFormatValue*(source: string): bool =
+  ## Decide whether source declares routine `formatValue`, which interpolation calls in place of
+  ##   `$`, so join of value into literal could print it otherwise in its project.
+  source.declarations.anyIt(
+    it.kind == KindName.Routine and it.name.nimIdentNormalize == "formatValue".nimIdentNormalize
+  )
 
 
 func checkInterpolations*(path, source: string): seq[Report] =
