@@ -2220,40 +2220,51 @@ member is one of these routines:
 The rule reads the uses and the module so:
 
 - A use of a routine is a mention of its name outside its own block. An operator has no name
-  that a use spells, so it reads by the mentions of the type of its first parameter. A mention in
-  a `type` section, an iterator or a template defines that type, and is no use. Such code runs
-  where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
+  that a use spells. So the rule reads its uses by the mentions of the type of its first
+  parameter. A mention in a `type` section, an iterator or a template defines that type, and is
+  no use. Such code runs where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
 - The body of `quote` or `genAst` is code that a macro emits. A use there is a runtime use, and a
   routine that it declares is no member, though it nests in a macro.
 - The family is staged where one routine of the module carries its own `compileTime`. A module
   where no routine carries it passes, as `pga/multivectors.nim` does.
 - An iterator and a template pass, since Nim refuses `compileTime` on both. A macro runs by its
   keyword, and carries no pragma for it.
-- Rejected: a family of the whole project, which issue 443 rules out. It also reports a helper of
-  one macro in a module that stages nothing else.
-- Rejected: the pragma of the parent covers a nested routine. STYLE.md §2 asks the family to
-  carry the pragma "the same way", so `constructPart` and `generateUpTo` carry their own.
+- Rejected: a family of the whole project, which reports a helper of one macro in a module that
+  stages nothing else (rule 10 of #443).
+- Rejected: a nested routine under the pragma of its parent, since STYLE.md §2 asks the family
+  to carry the pragma "the same way".
 - Cost: a field, a binding or a parameter that spells the name of a routine reads as a use. So
   it keeps the routine out of the family. That gives fewer findings, never a false one.
-- Verified by `suites/test_staging.nim`.
+- Cost: a runtime use of an operator through a field, as `w.o == w.o`, names no type of it. So the
+  operator reads as a member, and the fix stages a routine that runtime calls. The build fails.
+- Cost: two private routines that call each other, with no use outside the pair, read as members.
+  So the fix stages code that no build runs.
+- Verified by `suites/test_staging.nim`, which pins each cost above.
 
-**A compile-time routine carries no runtime pragma.** The runtime pragmas are `inline`, `noinit`,
-`noinline` and `codegenDecl`. Each acts on generated code alone, and the compiler generates no code
-for a compile-time routine. So each of them is superstition there.
+**A member of a staged family carries no runtime pragma.** The runtime pragmas are `inline`,
+`noinit`, `noinline` and `codegenDecl`. Each acts on generated code alone, and the compiler
+generates no code for a compile-time routine (the Nim manual, the `compileTime` pragma). So each of
+them is superstition there.
+
+- Cost: a module that stages nothing passes. So a routine that nests in its macro or its `static:`
+  block keeps its runtime pragma.
 
 **The fix writes on the line that the pragmas stand on, else on the line that closes the
 parameters (`Head.last`).** It drops each runtime pragma, and puts `compileTime` among the bare
-pragmas in dictionary order, before the pragmas that take an argument (X.10). Where the line holds
-no pragma block, it opens `{.compileTime.}` before the `=` of the body. So `{.borrow.}` becomes
-`{.borrow, compileTime.}`.
+pragmas in dictionary order, before the pragmas that take an argument (X.10). So `{.borrow.}`
+becomes `{.borrow, compileTime.}`. Where the line holds no pragma block, the fix opens
+`{.compileTime.}` before the `=` of the body.
 
 - The fix widens its line, so it is a widener (`## Wraps`). Off a held line it writes freely, and
   the wrapping after it lays the line out.
 - The chain runs it after the idioms and before the wrapping, on a module alone. A script and a
   nimble file run in the VM alone, so no pragma there acts on generated code.
-- Cost: a pragma block that spans lines is unread, so its runtime pragma stays for hand.
-- Verified by `suites/test_staging.nim`. Verified by `suites/test_regressions.nim`: four snippets of
-  the library lose `noinit` in the output of the whole chain.
+- Cost: a pragma block that spans lines is unread, so its routine stays for hand.
+- Verified by `suites/test_staging.nim`. Verified by `suites/test_regressions.nim`: each snippet of
+  the library with `noinit` on a compile-time routine loses it in the output of the chain.
+- Verified by hand with Nim 2.4.0, 2026-11-20. An iterator or a template with the pragma gives
+  `invalid pragma: compileTime`. A `when` on a static parameter in a macro gives `cannot evaluate
+  at compile time`.
 
 **A branch on what the build fixes is `when`, and never `if` (STYLE.md §3).** `checkBranches`
 reports an `if` where its condition, and each `elif` of its chain, read only these:
@@ -2284,6 +2295,7 @@ Any other name or call reads as runtime, so its chain passes.
   adds no false report.
 - Cost: a constant counts in each file of its package, whether the file imports its module or
   not. So a runtime name of the same spelling that a dependency gives reads as fixed by the build.
+  The fix then writes a `when` that the build refuses.
 - Cost: a condition that spans lines is unread.
 - Verified by `suites/test_staging.nim`.
 
@@ -2302,7 +2314,7 @@ as a placed step takes the nimble file (`## Layout of a package`).
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 A driver ran `checkFamilies` and `fixFamilies`, then `checkBranches` and `fixBranches`, each
-alone, on a copy of the library, with the code of knoller at `c85eef18`. `knoller --check` lists
+alone, on a copy of the library, with the code of knoller at `8088d980`. `knoller --check` lists
 the same lines.
 
 - Compile-time family: 21 reports over 21 lines, and the fix writes +21 −21 lines. That is the
@@ -2312,7 +2324,7 @@ the same lines.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and
   5 skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For the branch, rga4d, where
   `DIMENSIONS != 3` holds, gives 33 OK, 0 failed and 5 skipped.
-- The driver read each of the nine projects of the repository as one package, by `git ls-files`
+- The driver read each project of the repository at `8088d980` as one package, by `git ls-files`
   of its `.nim` files. The projects take 18 reports of the family: `ricysoho` 14,
   `dance_ontology` 3 and `pga_benchmark` 1. They take 3 reports of the branch: `pga_benchmark` 2
   and `pga_visualiser` 1.
