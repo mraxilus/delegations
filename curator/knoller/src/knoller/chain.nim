@@ -28,8 +28,10 @@
 ##     separator goes only where no layout wrote one.
 ##   - missing doc after wrapping: doc joins line only as wrapping leaves it, since doc trailing
 ##     line that opens bracket keeps call apart that wrapping would join;
-##   - comment last: plain `#` trailing comment of line still wide moves to own line above,
-##     since no wrap reads line holding comment; next round lays out line it leaves.
+##   - comment next: plain `#` trailing comment of line still wide moves to own line above,
+##     since no wrap reads line holding comment; next round lays out line it leaves;
+##   - stage comment last: placeholder above paragraph that lacks one, once comment above has
+##     moved, since comment it moves can open paragraph.
 ##   Chain is list of steps: fixer guarded on every line, widener (`reports.nim`), i.e. tab,
 ##     comment, message, condition, spacing, continuation and trailing separator fixers, which
 ##     read held lines, prover step, needless parentheses, which reads answers of parser, or
@@ -92,7 +94,7 @@
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   articles, blanks, commands, declarations, entry, fences, form, generations, idioms, messages,
-  names, parentheses, precedence, reports, spacing, targets, waits, wrapping,
+  names, parentheses, precedence, reports, spacing, stages, targets, waits, wrapping,
 ]
 
 
@@ -119,7 +121,7 @@ func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
   result.add dialect.stepsIdiom
   result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add STEPS_WRAPPING
-  result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove)]
+  result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove), guarded(fixStages)]
 
 
 func nimblesLocked*(files: openArray[(string, string)]): seq[string] =
@@ -150,7 +152,7 @@ func checkFormattingUnfenced(
     ]
     checks_after = [
       checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
-      checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove,
+      checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove, checkStages,
     ]
 
   # Run checks in order of chain, blank lines between, which read nimble file nearest file.

@@ -82,6 +82,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   DocMissing = "missing doc"
     ## Declaration takes doc, which reads `## TODO: Document.` while it waits for text.
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
+  CommentStage = "stage comment"
+    ## Paragraph that blank line opens takes comment naming its stage's purpose.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
   FenceHeld = "fence held"  ## Fence keeps its lines as written; run warns of each fence.
 

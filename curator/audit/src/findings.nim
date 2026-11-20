@@ -97,6 +97,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.SeparatorTrailing: "X.3",
   Rule.DocMissing: "VI.1",
   Rule.CommentAbove: "X.1",
+  Rule.CommentStage: "VI.4",
   Rule.Fence: "X.1",
   Rule.FenceHeld: "X.1",
 ]
