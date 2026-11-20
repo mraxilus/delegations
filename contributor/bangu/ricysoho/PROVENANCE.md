@@ -3234,7 +3234,17 @@ ni'o ro lertai poi le papri cu cusku ke'a selci'a le crepu fi pa datnyvei pe vo'
     selcme lo snina'u pe ke'a
   .i `koch drive` cipra di'u de'i `2026-11-11` gi'e jarco no selfa'i
 
-ni'o **lo batke po'u `Merge` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
+ni'o **ro selci'a pe le papri cu jboselci'a**
+  .i `Architect` cpedu di'u
+  .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `PA` Verified by `suites/test_draw.nim`.
+  .i lo stuzi pe lo pixra .e lo javni .e `NIF` cu stali lo namcu poi selci'a ta'i `0` bi'o `9`
+  .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
+  .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
+  .i ku'i le papri cu cusku lo glico selci'a po'o poi `merge.nim` .e `nif.nim` cu dunda ke'a
+      ca lo nu lo nu jmina cu se to'e curmi
+
+ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
   .i le batke cu jmina lo selci'a be fi `NIF` be'o poi ca zasti ku'o gi'e na jmina le rebla
   .i ki'u bo lo bavla'i cenba cu basti le rebla
@@ -3255,7 +3265,7 @@ ni'o le linji cu sinxa pa tricu va'o lo nu lo nu jmina cu jarco lo tricu pe lo n
   .i ta'i lo xance de'i `2026-11-11` lo se galfi samtci poi kancu le jgena ta'i lo nu li no cu krasi
       cu fliba le cipra
 
-ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `Merge` ca ro mupli gi'e cipra lo du'u le
+ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `jmina` ca ro mupli gi'e cipra lo du'u le
     pixra cu mintu lo selja'o be lo jbena nu jmina
   .i su'o mupli cu se jmina fo lo tricu pe lo nu tcidu le mulselci'a
   .i le mupli po'u `mi klama le .i ko` ralte le srera pe vo'a

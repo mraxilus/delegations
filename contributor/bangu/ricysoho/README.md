@@ -507,7 +507,7 @@ ni'o [`tricu be lo mivyselci'a`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7
   .i lo valsi poi galfi lo pu valsi mu'u zo si .a zo li'u katna lo selci'a be fi `NIF` bu'u lo stuzi
       be lo selga'i be le valsi
 
-ni'o lo batke po'u `Merge` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi lo nu tcidu le
+ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi lo nu tcidu le
     mulselci'a cu jarco ke'a
   .i va'o lo nu lo srera cu stali kei ro porsi be lo pagbu poi sruri le srera cu se jmina
   .i le srera cu stali
