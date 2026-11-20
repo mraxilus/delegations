@@ -16,7 +16,10 @@
 ## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
 ##   .i lo kutle'u .e denpa bu cu fendi lo valsi
 ##   .i denpa bu cu sinxa lo denpa
+##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi gi'e na fendi to `isBoundary`
+##       toi
 ##   .i slaka bu cu fendi lo slaka ne'i lo valsi
+##   .i ku'i slaka bu poi se lidne pa lerfu cu sinxa zo ki'o gi'a se to'e curmi
 ##   .i lo brale'u cu sinxa lo slaka poi se basna
 ##
 ## ni'o le genturfa'i cu tcidu pa valsi fi lo selci'avla poi zvati lo jbini be lo sinxa ku'o va'o lo
@@ -264,8 +267,9 @@ const
     ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
     ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
   MARKS_BOUNDARY* = Whitespace + {'.'}
-    ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
+    ## lo sinxa poi ka'e fendi lo valsi to `CLL 3.3` toi
     ##   .i lo kutle'u .e denpa bu
+    ##   .i denpa bu poi zvati lo jbini be re lerfu cu na fendi to `isBoundary` toi
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}
     ## lo brale'u pe ro lerfu
     ##   .i lo brale'u cu sinxa lo nu basna
@@ -584,6 +588,15 @@ func isBoundary*(text: string, at: int): bool =
   if c != '.': return false
   not (at > 0 and text[at - 1] in DIGITS_STREAM and at + 1 < text.len and
       text[at + 1] in DIGITS_STREAM)
+
+
+func isBoundarySettled*(text: string, at: int): bool =
+  ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
+  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `DIGITS_STREAM` cu na fendi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
+  ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
+  text.isBoundary(at) and
+    not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in DIGITS_STREAM)
 
 
 func wordsLetters(text: string, start, finish: int): ReadingStream =
