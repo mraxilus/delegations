@@ -4344,13 +4344,22 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 - Cost: the log of the audit project holds the rows of the root curator too, each with its own
   project.
 
-**`lineClaim` writes the text format, and `buf convert` reads it back in the suite.** It escapes
-each `\`, `"` and control character, and keeps UTF-8 as it is. The suite compares each value
-that `buf` 1.75.0 reads, since `buf convert` drops an unknown field with no error. Verified by
-hand with `buf` 1.75.0 on 2026-11-20: an unknown field gives exit 0, and the field drops.
+**`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
+exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
+hook needs no library and no `protoc` at each stop, and one row stays one line, as `union`
+needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 as it is.
 
-- Rejected: `protobuf_serialization`, which writes bytes, and which would be the first
-  dependency of the audit project. The log in the tree is text (#964).
+- `protoc --encode` reads each line against the schema, and refuses a misspelt field. Then the
+  suite compares each field that `protoc --decode` prints. Verified by
+  `suites/test_claims_log.nim`, and by hand on 2026-11-20: a field name misspelt in `lineClaim`
+  fails that test.
+- `tools/build.nim` declares `protobuf-compiler` through its verb `system`, so the runner installs
+  `protoc` for the suite.
+- Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as Data
+  asks. It would be the first dependency of the audit project, with `protoc` at each stop of each
+  delegate. `protoc` 3.21.12 prints one row over 17 lines, measured by hand on 2026-11-20.
+- Rejected: `buf convert` for the suite, which drops a misspelt field with no error
+  (`bufbuild.nim`).
 - Rejected: tokens summed from the transcript of the subagent. Its cost would need a price for
   each model in code, and the reflection states both.
 - Cost: a cell that `stop` refuses gives no row until a reflection quotes its claim whole.
@@ -4358,6 +4367,8 @@ hand with `buf` 1.75.0 on 2026-11-20: an unknown field gives exit 0, and the fie
   So replays of one prompt at several levels need a reflection for each run.
 - Cost: rows that wait outside the tree are lost where the machine ends before `koch claims`
   moves them.
+- Cost: each machine that runs the audit suite needs `protoc`, as `nim r koch list-packages
+  curator/audit` names it.
 - Cost: whether the merge of GitHub applies `union` is unmeasured. A branch that it refuses
   merges `main` in its own checkout, where git applies it.
 
