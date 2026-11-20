@@ -17,8 +17,9 @@
 ##     imports and configuration resolve as for file itself, and nothing is written there.
 ##     Candidate stays where any configuration caller names refuses it; configuration where
 ##     source as given does not check clean proves nothing, and file no configuration proves
-##     keeps every `proc`, with reason. All candidates are asked at once; error inside routine
-##     refuses it, and error outside every candidate asks each alone.
+##     keeps every `proc`, with reason. Source C does not check is asked on JavaScript backend,
+##     as semantic pass asks it (`symbols.nim`). All candidates are asked at once; error inside
+##     routine refuses it, and error outside every candidate asks each alone.
 ##   Included file checks inside text of file including it, which caller passes around it
 ##     (`prefix`, `suffix`), since included file compiles inside its includer alone.
 ##   Fixer writes `func` for `proc`, same width, so no line moves or widens; site holding no
@@ -283,8 +284,13 @@ proc provenPure*(
     refused: seq[(int, int)]
     proving = 0
     reasons: seq[string]
-  for defines in (if configurations.len == 0: @[newSeq[string]()] else: @configurations):
-    let before = checked(prefix & source & suffix, directory, nim, defines)
+  for configuration in (if configurations.len == 0: @[newSeq[string]()] else: @configurations):
+    # Backend whose source as given checks clean: C, else JavaScript, as semantic pass asks.
+    var defines = configuration
+    var before = checked(prefix & source & suffix, directory, nim, defines)
+    if not before.is_clean and before.reason.len == 0:
+      let js = checked(prefix & source & suffix, directory, nim, defines & @[BACKEND_JS])
+      if js.is_clean: (defines, before) = (defines & @[BACKEND_JS], js)
     if before.reason.len > 0: reasons.add before.reason
     if not before.is_clean:
       if before.errors.len > 0: reasons.add before.errors[0][1]

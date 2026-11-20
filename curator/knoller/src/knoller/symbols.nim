@@ -112,7 +112,7 @@ const
   PARALLEL = 4  ## Entries running at once at most.
   MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.
   SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
-  BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
+  BACKEND_JS* = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
   KIND_RESULT = "skResult"  ## Kind of routine's implicit `result`.
   SUFFIX_RESULT = ".result"  ## Last part of qualified name of implicit `result`.
   KIND_ROUTINE = "routine"  ## Kind given routine declared at site whose answer is its result.
