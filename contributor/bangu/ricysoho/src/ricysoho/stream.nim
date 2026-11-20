@@ -59,7 +59,7 @@
 ##   .i se ki'u bo no ve fendi cu punji lo denpa lo stuzi be slaka bu
 ##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu gi'e no roi
 ##       tcidu lo'u ka .i le'u fi `ka,i`
-##   .i ba bo le genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi selcu'a
+##   .i ba bo le genturfa'i cu jdice fi ro boi slaka bu sepi'o lo valsi poi selcu'a
 ##
 ## ni'o jdima fa lo nu va'o lo nu lo brale'u cu zvati kei slaka bu cu ka'e rinka lo nu le selci'avla
 ##     cu se fendi
@@ -226,7 +226,7 @@ type
       ##   .i le stuzi cu selpoi
     breaks: seq[int]  ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a to le stuzi cu selpoi toi
     commas: seq[int]
-      ## lo stuzi be ro slaka bu ne'i le porsi
+      ## lo stuzi be ro boi slaka bu ne'i le porsi
       ##   .i le stuzi cu selpoi ta'i `breaks`
 
   Score = object
@@ -337,7 +337,7 @@ func refusalMarks(text: string, start, finish: int): Option[ReadingStream] =
 func toSpelling(text: string, start, finish: int): Spelling =
   ## vimcu lo sinxa le selci'avla
   ##   .i ro brale'u cu binxo lo cmale'u
-  ##   .i ro slaka bu cu selvi'u
+  ##   .i ro boi slaka bu cu selvi'u
   for at in start ..< finish:
     if text[at] == ',':
       result.breaks.add result.letters.len
