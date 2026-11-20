@@ -343,6 +343,9 @@ func usesPackage*(
   let
     paths = files.mapIt(it[0])
     opened = files.itemsOpened
+    # Folder of root, as last part of its path: answer names file in its own form, so `\` and
+    #   short form of ancestor that Windows writes in root never match it (`below`).
+    folder = "/" & root.strip(leading = false, chars = {'/', '\\'}).rsplit({'/', '\\'}, 1)[^1]
   var texts = initTable[string, string]()
   for (path, text) in files: texts[path] = text
 
@@ -364,12 +367,12 @@ func usesPackage*(
           if line.section != "use" or line.name != defs[0].name or
               line.signature != defs[0].signature:
             continue
+          let below = paths.filterIt(line.file.endsWith(folder & "/" & it))
+          if below.len == 0: continue
           let
-            base = root.strip(leading = false, chars = {'/'}) & "/"
-            file = if line.file.startsWith(base): line.file[base.len .. ^1] else: ""
-          if file notin paths: continue
-          let is_name = file == module and line.line == private.line and
-            line.column >= private.column and line.column < private.column + private.name.len
+            file = below[0]
+            is_name = file == module and line.line == private.line and
+              line.column >= private.column and line.column < private.column + private.name.len
           if not is_name: users[key].incl file
 
   # Facts of each module, and of each importer's items.
