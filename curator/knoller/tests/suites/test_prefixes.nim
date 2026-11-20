@@ -49,9 +49,10 @@ suite "Style §5":
     check fixPrefixes("a.nim", "let m = (a + b).toX\n").fixed.mapIt(it.line) == @[1]
 
 
-  test "fixer takes 8 passes at most, inner call first, so deeper nest waits for next run":
+  test "fixer takes 8 passes at most, inner call first, so one call leaves outer call of nest of 9":
     # Case of review of record: `PASSES_MAX` held no case; each pass writes calls whose spans
-    #   hold none, so nest of 8 settles in one run, and nest of 9 leaves its outer call.
+    #   hold none, so one call of fixer settles nest of 8 and leaves outer call of nest of 9,
+    #   which next round of chain writes.
     check nested(8).fixed.isSettled
     let left = nested(9).fixed
     check checkPrefixes("a.nim", left).len == 1
