@@ -20,8 +20,9 @@
 ##   Checks and fixer share one reading (`tails`), so each rule is written once (Article II.1).
 ##   Each value of message stands in backticks, wherever it stands, as Architect ruled on rule 6
 ##     of #443 (`checkEchoes`): message is argument of call that takes one (`CALLS_MESSAGE`), or
-##     value of pragma (`PRAGMAS_MESSAGE`), where it holds literal. Value tail of message value
-##     reads takes no second report; value opening its claim, words after it, stays for hand.
+##     value of pragma (`PRAGMAS_MESSAGE`) inside `{. .}`, where it holds literal. Value tail
+##     of message value reads takes no second report; value opening its claim, words after it,
+##     stays for hand.
 ##   Interpolated string takes each value in braces, never by `&`, as Architect ruled on rule 21
 ##     of #443 (`checkInterpolations`): concatenation holding interpolated literal and joining
 ##     operand or literal to it by `&` reports, read by precedence (`segments`), split where
