@@ -64,8 +64,9 @@ func isLetterOne(word: string): bool =
 
 
 func axesDeclared*(source: string): seq[string] =
-  ## Read each axis value source declares: field of generic object of one placeholder, named for
-  ##   adjective closing with `-al`, whose every field takes that placeholder (V.7).
+  ## Read each axis value source declares: field of generic object of one placeholder and two
+  ##   fields or more, named for adjective closing with `-al`, whose every field takes that
+  ##   placeholder (V.7).
   let
     declared = source.declarations
     lines = source.codeOnly.split('\n')
