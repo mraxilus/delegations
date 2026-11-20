@@ -8,8 +8,8 @@
 ##     since library's word is no axis value, and its constructor is no call form of package.
 ##   Command line reads modules of run, by nimble file of their package, and library each package
 ##     builds on by `--path` of its `nim.cfg` (`command.nim`). `koch fix` passes names of each
-##     project too (`fixes.nim` of `curator/audit`), so both callers read them alike; static pass
-##     of `koch check` reads them at step 4 of #443.
+##     project too, from every module of its tree (`fixes.nim` of `curator/audit`); static pass of
+##     `koch check` reads them at step 4 of #443.
 
 {.experimental: "strictFuncs".}
 

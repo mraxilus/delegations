@@ -36,9 +36,9 @@
 ##     report.
 ##   Cost: generic body checks where module instantiates it alone, so instantiation in other
 ##     module that compiler would refuse is unread, and can add false report.
-##   Cost: one `nim check` of file for each configuration and round, 0.63 s for module of PGA
-##     library on 4 cores at 2.10 GHz, where none runs without rule (`nim check --hints:off -`,
-##     median of three, 2026-11-20, 2.4.0).
+##   Cost: one `nim check` of file for each configuration and round, 0.61 to 0.76 s for module of
+##     PGA library on 4 cores at 2.10 GHz, where none runs without rule (command of `checked`, with
+##     its flags, on stdin and fresh cache, six runs, 2026-11-20, 2.4.0).
 
 {.experimental: "strictFuncs".}
 
