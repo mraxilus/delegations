@@ -512,6 +512,64 @@ suite "Fixes":
     check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
 
 
+  test "private symbol sibling reaches takes its marker, and `{.all.}` reaching none goes, by uses":
+    # Case held: `koch fix` passed no uses of private symbols, so it kept `{.all.}` of line 9 of
+    #   `tests/suites/test_marker.nim` of `pga_visualiser`, which reaches none, where knoller drops
+    #   it (rule 7 of #443, STYLE.md §5). Domain: symbol sibling reaches, whose trailing doc moves
+    #   to next line, so later report names line as given; `{.all.}` reaching none, and one
+    #   reaching symbol; line holding plain comment, left for hand; file pass resolved none, which
+    #   warns; and no uses.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      module = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "const LIMIT = 3  ## Limit.\n\nfunc other(x: int): int = x  # Plain.\n" &
+          "  ## Same.\n\nlet SUM* = 1+2  ## Sum.\n",
+      )
+      reaching = entry(
+        DIRECTORY_AUDIT & "/src/b.nim", head & "import ./a {.all.}\n\nlet COPY* = LIMIT  ## Copy.\n"
+      )
+      reaching_none = entry(DIRECTORY_AUDIT & "/src/c.nim", head & "import ./a {.all.}\n")
+      unresolved = entry(DIRECTORY_AUDIT & "/src/d.nim", head & "import ./a {.all.}\n")
+      tree = @[module, reaching, reaching_none, unresolved]
+    var uses = initTable[string, Uses]()
+    uses[module.path] = Uses()
+    for site in [(5, 6), (7, 5)]:
+      uses[module.path].privates[site] = UsePrivate(siblings: @["b.nim"])
+    uses[reaching.path] = Uses()
+    uses[reaching.path].imports[(5, 9)] = true
+    uses[reaching_none.path] = Uses()
+    uses[reaching_none.path].imports[(5, 9)] = false
+    uses[unresolved.path] = Uses(reason: "nimsuggest answered nothing")
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, uses = uses))
+    check plan.written.mapIt((it.path, it.content)) == @[
+      (
+        module.path,
+        head & "const LIMIT {.used.} = 3  # Used in `b.nim`.\n  ## Limit.\n\n" &
+          "func other(x: int): int = x  # Plain.\n  ## Same.\n\nlet SUM* = 1 + 2  ## Sum.\n",
+      ),
+      (reaching_none.path, head & "import ./a\n"),
+    ]  # STYLE.md §5
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (module.path, 5, "marker used (STYLE.md §5)"),
+      (module.path, 10, "expression spacing (X.9)"),  # line as given, though doc moved below 5
+      (reaching_none.path, 5, "marker used (STYLE.md §5)"),
+    ]
+    check plan.left.mapIt((it.path, it.line, it.message)) == @[
+      (module.path, 7, "Private symbol sibling `b.nim` reaches carries `{.used.}` and comment " &
+        "naming sibling (STYLE.md §5); got `func other`."),
+    ]  # plain comment holds line
+    check plan.warned.mapIt((it.path, it.line, it.message)) == @[
+      (unresolved.path, 0, "Semantic pass resolved no use, so each private symbol and `{.all.}` " &
+        "stays as written (STYLE.md §5); got `nimsuggest answered nothing`."),
+    ]
+    let again = plan.written & @[reaching, unresolved]
+    check fixEntries(BRANCH_CURATOR, again, context = initContext(again, again)).written.len == 0
+    check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.mapIt(
+      it.path
+    ) == @[module.path]  # no uses: spacing alone
+
+
   test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
     let
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
