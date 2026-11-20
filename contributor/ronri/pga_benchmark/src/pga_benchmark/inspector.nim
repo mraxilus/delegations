@@ -62,6 +62,15 @@ const
     ## C name every instance of library's `MultivectorOf` opens with, hash after it.
   ACCESSOR = "X5BX5D_"
     ## Mangled head of `[]`, whose calls are element reads and not counted as calls.
+  MARK_LIBRARY = "illuminatedZpga"
+    ## Substring of module suffix of every library module, from its checkout path.
+  MARK_REFERENCE = "referenceZ"
+    ## Prefix of module suffix of every typed reference module, as `bench` builds it.
+  MODULE_DENSE = "dense"
+    ## Module suffix of dense form module, as bench entry beside it names it.
+    ##   Build from elsewhere spells path before it, ending `Zdense`.
+  MODULE_TIMED = "measurements"
+    ## Module suffix of timed calls, where library generic instantiates first unless library does.
 
 
 
@@ -427,6 +436,45 @@ func count*(body: string): Counts =
 func key*(f: FunctionC): string =
   ## Key function by symbol and parameter stems, e.g. `∧(Multivector,Multivector)`.
   f.symbol & "(" & f.parameters.join(",") & ")"
+
+
+func isModule(f: FunctionC, module: string): bool =
+  ## Decide whether module suffix names `module`, as built here or from elsewhere, `Z` before it.
+  f.module == module or f.module.endsWith("Z" & module)
+
+
+func isTimed*(f: FunctionC): bool =
+  ## Decide whether function sits in module of timed calls, as built here or from elsewhere.
+  f.isModule(MODULE_TIMED)
+
+
+func isKept*(f: FunctionC, heads: openArray[string]): bool =
+  ## Decide whether function belongs to library, reference or dense forms, i.e. to gap list.
+  ##   C names generic instance after module that instantiates it first. In `bench`, where no
+  ##     code of library instantiates it first, timed calls do, so it sits in `measurements`
+  ##     beside helpers of bench; head of measurand among `heads` tells it from them.
+  MARK_LIBRARY in f.module or f.module.startsWith(MARK_REFERENCE) or
+      f.isModule(MODULE_DENSE) or f.isTimed and f.symbol in heads
+
+
+func keyed*(functions: seq[FunctionC], heads: openArray[string]): seq[(string, FunctionC)] =
+  ## Key functions `isKept` keeps, numbering those sharing stems by overload index.
+  ##   Key then holds whatever order compiler emits them in: lowest index keeps bare key,
+  ##     others append `#u<n>`.
+  ##   `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
+  var
+    groups: Table[string, seq[FunctionC]]
+    order: seq[string]
+  for f in functions:
+    if not f.isKept(heads): continue
+    if f.key notin groups: order.add f.key
+    groups.mgetOrPut(f.key, @[]).add f
+  for key in order:
+    var group = groups[key]
+    group.sort(proc (a, b: FunctionC): int = cmp(a.overload, b.overload))
+    for i, f in group:
+      let numbered = if i == 0: key else: key & "#u" & $f.overload
+      result.add (numbered, f)
 
 
 func total(

@@ -865,6 +865,13 @@ func aliases*(measurands: openArray[Measurand]): seq[string] =
     if p.alias.len > 0 and p.alias notin result: result.add p.alias
 
 
+func heads*(measurands: openArray[Measurand]): seq[string] =
+  ## Read distinct heads of library functions measurands call, first seen first; tool and test side.
+  for p in measurands:
+    let head = p.headEmitted
+    if head.len > 0 and head notin result: result.add head
+
+
 func ids*(measurands: openArray[Measurand]): seq[string] =
   ## Read ids of measurands in order; tool and test side.
   for p in measurands: result.add p.id
