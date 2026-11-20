@@ -418,6 +418,18 @@ suite "Branch on what build fixes":
     check source.constantsExported == @["X", "Y", "V"]
 
 
+  test "STYLE.md §3 name that runtime parameter, binding or loop variable shadows is runtime":
+    let source = module(
+      "const N = 3  ## Count.\n\n\nproc p(N: int) =\n  ## Print.\n  if N > 2:\n    echo 1\n\n\n" &
+        "proc q(k: int) =\n  ## Print.\n  for N in 0 ..< k:\n    if N > 1:\n      echo N\n\n\n" &
+        "proc r() =\n  ## Print.\n  let N = 5\n  if N > 4:\n    echo N\n"
+    )  # probe of critic: `when` there cannot evaluate `N`, so fix would break build
+    check checkBranches("a.nim", source).len == 0
+    check fixBranches("a.nim", source, @[]).source == source
+    check module("const N = 3\nproc p() =\n  if N > 2:\n    echo 1\n").branches.len == 1
+      # unshadowed, constant still reads static
+
+
   test "module reads constants it binds itself, with none from caller":
     let source = module("const Q = 3\nproc p() =\n  if Q > 2:\n    echo 1\n")
     check checkBranches("a.nim", source).mapIt(it.line) == @[LINES_HEAD + 3]
