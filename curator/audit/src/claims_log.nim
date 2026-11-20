@@ -1,0 +1,366 @@
+## Log each scored claim of each reflection, as text format of `claims.proto`, where role writes.
+##   Claim is row of first table with column `Predicted` of `## Reflection` block of current
+##     model turn, whose cell is whole claim of block call took; `No prediction`, and cell quoting
+##     no claim, give none, since no claim or call stands behind them (#964).
+##   Claim takes latest call before reflection whose block holds it, of kind line `**Subagent:**`
+##     of reflection names, else of any kind, so claim of block of critic takes call of critic.
+##   Kind is `subagent_type` of call; model is `resolvedModel` of its result, else its input
+##     `model`; effort is input `effort`, else `effort:` of its template (`readEfforts`).
+##   State is marker opening first cell, and confidence is percentage of second. Tokens and cost
+##     are first `<n> tokens` and `$<x>` of line `**Subagent:**`; call of critic that line does
+##     not name reads line `**Critic:**`.
+##   Number claim, whose bullet ends at percentiles (`isNumber`), takes last three numbers of its
+##     text; its outcome is first number of its cell under `Result`, as GUIDE.md asks.
+##   Date, delegate and address come from entry of reflection: `timestamp`, `sessionId`, `uuid`.
+##   Log is `claims.txtpb` of scope branch writes (`pathLog`); other checkout writes file outside
+##     tree, which `moveClaims` empties into log of branch. Row whose address either file holds
+##     is never written again, so reply to refusal, which `stop` reads too, adds no row twice.
+##   Text format is written here, one row to line; suite reads it back through `buf`.
+##
+##   Rejected: `protobuf_serialization`, which writes bytes, and would be first dependency of
+##     audit; log in tree is text (#964).
+##   Rejected: tokens summed from transcript of subagent: cost would need price of each model in
+##     code, and reflection states both.
+##   Cost: one claim in blocks of several calls of one kind takes latest such call alone.
+##   Cost: rows waiting outside tree are lost where machine ends before `moveClaims` runs.
+
+{.experimental: "strictFuncs".}
+
+import std/[options, os, sequtils, sets, strutils, tables]
+import ./[domains, hooks]
+
+
+type
+  State* {.pure.} = enum  ## Define state of claim, in order of enum `State` of `claims.proto`.
+    Unspecified, Hit, Miss, Annulled, Waiting
+
+  Number* = object  ## Define number claim: its percentiles, and value its result gives.
+    low*: float  ## 10th percentile.
+    median*: float  ## 50th percentile.
+    high*: float  ## 90th percentile.
+    outcome*: Option[float]  ## First number of cell under `Result`; none where cell holds none.
+
+  Claim* = object  ## Define one row of log: message `Claim` of `claims.proto`.
+    date*: string  ## Day of reflection, as `2026-11-20`.
+    delegate*: string  ## `sessionId` of entry of reflection, which names delegate.
+    kind*: string  ## Kind of call claim takes.
+    model*: string  ## Model of that call.
+    effort*: string  ## Effort of that call, else of template of its kind.
+    text*: string  ## Claim, as cell under `Predicted` quotes it.
+    confidence*: float  ## Percentage of cell under `Confidence`, as fraction.
+    state*: State  ## Marker opening cell under `State`.
+    tokens*: int  ## Tokens line of reflection gives for call.
+    cost*: float  ## Dollars line of reflection gives for call.
+    address*: string  ## Delegate, `uuid` of entry of reflection, and row from 1, by `/`.
+    number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
+    result*: string  ## Cell under `Result`.
+
+
+const
+  FILE_LOG* = "claims.txtpb"  ## Log of each project, beside its record (#964).
+  PATH_LOG_CURATOR* = CURATOR & "/audit/" & FILE_LOG
+    ## Log of root branch of curator: `checkLayout` takes only index directly under `curator/`,
+    ##   so record of checker holds it.
+  KEY_CLAIMS* = "KOCH_CLAIMS_DIR"  ## Environment name overriding folder of rows outside tree.
+  DIRECTORY_CLAIMS* = ".cache/koch/claims"
+    ## Default folder of rows outside tree, under home, in koch's own directory.
+  FILE_WAITING* = "waiting.txtpb"  ## File of rows that wait outside tree for branch.
+  HEADER_LOG* = "# Log of claims of this project: one row of reflection to line, as `stop` " &
+    "writes it (#964).\n#   Text format of message `Log` of `curator/audit/src/claims.proto`.\n"
+    ## Comment new log opens with, which names its schema.
+  FIELD_LOG = "claims"  ## Field of `Log` each row fills.
+  FIELD_ADDRESS = "address: \""  ## Opening of address of row, as `lineClaim` writes it.
+  COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
+    ## Columns of table of reflection, in order of their cells in `rowsTable`.
+  MARKERS_STATE = [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
+    ("⏸", State.Waiting)]
+    ## Markers of cell under `State`, as GUIDE.md gives them; `⏸️` opens with `⏸`.
+  NAMES_STATE: array[State, string] =
+    ["STATE_UNSPECIFIED", "STATE_HIT", "STATE_MISS", "STATE_ANNULLED", "STATE_WAITING"]
+    ## Name of each value of enum `State` of `claims.proto`.
+  MARKER_DELEGATE = "MARKER_DELEGATE"  ## Value of `Marker` of row table of delegate gives.
+  LABELS_CRITIC = ["**critic:**", "**critic**:"]
+    ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
+  WORD_TOKENS = " tokens"  ## Word after count of tokens, as line of reflection writes it.
+  MARK_DOLLAR = '$'  ## Mark before cost, as line of reflection writes it.
+  MARK_PERCENT = '%'  ## Mark after confidence, as cell under `Confidence` writes it.
+  POINT = '.'  ## Mark between digits and decimal part of number.
+  COMMA = ','  ## Mark between groups of three digits of number, as in `170,000`.
+  DIGITS_GROUP = 3  ## Digits of group after comma.
+  LENGTH_DATE = 10  ## Characters of day of ISO 8601 timestamp, as `2026-11-20`.
+
+
+func numbersIn*(text: string): seq[float] =
+  ## Read each number of text, in order: digits, each group of three after comma, then decimal
+  ##   part; mark before, as `$`, and comma or full stop after stay out, so `$1.10,` reads 1.1.
+  ##   Digit after digit or point opens no number, so `1.75.0` reads 1.75 alone.
+  var i = 0
+  while i < text.len:
+    if text[i] notin Digits or (i > 0 and text[i - 1] in Digits + {POINT}):
+      inc i
+      continue
+    var
+      stop = i
+      digits = ""
+    while stop < text.len and text[stop] in Digits:
+      digits.add text[stop]
+      inc stop
+    while stop + DIGITS_GROUP < text.len and text[stop] == COMMA and
+        text[stop + 1 .. stop + DIGITS_GROUP].allCharsInSet(Digits) and
+        (stop + DIGITS_GROUP + 1 == text.len or text[stop + DIGITS_GROUP + 1] notin Digits):
+      digits.add text[stop + 1 .. stop + DIGITS_GROUP]
+      stop += DIGITS_GROUP + 1
+    if stop + 1 < text.len and text[stop] == POINT and text[stop + 1] in Digits:
+      digits.add POINT
+      inc stop
+      while stop < text.len and text[stop] in Digits:
+        digits.add text[stop]
+        inc stop
+    result.add digits.parseFloat
+    i = stop
+
+
+func figuresLine(text: string, labels: openArray[string]): tuple[tokens: int, cost: float] =
+  ## Read tokens and cost of first line of text that opens with one of labels, in any case:
+  ##   number before first ` tokens`, and number right after first `$`; zero where none.
+  for line in text.splitLines:
+    let lower = line.strip(trailing = false).toLowerAscii
+    if not labels.anyIt(lower.startsWith(it)): continue
+    let at = line.find(WORD_TOKENS)
+    if at > 0:
+      let before = line[0 ..< at].numbersIn
+      if before.len > 0: result.tokens = int(before[^1])
+    let dollar = line.find(MARK_DOLLAR)
+    if dollar >= 0 and dollar + 1 < line.len and line[dollar + 1] in Digits:
+      result.cost = line[dollar + 1 .. ^1].numbersIn[0]
+    return
+
+
+func rowsTable(text: string): seq[array[COLUMNS.len, string]] =
+  ## Read cells under each of `COLUMNS` of each row of first table of text whose header has
+  ##   column `Predicted`, each collapsed; empty cell where its column is missing.
+  ##   Table is run of lines opening with `|`, header first, as `findingsTable` of `hooks.nim`
+  ##     reads it.
+  let lines = text.splitLines
+  var i = 0
+  while i < lines.len:
+    if not lines[i].strip.startsWith("|"):
+      inc i
+      continue
+    var stop = i
+    while stop < lines.len and lines[stop].strip.startsWith("|"): inc stop
+    let header = lines[i].cellsRow
+    if COLUMN_PREDICTED notin header:
+      i = stop
+      continue
+    for line in lines[i + 1 ..< stop]:
+      let cells = line.cellsRow
+      if cells.isRowSeparator: continue
+      var row: array[COLUMNS.len, string]
+      for c, name in COLUMNS:
+        let column = header.find(name)
+        if column >= 0 and column < cells.len: row[c] = cells[column].collapsed
+      result.add row
+    return
+
+
+func stateCell(cell: string): State =
+  ## Read state that marker opening cell gives; `State.Unspecified` where none opens it.
+  for (marker, state) in MARKERS_STATE:
+    if cell.startsWith(marker): return state
+  State.Unspecified
+
+
+func confidenceCell(cell: string): float =
+  ## Read last number before first `%` of cell, as fraction; zero where cell holds none.
+  let at = cell.find(MARK_PERCENT)
+  if at < 0: return 0
+  let numbers = cell[0 ..< at].numbersIn
+  if numbers.len > 0: numbers[^1] / 100 else: 0
+
+
+func callTaken(
+  subagents: Subagents; taken: openArray[int]; reflection: Block; claim, named: string
+): int =
+  ## Read index of latest call before reflection whose block holds claim, of kind named, else of
+  ##   any kind; -1 where no call took block holding it.
+  result = -1
+  for k in countdown(subagents.calls.high, 0):
+    let call = subagents.calls[k]
+    if call.place.at >= reflection.place.at or taken[k] < 0: continue
+    if claim notin subagents.predictions[taken[k]].text.claims: continue
+    if named.len == 0 or call.kind == named: return k
+    if result < 0: result = k
+
+
+func claimsTurn*(
+  subagents: Subagents; kinds: openArray[string]; efforts: Table[string, string]
+): seq[Claim] =
+  ## Read claim of each row of each reflection of current model turn whose cell under `Predicted`
+  ##   is whole claim of block call took, in order of reflections and rows.
+  let
+    current = subagents.turns - 1
+    taken = subagents.blocksTaken(kinds)
+  for reflection in subagents.reflections:
+    if reflection.place.turn != current: continue
+    let
+      named = reflection.text.kindNamed(kinds)
+      figures_subagent = reflection.text.figuresLine(LABELS_SUBAGENT)
+      figures_critic = reflection.text.figuresLine(LABELS_CRITIC)
+    for n, row in reflection.text.rowsTable:
+      let quoted = row[2]
+      if quoted.len == 0 or quoted == NO_PREDICTION: continue
+      let k = subagents.callTaken(taken, reflection, quoted, named)
+      if k < 0: continue
+      let
+        call = subagents.calls[k]
+        figures = (if call.kind == KIND_CRITIC and call.kind != named: figures_critic
+          else: figures_subagent)
+      var claim = Claim(
+        date: reflection.timestamp[0 ..< min(LENGTH_DATE, reflection.timestamp.len)],
+        delegate: reflection.delegate,
+        kind: call.kind,
+        model: call.model,
+        effort: (if call.effort.len > 0: call.effort else: efforts.getOrDefault(call.kind)),
+        text: quoted,
+        confidence: row[1].confidenceCell,
+        state: row[0].stateCell,
+        tokens: figures.tokens,
+        cost: figures.cost,
+        address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
+        result: row[3],
+      )
+      let numbers = quoted.numbersIn
+      if subagents.predictions[taken[k]].text.isNumber(quoted) and numbers.len >= 3:
+        let outcome = row[3].numbersIn
+        claim.number = some(Number(
+          low: numbers[^3],
+          median: numbers[^2],
+          high: numbers[^1],
+          outcome: (if outcome.len > 0: some(outcome[0]) else: none(float)),
+        ))
+      result.add claim
+
+
+func quotedText(s: string): string =
+  ## Write string as text format quotes it: `\`, `"` and each control character escaped, and
+  ##   UTF-8 as it is, which text format reads.
+  result = "\""
+  for ch in s:
+    case ch
+    of '\\': result.add "\\\\"
+    of '"': result.add "\\\""
+    of '\n': result.add "\\n"
+    of '\r': result.add "\\r"
+    of '\t': result.add "\\t"
+    of '\0' .. '\x08', '\x0B', '\x0C', '\x0E' .. '\x1F', '\x7F':
+      result.add "\\x" & ch.ord.toHex(2)
+    else: result.add ch
+  result.add "\""
+
+
+func lineClaim*(claim: Claim): string =
+  ## Write claim as one line of log: field `claims` of `Log`, fields in order of their numbers.
+  ##   Empty string, zero number and unspecified state stay out, as text format leaves defaults.
+  var fields: seq[string]
+  template put(name, value: string) =
+    ## Add field of name and its value, as text format writes it.
+    fields.add name & ": " & value
+  if claim.date.len > 0: put "date", claim.date.quotedText
+  if claim.delegate.len > 0: put "delegate", claim.delegate.quotedText
+  if claim.kind.len > 0: put "kind", claim.kind.quotedText
+  if claim.model.len > 0: put "model", claim.model.quotedText
+  if claim.effort.len > 0: put "effort", claim.effort.quotedText
+  if claim.text.len > 0: put "text", claim.text.quotedText
+  if claim.confidence != 0: put "confidence", $claim.confidence
+  if claim.state != State.Unspecified: put "state", NAMES_STATE[claim.state]
+  put "marker", MARKER_DELEGATE
+  if claim.tokens != 0: put "tokens", $claim.tokens
+  if claim.cost != 0: put "cost", $claim.cost
+  if claim.address.len > 0: put "address", claim.address.quotedText
+  if claim.number.isSome:
+    let number = claim.number.get
+    var inside = @["low: " & $number.low, "median: " & $number.median, "high: " & $number.high]
+    if number.outcome.isSome: inside.add "outcome: " & $number.outcome.get
+    fields.add "number { " & inside.join(" ") & " }"
+  if claim.result.len > 0: put "result", claim.result.quotedText
+  FIELD_LOG & " { " & fields.join(" ") & " }"
+
+
+func addressesIn*(text: string): HashSet[string] =
+  ## Read address of each row of log text: quoted value after first `address: "` of each line.
+  ##   Quote inside string is escaped, so `address: "` stands only where field opens.
+  for line in text.splitLines:
+    let at = line.find(FIELD_ADDRESS)
+    if at < 0: continue
+    let
+      start = at + FIELD_ADDRESS.len
+      stop = line.find('"', start)
+    if stop > start: result.incl line[start ..< stop]
+
+
+func pathLog*(branch: string): string =
+  ## Read path from root of log branch writes rows to; empty where branch is outside grammar, as
+  ##   checkout of root curator, which keeps `main` detached, is.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return ""
+  case parsed.get.role
+  of Role.Curator: PATH_LOG_CURATOR
+  of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_LOG
+
+
+proc pathWaiting*(): string =
+  ## Read path of file of rows that wait outside tree: under `KEY_CLAIMS` where set, else under
+  ##   home.
+  let root = getEnv(KEY_CLAIMS)
+  (if root.len > 0: root else: getHomeDir() / DIRECTORY_CLAIMS) / FILE_WAITING
+
+
+proc writeLines(path, text: string) =
+  ## Add lines of text to end of file at path, opening it with `HEADER_LOG` where it is new;
+  ##   whole file goes to path at once, through file beside it.
+  var before = (if fileExists(path): readFile(path) else: HEADER_LOG)
+  if before.len > 0 and not before.endsWith("\n"): before.add "\n"
+  createDir(path.parentDir)
+  let written = path & ".new"
+  writeFile(written, before & text)
+  moveFile(written, path)
+
+
+proc appendClaims*(root, branch, waiting: string; claims: openArray[Claim]): int =
+  ## Add each claim whose address neither log of branch nor file `waiting` holds to log of branch,
+  ##   else to `waiting`; count claims written.
+  let
+    relative = branch.pathLog
+    path = (if relative.len > 0: root / relative else: waiting)
+  var
+    known: HashSet[string]
+    text = ""
+  for file in [path, waiting]:
+    if fileExists(file): known.incl readFile(file).addressesIn
+  for claim in claims:
+    if claim.address in known: continue
+    known.incl claim.address
+    text.add claim.lineClaim & "\n"
+    inc result
+  if text.len > 0: writeLines(path, text)
+
+
+proc moveClaims*(root, branch, waiting: string): tuple[moved: int, path: string] =
+  ## Move each row of file `waiting` whose address log of branch lacks into that log, then remove
+  ##   `waiting`; count rows moved, with path of log from root. Path is empty where branch writes
+  ##   no log, and `waiting` then stays.
+  result.path = branch.pathLog
+  if result.path.len == 0 or not fileExists(waiting): return
+  let
+    path = root / result.path
+    known = (if fileExists(path): readFile(path).addressesIn else: initHashSet[string]())
+  var text = ""
+  for line in readFile(waiting).splitLines:
+    if not line.startsWith(FIELD_LOG & " "): continue
+    let addresses = line.addressesIn
+    if addresses.len > 0 and addresses.toSeq[0] in known: continue
+    text.add line & "\n"
+    inc result.moved
+  if text.len > 0: writeLines(path, text)
+  removeFile(waiting)
