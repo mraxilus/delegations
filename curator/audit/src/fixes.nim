@@ -22,11 +22,12 @@
 ##     rules ask at one name; type conversion `x.T` (`conversions.nim`), each from semantic pass
 ##     (`symbols.nim`); alias of each landmark index (V.8), from names of project
 ##     (`packages.nim`); marker of each private symbol sibling reaches, and drop of each
-##     `{.all.}` reaching none (STYLE.md §5), from uses compiler reads (`markers.nim`); then dead
-##     export of checker (`checker.nim`), whose `*` goes where its own module calls it. Marker
-##     moves trailing doc to next line, so each later report traces back to line as given. Fix
-##     of named files reads tree whole, and rename writing file it leaves out is refused. File
-##     holding candidate that compiles on no backend is left to hand, with its error.
+##     `{.all.}` reaching none (STYLE.md §5), from uses compiler reads (`markers.nim`); `func` of
+##     each `proc` compiler proves pure (STYLE.md §1, `purity.nim`); then dead export of checker
+##     (`checker.nim`), whose `*` goes where its own module calls it. Marker moves trailing doc
+##     to next line, so each later report traces back to line as given. Fix of named files reads
+##     tree whole, and rename writing file it leaves out is refused. File holding candidate that
+##     compiles on no backend is left to hand, with its error.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
@@ -41,10 +42,10 @@
 ##     exports, defaults of configurations, and names of its modules, with aliases of library
 ##     it builds on, which no file of tree holds, so caller reads library from disk.
 ##   Finding of rule resting on context that fix leaves stays for hand, as knoller's command line
-##     leaves it: marker no edit writes, index whose alias no edit writes, and call of
-##     constructor, which no fix writes (STYLE.md §5). Fenced line of rule reading names counts
-##     in warning of its fence, which reads names too; file whose uses compiler resolved none
-##     warns, with reason.
+##     leaves it: marker and `func` no edit writes, index whose alias no edit writes, and call
+##     of constructor, which no fix writes (STYLE.md §5). Fenced line of rule reading names
+##     counts in warning of its fence, which reads names too; file whose uses or pures compiler
+##     resolved none warns, with reason.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -299,8 +300,8 @@ func initContext*(
   ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
   ##   defaults of its configurations, and names of its modules (`namesProjects`), aliases of
   ##   library it builds on among them, as `libraries` holds its modules by nimble file.
-  ##   Use of each private symbol and `{.all.}` of each file, as `uses` holds it by path
-  ##   (`readFacts`), passes through; pures read nothing yet.
+  ##   Use of each private symbol and `{.all.}` of each file, and each `proc` compiler checks as
+  ##   `func` there, as `uses` and `pures` hold them by path (`readFacts`), pass through.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -318,6 +319,7 @@ func initContext*(
     result.constants[project] = sources.mapIt(it.constantsExported).concat
   result.names = tree.namesProjects(libraries)
   result.uses = uses
+  result.pures = pures
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked, result.names):
@@ -348,14 +350,14 @@ func fixSource(
   ## Write edits semantic pass, compiler and tree settle, off fenced lines, then fix rest by
   ##   knoller (`formatted`); every report names line of source as given, traced through marker
   ##   that moves trailing doc to next line (`originApplied`), then through chain. Report of rule
-  ##   resting on context that no edit writes is left for hand: marker, and rule reading names of
-  ##   project off fenced lines, which warning of fence counts. Source knoller cannot settle
-  ##   keeps those edits alone, with warning that says why (`warnUnsettled`), since rename
+  ##   resting on context that no edit writes is left for hand: marker, `func`, and rule reading
+  ##   names of project off fenced lines, which warning of fence counts. Source knoller cannot
+  ##   settle keeps those edits alone, with warning that says why (`warnUnsettled`), since rename
   ##   planned whole reaches other files too.
 
   # Write edits semantic pass, names of project and compiler settle, off fenced lines, as
   #   knoller's command line writes them: renames, conversions, alias of each landmark index,
-  #   then markers; marker moving trailing doc to next line alone moves line.
+  #   then markers and `func`; marker moving trailing doc to next line alone moves line.
   var semantic: seq[Edit]
   for plan in context.plans:
     if plan.refusal.len > 0 or path notin plan.edits: continue
@@ -376,19 +378,25 @@ func fixSource(
     uses = context.uses.getOrDefault(path)
     (marks, marked) = editsMarkers(path, source, uses, fence.lines, semantic)
   semantic.add marks
-  result.fixed.add marked.toFindings
+  let
+    pures = context.pures.getOrDefault(path)
+    (funcs, purified) = editsPure(path, source, pures, fence.lines, semantic)
+  semantic.add funcs
+  result.fixed.add (marked & purified).toFindings
 
-  # Leave for hand each marker no edit writes, each index no alias edit writes, as choice of
-  #   aliases, and each call of constructor, which no fix writes, in order of lines; each edit
-  #   answers one report of its rule on its line.
+  # Leave for hand each marker and `func` no edit writes, each index no alias edit writes, as
+  #   choice of aliases, and each call of constructor, which no fix writes, in order of lines;
+  #   each edit answers one report of its rule on its line.
   var
-    unwritten = (aliasing & marked).mapIt((it.line, it.rule))
+    unwritten = (aliasing & marked & purified).mapIt((it.line, it.rule))
     kept: seq[Report]
-  for report in checkMarkers(path, source, uses) &
+  for report in checkMarkers(path, source, uses) & checkPure(path, source, pures) &
       checkLandmarks(path, source, names.landmarks) & checkConstructors(path, source, names.calls):
-    let at = unwritten.find((report.line, report.rule))
+    let
+      at = unwritten.find((report.line, report.rule))
+      is_compiled = report.rule in {Rule.UsedMarker, Rule.PureFunc}
     if at >= 0: unwritten.delete at
-    elif report.rule == Rule.UsedMarker or report.line - 1 notin fence.lines: kept.add report
+    elif is_compiled or report.line - 1 notin fence.lines: kept.add report
   result.left = kept.sortedByIt(it.line).toFindings
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped. Fence
@@ -465,6 +473,15 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
       Rule.UsedMarker,
       "Semantic pass resolved no use, so each private symbol and `{.all.}` stays as written; " &
         "got `" & uses.reason & "`.",
+    ).toFinding
+  let pures = context.pures.getOrDefault(e.path)
+  if pures.reason.len > 0:
+    result.warned.add initReport(
+      e.path,
+      0,
+      Rule.PureFunc,
+      "Compiler proved no routine pure, so each `proc` stays as written; got `" & pures.reason &
+        "`.",
     ).toFinding
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
