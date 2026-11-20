@@ -849,10 +849,11 @@ which fixers widen, which wraps follow, and what the chain holds where none fits
 ## Definition blank lines
 
 **The run of blank lines before a definition takes the count that X.2 gives it (#443, rule
-13).** `checkDefinitions` and `fixDefinitions` of `blanks.nim` share one reading (`gapsDefinition`).
-The rule reads each run between two items at module level. It also reads each run between two
-items of each branch of a `when` there, since `when` opens no scope. The first item of a level is
-not read.
+13).** The Architect ruled it so in chat on 2026-11-18, with the answers Q1 to Q3.
+`checkDefinitions` and `fixDefinitions` of `blanks.nim` share one reading (`gapsDefinition`). The
+rule reads each run between two items at module level. It also reads each run between two items
+of each branch of a `when` there, since `when` opens no scope. The rule reads no run before the
+first item of a level.
 
 - An item is a code line at the indent of its level, with the lines that it holds. These are its
   brackets, its deeper lines, its doc, and each `elif`, `else`, `of`, `except` or `finally` branch.
@@ -861,11 +862,13 @@ not read.
   routine `define…`. A `when` counts as the definition that it holds first, and below it as the
   one that it holds last.
 - An item is one line where its head line holds all its code. A routine with no body, as a
-  borrow, is one line too, since only width wraps its signature. An item with `##` is documented.
+  borrow, is one line too, since only width wraps its signature.
+- An item with a `##` doc on its head line or inside it is documented. A `##` inside a `#` comment
+  is no doc. A doc right above an item stands with it, but does not make it documented.
 - A `#` comment or a `##` doc at the indent of the definition, right above it, stands with it. So
   the run above them is the run that the rule reads, and the report names the head line.
-- The run is read only where the item above is a definition or an import. A pragma line, a
-  statement, a banner or a free comment above it opens what follows, so the rule reads no run
+- The rule reads the run only where the item above is a definition or an import. A pragma line,
+  a statement, a banner or a free comment above it opens what follows, so the rule reads no run
   there. A free comment has a blank line under it.
 
 **The definition below the run sets its count, and the item above decides each stack.** The
@@ -878,41 +881,47 @@ counts read the bullets of X.2 in this order:
 - An undocumented one-line routine after another stacks in its group. Up to two lines pass, since
   X.2 gives no count between two groups. The first helper of a group takes two.
 - A declaration block after another takes one.
-- A documented one-line definition takes one after any definition, and after the imports (Q3).
-- Every other definition takes two, a routine of several lines among them (Q2). So one line and
-  three lines are reported.
-- Inside a second-tier section, each count of two becomes one, since siblings there take one
-  (Q1). The nearest banner above the definition gives the section. Knoller changes the tier of no
-  banner, so the library writes `#[[ ]]#` by hand where a section is second tier.
+- A documented one-line definition that no bullet above names takes one after any definition
+  (Q3). So a documented call after a routine takes up to two, as a call does.
+- Knoller reads Q3 after the imports too, since Q3 says that the definition below a run sets its
+  count.
+- Every other definition takes two, a routine of several lines among them (Q2). So the check
+  reports one line and three lines.
+- Inside a second-tier section, each count caps at one, since siblings there take one (X.2). Q1
+  makes Wedge, Norms, Unitize and Support second tier. The nearest banner above the definition,
+  outside a string, gives the section. Knoller changes the tier of no banner, so the library writes
+  `#[[ ]]#` by hand where a section is second tier.
 - The fixer sets each run to the nearest count that passes, last run first.
-- Two single bindings of one keyword on adjacent lines are not read, since they share one keyword
-  (X.5). `single-bindings` merges them earlier in the chain.
+- The rule reads no run between two single bindings of one keyword on adjacent lines, since they
+  share one keyword (X.5). `single-bindings` merges them earlier in the chain.
 - Runs beside a banner, before a suite or a test, and beside a nested helper stay with
   `banner-spacing`, `test-blank-lines` and `helper-blank-lines`.
-- Rejected: two lines after the imports for each definition. Q3 says that the definition below a
-  run sets its count, so a documented one-line definition takes one there too.
-- Rejected: a fence marker as a separator. A marker is a comment, so one right above a definition
-  stands with it, and `fence-held` names the run inside the fence.
-- Cost: a definition inside a `when` of a routine body, or of an `if` at module level, is not
-  read. A `when` at module level is the form of X.2 that the library and the projects use.
-- Cost: a declarative call in command form, without `(`, reads as a statement.
+- Rejected: two lines after the imports for each definition, since the definition below a run
+  sets its count (Q3).
+- Rejected: a fence marker as a separator. It is a comment, so it stands with the definition
+  below it.
+- Cost: the rule reads no definition inside a `when` of a routine body, or of an `if` at module
+  level. How often the library and the projects hold one is unmeasured.
+- Cost: a declarative call in command form, with a generic bracket, or with a space before `(`,
+  reads as a statement.
 - The rule joins `checkFormatting` and the chain. The static pass of `curator/audit` does not
   read it until the projects fix their runs (step 4 of #443).
-- Verified by `suites/test_definitions.nim`, with each case of the library that the page of rule 13
-  names. Verified by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of
-  the chain and the command line.
-- Verified by measurement at commit `fd84031e`, 2026-11-20, with a driver that runs the rule alone
-  on each file of the PGA library at `3d9696e`. The hand change of Q1 stands at `operators.nim`
-  lines 298, 319, 365 and 393. With it, the check gives 23 reports, and the fix adds 16 blank lines
-  and removes 9.
-  Without it, the check gives 33 reports, and the fix adds 27 blank lines and removes 8. A second
-  check of each fixed copy gives 0 reports.
-- Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0. `rga3d` gives
-  33 OK, 0 FAILED and 5 SKIPPED. `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
-- Verified by measurement at commit `fd84031e`, 2026-11-20, over the files that git tracks in each
-  project. The counts are knoller 35, audit 42, assayer 5, probe 5, `pga_benchmark` 316,
-  `pga_visualiser` 193 and `dance_ontology` 531, which is 1,127. `rictadni` gives 24 and `ricysoho`
-  117.
+- Verified by `suites/test_definitions.nim`. It holds one case of each shape that rule 13 of #443
+  names. A law runs over each pair of forms, each count from 0 to 3 and each tier.
+- Verified by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of the
+  chain and the command line.
+- Verified by measurement at commit `14bab954`, 2026-11-20, with a driver that calls
+  `checkDefinitions` and `fixDefinitions` alone on each file of the PGA library at `3d9696e`. The
+  hand change of Q1 stands at `operators.nim` lines 298, 319, 365 and 393. With it, the check
+  gives 23 reports, and the fix adds 16 blank lines and removes 9.
+  Without it, the check gives 33 reports, and the fix adds 28 blank lines and removes 9, by `diff`.
+  One line that it removes holds spaces alone. A second check of each fixed copy gives 0 reports.
+- Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0 on 2026-11-20.
+  `rga3d` gives 33 OK, 0 FAILED and 5 SKIPPED. `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
+- Verified by measurement at commit `14bab954`, 2026-11-20, with the same driver over the `.nim`,
+  `.nims` and `.nimble` files that git tracks in each project. Knoller gives 36, audit 42,
+  assayer 5, probe 5 and `pga_benchmark` 316. `pga_visualiser` gives 193, `dance_ontology` 531,
+  `rictadni` 24 and `ricysoho` 117, which is 1,269.
 
 ## Configuration blocks
 
@@ -2316,6 +2325,8 @@ there is unverified.
 
 ## Open questions
 
+- Does a documented declarative call after a routine take one, as Q3 gives a documented
+  one-line definition, or up to two, as a call does? Knoller gives it up to two now.
 - Do two blocks of complementary configurations side by side, with the default last, report, and
   does the fix swap them? X.11 asks for the default first, and no place holds such a pair yet.
 - Does a test under a gate around a whole suite report, as one under a gate inside a suite does?
