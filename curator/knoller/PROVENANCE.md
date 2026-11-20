@@ -2485,7 +2485,8 @@ the package, as it reads the constants of the staging rules (`## Staging`).
 - Cost: a run that names some files of a package reads the names of those files alone. Run
   knoller on `.` at the root of a project to read them all.
 - Verified by `suites/test_packages.nim`, on modules of two packages in one run, and on a library
-  under `nim.cfg` in a fresh tree.
+  under `nim.cfg` in a fresh tree. It holds that the check of the chain and the warning of a
+  fence read the names, so what the fix leaves reports.
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`.** A copy of the library stood in
 the index of a fresh git repository, with no commit and no nimble file. `knoller --check .` and
@@ -2537,7 +2538,9 @@ becomes `GradeAnti.vectorAnti`.
   check reports 7 bare indexes over 5 lines of `tests/suites.nim`. The fix writes each alias over
   +5 −5 lines, the diff of the page of rule 9, line for line.
 - In the projects of the repository, the check reports 2 in `pga_benchmark` and 1 in
-  `pga_visualiser`, where `Grade(0)` of `objects.nim:139` takes `Grade.low`.
+  `pga_visualiser`. Verified by hand with knoller at `ea44619d`, 2026-11-20, on a copy of
+  `pga_visualiser`. Its library stood at the path that its `nim.cfg` names, and the fix wrote
+  `Grade.low` for `Grade(0)` at `objects.nim:139`.
 
 ## Conversion prefix
 
