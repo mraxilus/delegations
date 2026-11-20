@@ -19,12 +19,14 @@ when compileOption("profiler"):
 
 import std/[algorithm, strutils, unittest]
 
-import ../../src/browser/draw
+import ../../src/browser/draw {.all.}
 import ../../src/ricysoho/[live, nif, nif_read, prose]
 import ./corpora
 
 
 const
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` ja'i lo namcu poi selci'a ta'i `0` bi'o `9` to `CLL 18.2` toi
   STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
@@ -237,6 +239,12 @@ suite "Internal: Drawing of live text":
           inc count
       check count >= 1
 
+
+  test "Each count of a line is its digits, each as cmavo of PA":
+    for digit in 0 .. 9: check counted(digit) == LUT_CMAVO_BY_DIGIT[digit]  # `CLL 18.2`
+    check counted(105) == "panomu"  # `CLL 18.2`
+    check counted(2000) == "renonono"  # `CLL 18.2`
+
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let
       whole = drawnMerged(readTextParts("mi klama .i ko").reading.toNifParts)
@@ -259,4 +267,4 @@ suite "Internal: Drawing of live text":
     let drawing = drawn(reader.toNif, change.tail)
     check drawing.count_open == 1
     check "<figure class=\"part open\">" in drawing.html
-    check drawing.status.endsWith("pa pagbu poi ca'o kalri")
+    check drawing.status.endsWith(" · pa pagbu poi ca'o kalri")
