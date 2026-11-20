@@ -25,7 +25,7 @@
 ##   Fixer sets each line two spaces past its parent's sentence, as parent stands once moved, so
 ##     lines below moved line move with it. Comment whose move would widen line past `LINE_MAX`
 ##     stays for hand, whole. Checks and fixer share one reading (`outline`), so rule is written
-##     once (Article II.1), and `prose.nim` reads comments as `comments` gives them.
+##     once (Article II.1), and `claims.nim` reads comments as `comments` gives them.
 ##
 ##   Cost: generated doc passed by place, not by name, is unread; so is its outline past summary.
 ##   Cost: line of table, diagram or code stays where its parent moves.

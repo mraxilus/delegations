@@ -6,21 +6,21 @@
 import ./reports
 
 
-func checkProse*(path, source: string): seq[Report] =
+func checkClaims*(path, source: string): seq[Report] =
   ## Report claim of comment off its form, and name of comment out of backticks.
   discard
 
 
-func checkProseNames*(path, source: string): seq[Report] =
+func checkBackticks*(path, source: string): seq[Report] =
   ## Report name of comment out of backticks alone, where comments keep their own language.
   discard
 
 
-func fixProse*(path, source: string): Fix =
+func fixClaims*(path, source: string): Fix =
   ## Write capital, period and backticks check reports.
   result.source = source
 
 
-func fixProseNames*(path, source: string): Fix =
+func fixBackticks*(path, source: string): Fix =
   ## Write backticks check reports alone, where comments keep their own language.
   result.source = source

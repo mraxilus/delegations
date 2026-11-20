@@ -95,8 +95,8 @@
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
-  articles, blanks, commands, declarations, entry, fences, form, generations, idioms, messages,
-  names, outlines, parentheses, precedence, prose, reports, spacing, stages, targets, waits,
+  articles, blanks, claims, commands, declarations, entry, fences, form, generations, idioms,
+  messages, names, outlines, parentheses, precedence, reports, spacing, stages, targets, waits,
   wrapping,
 ]
 
@@ -116,8 +116,8 @@ func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
   ##   periods of comment, runs only where comments drop articles, as English does.
   result = @STEPS_FORM
   result.add guarded(fixBlockEntry)
-  if should_drop_articles: result.add @[guarded(fixArticles), guarded(fixProse)]
-  else: result.add guarded(fixProseNames)
+  if should_drop_articles: result.add @[guarded(fixArticles), guarded(fixClaims)]
+  else: result.add guarded(fixBackticks)
   result.add guarded(fixOutlines)
   result.add @[
     widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
@@ -162,7 +162,7 @@ func checkFormattingUnfenced(
     ]
 
   # Run checks in order of chain, blank lines between, which read nimble file nearest file.
-  result.add(if should_drop_articles: checkProse(path, view) else: checkProseNames(path, view))
+  result.add(if should_drop_articles: checkClaims(path, view) else: checkBackticks(path, view))
   for check in checks_before: result.add check(path, view)
   result.add checkBlanks(path, view, nimble)
   for check in checks_after: result.add check(path, view)
