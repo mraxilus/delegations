@@ -1539,6 +1539,55 @@ is false, the chain runs no fixer and no check of articles on that file. Every o
 - Verified by `suites/test_command.nim`: the check of the command line reports the word and exits
   1, and its fix writes the word away.
 
+## Outlines
+
+**A nuance stands two spaces past where the sentence of its parent starts (VI.2).** The Architect
+ruled so on rule 3 of #443, in two decisions. A summary may wrap two spaces deeper, and the two
+spaces count past each leading tag. A tag is a capitalised word with a colon and a space, as
+`TODO:`, `Cost:` and `Rejected:` are (`tagged`). So a line below `# TODO: Implement …` stands two
+spaces past `Implement`.
+
+- A comment is a doc as the lexer joins it: a `##` line and each next line that opens with `##`.
+  That next line can stand at any column (`scanComment` of `compiler/lexer.nim` of 2.4.0). A
+  comment is also a run of own-line `#` lines at one column, or a trailing `#` comment alone. A
+  block comment, a fence marker and a shebang (`#!`) are none.
+- The step of a line is the count of spaces between its marker and its text. The parent of a line
+  is the nearest line above it in its comment at a smaller step.
+- A table row (`|`), a diagram (`->`) and code between fences of three backticks hold no step. So
+  does a blank line. A `#` comment whose first line stands at an even step is commented code, as
+  `#func` is, so it holds no outline.
+- The fixer sets each line two spaces past the sentence of its parent, as the parent stands once
+  moved. So the lines below a moved line move with it. A comment whose move would widen a line
+  past `LINE_MAX` stays for hand, whole, and its reports stay.
+- Verified by `suites/test_outlines.nim`. The cases of `pga/multivectors.nim`, `pga/operators.nim`,
+  `pga/algebra.nim` and `pga.nim` of the PGA library at `3d9696e` are quoted as found.
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
+  `checkOutlines` and `fixOutlines` alone. It gives 11 reports, and the fix moves 18 lines. Of
+  those, 17 are the lines under tags that the ruling counts. The other is line 354 of
+  `pga/algebra.nim`, a nuance one space short.
+- Verified by hand with that driver over each Nim file that git lists, 2026-11-20. It gives 3,200
+  reports, and the fix moves 2,424 lines. No check of `koch check` reads them yet.
+- Cost: a line of a table, a diagram or code stays where its parent moves.
+
+**A doc holds one summary line, and its sentence ends in a period (VI.1).** The first line of a
+doc is its summary. One check reads both rules. Each reports under a rule of its own, since each
+cites an article of its own (D1 c of #563).
+
+- In the first paragraph of a doc, a line at the summary step after a line that closes a sentence
+  is a second summary. It moves two spaces past the sentence of the summary, with the lines below
+  it.
+- After a line that runs on, the summary wraps at its own step. It stays for hand, since the hand
+  alone knows where the sentence ends.
+- A paragraph after a blank `##` line can hold lines at the summary step. The header of a module
+  in the example of Article I holds them so.
+- A generated doc is the string that a call passes as the argument `docs`, by name. Its first line
+  is its summary, which ends in a period, or wraps two spaces deeper to a line that does. Else it
+  stays for hand, since a fix of its string changes its value.
+- The generated doc of line 222 of `pga/operators.nim` stays for hand so, since its second line
+  stands four spaces deeper. Verified by `suites/test_outlines.nim`.
+- Cost: a generated doc passed by place, and not by name, is unread, and so is its outline past
+  the summary.
+
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and to the words the
