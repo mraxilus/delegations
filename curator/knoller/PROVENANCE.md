@@ -104,9 +104,9 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
 - The caller also gives the facts of each file that its text does not hold. They are the mode of
-  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), whether it
-  is drive code (`## Fixed waits`), and the constants that the other modules of its package
-  export (`## Staging`).
+  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
+  is drive code (`## Fixed waits`). The caller gives the constants that the other modules of its
+  package export too (`## Staging`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
@@ -2102,8 +2102,8 @@ The rule reads the uses and the module so:
 
 - A use of a routine is a mention of its name outside its own block. An operator has no name
   that a use spells, so it reads by the mentions of the type of its first parameter. A mention in
-  a `type` section, an iterator or a template defines that type, and is no use, since such code
-  runs where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
+  a `type` section, an iterator or a template defines that type, and is no use. Such code runs
+  where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
 - The body of `quote` or `genAst` is code that a macro emits. A use there is a runtime use, and a
   routine that it declares is no member, though it nests in a macro.
 - The family is staged where one routine of the module carries its own `compileTime`. A module
@@ -2114,8 +2114,8 @@ The rule reads the uses and the module so:
   one macro in a module that stages nothing else.
 - Rejected: the pragma of the parent covers a nested routine. STYLE.md §2 asks the family to
   carry the pragma "the same way", so `constructPart` and `generateUpTo` carry their own.
-- Cost: a field, a binding or a parameter that spells the name of a routine reads as a use, and
-  keeps the routine out of the family. That gives fewer findings, never a false one.
+- Cost: a field, a binding or a parameter that spells the name of a routine reads as a use. So
+  it keeps the routine out of the family. That gives fewer findings, never a false one.
 - Verified by `suites/test_staging.nim`.
 
 **A compile-time routine carries no runtime pragma.** The runtime pragmas are `inline`, `noinit`,
@@ -2140,8 +2140,9 @@ no pragma block, it opens `{.compileTime.}` before the `=` of the body. So `{.bo
 reports an `if` where its condition, and each `elif` of its chain, read only these:
 
 - literals and operators, and the type after `is` or `isnot`;
-- constants: a name that a `const` binds at module level in the file, a local `const` above the
-  branch in its routine, and each constant that another module of the package exports;
+- each name that a `const` binds at module level in the file;
+- each local `const` above the branch in its routine;
+- each constant that another module of the package exports;
 - static and typedesc parameters, and placeholders, of each routine around the branch;
 - `defined`, `declared`, `compileOption`, `compiles` and `sizeof`, whatever their argument;
 - `len`, `high`, `low`, `ord` and `card` of a static value.
@@ -2184,9 +2185,9 @@ alone, on a copy of the library, with knoller at `0d58caae`. `knoller --check` l
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and
   5 skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For the branch, rga4d, where
   `DIMENSIONS != 3` holds, gives 33 OK, 0 failed and 5 skipped.
-- The projects of the repository, each read as one package by `git ls-files`, take 4 reports of
-  the family (`pga_benchmark` 1, `dance_ontology` 3) and 3 of the branch (`pga_benchmark` 2,
-  `pga_visualiser` 1).
+- The driver read each project of the repository as one package, by `git ls-files`. The projects
+  take 4 reports of the family: `pga_benchmark` 1 and `dance_ontology` 3. They take 3 reports of
+  the branch: `pga_benchmark` 2 and `pga_visualiser` 1.
 
 ## Fixed waits
 
