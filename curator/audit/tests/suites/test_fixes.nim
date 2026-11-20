@@ -7,7 +7,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils, tables, unittest]
+import std/[options, os, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
 import ../../src/[findings, fixes, form, kinds, symbols, tree]
 import ./fixtures
@@ -410,6 +410,74 @@ suite "Fixes":
       .allIt("  if COUNT > 2:" in it.content)  # project holds no constant, so branch is runtime
 
 
+  test "landmark index takes alias its project or its library declares, through names of context":
+    # Case held: `koch fix` passed no names of package, so `Grade(0)` at line 139 of
+    #   `src/pga_visualiser/objects.nim` stayed bare, where alias of library of `pga_visualiser`
+    #   names it and knoller writes `Grade.low` (rule 9 of #443, V.8). Domain: alias in other
+    #   module of project, in library of project alone, in other project, and nowhere.
+    let
+      alias = "## Do.\n\n" & STRICT_FUNCS & "\n\n" &
+          "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n  ## Alias grade.\n"
+      bare = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet VECTOR = Grade(1)  ## Grade of vectors.\n"
+      aliased = bare.replace("Grade(1)", "Grade.vector")
+      tree = @[
+        entry(DIRECTORY_AUDIT & "/src/a.nim", alias), entry(DIRECTORY_AUDIT & "/src/b.nim", bare)
+      ]
+      plan = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree))
+    check plan.written.mapIt(it.content) == @[aliased]  # V.8
+    check plan.fixed.mapIt((it.line, it.message)) == @[(5, "landmark alias (V.8)")]
+    let again = @[tree[0]] & plan.written
+    check fixEntries(BRANCH_CURATOR, plan.written, context = initContext(again)).written.len == 0
+    let
+      libraries = {DIRECTORY_AUDIT & "/audit.nimble": @[alias]}.toTable
+      library = initContext(tree[1..1], libraries = libraries)
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = library).written.mapIt(it.content) ==
+        @[aliased]  # library of project alone names alias
+    let other = @[entry("curator/beta/src/a.nim", alias), tree[1]]
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(other)).written.len == 0
+    let alone = initContext(tree[1..1])
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = alone).written.len == 0  # no alias
+
+
+  test "constructor call of form fewer calls take, and index of several aliases, stay for hand":
+    # Case held: `koch fix` passed no names of package, so it never reported
+    #   `initMatrixViewProjection(camera, …)` at line 860 of `tests/suites/test_camera.nim` of
+    #   `pga_visualiser`, which knoller leaves for hand, since more calls take dot (rule 15 of #443,
+    #   STYLE.md §5). Domain: call of form fewer calls take, call of form more take, index whose
+    #   aliases are several (V.8), index inside fence, which its warning counts, and no names.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      declaring = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "func initPoint*(x: int): int = x\n  ## Point.\n\n" &
+        "template one*(t: typedesc[Grade]): Grade = Grade(1)\n  ## One.\n\n" &
+        "template first*(t: typedesc[Grade]): Grade = Grade(1)\n  ## First.\n\n" &
+        "template second*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Second.\n",
+      )
+      calling = entry(
+        DIRECTORY_AUDIT & "/src/b.nim",
+        head & "let\n  NORTH* = X.initPoint  ## North.\n  SOUTH* = Y.initPoint  ## South.\n" &
+        "  WEST* = initPoint(Z)  ## West.\n  FIRST* = Grade(1)  ## First.\n\n" & FENCE_OFF &
+        "\nlet SECOND* = Grade(2)  ## Second.\n" & FENCE_ON & "\n",
+      )
+      tree = @[declaring, calling]
+      plan = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree))
+    check plan.written.len == 0  # no fix writes either
+    check plan.left.mapIt((it.line, it.message)) == @[
+      (8, "Routine takes one call form on plain first argument across package, where `2` calls " &
+        "take dot (STYLE.md §5); got `initPoint(Z)`."),
+      (9, "Landmark index stands as one of its aliases, `Grade.one` or `Grade.first` (V.8); got " &
+        "`Grade(1)`."),
+    ]  # dotted calls take form more calls take, so report none
+    check plan.warned.mapIt(it.message) == @[
+      "Fence keeps its lines as written, and inside them landmark-alias breaks once at line 12 " &
+      "(X.1); got lines `11` to `13`.",
+    ]  # names reach fence too
+    let alone = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree[1..1]))
+    check alone.left.len == 0  # project declares neither constructor nor alias
+    check alone.warned.allIt("nothing inside breaks a rule" in it.message)
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"
@@ -442,6 +510,150 @@ suite "Fixes":
       left = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, [failed]))
     check left.written.len == 0
     check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
+
+
+  test "private symbol sibling reaches takes its marker, and `{.all.}` reaching none goes, by uses":
+    # Case held: `koch fix` passed no uses of private symbols, so it kept `{.all.}` of line 9 of
+    #   `tests/suites/test_marker.nim` of `pga_visualiser`, which reaches none, where knoller drops
+    #   it (rule 7 of #443, STYLE.md §5). Domain: symbol sibling reaches, whose trailing doc moves
+    #   to next line, so later report names line as given; `{.all.}` reaching none, and one
+    #   reaching symbol; line holding plain comment, left for hand; file pass resolved none, which
+    #   warns; and no uses.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      module = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "const LIMIT = 3  ## Limit.\n\nfunc other(x: int): int = x  # Plain.\n" &
+        "  ## Same.\n\nlet SUM* = 1+2  ## Sum.\n",
+      )
+      reaching = entry(
+        DIRECTORY_AUDIT & "/src/b.nim", head & "import ./a {.all.}\n\nlet COPY* = LIMIT  ## Copy.\n"
+      )
+      reaching_none = entry(DIRECTORY_AUDIT & "/src/c.nim", head & "import ./a {.all.}\n")
+      unresolved = entry(DIRECTORY_AUDIT & "/src/d.nim", head & "import ./a {.all.}\n")
+      tree = @[module, reaching, reaching_none, unresolved]
+    var uses = initTable[string, Uses]()
+    uses[module.path] = Uses()
+    for site in [(5, 6), (7, 5)]:
+      uses[module.path].privates[site] = UsePrivate(siblings: @["b.nim"])
+    uses[reaching.path] = Uses()
+    uses[reaching.path].imports[(5, 9)] = true
+    uses[reaching_none.path] = Uses()
+    uses[reaching_none.path].imports[(5, 9)] = false
+    uses[unresolved.path] = Uses(reason: "nimsuggest answered nothing")
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, uses = uses))
+    check plan.written.mapIt((it.path, it.content)) == @[
+      (
+        module.path,
+        head & "const LIMIT {.used.} = 3  # Used in `b.nim`.\n  ## Limit.\n\n" &
+        "func other(x: int): int = x  # Plain.\n  ## Same.\n\nlet SUM* = 1 + 2  ## Sum.\n",
+      ),
+      (reaching_none.path, head & "import ./a\n"),
+    ]  # STYLE.md §5
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (module.path, 5, "marker used (STYLE.md §5)"),
+      (module.path, 10, "expression spacing (X.9)"),  # line as given, though doc moved below 5
+      (reaching_none.path, 5, "marker used (STYLE.md §5)"),
+    ]
+    check plan.left.mapIt((it.path, it.line, it.message)) == @[
+      (module.path, 7, "Private symbol sibling `b.nim` reaches carries `{.used.}` and comment " &
+        "naming sibling (STYLE.md §5); got `func other`."),
+    ]  # plain comment holds line
+    check plan.warned.mapIt((it.path, it.line, it.message)) == @[
+      (unresolved.path, 0, "Semantic pass resolved no use, so each private symbol and `{.all.}` " &
+        "stays as written (STYLE.md §5); got `nimsuggest answered nothing`."),
+    ]
+    let again = plan.written & @[reaching, unresolved]
+    check fixEntries(BRANCH_CURATOR, again, context = initContext(again, again)).written.len == 0
+    check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.mapIt(
+      it.path,
+    ) == @[module.path]  # no uses: spacing alone
+
+
+  test "`proc` compiler proves pure becomes `func`, through pures of context; fenced one stays":
+    # Case held: `koch fix` passed no pures, so it kept `proc pointCorners*()` at line 1390 of
+    #   `src/pga_visualiser/mesh.nim`, which compiler checks as `func` and knoller writes so (rule
+    #   11 of #443, STYLE.md §1). Domain: routine pures prove, fenced one, left for hand, file
+    #   compiler proved nothing of, which warns, and no pures.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      proven = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "proc twice*(x: int): int = x * 2\n  ## Double.\n\n" & FENCE_OFF &
+        "\nproc thrice*(x: int): int = x * 3\n  ## Triple.\n" & FENCE_ON & "\n",
+      )
+      unproven = entry(
+        DIRECTORY_AUDIT & "/src/b.nim", head & "proc half*(x: int): int = x div 2\n  ## Halve.\n"
+      )
+      tree = @[proven, unproven]
+    var pures = initTable[string, Pures]()
+    pures[proven.path] = Pures(sites: @[(5, 0), (9, 0)])
+    pures[unproven.path] =
+      Pures(reason: "source checks clean in no configuration: undeclared identifier: 'x'")
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, pures = pures))
+    check plan.written.mapIt((it.path, it.content)) == @[
+      (proven.path, proven.content.replace("proc twice", "func twice")),
+    ]  # STYLE.md §1
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (proven.path, 5, "func pure (STYLE.md §1)"),
+    ]
+    check plan.left.mapIt((it.path, it.line, it.message)) == @[
+      (proven.path, 9, "Routine with no effect beyond its parameters is `func` (STYLE.md §1); " &
+        "got `proc thrice`."),
+    ]  # fence keeps `proc`, X.1
+    check plan.warned.filterIt(it.path == unproven.path).mapIt(it.message) == @[
+      "Compiler proved no routine pure, so each `proc` stays as written (STYLE.md §1); got " &
+      "`source checks clean in no configuration: undeclared identifier: 'x'`.",
+    ]
+    check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.len == 0
+
+
+  test "facts of each project read from disk under root, as knoller's command line reads them":
+    # Case held: `koch fix` read no uses, pures or library from disk, so rules 7, 9 and 11 of #443
+    #   read nothing there, where knoller's command line reads each (`resolveMarkers`,
+    #   `resolvePures`, `modulesLibrary`). Domain: private symbol sibling reaches through
+    #   `{.all.}`, `proc` compiler proves pure, alias of library `nim.cfg` names, which no file of
+    #   tree holds, and file at root, which lies in no project and asks none.
+    let
+      root = repoTemp()
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      nimble = "version = \"0.1.0\"\nrequires \"nim == " & compilerRunning().version & "\"\n"
+      alias = head & "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n" &
+          "  ## Alias grade.\n"
+      tree = @[
+        entry("curator/fixture/fixture.nimble", nimble),
+        entry(
+          "curator/fixture/src/a.nim",
+          head & "func helper(x: int): int = x + 1\n  ## Add one.\n\n" &
+          "proc twice*(x: int): int = x * 2\n  ## Double.\n",
+        ),
+        entry(
+          "curator/fixture/src/b.nim",
+          head & "import ./a {.all.}\n\nlet ONE* = helper(0)  ## One.\n",
+        ),
+        entry("curator/fixture/src/c.nim", head & "let VECTOR* = Grade(1)  ## Grade of vectors.\n"),
+        entry("root.nim", head & "proc thrice*(x: int): int = x * 3\n  ## Triple.\n"),
+      ]
+    defer: removeDir(root)
+    for e in tree: writeInto(root, e.path, e.content)
+    writeInto(root, "curator/fixture/nim.cfg", "--path:\"dependencies/library\"\n")
+    writeInto(root, "curator/fixture/dependencies/library/algebra.nim", alias)  # git lists none
+    discard root.git("add " & tree.mapIt(it.path).join(" "))
+    let (uses, pures, libraries) = readFacts(root, tree)
+    check uses.getOrDefault(tree[1].path).privates.values.toSeq.mapIt(it.siblings) ==
+        @[@["b.nim"]]  # `b.nim` reaches `helper`, which `a.nim` never uses
+    check pures.getOrDefault(tree[1].path).sites == @[(8, 0)]
+    check "root.nim" notin uses and "root.nim" notin pures  # root lies in no project
+    check libraries == {"curator/fixture/fixture.nimble": @[alias]}.toTable
+    let
+      context = initContext(tree, tree, uses = uses, pures = pures, libraries = libraries)
+      written = fixEntries(BRANCH_CURATOR, tree, context = context).written
+    check written.mapIt(it.path) == @[tree[1].path, tree[3].path]
+    check written.anyIt(
+      "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in it.content,
+    )  # rule 7
+    check written.anyIt("func twice*(x: int): int = x * 2" in it.content)  # rule 11
+    check written.anyIt(it.content == tree[3].content.replace("Grade(1)", "Grade.vector"))
 
 
   test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
@@ -573,6 +785,52 @@ suite "Fixes":
     ]  # V.1, V.6
     check plan.fixed.mapIt(it.message) == @["name case (V.1)", "name case (V.1)"]  # one rename
     check plan.written.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.6
+
+
+  test "glued `anti` renames at every use where words of project decide its cut, through context":
+    # Case held: `koch fix` passed no names of package, so it planned no cut rename and left
+    #   `ANTISCALAR` at line 238 of `tests/suites/test_regressions.nim` of `curator/knoller`, which
+    #   knoller renames `SCALAR_ANTI` from words of its package (rule 8 of #443, V.2). Domain: word
+    #   other module of project declares, word no module of project declares, and global breaking
+    #   case too, whose one rename settles both rules.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      words = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "func scalar*(): int = 1\n  ## One.\n\nfunc basis*(): int = 2\n  ## Two.\n",
+      )
+      glued = entry(
+        DIRECTORY_AUDIT & "/src/b.nim",
+        head & "const ANTISCALAR* = 2  ## Two.\n\nlet COUNT* = ANTISCALAR + 1  ## Three.\n",
+      )
+      cased = entry(DIRECTORY_AUDIT & "/src/c.nim", head & "let Antibasis* = 3  ## Odd.\n")
+      tree = @[words, glued, cased]
+    check queriesSemantic(tree, [glued, cased]).mapIt((it.path, it.sites, it.names)) == @[
+      (glued.path, @[(5, 6), (7, 13)], @["SCALAR_ANTI"]),
+      (cased.path, @[(5, 4)], @["BASIS_ANTI"]),
+    ]  # one rename for both rules, never case rename `ANTIBASIS` beside it
+    check queriesSemantic(tree[1..2], [glued, cased]).mapIt((it.path, it.names)) ==
+        @[(cased.path, @["ANTIBASIS"])]  # no module declares either word, so case rename alone
+    var answers = @[Answer(path: glued.path), Answer(path: cased.path)]
+    for site in [(5, 6), (7, 13)]:
+      answers[0].symbols[site] =
+        Symbol(kind: "skConst", name: "b.ANTISCALAR", file: "/r/" & glued.path, line: 5, column: 6)
+    answers[0].globals["SCALAR_ANTI"] = @[]
+    answers[1].symbols[(5, 4)] =
+      Symbol(kind: "skLet", name: "c.Antibasis", file: "/r/" & cased.path, line: 5, column: 4)
+    answers[1].globals["BASIS_ANTI"] = @[]
+    let
+      context = initContext(tree, [glued, cased], answers)
+      plan = fixEntries(BRANCH_CURATOR, [glued, cased], context = context)
+    check plan.written.mapIt(it.content) == @[
+      glued.content.replace("ANTISCALAR", "SCALAR_ANTI"),
+      cased.content.replace("Antibasis", "BASIS_ANTI"),
+    ]  # V.2, V.1
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (glued.path, 5, "name cut (V.2)"),
+      (glued.path, 7, "name cut (V.2)"),
+      (cased.path, 5, "name case (V.1)"),
+    ]  # joined rename takes rule of case, as knoller names it
 
 
   test "rename fix cannot prove stays for hand with its reason, and asks semantic pass nothing":
