@@ -778,6 +778,7 @@ type
     ## lo mulcmi pe pa pagbu ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
     ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali to `fillSets` toi
     terminals: seq[Terminal]  ## lo genvla poi le selcmi cu tcidu ke'a
+    is_everywhere: bool  ## le tadji pe le romoi nu tisna to `fillSets` toi
     sets: seq[seq[Item]]  ## le selcmi pe `Earley`
     firsts: seq[int]  ## le pamoi cmima poi denpa ro jvasni ne'i ro selcmi
     lasts: seq[int]  ## le romoi cmima poi denpa ro jvasni ne'i ro selcmi
@@ -848,6 +849,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
   ##       cnino
+  ##   .i va'o lo nu `is_everywhere` cu cenba kei le fancu cu tisna ro selcmi
   ##
   ## ni'o lo temci pe lo nu karbi lo genvla cu zensmi lo te kancu be lo genvla poi stali
   ##   .i lo temci pe lo nu fukpi lo genvla cu zensmi lo te kancu be lo genvla poi cnino
@@ -885,11 +887,12 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
     same = 0  # lo te kancu be lo genvla poi stali
     first = 0  # le pamoi selcmi poi le fancu cu tisna ke'a
     seen = initHashSet[int]()  # lo cmima poi pagre lo jvasni ne'i le ca selcmi
-  if chart.sets.len > 0:
+  if chart.sets.len > 0 and chart.is_everywhere == is_everywhere:
     let most = min(chart.terminals.len, terminals.len)
     while same < most and chart.terminals[same] == terminals[same]: inc same
     first = same + 1
   result = terminals.len + 1 - first
+  chart.is_everywhere = is_everywhere
   chart.sets.setLen(first)
   chart.sets.setLen(terminals.len + 1)
   chart.firsts.setLen(first * count_nonterminals)
