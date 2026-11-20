@@ -103,8 +103,9 @@ suite "Command line":
       "a.nim: strictfuncs fixed",  # whole file: path alone
       "a.nim:1: expression-spacing fixed",
       "a.nim:1: trailing-comment fixed",
+      "a.nim:2: definition-blank-lines fixed",
       "a.nim:2: parameter-separators fixed",
-      "4 fixed.",
+      "5 fixed.",
     ]  # sorted by path, line, then rule id
     check outcome.code == 0  # nothing left
     let again = outcome([outcome.written[0]], [], is_check = false)
@@ -114,7 +115,7 @@ suite "Command line":
   test "check writes nothing, reports each change due, and exits 1 where any":
     let outcome = outcome([("a.nim", DIRTY)], [], is_check = true)
     check outcome.written.len == 0
-    check outcome.lines[^1] == "4 to fix."
+    check outcome.lines[^1] == "5 to fix."
     check outcome.lines[0] == "a.nim: strictfuncs to fix"
     check outcome.code == 1
     check outcome([("b.nim", CLEAN)], [], is_check = true).code == 0  # nothing due
@@ -245,7 +246,7 @@ suite "Command line":
     #   (D2 of #572).
     let source =
         "import std/json\n\nfunc toJSON*(text: string): JsonNode = parseJson(text)\n" &
-        "  ## Parse.\ntype GLContext* = object  ## Context.\n"
+        "  ## Parse.\n\ntype GLContext* = object  ## Context.\n"
     for path in ["a.nim", "a.nims", "a.nimble"]:
       let
         given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
@@ -270,7 +271,8 @@ suite "Command line":
       outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
-        "expression-spacing breaks once at line 3; got lines `2` to `4`.",
+        "definition-blank-lines breaks once at line 3 and expression-spacing once at line 3; " &
+        "got lines `2` to `4`.",
       "0 to fix.",
     ]
     check outcome.code == 0  # break inside fence alone fails nothing
@@ -601,7 +603,7 @@ suite "Command line":
     let dirty = outcomeProven(
       [("a.nim", DIRTY & "let S = @(x) + 1  ## One.\n")], [], true, "/", proverFailing
     )
-    check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
+    check dirty.code == 1 and dirty.lines[^1] == "6 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 
 
