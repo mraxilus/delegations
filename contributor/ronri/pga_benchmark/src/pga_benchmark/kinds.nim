@@ -67,7 +67,7 @@ const
     ## Name type of each element count, since C names every `MultivectorOf` alike.
     ##   Cost: count names first stem that holds it, so motor reads as scalars at rga2d, which
     ##     hold same two bases. Elsewhere each type of half of bases reads as motor at same bytes,
-    ##     so stem tells motor from no flector part.
+    ##     so stem does not tell motor from flector part, or from any other type of half of bases.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."
