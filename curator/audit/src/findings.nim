@@ -86,6 +86,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.SeedRandom: "STYLE.md §6",
   Rule.HeaderStub: "STYLE.md §6",
   Rule.OutputDebug: "VIII.5",
+  Rule.ReasonSkip: "IX.9",
   Rule.WaitFixed: "IX.12",
   Rule.ListUnordered: "X.10",
   Rule.LinesBlankTest: "X.2",

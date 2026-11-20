@@ -73,6 +73,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   SeedRandom = "random seed"  ## Suite importing `std/random` seeds it.
   HeaderStub = "stub header"  ## Test stub carries testament header.
   OutputDebug = "debug output"  ## Test leaves no unlabelled `echo` outside condition.
+  ReasonSkip = "skip reason"  ## Skip gives reason, gap skips, and no test leaves run.
   WaitFixed = "fixed wait"  ## Drive code waits on condition or clock, never span of real time.
   ListUnordered = "unordered list"  ## List language leaves unordered is alphabetised.
   LinesBlankTest = "test blank lines"  ## Blank lines beside suite and test follow tier.

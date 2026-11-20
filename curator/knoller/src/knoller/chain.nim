@@ -96,8 +96,8 @@
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   articles, blanks, claims, commands, declarations, entry, fences, form, generations, idioms,
-  messages, names, outlines, parentheses, precedence, reports, spacing, stages, targets, waits,
-  wrapping,
+  messages, names, outlines, parentheses, precedence, reports, skips, spacing, stages, targets,
+  waits, wrapping,
 ]
 
 
@@ -171,7 +171,7 @@ func checkFormattingUnfenced(
   result.add checkParentheses(path, view, proofs)
   if dialect == Dialect.Module:
     result.add checkBracketsImport(path, view) & checkLists(path, view) &
-        checkProfiler(path, view, nimble)
+        checkProfiler(path, view, nimble) & checkSkips(path, view, nimble)
 
 
 func checkFormatting*(

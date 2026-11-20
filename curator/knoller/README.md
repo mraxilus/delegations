@@ -203,6 +203,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
 | `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
 | `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
+| `skip-reason` | A skip gives its reason, and a gap in coverage is a test that skips. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
