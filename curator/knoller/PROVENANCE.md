@@ -678,8 +678,8 @@ static pass of `audit` does not run this check yet.
 **Each layout rule that has one right answer has a check and a fixer, from one reading.** The
 checks and fixers of separators, signatures, calls and trailing separators share the reading of
 `wrapping.nim`. Spaces read `spacing.nim`, and `## Spaces` gives them. Blank lines read
-`blanks.nim`, and docs and defaults `declarations.nim`. A construct that the scanner cannot read
-with certainty stays as written, and its check stays silent.
+`blanks.nim`, and docs and defaults `declarations.nim`, where `## Docs` gives the docs. A construct
+that the scanner cannot read with certainty stays as written, and its check stays silent.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
@@ -829,16 +829,6 @@ moves.
 - Cost: a helper inside a `when`, an `if` or a loop of the body is not read. X.11 asks each
   helper first in the body.
 
-**A one-line doc of a type, a field, a binding or an enum member stands on its line (STYLE.md
-§5).** It takes two spaces before `##`, where the joined line fits `LINE_MAX`. Otherwise it takes
-the next line, one level in. A trailing doc that widens its line past `LINE_MAX` moves there. A
-doc of two or more lines stays where it is.
-
-- A declaration is a line of code in a `type`, `const`, `let` or `var` section, at any depth. A
-  keyword line that holds one declaration is one too.
-- A line that continues an expression, opens a block, leaves a bracket open or carries a `#`
-  comment is none. The doc of a routine keeps its own place.
-
 **A parameter drops a type that its literal default gives exactly (X.12).** An integer literal
 gives `int`, a float literal `float`, `true` and `false` give `bool`, and a string or a character
 literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `Option[T]`.
@@ -852,7 +842,7 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 **A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
 which fixers widen, which wraps follow, and what the chain holds where none fits.
 
-## Missing docs
+## Docs
 
 **Each declaration takes a doc where its shape puts it, and `## TODO: Document.` waits for its
 text (VI.1).** The rule reads each name that `declared.nim` declares. A local, a parameter and a
@@ -952,16 +942,58 @@ trails a line which opens a bracket holds apart a call that the wraps would join
   2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
   each file the fix writes with `parseStmt`, under 2.2.12 and under commit `27763495`, and
   each one parses. Each one parses under 2.4.0 too, verified by hand, 2026-10-29.
-- Cost: a doc that opens the line right below the first line of a declaration counts, though the
+- A doc that opens the line right below the first line of a declaration counts, though the
   value runs on past it. That holds for the first line of a `block:`, and for a line inside a
   bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
-  2026-10-25, and of 2.4.0, 2026-10-29. The fixer never writes a doc there.
+  2026-10-25, and of 2.4.0, 2026-10-29. The fixer never writes a doc there, and doc position
+  moves such a doc, or reports it for hand (below).
 - Cost: a routine with no body reads as a forward declaration where any overload of its name
   follows.
 - Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
   `BODY_FORWARD_MAX`, 40 bytes. A forward calls one routine with the arguments it takes, as
   `entry(PICK)` does, and a longer body holds logic of its own. The bound is chosen and not
   measured, so a short helper under a group comment passes too.
+
+**Each doc stands in the one position where `nim doc` reads it (VI.9; STYLE.md §5).** The
+Architect ruled so on rule 5 of #443. Doc position and missing doc read one place for each
+declaration (`placements`), and where `nim doc` reads its doc (`target`). So each doc that the
+fixer of one writes, the check of the other passes.
+
+- A one-line doc of a type, a field, a binding or an enum member stands on its line, where the
+  joined line fits `LINE_MAX`. Two spaces stand before its `##`. Otherwise it takes the next line,
+  one level in. A trailing doc that widens its line past `LINE_MAX` moves there.
+- A next-line doc of several lines, or below a line that holds a `#` comment, stands one level in
+  too. A trailing doc keeps the lines below it that continue it, at the column that the hand gave.
+- A doc above a type, a field, a global binding or an enum member moves where missing doc writes
+  it. It joins the line where it fits, else it takes the next line, one level in. A value over
+  brackets takes it after its close.
+- A doc moves from above only where a blank line, a `#` comment or the start of the file stands
+  above it. A doc right below other code stays, because that code can own it. So does a doc that
+  a declaration holds as its own. A doc above a local binding stays, since a local binding takes
+  none.
+- A one-line doc can stand on the line below the first line of a value over lines. It moves after
+  the `=` that ends that first line, where it fits. Otherwise it moves after the close of the
+  value, joined where it fits, else one level in. `nim doc` reads none below an `=` that ends the
+  first line, nor after `[` or `(` (above).
+- A doc inside a value that opens `block` reports, and stays for hand, as missing doc leaves such
+  a value. The ruling names the doc of `lut_grade_by_basis` at `pga/algebra.nim:343`, a local
+  binding. So this shape reads a binding of any reach.
+- The doc of a routine opens the line after its signature, at the indent of its body. A doc on the
+  signature line, after a blank line, or at another indent moves there.
+- A one-line doc under a bare `type` joins the keyword line, as the group doc of the block.
+- Doc position reads as a declaration each line of code in a `type`, `const`, `let` or `var`
+  section, at any depth. A keyword line that holds one declaration is one too. A line that
+  continues an expression declares nothing.
+- Verified by `suites/test_declarations.nim`, for each shape and for each doc that stays. The cases
+  of `type Order` and `lut_grade_by_basis` are quoted from the PGA library at `3d9696e`.
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
+  `checkDocs` and `fixDocs` alone. It gives 2 reports. The fix writes 1 line and removes 2 at
+  `type Order`, and leaves the doc under `block:` for hand.
+- Verified by hand with that driver over each Nim file that git lists, 2026-11-20, against the
+  rule before these shapes. The shapes add 14 reports, and each is a doc inside `block` that stays
+  for hand. The 22 reports of the rule before stay as they were.
+- Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
+  stays, though `nim doc` reads none there.
 
 ## Spaces
 
