@@ -182,9 +182,8 @@ func named(source: string, stems: openArray[(int, string)]): string =
       array = if words.len > 1 and words[0].startsWith("NIM_ALIGN("): words[1] else: words[0]
     if not field.endsWith(" elements;") or array notin counts: continue
     for (count, stem) in stems:
-      if count == counts[array]:  # first stem of count wins, as motor and scalars at rga2d
+      if count == counts[array]:
         renames.add (instance, "tyObject_" & stem & instance[PREFIX_INSTANCE.len-2..^1])
-        break
   source.multiReplace(renames)
 
 

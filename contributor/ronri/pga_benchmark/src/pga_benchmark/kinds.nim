@@ -65,8 +65,9 @@ const
     (card(BASES_MOTOR), STEM_MOTOR),
   ]
     ## Name type of each element count, since C names every `MultivectorOf` alike.
-    ##   Cost: count names one stem, so each instance of motor's count reads as motor; at rga3d
-    ##     `MultivectorEven` holds as many bases, and reads same bytes.
+    ##   Cost: count names first stem that holds it, so motor reads as scalars at rga2d, which
+    ##     hold same two bases. Elsewhere each type of half of bases reads as motor at same bytes,
+    ##     so stem tells motor from no flector part.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."
