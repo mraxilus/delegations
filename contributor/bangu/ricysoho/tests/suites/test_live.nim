@@ -748,6 +748,21 @@ suite "Internal: Live text":
     check count >= COUNT_PARTED_LEAST  # `IX.3`
 
 
+  test "Decimal point and digit group read typed byte by byte as read whole, and grow":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i denpa bu poi romoi gi'e se lidne pa lerfu cu sinxa lo denpa
+    #   .i ba lo nu lo lerfu cu se ciska ba ke'a kei denpa bu cu sinxa zo pi
+    for text in [
+        "li 3.14 .i li 1,000", "mi viska 3. do", "li 1,000.5 du li 1,000 su'i pi 5",
+        "li 3,14 du li ci"]:
+      checkpoint text
+      let live = text.readLive(toSeq(1 ..< text.len), is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`
+      check live.is_held  # le stedu be `live.nim`
+      check live.is_grown  # le stedu be `live.nim`
+      check live.is_tied  # `ChangeNif` pe `live.nim`
+
+
   test "Bytes read grow with length of text, word by word":
     let
       text = textCost(SENTENCES_COST)

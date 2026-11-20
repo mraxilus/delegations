@@ -210,6 +210,14 @@ func selmahoRead(text: string): Option[seq[Option[Selmaho]]] =
   else: none(seq[Option[Selmaho]])
 
 
+func cmavoRead(text: string): Option[seq[string]] =
+  ## tcidu le porsi gi'e liste lo valsi poi le genturfa'i cu tcidu ro valsi ta'i ke'a
+  ##   .i dunda no da va'o lo nu le porsi cu se to'e curmi
+  let reading = text.readStream
+  if not reading.is_read: return none(seq[string])
+  some(reading.occurrences.mapIt(if it.reading.is_word: $it.reading.tanru else: it.text))
+
+
 func refusalRead(text: string): Option[(Refusal, int)] =
   ## tcidu le porsi gi'e dunda lo javni poi to'e curmi le porsi ku'o .e lo stuzi poi le javni cu
   ##     cusku ke'a
@@ -719,11 +727,36 @@ suite "Internal: Stream":
     check "li 1987".stressesRead == some(none(int).repeat(5))
     check "le 10moi".wordsRead == some(@["le", "1", "0", "moi"])
     check "pa3".wordsRead == some(@["pa", "3"])
-    # slaka bu poi zvati lo jbini be re lerfu pe li 10 cu se to'e curmi to `CLL 3.3` toi
-    check "li 1,000".refusalRead == some((Refusal.Comma, 4))  # `CLL 3.3`
-    # denpa bu poi zvati lo jbini be re lerfu pe li 10 cu sinxa lo denpa to `CLL 3.3` toi
-    check "li 3.14".pausesRead ==
-      some(@[Pause.Absent, Pause.Absent, Pause.Written, Pause.Absent])  # `CLL 3.3`
+    # le cipra po'u lo bavla'i cu cipra lo nu tcidu slaka bu .e denpa bu poi zvati lo jbini be re
+    #     lerfu
+
+
+  test "Period between two digits reads as pi, and comma before three digits as ki'o":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` cu pilno zo pi .e zo ki'o ne'i lo namcu
+    for (text, words, cmavo) in [
+        ("li 3.14", @["li", "3", ".", "1", "4"], @["li", "ci", "pi", "pa", "vo"]),
+        ("li 1,000", @["li", "1", ",", "0", "0", "0"], @["li", "pa", "ki'o", "no", "no", "no"]),
+        ("li 1,234,567", @["li", "1", ",", "2", "3", "4", ",", "5", "6", "7"],
+          @["li", "pa", "ki'o", "re", "ci", "vo", "ki'o", "mu", "xa", "ze"]),
+        ("li 1,000.5", @["li", "1", ",", "0", "0", "0", ".", "5"],
+          @["li", "pa", "ki'o", "no", "no", "no", "pi", "mu"]),
+        ("le 1,000moi", @["le", "1", ",", "0", "0", "0", "moi"],
+          @["le", "pa", "ki'o", "no", "no", "no", "moi"])]:
+      checkpoint text
+      check text.wordsRead == some(words)  # `CLL 18.2`
+      check text.cmavoRead == some(cmavo)  # `CLL 18.2`
+      check text.startsRead == some(toSeq(0 ..< words.len).mapIt(if it == 0: 0 else: it + 2))
+      check text.pausesRead == some(Pause.Absent.repeat(words.len))  # no denpa
+    # slaka bu poi lidne lo drata be ci lerfu cu se to'e curmi to `CLL 3.3` toi
+    for text in ["li 3,14", "li 1,2,3", "li 1,0000", "li 1,00"]:
+      checkpoint text
+      check text.refusalRead == some((Refusal.Comma, 4))  # `CLL 3.3`
+    # denpa bu poi na zvati lo jbini be re lerfu cu sinxa lo denpa to `CLL 3.3` toi
+    check "mi viska 3. do".pausesRead ==
+      some(@[Pause.Absent, Pause.Absent, Pause.Absent, Pause.Written])  # `CLL 3.3`
+    check "li .5".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
+    check "1.ai".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
 
 
   test "Words joined by spaces read as readWord reads each, at byte where each opens":

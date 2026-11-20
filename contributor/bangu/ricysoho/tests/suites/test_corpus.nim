@@ -254,6 +254,18 @@ suite "Chapters 1-19":
     check count >= COUNT_DIGITS_LEAST  # `Article IX.3`
 
 
+  test "Decimal point and digit group read to same tree as pi and ki'o":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    for (text, cmavo) in [
+        ("li 3.14", "li ci pi pa vo"), ("li 1,000", "li pa ki'o no no no"),
+        ("li 1,234,567", "li pa ki'o re ci vo ki'o mu xa ze"),
+        ("li 1,000.5", "li pa ki'o no no no pi mu")]:
+      checkpoint text
+      let (read, reading) = (text.readText, cmavo.readText)
+      check read.is_read and reading.is_read  # `CLL 18.6` .e `CLL 18.11`
+      if not (read.is_read and reading.is_read): continue
+      check read.tree.shapeTree(read.units) == reading.tree.shapeTree(reading.units)
+
   test "Each example of mex alone reads after li":
     for number in NUMBERS_MEX:
       checkpoint "Example " & number

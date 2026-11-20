@@ -137,7 +137,9 @@ suite "Internal: Prose of project, in lojban":
         ("ni'o lo 02 mlatu cu klama\n", 1), ("ni'o li 0 pi 079 cu namcu\n", 0),
         ("ni'o li 2026 pi'e 11 pi'e vo cu detri\n", 1),
         ("ni'o li 2026 pi'e 11 pi'e 4 cu detri\n", 0), ("ni'o zo pa cu cmavo\n", 0),
-        ("ni'o lo'u li pa le'u cu sitna\n", 0), ("ni'o lu li pa li'u cu sitna\n", 0)]:
+        ("ni'o lo'u li pa le'u cu sitna\n", 0), ("ni'o lu li pa li'u cu sitna\n", 0),
+        ("ni'o li 3.14 cu namcu\n", 0), ("ni'o li 1,000 cu namcu\n", 0),
+        ("ni'o li 1,000.05 cu namcu\n", 0)]:
       checkpoint prose
       check faultsNumbersRead("README.md", prose).len == count  # `CLL 18.2` .e `CLL 18.6`
 
