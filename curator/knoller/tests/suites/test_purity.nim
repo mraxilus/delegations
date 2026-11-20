@@ -215,6 +215,16 @@ suite "Style §1":
     check broken.sites.len == 0 and broken.reason.contains("type mismatch")
 
 
+  test "proc inside `compiles` stays, since clean check of module never proves its answer":
+    # Case: `leaving` and `staying` of `tests/suites/test_timings.nim:39` of `pga_visualiser`,
+    #   each inside `check compiles(block: …)`, whose answer reads only as suite runs.
+    for opening in ["check not compiles(block:", "check compiles(block:", "when compiles(block:"]:
+      let source = opening & "\n  proc leaving() =\n    discard\n  leaving())\n"
+      checkpoint opening
+      check candidatesPure([("a.nim", source)]).len == 0
+    check candidatesPure([("a.nim", "proc leaving() =\n  discard\n")]).len == 1
+
+
   test "module JavaScript backend alone compiles proves its candidates there":
     # Case: `design/rig_view.nim:72` of `dance_ontology`, which imports `std/jsffi`; C backend
     #   refuses it, so it proved nothing, where semantic pass asks JavaScript backend too.
