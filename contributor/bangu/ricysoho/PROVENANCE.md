@@ -1034,14 +1034,14 @@ ni'o se to'e cuxna fa lo nu jorne ro porsi be lo valsi pe `PA` ta'i pa genvla pu
   .i ki'u bo pa genvla cu ba kuspe so'i valsi
   .i ku'i ro genvla pe `NIF` .e ro stuzi pe le jmive se ciska cu kuspe pa valsi po'o
 
-ni'o de'i `2026-11-20` le nu fanta cu rinka lo nu pa jufra be le mulvei pe `Tatoeba` .e pa ju'agri
-    pe `Wikipedia` cu se to'e curmi
+ni'o de'i `2026-11-20` pa jufra be le mulvei pe `Tatoeba` .e pa ju'agri pe `Wikipedia` cu se to'e
+    curmi ki'u po'o le nu fanta
   .i lo jufra po'u `7654378` cu vasru lo'u mi bruli piso'iroi klaku le'u
   .i lo'u pi so'i le'u cu du pa namcu
   .i se ki'u bo lo'u piso'iroi le'u cu tcita gi'e nitcu lo sumti
   .i `3668385` .e `5180323` cu se to'e curmi bu'u le javni pe li 812
   .i ki'u bo lo mekso poi klani lo sumti cu nitcu zo vei to le javni pe li 300 toi
-  .i ro drata seljdi pe le mulvei cu stali
+  .i le nu fanta cu jdice no drata seljdi pe le mulvei
 
 ## ni'o ni'o ni'o lo genturfa'i pe `Earley`
 
