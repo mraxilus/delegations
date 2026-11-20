@@ -254,6 +254,11 @@ suite "Style §5":
     check uses["pga/rig.nim"].imports[(1, 7)]  # names private `toFlags` in its text
     check uses["tests/suites.nim"].imports[(1, 15)]  # suite reaches, and makes no sibling (Q1)
     check "pga/bench.nim" notin uses  # `pga/cayleys` names no file of package, so unread (Q3)
+    let hinted = usesPackage(
+      files, answers, ROOT_FIXTURE, {"pga/algebra.nim": @[(1, "countSetBits")]}.toTable
+    )
+    check not hinted["pga/algebra.nim"].privates[(1, 5)].is_own  # compiler hints it unused
+    check hinted["pga/algebra.nim"].privates[(2, 9)].is_own  # it hints none, so module uses it
     let failed = usesPackage(files, @[("pga/cayleys.nim", Answer(path: "pga/algebra.nim",
       reason: "error"))], ROOT_FIXTURE)
     check failed["pga/cayleys.nim"].reason == "error" and
