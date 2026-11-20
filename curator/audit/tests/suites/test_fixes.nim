@@ -410,6 +410,35 @@ suite "Fixes":
       .allIt("  if COUNT > 2:" in it.content)  # project holds no constant, so branch is runtime
 
 
+  test "landmark index takes alias its project or its library declares, through names of context":
+    # Case held: `koch fix` passed no names of package, so `Grade(0)` at line 139 of
+    #   `src/pga_visualiser/objects.nim` stayed bare, where alias of library of `pga_visualiser`
+    #   names it and knoller writes `Grade.low` (rule 9 of #443, V.8). Domain: alias in other
+    #   module of project, in library of project alone, in other project, and nowhere.
+    let
+      alias = "## Do.\n\n" & STRICT_FUNCS & "\n\n" &
+        "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n  ## Alias grade.\n"
+      bare = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet VECTOR = Grade(1)  ## Grade of vectors.\n"
+      aliased = bare.replace("Grade(1)", "Grade.vector")
+      tree = @[
+        entry(DIRECTORY_AUDIT & "/src/a.nim", alias), entry(DIRECTORY_AUDIT & "/src/b.nim", bare)
+      ]
+      plan = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree))
+    check plan.written.mapIt(it.content) == @[aliased]  # V.8
+    check plan.fixed.mapIt((it.line, it.message)) == @[(5, "landmark alias (V.8)")]
+    let again = @[tree[0]] & plan.written
+    check fixEntries(BRANCH_CURATOR, plan.written, context = initContext(again)).written.len == 0
+    let
+      libraries = {DIRECTORY_AUDIT & "/audit.nimble": @[alias]}.toTable
+      library = initContext(tree[1 .. 1], libraries = libraries)
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = library).written.mapIt(it.content) ==
+      @[aliased]  # library of project alone names alias
+    let other = @[entry("curator/beta/src/a.nim", alias), tree[1]]
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(other)).written.len == 0
+    let alone = initContext(tree[1 .. 1])
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = alone).written.len == 0  # no alias
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"
