@@ -1,13 +1,15 @@
 ## Replicate log of claims: rows of reflection read from transcript, line of each, its key, its
 ##   path and project by branch, and file `stop` writes, reads back and moves.
-##   Text format of each line is read back through `buf convert` against `claims.proto`, value by
-##     value, since `buf` drops unknown field with no error.
-##   Cost: round trip runs `buf`, so cold store fetches it, about 33 MB, and needs network.
+##   Text format of each line is read back through `protoc` against `claims.proto`, field by
+##     field: `--encode` refuses misspelt field, which `buf convert` drops with no error, as
+##     Architect ruled on #989 (comment 7053329096).
+##   Cost: round trip runs `protoc`, which `tools/build.nim` declares, so machine lacking it fails.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
-import ../../src/[bufbuild, claims_log, hooks]
+import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
+import std/unittest
+import ../../src/[claims_log, hooks]
 
 
 const
@@ -148,21 +150,22 @@ proc rootTemplates(): string =
       "---\n")
 
 
-proc converted(log: string): JsonNode =
-  ## Read log text back through `buf convert`, as JSON of its `Log`.
-  let binary = bufbuildIn(rootBufbuild(getEnv(KEY_BUFBUILD)))
-  doAssert binary.isSome, "buf could not be fetched"
-  let
-    directory = createTempDir("claims_", "_log")
-    path = directory / FILE_LOG
-    schema = currentSourcePath().parentDir / "../../src/claims.proto"
-  writeFile(path, log)
-  let (output, code) = execCmdEx(quoteShellCommand([
-    binary.get, "convert", schema, "--type", "claims.Log", "--from", path, "--to", "-#format=json"
-  ]))
-  removeDir(directory)
-  doAssert code == 0, "buf convert failed; got `" & output & "`."
-  output.parseJson
+proc protoc(verb, input: string): tuple[output: string, code: int] =
+  ## Run `protoc` with verb `--encode` or `--decode` of `claims.Log`, in folder of `claims.proto`,
+  ##   on input; give its output whole and its exit code.
+  ##   Output is read whole, never by line, since `--encode` writes bytes that reading by line
+  ##     changes; input is small, so writing all of it first fills no pipe.
+  let process = startProcess(
+    "protoc",
+    currentSourcePath().parentDir / "../../src",
+    [verb & "=claims.Log", "claims.proto"],
+    options = {poUsePath, poStdErrToStdOut},
+  )
+  process.inputStream.write(input)
+  process.inputStream.close()
+  result.output = process.outputStream.readAll
+  result.code = process.waitForExit
+  process.close
 
 
 
@@ -294,36 +297,37 @@ suite "Log of claims":
       "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
 
 
-  test "buf reads each line back against schema, value by value":
+  test "protoc reads each line back against schema, field by field, and refuses misspelt field":
     var claims = transcript().claimsRead
     claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled)
-    let
-      log = HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join
-      read = log.converted["claims"].getElems
-    check read.len == claims.len
-    for k, claim in claims:
-      check read[k]{"text"}.getStr == claim.text
-      check read[k]{"date"}.getStr == claim.date
-      check read[k]{"delegate"}.getStr == claim.delegate
-      check read[k]{"project"}.getStr == claim.project
-      check read[k]{"kind"}.getStr == claim.kind
-      check read[k]{"call"}.getStr == claim.call
-      check read[k]{"model"}.getStr == claim.model
-      check read[k]{"effort"}.getStr == claim.effort
-      check read[k]{"confidence"}.getFloat == claim.confidence
-      check read[k]{"marker"}.getStr == "MARKER_DELEGATE"
-      check read[k]{"tokens"}.getStr("0").parseInt == claim.tokens  # int64 reads as string
-      check read[k]{"cost"}.getFloat == claim.cost
-      check read[k]{"address"}.getStr == claim.address
-      check read[k]{"key"}.getStr == claim.key
-      check read[k]{"result"}.getStr == claim.result
-    check read.mapIt(it{"state"}.getStr) ==
-      @["STATE_HIT", "STATE_MISS", "STATE_WAITING", "STATE_ANNULLED"]
-    let number = read[1]{"number"}
-    check (number{"low"}.getFloat, number{"median"}.getFloat, number{"high"}.getFloat) ==
-      (1e5, 1.6e5, 3e5)
-    check number{"outcome"}.getFloat == 320_000.0
-    check read[0]{"number"} == nil
+    claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit)
+    let (encoded, code) = protoc("--encode", HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join)
+    check code == 0
+    let (decoded, back) = protoc("--decode", encoded)
+    check back == 0
+    check decoded.count("claims {") == claims.len
+    for field in [  # as `protoc` prints each field it read, by name, from first row and others
+      "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"claude-opus-5-5\"",
+      "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
+      "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
+      "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",
+      "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
+      "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
+      "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
+      "text: \"a\\\\b\\n\\t\\001\"",
+    ]:
+      check decoded.splitLines.anyIt(it.strip == field)
+    check protoc("--encode", "claims { dat: \"2026-11-20\" }\n").code != 0  # misspelt field
+
+
+  test "driver of audit declares `protoc` that suite reads log with":
+    let (output, code) = execCmdEx(
+      "nim r --hints:off tools/build.nim system",
+      workingDir = currentSourcePath().parentDir / "../..",
+    )
+    check code == 0
+    check output.splitLines.anyIt(it.strip == "protobuf-compiler")
 
 
   test "escaped quote in text is no key, so only field opens one":

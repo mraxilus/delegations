@@ -18,10 +18,13 @@
 ##   Log is `claims.txtpb` of scope branch writes (`pathLog`), with project its role names; other
 ##     checkout writes file outside tree, with project `curator`, since root curator alone keeps
 ##     checkout outside grammar. `moveClaims` empties that file into log of root branch alone.
-##   Text format is written here, one row to line; suite reads it back through `buf`.
+##   Text format is written here, one row to line, as exception to CONTRIBUTOR.md, Data, that
+##     Architect ruled on #989 (comment 7053329096); suite reads it back through `protoc`, which
+##     refuses misspelt field.
 ##
-##   Rejected: `protobuf_serialization`, which writes bytes, and would be first dependency of
-##     audit; log in tree is text (#964).
+##   Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as
+##     Data asks: first dependency of audit and `protoc` at each stop of each delegate, and row
+##     of 17 lines, which `union` joins no longer.
 ##   Rejected: tokens summed from transcript of subagent: cost would need price of each model in
 ##     code, and reflection states both.
 ##   Cost: one claim in blocks of several calls of one kind takes latest such call alone.
