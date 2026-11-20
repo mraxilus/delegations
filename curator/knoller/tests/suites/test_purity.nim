@@ -180,11 +180,30 @@ suite "Style §1":
     check proven(source).sites == @[source.site("proc home")]
 
 
-  test "write library routine makes through `ref` parameter proves, as `[]=` of `std/json`":
-    # Cost of record: rule reports `mergeAllocations` of `pga_benchmark`, which changes its node.
-    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n" &
-      "proc merge(n: JsonNode) =\n  n[\"a\"] = %1\n\nmerge(newJObject())\n"
-    check proven(source).sites == @[source.site("proc merge")]
+  test "routine taking `ref` or `ptr` parameter stays `proc`, since other holder can change it":
+    # Ruling `D1 a` of #980: `mergeAllocations` of `pga_benchmark` stays, which changes its node.
+    #   Routine that only reads stays too, and `var` alone keeps no routine `proc`.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\ntype\n" &
+      "  Cell = ref object\n    x: int\n  Alias = JsonNode\n  Handle = distinct ptr int\n\n" &
+      "proc merge(n: JsonNode) =\n  n[\"a\"] = %1\n\nproc size(n: JsonNode): int =\n  n.len\n\n" &
+      "proc read(c: Cell): int =\n  c.x\n\nproc aliased(a: Alias): int =\n  a.len\n\n" &
+      "proc deref(p: ptr int): int =\n  p[]\n\nproc raw(p: pointer): bool =\n  p.isNil\n\n" &
+      "proc handled(h: Handle): int =\n  1\n\nproc held(c: var Cell): int =\n  c.x\n\n" &
+      "proc fresh(n = newJObject()): int =\n  n.len\n\nproc twice(x: int): int =\n  2 * x\n\n" &
+      "proc bump(x: var int) =\n  inc x\n"
+    check candidatesPure([("a.nim", source)])["a.nim"].len == 11
+    check proven(source).sites == @[source.site("proc twice"), source.site("proc bump")]
+
+
+  test "ref inside container or field, generic parameter and `cstring` are unread, so each proves":
+    # Cost of record: each reads as pure, though another holder can change what it reads, and
+    #   `put` changes node of its caller through `[]=` of `std/json`.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\ntype Holder = object\n" &
+      "  node: JsonNode\n\nproc count(nodes: seq[JsonNode]): int =\n  nodes.len\n\n" &
+      "proc put(h: Holder) =\n  h.node[\"a\"] = %1\n\nproc same[T](x: T): T =\n  x\n\n" &
+      "proc chars(s: cstring): int =\n  s.len\n"
+    check proven(source).sites ==
+      ["proc count", "proc put", "proc same", "proc chars"].mapIt(source.site(it))
 
 
   test "generic body checks where its own module instantiates it, so other module goes unread":
@@ -251,9 +270,9 @@ suite "Style §1":
 
 
   test "compiler proves each candidate it checks as `func`, and refuses one it rejects":
-    # Domain: candidate syntax passes and `strictFuncs` refuses, as write through `ref`.
-    let source = MODULE_ALGEBRA &
-      "\ntype Cell = ref object\n  x: int\n\nproc reset(cell: Cell) =\n  cell.x = 0\n"
+    # Domain: candidate syntax passes and `strictFuncs` refuses, as write through `ref` of field.
+    let source = MODULE_ALGEBRA & "\ntype\n  Cell = ref object\n    x: int\n  Holder = object\n" &
+      "    cell: Cell\n\nproc reset(holder: Holder) =\n  holder.cell.x = 0\n"
     check candidatesPure([("a.nim", source)])["a.nim"].len == 2
     let pures = proven(source)
     check pures.reason.len == 0
@@ -261,9 +280,10 @@ suite "Style §1":
 
 
   test "candidate stays where any configuration refuses it, and none proves where no file checks":
-    let source = "{.experimental: \"strictFuncs\".}\n\nproc f(p: ref int): int =\n" &
-      "  when defined(knoller_effect):\n    p[] = 1\n  2\n"
-    check proven(source, [DEFINES_NONE]).sites == @[(3, 0)]
+    let source = "{.experimental: \"strictFuncs\".}\n\ntype\n  Box = ref object\n    x: int\n" &
+      "  Holder = object\n    box: Box\n\nproc f(h: Holder): int =\n" &
+      "  when defined(knoller_effect):\n    h.box.x = 1\n  2\n"
+    check proven(source, [DEFINES_NONE]).sites == @[source.site("proc f")]
     check proven(source, [DEFINES_NONE, @["-d:knoller_effect"]]).sites.len == 0
     check proven(source, [@["-d:knoller_effect"]]).sites.len == 0
     let broken = proven(source & "let y: int = \"a\"\n")  # checks clean in no configuration
