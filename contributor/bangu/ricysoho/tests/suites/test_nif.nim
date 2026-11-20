@@ -38,7 +38,7 @@ import ../../src/ricysoho/nif {.all.}
 import ../../src/ricysoho/[prose, selmaho]
 import ./[corpora, reader_nif]
 from std/unicode import validateUtf8
-from ./reader_prose import errorsMessage, textsRecord
+from ./reader_prose import errorsMessage, faultsNumbersMessage, textsRecord
 
 
 const
@@ -237,6 +237,7 @@ suite "Internal: NIF":
       checkpoint message
       check message.len > 0  # le tcidu cu to'e curmi
       check message.errorsMessage.len == 0  # lo jboselci'a
+      check message.faultsNumbersMessage.len == 0  # lo namcu cu vasru lo lerfu pe `0` bi'o `9`
       check message.validateUtf8 == -1  # lo selci'a pe `UTF-8`
 
 

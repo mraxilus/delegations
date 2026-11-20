@@ -74,7 +74,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils]
+import std/[options, os, sequtils, strutils]
 
 import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 
@@ -173,6 +173,15 @@ const
     ## lo namcu poi lo stuzi be lo linji poi lo jufra cu ranji ke'a cu sumji ke'a lo stuzi be le
     ##     linji poi krasi le jufra
     ##   .i `Architect` jdice le namcu bu'u `#890`
+  CMAVO_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
+  CMAVO_INSIDE = ["pi", "pi'e", "ki'o"]
+    ## lo cmavo pe `PA` poi ka'e zvati lo jbini be re lerfu pe pa namcu
+    ##   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` .e `CLL 18.74` cu pilno le cmavo
+  CMAVO_BEFORE = ["ni'u", "ma'u", "ji'i", "pi"]
+    ## lo cmavo pe `PA` poi ka'e zvati lo jbini be zo li .e lo namcu
+  WORDS_NUMBERED = ["li", "me'o"]
+    ## lo cmavo poi lidne lo namcu poi selci'a ta'i lo lerfu pe `0` bi'o `9` ro roi
 
 
 func fencedOut(markdown: string): string =
@@ -841,6 +850,78 @@ func faultsJoined*(text: Text, marked: ReadingMarked): seq[Error] =
     let start = marked.occurrences[marked.units[at].words[0]].start
     result.add Error(path: text.path, place: text.place(start),
       why: "selbri after open tanru, with no cu")
+
+
+func digitRead(occurrence: Occurrence): int =
+  ## dunda le namcu poi le valsi cu sinxa ke'a
+  ##   .i le valsi cu du pa lerfu pe `0` bi'o `9` .a pa cmavo pe `CMAVO_DIGITS`
+  ##   .i va'o lo drata le se dunda cu mleca li 0
+  if not occurrence.reading.is_word: return -1
+  let word = occurrence.text
+  if word.len == 1 and word[0] in {'0' .. '9'}: ord(word[0]) - ord('0')
+  else: CMAVO_DIGITS.find(word)
+
+
+func faultsNumbers*(occurrences: openArray[Occurrence]): seq[tuple[start: int, why: string]] =
+  ## dunda ro namcu poi na mapti le javni be lo nu ciska lo lerfu pe `0` bi'o `9` ku'o .e lo krinu
+  ##   .i pa namcu cu du lo porsi be lo valsi poi sinxa lo lerfu gi'e ka'e vasru lo cmavo pe
+  ##       `CMAVO_INSIDE`
+  ##   .i va'o lo nu le namcu cu vasru su'o re lerfu gi'a se lidne pa cmavo pe `WORDS_NUMBERED` kei
+  ##       le namcu cu vasru no cmavo pe `CMAVO_DIGITS`
+  ##   .i re lerfu poi lamji cu zvati pa selci'avla
+  ##   .i ki'u bo zo boi fendi re namcu poi lamji to `CLL 18.6` toi
+  ##   .i no namcu cu cfari ta'i lo lerfu po'u `0` poi lidne lo drata lerfu
+  ##   .i lo valsi poi zo zo .a zo lu .a zo lo'u sitna ke'a cu na se cipra
+  var
+    at = 0
+    depth = 0  # lo klani be lo se sitna be zo lu poi ca'o kalri
+    is_quoted, is_after_zo = false
+  while at < occurrences.len:
+    let word = occurrences[at].text
+    if is_after_zo: is_after_zo = false
+    elif is_quoted: is_quoted = word != "le'u"
+    elif word == "zo": is_after_zo = true
+    elif word == "lo'u": is_quoted = true
+    elif word == "lu": inc depth
+    elif word == "li'u" and depth > 0: dec depth
+    elif depth == 0 and occurrences[at].digitRead >= 0:
+      var
+        last = at
+        digits = @[at]
+      while last + 1 < occurrences.len:
+        let next = occurrences[last + 1]
+        if next.digitRead >= 0: digits.add last + 1
+        elif not next.reading.is_word or next.text notin CMAVO_INSIDE: break
+        inc last
+      var before = at - 1
+      while before >= 0 and occurrences[before].text in CMAVO_BEFORE: dec before
+      let
+        start = occurrences[at].start
+        is_number = digits.len >= 2 or (before >= 0 and occurrences[before].text in WORDS_NUMBERED)
+      if is_number and digits.anyIt(occurrences[it].text.len > 1):
+        result.add (start, "number in cmavo of digits")
+      for k in 1 ..< digits.len:
+        if digits[k] == digits[k - 1] + 1 and
+            occurrences[digits[k - 1]].finish < occurrences[digits[k]].start:
+          result.add (start, "two numbers with no boi between them")
+          break
+      if digits.len >= 2 and digits[1] == digits[0] + 1 and occurrences[at].digitRead == 0:
+        result.add (start, "number that opens with 0")
+      at = last
+    inc at
+
+
+func faultsNumbers*(text: Text, marked: ReadingMarked): seq[Error] =
+  ## dunda ro namcu pe le selci'a poi na mapti le javni pe `faultsNumbers` ku'o .e lo stuzi be ri
+  ##   .i `marked` se tcidu fi le selci'a
+  for (start, why) in marked.occurrences.faultsNumbers:
+    result.add Error(path: text.path, place: text.place(start), why: why)
+
+
+func faultsNumbersMessage*(message: string): seq[Error] =
+  ## dunda ro namcu pe pa notci pe lo samtci poi na mapti le javni pe `faultsNumbers`
+  for text in textsRecord("notci.md", message):
+    result.add text.faultsNumbers(text.text.readTextMarked)
 
 
 func texts*(path, content: string): seq[Text] =
