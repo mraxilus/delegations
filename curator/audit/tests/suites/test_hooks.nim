@@ -2244,6 +2244,15 @@ suite "Hooks":
       answered("critic", error, %*{"agentId": "a1"}, is_foreground = true) & ran).anyIt(
       it.startsWith("Report of critic takes `## Reflection` block"))
 
+    # Skip drops rejected call alone: call of its kind that launched before it keeps block it
+    #   took, so reflection that quotes that block passes (break X3 of critic of last build,
+    #   which dropped each earlier call of kind of rejected call too).
+    check blocksHeld(build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") &
+      checked & answered("builder", error, %"Error: The tool use was rejected.") &
+      lineSaid(reflectedProbe("the builder adds two commits"))).len == 0
+
     # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
     #   any indent, up to whitespace. Ruling 7022770415 of #969: before match, word drops case,
     #   backticks, bold or italic marks, and final comma, so `**Subagent:** Builder of the fix`
@@ -3485,6 +3494,26 @@ suite "Hooks":
       check quoted(capital, cell).len == 0
     check quoted("- Écart: a b (70%).", "Écart: a b").len == 0
     check quoted("- Écart: a b (70%).", "a b") == @[refusalCell("a b")]
+
+    # Each capital from `A` to `Z` opens label (break X14 of critic of last build, which dropped
+    #   `Z`).
+    for capital in 'A' .. 'Z':
+      check quoted("- " & capital & "b: a (70%).", "a").len == 0
+
+    # Words of percentiles read in lower case alone, so `, As the 10th` opens none, and claim
+    #   runs to its criterion (break X1 of critic of last build, which read them in any case).
+    const upper = "- Work: cost: $1, $2 and $3, As the 10th, 50th and 90th percentiles. " &
+      "Resolution criterion: the usage."
+    check quoted(upper, "cost: $1, $2 and $3, As the 10th, 50th and 90th percentiles").len == 0
+    check quoted(upper, "cost: $1, $2 and $3") == @[refusalCell("cost: $1, $2 and $3")]
+
+    # Words of criterion that claim quotes in its text end it there, as mark does (critic of
+    #   last build), so cell quotes claim up to them.
+    const quoting = "- Judgement: the hook reads `. **Resolution criterion:**` as mark (70%). " &
+      "Resolution criterion: the report."
+    check quoted(quoting, "the hook reads `").len == 0
+    check quoted(quoting, "the hook reads `. **Resolution criterion:**` as mark") ==
+      @[refusalCell("the hook reads `. **Resolution criterion:**` as mark")]
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
