@@ -105,8 +105,8 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
   one file, then gives the source to `formatted`.
 - The caller also gives the facts of each file that its text does not hold. They are the mode of
   its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
-  is drive code (`## Fixed waits`). The caller gives the constants that the other modules of its
-  package export too (`## Staging`).
+  is drive code (`## Fixed waits`). It gives the constants that the other modules of its package
+  export (`## Staging`), and the defaults of its configurations (`## Configuration blocks`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
@@ -2268,6 +2268,9 @@ reports an `if` where its condition, and each `elif` of its chain, read only the
 
 Any other name or call reads as runtime, so its chain passes.
 
+- A runtime parameter, a loop variable, and a `let` or `var` shadow a constant of the same name,
+  so that name reads as runtime. A `let` or `var` shadows from above the branch in its routine,
+  or from module level.
 - An `if` in the value of a `const`, a macro, a `static:` block or a compile-time routine passes,
   since it is no runtime branch. Nim 2.4.0 cannot evaluate a static parameter of a macro in
   `when`, so `if not as_unary` of `pga/operators.nim` stays.
@@ -2277,8 +2280,10 @@ Any other name or call reads as runtime, so its chain passes.
 - Rejected: a constant read from the case of its name. A global `let` or `var` takes that case
   too, as `IS_TALLYING` of `pga_visualiser` does, and the build fixes neither.
 - Cost: a constant of a package that the run does not read, such as the library that a project
-  imports, reads as runtime. So `if IS_CONFORMAL` of `pga_benchmark` passes. That gives fewer
-  findings, never a false one.
+  imports, reads as runtime. So `if IS_CONFORMAL` of `pga_benchmark` passes. A missing constant
+  adds no false report.
+- Cost: a constant counts in each file of its package, whether the file imports its module or
+  not. So a runtime name of the same spelling that a dependency gives reads as fixed by the build.
 - Cost: a condition that spans lines is unread.
 - Verified by `suites/test_staging.nim`.
 
@@ -2289,13 +2294,15 @@ as a placed step takes the nimble file (`## Layout of a package`).
 
 - The command line reads them from each module of the run, by the nimble file of its package
   (`constantsPackage`).
-- Cost: `curator/audit` passes none yet. So `koch fix` and its dry run read the constants of the
-  file alone, until `fixes.nim` passes those of the package. That edit is outside this project.
-- Verified by `suites/test_staging.nim`: two modules of one package, and one module alone.
+- The audit reads them from each `.nim` file of the tree, by the nimble file of its project
+  (`initContext` of `fixes.nim`). The fix and the fence warning of each entry take those of its
+  project.
+- Verified by `suites/test_staging.nim`, over two modules of one package and one module alone, and
+  by `suites/test_fixes.nim` of `curator/audit`, over two modules of one project.
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 A driver ran `checkFamilies` and `fixFamilies`, then `checkBranches` and `fixBranches`, each
-alone, on a copy of the library, with the code of knoller at `0e099bc1`. `knoller --check` lists
+alone, on a copy of the library, with the code of knoller at `c85eef18`. `knoller --check` lists
 the same lines.
 
 - Compile-time family: 21 reports over 21 lines, and the fix writes +21 −21 lines. That is the
@@ -2305,9 +2312,10 @@ the same lines.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and
   5 skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For the branch, rga4d, where
   `DIMENSIONS != 3` holds, gives 33 OK, 0 failed and 5 skipped.
-- The driver read each project of the repository as one package, by `git ls-files`. The projects
-  take 4 reports of the family: `pga_benchmark` 1 and `dance_ontology` 3. They take 3 reports of
-  the branch: `pga_benchmark` 2 and `pga_visualiser` 1.
+- The driver read each of the nine projects of the repository as one package, by `git ls-files`
+  of its `.nim` files. The projects take 18 reports of the family: `ricysoho` 14,
+  `dance_ontology` 3 and `pga_benchmark` 1. They take 3 reports of the branch: `pga_benchmark` 2
+  and `pga_visualiser` 1.
 
 ## Fixed waits
 
