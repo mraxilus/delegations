@@ -27,6 +27,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
+from std/unicode import runeLen
 import ./[form, precedence, reports, tokens]
 
 
@@ -519,7 +520,8 @@ func joining(
     joined = prefix & "\"" & content & "\""
     ending = source.find('\n', tokens[last].after)
     rest = source[tokens[last].after ..< (if ending < 0: source.len else: ending)]
-    is_fit = not (source[starts[line] ..< tokens[first].first] & joined & rest).isWide
+    is_fit = (source[starts[line] ..< tokens[first].first] & joined & rest).runeLen <= LINE_MAX
+      # runes alone, since width check lets line of one long token stand
     is_wrap = tokens[last].lineLast(source) > line
   if is_wrap and not is_fit and kinds.allIt(it in {KindRun.Interpolated, KindRun.Plain}): return
   result.add Join(
@@ -579,7 +581,7 @@ func fixInterpolations*(path, source: string): Fix =
       shaped.add join.text
       at = join.after
     shaped.add source[at .. ^1]
-    let wide = toSeq(0 ..< joins.len).filterIt(shaped.split('\n')[lines[it]].isWide)
+    let wide = toSeq(0 ..< joins.len).filterIt(shaped.split('\n')[lines[it]].runeLen > LINE_MAX)
     if wide.len == 0: break
     joins = toSeq(0 ..< joins.len).filterIt(it notin wide).mapIt(joins[it])
   if joins.len == 0: return
