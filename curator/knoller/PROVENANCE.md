@@ -1185,27 +1185,6 @@ another. Article I.4 asks the columns to align as the eye reads them, so reading
 - Verified by `suites/test_chain.nim`: a table row that holds a glyph, padded as the hand's font
   shows it, passes the whole chain as written.
 
-**A message echoes each value after `got` in backticks (IV.4).** The check reads the
-concatenation from the literal that holds `; got ` to its end. Each interpolation and each
-operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
-such as `got none.`, echoes no value and is no finding.
-
-- The fixer puts a backtick on each side of a bare value, inside the literals around it.
-- A value that ends the message has no literal after it, so the message takes a fixed shape. A
-  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
-  message ends on its value, as IV.4 asks.
-- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
-  appended literal would join that operator. So `"got " & a == b` stays.
-- The rule reads every value of the tail, so a context after the value takes backticks too, as
-  `for {manner}` does.
-- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
-  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
-- An operand ends at its line, so a bracket that opens the next line opens the next statement.
-  A comment after a joining `&` is no operand, and the operand follows it on the next line.
-- A test that builds the old text in the same form changes with it. A test that asserts the
-  text in another form changes by hand, as two tests of `test_record.nim` do.
-- Verified by `suites/test_messages.nim`.
-
 **A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
 already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
 The check reads an expression on tokens, at one bracket depth, between delimiters. A command call
@@ -1363,6 +1342,54 @@ layout, and its `))` becomes `)`.
 - The rewrite never widens a line: `(` becomes a space, and its `)` goes. The chain runs it before
   the call layout, so the layout reads the command form. Verified by `suites/test_commands.nim` and
   `suites/test_chain.nim`.
+
+## Messages
+
+**A message echoes each value after `got` in backticks (IV.4).** The check reads the
+concatenation from the literal that holds `; got ` to its end. Each interpolation and each
+operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
+such as `got none.`, echoes no value and is no finding.
+
+- The fixer puts a backtick on each side of a bare value, inside the literals around it.
+- A value that ends the message has no literal after it, so the message takes a fixed shape. A
+  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
+  message ends on its value, in the form that IV.4 gives as its example.
+- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
+  appended literal would join that operator. So `"got " & a == b` stays.
+- The rule reads every value of the tail, so a context after the value takes backticks too, as
+  `for {manner}` does.
+- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
+  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
+- An operand ends at its line, so a bracket that opens the next line opens the next statement.
+  A comment after a joining `&` is no operand, and the operand follows it on the next line.
+- A test that builds the old text in the same form changes with it. A test that asserts the
+  text in another form changes by hand, as two tests of `test_record.nim` do.
+- Verified by `suites/test_messages.nim`.
+
+**Each value of a message stands in backticks, wherever it stands, and a value that opens its
+claim stays for hand (IV.4).** The Architect ruled so on rule 6 of #443, with no demand for the
+form `; got`. A message is an argument of a call that takes one (`CALLS_MESSAGE`). It is the
+second argument of `assert`, `doAssert` and `newException`. It is the first of `error`, `quit`,
+`raiseAssert` and `warning`. It is also the value of the pragmas `error`, `warning` and `fatal`.
+
+- A message that holds no literal, as one that a binding holds, is none.
+- The check reads the concatenation of a message from its first operand, as the rule of message
+  value reads its tail. Each interpolation and each operand must stand inside a backtick span,
+  counted from the start of the message.
+- A value that the rule of message value reads, after `; got ` in its literal, takes no second
+  report.
+- The fixer writes the backticks as the rule of message value does. An operand that ends a message
+  takes `& "`"` after it, and no period, since such a message takes a form of its own.
+- A value that opens its claim, with words after it, stays for hand, since a fix cannot reword
+  the claim. Its report names the words after it.
+- A message under `quote do:` reads too, since the macro writes it into code. A name that the
+  macro splices there is an operand.
+- Verified by `suites/test_echoes.nim`, which quotes each message of the library at `3d9696e`.
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
+  runs `checkEchoes` and `fixEchoes` alone on each file that `git ls-files '*.nim' '*.nims'
+  '*.nimble'` lists. It gives 4 reports, and the fix changes the 3 lines that the ruling lists.
+  A second run writes nothing.
+- Cost: a message that a binding holds, or that a routine of the project builds, stays unread.
 
 ## Wraps
 
