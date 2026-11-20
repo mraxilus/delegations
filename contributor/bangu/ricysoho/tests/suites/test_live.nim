@@ -95,6 +95,9 @@ type
 const
   SEED = 859  ## lo tsiju be lo cunso nu katna .e lo selci'a poi selzba
   COUNT_BUILT = 300  ## lo klani be lo selci'a poi selzba fi lo valsi poi galfi lo pu valsi
+  DRAWS_NUMBERED = 40
+    ## lo klani be lo cunso nu katna be ro selci'a pe le flalu pe denpa bu .e slaka bu poi zvati lo
+    ##     jbini be lo lerfu
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
@@ -476,6 +479,22 @@ func countCut(piece: string, sentences: openArray[string]): int =
     inc result
 
 
+func isSettledTyped(typed: string, at: int): bool =
+  ## jdice lo du'u xu kau le lerfu pe `at` cu fendi lo selci'avla ca lo nu `typed` po'o cu se ciska
+  ##   .i lo kutle'u cu fendi
+  ##   .i denpa bu poi zvati lo jbini be re lerfu pe `0` bi'o `9` cu na fendi
+  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `0` bi'o `9` cu na fendi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu jdice lo du'u xu kau ri sinxa zo pi
+  ##   .i le fancu cu ciska le javni pe `D1 a` ji'a gi'e pilno no fancu pe `stream.nim` .e
+  ##       `live.nim`
+  let c = typed[at]
+  if c in Whitespace: return true
+  if c != '.': return false
+  let is_after_digit = at > 0 and typed[at - 1] in Digits
+  if at == typed.high: return not is_after_digit
+  not (is_after_digit and typed[at + 1] in Digits)
+
+
 func readLive(
   text: string, cuts: openArray[int], is_growing = false, is_sentences = false
 ): ReadingLive =
@@ -520,8 +539,9 @@ func readLive(
     last = at
     var ending = at  # le selci'a poi ca zvati gi'e fanmo bu'u le romoi sinxa poi jbini lo valsi
     # lo lerfu poi se lidne `at` cu na zvati ca ro nu se ciska
-    #   .i ki'u bo `isBoundarySettled` tcidu lo pagbu po'o poi se ciska
-    while ending > 0 and not text[0 ..< at].isBoundarySettled(ending - 1): dec ending
+    #   .i ki'u bo `isSettledTyped` tcidu lo pagbu po'o poi se ciska
+    let typed = text[0 ..< at]
+    while ending > 0 and not typed.isSettledTyped(ending - 1): dec ending
     if is_growing and ending > 0:
       let grown = readTextParts(text[0 ..< ending], is_live = true).reading.toNifParts
       result.is_grown = result.is_grown and result.nif & change.tail == grown
@@ -750,19 +770,26 @@ suite "Internal: Live text":
     check count >= COUNT_PARTED_LEAST  # `IX.3`
 
 
-  test "Decimal point and digit group read typed byte by byte as read whole, and grow":
+  test "Decimal point and digit group read typed byte by byte or in pieces as read whole, and grow":
     # `Architect` jdice `D1 a` bu'u `#991`
     #   .i denpa bu poi romoi gi'e se lidne pa lerfu cu sinxa lo denpa
     #   .i ba lo nu lo lerfu cu se ciska ba ke'a kei denpa bu cu sinxa zo pi
+    #   .i ro selci'a cu se tcidu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi cu katna
+    #   .i lo spisa poi vasru so'i lerfu cu se benji ca lo nu lo selci'a cu se jmina fi le papri
+    var rng = initRand(SEED)
     for text in [
         "li 3.14 .i li 1,000", "mi viska 3. do", "li 1,000.5 du li 1,000 su'i pi 5",
-        "li 3,14 du li ci"]:
-      checkpoint text
-      let live = text.readLive(toSeq(1 ..< text.len), is_growing = true)
-      check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`
-      check live.is_held  # le stedu be `live.nim`
-      check live.is_grown  # le stedu be `live.nim`
-      check live.is_tied  # `ChangeNif` pe `live.nim`
+        "li 3,14 du li ci", "mi fa'o 3.5 do", "mi fa'o 1,000.5 do", "zoi 5 2.5 5 5",
+        "mi viska li 3."]:
+      for draw in 0 .. DRAWS_NUMBERED:
+        let cuts = (if draw == 0: toSeq(1 ..< text.len) else: text.cutsRandom(rng, PIECE_MOST))
+        checkpoint text & " cut at " & $cuts
+        let live = text.readLive(cuts, is_growing = true)
+        # le flalu pe le stedu be `live.nim`
+        check live.nif == readTextParts(text).reading.toNifParts
+        check live.is_held  # le stedu be `live.nim`
+        check live.is_grown  # le stedu be `live.nim`
+        check live.is_tied  # `ChangeNif` pe `live.nim`
 
 
   test "Run of number words reads typed byte by byte as read whole, and grows":

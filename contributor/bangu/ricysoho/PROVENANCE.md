@@ -635,7 +635,8 @@ ni'o `rictadni` ralte lo sinxa po'u `+` pe le jvoste
 
 ## ni'o ni'o ni'o lo porsi be lo valsi
 
-ni'o **lo porsi be lo valsi cu se fendi fi lo valsi bu'u lo kutle'u .e denpa bu**
+ni'o **lo porsi be lo valsi cu se fendi fi lo valsi bu'u lo kutle'u .e denpa bu poi na zvati lo
+    jbini be re lerfu**
   .i `CLL 3.3` cusku lo du'u denpa bu cu sinxa lo denpa
   .i lo denpa cu fendi pa valsi fi re valsi to le pamoi javni pe `CLL 4.9` toi
   .i va'o lo nu denpa bu cu zvati lo jbini be re valsi kei `CLL 3.3` na nitcu lo kutle'u vi
@@ -787,20 +788,37 @@ ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i 
   .i se ki'u bo le genturfa'i cu tcidu lo'u li ci pi pa vo le'u fi zoi gy. li 3.14 .gy.
   .i le genturfa'i cu tcidu lo'u li pa ki'o no no no le'u fi zoi gy. li 1,000 .gy.
   .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi ta'i `Comma` mu'u zoi gy. 3,14 .gy.
-  .i denpa bu poi na se lidne pa lerfu cu sinxa lo denpa mu'u zoi gy. 3. do .gy.
-      Verified by `suites/test_stream.nim`.
+  .i denpa bu poi na zvati lo jbini be re lerfu cu sinxa lo denpa mu'u zoi gy. 3. do .gy. .e
+      zoi gy. .5 .gy. Verified by `suites/test_stream.nim`.
+  .i le cipra cu tcidu ro selci'a poi zo li lidne ke'a gi'e vasru su'e ze lerfu po'u `1` .a denpa bu
+      .a slaka bu .a lo kutle'u
+  .i ro le selci'a cu se tcidu ja'i lo fancu poi ciska le javni gi'e pilno no fancu pe
+      `stream.nim` Verified by `suites/test_stream.nim`.
   .i le tricu pe ro le namcu cu du le tricu pe le cmavo Verified by `suites/test_corpus.nim`.
-  .i ji'a le mivyselci'a cu tcidu le namcu ta'i lo nu ro lerfu cu se ciska
-      Verified by `suites/test_live.nim`.
+  .i ji'a le mivyselci'a cu tcidu le namcu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi
+      cu katna Verified by `suites/test_live.nim`.
+  .i pa selci'avla poi se to'e curmi cu du pa pagbu mu'u zoi gy. li 3.1,4 du .gy.
+      Verified by `suites/test_marks.nim`.
+  .i ji'a pa namcu poi se lidne zo fa'o cu du pa valsi mu'u zoi gy. mi fa'o 3.5 do .gy.
+      Verified by `suites/test_marks.nim`.
+  .i ro stuzi pe `stream.nim` .e `prose.nim` .e `live.nim` poi fendi lo selci'avla cu pilno
+      `isBoundary` ki'u lo nu ro le stuzi cu jdice fi lo mintu javni
+  .i de'i `2026-11-20` no cipra cu facki lo selci'a poi rinka lo nu `boundary` .a `byteQuoted` .a
+      `isSpelled` .a `stop` pe `live.nim` cu frica le nu pilno `MARKS_BOUNDARY`
 
 ni'o le nu tcidu denpa bu ta'i zo pi cu frica `CLL 3.3` noi cusku lo du'u denpa bu cu sinxa lo denpa
-  .i ku'i lo denpa poi zvati lo jbini be re lerfu cu galfi no namcu to `CLL 18.6` toi
+  .i ku'i `CLL 3.3` cusku zoi gy. A pause (or glottal stop) may appear between any two words .gy.
+  .i se ki'u bo lo denpa poi zvati lo jbini be re lerfu cu galfi no namcu
+  .i de'i `2026-11-20` no jufra be le 17495 jufra pe le mulvei pe `Tatoeba` cu vasru denpa bu .a
+      slaka bu poi zvati lo jbini be re lerfu
+  .i se ki'u bo ro seljdi pe le mulvei cu mintu ca `e76184f3` .e `0be7efae`
   .i lo mupli po'u `CLL 18.6` du lo'u ci pi pa vo pa mu le'u
   .i lo mupli po'u `CLL 18.11` du lo'u pa ki'o re ci vo ki'o mu xa ze le'u
 
 ni'o se to'e cuxna fa lo nu ro slaka bu poi se lidne pa lerfu cu se tcidu ta'i zo ki'o
   .i ki'u bo da'i le genturfa'i cu tcidu zoi gy. 3,14 .gy. ta'i li 3014
-  .i ku'i so'i ciska cu ciska li 3 pi 14 ta'i zoi gy. 3,14 .gy.
+  .i ku'i `CLL 18.3` cusku zoi gy. In some cultures, a comma is used instead of a period in the
+      symbolic version of Example 18.6 .gy.
 
 ni'o jdima fa lo nu lo genturfa'i poi jersi `CLL 3.1` cu to'e curmi lo selci'a poi vasru le lerfu
   .i lo vreji .e lo pinka pe le samtci cu vasru le lerfu
@@ -2563,6 +2581,24 @@ ni'o **lo spisa cu ka'e katna lo valsi
   .i se ki'u bo zo su poi lo spisa poi se lidne cu galfi ke'a zo su'i vimcu no da
       Verified by `suites/test_live.nim`
   .i le cipra cu tcidu pa mupli
+
+ni'o **denpa bu poi romoi gi'e se lidne pa lerfu cu na fendi ca lo nu lo selci'a cu se jmina**
+  .i ki'u bo lo lerfu poi ba se ciska cu jdice lo du'u xu kau denpa bu cu sinxa zo pi
+  .i `isBoundarySettled` pe `stream.nim` cu jdice di'u
+  .i `readFrom` .e `push` pe `live.nim` cu pilno `isBoundarySettled`
+  .i ca lo nu `finish` cu se pilno kei denpa bu cu fendi
+  .i ro selci'a cu se tcidu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi cu katna
+  .i le se tcidu cu mintu le se tcidu be le mulselci'a Verified by `suites/test_live.nim`.
+  .i le cipra cu ciska le javni gi'e pilno no fancu pe `stream.nim` .e `live.nim`
+
+ni'o jdima fa lo nu le valsi poi lidne pa denpa bu poi romoi cu na se tcidu
+  .i mupli fa lo nu `3` pe zoi gy. mi viska li 3. .gy. cu na se tcidu ca lo nu no lerfu cu se
+      ciska ba ri
+
+ni'o se to'e cuxna fa lo nu tcidu denpa bu ta'i lo denpa kei gi'e raptcidu va'o lo nu lo lerfu cu
+    se ciska ba ke'a
+  .i ki'u bo le nu raptcidu cu nitcu lo nu krasi pu lo sinxa poi pu fendi
+  .i ku'i ro nu raptcidu cu krasi bu'u le krasi be le selci'avla poi vasru le cenba
 
 ni'o **lo valsi poi galfi lo pu valsi cu rinka lo nu lo tcidu cu raptcidu le selci'a poi selkra lo
     jgena poi le valsi cu klama ke'a**

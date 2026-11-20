@@ -470,15 +470,6 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
     for u in leaves[k]: next = max(next, units[u].words[^1] + 1)
 
 
-func isBoundarySettled*(text: string, at: int): bool =
-  ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
-  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `0` bi'o `9` cu na fendi
-  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
-  ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
-  text.isBoundary(at) and
-    not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in {'0' .. '9'})
-
-
 func byteQuoted(text: string, at: int, delimiter: string): int =
   ## jarco lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
   ##   .i zo zoi krasi bu'u `at`
