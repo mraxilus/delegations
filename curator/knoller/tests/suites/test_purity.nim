@@ -163,6 +163,15 @@ suite "Style §1":
     check candidatesPure([("a.nim", "proc f(): int = COUNTER\n"), other]).len == 0
 
 
+  test "error outside every candidate asks each candidate alone, and keeps each it proves":
+    # Probe of reviewer of record: forward declaration of `a` stays `proc`, so `func a` leaves
+    #   ambiguous call and open declaration, each outside both candidates; `b` alone is clean.
+    let source = "proc a(): int\n\nproc b(): int =\n  2\n\nproc a(): int =\n  1\n\n" &
+      "echo a() + b()\n"
+    check candidatesPure([("a.nim", source)]).getOrDefault("a.nim").len == 2
+    check proven(source).sites == @[source.site("proc b")]
+
+
   test "proc calling project proc that stays stays, and proc calling candidate is candidate":
     # Domain: chain of three procs, to any depth; last echoes, or computes alone.
     for (last, count) in [("echo x", 0), ("discard x + 1", 3)]:
