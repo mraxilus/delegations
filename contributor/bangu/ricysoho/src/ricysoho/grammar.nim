@@ -753,6 +753,11 @@ const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
 const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
   ## lo namcu poi zmadu ro stuzi pe lo nu tcidu ne'i ro basyjva
 
+const WIDTH_KEY = high(int32) div GRAMMAR_EBNF.heads.len
+  ## lo namcu poi zmadu lo krasi be ro pagbu
+  ##   .i ro lo namcu pe `keyCompleted` cu mleca li re te'a ci pa
+  ##   .i `fillSets` cu cipra lo du'u lo te kancu be lo genvla pe ro pagbu cu mleca le namcu
+
 
 type
   Completions = seq[Table[int, seq[int]]]
@@ -874,6 +879,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
     let advanced: Item = item
     if not seen.containsOrIncl(advanced.key): add(i, advanced)
 
+  doAssert terminals.len < WIDTH_KEY, "Part should hold fewer terminals than WIDTH_KEY."
   let count_nonterminals = GRAMMAR_EBNF.heads.len
   var
     same = 0  # lo te kancu be lo genvla poi stali
@@ -1003,11 +1009,6 @@ func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
   ReadingGrammar(
     is_read: false, at: last, rule: head.ruleNamed, head: head, expected: expected,
   )
-
-
-const WIDTH_KEY = high(int32) div GRAMMAR_EBNF.heads.len
-  ## lo namcu poi zmadu lo krasi be ro pagbu
-  ##   .i ro lo namcu pe `keyCompleted` cu mleca li re te'a ci pa
 
 
 func keyCompleted(head, start: int): int =
