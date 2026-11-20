@@ -19,7 +19,8 @@
 ##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
 ##     one rename where both rules ask at one name; and type conversion `x.T`
-##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
+##     (`conversions.nim`), each from semantic pass (`symbols.nim`); alias of each landmark
+##     index (V.8), from names of project (`packages.nim`); then dead export of checker
 ##     (`checker.nim`), whose `*` goes where its own module calls it. Fix of named files reads
 ##     tree whole, and rename writing file it leaves out is refused. File holding candidate
 ##     that compiles on no backend is left to hand, with its error.
@@ -34,7 +35,8 @@
 ##     finds that file; koch gives that of project holding it (`nimbleProject`).
 ##   Knoller reads what other modules of project tell fixer of one file, and `initContext` reads
 ##     it over tree by project: whether file declares `formatValue`, constants each module
-##     exports, and defaults of configurations.
+##     exports, defaults of configurations, and names of its modules, with aliases of library
+##     it builds on, which no file of tree holds, so caller reads library from disk.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -264,9 +266,10 @@ func initContext*(
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
   ##   of each abbreviation and case in entries, refused where it would write file entries
-  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export
-  ##   and defaults of its configurations.
-  ##   Uses, pures and modules of library each project builds on (`readFacts`) read nothing yet.
+  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
+  ##   defaults of its configurations, and names of its modules (`namesPackage`), aliases of
+  ##   library it builds on among them, as `libraries` holds its modules by nimble file.
+  ##   Uses and pures (`readFacts`) read nothing yet.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -282,6 +285,7 @@ func initContext*(
   for project, sources in modules:
     result.configurations[project] = readConfigurations(sources)
     result.constants[project] = sources.mapIt(it.constantsExported).concat
+    result.names[project] = namesPackage(sources, libraries.getOrDefault(project))
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked):
@@ -314,19 +318,25 @@ func fixSource(
   ##   given. Source knoller cannot settle keeps those edits alone, with warning that says why
   ##   (`warnUnsettled`), since rename planned whole reaches other files too.
 
-  # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
-  var renamed: seq[Edit]
+  # Write edits semantic pass and names of project settle, off fenced lines: renames,
+  #   conversions, then alias of each landmark index; no line moves, so fence holds.
+  var semantic: seq[Edit]
   for plan in context.plans:
     if plan.refusal.len > 0 or path notin plan.edits: continue
-    renamed.add plan.edits[path]
+    semantic.add plan.edits[path]
     for (file, line) in plan.lines:
       if file == path: result.fixed.add initReport(path, line, plan.rename.rule).toFinding
-  var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
-      editsConversion(path, source, context.answers[path], fence.lines, renamed)
-    base = source.applied(renamed & edits)
+      editsConversion(path, source, context.answers[path], fence.lines, semantic)
+    semantic.add edits
     result.fixed.add reports.toFindings
+  let
+    names = context.names.getOrDefault(path.nimbleProject)
+    (aliased, aliasing) = editsLandmark(path, source, names.landmarks, fence.lines, semantic)
+  semantic.add aliased
+  result.fixed.add aliasing.toFindings
+  var base = source.applied(semantic)
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
