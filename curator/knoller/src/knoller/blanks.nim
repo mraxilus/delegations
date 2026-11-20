@@ -460,7 +460,7 @@ func gaps(v: View; level: seq[Item]; result: var seq[Gap]) =
       elif below.is_one_line and below.is_documented: (1, 1, Spacing.Documented)
       else: (2, 2, Spacing.Two)
     var banner = item.head - 1
-    while banner >= 0 and not v.isBanner(banner): dec banner
+    while banner >= 0 and (v.inside[banner] or not v.isBanner(banner)): dec banner
     gap.is_second = banner >= 0 and v.lines[banner].startsWith("#[[")
     if gap.is_second:
       gap.lo = min(gap.lo, 1)
