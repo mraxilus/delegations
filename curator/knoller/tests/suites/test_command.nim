@@ -545,6 +545,29 @@ suite "Command line":
     check texts["p/c.nim"].contains("import ./a\n")
 
 
+  test "private symbol its own module uses inside interpolated string takes no marker (Q2)":
+    # Case: `BANDS` of `design/rig.nim:77` of `dance_ontology`, which `design/floors.nim` reaches
+    #   and `rig.nim` uses inside `&"…{BANDS[…]}…"` alone; pass lists no use there, as strformat
+    #   parses braces from text, and compiler counts it, so it hints none (ruling of rule 7).
+    let root = createTempDir("knoller_", "_interpolated")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/rig.nim", pragma & "import std/strformat\n\nconst BANDS = [\"low\", \"high\"]\n\n" &
+        "func label*(k: int): string = &\"band {BANDS[k]}\"\n\nconst LONE = 3\n"),
+      ("p/floors.nim", pragma & "from ./rig {.all.} import BANDS, LONE\n\necho BANDS[0], LONE\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/rig.nim", "p/floors.nim"].mapIt((it, readFile(root / it)))
+      uses = files.resolveMarkers("", root, toolchains)
+      lines = outcome(files, [], is_check = true, directory = root, uses = uses).lines
+    check lines.filterIt("marker-used" in it) == @["p/rig.nim:9: marker-used to fix"]  # `LONE`
+
+
   test "`proc` compiler proves resolves in project of file, and run fixes it, included or not":
     let root = createTempDir("knoller_", "_pures")
     defer: removeDir(root)
