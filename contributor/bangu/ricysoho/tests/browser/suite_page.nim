@@ -160,7 +160,7 @@ proc runSuite() {.async.} =
       "merge draws trees native build merges to: " & claim
     expectThat merges[k].status == cases[k].merged_status,
       "line of merge names what native build names: " & claim
-    if cases[k].merged_status.startsWith("se jmina · pa tricu"): inc count_whole
+    if cases[k].merged_status.startsWith("se jmina · 1 tricu"): inc count_whole
     elif cases[k].merged_status.startsWith("se jmina · "): inc count_kept
   expectThat count_whole > 0 and count_kept > 0, "cases merge whole, and keep error"  # `IX.3`
   ended "Merge draws trees of completed parts as native build merges them, error in place"

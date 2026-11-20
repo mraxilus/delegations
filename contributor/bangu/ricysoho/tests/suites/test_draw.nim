@@ -21,13 +21,10 @@ import std/[algorithm, strutils, unittest]
 
 import ../../src/browser/draw {.all.}
 import ../../src/ricysoho/[live, nif, nif_read, prose]
-from ../../src/ricysoho/nif_read {.all.} import toCmavo
 import ./corpora
 
 
 const
-  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
-    ## lo cmavo pe `PA` ja'i lo namcu poi selci'a ta'i `0` bi'o `9` to `CLL 18.2` toi
   STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
@@ -241,24 +238,28 @@ suite "Internal: Drawing of live text":
       check count >= 1
 
 
-  test "Each count of a line is its digits, each as cmavo of PA":
-    for digit in 0 .. 9: check digit.toCmavo == LUT_CMAVO_BY_DIGIT[digit]  # `CLL 18.2`
-    check 105.toCmavo == "panomu"  # `CLL 18.2`
-    check 2000.toCmavo == "renonono"  # `CLL 18.2`
+  test "Each count of a line is its digits":
+    let
+      text = "mi klama le zarci .i do klama le zarci .i ko klama le zarci"
+      drawing = drawn(readTextParts(text).reading.toNifParts, "")
+    check drawing.count_words >= 10  # lo namcu poi vasru re lerfu pe li pano
+    check drawing.status.startsWith(
+      $drawing.count_parts & " pagbu · " & $drawing.count_words & " valsi · 0 srera · "
+    )  # lo lerfu pe li pano cu sinxa lo cmavo pe `CLL 18.2`
 
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let
       whole = drawnMerged(readTextParts("mi klama .i ko").reading.toNifParts)
       kept = drawnMerged(readTextParts(EXAMPLE_ERROR.text).reading.toNifParts)
       refused = drawnMerged(MODULE_REFUSED)
-    check whole.status == "se jmina · pa tricu · vo valsi · simsa lo nu tcidu le mulselci'a pa roi"
+    check whole.status == "se jmina · 1 tricu · 4 valsi · simsa lo nu tcidu le mulselci'a pa roi"
     check not whole.is_refused and whole.count_parts == 1
-    check kept.status == "se jmina · re tricu · mu valsi · pa srera · no valsi poi na se tcidu"
+    check kept.status == "se jmina · 2 tricu · 5 valsi · 1 srera · 0 valsi poi na se tcidu"
     check not kept.is_refused and "class=\"box err\"" in kept.html
     # lo selci'a be fi `NIF` be'o poi na se tcidu
     check refused.is_refused and refused.html.len == 0  # no pagbu cu selxra
     check refused.status.startsWith(
-      "le nu jmina cu se to'e curmi · le remoi pagbu · ")  # li pa cu krasi lo nu kancu
+      "le nu jmina cu se to'e curmi · le 2moi pagbu · ")  # li 1 cu krasi lo nu kancu
 
 
   test "Part still open draws as open, and line counts it apart":
@@ -268,4 +269,4 @@ suite "Internal: Drawing of live text":
     let drawing = drawn(reader.toNif, change.tail)
     check drawing.count_open == 1
     check "<figure class=\"part open\">" in drawing.html
-    check drawing.status.endsWith(" · pa pagbu poi ca'o kalri")
+    check drawing.status.endsWith(" · 1 pagbu poi ca'o kalri")

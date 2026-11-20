@@ -106,9 +106,9 @@ const
     (VERSION & "\n(a \"b", "le stuzi cu fanmo le selci'a"),  # lo fanmo
     (" (.nif27)", "lo kutle'u cu zvati le stuzi"),  # lo kutle'u
     (VERSION & "\n(a @)", "`@` cu zvati le stuzi"),  # lo lerfu poi le notci cu sitna ke'a
-    (VERSION & "\n(a `)", "lo me `byte` me'u po'u li soxa cu zvati le stuzi"),
+    (VERSION & "\n(a `)", "lo me `byte` me'u po'u li 96 cu zvati le stuzi"),
       # lo lerfu po'u `backtick`
-    (VERSION & "\n(a \"\x01\")", "lo me `byte` me'u po'u li pa cu zvati le stuzi"),
+    (VERSION & "\n(a \"\x01\")", "lo me `byte` me'u po'u li 1 cu zvati le stuzi"),
       # lo lerfu poi na se viska
   ]
     ## lo selci'a be fi `NIF` .e lo pagbu be lo notci
