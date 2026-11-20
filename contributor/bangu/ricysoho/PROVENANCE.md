@@ -769,6 +769,29 @@ ni'o **lo valsi poi zo zo .a zo lo'u sitna ke'a galfi no da
       `CLL 19.15` .e `CLL 21.1` toi Verified by `suites/test_stream.nim`.
   .i ne'i `CLL 4.9`
 
+ni'o **ro lerfu pe `0` bi'o `9` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo pe
+    `PA` poi le lerfu cu sinxa ke'a to `CLL 18.2` toi**
+  .i `CLL 3.1` na liste le lerfu
+  .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li pa so bi ze le'u fi zoi gy. li 1987 .gy.
+  .i ro lerfu pe `0` bi'o `9` cu fendi le selci'avla poi vasru ke'a
+  .i se ki'u bo le genturfa'i cu tcidu lo'u pa no moi le'u fi zoi gy. 10moi .gy.
+  .i le lerfu na se basna
+  .i ne'i lo javni pe `CLL 4.9` le lerfu cu na karsna gi'e na zunsna
+  .i slaka bu poi zvati lo jbini be re lerfu cu se to'e curmi ta'i `Comma` to `CLL 3.3` toi
+  .i denpa bu poi zvati lo jbini be re lerfu cu sinxa lo denpa to `CLL 3.3` toi
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li ci pa vo le'u fi zoi gy. li 3.14 .gy.
+      Verified by `suites/test_stream.nim`.
+  .i ne'i lo cipra po'u `Internal: Stream`
+
+ni'o se to'e cuxna fa lo nu denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi
+  .i ki'u bo `CLL 3.3` cusku lo du'u denpa bu cu sinxa lo denpa
+  .i ku'i lo glico selci'a cu sinxa zo pi ta'i denpa bu
+  .i lo mupli po'u `CLL 18.6` du lo'u ci pi pa vo pa mu le'u
+
+ni'o jdima fa lo nu lo genturfa'i poi jersi `CLL 3.1` cu to'e curmi lo selci'a poi vasru le lerfu
+  .i lo vreji .e lo pinka pe le samtci cu vasru le lerfu
+
 ## ni'o ni'o ni'o slaka bu .e lo barda lerfu
 
 ni'o **slaka bu cu fendi lo slaka
@@ -1534,6 +1557,14 @@ ni'o **`CLL 18.77` .e `CLL 18.78` .e `CLL 18.105` .e `CLL 18.106` .e `CLL 18.108
   .i le cukta cu jarco ro le mupli ta'i lo mekso poi se lidne zo li
       Verified by `suites/test_corpus.nim`.
 
+ni'o **va'o lo nu lo lerfu pe `0` bi'o `9` cu basti ro cmavo pe `CLL 18.2` ne'i pa mupli kei le
+    tricu pe le mupli cu stodi**
+  .i le cipra cu cipra su'o 200 mupli poi se tcidu gi'e vasru lo cmavo pe `CLL 18.2`
+      Verified by `suites/test_corpus.nim`.
+  .i le tricu cu se kancu ta'i ro javni .e ro klesi be lo genvla
+  .i le cipra cu claxu lo mupli poi vasru slaka bu ki'u lo nu slaka bu poi zvati lo jbini be re
+      lerfu pe `0` bi'o `9` cu se to'e curmi
+
 ni'o **va'o lo nu lo mupli cu na'e mapti su'o javni pe `CLL 21.1` kei le genturfa'i cu tinbe
     `CLL 21.1`
   .i `Architect` jdice `D2 a` bu'u `#815`**
@@ -1749,9 +1780,12 @@ ni'o jdima fa lo nu lo linji poi pagbu lo jufra poi cfari ne'i lo pu linji cu se
     pagbu be lo liste Verified by `suites/test_wikipedia.nim`.
   .i le cipra cu sitna lo pu linji poi le linji cu se tcidu va'o lo nu kansa ke'a
 
-ni'o **69 lo 86 ju'agri cu se tcidu
+ni'o **76 lo 86 ju'agri cu se tcidu
   .i ro ju'agri poi se to'e curmi cu na'e mapti su'o javni be fi `CLL`**
-  .i 10 ju'agri cu ciska lo nacle'u noi na lerfu la lojban. to `CLL 3.1` toi
+  .i ci ju'agri cu vasru lo lerfu pe `0` bi'o `9` gi'e se to'e curmi ki'u lo drata
+  .i lo remoi be zo kei pe `keikei` ne'i `cmaci` cu fanmo no da to `CLL 11.1` toi
+  .i `1987 so'o` ne'i `lo jbobau` cu nitcu zo boi to `CLL 18.6` toi
+  .i zoi gy. a'y .gy. ne'i `lo jbobau` cu mapti no tarmi be lo cmavo to `CLL 4.2` toi
   .i ci ju'agri cu pagbu lo jufra poi cfari ne'i lo pu linji
   .i mupli fa lo nu ne'i `cmaci` le remoi linji .e le cimoi linji cu pagbu lo jufra poi cfari ne'i
       le pamoi linji
@@ -2558,7 +2592,7 @@ ni'o **lo jgena goi ko'e pilno lo selku'e poi lidne ko'e ku'o va'o lo nu zo sa p
       javni
   .i zo sa cpacu lo sinxa lo pamoi valsi poi le javni cu tcidu ke'a gi'e se lidne zo sa
   .i se ki'u bo lo nu le valsi cu cenba cu galfi lo selvi'u be zo sa
-  .i mupli fa `ni'o .i sa 1987 zo .i si` Verified by `suites/test_live.nim`
+  .i mupli fa `ni'o .i sa html zo .i si` Verified by `suites/test_live.nim`
   .i le cipra cu tcidu lo selci'a poi lo cuncipra pe le flalu cu facki ke'a ku'o .e lo selci'a poi
       selzba ta'i lo simsa
 
@@ -3236,12 +3270,11 @@ ni'o ro lertai poi le papri cu cusku ke'a selci'a le crepu fi pa datnyvei pe vo'
 
 ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
   .i `Architect` cpedu di'u
-  .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+  .i le genturfa'i cu tcidu lo lerfu pe `0` bi'o `9` ta'i lo cmavo pe `PA`
       Verified by `suites/test_stream.nim`.
-  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `CLL 18.2`
+  .i se ki'u bo le linji .e ro tanxe cu ciska lo namcu ta'i lo lerfu pe `0` bi'o `9`
       Verified by `suites/test_draw.nim`.
-  .i ku'i ro tanxe cu ciska lo stuzi .e lo namcu ta'i `0` bi'o `9`
-  .i ki'u bo ro tanxe cu jarco su'e 17 lerfu ne'i le pamoi linji be vo'a
+  .i ro tanxe cu jarco su'e 17 lerfu ne'i le pamoi linji be vo'a
       Verified by `suites/test_draw.nim`.
   .i se to'e cuxna fa lo nu ro tanxe cu cusku lo namcu ta'i lo cmavo pe `PA`
   .i le se to'e cuxna cu katna le krasi be ro srera tanxe
@@ -3262,8 +3295,7 @@ ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
   .i lo kunti cmene .e lo cmene poi pa samtci pagbu na ka'e vasru ke'a cu se skicu ta'i lo
       jboselci'a
       Verified by `suites/test_merge.nim`.
-  .i le notci cu cusku le stuzi ta'i lo cmavo pe `PA` ki'u lo nu le papri cu jarco le notci ne'i pa
-      linji
+  .i le notci cu cusku le stuzi ta'i lo lerfu pe `0` bi'o `9`
   .i lo kutle'u cu se cusku ta'i zo kutle'u
   .i lo lerfu po'u `backtick` .e lo me `byte` me'u poi na se viska cu se cusku ta'i lo namcu pe vo'a
       Verified by `suites/test_nif.nim`.
@@ -3523,6 +3555,20 @@ ni'o lo lujvo cu basti lo tanru poi vasru lo gismu .e lo cmavo pe `SE` po'o ku'o
       `CLL 4.12`
   .i `Architect` jdice di'u bu'u `#914` ta'i `D1 a`
   .i no lujvo cu selci'a fi le vlaste
+
+ni'o **lo lerfu pe `0` bi'o `9` cu basti lo cmavo pe `CLL 18.2` va'o lo nu su'o re le cmavo cu
+    lamji .a lo nu zo li .a zo me'o cu lidne le cmavo**
+  .i `Architect` cpedu lo nu le prosa cu ciska lo lerfu ca lo nu le lerfu cu mapti
+  .i pa cmavo poi no drata cmavo pe `CLL 18.2` cu lamji ke'a cu stali mu'u zo pa pe lo'u pa roi le'u
+  .i ro valsi poi zo zo .a zo lu .a zo lo'u sitna ke'a cu stali
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu kancu lo lerfu pe ro selci'a poi `texts` pe
+      `reader_prose.nim` dunda ke'a
+  .i le selci'a cu vasru 965304 lerfu ca `bba232bb` gi'e vasru 963396 lerfu ca `5541c12e`
+
+ni'o se to'e cuxna fa lo nu ro cmavo pe `CLL 18.2` cu se basti
+  .i ki'u bo lo nu basti pa cmavo poi no drata cmavo cu lamji ke'a cu vimcu pa lerfu po'o
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u lo nu basti ro cmavo cu vimcu 6553 lerfu
+      lo 965304 lerfu ca `bba232bb`
 
 ni'o **lo famyma'o .a zo cu selvi'u va'o lo nu le tricu pe lo genturfa'i poi na cuxna cu stali**
   .i zo cu selvi'u ba lo sumka'i .a lo cmene .a lo se sitna .a lo fanmo cmavo po'o
