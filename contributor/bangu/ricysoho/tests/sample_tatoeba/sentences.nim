@@ -30,7 +30,7 @@ type SentenceTatoeba* = object
 
 
 const
-  COUNT_FEATURES_TATOEBA* = 599
+  COUNT_FEATURES_TATOEBA* = 601
     ## lo te kancu be lo tcila pe lo se tcidu zi'e poi le mupli cu jarco ke'a ca lo nu ciska
   SENTENCES_TATOEBA* = [
     SentenceTatoeba(id: 602555, text: "ko'a puze'i stali", owner: "remod", verdict: ""),
@@ -921,6 +921,12 @@ const
       verdict: "Grammar sumti-tail-1 112",
     ),
     SentenceTatoeba(id: 5181539, text: "ko stali bu'u nai lo srasu", owner: "FB", verdict: ""),
+    SentenceTatoeba(
+      id: 5181650,
+      text: "ke po'o 514 prenu pu'i zvati lo kensa",
+      owner: "FB",
+      verdict: "Grammar number 812",
+    ),
     SentenceTatoeba(id: 5181673, text: "je'e nai ke'o", owner: "FB", verdict: ""),
     SentenceTatoeba(
       id: 5181743,
@@ -1042,6 +1048,15 @@ const
       text: "lo tuple be la .tam. cu jai fi'o ba'o klama fe'u pu cecla",
       owner: "nabyspi3",
       verdict: "Grammar tense-modal 815",
+    ),
+    SentenceTatoeba(
+      id: 11188530,
+      text: "ca le zi cerni de'i li 2022 pi'e 10 pi'e 16 mi viska la .maikl. goi my. zi'e poi " &
+          "danseke gi'e fraso zi'e noi damva'u bu'u le panka ne'i le la .lulus. daplu ca lo nu " &
+          "mi klama le iptsa gusta .i le tsani cu blanu .i solgu'i .i za'adai my. pu viska le " &
+          "pamoi snime gunse ca le zi citsi",
+      owner: "nonong",
+      verdict: "",
     ),
     SentenceTatoeba(id: 11998882, text: ".i je'e", owner: "Theocracy", verdict: ""),
     SentenceTatoeba(

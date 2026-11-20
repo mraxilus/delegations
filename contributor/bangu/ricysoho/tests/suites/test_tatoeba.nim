@@ -150,6 +150,9 @@ const IDS_REFUSED = [
   # `nu` lidne lo bridi
   #   .i ku'i `lo ckafi` vasru no selbri
   5181396,  # le javni pe li 152
+  # `ke` lidne lo selbri
+  #   .i ku'i `514 prenu` cu sumti gi'e vasru no cmavo pe `MOI`
+  5181650,  # le javni pe li 152
   # lo lerfu po'u zoi gy. ' .gy. zvati lo jbini be re karsna gi'e no roi zvati lo datstu
   #   .i le jufra cu vasru `mi''a`
   5181743,  # `CLL 3.3`
