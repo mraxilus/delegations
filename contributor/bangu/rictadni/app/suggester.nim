@@ -43,13 +43,15 @@
 ##       query included; URL given to `-` is tagged as text.
 ##   Service, endpoint, model, effort, workspace and credential come from environment on each
 ##     run, as index path does for `tagger`: credential exists only at run time, and rest must
-##     agree with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from
+##     agree with it (Article II.2). Credential is read from `RICTADNI_API_KEY`, then from
 ##     usual name of service; report names variable, never value. `ANTHROPIC_BASE_URL` is never
 ##     read.
+##   Each variable still reads under its name before project took name `rictadni`, opening
+##     `LOJBAN_TAGGER_`, where new name is empty, as D1 on #946 ruled; problem names variable read.
 ##   Usual name of service is read only where endpoint has host of default endpoint of service,
 ##     compared without case: key exported for other tools never goes to other host, which
-##     reads `LOJBAN_TAGGER_API_KEY` alone, as `chat` does.
-##   `LOJBAN_TAGGER_WORKSPACE` names workspace `claude` sends as `anthropic-workspace-id`, which
+##     reads `RICTADNI_API_KEY` alone, as `chat` does.
+##   `RICTADNI_WORKSPACE` names workspace `claude` sends as `anthropic-workspace-id`, which
 ##     key scoped to no workspace needs on every request; ID of `wrkspc_` and visible ASCII
 ##     alone, at most `BYTES_WORKSPACE_MAX` bytes, so no line break reaches header. Other service
 ##     refuses any value. It stays out of stamp, so exchange replays under any workspace.
@@ -178,6 +180,10 @@ type
       failure: Failure  ## `Network`, `Replay` or `Page`.
       detail: string  ## Offending value, made printable.
 
+  Variable = object  ## Define one variable read from environment.
+    name: string  ## Name value was read under, which problem names.
+    value: string  ## Value read; empty where neither name holds one.
+
 
 const
   USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n"
@@ -188,15 +194,18 @@ const
     ##   `exchanges.nim` words same rule.
   FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
   FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
-  KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name of service.
-  KEY_ENDPOINT = "LOJBAN_TAGGER_ENDPOINT"  ## Environment name overriding endpoint.
-  KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name overriding model.
-  KEY_EFFORT = "LOJBAN_TAGGER_EFFORT"  ## Environment name of effort.
-  KEY_WORKSPACE = "LOJBAN_TAGGER_WORKSPACE"  ## Environment name of workspace `claude` sends.
+  KEY_SERVICE = "RICTADNI_SERVICE"  ## Environment name of service.
+  KEY_ENDPOINT = "RICTADNI_ENDPOINT"  ## Environment name overriding endpoint.
+  KEY_MODEL = "RICTADNI_MODEL"  ## Environment name overriding model.
+  KEY_EFFORT = "RICTADNI_EFFORT"  ## Environment name of effort.
+  KEY_WORKSPACE = "RICTADNI_WORKSPACE"  ## Environment name of workspace `claude` sends.
+  OPENING_KEY = "RICTADNI_"  ## Opening of each environment name read.
+  OPENING_KEY_OLD = "LOJBAN_TAGGER_"
+    ## Opening read where name of `OPENING_KEY` is empty: opening before rename (#946).
   OPENING_WORKSPACE = "wrkspc_"  ## Opening of ID of workspace, as Anthropic issues it.
   BYTES_WORKSPACE_MAX = 128
     ## Most bytes of ID of workspace read; project cap, past length of IDs Anthropic issues.
-  KEY_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Environment name read first for credential.
+  KEY_CREDENTIAL = "RICTADNI_API_KEY"  ## Environment name read first for credential.
   LUT_KEY_CREDENTIAL_BY_SERVICE: array[Service, string] =
     ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", ""]
     ## Environment name read second where first is unset; `chat` reads first alone.
@@ -272,8 +281,21 @@ proc readInput(): Option[string] =
   if text.len > BYTES_PAGE_MAX: none(string) else: some(text)
 
 
-func readSettings(service, endpoint, model, effort, workspace: string): Configured =
-  ## Read settings from environment values; empty value takes default of service.
+func toKeyOld(name: string): string =
+  ## Name environment held variable under before rename (#946): opening `OPENING_KEY_OLD`.
+  OPENING_KEY_OLD & name[OPENING_KEY.len .. ^1]
+
+
+proc readVariable(name: string): Variable =
+  ## Read variable under name, else under its old name where name holds empty value (#946).
+  let old = name.toKeyOld
+  if getEnv(name).len == 0 and getEnv(old).len > 0: Variable(name: old, value: getEnv(old))
+  else: Variable(name: name, value: getEnv(name))
+
+
+func readSettings(service, endpoint, model, effort, workspace: Variable): Configured =
+  ## Read settings from environment variables; empty value takes default of service, and each
+  ##   problem names variable read.
   ##   Endpoint refused names its fault: shape of URL where `isShapedURL` refuses it; `RULE_PORT`
   ##     where port alone fails `isURL` (`isPortFaulty`), else `RULE_AUTHORITY`; scheme, https or
   ##     http to loopback host, only where URL is well formed.
@@ -284,45 +306,45 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
     ## Build outcome refusing settings, naming variable.
     Configured(is_valid: false, problem: text & "; got `` for `" & name & "`.")
 
-  let found = if service.len == 0: some(Service.Claude) else: service.readService
+  let found = if service.value.len == 0: some(Service.Claude) else: service.value.readService
   if found.isNone:
     return Configured(is_valid: false, problem: "Service should be `claude`, `openrouter` or " &
-        "`chat`; got `" & service.toPrintable(RUNES_SHOWN) & "` for `" & KEY_SERVICE & "`.")
+        "`chat`; got `" & service.value.toPrintable(RUNES_SHOWN) & "` for `" & service.name & "`.")
   let
     chosen = found.get
-    endpoint_used = if endpoint.len > 0: endpoint else: LUT_ENDPOINT_BY_SERVICE[chosen]
-    model_used = if model.len > 0: model else: LUT_MODEL_BY_SERVICE[chosen]
+    endpoint_used = if endpoint.value.len > 0: endpoint.value else: LUT_ENDPOINT_BY_SERVICE[chosen]
+    model_used = if model.value.len > 0: model.value else: LUT_MODEL_BY_SERVICE[chosen]
   if endpoint_used.len == 0:
-    return refuse("Endpoint should be named for service `" & $chosen & "`", KEY_ENDPOINT)
+    return refuse("Endpoint should be named for service `" & $chosen & "`", endpoint.name)
   if not endpoint_used.isURL:
     let rule =
       if not endpoint_used.isShapedURL: "be http or https URL with host and no whitespace"
       elif endpoint_used.isPortFaulty: RULE_PORT
       else: RULE_AUTHORITY
     return Configured(is_valid: false, problem: "Endpoint should " & rule & "; got `" &
-        endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" & KEY_ENDPOINT & "`.")
+        endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" & endpoint.name & "`.")
   if not endpoint_used.isEndpoint:
     return Configured(is_valid: false, problem: "Endpoint should be https, or http to " &
         "loopback host; got `" & endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" &
-        KEY_ENDPOINT & "`.")
+        endpoint.name & "`.")
   if model_used.len == 0:
-    return refuse("Model should be named for service `" & $chosen & "`", KEY_MODEL)
+    return refuse("Model should be named for service `" & $chosen & "`", model.name)
   var effort_used = if chosen == Service.Chat: none(Effort) else: some(EFFORT_DEFAULT)
-  if effort.len > 0:
-    effort_used = effort.readEffort
+  if effort.value.len > 0:
+    effort_used = effort.value.readEffort
     if effort_used.isNone:
       return Configured(is_valid: false, problem: "Effort should be `low`, `medium`, `high`, " &
-          "`xhigh` or `max`; got `" & effort.toPrintable(RUNES_SHOWN) & "` for `" & KEY_EFFORT &
-          "`.")
-  let shown = workspace.toPrintable(RUNES_SHOWN)
-  if workspace.len > 0 and chosen != Service.Claude:
+          "`xhigh` or `max`; got `" & effort.value.toPrintable(RUNES_SHOWN) & "` for `" &
+          effort.name & "`.")
+  let shown = workspace.value.toPrintable(RUNES_SHOWN)
+  if workspace.value.len > 0 and chosen != Service.Claude:
     return Configured(is_valid: false, problem: "Workspace should be named for service " &
-        "`claude` alone; got `" & shown & "` for `" & KEY_WORKSPACE & "`.")
-  if workspace.len > 0 and (not workspace.startsWith(OPENING_WORKSPACE) or
-      workspace.len > BYTES_WORKSPACE_MAX or workspace.anyIt(it notin {'!'..'~'})):
+        "`claude` alone; got `" & shown & "` for `" & workspace.name & "`.")
+  if workspace.value.len > 0 and (not workspace.value.startsWith(OPENING_WORKSPACE) or
+      workspace.value.len > BYTES_WORKSPACE_MAX or workspace.value.anyIt(it notin {'!'..'~'})):
     return Configured(is_valid: false, problem: "Workspace should open with `" &
         OPENING_WORKSPACE & "` and hold at most " & $BYTES_WORKSPACE_MAX & " bytes of " &
-        "visible ASCII; got `" & shown & "` for `" & KEY_WORKSPACE & "`.")
+        "visible ASCII; got `" & shown & "` for `" & workspace.name & "`.")
   Configured(
     is_valid: true,
     settings: Settings(
@@ -330,7 +352,7 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
       endpoint: endpoint_used,
       model: model_used,
       effort: effort_used,
-      workspace: workspace,
+      workspace: workspace.value,
     ),
   )
 
@@ -339,17 +361,18 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
 #[ Exchanges ]#
 
 proc findCredential(settings: Settings): Credentialed =
-  ## Read credential from first variable holding one: `LOJBAN_TAGGER_API_KEY`, then usual name
-  ##   of service, read only where endpoint has host of default endpoint of service, compared
-  ##   without case; other host reads first alone, so key exported for other tools never goes
-  ##   there, and problem says why.
+  ## Read credential from first variable holding one: `RICTADNI_API_KEY`, then its old name
+  ##   (#946), then usual name of service, read only where endpoint has host of default endpoint
+  ##   of service, compared without case; other host reads first two alone, so key exported for
+  ##   other tools never goes there, and problem says why.
+  ##   Problem names new name and usual name alone, since old name is read for old setups only.
   let
     host = LUT_ENDPOINT_BY_SERVICE[settings.service].parseUri.hostname
     is_usual = host.len > 0 and settings.endpoint.parseUri.hostname.toLowerAscii == host
     names =
       if is_usual: @[KEY_CREDENTIAL, LUT_KEY_CREDENTIAL_BY_SERVICE[settings.service]]
       else: @[KEY_CREDENTIAL]
-  for name in names:
+  for name in @[KEY_CREDENTIAL, KEY_CREDENTIAL.toKeyOld] & names[1 .. ^1]:
     if getEnv(name).strip.len > 0: return readCredential(name, getEnv(name), settings.service)
   let named = names.mapIt("`" & it & "`").join(" or ")
   if host.len > 0 and not is_usual:
@@ -424,6 +447,8 @@ proc exchange(
   ##     past request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body
   ##     past `bytes_max` is refused once read.
   ##   Exchange file that stands but cannot be read is refused, naming first line of error.
+  ##   Where request has no file, same request under old session of OpenRouter is read
+  ##     (`requestsRead`), so exchange recorded before rename replays (#946); write keeps request.
   ##   Refusal names problem in words of tool first, then path, so long directory never hides
   ##     either: outside text, directory and error, is made printable and cut alone, and name
   ##     holding stamp stays whole. Note names path as refusal does.
@@ -457,29 +482,42 @@ proc exchange(
   if command.mode != Mode.Live and command.directory.isShared:
     return refuse("writable by every user at " & shown_directory)
 
+  # Read exchange of request, else of same request under old session where its file alone
+  #   stands (`requestsRead`, #946); record mode writes under request alone.
+  var (request_read, path_read, shown_read) = (request, path, shown)
+  if command.mode != Mode.Live and not fileExists(path):
+    for held in request.requestsRead[1 .. ^1]:
+      let name_held = held.stamp & ".exchange"
+      if fileExists(command.directory.joinVerbatim(name_held)):
+        (request_read, path_read, shown_read) = (held, command.directory.joinVerbatim(
+            name_held), shown_directory.joinVerbatim(name_held))
+        break
+  let bytes_read_max = request_read.len + bytes_max + BYTES_FIELDS_MAX
+
   # Replay exchange of same request within its caps, as mode and `isReplayed` choose.
-  if command.mode != Mode.Live and fileExists(path):
+  if command.mode != Mode.Live and fileExists(path_read):
     var bytes = ""
     try:
-      if getFileInfo(path, followSymlink = false).kind != pcFile:
-        return refuse("link or other than file at " & shown)
-      if getFileSize(path) > bytes_file_max:
-        return refuse("larger than " & $bytes_file_max & " bytes at " & shown)
-      bytes = readFile(path)
+      if getFileInfo(path_read, followSymlink = false).kind != pcFile:
+        return refuse("link or other than file at " & shown_read)
+      if getFileSize(path_read) > bytes_read_max:
+        return refuse("larger than " & $bytes_read_max & " bytes at " & shown_read)
+      bytes = readFile(path_read)
     except CatchableError as error:
-      return refuse("unreadable: " & error.toLine & " at " & shown)
+      return refuse("unreadable: " & error.toLine & " at " & shown_read)
     let recorded = bytes.readExchange
     if not recorded.is_read:
       var problem = recorded.problem  # Words of reader, value it echoes made printable and cut.
       problem.removeSuffix('.')
-      return refuse(problem & " at " & shown)
-    if recorded.exchange.request != request: return refuse("other request at " & shown)
+      return refuse(problem & " at " & shown_read)
+    if recorded.exchange.request != request_read:
+      return refuse("other request at " & shown_read)
     if recorded.exchange.reply.body.len > bytes_max:
-      return refuse("body over " & $bytes_max & " bytes at " & shown)
+      return refuse("body over " & $bytes_max & " bytes at " & shown_read)
     if command.mode == Mode.Replay or recorded.exchange.reply.isReplayed(service):
       let label = recorded.exchange.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.exchange.reply,
-          note: "Reply replayed from `" & shown & "`: " & label & ".")
+          note: "Reply replayed from `" & shown_read & "`: " & label & ".")
   if command.mode == Mode.Replay: return refuse("missing at " & shown)
 
   # Send within deadline, through proxy environment names.
@@ -599,11 +637,11 @@ proc main(): int =
       stderr.write toReportGiven(command.argument, given.get.tag)
       return 0
   let configured = readSettings(
-    getEnv(KEY_SERVICE),
-    getEnv(KEY_ENDPOINT),
-    getEnv(KEY_MODEL),
-    getEnv(KEY_EFFORT),
-    getEnv(KEY_WORKSPACE),
+    readVariable(KEY_SERVICE),
+    readVariable(KEY_ENDPOINT),
+    readVariable(KEY_MODEL),
+    readVariable(KEY_EFFORT),
+    readVariable(KEY_WORKSPACE),
   )
   if not configured.is_valid:
     stderr.writeLine configured.problem

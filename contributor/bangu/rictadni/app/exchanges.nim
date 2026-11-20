@@ -133,6 +133,8 @@
 ##     each, least significant first, as protobuf lays out `fixed32`.
 ##     Format line names format and version, and closes with line break: `head -n 1` prints it,
 ##       and transfer rewriting line ends is refused there, naming carriage return.
+##     Reader takes format line of file written before project took name `rictadni` too
+##       (`LINES_FORMAT_READ`), and frame past it, as D1 on #946 ruled; writer writes new one alone.
 ##     Length takes four bytes, as protobuf caps message at 2 GiB.
 ##     Checksum is CRC-32C, Castagnoli polynomial of RFC 3720 section 12.1: it detects every run
 ##       of up to 32 bits changed within message, and every odd count of bits, since `x + 1`
@@ -143,7 +145,8 @@
 ##       lacks, and whose strength buys nothing, since checksum carries no key; FNV-1a 64 of
 ##       `stamp`, hash for names guaranteeing change of one byte alone, which would tie checksum
 ##       to name of file.
-##     Cost: 33 bytes of frame on each file; person reads file through `protoc`, past frame.
+##     Cost: 28 bytes of frame on each file written, 33 on file of old line; person reads file
+##       through `protoc`, past frame.
 ##   Message holds what `Exchange` holds, field for field. Label is `string`, which protobuf
 ##     holds as well-formed UTF-8 alone, so `toBytes` repairs it by Table 3-7 of Unicode Standard,
 ##     and reader refuses label that rule would repair, as `protoc` does: decoder of Nim takes
@@ -227,10 +230,13 @@ type
 
 
 const
-  LINE_FORMAT_EXCHANGE = "lojban_tagger exchange 2\n"
-    ## Format line of exchange file: format and version, then line break; version 1, text in
-    ##   format of its own, is refused here.
-  AT_LENGTH = LINE_FORMAT_EXCHANGE.len  ## Byte length of message opens at, past format line.
+  LINE_FORMAT_EXCHANGE = "rictadni exchange 2\n"
+    ## Format line of exchange file written: format and version, then line break.
+  LINES_FORMAT_READ = [LINE_FORMAT_EXCHANGE, "lojban_tagger exchange 2\n"]
+    ## Format lines reader takes: one written, and one of file written before rename (#946),
+    ##   whose frame past line is same; version 1, text in format of its own, is refused.
+  AT_LENGTH = LINE_FORMAT_EXCHANGE.len
+    ## Byte length of message opens at in file written, past format line.
   AT_CHECKSUM = AT_LENGTH + 4  ## Byte checksum of message opens at, past length.
   AT_MESSAGE = AT_CHECKSUM + 4  ## Byte message opens at, past checksum, i.e. bytes of frame.
   POLYNOMIAL_CHECKSUM = 0x82F6_3B78'u32
@@ -249,7 +255,7 @@ const
   STATUSES_KEPT = 0..999
     ## Statuses exchange file keeps: three digits, as status line spells them; `send` gives 0 to
     ##   599.
-  USER_AGENT* = "lojban_tagger"  ## Agent every request names.
+  USER_AGENT* = "rictadni"  ## Agent every request names: name of project (#946).
   STATUSES_REDIRECT* = [301, 302, 303, 307, 308]  ## Statuses `redirect` follows, as client does.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
   LUT_OPENING_BY_SERVICE*: array[Service, string] = ["sk-ant-", "sk-or-", ""]
@@ -629,28 +635,35 @@ func readExchange*(bytes: string): Recorded =
     ##   (`dropSecretsText`), then made printable and cut.
     text.dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
 
-  # Check format line, then length and checksum of message, so no message cut or changed decodes.
-  if not bytes.startsWith(LINE_FORMAT_EXCHANGE):
+  # Check format line, then length and checksum of message, so no message cut or changed decodes;
+  #   frame past line opens where line read closes.
+  var at_length = 0  # Byte length of message opens at, past format line file opens with.
+  for line in LINES_FORMAT_READ:
+    if bytes.startsWith(line): at_length = line.len
+  if at_length == 0:
     let close = bytes.find('\n')
     return refuse("Exchange should open with `" & LINE_FORMAT_EXCHANGE.toEcho & "`; got `" &
         bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`.")
-  if bytes.len < AT_MESSAGE:
-    return refuse("Exchange should hold 8 bytes of length and checksum after format line; got `" &
-        $(bytes.len - AT_LENGTH) & "`.")
-  let length = bytes.readFixed(AT_LENGTH)
-  if int64(length) != int64(bytes.len - AT_MESSAGE):
-    return refuse("Message should hold `" & $length & "` bytes, as its length counts; got `" &
-        $(bytes.len - AT_MESSAGE) & "`.")
   let
-    named = bytes.readFixed(AT_CHECKSUM)
-    held = checksum(bytes.toOpenArray(AT_MESSAGE, bytes.high))
+    at_checksum = at_length + AT_CHECKSUM - AT_LENGTH
+    at_message = at_length + AT_MESSAGE - AT_LENGTH
+  if bytes.len < at_message:
+    return refuse("Exchange should hold 8 bytes of length and checksum after format line; got `" &
+        $(bytes.len - at_length) & "`.")
+  let length = bytes.readFixed(at_length)
+  if int64(length) != int64(bytes.len - at_message):
+    return refuse("Message should hold `" & $length & "` bytes, as its length counts; got `" &
+        $(bytes.len - at_message) & "`.")
+  let
+    named = bytes.readFixed(at_checksum)
+    held = checksum(bytes.toOpenArray(at_message, bytes.high))
   if held != named:
     return refuse("Message should hold checksum `" & named.toHex.toLowerAscii & "` its frame " &
         "names; got `" & held.toHex.toLowerAscii & "`.")
 
   # Decode message, then refuse label `protoc` refuses and status no status line spells.
   let message =
-    try: Protobuf.decode(bytes.toOpenArray(AT_MESSAGE, bytes.high), exchanges_schema.Exchange)
+    try: Protobuf.decode(bytes.toOpenArray(at_message, bytes.high), exchanges_schema.Exchange)
     except SerializationError as error:
       return refuse("Message should decode as `lojban_tagger.Exchange`; got `" &
           error.msg.splitLines[0].toPrintable(RUNES_ANSWER_SHOWN) & "`.")

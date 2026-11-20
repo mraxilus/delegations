@@ -460,9 +460,18 @@ the page for each row.
 
 **`openrouter` names one session, and `claude` can name a workspace.** A fixed `session_id` keeps
 the cached system text on one endpoint of OpenRouter, where the passage alone would route each
-request apart. Its documentation says so, and no run measured a hit of the cache. A Claude key
-that no workspace scopes needs `anthropic-workspace-id`, which `LOJBAN_TAGGER_WORKSPACE` gives.
-The workspace goes in a header, never in the body, so the exchange replays under any
+request apart. Its documentation says so, and no run measured a hit of the cache. The session is
+`rictadni`, the name of the project, as the Architect ruled on #946. So the first request after
+the rename can miss the cache once.
+
+**Replay still takes an exchange recorded under the old session, `lojban_tagger`.** The stamp of
+an exchange and the compare of replay read the whole request, and the body of OpenRouter names
+the session. So where the request has no file, replay reads the same request under the old
+session (`requestsRead`). Record mode writes under the new request alone. Verified by
+`suites/test_suggester.nim`, over a file of the old session and the old format line.
+
+A Claude key that no workspace scopes needs `anthropic-workspace-id`, which `RICTADNI_WORKSPACE`
+gives. The workspace goes in a header, never in the body, so the exchange replays under any
 workspace. Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 **There is no retry.** The key is for sparing use. So a reply that fails as a whole goes to the
@@ -597,14 +606,23 @@ types.
 Buffers reads a message that is cut between two fields as a message with fewer fields. So the
 frame holds three parts, and the reader refuses the file at the first part that fails:
 
-1. The format line, `lojban_tagger exchange 2` and a line break, which names the format and its
+1. The format line, `rictadni exchange 2` and a line break, which names the format and its
    version.
 2. The length of the message, in four bytes.
 3. The CRC-32C of the message, in four bytes.
 
 Both numbers put the least significant byte first, as Protocol Buffers writes `fixed32`. The
-message starts after these 33 bytes. Verified by `suites/test_exchanges.nim`, against a frame that
+message starts after these 28 bytes. Verified by `suites/test_exchanges.nim`, against a frame that
 the suite builds apart, over each cut and each changed bit or byte.
+
+**The reader still takes the format line of a file written before the rename.** That line is
+`lojban_tagger exchange 2`, and the frame past it is the same, so the message starts after 33
+bytes there. The writer writes the new line alone. The Architect ruled so on #946, so that each
+exchange recorded before the rename still replays. Verified by `suites/test_exchanges.nim`, over
+each cut and each changed byte past the old line.
+
+Rejected: the new line alone, which refuses each exchange that a person recorded before the
+rename. Cost: the reader takes two lines, and the frame opens where the line that it read closes.
 
 The format line ends with a line break, so `head -n 1` prints it. A transfer that rewrites line
 ends also changes the format line, so the reader refuses the file there and shows the carriage
@@ -626,7 +644,8 @@ checksum carries no key, so its strength buys nothing here. Rejected: FNV-1a 64 
 hash for names. It detects each change of one byte, but it makes no promise for a longer run. It
 would also tie the checksum to the name of the file.
 
-Cost: each file holds 33 bytes of frame, and a person reads it through `protoc`, past the frame.
+Cost: each file holds 28 bytes of frame, or 33 where it opens with the old line. A person reads
+it through `protoc`, past the frame.
 
 **The message holds each field of `Exchange`.** The label is a `string`, and Protocol Buffers
 holds a `string` as well-formed UTF-8 alone. `protoc` refuses a message whose `string` is
@@ -669,11 +688,11 @@ exits 0. Verified by hand with Nim 2.4.0 on 2026-11-11.
 project, this command prints the first hop of the example `page`:
 
 ```sh
-tail -c +34 build/examples/390a130dbd59a40f.exchange |
+tail -c +29 build/examples/390a130dbd59a40f.exchange |
   protoc --decode=lojban_tagger.Exchange app/exchanges.proto
 ```
 
-Verified by hand with `protoc` 3.21.12 on 2026-11-04, for each file that `examples` writes.
+Verified by hand with `protoc` 3.21.12 on 2026-11-19, for each file that `examples` writes.
 
 **Each refusal names the part that fails, and ends in the value that it refuses.** That value is
 the first line of the file, a count of bytes, a checksum, an error of the decoder, a label or a
@@ -726,8 +745,21 @@ runs at one time race, and the last rename wins. Verified by `suites/test_comman
 `suites/test_tagger.nim`, which builds the binary and drives it.
 
 **The index path comes from the user, never from this machine.** The option `--index:<path>`
-wins, then the variable `LOJBAN_TAGGER_INDEX`, then `lojban_tagger/index` under the data directory
-of XDG. An absent file reads as an empty index, so the first `tag` makes it.
+wins, then the variable `RICTADNI_INDEX`, then `rictadni/index` under the data directory of XDG.
+An absent file reads as an empty index, so the first `tag` makes it. Verified by
+`suites/test_tagger.nim`.
+
+**The tagger still reads the old names of its index, from before the rename.** It reads
+`LOJBAN_TAGGER_INDEX` where the variable `RICTADNI_INDEX` is unset or empty. It reads
+`lojban_tagger/index` where the new folder holds no index, and the first change writes the new
+folder. The old file stays as it was, as an artifact of history. The Architect ruled so on #946.
+Verified by `suites/test_tagger.nim`, over a file of the old header in the old folder.
+
+Rejected: the new names alone, which show an empty index to each person who holds one. Cost: the
+old file stays in place, and once the new folder holds the index, the old file is out of date.
+
+The header of the index follows the same rule. The writer writes `rictadni index 1`, and the
+reader also takes `lojban_tagger index 1`. Verified by `suites/test_index.nim`.
 
 **`suggester` is a second binary, and not a verb of `tagger`.** `-d:ssl` loads libssl when a
 program starts, so each verb of `tagger` would need it. The Architect chose the second binary in
@@ -745,11 +777,22 @@ A blank passage exits 2 before any setting is read, and so does a URL whose host
 refuses. The argument `-` reads the text from standard input, up to 4 MiB, so the text stays out
 of the list of processes. Verified by `suites/test_suggester.nim`.
 
-**The key comes from the environment alone.** `LOJBAN_TAGGER_API_KEY` is read first, and where it
-is unset, `claude` reads `ANTHROPIC_API_KEY` and `openrouter` reads `OPENROUTER_API_KEY`, as the
-Architect ruled. Each reads that name only for the host of its default endpoint. So a key that
-the user set for other tools never goes to another host. The report names the variable, and
-never the value. Verified by `suites/test_suggester.nim`.
+**The key comes from the environment alone.** `RICTADNI_API_KEY` is read first, then its name
+before the rename, `LOJBAN_TAGGER_API_KEY`. Where both are unset, `claude` reads
+`ANTHROPIC_API_KEY` and `openrouter` reads `OPENROUTER_API_KEY`, as the Architect ruled.
+
+Each reads that name only for the host of its default endpoint. So a key that the user set for
+other tools never goes to another host. The report names the variable, and never the value.
+Verified by `suites/test_suggester.nim`.
+
+**Each variable of `suggester` still reads under its name before the rename.** That name opens
+with `LOJBAN_TAGGER_` in place of `RICTADNI_`, and it is read where the variable of the new name
+is unset or empty. The new name wins where both hold a value, and a problem names the variable
+that it read. The Architect ruled so on #946. Verified by `suites/test_suggester.nim`.
+
+An empty variable reads as unset, as each setting of the tool already did before the rename. So
+a person clears an old value only by unsetting its old name. Rejected: the new names alone, which
+drop each setting that a person exported. Cost: an old value applies until the person unsets it.
 
 ## Tests
 
@@ -947,8 +990,6 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
 - **Title and textarea.** The reader reads their content as markup, where HTML reads it as text.
-- **The names that files and people hold.** These keep the old name: the format lines
-  `lojban_tagger exchange 2` and `lojban_tagger index 1`, the package `lojban_tagger` of the
-  schema, and the folder `lojban_tagger/index`. So do the variables `LOJBAN_TAGGER_*`, the user
-  agent and the ID of the session. D1 on #946 asks the Architect how they move. The options are
-  the new name with the old one still read, the old name kept, or the new name alone.
+- **The package of the schema.** It keeps `lojban_tagger`, though D1 on #946 moves each name.
+  `check-schemas` refuses a new package, by the rule `FILE_SAME_PACKAGE` of `buf breaking`, and no
+  byte of a message names a package. The curator decides on #981 whether the package may change.

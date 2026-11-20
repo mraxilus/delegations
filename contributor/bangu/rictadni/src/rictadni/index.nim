@@ -3,9 +3,11 @@
 ##   File holds one header line, then one line per entity: name, tab, then each tag as tanru
 ##     (`datni+vreji`), space apart. Entities sort by name, and tags keep order they were added.
 ##
-##     lojban_tagger index 1
+##     rictadni index 1
 ##     notes/plan.md<TAB>notci datni+vreji
 ##
+##   Header names project; reader takes header of file written before project took name
+##     `rictadni` too (`HEADERS_INDEX_READ`), and writer writes new one alone, as D1 on #946 ruled.
 ##   Tag is stored as tanru, never as lujvo spelling: tanru is what tag is (`tags.nim`), and it
 ##     stays readable if scoring of 4.12 ever prefers other spelling.
 ##   Reader refuses whole file at first bad line, naming line and text, rather than keep part:
@@ -41,8 +43,10 @@ type
 
 
 const
-  HEADER_INDEX* = "lojban_tagger index 1"
-    ## First line of every index file, naming format and version.
+  HEADER_INDEX* = "rictadni index 1"
+    ## First line of every index file written, naming format and version.
+  HEADERS_INDEX_READ* = [HEADER_INDEX, "lojban_tagger index 1"]
+    ## First lines reader takes: one written, and one of file written before rename (#946).
   CHARACTERS_FORBIDDEN* = {'\t', '\r', '\n'}  ## Characters name may not hold.
 
 
@@ -99,7 +103,7 @@ func toText*(index: Index): string =
 func readIndex*(text: string): Loaded =
   ## Read file text as index; refuse at first bad line.
   let lines = text.splitLines
-  if lines.len == 0 or lines[0] != HEADER_INDEX:
+  if lines.len == 0 or lines[0] notin HEADERS_INDEX_READ:
     return Loaded(is_loaded: false, line: 1, problem: "Header should read `" & HEADER_INDEX &
         "`; got `" & (if lines.len > 0: lines[0] else: "") & "`.")
   var index: Index
