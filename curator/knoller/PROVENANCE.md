@@ -603,8 +603,10 @@ test, end to end (`suites/test_regressions.nim`).** The Architect asked for this
 Each case quotes the source as found and names where it came from. It runs through `formatted`,
 as `koch fix` runs it, and holds the exact output and a second run that writes nothing.
 
-- The cases come from the PGA library at `d9be8ae`, from `dance_ontology` (#539), from
-  `rga_visualiser` (#521), and from the rulings of #533, #526 and #443.
+- The cases come from the PGA library at `d9be8ae` and `3d9696e`, from `dance_ontology` (#539),
+  and from `rga_visualiser` (#521). Others come from the rulings of #533, #526 and #443.
+- The cases of rules 2 to 5 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20:
+  each fails at `4245dca8`, before those rules, and the case of rule 2 fails at `3a6cf5e9`.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
@@ -1010,6 +1012,9 @@ purpose.` above the paragraph, at its indent, as `## TODO: Document.` waits for 
 - A body is the lines below the `=` that ends a signature, deeper than the head, for each kind of
   routine. The lines below `test "…":` are a body too. A routine nested in a body cuts the
   paragraphs of the routine that holds it, and its body reads as its own (STYLE.md §1).
+- A comment right above a nested helper belongs to the helper. A paragraph of routines on one line
+  is helpers too. Neither opens a stage of the routine that holds them, since STYLE.md §1 puts
+  each helper before the first stage. Verified by `suites/test_stages.nim`.
 - A paragraph is a run of lines with text and no blank line between them, at any depth of the
   body. A line inside a string or a comment that spans lines opens no paragraph, and a blank line
   there ends none. Code under `quote do:` belongs to its generator, so it opens none.
@@ -1560,9 +1565,13 @@ spaces past `Implement`.
   block comment, a fence marker and a shebang (`#!`) are none.
 - The step of a line is the count of spaces between its marker and its text. The parent of a line
   is the nearest line above it in its comment at a smaller step.
-- A table row (`|`), a diagram (`->`) and code between fences of three backticks hold no step. So
-  does a blank line. A `#` comment whose first line stands at an even step is commented code, as
-  `#func` is, so it holds no outline.
+- A table row (`|`), a diagram and code between fences of three backticks hold no step. So does a
+  blank line. A `#` comment whose first line stands at an even step is commented code, as `#func`
+  is, so it holds no outline.
+- A diagram holds one item, a name or a bracket group, each side of each arrow `->` outside
+  backticks. A bracket group alone above an arrow is a line of it too. So an arrow that prose
+  quotes in backticks, or writes between measures, marks no diagram (`isDiagram`). Verified by
+  `suites/test_outlines.nim`, with the diagram of `pga.nim` at `3d9696e`.
 - The fixer sets each line two spaces past the sentence of its parent, as the parent stands once
   moved. So the lines below a moved line move with it. A comment whose move would widen a line
   past `LINE_MAX` stays for hand, whole, and its reports stay.
@@ -1610,8 +1619,11 @@ bare. The rule reads no string that a generator passes as a doc.
   comparison after a name. It is also a line that ends in `=`, a keyword line that ends in `:`,
   or a nested marker.
 - A line without a step holds no prose, as the outline reads it (`isStepless`). Nor does an
-  aligned column, that is two spaces or more between words outside backticks, after no closing
-  mark. Nor does a deeper line that continues one, or a `#` line that reads as code.
+  aligned column, that is two spaces or more between words outside backticks. Nor does a deeper
+  line that continues one, or a `#` line that reads as code.
+- Two spaces after a closing mark, a comma or a semicolon space the clauses of a sentence, and
+  align no column. The header of `simulation/rig.nim` of `dance_ontology` writes them so, and
+  `suites/test_claims.nim` quotes it as found at `e9ac1be1`.
 - A path is a word with a file extension of `EXTENSIONS_FILE`, as `cayleys.nim`, or a folder that
   a slash closes, as `draw/`. Backticks replace its double quotes, as EXAMPLES.md, I.6 writes it.
   A capitalised name with an extension and no folder, as Node.js, names a product, and stands
