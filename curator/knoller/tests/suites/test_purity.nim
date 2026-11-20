@@ -99,6 +99,12 @@ proc claimed[T](store: var Store[T], key: string): bool =
     ("signal", "broadcast(cond)"),
   ]
     ## Kind of effect, and statement naming it, one for each kind §1 and ruling name.
+  CALLED = [
+    "acquire", "broadcast", "debugEcho", "echo", "epochTime", "execProcess", "gauss", "getEnv",
+    "now", "rand", "readFile", "readLine", "second", "signal", "stdin", "stdout", "wait",
+    "withLock", "write",
+  ]
+    ## Routine each statement of `EFFECTS` calls, which project declares in one test.
 
 
 func site(source, text: string): (int, int) =
@@ -127,13 +133,17 @@ suite "Style §1":
 
   test "proc naming effect stays, of each kind §1 and ruling name":
     # Domain: output, input, files, clock, random numbers, environment, process, address, lock,
-    #   wait and signal, one statement each; same proc without it is candidate.
-    let pure = "proc f(x: var int, lock: var Lock, cond: var Cond) =\n  inc x\n"
-    check candidatesPure([("a.nim", pure)]).getOrDefault("a.nim") == @[(1, 0)]
+    #   wait and signal, one statement each; same proc without it is candidate. Project declares
+    #   each routine statement calls, so its name alone keeps proc `proc`, as lock that template
+    #   of project takes would.
+    let
+      pure = "proc f(x: var int, lock: var Lock, cond: var Cond) =\n  inc x\n"
+      declared = ("b.nim", CALLED.mapIt("func " & it & "*() = discard\n").join)
+    check candidatesPure([("a.nim", pure), declared]).getOrDefault("a.nim") == @[(1, 0)]
     for (kind, statement) in EFFECTS:
       let source = pure & "  " & statement & "\n"
       checkpoint kind & ": " & statement
-      check candidatesPure([("a.nim", source)]).getOrDefault("a.nim").len == 0
+      check candidatesPure([("a.nim", source), declared]).getOrDefault("a.nim").len == 0
 
 
   test "proc taking lock stays, as `claimed` of `dance_ontology` does":
