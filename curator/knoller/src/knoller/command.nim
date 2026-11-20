@@ -819,7 +819,7 @@ proc resolveMarkers(
   ##   it, since command line names no define (`symbols.nim`). Each module opened checks with
   ##   hints, so symbol compiler hints none of is used by module, as Q2 reads it. Each `{.all.}`
   ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
-  ##   cannot read, as symbol macro declares; file checking clean on no backend confirms nothing.
+  ##   cannot read, as symbol template declares; file checking clean on no backend confirms nothing.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()

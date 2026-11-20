@@ -148,7 +148,8 @@ suite "Style §1":
 
   test "proc taking lock stays, as `claimed` of `dance_ontology` does":
     # Case: `simulation/walk.nim:142` of `dance_ontology`; compiler checks it as `func`, but
-    #   another thread sees each lock, so ruling of rule 11 (#443) counts it as effect.
+    #   answer of `claimed` depends on order of threads, so ruling of rule 11 (#443) counts lock
+    #   as effect, as STYLE.md §1 does, since another thread sees it.
     check candidatesPure([("simulation/walk.nim", STORE)]).len == 0
     let unlocked = STORE.replace("  withLock store.lock:\n    if", "  block:\n    if")
     check candidatesPure([("simulation/walk.nim", unlocked)])["simulation/walk.nim"] ==

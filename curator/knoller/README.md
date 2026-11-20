@@ -184,7 +184,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | Id | Rule |
 |----|------|
 | `type-conversion` | A type conversion is a prefix call, `T(x)`, and never `x.T`. |
-| `marker-used` | A private symbol a sibling reaches carries its marker. An `{.all.}` reaches one. |
+| `marker-used` | A private symbol only a sibling uses has its marker. An `{.all.}` reaches one. |
 | `func-pure` | A routine with no effect beyond its parameters is a `func`. |
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
 | `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |

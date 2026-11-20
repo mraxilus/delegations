@@ -7,8 +7,8 @@
 ##     marker, since test reaches internals by design. Its `{.all.}` still reaches something.
 ##   - Q2: marker stands only where sibling reaches symbol and its own module never uses it, as
 ##     compiler confirms: each such symbol is hint that it is declared and never used.
-##   - Q3: `{.all.}` import of module outside package is not read, and its markers belong to
-##     its own package.
+##   - Q3: `{.all.}` import of module outside package stays unread, since its markers belong to
+##     its own package, as page of #443 proposes.
 ##   Private symbol is name module declares at top level, under blocks opening no scope (`when`
 ##     chain, section keyword), outside entry block, with no `*`: routine, operator among them,
 ##     type, and single binding (`privatesTop`). Each is asked where every use of it stands
@@ -17,7 +17,7 @@
 ##     as one `{.borrow.}` calls, are left out by name and type; use inside its own name is none.
 ##   Use counts where compiler resolves it, implicit call among them: `for d in x` calls `items`,
 ##     and `x[i]` calls `[]`. Caller asks in entry of each file importing module with `{.all.}`,
-##     under each configuration its stubs give, so each `when` branch one takes is read.
+##     with no define (`resolveMarkers`).
 ##   `from M {.all.} import a, b` names its reach in its text, so it reaches where it names
 ##     private symbol of `M`.
 ##   Comment names sibling where it holds file name of each sibling reaching symbol, in any

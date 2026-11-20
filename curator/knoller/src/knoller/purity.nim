@@ -5,8 +5,10 @@
 ##     `genAst`), code template substitutes, and code `compiles` tests, whose verdict clean
 ##     check of module never proves, whose body
 ##   - names no effect of `EFFECTS`: output, input, files, clock, random numbers, environment,
-##     process, address, and lock, wait and signal, which another thread sees (ruling of rule 11,
-##     #443), though compiler checks routine taking lock in its `var` parameter as `func`;
+##     process, address, and lock, wait and signal, which another thread sees (STYLE.md §1), so
+##     answer of routine taking one depends on order of threads, and is no deterministic
+##     transformation of its arguments (ruling of rule 11, #443), though compiler checks routine
+##     taking lock in its `var` parameter as `func`;
 ##   - reads no global `var` of project;
 ##   - calls no routine project declares nowhere and `TRANSFORMS` holds not, so call syntax cannot
 ##     read never counts as pure; call is name glued before `(` or `[…](`, name glued after `.`,
@@ -28,10 +30,15 @@
 ##
 ##   Cost: effect is read from names, so name of `EFFECTS` used otherwise, as field `write`,
 ##     keeps routine `proc`; fewer reports, never false one.
+##   Cost: compiler accepts write library routine makes through `ref` parameter that is not
+##     `var`, as `[]=` of `std/json` makes, and default argument is no part of body, so
+##     `initToolchains` reads as pure though its default reads environment. Each adds false
+##     report.
 ##   Cost: generic body checks where module instantiates it alone, so instantiation in other
-##     module that compiler would refuse is unread.
-##   Cost: one `nim check` of file for each configuration and round, about 0.6 s for module of
-##     PGA library (measured 2026-11-20, 2.4.0).
+##     module that compiler would refuse is unread, and can add false report.
+##   Cost: one `nim check` of file for each configuration and round, 0.63 s for module of PGA
+##     library on 4 cores at 2.10 GHz, where none runs without rule (`nim check --hints:off -`,
+##     median of three, 2026-11-20, 2.4.0).
 
 {.experimental: "strictFuncs".}
 

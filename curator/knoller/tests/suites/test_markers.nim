@@ -110,7 +110,7 @@ suite "Style §5":
 
 
   test "marker passes where its comment names each sibling, in any spelling":
-    # Case: five marks of `pga/algebra.nim` at `3d9696e`, each silencing real hint (Q2).
+    # Case: three of five marks of `pga/algebra.nim` at `3d9696e`, naming sibling in each spelling.
     var uses: Uses
     for name in ["`and`", "`[]`", "toBasis("]:
       uses.privates[ALGEBRA.at(name)] = UsePrivate(siblings: @["cayleys.nim"])
