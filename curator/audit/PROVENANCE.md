@@ -3924,7 +3924,8 @@ comments on #962 and #969. `checkBlocks` holds these: a prediction before each c
 after each report of a critic, and a quote in each cell of a reflection. It reads every model
 turn, whether or not it pushed or posted, because the turn of a prediction writes nothing.
 Section Quotes of claims gives the quote, and reading holds each other step. Section Runs of the
-block check gives the runs that verify both sections, on small transcripts and on a real one.
+block check gives the runs that verify both sections, on small transcripts and on a frozen copy
+of a real one.
 
 **A model turn ends where the model stops.** It ends at an `assistant` entry whose `stop_reason`
 is a string other than `tool_use`. The harness writes each item of a message as an entry of its
@@ -3970,7 +3971,8 @@ kind, names no kind.
 - Choice: the line may open after an indent, so a block whose lines a delegate indents serves
   too. Rejected: the first column alone, which refuses such a block. The label keeps its other
   marks, and the word each other mark, since the rulings name these marks alone. So
-  `__Subagent:__`, `builder;`, `~~builder~~` and `builder,,` name no kind.
+  `__Subagent:__`, `builder;`, `~~builder~~` and `builder,,` name no kind. The word drops a mark
+  only at its ends, so a word with a backtick inside it names no kind.
 - Verified by `suites/test_hooks.nim`: a law of each kind of the suite in four cases, inside each
   mark, with each final mark or none. The plain word also runs after each of five forms of the
   label. It holds an indent, no space after the label, and a later label line. As no kind, it
@@ -3984,9 +3986,9 @@ ends the turns that the hook looks back over, and its blocks are no evidence (`D
 turn (comment 7017187857). Inside that turn, it takes the earliest (comments 7017187857 and
 7027197745).
 
-- Choice: a call of any type ends those turns, tool use as `web-fetch` too. The ruling names no
-  type, and the harness starts a subagent for each such call. Rejected: a call of a kind alone,
-  which lets a block serve a call across a `web-fetch` call between them.
+- A call of any type ends those turns, tool use as `web-fetch` too. A block serves only where no
+  subagent starts between it and its call (comment 7014974932). Comment 6974524232 calls
+  `web-fetch` a subagent that stands in for a tool.
 - Each prediction is the last message of a turn of its own (comment 6980006567). So a block in
   the turn of its call is no evidence (comment 7014974932). A reply to a refusal, or a wake by
   another event, can come between a block and its call, and the block still serves it.
@@ -4067,9 +4069,9 @@ block that a call took. Verified by `suites/test_hooks.nim`.
   confidence (comments 6980233163 and 7004976005). Nor does it read the tokens, cost, calls and
   time of a reflection. It never reads whether the resolver ran, or what it marked (comments
   6982623146 and 6983032935).
-- The hook never reads the rules for forecasting of `D1 a` of comment 6982373798, as the side of
-  a claim or its percentiles. It never reads the resolution criterion of a claim (comment
-  6982623146), or the effort of a critic (comment 6977822742). It reads the confidence, the
+- The hook never checks the rules for forecasting of `D1 a` of comment 6982373798, as the side of
+  a claim or its percentiles. It never checks whether a claim meets its resolution criterion
+  (comment 6982623146), or the effort of a critic (comment 6977822742). It reads the confidence, the
   percentiles and the resolution criterion of a claim only to find where the claim ends (section
   Quotes of claims).
 - The hook never reads two choices of the guide that no comment holds. A number is a hit on
@@ -4215,9 +4217,9 @@ form that opens no claim. It holds `No prediction` with and without a block, and
   holds the probes M1, M2 and M6 of the critic of the build of D5 b, as each was found.
 - For the percentiles: probe F11 of the critic of the claim build, and the example of the ruling.
   It holds a percentage after them, a criterion before them, and `, As the 10th`, which opens none.
-- For the criterion: probes F02, F03 and F07, and each case of its words in 21 forms, plain and
-  in italics, bold or both. It holds two forms in one bullet, each form left out, and a claim
-  that quotes the words.
+- For the criterion: probes F02, F03 and F07. It holds each case of its words, plain and in each
+  form of italics, bold or both, as the bullets that `marks` counts. It holds two forms in one
+  bullet, each form left out, and a claim that quotes the words.
 - For the label: probes M3 to M5, F21 and F22. It holds a capital with each class of character
   after it, plain and in each form of bold. It holds each capital from `A` to `Z`, each other text
   before `: `, and a capital word inside a claim. It holds another label before a claim, and a
@@ -4230,9 +4232,10 @@ form that opens no claim. It holds `No prediction` with and without a block, and
 **Verified by hand on 2026-11-20, through koch built at `ff2fa434`.** `koch hook stop` passes or
 refuses each case of the guide and a reply to a refusal, on small transcripts in the shape of the
 harness. No suite runs `main` of koch, so this run holds the dispatch of the stop branch. A row
-of `No prediction` passes where no call took a block, and a cell of `-` is refused. Each of the
-92 probes of the earlier critics gives the verdict that the rulings ask. Probes S05, S10 and S15
-pass, since the label and the word of the kind line read as comment 7027197745 rules.
+of `No prediction` passes where no call took a block, and a cell of `-` is refused. At
+`ff2fa434`, 89 of the 92 probes of the earlier critics give the verdict and reason that they give
+at `7a912117`, word for word. Probes S05, S10 and S15, refused at `7a912117`, pass, since the
+label and the word of the kind line read as comment 7027197745 rules.
 
 - Each of 222 breaks of the rules fails a test of `suites/test_hooks.nim`, on 2026-11-20. A break
   is one edit of a scratch copy of `hooks.nim` at `ff2fa434`, with which the suite builds and runs.
@@ -4255,11 +4258,11 @@ transcript, so another copy gives its own figures.
   a later hand-back. The call of `web-fetch` in the foreground has the status `completed`, and its
   result holds its report. No result of an `Agent` call has `is_error`, so no call is skipped.
 - By that read, each of the 14 lines `**Subagent:**` writes its kind in lower case with no marks.
-  No claim of a block opens with a bold label or a label of other marks. No claim holds `\|` or
-  percentiles, and no item stands right under a claim. One claim holds `resolution criterion`
-  with no full stop before it, so it ends nothing.
+  No claim of a `## Prediction` block opens with a bold label or a label of other marks. No claim
+  holds `\|` or percentiles, and no item stands right under a claim. One claim holds
+  `resolution criterion` with no full stop before it, so it ends nothing.
 - A tool that includes `hooks.nim` at `ff2fa434` runs `toSubagents`, `kindNamed`, `blocksTaken`
-  and `claims` over the copy, and gives the same output at `9d4b7eff`. Entries count from 1. The
+  and `claims` over the copy, and gives the same output at `7a912117`. Entries count from 1. The
   8 blocks name `reviewer` and `builder` in entry 370, then `critic`, `builder`, `builder`,
   `critic`, `builder` and `researcher`. Only the last, in entry 817, serves a call, the call of
   `researcher` in entry 821. They hold 55 claims, 51 with a label, which `claims` reads as 106
@@ -4280,7 +4283,8 @@ transcript, so another copy gives its own figures.
   cell read in other words. The other 49 reasons are the same word for word.
 - Cost: `koch hook stop` on the whole copy takes a median of 227 ms at `40bee07a` and 241 ms at
   `ff2fa434`. A second set gives 246 ms and 239 ms. Each median is of 20 runs on 2026-11-20,
-  which alternate between the builds. Each set spans 97 to 121 ms, so the gap stays inside it.
+  which alternate between the builds. The runs of one build in one set span 97 to 121 ms, so the
+  gap stays inside that spread.
   They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.40 to 0.57, as
   `/proc/loadavg` gave it before and after each set.
 
