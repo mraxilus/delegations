@@ -177,3 +177,28 @@ suite "Names of package":
       "`rightName`." in outcome.lines
     check outcome.lines.anyIt(it.startsWith("p/src/a.nim:10: name-case warning: Rename to " &
       "`name_right` stays for hand, since it is refused:"))
+
+
+  test "rename refused before semantic pass warns at path run names":
+    # Case of wiring of audit: rename of `Anticlockwise` at `rotation.nim:70` of `dance_ontology`
+    #   printed `left` alone, since plan refused before pass kept path inside its project.
+    let root = createTempDir("knoller_", "_early")
+    defer: removeDir(root)
+    const source =
+      "type Chiral*[T] = object  ## Pair of sides.\n" &
+      "  left*, right*: T  ## Side.\n\n\n" &
+      "const LEFT_NAME* {.strdefine.} = \"a\"  ## Name.\n"
+    root.writeTree([("p/p.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+                    ("p/src/a.nim", source)])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = [("p/src/a.nim", source)]
+      nimbles = nimblesNearest(["p/src/a.nim"], root)
+      plans = files.planRenames([], "", root, toolchains, nimbles)
+    check plans.mapIt((it.rename.path, it.rename.renamed, it.refusal.len > 0)) ==
+      @[("p/src/a.nim", "NAME_LEFT", true)]
+    let outcome = outcome(files, [], false, root, plans = plans, nimbles = nimbles)
+    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:5: name-cut warning: Rename to " &
+      "`NAME_LEFT` stays for hand, since it is refused: `strdefine` gives `LEFT_NAME`"))
