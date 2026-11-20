@@ -21,8 +21,8 @@
 ##   Cost: scanner on lines, never parser: body runs while lines stand deeper than head, so line
 ##     of string at column 0 ends it. Branch on line of its head (`when C: a`) and `elif` chain
 ##     are unread.
-##   Cost: two blocks of complementary configurations side by side, default last, pass, since
-##     ruling names swap of two-way branch alone.
+##   Cost: order is read in two-way branch alone, so complementary blocks side by side, default
+##     last, pass, though X.11 asks default first there too (`PROVENANCE.md`, Open questions).
 
 {.experimental: "strictFuncs".}
 

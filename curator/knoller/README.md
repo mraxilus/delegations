@@ -207,7 +207,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `skip-reason` | A skip gives its reason, and a gap is a test that skips. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
-| `configuration-block` | Blocks of one configuration side by side join, the default first. |
+| `configuration-block` | Blocks of one configuration join. In `when … else` the default is first. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
 | `definition-blank-lines` | The blank lines before a definition follow its kind. |
