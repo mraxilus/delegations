@@ -768,7 +768,7 @@ const HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` n
 
 
 func isPaAt(terminals: openArray[Terminal], at: int): bool =
-  ## jdice lo du'u xu kau le genvla pe `at` cu valsi pe `PA`
+  ## jdice lo du'u xu kau le genvla pe `at` cu cmima `PA`
   ##   .i va'o lo nu `at` cu zvati le fanmo kei le jalge cu du `false`
   at < terminals.len and terminals[at] == Selmaho.Pa.toTerminal
 
@@ -809,8 +809,8 @@ type
 
   Chart = object
     ## lo mulcmi pe pa pagbu ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
-    ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali gi'e le bavla'i
-    ##       genvla cu stali lo ka ce'u valsi pe `PA` to `fillSets` toi
+    ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali kei .e lo nu le
+    ##       bavla'i genvla cu stali lo ka ce'u cmima `PA` to `fillSets` toi
     terminals: seq[Terminal]  ## lo genvla poi le selcmi cu tcidu ke'a
     is_everywhere: bool  ## le tadji pe le romoi nu tisna to `fillSets` toi
     sets: seq[seq[Item]]  ## le selcmi pe `Earley`
@@ -827,8 +827,8 @@ type
 
   ChartsKept* = object
     ## lo mulcmi pe le romoi pagbu poi se tcidu
-    ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali gi'e
-    ##       le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
+    ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali kei .e
+    ##       lo nu le bavla'i genvla cu stali lo ka ce'u cmima `PA`
     ##   .i se ki'u bo lo tcidu be lo mivyselci'a cu tisna lo selcmi po'o pe lo valsi poi cnino
     ##   .i `ReaderLive` pe `live.nim` cu ralte ke'a gi'e benji ke'a fi `readTextParts` pe
     ##       `prose.nim`
@@ -880,9 +880,9 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
   ##
   ## ni'o le fancu cu ralte ro selcmi pe `chart` poi ro genvla poi lidne ke'a cu mintu lo genvla pe
-  ##     `terminals` gi'e poi le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
+  ##     `terminals` zi'e poi le bavla'i genvla cu stali lo ka ce'u cmima `PA`
   ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a ku'o .e lo du'u xu kau le bavla'i
-  ##       genvla cu valsi pe `PA` to `isHeld` toi
+  ##       genvla cu cmima `PA` to `isHeld` toi
   ##   .i ba bo le fancu cu tcidu le genvla pe le romoi selcmi poi stali gi'e tisna ro selcmi poi se
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
@@ -928,7 +928,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   if chart.sets.len > 0 and chart.is_everywhere == is_everywhere:
     let most = min(chart.terminals.len, terminals.len)
     while same < most and chart.terminals[same] == terminals[same]: inc same
-    # le selcmi pe `same` cu stali va'o lo nu le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
+    # le selcmi pe `same` cu stali va'o lo nu le bavla'i genvla cu stali lo ka ce'u cmima `PA`
     first = (if chart.terminals.isPaAt(same) == terminals.isPaAt(same): same + 1 else: same)
   result = terminals.len + 1 - first
   chart.is_everywhere = is_everywhere
@@ -953,7 +953,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   else:
     # le romoi selcmi poi stali cu tcidu le genvla poi se lidne ri
     #   .i le selcmi poi lidne le pamoi genvla poi cenba cu cnino va'o lo nu le genvla .e le pu
-    #       genvla cu frica lo ka ce'u valsi pe `PA` kei to `isHeld` toi
+    #       genvla cu frica lo ka ce'u cmima `PA` kei to `isHeld` toi
     #   .i lo cmima poi se kanpe ne'i lo selcmi poi cnino cu na stali
     for head in 0 ..< count_nonterminals:
       if chart.predicted[head] >= first: chart.predicted[head] = -1

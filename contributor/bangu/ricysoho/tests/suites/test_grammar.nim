@@ -582,7 +582,7 @@ suite "Internal: Grammar":
         while same < min(previous.len, step.len) and previous[same] == step[same]: inc same
         # ro spisa cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
         #   .i ji'a le selcmi poi lidne le genvla cu se tisna va'o lo nu le genvla .e le pu genvla
-        #       cu frica lo ka ce'u valsi pe `PA`
+        #       cu frica lo ka ce'u cmima `PA`
         #   .i ki'u bo le genvla cu jdice lo du'u xu kau pa namcu cu mulno ne'i le selcmi
         let
           is_pa_kept = same < previous.len and previous[same] == Selmaho.Pa.toTerminal
@@ -611,7 +611,7 @@ suite "Internal: Grammar":
         let step = read[0 ..< count]
         var whole_fresh, everywhere_fresh: Chart
         # ro spisa cu tisna le selcmi poi se lidne le valsi poi se jmina
-        #   .i va'o lo nu le valsi cu valsi pe `PA` kei ji'a le selcmi poi lidne le valsi cu se
+        #   .i va'o lo nu le valsi cu cmima `PA` kei ji'a le selcmi poi lidne le valsi cu se
         #       tisna
         let filled = (if count == 1 or step[^1] == Selmaho.Pa.toTerminal: 2 else: 1)
         check whole.fillSets(step, is_everywhere = false) == filled
