@@ -428,6 +428,12 @@ suite "Branch on what build fixes":
     check fixBranches("a.nim", source, @[]).source == source
     check module("const N = 3\nproc p() =\n  if N > 2:\n    echo 1\n").branches.len == 1
       # unshadowed, constant still reads static
+    let global = module(
+      "let COUNT = 5  ## Count.\n\n\nproc p() =\n  ## Print.\n  if COUNT > 2:\n    echo 1\n"
+    )
+    check checkBranches("a.nim", global, @["COUNT"]).len == 0
+      # global `let` of file shadows constant other module exports, imported or not
+    check fixBranches("a.nim", global, @["COUNT"]).source == global
 
 
   test "module reads constants it binds itself, with none from caller":
