@@ -10,8 +10,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tables, unittest]
+import std/[os, sequtils, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, proofs, reports]
+import ./sources
 
 
 const
@@ -386,6 +387,80 @@ const
     "type Order = distinct range[0..DIMENSIONS]\n" &
     "#func `<=`(a, b: Order): bool {.borrow.}\n"
     ## Lines 46 to 48 of `pga/cayleys.nim` at `3d9696e` (rule 5 of #443).
+  COMPLEMENT =
+    HEAD &
+    "func complement(b: Basis, chirality: Chirality): BasisSigned {.compileTime.} =\n" &
+    "  ## Get complement of basis (right by default).\n" &
+    "  let\n" &
+    "    mask = Basis.scalarAnti.toFlags\n" &
+    "    antibasis = (not b.toFlags and mask).toBasis.toSigned\n" &
+    "    antiscalar = case chirality\n" &
+    "      of Chirality.Left: multiplyExterior(antibasis, b.toSigned)\n" &
+    "      of Chirality.Right: multiplyExterior(b.toSigned, antibasis)\n" &
+    "  BasisSigned(basis: antibasis.basis, is_negated: antiscalar.basis.is_negated)\n"
+    ## Lines 613 to 621 of `pga/cayleys.nim` at `3d9696e` (rules 8 and 15 of #443).
+  TARGET_COMPOUND =
+    HEAD &
+    "proc p() =\n" &
+    "  ## Check.\n" &
+    "  for 𝐦, _, _ in sampleMultivectors():\n" &
+    "    if 𝑡 != 0:\n" &
+    "      check ^((|𝐦).toMultivector) =~ initElement(Basis.scalar, 𝐬 / 𝑡) + 𝟙  # 2.94\n"
+    ## Lines 338, 343 and 344 of `tests/suites.nim` at `3d9696e`, in routine (rule 15 of #443).
+  GRADES =
+    HEAD &
+    "suite \"Chapter 2\":\n" &
+    "  test \"Equation 2.1\":\n" &
+    "    for b, 𝐮 in enumerateBasis():\n" &
+    "      if b.grade == Grade(1):\n" &
+    "        check 𝐮 ∧ 𝐮 =~ 0\n" &
+    "\n\n" &
+    "  test \"Equation 2.2-4\":\n" &
+    "    for b, c, 𝐮, 𝐯 in enumerateBasisPair():\n" &
+    "      if b.grade == Grade(1) and c.grade == Grade(1):\n" &
+    "        check (𝐮 + 𝐯) ∧ (𝐮 + 𝐯) =~ 0  # 2.2a\n" &
+    "\n\n" &
+    "  test \"Equation 2.31\":\n" &
+    "    for b, c, 𝐮, 𝐯 in enumerateBasisPair():\n" &
+    "      if b.gradeAnti == GradeAnti(1) and c.gradeAnti == GradeAnti(1):\n" &
+    "        check 𝐮 ∨ 𝐯 =~ -(𝐯 ∨ 𝐮)\n"
+    ## Lines 140 to 149 and 259 to 262 of `tests/suites.nim` at `3d9696e` (rule 9 of #443).
+  CUTS =
+    HEAD &
+    "type\n" &
+    "  Chiral*[T] = object  ## Pair.\n" &
+    "    left*, right*: T  ## Side.\n" &
+    "\n\n" &
+    "func emitTerm*(\n" &
+    "  left_name: string,\n" &
+    "  left_basis: Basis,\n" &
+    "  operator: string,\n" &
+    "  right_name: string,\n" &
+    "  right_basis: Basis,\n" &
+    "  as_negated = false,\n" &
+    "): NimNode {.compileTime.} =\n" &
+    "  ## Emit AST of signed term for multivector basis assignment.\n" &
+    "  let\n" &
+    "    left = emitSubscript(left_name, left_basis)\n" &
+    "    right = emitSubscript(right_name, right_basis)\n" &
+    "  infix(left, operator, right)\n" &
+    "\n\n" &
+    "func normalized*(m: Multivector): Multivector =\n" &
+    "  ## Normalize multivector.\n" &
+    "  let\n" &
+    "    m_norm_bulk = (`|∙²`m)[Basis.scalar].sqrt\n" &
+    "    reciprocal = if m_norm_bulk != 0: 1.0 / m_norm_bulk else: 1.0\n" &
+    "  const 𝐞ₙ = initElement(Basis.origin)\n" &
+    "  h.basis.initElement(reciprocal) + Basis.infinity.initElement() + 𝐞ₙ\n" &
+    "\n\n" &
+    "func initElement*(b: Basis, scalar = 1.0): Multivector =\n" &
+    "  ## Construct element.\n" &
+    "  let 𝐦_grade = b.grade\n" &
+    "  Multivector(𝐦_grade)\n"
+    ## Names and calls of lines 34 and 35 of `pga/cayleys.nim`, 44 to 55 of `pga/emitters.nim`,
+    ##   371, 372, 398, 405 and 411 of `pga/operators.nim` and 392 of `tests/suites.nim` at
+    ##   `3d9696e`, gathered in one module, which declares wrapper and constructor as library
+    ##   does, so one package holds them (rules 8 and 15 of #443).
 
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
 
@@ -573,3 +648,52 @@ suite "Regressions":
   test "17. bare value of message takes backticks (#443)":
     holds BASIS_FLAGS, BASIS_FLAGS.staged.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
       # rule 6: line 243 of `pga/algebra.nim`, whose value stands bare
+
+
+  test "18. dotted `to<Target>` of compound argument becomes prefix call (#443)":
+    holds COMPLEMENT, COMPLEMENT.replace(
+      "(not b.toFlags and mask).toBasis", "toBasis(not b.toFlags and mask)"
+    )  # rule 15: line 617 of `pga/cayleys.nim`; rename of its `antibasis` is planner's
+    holds TARGET_COMPOUND,
+      TARGET_COMPOUND.replace("^((|𝐦).toMultivector)", "^toMultivector(|𝐦)")
+      # rule 15: line 344 of `tests/suites.nim`; group around call goes in same run
+
+
+  test "19. landmark index written bare takes alias package declares (#443)":
+    let
+      files = [("pga/algebra.nim", HEAD & ALIASES), ("tests/suites.nim", GRADES)]
+      nimbles = {"pga/algebra.nim": "pga.nimble", "tests/suites.nim": "pga.nimble"}.toTable
+      outcome = outcome(files, [], is_check = false, nimbles = nimbles)
+      written = outcome.written.toTable["tests/suites.nim"]
+    check outcome.lines.filterIt("landmark-alias" in it) == @[
+      "tests/suites.nim:6: landmark-alias fixed",
+      "tests/suites.nim:12: landmark-alias fixed",
+      "tests/suites.nim:12: landmark-alias fixed",
+      "tests/suites.nim:18: landmark-alias fixed",
+      "tests/suites.nim:18: landmark-alias fixed",
+    ]  # rule 9: lines 142, 148 and 261 of `tests/suites.nim`
+    check written.count("Grade.vector") == 3 and written.count("GradeAnti.vectorAnti") == 2
+    check "Grade(1)" notin written
+    let again = outcome(outcome.written, [], is_check = false, nimbles = nimbles)
+    check not again.lines.anyIt("landmark-alias" in it)  # second run
+
+
+  test "20. name breaking cut and constructor called both ways stay for hand (#443)":
+    let
+      outcome = outcome([("pga/a.nim", CUTS)], [], is_check = true,
+        nimbles = {"pga/a.nim": "pga.nimble"}.toTable)
+      left = outcome.lines.filterIt("name-cut left" in it or "conversion-prefix left" in it)
+    check left == @[
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_basis`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_name`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
+        "`right_basis`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
+        "`right_name`.",
+      "pga/a.nim:26: name-cut left: Property leads name, value it belongs to last; got " &
+        "`m_norm_bulk`.",
+      "pga/a.nim:28: conversion-prefix left: Routine takes one call form on plain first " &
+        "argument across package, where `2` calls take dot; got `initElement(Basis.origin)`.",
+      "pga/a.nim:34: name-cut left: Property leads name, value it belongs to last; got " &
+        "`𝐦_grade`.",
+    ]  # rule 8 renames through semantic pass (`test_packages.nim`); rule 15 writes no form
