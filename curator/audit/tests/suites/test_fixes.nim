@@ -439,6 +439,45 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [tree[1]], context = alone).written.len == 0  # no alias
 
 
+  test "constructor call of form fewer calls take, and index of several aliases, stay for hand":
+    # Case held: `koch fix` passed no names of package, so it never reported
+    #   `initMatrixViewProjection(camera, …)` at line 860 of `tests/suites/test_camera.nim` of
+    #   `pga_visualiser`, which knoller leaves for hand, since more calls take dot (rule 15 of #443,
+    #   STYLE.md §5). Domain: call of form fewer calls take, call of form more take, index whose
+    #   aliases are several (V.8), index inside fence, which its warning counts, and no names.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      declaring = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "func initPoint*(x: int): int = x\n  ## Point.\n\n" &
+          "template one*(t: typedesc[Grade]): Grade = Grade(1)\n  ## One.\n\n" &
+          "template first*(t: typedesc[Grade]): Grade = Grade(1)\n  ## First.\n\n" &
+          "template second*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Second.\n",
+      )
+      calling = entry(
+        DIRECTORY_AUDIT & "/src/b.nim",
+        head & "let\n  NORTH* = X.initPoint  ## North.\n  SOUTH* = Y.initPoint  ## South.\n" &
+          "  WEST* = initPoint(Z)  ## West.\n  FIRST* = Grade(1)  ## First.\n\n" & FENCE_OFF &
+          "\nlet SECOND* = Grade(2)  ## Second.\n" & FENCE_ON & "\n",
+      )
+      tree = @[declaring, calling]
+      plan = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree))
+    check plan.written.len == 0  # no fix writes either
+    check plan.left.mapIt((it.line, it.message)) == @[
+      (8, "Routine takes one call form on plain first argument across package, where `2` calls " &
+        "take dot (STYLE.md §5); got `initPoint(Z)`."),
+      (9, "Landmark index stands as one of its aliases, `Grade.one` or `Grade.first` (V.8); got " &
+        "`Grade(1)`."),
+    ]  # dotted calls take form more calls take, so report none
+    check plan.warned.mapIt(it.message) == @[
+      "Fence keeps its lines as written, and inside them landmark-alias breaks once at line 12 " &
+        "(X.1); got lines `11` to `13`.",
+    ]  # names reach fence too
+    let alone = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree[1 .. 1]))
+    check alone.left.len == 0  # project declares neither constructor nor alias
+    check alone.warned.allIt("nothing inside breaks a rule" in it.message)
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"
