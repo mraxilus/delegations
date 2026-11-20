@@ -809,7 +809,7 @@ proc scopeProject(
     if file notin result.mapIt(it[0]): result.add (file, source)
 
 
-proc resolveMarkers(
+proc resolveMarkers*(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Uses] =
   ## Resolve, through semantic pass, uses of private symbols and `{.all.}` imports of modules
@@ -820,6 +820,7 @@ proc resolveMarkers(
   ##   hints, so symbol compiler hints none of is used by module, as Q2 reads it. Each `{.all.}`
   ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
   ##   cannot read, as symbol macro declares; file checking clean on no backend confirms nothing.
+  ##   `koch fix` reads uses through it too (`fixes.nim` of `curator/audit`), so both read alike.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
@@ -883,7 +884,7 @@ proc resolveMarkers(
     result[path] = gathered[project].getOrDefault(absolute.relativePath(project, '/'))
 
 
-proc resolvePures(
+proc resolvePures*(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Pures] =
   ## Prove, through compiler, each `proc` of modules files name that checks as `func`, keyed by
@@ -891,6 +892,7 @@ proc resolvePures(
   ##   nearest directory holding nimble file; each proves in its own directory, with toolchain
   ##   `bin` gives, as project alone compiles it, since command line names no define
   ##   (`symbols.nim`). Included file proves inside text of file including it.
+  ##   `koch fix` proves through it too (`fixes.nim` of `curator/audit`), so both prove alike.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
@@ -1042,10 +1044,11 @@ func pathConfigured(line: string): string =
     return rest[1 .. ^1].strip.strip(chars = {'"'})
 
 
-proc modulesLibrary(nimbles: Table[string, string]): Table[string, seq[string]] =
+proc modulesLibrary*(nimbles: Table[string, string]): Table[string, seq[string]] =
   ## Read source of each module of library each package builds on, under each directory `nim.cfg`
   ##   beside its nimble file adds to search path, by nimble file as `nimbles` holds it; path
   ##   holding variable, or naming no directory, reads none, as library not restored does.
+  ##   `koch fix` reads library through it too (`fixes.nim` of `curator/audit`).
   for nimble in toSeq(nimbles.values).deduplicate:
     let
       root = nimble.parentDir
