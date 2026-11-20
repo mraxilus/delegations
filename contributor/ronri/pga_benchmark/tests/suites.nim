@@ -24,7 +24,7 @@ import ../src/pga_benchmark/pages/[
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
   readLibrary, compileCost, pairTimes
-from ../src/pga_benchmark/inspect import keyedCatalogue
+from ../src/pga_benchmark/inspect import keyLibrary, keyedCatalogue
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -708,7 +708,7 @@ suiteInProc "Internal: Inspector":
       if f.isTimed:
         inc count_timed
         checkpoint f.name
-        check f.symbol notin heads or STEM_MOTOR in f.parameters
+        check f.symbol notin heads or (f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters)
     check count_timed >= count_timed_least
 
 
@@ -717,10 +717,15 @@ suiteInProc "Internal: Inspector":
     const is_typed_library =
       when IS_RIGID: compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
       else: false
-    var is_emitted = false  # instance at typed motor, which timed transform calls
+    var
+      is_emitted = false  # instance at typed motor, which timed transform calls
+      keys: seq[string]
     for f in INSPECTED:
+      keys.add f.key
       if f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters: is_emitted = true
     check is_emitted == is_typed_library
+    for p in CATALOGUE:
+      if 1 in p.typed: check p.keyLibrary in keys  # gap list joins measurand to its counts by key
     for p in CATALOGUE:
       checkpoint p.id
       let
@@ -815,6 +820,18 @@ suiteInProc "Internal: Inspector":
       check functions.len == 1  # one definition read
       if functions.len == 1:
         check functions[0].parameters == @["Multivector"]  # named by count of its array
+    let shared = functionsIn(  # two stems of one count: first names instance
+      [
+        "typedef NF tyArray__a[16];",
+        "struct tyObject_MultivectorOf__h {",
+        "\ttyArray__a elements;",
+        "};",
+        "N_LIB_PRIVATE N_NIMCALL(void, negate__u0__m)(tyObject_MultivectorOf__h* m_p0) {",
+        "}",
+      ].join("\n") & "\n",
+      [(16, "Multivector"), (16, "Other")],
+    )
+    check shared.len == 1 and shared[0].parameters == @["Multivector"]
 
 
   test "terms inside loops of constant bound count once per trip":
