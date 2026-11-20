@@ -172,6 +172,27 @@ suite "Style §1":
     check proven(source).sites == @[source.site("proc b")]
 
 
+  test "default argument is no part of body, so routine whose default reads environment proves":
+    # Cost of record: `initToolchains` of knoller reads as pure, though its default calls `getEnv`.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/os\n\n" &
+      "proc home(path = getEnv(\"HOME\")): string =\n  path\n\necho home()\n"
+    check proven(source).sites == @[source.site("proc home")]
+
+
+  test "write library routine makes through `ref` parameter proves, as `[]=` of `std/json`":
+    # Cost of record: rule reports `mergeAllocations` of `pga_benchmark`, which changes its node.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n" &
+      "proc merge(n: JsonNode) =\n  n[\"a\"] = %1\n\nmerge(newJObject())\n"
+    check proven(source).sites == @[source.site("proc merge")]
+
+
+  test "generic body checks where its own module instantiates it, and nowhere else":
+    # Cost of record: instantiation in other module that compiler would refuse is unread.
+    let source = "{.experimental: \"strictFuncs\".}\n\nproc shown[T](x: T): string =\n" &
+      "  $x\n\necho shown(1)\n"
+    check proven(source).sites == @[source.site("proc shown")]
+
+
   test "proc calling project proc that stays stays, and proc calling candidate is candidate":
     # Domain: chain of three procs, to any depth; last echoes, or computes alone.
     for (last, count) in [("echo x", 0), ("discard x + 1", 3)]:
