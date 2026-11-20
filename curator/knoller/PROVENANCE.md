@@ -605,9 +605,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 
 - The cases come from the PGA library at `d9be8ae` and `3d9696e`, from `dance_ontology` (#539),
   and from `rga_visualiser` (#521). Others come from the rulings of #533, #526 and #443.
-- The cases of rules 2 to 5 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20,
-  with the suite of `048c3c36` against knoller at each commit. Each fails at `4245dca8`, before
-  those rules, and the case of rule 2 alone fails at `3a6cf5e9`.
+- The cases of rules 2 to 6 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20,
+  with the suite of `060c3a76` against knoller at each commit. Each fails at `4245dca8`, before
+  those rules. The cases of rules 2 and 6 alone fail at `3a6cf5e9`, and that of rule 6 alone at
+  `d018a6c0`.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
@@ -1010,8 +1011,8 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   routine body.
 - Cost: a doc at the start of a file moves onto a declaration right below it. `nim doc` reads it as
   the doc of the module. No Nim file of the tree at `93613d68` opens with a doc right above a
-  declaration, read on 2026-11-20. Verified by `suites/test_declarations.nim`, and by hand with
-  `nim jsondoc` of 2.4.0, 2026-11-20.
+  declaration. Verified by a script over each file that `git ls-files '*.nim'` lists, 2026-11-20.
+  Verified by `suites/test_declarations.nim`, and by hand with `nim jsondoc` of 2.4.0, 2026-11-20.
 
 ## Stages
 
@@ -1038,7 +1039,7 @@ It writes only where the line fits `LINE_MAX`, and otherwise the report stays fo
 - The floor of three lines is the Architect's. The routines of the PGA library that comment a stage
   hold 50 paragraphs of three lines of code or more. Of them, 43 open with a comment. Of the 16
   paragraphs of one line, 6 do. Both figures are the count on #443 of 2026-11-18, unmeasured here.
-- Rejected: the broad form, every paragraph that a blank line opens, which #443 counts at 45 lines.
+- Rejected: the broad form, every paragraph that a blank line opens: 45 lines of the library, #443.
 - Rejected: `# TODO: Describe stage.`, which asks for no purpose (VI.4).
 - Verified by `suites/test_stages.nim`. Its cases quote the macro `defineOperator` of
   `pga/operators.nim` and the routine `filterBases` of `pga/cayleys.nim` at `3d9696e`, and each
@@ -1358,12 +1359,13 @@ such as `got none.`, echoes no value and is no finding.
   appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
-- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
-  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
+- An `&` that joins two operands stands on the line where the first one ends. Nim continues a
+  line that a binary operator ends, so a line that `&` opens is the next statement, such as an
+  `&"…"` result.
 - An operand ends at its line, so a bracket that opens the next line opens the next statement.
-  A comment after a joining `&` is no operand, and the operand follows it on the next line.
+  A comment after such an `&` is no operand, and the operand follows it on the next line.
 - A test that builds the old text in the same form changes with it. A test that asserts the
-  text in another form changes by hand, as two tests of `test_record.nim` do.
+  text in another form takes an edit by hand.
 - Verified by `suites/test_messages.nim`.
 
 **Each value of a message stands in backticks, wherever it stands, and a value that opens its
@@ -1372,6 +1374,8 @@ form `; got`. A message is an argument of a call that takes one (`CALLS_MESSAGE`
 second argument of `assert`, `doAssert` and `newException`. It is the first of `error`, `quit`,
 `raiseAssert` and `warning`. It is also the value of the pragmas `error`, `warning` and `fatal`.
 
+- The value of a pragma is a message only where the innermost bracket around it is `{.`. So a
+  field, an argument or a binding of that name holds no message.
 - A message that holds no literal, as one that a binding holds, is none.
 - The check reads the concatenation of a message from its first operand, as the rule of message
   value reads its tail. Each interpolation and each operand must stand inside a backtick span,
@@ -1384,8 +1388,9 @@ second argument of `assert`, `doAssert` and `newException`. It is the first of `
   the claim. Its report names the words after it.
 - A message under `quote do:` reads too, since the macro writes it into code. A name that the
   macro splices there is an operand.
-- Verified by `suites/test_echoes.nim`, which quotes each message of the library at `3d9696e`.
-- Verified by hand with knoller at `008ecfa1` on the PGA library at `3d9696e`, 2026-11-20. A driver
+- Verified by `suites/test_echoes.nim`. It quotes each message of the library at `3d9696e` that the
+  rule reports, and the message of `tools/cll.nim` of `ricysoho` that a binding `error` tripped.
+- Verified by hand with knoller at `c3c34ca8` on the PGA library at `3d9696e`, 2026-11-20. A driver
   imports `knoller` and runs `checkEchoes` and `fixEchoes` alone on each file that
   `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 4 reports, and the fix changes the 3
   lines that the ruling counts. The value that opens its claim keeps its report, and a second run
@@ -1401,9 +1406,11 @@ takes one report. The fix joins it into one interpolated literal.
   (`segments`, `tailCommand`). An operator that binds more loosely than `&` splits the
   expression, so each operand of `&` stays whole, and `dir / name` joins as one value.
 - A concatenation with no interpolated literal passes, as `"E" & $b` at `pga/algebra.nim:268`
-  does. Interpolation costs more than `&`, so the fix never turns a plain join into one (D1).
+  does. By the page's figure for ruling D1, interpolation costs 5 to 15 ns more for each message
+  than `&`. So the fix never turns a plain join into one.
 - The fix keeps the prefix of the first interpolated literal, `&` or `fmt`. `$x` becomes `{x}`,
-  since braces turn a value to text by `$`, and a group under `$` gives its content. A plain
+  since `formatValue` of `std/strformat` turns a value to text by `$`, read in 2.4.0. A group under
+  `$` gives its content. A plain
   literal joins as text, with each brace doubled. A backtick round a value stays (IV.4).
 - A wrap of literals whose joined line would not fit `LINE_MAX` passes, since X.1 lets a long
   string break so. The fit counts runes alone, since the width check lets a line of one long
@@ -1411,25 +1418,26 @@ takes one report. The fix joins it into one interpolated literal.
 - A value stays for hand, with its report, where it holds a quote, a brace, a backslash or a
   backtick. So does one that holds a line break or a colon outside brackets. So do a raw or long
   literal and a comment between two operands, and a concatenation whose joined line would not fit.
-- A literal whose escapes the kept literal would read otherwise stays for hand too, since
+- A literal stays for hand too where the kept literal would read its escapes otherwise, since
   `fmt"…"` is raw and `&"…"` is not. So does an escape by number, which can spell a brace.
 - The chain runs the fixer only where the project declares no `formatValue`, which
-  interpolation calls in place of `$` (`isDeclaringFormatValue`). The audit reads each file of
-  the tree, and the command line each file of the run, and each groups them by nimble file. The
-  check still reports there, and the report stays for hand.
+  interpolation calls in place of `$` (`isDeclaringFormatValue`). The audit reads each `.nim`
+  file of the tree. The command line reads each file of the run in a Nim dialect. Each groups
+  them by nimble file. The check still reports there, and the report stays for hand.
 - Verified by `suites/test_interpolations.nim`, `suites/test_command.nim`, and
-  `suites/test_fixes.nim` of `curator/audit`. A mutant that drops the guard in the command line,
-  or in the audit, fails its suite.
+  `suites/test_fixes.nim` of `curator/audit`. Verified by hand, 2026-11-20, with each mutant built
+  alone in its own cache. A mutant that drops the guard in the command line or in the audit fails
+  its suite. So does each mutant that drops a guard of a value or a literal for hand.
 - Verified by hand with knoller at `008ecfa1` on the PGA library at `3d9696e`, 2026-11-20. A driver
   imports `knoller` and runs `checkInterpolations` and `fixInterpolations` alone on each file
   that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives no report, since each wrap of
   the library would join past `LINE_MAX`, at 122 and 123 runes.
 - Verified by hand with that driver over the repository at `008ecfa1`, 2026-11-20. It gives 53
   reports, and the fix joins 24, each settled, since a second run writes nothing.
-- The page counts 44 reports and 21 fixes. Three wraps join here at exactly 100 runes, which X.1
-  allows. They are lines 2796 and 2804 of `src/desktop/main.nim` of `pga_visualiser`, and line
-  408 of `design/checks.nim` of `dance_ontology`. The cause of the other 6 reports is unmeasured,
-  since no copy of the prototype of the page is at hand.
+- The ruling of 2026-11-19 counts 44 reports and 21 fixes. Three wraps join here at exactly 100
+  runes, which X.1 allows. They are lines 2796 and 2804 of `src/desktop/main.nim` of
+  `pga_visualiser`, and line 408 of `design/checks.nim` of `dance_ontology`. The cause of the
+  other 6 reports, each in `dance_ontology`, is unmeasured.
 - Cost: a `formatValue` that a dependency declares, or a file outside the run of the command
   line, is unread.
 - Cost: a wrap that holds a value and does not fit stays whole for hand, though a join inside one

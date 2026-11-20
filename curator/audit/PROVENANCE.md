@@ -3133,7 +3133,7 @@ the two lines after the last pragma that opens the module, with a blank line on 
 
 **The chain joins an interpolated string only in a project that declares no `formatValue`.**
 Interpolation calls `formatValue` in place of `$`, so a join could print a value otherwise where a
-project declares one (rule 21 of #443). The context of a fix reads each Nim file of the tree. It
+project declares one (rule 21 of #443). The context of a fix reads each `.nim` file of the tree. It
 names the nimble file of each project where a file declares one (`nimbleProject`).
 
 - Verified by `suites/test_fixes.nim`: a join stays split where another file of the project
