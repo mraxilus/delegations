@@ -3,7 +3,8 @@
 `⟇⟇~∘` transforms 𝐦 by the operator 𝐧, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰. Its typed form builds the table of that
 sandwich from the types of both operands, when the code compiles. So each value of each type
 transforms exactly. Two full multivectors take the three steps of pin. `pga.nim` names the operator
-`transform`. Every edit quotes text of P04.
+`transform`, and two tests of the suite `Typed operators` hold both to the chain. Every edit quotes
+text of P04.
 
 ## Edit `pga/operators.nim`
 
@@ -175,4 +176,65 @@ func transform*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = m ⟇⟇~∘ n
   ## Transform multivector by operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, reading table of both types.
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+const EMPTY: Bases = {}
+```
+
+```nim
+template checkTypedSandwich(A, B: static Bases) =
+  ## Check typed sandwich of samples over `A` by samples over `B` near chain of full forms.
+  ##   Table and chain sum their terms in other orders, so they agree within tolerance alone.
+  ##   Also check its type holds each basis that chain reaches, and no other.
+  block:
+    var reached: Bases
+    for _ in 0 ..< SAMPLES:
+      let
+        m = sampleOf[A]()
+        n = sampleOf[B]()
+        (f, g) = (m.toMultivector, n.toMultivector)
+        chain = (g ⟇ f) ⟇ (~∘ g)
+      check (m ⟇⟇~∘ n).toMultivector =~ chain
+      for b in Basis:
+        if abs(chain[b]) > TOLERANCE_ABS: reached.incl(b)
+    check basesType(sampleOf[A]() ⟇⟇~∘ sampleOf[B]()) == reached
+
+
+const EMPTY: Bases = {}
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+  test "Scaling, norms and unitizing: equal full forms exactly, scaling keeps type":
+    checkTypedScaling(VECTORS)
+    checkTypedScaling(EVEN)
+    checkTypedScaling(SCATTERED)
+```
+
+```nim
+  test "Scaling, norms and unitizing: equal full forms exactly, scaling keeps type":
+    checkTypedScaling(VECTORS)
+    checkTypedScaling(EVEN)
+    checkTypedScaling(SCATTERED)
+
+
+  test "Sandwich: near chain of full forms, typed by bases its table reaches":
+    checkTypedSandwich(ALL, EVEN)
+    checkTypedSandwich(ALL, ODD)
+    checkTypedSandwich(VECTORS, EVEN)
+    checkTypedSandwich(VECTORS, ODD)
+    checkTypedSandwich(BIVECTORS, EVEN)
+    checkTypedSandwich(EVEN, ODD)
+    checkTypedSandwich(SCATTERED, VECTORS)
+
+
+  test "Sandwich: equal chain exactly for full operands, and alias reads operator":
+    for (m, n, _) in sampleMultivectors():
+      checkSame(m ⟇⟇~∘ n, (n ⟇ m) ⟇ (~∘ n))
+    let (v, e) = (sampleOf[VECTORS](), sampleOf[EVEN]())
+    check transform(v, e).toMultivector =~ (v ⟇⟇~∘ e).toMultivector
 ```
