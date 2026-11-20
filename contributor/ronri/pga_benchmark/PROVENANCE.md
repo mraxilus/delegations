@@ -222,8 +222,19 @@ once from `randomize(0)`: dense multivectors of every grade, typed objects in ge
 lines and planes joined from points, and motors unitized. Every typed pool has a widened
 image, so the two implementations read equivalent operands.
 
+**A transform reads its motor at the type of a motor where the library can.** The pool
+`POOL_MOTOR_TYPED` holds the antieven part of each widened motor, at `MultivectorOf[BASES_MOTOR]`.
+Where the library's `⟇⟇~∘` takes that type, the catalogue marks the motor of each transform as
+typed. Its library side then reads that pool, and the inspector keys it by the stem
+`MultivectorOf`. At the pin no transform takes it, so no measurand reads a typed operand. A motor
+holds its antieven part alone, so the typed image loses no coefficient.
+
+- Rejected: every typed operand at its type. The order of the work in #959 types the motor of a
+  transform alone, so each other measurand keeps the operands of the pin.
+
 Verified by `test_rga4d.nim` and the other stubs. Suite `Chapter 2` and the `Wiki` suites run
-through the widening, and suite `Internal: Measurements` runs every measurand over the pools.
+through the widening, and suite `Internal: Measurements` runs every measurand over the pools. That
+suite also holds the typed pool to the widened one, and holds the name of each pool.
 
 ## Measurements
 
