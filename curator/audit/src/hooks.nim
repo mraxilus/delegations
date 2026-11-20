@@ -371,11 +371,17 @@ const
     ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
     ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
     ##   (7023048202).
-  MARKS_CRITERION = [". resolution criterion", ". " & BOLD & "resolution criterion"]
+  OPENING_CRITERION = ". "  ## Full stop and space that open resolution criterion of claim.
+  WORDS_CRITERION = "resolution criterion"
     ## Words that open resolution criterion of claim, as samples of GUIDE.md write them, in lower
-    ##   case: claim reads them in any case of letters, bold or not, so criterion in such form
-    ##   makes no later percentage confidence (choice). Where they are first mark, claim ends at
-    ##   them (7016134603), or at confidence before them (7018501890).
+    ##   case: claim reads them in any case of letters (choice), after `OPENING_CRITERION` and
+    ##   marks of emphasis, so criterion in such form makes no later percentage confidence.
+    ##   Where they are first mark, claim ends at them (7016134603), or at confidence before them
+    ##   (7018501890).
+  MARKS_EMPHASIS = {'*', '_'}  ## Marks of italics and bold, as Markdown writes them.
+  EMPHASIS_CRITERION = 3
+    ## Marks of emphasis that may stand between full stop and words of criterion: none, italics,
+    ##   bold, or both, as `. ***Resolution criterion:***` (7027197745); four or more stay text.
   POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
   PIPE = '|'  ## Mark between cells of row of table.
   PIPE_ESCAPED = "\\" & PIPE
@@ -2142,6 +2148,19 @@ func labelClaim(claim: string): string =
   ""
 
 
+func findCriterion(lower: string): int =
+  ## Read first place of resolution criterion in text in lower case: `OPENING_CRITERION`, up to
+  ##   `EMPHASIS_CRITERION` marks of emphasis, then `WORDS_CRITERION`; -1 where text holds none.
+  var at = lower.find(OPENING_CRITERION)
+  while at >= 0:
+    let start = at + OPENING_CRITERION.len  # First character after full stop and space.
+    var i = start
+    while i < lower.len and i - start < EMPHASIS_CRITERION and lower[i] in MARKS_EMPHASIS: inc i
+    if lower.continuesWith(WORDS_CRITERION, i): return at
+    at = lower.find(OPENING_CRITERION, at + 1)
+  -1
+
+
 func stopClaim(text: string): int =
   ## Read where claim of collapsed bullet text ends, from first of its marks.
   ##   Claim whose percentiles come first ends at them, and no percentage in brackets ends it,
@@ -2150,15 +2169,11 @@ func stopClaim(text: string): int =
   ##     criterion, or before its end; percentage before confidence stays in claim (7018501890).
   ##     With no percentage there, claim runs up to criterion (7016134603); with neither, it ends
   ##     before one final full stop of its bullet (7017902016).
-  ##   Criterion is first of `MARKS_CRITERION` in text in lower case, whose places are those of
-  ##     text, since case of ASCII letter keeps its length.
+  ##   Criterion is read in text in lower case (`findCriterion`), whose places are those of text,
+  ##     since case of ASCII letter keeps its length.
   let
     ranged = text.find(MARK_PERCENTILES)
-    lower = text.toLowerAscii
-  var criterion = -1  # First place of criterion; -1 where text holds none.
-  for mark in MARKS_CRITERION:
-    let at = lower.find(mark)
-    if at >= 0 and (criterion < 0 or at < criterion): criterion = at
+    criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
   if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
   result = (if criterion >= 0: criterion else: text.len)
   for at in countdown(result - 1, 0):  # last percentage first: it is confidence
