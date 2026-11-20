@@ -3248,10 +3248,14 @@ ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
   .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
   .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
   .i lo cmene be lo javni pe `CLL 21.1` .e `NIF` cu stali ki'u lo nu ri cmene
-  .i le papri cu cusku lo glico selci'a po'o poi `nif_read.nim` .e `merge.nim` cu dunda ke'a ca lo
-      nu le papri na ka'e tcidu `NIF` kei .a lo nu lo nu jmina cu se to'e curmi
-  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki di'u ta'i lo nu le genturfa'i cu tcidu ro
-      selci'a pe le papri
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u ro selci'a pe le papri cu jboselci'a
+      kei ta'i lo nu le genturfa'i cu tcidu ro le selci'a
+  .i ro notci pe lo nu to'e curmi pe `nif_read.nim` cu jboselci'a ja'i `D1 a` pe `#987`
+      Verified by `suites/test_nif.nim`.
+  .i ro notci pe lo nu to'e curmi pe `merge.nim` cu jboselci'a ji'a
+      Verified by `suites/test_merge.nim`.
+  .i le notci cu cusku le stuzi ta'i lo cmavo pe `PA` ki'u lo nu le papri cu jarco le notci ne'i pa
+      linji
 
 ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
