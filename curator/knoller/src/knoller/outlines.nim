@@ -123,7 +123,7 @@ func comments*(source: string): seq[Comment] =
     result.add Comment(kind: kind, lines: @[line])
 
 
-func isStepless(lines: seq[LineComment]): seq[bool] =
+func isStepless*(lines: seq[LineComment]): seq[bool] =
   ## Decide of each line whether it holds no step: blank, table row, diagram, or code between
   ##   fences of three backticks, fences included.
   var is_fenced = false
