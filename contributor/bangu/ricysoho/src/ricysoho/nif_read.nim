@@ -6,15 +6,13 @@
 ##   .i se ki'u bo lo cipra cu cipra fi le ciska ja'i le velski gi'e no roi cipra fi le ciska ja'i
 ##       le ciska
 ##
-##   |--------------|-------------------------------------------------|
-##   | lo cmene     | lo smuni                                        |
-##   |--------------|-------------------------------------------------|
-##   | `readModule` | lo jgena pe lo selci'a be fi `NIF` |
-##   |              | .i ro basysni cu selga'i fi lo stuzi       |
-##   |              | .i `ValueError` va'o lo nu to'e curmi           |
-##   | `counted`    | lo valsi poi cusku pa namcu ta'i lo cmavo pe `PA` |
-##   |              | .i ro cmavo cu mapti `CLL 18.2`                   |
-##   |--------------|-------------------------------------------------|
+##   |--------------|---------------------------------------|
+##   | lo cmene     | lo smuni                              |
+##   |--------------|---------------------------------------|
+##   | `readModule` | lo jgena pe lo selci'a be fi `NIF`    |
+##   |              | .i ro basysni cu selga'i fi lo stuzi  |
+##   |              | .i `ValueError` va'o lo nu to'e curmi |
+##   |--------------|---------------------------------------|
 ##
 ## ni'o le tcidu cu tcidu lo pagbu be `NIF` po'o
 ##   .i le tcidu cu tcidu lo minde .e lo jgena poi vasru lo tcita .e lo jgena
@@ -51,8 +49,9 @@
 ##       .a `#` pe lo pinka
 ##   .i lo nu to'e curmi cu renro `ValueError` noi cusku lo stuzi .e lo selcpe be `NIF` bu'u le
 ##       stuzi
-##   .i le notci be `ValueError` cu jboselci'a gi'e cusku le stuzi ta'i lo cmavo pe `PA` to `D1 a`
+##   .i le notci pe `ValueError` cu jboselci'a gi'e cusku le stuzi ta'i lo cmavo pe `PA` to `D1 a`
 ##       pe `#987` toi
+##   .i `test_nif.nim` cipra di'u
 ##
 ## ni'o le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
 ##   .i se ki'u bo ro le re datnyvei cu cipra fi le drata
@@ -105,35 +104,34 @@ const
     ## ro torbasysni joi lo stuzi poi le basysni cu dunda ke'a to `Escape sequences` toi
   VERSION* = "(.nif27)"
     ## lo minde poi cusku lo namcu pe le tarmi gi'e krasi lo selci'a gi'e se lidne no stuzi
-  VISIBLE = {'!'..'~'} - {'`'}
+  BYTES_VISIBLE = {'!'..'~'} - {'`'}
     ## lo me `byte` me'u poi le notci cu sitna ke'a ta'i pa samtci pagbu
 
 
 
-func counted*(count: int): string =
+func toCmavo(count: Natural): string =  # selpli ne'i `draw.nim` .e `test_draw.nim`
   ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
   ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
-  ##   .i se ki'u bo ro notci pe lo nu to'e curmi .e ro linji pe le papri cu cusku ro namcu ta'i lo
-  ##       cmavo pe `PA`
+  ##   .i se ki'u bo ro notci pe lo nu to'e curmi .e ro linji pe le papri cu cusku ro namcu poi na
+  ##       zvati lo samtci pagbu ku'o ta'i lo cmavo pe `PA`
   ##   .i ro cmavo cu mapti `CLL 18.2`
-  ##   .i le namcu na mleca li no
-  doAssert count >= 0, "Count should not be negative."
   const lut_cmavo_by_digit = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
   for digit in $count: result.add lut_cmavo_by_digit[ord(digit) - ord('0')]
 
 
 func refuse(reader: Reader, expected: string) {.noreturn.} =
   ## to'e curmi le selci'a bu'u lo stuzi poi le tcidu cu zvati ke'a
-  ##   .i le fancu cu cusku lo selcpe be `NIF` bu'u le stuzi .e lo se zvati be le stuzi
-  ##   .i lo kutle'u cu se cusku ta'i lo cmene
-  ##   .i lo me `byte` me'u poi na cmima `VISIBLE` cu se cusku ta'i lo namcu pe vo'a
+  ##   .i le fancu cu cusku lo selcpe be `NIF` bu'u le stuzi .e lo zvati be le stuzi
+  ##   .i lo kutle'u cu se cusku ta'i zo kutle'u
+  ##   .i lo me `byte` me'u poi na cmima `BYTES_VISIBLE` cu se cusku ta'i lo namcu pe vo'a
   let found =
     if reader.at >= reader.text.len: "le stuzi cu fanmo le selci'a"
     elif reader.text[reader.at] in WHITESPACE: "lo kutle'u cu zvati le stuzi"
-    elif reader.text[reader.at] in VISIBLE: "`" & reader.text[reader.at] & "` cu zvati le stuzi"
-    else: "lo me `byte` me'u po'u li " & counted(ord(reader.text[reader.at])) & " cu zvati le stuzi"
+    elif reader.text[reader.at] in BYTES_VISIBLE:
+      "`" & reader.text[reader.at] & "` cu zvati le stuzi"
+    else: "lo me `byte` me'u po'u li " & ord(reader.text[reader.at]).toCmavo & " cu zvati le stuzi"
   raise newException(ValueError, "`NIF` cu cpedu " & expected & " bu'u le stuzi poi " &
-      counted(reader.at) & " me `byte` me'u cu lidne ke'a .i ku'i " & found)
+      reader.at.toCmavo & " me `byte` me'u cu lidne ke'a .i ku'i " & found)
 
 
 func isAt(reader: Reader, bytes: set[char]): bool =
