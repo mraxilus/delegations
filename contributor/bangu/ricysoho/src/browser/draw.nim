@@ -231,8 +231,8 @@ func counted(count: int): string =
   ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
   ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
   ##   .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `PA`
-  const DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
-  for digit in $count: result.add DIGITS[ord(digit) - ord('0')]
+  const digits = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+  for digit in $count: result.add digits[ord(digit) - ord('0')]
 
 
 func isCompound(node: NodeNif): bool =
