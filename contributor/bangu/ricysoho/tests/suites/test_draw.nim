@@ -242,10 +242,9 @@ suite "Internal: Drawing of live text":
     let
       text = "mi klama le zarci .i do klama le zarci .i ko klama le zarci"
       drawing = drawn(readTextParts(text).reading.toNifParts, "")
-    check drawing.count_words >= 10  # lo namcu poi vasru re lerfu pe li 10
-    check drawing.status.startsWith(
-      $drawing.count_parts & " pagbu · " & $drawing.count_words & " valsi · 0 srera · "
-    )  # lo lerfu pe li 10 cu sinxa lo cmavo pe `CLL 18.2`
+    check drawing.count_words == 14  # lo namcu poi vasru re lerfu
+    check drawing.status ==
+      "3 pagbu · 14 valsi · 0 srera · 0 valsi poi na se tcidu"  # lo lerfu cu sinxa lo cmavo pe `PA`
 
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let
