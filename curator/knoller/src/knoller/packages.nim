@@ -7,11 +7,9 @@
 ##     (`staging.nim`). Names come from modules of package alone, and aliases from library too,
 ##     since library's word is no axis value, and its constructor is no call form of package.
 ##   Command line reads modules of run, by nimble file of their package, and library each package
-##     builds on by `--path` of its `nim.cfg` (`command.nim`).
-##
-##   Cost: `koch fix` passes no names yet, so it reads no name cut, landmark alias or constructor
-##     until `curator/audit` passes them; fix of compound `to<Target>` reads one file, so it runs
-##     there already.
+##     builds on by `--path` of its `nim.cfg` (`command.nim`). `koch fix` passes names of each
+##     project too (`fixes.nim` of `curator/audit`), so both callers read them alike; static pass
+##     of `koch check` reads them at step 4 of #443.
 
 {.experimental: "strictFuncs".}
 
