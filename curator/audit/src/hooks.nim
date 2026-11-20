@@ -67,7 +67,9 @@
 ##     without its label, or `No prediction`. Model turn ends where model stops, never at
 ##     `user` entry, so block checks read model turns, and every other check reads turn since
 ##     message of person. Kinds are read from templates at each stop (`readKinds`). `Agent` call
-##     whose result has `is_error` and no `agentId` is skipped, as harness rejected it.
+##     whose result has `is_error` and no `agentId` is skipped (7022770415). Assumed: harness
+##     writes such result only for call that it rejects; probe Q5 gives its shape, and frozen
+##     copy of transcript holds no `Agent` result with `is_error`.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -88,9 +90,12 @@
 ##     and second stop passes.
 ##   Cost: hook never reads state, confidence or figures of header of reflection, run of
 ##     resolver, or rules of forecasting, so reading holds those.
-##   Cost: block written after call it names still serves later call of its own kind, and later
-##     block of kind replaces earlier one, so of blocks for two subagents of one kind, first call
-##     takes block of nearer turn.
+##   Cost: block written after call it names still serves later call of its own kind, and block
+##     of later turn replaces block of its kind of earlier turn, while inside one turn call takes
+##     earliest (7027197745); so of blocks for two subagents of one kind, first call takes block
+##     of nearer turn.
+##   Cost: call that starts subagent and then fails with result that has `is_error` and no
+##     `agentId` is skipped too, as rejected call is.
 
 {.experimental: "strictFuncs".}
 
@@ -1997,8 +2002,8 @@ func blocksTaken(subagents: Subagents, kinds: openArray[string]): seq[int] =
   ##   So block of turn that starts subagent is no evidence (`D2 a` of 6982373798), and nor is
   ##     block of turn of call, since prediction is last message of turn of its own (6980006567).
   ##   Block serves only call of kind it names (`kindNamed`), exempt kind too, and call takes
-  ##     free one of nearest of those turns, earliest in that turn (`nearestFirst`); calls of one
-  ##     turn take in their order (7017187857).
+  ##     free one of nearest of those turns, earliest in that turn (`nearestFirst`, 7017187857);
+  ##     calls of one turn take in their order.
   ##   Call of type no template names is tool use, and takes none.
   result = newSeqWith(subagents.calls.len, -1)
   let named = subagents.predictions.mapIt(it.text.kindNamed(kinds))
@@ -2221,13 +2226,12 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
   ##     so it names `No prediction`, which row of missed prediction holds.
   ##   Cell equals one claim of block call took, with or without its label (7016134603), run
-  ##     that opens with capital, bold or not (7022872980), each run of whitespace read as one
-  ##     space; fragment of
-  ##     claim, claim with other label before it, claim with its confidence
-  ##     (7018501890), or claim with no mark that keeps final full stop of its bullet
-  ##     (7017902016), is none.
-  ##     Cell `No prediction` passes too, in that case of letters alone: it counts
-  ##     missing prediction in row of its own, with cause of miss under `Result` (7015791554).
+  ##     that opens with capital, plain or in form of bold of `FORMS_LABEL` (7022872980,
+  ##     7027197745), each run of whitespace read as one space. Fragment of claim, claim with
+  ##     other label before it, claim with its confidence (7018501890), or claim with no mark
+  ##     that keeps final full stop of its bullet (7017902016) is none.
+  ##   Cell `No prediction` passes too, in that case of letters alone: it counts missing
+  ##     prediction in row of its own, with cause of miss under `Result` (7015791554).
   let lines = text.splitLines
   var i = 0
   while i < lines.len:
