@@ -152,6 +152,29 @@ suite "Compile-time family":
     check module(STAGED & body).families.len == 1
 
 
+  test "STYLE.md §2 code quote emits runs at runtime, so routine it calls or declares is none":
+    # Case held: `contributor/ronri/pga_benchmark/proposals/04-basis-set-forms/laws.nim` 108,
+    #   `isAgreeing`, which macro calls inside `quote do:` alone, and
+    #   `proposals/02-typed-multivectors/prototype.nim` 78, `bases`, which `quote do:` declares.
+    for opening in ["quote do:", "quote(\"@\") do:", "genAst():", "genAst(x):"]:
+      let
+        calls = module(
+          STAGED & "func c(): int =\n  1\nmacro m(): untyped =\n  result = " & opening &
+            "\n    echo c()\n"
+        )
+        declares = module(
+          STAGED & "macro m(): untyped =\n  result = " & opening & "\n    func g(): int = 1\n"
+        )
+      check calls.families.len == 0
+      check calls.fixedFamilies == calls
+      check declares.families.len == 0
+    let outside = module(
+      STAGED & "func c(): int =\n  1\nmacro m(): untyped =\n  let x = c()\n" &
+        "  result = quote do:\n    echo `x`\n"
+    )
+    check outside.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`.")]
+
+
   test "STYLE.md §2 iterator and template pass, since Nim refuses compileTime on both":
     let source = module(
       "func f(): int {.compileTime.} =\n" &
