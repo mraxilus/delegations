@@ -41,7 +41,11 @@ func stemLibrary(k: Kind, is_typed: bool): string =
   ## Read C stem library takes for operand: `float` for scalar, motor's stem where typed, since
   ##   catalogue types motor alone and stops build else, and dense multivector else.
   ##   Reached by `tests/suites.nim` through `{.all.}`.
-  if k == Kind.Scalar: "float" elif is_typed: STEM_MOTOR else: "Multivector"
+  if k == Kind.Scalar: return "float"
+  if is_typed:
+    doAssert $k == "Motor", "Typed stem exists for motor alone; got `" & $k & "`."
+    return STEM_MOTOR
+  "Multivector"
 
 
 func stemReference(k: Kind): string =
