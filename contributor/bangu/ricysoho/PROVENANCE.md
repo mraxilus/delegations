@@ -1017,10 +1017,13 @@ ni'o `EBNF` pe `CLL 21.1` curmi lo nu re namcu cu lamji
   .i se ki'u bo `isHeld` pe `grammar.nim` cu fanta lo nu `number` cu mulno pu lo valsi pe `PA`
   .i le nu fanta cu fasnu ne'i `fillSets` .e `fillCompletions`
   .i se ki'u bo le tricu .e lo ricpau cu vasru no namcu poi lidne lo valsi pe `PA`
+      Verified by `suites/test_grammar.nim`.
   .i va'o lo nu no nu fanta kei le tricu cu tcidu zo pa pe lo'u le pano moi le'u ta'i lo klani to lu
       lo nu cuxna lo tricu li'u toi
   .i le vreji .e lo pinka pe le samtci cu ciska zo boi ba lo klani poi lidne lo namcu mu'u lo'u ro
-      boi remei le'u Verified by `suites/test_prose_own.nim`.
+      boi remei le'u
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u no drata zo ro pe le vreji .e lo pinka
+      cu lidne lo valsi pe `PA`
 
 ni'o se to'e cuxna fa lo nu le nu cuxna lo tricu po'o cu cuxna lo namcu poi traji lo ka clani
   .i ki'u bo le genturfa'i cu ba tcidu lo selci'a poi `CLL 18.6` cu to'e curmi ke'a
@@ -1036,7 +1039,8 @@ ni'o de'i `2026-11-20` le nu fanta cu rinka lo nu pa jufra be le mulvei pe `Tato
   .i lo jufra po'u `7654378` cu vasru lo'u mi bruli piso'iroi klaku le'u
   .i lo'u pi so'i le'u cu du pa namcu
   .i se ki'u bo lo'u piso'iroi le'u cu tcita gi'e nitcu lo sumti
-  .i `3668385` .e `5180323` cu se to'e curmi bu'u lo drata stuzi
+  .i `3668385` .e `5180323` cu se to'e curmi bu'u le javni pe li 812
+  .i ki'u bo lo mekso poi klani lo sumti cu nitcu zo vei to le javni pe li 300 toi
   .i ro drata seljdi pe le mulvei cu stali
 
 ## ni'o ni'o ni'o lo genturfa'i pe `Earley`
@@ -2546,10 +2550,6 @@ ni'o **lo tcidu be lo mivyselci'a cu ralte lo mulcmi pe le romoi pagbu poi se tc
   .i se ki'u bo ro spisa cu tisna lo selcmi poi se lidne le pamoi genvla poi cenba
   .i ji'a ro spisa cu tisna le selcmi poi lidne le genvla va'o lo nu le genvla .e le pu genvla cu
       frica lo ka ce'u cmima `PA` Verified by `suites/test_grammar.nim`.
-
-ni'o se to'e cuxna fa lo nu ro spisa cu tisna le selcmi poi lidne le pamoi genvla poi cenba
-  .i ki'u bo `ReaderLive` cu ba pilno lo samtci minde poi zmadu fo `18.4%` to lu lo nu fanta lo nu
-      lo namcu cu mulno li'u toi
   .i le cipra cu tcidu ro boi cimoi selci'a pe le selci'agri ta'i lo nu le selci'a cu zenba gi'e
       cenba
   .i ji'a le cipra cu vimcu pa genvla pe le midju be ro selci'a
@@ -2570,6 +2570,10 @@ ni'o se to'e cuxna fa lo nu ro spisa cu tisna le selcmi poi lidne le pamoi genvl
   .i jdima fa lo nu lo nu tcidu le mulselci'a cu pilno lo samtci minde poi zmadu fo `2.7%` ne'i le
       jbezba
   .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le namcu
+
+ni'o se to'e cuxna fa lo nu ro spisa cu tisna le selcmi poi lidne le pamoi genvla poi cenba
+  .i ki'u bo `ReaderLive` cu ba pilno lo samtci minde poi zmadu le samtci minde pe `f86b429f` fo
+      `18.0%` to lu lo nu fanta lo nu lo namcu cu mulno li'u toi
 
 ni'o se to'e cuxna fa lo nu ro spisa cu tisna ro selcmi pe le pagbu poi ca'o kalri
   .i va'o lo nu ro valsi cu spisa kei ne'i le jbezba le se to'e cuxna cu pilno lo temci poi jibni lo
