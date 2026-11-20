@@ -1385,11 +1385,55 @@ second argument of `assert`, `doAssert` and `newException`. It is the first of `
 - A message under `quote do:` reads too, since the macro writes it into code. A name that the
   macro splices there is an operand.
 - Verified by `suites/test_echoes.nim`, which quotes each message of the library at `3d9696e`.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
-  runs `checkEchoes` and `fixEchoes` alone on each file that `git ls-files '*.nim' '*.nims'
-  '*.nimble'` lists. It gives 4 reports, and the fix changes the 3 lines that the ruling lists.
-  A second run writes nothing.
+- Verified by hand with knoller at `008ecfa1` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkEchoes` and `fixEchoes` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 4 reports, and the fix changes the 3
+  lines that the ruling counts. The value that opens its claim keeps its report, and a second run
+  writes nothing.
 - Cost: a message that a binding holds, or that a routine of the project builds, stays unread.
+
+**An interpolated string takes each value in braces, never by `&` (STYLE.md §3).** The Architect
+ruled so on rule 21 of #443, after ruling D3 on `&"y is {y}, from " & $x`. A concatenation that
+holds an interpolated literal, `&"…"` or `fmt"…"`, and joins an operand or a literal to it by `&`
+takes one report. The fix joins it into one interpolated literal.
+
+- The check reads each expression of each depth by precedence, as the check of conditions does
+  (`segments`, `tailCommand`). An operator that binds more loosely than `&` splits the
+  expression, so each operand of `&` stays whole, and `dir / name` joins as one value.
+- A concatenation with no interpolated literal passes, as `"E" & $b` at `pga/algebra.nim:268`
+  does. Interpolation costs more than `&`, so the fix never turns a plain join into one (D1).
+- The fix keeps the prefix of the first interpolated literal, `&` or `fmt`. `$x` becomes `{x}`,
+  since braces turn a value to text by `$`, and a group under `$` gives its content. A plain
+  literal joins as text, with each brace doubled. A backtick round a value stays (IV.4).
+- A wrap of literals whose joined line would not fit `LINE_MAX` passes, since X.1 lets a long
+  string break so. The fit counts runes alone, since the width check lets a line of one long
+  token stand. A wrap whose joined line fits is joined.
+- A value stays for hand, with its report, where it holds a quote, a brace, a backslash or a
+  backtick. So does one that holds a line break or a colon outside brackets. So do a raw or long
+  literal and a comment between two operands, and a concatenation whose joined line would not fit.
+- A literal whose escapes the kept literal would read otherwise stays for hand too, since
+  `fmt"…"` is raw and `&"…"` is not. So does an escape by number, which can spell a brace.
+- The chain runs the fixer only where the project declares no `formatValue`, which
+  interpolation calls in place of `$` (`isDeclaringFormatValue`). The audit reads each file of
+  the tree, and the command line each file of the run, and each groups them by nimble file. The
+  check still reports there, and the report stays for hand.
+- Verified by `suites/test_interpolations.nim`, `suites/test_command.nim`, and
+  `suites/test_fixes.nim` of `curator/audit`. A mutant that drops the guard in the command line,
+  or in the audit, fails its suite.
+- Verified by hand with knoller at `008ecfa1` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkInterpolations` and `fixInterpolations` alone on each file
+  that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives no report, since each wrap of
+  the library would join past `LINE_MAX`, at 122 and 123 runes.
+- Verified by hand with that driver over the repository at `008ecfa1`, 2026-11-20. It gives 53
+  reports, and the fix joins 24, each settled, since a second run writes nothing.
+- The page counts 44 reports and 21 fixes. Three wraps join here at exactly 100 runes, which X.1
+  allows. They are lines 2796 and 2804 of `src/desktop/main.nim` of `pga_visualiser`, and line
+  408 of `design/checks.nim` of `dance_ontology`. The cause of the other 6 reports is unmeasured,
+  since no copy of the prototype of the page is at hand.
+- Cost: a `formatValue` that a dependency declares, or a file outside the run of the command
+  line, is unread.
+- Cost: a wrap that holds a value and does not fit stays whole for hand, though a join inside one
+  of its lines would fit.
 
 ## Wraps
 

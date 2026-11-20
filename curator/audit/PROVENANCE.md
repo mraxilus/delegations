@@ -3131,6 +3131,15 @@ the two lines after the last pragma that opens the module, with a blank line on 
 - Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
   `suites/test_checker.nim`. The tree holds no finding of these four rules.
 
+**The chain joins an interpolated string only in a project that declares no `formatValue`.**
+Interpolation calls `formatValue` in place of `$`, so a join could print a value otherwise where a
+project declares one (rule 21 of #443). The context of a fix reads each Nim file of the tree. It
+names the nimble file of each project where a file declares one (`nimbleProject`).
+
+- Verified by `suites/test_fixes.nim`: a join stays split where another file of the project
+  declares `formatValue`, and joins where no file of the tree does.
+- Cost: a `formatValue` that a dependency declares, outside the tree, is unread.
+
 **An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
 `proc main` above the block, and the block calls `main()`. The routine takes the doc
 `TODO: Document.` (VI.1), because only a reader can say what it does. The body keeps its lines
