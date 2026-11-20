@@ -90,7 +90,13 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
   ## Report each rule `koch fix` clears in full in source of Nim syntax, as knoller reads its
   ##   dialect (`checkFormatting` there); other kind is read by none.
   if kind.rule.syntax != Syntax.Nim: return
-  checkFormatting(path, source, kind.dialect, nimble = path.nimbleProject)
+  checkFormatting(
+    path,
+    source,
+    kind.dialect,
+    nimble = path.nimbleProject,
+    should_drop_articles = not path.isProseOwn,
+  )
 
 
 func checkFormatting*(tree: Tree): seq[Finding] =

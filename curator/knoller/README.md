@@ -177,6 +177,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |
 | `article-in-comment` | A comment holds no article. |
+| `comment-form` | A claim opens with a capital and closes with a period; a name takes backticks. |
 | `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
 | `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |

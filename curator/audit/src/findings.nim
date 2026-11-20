@@ -60,6 +60,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.SuffixGeneric: "V.13",
   Rule.NameCollection: "V.6",
   Rule.ArticleInComment: "VI.5",
+  Rule.FormComment: "VI.10",
   Rule.OutlineDoc: "VI.2",
   Rule.SummaryDoc: "VI.1",
   Rule.ValueMessage: "IV.4",

@@ -10,12 +10,13 @@
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
 ##     none, so every later fixer reads body where it stands;
-##   - content next (articles in comments, outline of each comment, backticks of IV.4 messages,
-##     parentheses of X.4 conditions, `to<Target>` subject first, prefix call of `define…` and
-##     `emit…`, command form of dotted call statement, needless parentheses gone), since each
-##     changes width of its line; prefix call goes before command form, which then reads no
-##     dotted call of either; parentheses go before spacing, which glues prefix operator they
-##     leave in same round;
+##   - content next (articles in comments, form and outline of each comment, backticks of IV.4
+##     messages, parentheses of X.4 conditions, `to<Target>` subject first, prefix call of
+##     `define…` and `emit…`, command form of dotted call statement, needless parentheses gone),
+##     since each changes width of its line; articles go before form, so claim whose article goes
+##     takes its capital after; prefix call goes before command form, which then reads no dotted
+##     call of either; parentheses go before spacing, which glues prefix operator they leave in
+##     same round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
@@ -71,7 +72,8 @@
 ##     exit code.
 ##   Caller says of each file whether its comments drop their articles (`should_drop_articles`),
 ##     true by default. Where they keep them, as comments in language other than English may,
-##     chain runs neither fixer nor check of articles, and runs every other step. Policy is
+##     chain runs neither fixer nor check of articles, nor of capitals and periods of comment form
+##     (VI.10), and runs every other step, names of comment form among them. Policy is
 ##     caller's, as words names may take are (`names.nim`), so knoller holds none; command line
 ##     sets none, so it drops articles in every file it reads.
 ##   Caller names nimble file nearest each file (`nimble`), written as path is, empty where none
@@ -94,7 +96,8 @@
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   articles, blanks, commands, declarations, entry, fences, form, generations, idioms, messages,
-  names, outlines, parentheses, precedence, reports, spacing, stages, targets, waits, wrapping,
+  names, outlines, parentheses, precedence, prose, reports, spacing, stages, targets, waits,
+  wrapping,
 ]
 
 
@@ -109,11 +112,12 @@ const
 
 
 func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
-  ## List steps dialect takes, in order header gives; fixer of articles runs only where comments
-  ##   drop them.
+  ## List steps dialect takes, in order header gives; fixer of articles, and of capitals and
+  ##   periods of comment, runs only where comments drop articles, as English does.
   result = @STEPS_FORM
   result.add guarded(fixBlockEntry)
-  if should_drop_articles: result.add guarded(fixArticles)
+  if should_drop_articles: result.add @[guarded(fixArticles), guarded(fixProse)]
+  else: result.add guarded(fixProseNames)
   result.add guarded(fixOutlines)
   result.add @[
     widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
@@ -141,11 +145,12 @@ func nimblesLocked*(files: openArray[(string, string)]): seq[string] =
 
 
 func checkFormattingUnfenced(
-  path, view: string; dialect: Dialect; proofs: Proofs; nimble: string
+  path, view: string; dialect: Dialect; proofs: Proofs; nimble: string; should_drop_articles: bool
 ): seq[Report] =
   ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
-  ##   Parentheses check reads answers of parser, so it names only groups they prove, and checks
-  ##   of tests and profiler import read nimble file nearest file.
+  ##   Parentheses check reads answers of parser, so it names only groups they prove, checks of
+  ##   tests and profiler import read nimble file nearest file, and comment form reads capitals
+  ##   and periods only where comments drop articles.
   let
     checks_before = [
       checkComments, checkBanners, checkOutlines, checkMessages, checkMixtures, checkNegations,
@@ -157,6 +162,7 @@ func checkFormattingUnfenced(
     ]
 
   # Run checks in order of chain, blank lines between, which read nimble file nearest file.
+  result.add(if should_drop_articles: checkProse(path, view) else: checkProseNames(path, view))
   for check in checks_before: result.add check(path, view)
   result.add checkBlanks(path, view, nimble)
   for check in checks_after: result.add check(path, view)
@@ -167,7 +173,11 @@ func checkFormattingUnfenced(
 
 
 func checkFormatting*(
-  path, source: string; dialect: Dialect; proofs = Proofs(); nimble = ""
+  path, source: string;
+  dialect: Dialect;
+  proofs = Proofs();
+  nimble = "";
+  should_drop_articles = true;
 ): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
@@ -179,10 +189,13 @@ func checkFormatting*(
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone. Needless parentheses read `proofs`, so no answer reports none; tests and profiler
-  ##   import read `nimble`.
+  ##   import read `nimble`; capitals and periods of comment read where comments drop articles
+  ##   (`should_drop_articles`).
   let fence = source.fence
   if fence.fault >= 0: return checkFence(path, fence)
-  let found = checkFormattingUnfenced(path, source.masked(fence), dialect, proofs, nimble)
+  let found = checkFormattingUnfenced(
+    path, source.masked(fence), dialect, proofs, nimble, should_drop_articles
+  )
   found.filterIt(it.line - 1 notin fence.lines)
 
 func checkStatic(
@@ -213,7 +226,7 @@ func checkSource*(
   ##   fixers leave, or fence keeps from them, fails command line as it fails static pass.
   ##   Articles are read only where comments drop them (`should_drop_articles`), and tests from
   ##   nimble file nearest file (`nimble`); caller says whether file is drive code (`is_drive`).
-  checkFormatting(path, source, dialect, proofs, nimble) &
+  checkFormatting(path, source, dialect, proofs, nimble, should_drop_articles) &
       checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
 
@@ -346,8 +359,9 @@ func checkFenceHeld*(
   ##     drive code (`is_drive`).
   let fence = source.fence
   if fence.fault >= 0 or fence.lines.len == 0: return
-  let found = checkFormattingUnfenced(path, source, dialect, proofs, nimble) &
-      checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
+  let found =
+    checkFormattingUnfenced(path, source, dialect, proofs, nimble, should_drop_articles) &
+    checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
   # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
   for run in fence.runs:
