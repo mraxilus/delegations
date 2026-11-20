@@ -6,6 +6,7 @@
 ##     holds exactly bases chain reaches over samples; alias `transform` reads same. Two full
 ##     multivectors take chain itself.
 ##   Pairs hold motor and flector parts, single grades and full type, so each kind of table runs.
+##     Typed 𝐦 by full 𝐧 takes table of both types too, as it does over every pair of 𝐧.
 ##   Samples are dense in their types, every coefficient drawn, so each law reads every term.
 
 {.experimental: "strictFuncs".}
@@ -98,6 +99,10 @@ proc main() =
   holdPair(r, "vector by vector", MultivectorOf[basesOfGrade(1)], MultivectorOf[basesOfGrade(1)])
   held.inc
   holdPair(r, "full by vector", MultivectorOf[basesEvery()], MultivectorOf[basesOfGrade(1)])
+  held.inc
+  holdPair(r, "vector by full", MultivectorOf[basesOfGrade(1)], Multivector)
+  held.inc
+  holdPair(r, "motor part by full", MultivectorOf[basesAntieven()], Multivector)
   held.inc
   for _ in 0 ..< SAMPLES:
     let

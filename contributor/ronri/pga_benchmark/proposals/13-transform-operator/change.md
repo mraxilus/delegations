@@ -1,6 +1,6 @@
 # One operator for the transform of a multivector, built from the types of its operands
 
-`⟇⟇~∘` transforms 𝐦 by the operator 𝐧, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰. Its typed form builds the table of that
+`⟇⟇~∘` transforms 𝐦 by the operator 𝐧, that is 𝐧 ⟇ 𝐦 ⟇ 𝐧̰. Its typed form builds the table of that
 sandwich from the types of both operands, when the code compiles. So each value of each type
 transforms exactly. Two full multivectors take the three steps of pin. `pga.nim` names the operator
 `transform`, and two tests of the suite `Typed operators` hold both to the chain. Every edit quotes
@@ -74,17 +74,23 @@ func basesSandwiched(a, b: Bases): Bases {.compileTime.} =
     if table[output].len > 0: result.incl output
 
 
-macro emitSandwichedByBasis(R, A, B: static Bases, r, m, n: untyped): untyped =
-  ## Emit one assignment per basis of `R`, from table of bases `A` of `m` and pairs of `B` of `n`.
+macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
+  ## Emit one assignment per basis that table of bases `A` of `m` and pairs of `B` of `n` reaches.
   ##   Names doubled basis and product of each pair once, so each coefficient reads products alone.
+  ##   Each loop walks each term once, so table over every pair at six dimensions stays under
+  ##     loop bound of VM.
   let table = constructSandwich(A, B)
   var
     pairs: seq[array[2, Basis]]
+    paired: array[Basis, Bases]  # Bases j that pair with i so far, so each term tests in one step.
     doubled: Bases
-  for output in R:
+  for output in Basis:
     for term in table[output]:
-      if term.pair notin pairs: pairs.add term.pair
-      if term.pair[0] != term.pair[1]: doubled.incl term.pair[0]
+      let (i, j) = (term.pair[0], term.pair[1])
+      if j notin paired[i]:
+        paired[i].incl j
+        pairs.add term.pair
+      if i != j: doubled.incl i
 
   func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
   func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
@@ -102,15 +108,18 @@ macro emitSandwichedByBasis(R, A, B: static Bases, r, m, n: untyped): untyped =
         first = (if pair[0] == pair[1]: (quote do: `n`[`b0`]) else: nameDoubled(pair[0]))
       products.add newIdentDefs(namePair(pair), newEmptyNode(), quote do: `first` * `n`[`b1`])
     result.add products
-  for output in R:
-    var operands: seq[Basis]
+  for output in Basis:
+    if table[output].len == 0: continue
+    var
+      operands: Bases
+      terms: array[Basis, seq[TermSandwich]]  # Terms of output by basis of `m` that they read.
     for term in table[output]:
-      if term.operand notin operands: operands.add term.operand
+      operands.incl term.operand
+      terms[term.operand].add term
     var summands: seq[NimNode]
     for k in operands:
       var weight: NimNode = nil
-      for term in table[output]:
-        if term.operand != k: continue
+      for term in terms[k]:
         let
           product = namePair(term.pair)
           magnitude =
@@ -134,7 +143,7 @@ func `⟇⟇~∘`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): typeof(zeroNamed[basesSandwiched(A, B)]()) {.inline, noinit.} =
   ## Transform multivector by operator of any types, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, from table of both types.
-  emitSandwichedByBasis(basesSandwiched(A, B), A, B, result, m, n)
+  emitSandwichedByBasis(A, B, result, m, n)
 
 
 func `⟇⟇~∘`*(m, n: Multivector): Multivector {.inline.} =
@@ -230,6 +239,8 @@ const EMPTY: Bases = {}
     checkTypedSandwich(BIVECTORS, EVEN)
     checkTypedSandwich(EVEN, ODD)
     checkTypedSandwich(SCATTERED, VECTORS)
+    checkTypedSandwich(VECTORS, ALL)
+    checkTypedSandwich(EVEN, ALL)
 
 
   test "Sandwich: equal chain exactly for full operands, and alias reads operator":
