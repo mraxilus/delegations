@@ -32,8 +32,8 @@ const
   EXAMPLE_ERROR = (
     # `CLL 6.2`
     text: "mi klama le .i ko",  # zo le krasi pa sumti poi no valsi cu fanmo ke'a
-    head: "srera · byte 13",
-    rule: "in sumti-6",
+    head: "srera · stuzi li paci",
+    rule: "ne'i sumti-6",
   )
     ## pa selci'a .e lo selsku be le tanxe pe le selci'a
     ##   .i le gerna cu sisti bu'u zo .i noi zvati lo stuzi pe li paci ku'o ne'i `sumti-6` noi du le
@@ -212,7 +212,7 @@ suite "Internal: Drawing of live text":
     let places = root.laidOut.places
     check places[^1].kind == KindPlace.Error
     check places[^1].lines == @[EXAMPLE_ERROR.head, EXAMPLE_ERROR.rule]
-    check places[^1].title.startsWith("needs ")
+    check places[^1].title.startsWith("nitcu ")
     check drawing.count_errors == 1
     check "class=\"box err\"" in drawing.html
 
@@ -221,13 +221,14 @@ suite "Internal: Drawing of live text":
       whole = drawnMerged(readTextParts("mi klama .i ko").reading.toNifParts)
       kept = drawnMerged(readTextParts(EXAMPLE_ERROR.text).reading.toNifParts)
       refused = drawnMerged(MODULE_REFUSED)
-    check whole.status == "Merged · one tree · 4 words · as one pass reads the text"
+    check whole.status == "se jmina · pa tricu · vo valsi · simsa lo nu tcidu le mulselci'a pa roi"
     check not whole.is_refused and whole.count_parts == 1
-    check kept.status == "Merged · 2 trees · 5 words · 1 error · 0 words unread"
+    check kept.status == "se jmina · re tricu · mu valsi · pa srera · no valsi poi na se tcidu"
     check not kept.is_refused and "class=\"box err\"" in kept.html
     # lo selci'a be fi `NIF` be'o poi na se tcidu
     check refused.is_refused and refused.html.len == 0  # no pagbu cu selxra
-    check refused.status.startsWith("Merge refused · part 2 · ")  # li pa cu krasi lo nu kancu
+    check refused.status.startsWith(
+      "le nu jmina cu se to'e curmi · le remoi pagbu · ")  # li pa cu krasi lo nu kancu
 
 
   test "Part still open draws as open, and line counts it apart":
@@ -237,4 +238,4 @@ suite "Internal: Drawing of live text":
     let drawing = drawn(reader.toNif, change.tail)
     check drawing.count_open == 1
     check "<figure class=\"part open\">" in drawing.html
-    check drawing.status.endsWith("1 part open")
+    check drawing.status.endsWith("pa pagbu poi ca'o kalri")

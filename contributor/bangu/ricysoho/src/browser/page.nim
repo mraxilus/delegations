@@ -186,9 +186,9 @@ proc shown() =
   document.getElementById("nif").innerHTML = cstring(head & "<mark>" & changed & "</mark>" &
       "<span class=\"open\">" & open & "</span>")
   let mode =
-    if STATE.reader.isNil: "The script has not read any text."
-    elif STATE.reader.isWorkerLive: "A worker reads the text."
-    else: "This page reads the text, since it gives no worker."
+    if STATE.reader.isNil: "le samtci na pu tcidu da"
+    elif STATE.reader.isWorkerLive: "pa gunka cu tcidu le selci'a"
+    else: "le vi papri cu tcidu le selci'a ki'u lo nu le papri cu dunda no gunka"
   document.getElementById("mode").textContent = cstring(mode)
 
 
