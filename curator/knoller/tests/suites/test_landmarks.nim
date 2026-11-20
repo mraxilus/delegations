@@ -95,3 +95,25 @@ suite "Article V.8":
     ]:
       check landmarksDeclared([alias]).len == 0
     check landmarksDeclared(["proc a*(t: typedesc[T]): T = T(1)\n"]).len == 1  # routine too
+
+
+  test "index is constant expression, so body sampling value names no landmark":
+    # Case held: `sample` read as alias of `Coefficient`, so `Coefficient(rand(-1.0..1.0))` was
+    #   reported as its index; line 95 of `proposals/04-basis-set-forms/laws.nim` of
+    #   `pga_benchmark` at `4a06f521`. Domain: index of literal, name and arithmetic, beside
+    #   call, field, float, range, string and index expression.
+    const SAMPLE =
+      "proc sample(t: typedesc[Coefficient]): Coefficient =\n" &
+      "  ## Sample scalar uniform in [-1, 1].\n" &
+      "  Coefficient(rand(-1.0..1.0))\n"
+    check landmarksDeclared([SAMPLE]).len == 0
+    check checkLandmarks("a.nim", "m[b] = Coefficient(rand(-1.0..1.0))\n",
+      landmarksDeclared([SAMPLE])).len == 0
+    for (body, index) in [
+      ("T(1)", "1"), ("T(N)", "N"), ("T(N - 1)", "N-1"), ("T(2 * N)", "2*N"),
+      ("T(N div 2)", "Ndiv2"), ("T(-1)", "-1"),
+    ]:
+      check landmarksDeclared(["template a*(t: typedesc[T]): T = " & body & "\n"]).mapIt(
+        it.index) == @[index]
+    for body in ["T(rand(n))", "T(a.b)", "T(1.0)", "T(0..1)", "T(\"a\")", "T(a[0])"]:
+      check landmarksDeclared(["template a*(t: typedesc[T]): T = " & body & "\n"]).len == 0
