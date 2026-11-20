@@ -38,11 +38,11 @@ message Object {
   NAME = "scene.proto"  ## Name of schema in its folder.
 
 
-proc held(changed: string): seq[Finding] =
-  ## Hold `changed` to `SHIPPED` through `buf`, as one schema of `FOLDER`.
+proc held(changed: string, shipped = SHIPPED): seq[Finding] =
+  ## Hold `changed` to `shipped` through `buf`, as one schema of `FOLDER`.
   let binary = bufbuildIn(rootBufbuild(getEnv(KEY_BUFBUILD)))
   doAssert binary.isSome, "buf could not be fetched"
-  breakingFindings(binary.get, FOLDER, [(NAME, SHIPPED)], [(NAME, changed)])
+  breakingFindings(binary.get, FOLDER, [(NAME, shipped)], [(NAME, changed)])
 
 
 
@@ -141,3 +141,63 @@ suite "Schemas":
     discard root.git("commit -q -a -m 'feat(alpha): add shines'")
     discard root.git("checkout -q work")
     check checkSchemas(root, "main").anyIt("name \"shines\"" in it.message)
+
+
+  test "new package of folder passes where each field holds, and break under it still fails":
+    # Case held: rictadni moves package `lojban_tagger` to `rictadni` (#981); `buf` pairs
+    #   messages by full name, so shipped side reads under new package before compare.
+    let moved = SHIPPED.replace("package pga_visualiser.scene;", "package pga_visualiser.scenes;")
+    check held(moved).len == 0  # package alone moves
+    let retyped = held(moved.replace("optional double radius", "optional float radius"))
+    check retyped.anyIt("changed type from \"double\" to \"float\"" in it.message)
+
+
+  test "schema renamed under new package is held, so moved file hides no break":
+    let binary = bufbuildIn(rootBufbuild(getEnv(KEY_BUFBUILD)))
+    doAssert binary.isSome, "buf could not be fetched"
+    let
+      moved = SHIPPED.replace("package pga_visualiser.scene;", "package pga_visualiser.scenes;")
+      found = breakingFindings(binary.get, FOLDER, [(NAME, SHIPPED)],
+        [("scenes.proto", moved.replace("  string label = 3;\n", ""))])
+    check found.anyIt("\"label\" on message \"Object\" was deleted" in it.message)
+    check breakingFindings(binary.get, FOLDER, [(NAME, SHIPPED)], [("scenes.proto", moved)])
+      .len == 0
+
+
+  test "qualified name of old package reads under new one":
+    let qualified = SHIPPED.replace("  Ink ink = 1;", "  .pga_visualiser.scene.Ink ink = 1;")
+    check qualified != SHIPPED
+    let found = breakingFindings(
+      bufbuildIn(rootBufbuild(getEnv(KEY_BUFBUILD))).get, FOLDER, [(NAME, qualified)],
+      [(NAME, SHIPPED.replace("package pga_visualiser.scene;", "package pga_visualiser.scenes;"))],
+    )
+    check found.len == 0
+
+
+  test "new package beside `Any`, `service` or `extend` is refused, since full name reaches data":
+    let
+      any = SHIPPED.replace("package pga_visualiser.scene;\n",
+        "package pga_visualiser.scene;\n\nimport \"google/protobuf/any.proto\";\n")
+        .replace("  optional double radius = 4;\n",
+          "  optional double radius = 4;\n  google.protobuf.Any extra = 5;\n")
+      served = SHIPPED & "\nservice Gallery {\n  rpc Show(Object) returns (Object);\n}\n"
+      extended = SHIPPED.replace("package pga_visualiser.scene;\n",
+        "package pga_visualiser.scene;\n\nimport \"google/protobuf/descriptor.proto\";\n") &
+        "\nextend google.protobuf.FieldOptions {\n  string unit = 50000;\n}\n"
+    for shipped in [any, served, extended]:
+      check held(shipped, shipped).len == 0  # each compiles, and holds as shipped
+      let found = held(shipped.replace("package pga_visualiser.scene;",
+        "package pga_visualiser.scenes;"), shipped)
+      check found.len == 1
+      check found.allIt("beside `Any`, `service` or `extend`" in it.message)
+
+
+  test "folder whose packages split, so no one package of base maps to one, is refused":
+    let
+      binary = bufbuildIn(rootBufbuild(getEnv(KEY_BUFBUILD))).get
+      found = breakingFindings(binary, FOLDER, [(NAME, SHIPPED)], [
+        (NAME, SHIPPED.replace("package pga_visualiser.scene;", "package one;")),
+        ("tour.proto", "syntax = \"proto3\";\n\npackage two;\n\nmessage Tour {}\n"),
+      ])
+    check found.len == 1
+    check found.allIt("no one package of base maps to one of branch" in it.message)
