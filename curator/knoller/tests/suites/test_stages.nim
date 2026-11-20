@@ -45,7 +45,7 @@ const
     "    for n in Basis:\n      if cayley[m][n].len == 0: continue\n\n" &
     "      # Filter by n operands.\n      cayley[m][n] = @[]\n"
     ## Lines 721 to 739 of `pga/cayleys.nim` at `3d9696e`, parameters and last stage cut:
-    ##   paragraph of line 734 holds two lines of code alone.
+    ##   paragraph of line 736 holds two lines of code alone.
 
 
 func fixed(source: string): string =
@@ -77,7 +77,7 @@ suite "Stages":
 
 
   test "paragraph of fewer than three lines of code passes, comment lines not counted":
-    check FILTER.isSettled  # line 734 of `pga/cayleys.nim`: two lines of code
+    check FILTER.isSettled  # line 736 of `pga/cayleys.nim`: two lines of code
     let
       head = "proc p() =\n  ## Do.\n  # Read.\n  let a = 1\n\n"
       counted = head & "  let b = a\n  # Why.\n  let c = b\n"  # two lines of code, one comment
