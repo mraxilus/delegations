@@ -38,9 +38,9 @@ const
 
 
 func stemLibrary(k: Kind, is_typed: bool): string =
-  ## Read C stem library takes for operand: `float` for scalar, unnamed instance where typed,
-  ##   dense multivector else.
-  if k == Kind.Scalar: "float" elif is_typed: "MultivectorOf" else: "Multivector"
+  ## Read C stem library takes for operand: `float` for scalar, motor's stem where typed, since
+  ##   catalogue types motor alone, and dense multivector else.
+  if k == Kind.Scalar: "float" elif is_typed: STEM_MOTOR else: "Multivector"
 
 
 func stemReference(k: Kind): string =

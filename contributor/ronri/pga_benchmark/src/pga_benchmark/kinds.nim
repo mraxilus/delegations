@@ -55,13 +55,18 @@ const
     ## Timed rounds per measurand; median and minimum over rounds are measurements reported.
   SIZE_MULTIVECTOR* = sizeof(Multivector)
     ## Bytes one dense multivector occupies, i.e. 8 × 2^DIMENSIONS.
+  BASES_MOTOR* = basesAntieven()
+    ## Bases of motor, its antieven part; transform reads motor at this type where library can.
+  STEM_MOTOR* = "MultivectorMotor"
+    ## Stem inspector gives typed motor by its count, half of every basis; model sizes it so.
   STEMS_MULTIVECTOR* = [
     (sizeof(Multivector) div sizeof(Coefficient), "Multivector"),
     (sizeof(MultivectorScalars) div sizeof(Coefficient), "MultivectorScalars"),
+    (card(BASES_MOTOR), STEM_MOTOR),
   ]
-    ## Name library type of each element count, since C names every `MultivectorOf` alike.
-  BASES_MOTOR* = basesAntieven()
-    ## Bases of motor, its antieven part; transform reads motor at this type where library can.
+    ## Name type of each element count, since C names every `MultivectorOf` alike.
+    ##   Cost: count names one stem, so each instance of motor's count reads as motor; at rga3d
+    ##     `MultivectorEven` holds as many bases, and reads same bytes.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."

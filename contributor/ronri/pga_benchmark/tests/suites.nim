@@ -936,7 +936,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
     check sizeOfStem("Point", 64, "referenceZrigid2") == 24  # 2D point, not 3D one
     check sizeOfStem("Circle", 128, "referenceZconformal2") == 32  # 2D circle, not 3D one
-    check sizeOfStem("MultivectorOf", SIZE_MULTIVECTOR) == sizeof(MultivectorOf[BASES_MOTOR])
+    check sizeOfStem(STEM_MOTOR, SIZE_MULTIVECTOR) == sizeof(MultivectorOf[BASES_MOTOR])  # motor
 
 
   test "no lower bound outruns what library spends on same operation":

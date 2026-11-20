@@ -1,8 +1,8 @@
 ## Model bytes one call moves, from counts read out of C and sizes of what it reads and writes.
 ##   Movement is what memory sees: operands read, result written, whole-object zero fills,
 ##   whole-object copies and intermediates materialised. Sizes come from type stems C names:
-##   library's dense multivector is 8 × 2^dimensions, typed reference objects are their
-##   Nim sizes, scalars eight bytes.
+##   library's dense multivector is 8 × 2^dimensions, its typed motor half that, typed reference
+##   objects are their Nim sizes, scalars eight bytes.
 ##
 ##   Cost: model counts bytes named by code, not cache lines touched; it ranks data
 ##     movement between forms, and is not measurement of traffic (Article VIII.1: modelled,
@@ -31,6 +31,7 @@ func sizeOfStem*(stem: string, size_multivector: int, module = ""): int =
   ##   names reference whose types they are; 3D Euclidean reference where module names none.
   case stem
   of "Multivector": size_multivector
+  of "MultivectorMotor": size_multivector div 2  # typed motor: antieven half of every basis
   of "MultivectorScalars": 16  # scalar and antiscalar, eight bytes each
   of "float", "int", "Antiscalar": 8
   else:
