@@ -23,15 +23,15 @@ when compileOption("profiler"):
 import ./knoller/[
   articles, blanks, chain, claims, command, commands, compilers, conversions, declarations,
   declared, edits, entry, fences, form, generations, idioms, messages, names, outlines,
-  parentheses, pins, precedence, proofs, reports, rewrites, rules, spacing, stages, symbols,
-  targets, tokens, views, waits, wrapping,
+  parentheses, pins, precedence, proofs, reports, rewrites, rules, spacing, stages, staging,
+  symbols, targets, tokens, views, waits, wrapping,
 ]
 
 export
   articles, blanks, chain, claims, commands, compilers, conversions, declarations, declared,
   edits, entry, fences, form, generations, idioms, messages, names, outlines, parentheses, pins,
-  precedence, proofs, reports, rewrites, rules, spacing, stages, symbols, targets, tokens, views,
-  waits, wrapping
+  precedence, proofs, reports, rewrites, rules, spacing, stages, staging, symbols, targets, tokens,
+  views, waits, wrapping
 
 
 when isMainModule:

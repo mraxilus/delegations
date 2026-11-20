@@ -16,6 +16,10 @@
 ##   Routine is compile-time where its pragmas hold `compileTime`, or where it nests in body that
 ##     compile time alone runs: macro, `static:`, or compile-time routine. Macro itself reads by
 ##     its keyword, and template body runs where it expands, so neither marks itself.
+##   Same walk reads head of each routine, operator among them (`heads`): line, keyword, export,
+##     pragmas, parameters, placeholders, and compile time as above, so compile-time family reads
+##     one nesting (`staging.nim`). Binding by `const` says so (`is_constant`), for branch on what
+##     build fixes.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -69,6 +73,7 @@ type
     kind*: KindName
     reach*: Reach  ## Binding's reach; `Local` for every other kind.
     is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
+    is_constant*: bool  ## Binding by `const`, whose value build fixes (STYLE.md §3).
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
     is_generic*: bool  ## Parameter of type `typedesc` alone, which stands for any type (V.12).
     keyword*: string  ## Keyword declaring routine, as `macro`; empty for every other kind.
@@ -80,6 +85,20 @@ type
       ## Value binding takes on its own line and lines below opening `.`, its element where tuple
       ##   gives one to each name; empty where line gives none, or value runs past otherwise.
       ##   Type keeps text after `=` on its line, so alias names type it takes (V.13).
+
+  Head* = object
+    ## Define head of one routine, operator among them, as compile-time family reads it
+    ##   (`staging.nim`); foreign routine has none, as it declares no name of ours.
+    name*: string  ## Name, or operator between its backticks, e.g. `==`.
+    line*: int  ## One-based line of routine's keyword.
+    last*: int  ## One-based line signature ends on: its pragmas, else `)` closing parameters.
+    keyword*: string  ## Keyword declaring routine, e.g. `func`.
+    is_operator*: bool  ## Name stands in backticks, so no use spells it as word.
+    is_exported*: bool  ## `*` follows name, so other module may call it.
+    is_compile_time*: bool  ## As `Declared.is_compile_time` reads it.
+    pragmas*: seq[string]  ## Words among its pragmas, values included (`wordsPragma`).
+    parameters*: string  ## Text between parentheses of signature; empty where none.
+    placeholders*: seq[string]  ## Placeholders of its generic brackets.
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -294,14 +313,16 @@ func reach(openers: openArray[Opener], is_scoped = false): Reach =
   Reach.Global
 
 
-func declarations*(source: string): seq[Declared] =
-  ## Read every declared name of Nim source with its line, kind and reach.
+func scanned(source: string): tuple[names: seq[Declared], heads: seq[Head]] =
+  ## Read every declared name of Nim source with its line, kind and reach, and head of each
+  ##   routine, in one walk, so both read one nesting.
   let lines = source.codeOnly.splitLines
   var
     openers: seq[Opener]
     indent_section = -1
     section_child = -1
     is_section_mutable = false
+    is_section_constant = false
     indent_type = -1
     indent_object = -1
     indent_enum = -1
@@ -362,25 +383,31 @@ func declarations*(source: string): seq[Declared] =
         # Walk name, placeholders, parameters, then return type; backticked name is operator.
         var k = word.len
         while k < text.len and text[k] == ' ': inc k
-        var name = ""
+        var name, operator = ""
         if k < text.len and text[k] == '`':
           let close = text.find('`', k + 1)
+          if close > k: operator = text[k + 1 ..< close]
           k = (if close < 0: text.len else: close + 1)
         else:
           name = text.identifierAt(k)
           k += name.len
-        if k < text.len and text[k] == '*': inc k
+        let is_exported = k < text.len and text[k] == '*'
+        if is_exported: inc k
+        var placeholders: seq[string]
         if k < text.len and text[k] == '[' and text.closing(k) > k:
-          for p in text[k + 1 ..< text.closing(k)].namesPlaceholder:
-            result.add Declared(name: p, line: one, kind: KindName.Placeholder)
+          placeholders = text[k + 1 ..< text.closing(k)].namesPlaceholder
+          for p in placeholders:
+            result.names.add Declared(name: p, line: one, kind: KindName.Placeholder)
           k = text.closing(k) + 1
         while k < text.len and text[k] == ' ': inc k
-        var is_writing = false
+        var
+          is_writing = false
+          signature = ""
         if k < text.len and text[k] == '(' and text.closing(k) > k:
-          let signature = text[k + 1 ..< text.closing(k)]
+          signature = text[k + 1 ..< text.closing(k)]
           for (p, is_boolean, is_generic) in signature.namesParameter:
             if word == "template": substituted.add p
-            result.add Declared(
+            result.names.add Declared(
               name: p,
               line: one,
               kind: KindName.Parameter,
@@ -399,7 +426,7 @@ func declarations*(source: string): seq[Declared] =
           is_foreign = pragmas.anyIt(it in MARKS_FOREIGN)
           is_compile_time = "compileTime" in pragmas or openers.anyIt(it.is_compile_time)
         if name.len > 0 and not is_foreign:
-          result.add Declared(
+          result.names.add Declared(
             name: name,
             line: one,
             kind: KindName.Routine,
@@ -407,6 +434,19 @@ func declarations*(source: string): seq[Declared] =
             keyword: word,
             type_return: tail.typeReturn,
             is_compile_time: is_compile_time,
+          )
+        if (name.len > 0 or operator.len > 0) and not is_foreign:
+          result.heads.add Head(
+            name: if name.len > 0: name else: operator,
+            line: one,
+            last: j + 1,
+            keyword: word,
+            is_operator: operator.len > 0,
+            is_exported: is_exported,
+            is_compile_time: is_compile_time,
+            pragmas: pragmas,
+            parameters: signature,
+            placeholders: placeholders,
           )
         is_compile_time_body = word == "macro" or is_compile_time
         break reading
@@ -418,7 +458,7 @@ func declarations*(source: string): seq[Declared] =
         if "=" in s:
           var read: seq[Declared]
           let below = (if word == "type": rest.strip else: s).readType(one, read)
-          result.add read.filterIt(
+          result.names.add read.filterIt(
             not (it.kind == KindName.Type and openers.isSubstituted(it.name)),
           )
           if below == KindName.Member: indent_enum = indent
@@ -428,7 +468,7 @@ func declarations*(source: string): seq[Declared] =
       if indent_enum >= 0 and indent > indent_enum:
         for m in s.splitTop({','}):
           if m.nameDeclared.len > 0:
-            result.add Declared(name: m.nameDeclared, line: one, kind: KindName.Member)
+            result.names.add Declared(name: m.nameDeclared, line: one, kind: KindName.Member)
         break reading
 
       if indent_object >= 0 and indent > indent_object:
@@ -437,7 +477,7 @@ func declarations*(source: string): seq[Declared] =
         if word notin ["of", "else", "elif", "when"] and text.indexTop(':') > 0:
           for name in text[0 ..< text.indexTop(':')].splitTop({','}):
             if name.nameDeclared.len > 0:
-              result.add Declared(
+              result.names.add Declared(
                 name: name.nameDeclared,
                 line: one,
                 kind: KindName.Field,
@@ -449,15 +489,17 @@ func declarations*(source: string): seq[Declared] =
         if rest.strip.len == 0:
           indent_section = indent
           is_section_mutable = word == "var"
+          is_section_constant = word == "const"
         else:
           for (name, value) in (rest & lines.continued(i)).pairsBinding:
             if openers.isSubstituted(name): continue
-            result.add Declared(
+            result.names.add Declared(
               name: name,
               line: one,
               kind: KindName.Binding,
               reach: openers.reach,
               is_mutable: word == "var",
+              is_constant: word == "const",
               is_boolean: rest.isBooleanShown,
               value: value,
             )
@@ -469,12 +511,13 @@ func declarations*(source: string): seq[Declared] =
         if indent == section_child and (s.indexTop(':') > 0 or s.indexTop('=') > 0):
           for (name, value) in (s & lines.continued(i)).pairsBinding:
             if openers.isSubstituted(name): continue
-            result.add Declared(
+            result.names.add Declared(
               name: name,
               line: one,
               kind: KindName.Binding,
               reach: openers.reach,
               is_mutable: is_section_mutable,
+              is_constant: is_section_constant,
               is_boolean: s.isBooleanShown,
               value: value,
             )
@@ -484,7 +527,7 @@ func declarations*(source: string): seq[Declared] =
         let at = rest.find(" in ")
         if at > 0:
           for name in rest[0 ..< at].namesBinding:
-            result.add Declared(
+            result.names.add Declared(
               name: name,
               line: one,
               kind: KindName.Binding,
@@ -497,7 +540,7 @@ func declarations*(source: string): seq[Declared] =
         if at >= 0:
           let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameDeclared
           if name.len > 0:
-            result.add Declared(
+            result.names.add Declared(
               name: name,
               line: one,
               kind: KindName.Binding,
@@ -510,3 +553,13 @@ func declarations*(source: string): seq[Declared] =
       held.is_compile_time = is_compile_time_body
       openers.add held
     i = next
+
+
+func declarations*(source: string): seq[Declared] =
+  ## Read every declared name of Nim source with its line, kind and reach.
+  source.scanned.names
+
+
+func heads*(source: string): seq[Head] =
+  ## Read head of each routine of Nim source, operator among them, in order of its lines.
+  source.scanned.heads
