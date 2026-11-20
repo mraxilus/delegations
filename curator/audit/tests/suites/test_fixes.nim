@@ -604,6 +604,52 @@ suite "Fixes":
     check plan.written.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.6
 
 
+  test "glued `anti` renames at every use where words of project decide its cut, through context":
+    # Case held: `koch fix` passed no names of package, so it planned no cut rename and left
+    #   `ANTISCALAR` at line 238 of `tests/suites/test_regressions.nim` of `curator/knoller`, which
+    #   knoller renames `SCALAR_ANTI` from words of its package (rule 8 of #443, V.2). Domain: word
+    #   other module of project declares, word no module of project declares, and global breaking
+    #   case too, whose one rename settles both rules.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      words = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "func scalar*(): int = 1\n  ## One.\n\nfunc basis*(): int = 2\n  ## Two.\n",
+      )
+      glued = entry(
+        DIRECTORY_AUDIT & "/src/b.nim",
+        head & "const ANTISCALAR* = 2  ## Two.\n\nlet COUNT* = ANTISCALAR + 1  ## Three.\n",
+      )
+      cased = entry(DIRECTORY_AUDIT & "/src/c.nim", head & "let Antibasis* = 3  ## Odd.\n")
+      tree = @[words, glued, cased]
+    check queriesSemantic(tree, [glued, cased]).mapIt((it.path, it.sites, it.names)) == @[
+      (glued.path, @[(5, 6), (7, 13)], @["SCALAR_ANTI"]),
+      (cased.path, @[(5, 4)], @["BASIS_ANTI"]),
+    ]  # one rename for both rules, never case rename `ANTIBASIS` beside it
+    check queriesSemantic(tree[1 .. 2], [glued, cased]).mapIt((it.path, it.names)) ==
+      @[(cased.path, @["ANTIBASIS"])]  # no module declares either word, so case rename alone
+    var answers = @[Answer(path: glued.path), Answer(path: cased.path)]
+    for site in [(5, 6), (7, 13)]:
+      answers[0].symbols[site] =
+        Symbol(kind: "skConst", name: "b.ANTISCALAR", file: "/r/" & glued.path, line: 5, column: 6)
+    answers[0].globals["SCALAR_ANTI"] = @[]
+    answers[1].symbols[(5, 4)] =
+      Symbol(kind: "skLet", name: "c.Antibasis", file: "/r/" & cased.path, line: 5, column: 4)
+    answers[1].globals["BASIS_ANTI"] = @[]
+    let
+      context = initContext(tree, [glued, cased], answers)
+      plan = fixEntries(BRANCH_CURATOR, [glued, cased], context = context)
+    check plan.written.mapIt(it.content) == @[
+      glued.content.replace("ANTISCALAR", "SCALAR_ANTI"),
+      cased.content.replace("Antibasis", "BASIS_ANTI"),
+    ]  # V.2, V.1
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (glued.path, 5, "name cut (V.2)"),
+      (glued.path, 7, "name cut (V.2)"),
+      (cased.path, 5, "name case (V.1)"),
+    ]  # joined rename takes rule of case, as knoller names it
+
+
   test "rename fix cannot prove stays for hand with its reason, and asks semantic pass nothing":
     let
       path = "curator/audit/src/a.nim"
