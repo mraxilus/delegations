@@ -2176,7 +2176,8 @@ as a placed step takes the nimble file (`## Layout of a package`).
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 A driver ran `checkFamilies` and `fixFamilies`, then `checkBranches` and `fixBranches`, each
-alone, on a copy of the library, with knoller at `0d58caae`. `knoller --check` lists the same lines.
+alone, on a copy of the library, with the code of knoller at `0e099bc1`. `knoller --check` lists
+the same lines.
 
 - Compile-time family: 21 reports over 21 lines, and the fix writes +21 −21 lines. That is the
   diff of the page of rule 10, line for line. The check finds nothing on the fixed copy.
