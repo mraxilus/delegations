@@ -966,6 +966,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
       if GRAMMAR_EBNF.nullable[symbol.code]:
         advance(i, (item.production, item.dot + 1, item.origin))
 
+
 func toRule(head: int): tuple[name: string, number: int] =
   ## dunda lo cmene .e lo namcu vu'o pe le javni pe le jvasni mu'u `sumti-6` .e li soze
   ##   .i lo djujva cu cpacu le cmene .e le namcu vu'o pe le javni poi vasru le djujva
@@ -1039,6 +1040,7 @@ func fillCompletions(chart: var Chart) =
       chart.completions[i].mgetOrPut(key, @[]).add item.production
     for key in chart.completions[i].keys.toSeq: chart.completions[i][key].sort
   chart.count_completed = chart.sets.len
+
 
 func isFewer(a, b: seq[int]): bool =
   ## jdice lo du'u xu kau `a` mleca `b` lo ka mulgau lo jvasni kei bu'u le pamoi stuzi poi `a` .e
