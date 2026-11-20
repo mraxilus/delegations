@@ -70,12 +70,15 @@ type
     proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
     formatting: seq[string]
       ## Nimble file of each project declaring `formatValue`, whose interpolated strings never join.
+    configurations: Table[string, Configurations]
+      ## Defaults of configurations of each project, read from its modules, by nimble file.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
     fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
-    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
+    warned: seq[Finding]
+      ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 
@@ -247,9 +250,12 @@ func initContext*(
       sources.add e.content
     if e.path.isCalling: suites.add e.content
   result.dead = exportsDead(paths, sources, suites).deduplicate
+  var modules: Table[string, seq[string]]
   for e in tree:
-    if e.path.endsWith(".nim") and e.content.isDeclaringFormatValue:
-      result.formatting.add e.path.nimbleProject
+    if not e.path.endsWith(".nim"): continue
+    if e.content.isDeclaringFormatValue: result.formatting.add e.path.nimbleProject
+    modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
+  for project, sources in modules: result.configurations[project] = readConfigurations(sources)
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked):
@@ -315,6 +321,7 @@ func fixSource(
     should_drop_articles = not path.isProseOwn,
     nimble = path.nimbleProject,
     has_format_value = path.nimbleProject in context.formatting,
+    configurations = context.configurations.getOrDefault(path.nimbleProject),
   )
   result.source = fix.source
   result.asked = fix.asked
@@ -345,7 +352,9 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     should_drop_articles = not e.path.isProseOwn,
     nimble = e.path.nimbleProject,
     is_drive = e.path.isCodeDrive,
+    configurations = context.configurations.getOrDefault(e.path.nimbleProject),
   ).toFindings
+  result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:

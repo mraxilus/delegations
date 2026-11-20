@@ -14,8 +14,10 @@
 ##     `path:line: <rule-id> left: <message>` for finding left for hand, as every check of
 ##     knoller reads fixed text (`checkSource`), static pass's among them;
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
-##     inside it with count and first line, so no fenced line goes unseen (`checkFenceHeld`); then
-##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
+##     inside it with count and first line, so no fenced line goes unseen (`checkFenceHeld`);
+##     `path:line: debug-output warning: <message>` for each debug output, which no fix removes
+##     (`warnDebug`); then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its
+##     location is path alone.
 ##   Every line printed is line of file as given: finding left in fixed text is traced back
 ##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
 ##     given, so it prints at line `0`, path alone, and its message echoes its text.
@@ -63,8 +65,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, conversions, edits, fences, messages, names, parentheses, pins, proofs, reports,
-  rewrites, rules, symbols,
+  chain, compilers, configurations, conversions, edits, fences, idioms, messages, names,
+  parentheses, pins, proofs, reports, rewrites, rules, symbols,
 ]
 
 
@@ -111,7 +113,8 @@ type
   Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
     path: string  ## Path as named.
     written: seq[(string, string)]  ## Path and new text, where file changes.
-    fixed, left, held: seq[Report]  ## Rewrite, finding left and fence warning, unsorted.
+    fixed, left, held: seq[Report]
+      ## Rewrite, finding left, and warning of fence or debug output, unsorted.
     unsettled: string  ## Why fixers leave file as written (`Fix.unsettled`); empty if settled.
     asked: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
@@ -178,20 +181,24 @@ func part(
   plans: openArray[Plan];
   nimble: string;
   has_format_value: bool;
+  configurations: Configurations;
 ): Part =
   ## Fix one file of Nim dialect, as `outcome` does: what file writes and reports, and what it
   ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
   ##   are written first, from source as given; file whose candidate pass could not resolve
   ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
   ##   Rules of tests, stubs and umbrella read nimble file nearest file, read whole as path is.
-  ##   Interpolated strings join only where package declares no `formatValue` (`has_format_value`).
+  ##   Interpolated strings join only where package declares no `formatValue` (`has_format_value`),
+  ##   and configuration blocks read defaults of package (`configurations`).
   let
     dialect = path.dialect.get
     layout = path.toAbsolute(directory)
     nimble_layout = if nimble.len == 0: "" else: nimble.toAbsolute(directory)
     fence = source.fence
-    held = checkFenceHeld(layout, source, dialect, proofs, nimble = nimble_layout)
-  result.held = held.shownAs(path)
+    held = checkFenceHeld(
+      layout, source, dialect, proofs, nimble = nimble_layout, configurations = configurations
+    )
+  result.held = (held & warnDebug(layout, source, nimble_layout)).shownAs(path)
   if fence.lines.len > 0: result.asked.add source.questions(proofs)
   var
     renamed: seq[Edit]
@@ -224,10 +231,18 @@ func part(
     base = source.applied(renamed & edits)
     rewritten.add reports.shownAs(path)
   let fix = formatted(
-    layout, base, dialect, proofs, nimble = nimble_layout, has_format_value = has_format_value
+    layout,
+    base,
+    dialect,
+    proofs,
+    nimble = nimble_layout,
+    has_format_value = has_format_value,
+    configurations = configurations,
   )
   result.asked.add fix.asked
-  var after = checkSource(layout, fix.source, dialect, proofs, nimble = nimble_layout)
+  var after = checkSource(
+    layout, fix.source, dialect, proofs, nimble = nimble_layout, configurations = configurations
+  )
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
   result.unsettled = fix.unsettled
@@ -271,6 +286,18 @@ func nimblesFormatting(
     if path.dialect.isSome and source.isDeclaringFormatValue: result.add nimbles.getOrDefault(path)
 
 
+func nimblesConfigurations(
+  files: openArray[(string, string)], nimbles: Table[string, string]
+): Table[string, Configurations] =
+  ## Read defaults of configurations of each package from its modules of run, by nimble file as
+  ##   `nimbles` holds it; empty name stands for files with no nimble file above.
+  var sources: Table[string, seq[string]]
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    sources.mgetOrPut(nimbles.getOrDefault(path), @[]).add source
+  for nimble, each in sources: result[nimble] = readConfigurations(each)
+
+
 func outcome*(
   files: openArray[(string, string)],
   locked: openArray[string],
@@ -291,7 +318,9 @@ func outcome*(
   ##   rename where its plan writes path (`planRenames`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
   ##   it by path as named (`nimblesNearest`); path it lacks has none above.
-  let formatting = files.nimblesFormatting(nimbles)
+  let
+    formatting = files.nimblesFormatting(nimbles)
+    configurations = files.nimblesConfigurations(nimbles)
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
@@ -305,6 +334,7 @@ func outcome*(
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
+      configurations.getOrDefault(nimbles.getOrDefault(path)),
     )
   parts.joined(is_check, [failure])
 
@@ -328,6 +358,7 @@ proc outcomeProven*(
   let
     read = files.filterIt(it[0].dialect.isSome and it[0] notin locked)
     formatting = files.nimblesFormatting(nimbles)
+    configurations = files.nimblesConfigurations(nimbles)
   var
     proofs = newSeq[Proofs](batches.len)
     failures = newSeq[string](batches.len)
@@ -351,6 +382,7 @@ proc outcomeProven*(
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
+      configurations.getOrDefault(nimbles.getOrDefault(path)),
     )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
@@ -378,6 +410,7 @@ proc outcomeProven*(
         plans,
         nimbles.getOrDefault(path),
         nimbles.getOrDefault(path) in formatting,
+        configurations.getOrDefault(nimbles.getOrDefault(path)),
       )
   parts.joined(is_check, failures)
 

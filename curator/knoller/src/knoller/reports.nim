@@ -94,12 +94,23 @@ type
   Placed* = proc (path, source, nimble: string): Fix {.nimcall, noSideEffect.}
     ## Define fixer whose rule reads where file lies in its package, from nimble file nearest it.
 
+  Configurations* = object
+    ## Define default of each configuration constant of package, as its define gives it.
+    defaults*: Table[string, bool]  ## Value constant takes in build with no define, by name.
+    complements*: Table[string, string]  ## Constant written `not` of other, both ways, by name.
+
+  Configuring* =
+    proc (path, source: string; configurations: Configurations): Fix {.nimcall, noSideEffect.}
+    ## Define fixer whose rule reads default of each configuration of package.
+
   KindStep* {.pure.} = enum
-    ## Define how step reads lines held, answers of parser and nimble file nearest file.
+    ## Define how step reads lines held, answers of parser, nimble file nearest file and
+    ##   defaults of configurations of package.
     Guarded  ## Fixer guarded on every line.
     Widening  ## Widener, off held lines.
     Proving  ## Fixer writing what parser proves, guarded on every line.
     Placing  ## Fixer reading nimble file nearest file, guarded on every line.
+    Configuring  ## Fixer reading defaults of configurations, guarded on every line.
 
   Step* = object  ## Define one fixer of chain, of one kind.
     case kind*: KindStep
@@ -107,6 +118,7 @@ type
     of KindStep.Widening: widener*: Widener
     of KindStep.Proving: proven*: Proven
     of KindStep.Placing: placed*: Placed
+    of KindStep.Configuring: configuring*: Configuring
 
   Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
     Module  ## `.nim`, which module's idiom checks and fixers read too.
@@ -118,6 +130,7 @@ const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
   DIRECTORY_SOURCE = "src"  ## Directory of package that nimble puts its umbrella in.
   DIRECTORY_TESTS = "tests"  ## Directory of package that testament reads its tests from.
+  DIRECTORY_TOOLS = "tools"  ## Directory of package that holds its programs of build and check.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
   HEADER_TESTAMENT* = "discard \"\"\""
@@ -141,6 +154,13 @@ func partTests(path, nimble: string): seq[string] =
   ## Read names of path below directory `tests` of its package; empty where it lies elsewhere.
   let part = path.partPackage(nimble)
   if part.len > 1 and part[0] == DIRECTORY_TESTS: part[1 .. ^1] else: @[]
+
+
+func isFileTool*(path, nimble: string): bool =
+  ## Decide whether path lies under directory `tools` of its package, at any depth; `nimble` is
+  ##   nimble file nearest path, as `isFileTest` reads it.
+  let part = path.partPackage(nimble)
+  part.len > 1 and part[0] == DIRECTORY_TOOLS
 
 
 func isFileTest*(path, nimble: string): bool =
@@ -189,14 +209,28 @@ func placing*(placed: Placed): Step =
   Step(kind: KindStep.Placing, placed: placed)
 
 
-func run*(step: Step; path, source: string; held: Held; proofs = Proofs(); nimble = ""): Fix =
+func configuring*(configuring: Configuring): Step =
+  ## Construct step of fixer whose rule reads defaults of configurations of package.
+  Step(kind: KindStep.Configuring, configuring: configuring)
+
+
+func run*(
+  step: Step;
+  path, source: string;
+  held: Held;
+  proofs = Proofs();
+  nimble = "";
+  configurations = Configurations();
+): Fix =
   ## Run step on source: widener reads held lines, prover step reads answers, placed fixer reads
-  ##   nimble file nearest file, guarded fixer reads none of them.
+  ##   nimble file nearest file, configuring fixer reads defaults of configurations, guarded
+  ##   fixer reads none of them.
   case step.kind
   of KindStep.Guarded: step.fixer(path, source)
   of KindStep.Widening: step.widener(path, source, held)
   of KindStep.Proving: step.proven(path, source, proofs)
   of KindStep.Placing: step.placed(path, source, nimble)
+  of KindStep.Configuring: step.configuring(path, source, configurations)
 
 
 func isHeld*(held: Held, line: int): bool =
