@@ -954,10 +954,15 @@ trails a line which opens a bracket holds apart a call that the wraps would join
   `entry(PICK)` does, and a longer body holds logic of its own. The bound is chosen and not
   measured, so a short helper under a group comment passes too.
 
-**Each doc stands in the one position where `nim doc` reads it (VI.9; STYLE.md §5).** The
-Architect ruled so on rule 5 of #443. Doc position and missing doc read one place for each
-declaration (`placements`), and where `nim doc` reads its doc (`target`). So each doc that the
-fixer of one writes, the check of the other passes.
+**Each doc stands in the one position that STYLE.md §5 gives its shape (VI.9).** The Architect
+ruled so on rule 5 of #443. For most shapes that position is where `nim doc` reads the doc. Doc
+position and missing doc read one place for each declaration (`placements`), and where its doc
+stands (`target`). So each doc that the fixer of one writes, the check of the other passes.
+
+- For three shapes STYLE.md §5 alone sets the position. `nim doc` reads the group doc of a bare
+  `type` in neither place. It reads the doc of a routine in each place that the fix moves it from.
+  These places are the signature line, the line after a blank line, and another indent. Verified
+  by hand with `nim jsondoc` of 2.4.0, 2026-11-20, on one probe of each shape.
 
 - A one-line doc of a type, a field, a binding or an enum member stands on its line, where the
   joined line fits `LINE_MAX`. Two spaces stand before its `##`. Otherwise it takes the next line,
@@ -986,10 +991,10 @@ fixer of one writes, the check of the other passes.
   continues an expression declares nothing.
 - Verified by `suites/test_declarations.nim`, for each shape and for each doc that stays. The cases
   of `type Order` and `lut_grade_by_basis` are quoted from the PGA library at `3d9696e`.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
-  `checkDocs` and `fixDocs` alone. It gives 2 reports. The fix writes 1 line and removes 2 at
-  `type Order`, and leaves the doc under `block:` for hand.
-- Verified by hand with that driver over each Nim file that git lists, 2026-11-20, against the
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
+  runs `checkDocs` and `fixDocs` alone on each file that `git ls-files` lists. It gives 2 reports.
+  The fix writes 1 line and removes 2 at `type Order`, and leaves the doc under `block:` for hand.
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20, against the
   rule before these shapes. The shapes add 14 reports, and each is a doc inside `block` that stays
   for hand. The 22 reports of the rule before stay as they were.
 - Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
@@ -1022,10 +1027,11 @@ purpose.` above the paragraph, at its indent, as `## TODO: Document.` waits for 
   as VI.4 says, so the placeholder asks for the purpose.
 - Verified by `suites/test_stages.nim`. The macro `defineOperator` of `pga/operators.nim` and the
   routine `filterBases` of `pga/cayleys.nim` at `3d9696e` are quoted as found.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
-  `checkStages` and `fixStages` alone. It gives 7 reports, and the fix writes 7 lines. They are
-  lines 365, 465 and 504 of `pga/cayleys.nim`, and lines 41, 45, 94 and 98 of `pga/operators.nim`.
-- Verified by hand with that driver over each Nim file that git lists, 2026-11-20. It gives 211
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
+  runs `checkStages` and `fixStages` alone on each file that `git ls-files` lists. It gives 7
+  reports, and the fix writes 7 lines. They are lines 365, 465 and 504 of
+  `pga/cayleys.nim`, and lines 41, 45, 94 and 98 of `pga/operators.nim`.
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 209
   reports, which no check of `koch check` reads yet.
 - Cost: a routine reads from a line that opens with its keyword and its name. So the body of a
   lambda reads as lines of the routine that holds it, and a test reads as `test "…":` alone.
@@ -1524,7 +1530,8 @@ words.
 
 **The caller says of each file whether its comments drop their articles.** `formatted`,
 `checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
-is false, the chain runs no fixer and no check of articles on that file. Every other rule runs.
+is false, the chain runs no fixer and no check of articles on that file. There the rule of
+comment form reads its names alone (`## Claims`). Every other rule runs.
 
 - A comment in another language can hold a word that reads as an article. In lojban, `a` joins
   two names, as "or" does in English. The fixer would delete it and change what the comment says.
@@ -1561,11 +1568,12 @@ spaces past `Implement`.
   past `LINE_MAX` stays for hand, whole, and its reports stay.
 - Verified by `suites/test_outlines.nim`. The cases of `pga/multivectors.nim`, `pga/operators.nim`,
   `pga/algebra.nim` and `pga.nim` of the PGA library at `3d9696e` are quoted as found.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
-  `checkOutlines` and `fixOutlines` alone. It gives 11 reports, and the fix moves 18 lines. Of
-  those, 17 are the lines under tags that the ruling counts. The other is line 354 of
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
+  runs `checkOutlines` and `fixOutlines` alone on each file that `git ls-files '*.nim' '*.nims'
+  '*.nimble'` lists. It gives 11 reports, and the fix moves 18 lines. Of those,
+  17 are the lines under tags that the curator counted for the ruling. The other is line 354 of
   `pga/algebra.nim`, a nuance one space short.
-- Verified by hand with that driver over each Nim file that git lists, 2026-11-20. It gives 3,200
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 3,200
   reports, and the fix moves 2,424 lines. No check of `koch check` reads them yet.
 - Cost: a line of a table, a diagram or code stays where its parent moves.
 
@@ -1587,6 +1595,89 @@ cites an article of its own (D1 c of #563).
   stands four spaces deeper. Verified by `suites/test_outlines.nim`.
 - Cost: a generated doc passed by place, and not by name, is unread, and so is its outline past
   the summary.
+
+## Claims
+
+**A comment opens with a capital and closes with a period, and each path, literal and name in it
+stands in backticks (VI.10).** The Architect ruled so on rule 2 of #443, with four answers. A
+lowercase line two spaces deeper is a wrap of the sentence above, and no claim of its own. A line
+with no closing mark before a capitalised line takes no report. A citation of the charter stands
+bare. The rule reads no string that a generator passes as a doc.
+
+- The comments are those that `comments` of `outlines.nim` gives, so both rules read one grouping.
+- Commented code holds no prose. It is a `#` comment whose first line stands at an even step, or
+  reads as code (`isCode`). Code there is a call or index glued to a name, or an assignment or
+  comparison after a name. It is also a line that ends in `=`, a keyword line that ends in `:`,
+  or a nested marker.
+- A line without a step holds no prose, as the outline reads it (`isStepless`). Nor does an
+  aligned column, that is two spaces or more between words outside backticks, after no closing
+  mark. Nor does a deeper line that continues one, or a `#` line that reads as code.
+- A path is a word with a file extension of `EXTENSIONS_FILE`, as `cayleys.nim`, or a folder that
+  a slash closes, as `draw/`. Backticks replace its double quotes, as EXAMPLES.md, I.6 writes it.
+  A capitalised name with an extension and no folder, as Node.js, names a product, and stands
+  bare.
+- A literal is a range, a typed literal or a hex literal, as `E1..E4`, `1'e1` and `0xFF`. Literals
+  that only operators part take one pair, fillers between them included, as in
+  `1'e1 ∧ 1'e2 ∧ ... ∧ 1'en`. A possessive, as `7's`, is none.
+- A name is a Nim type that is no English word (`TYPES_BARE`), as `seq` and `int`. It is also an
+  identifier that the file declares in a shape that no English word takes. That shape holds `_`, a
+  digit after a letter, or an inner capital. So a name in capitals alone takes `_` or a digit,
+  since RGB reads as a word. A dotted name takes backticks where the file declares a part of it,
+  each part two letters or more.
+- A word that a reader cannot tell from a word of English stays bare. Such a word is one
+  lowercase word, as `sqrt`, or one capitalised word, as `Basis`. So is an enum member alone, and
+  a word with a letter outside ASCII, which is formal notation.
+- A citation is a Markdown file named in capitals alone, as STYLE.md or PROVENANCE.md, and it
+  stands bare. The question of the ruling named charter and record files together. A path with a
+  folder takes backticks.
+- Rejected: the declarations of the whole project. One file is all that a check of knoller reads,
+  so a name that another file declares stays bare.
+- Verified by `suites/test_claims.nim`, with each library line that a report names, as found.
+
+**A claim ends where its sentence must close, and a wrap reads no end.** A claim ends at the last
+line of a comment, before a shallower line, before a line without a step, and before a bullet.
+There it closes with `.`, `?`, `!`, `:` or `…`, past a closing bracket or quote. Before a bullet,
+or before the next item of the list that it continues, it closes with `,` or `;` too. A line that
+runs on to a line of the same depth or deeper is a wrap. The rule reads no mark at its end.
+
+- A claim starts at the first line of a paragraph, and after a claim end. There it opens with a
+  capital, and a leading tag, as `TODO:`, opens it so. A lowercase line deeper than the line above
+  it continues that sentence (VI.2).
+- A bullet opens as it will. A bullet that ends the sentence of the line above may open in
+  lowercase, as the headers of knoller write their lists.
+- A label carries neither a capital nor a period (VI.10). It is a trailing `#` comment. It is
+  also an own-line `#` comment of one line that opens with no capital, or that hangs under the
+  code that it labels. A comment of one line that holds one word or opens with a citation is a
+  label too.
+- `e.g.` and `i.e.` close no sentence, so a line that ends on one is cut.
+- Verified by `suites/test_claims.nim`. The library lines of each answer are quoted as found: lines
+  163 and 165 of `pga/algebra.nim`, and lines 30 and 229 of `pga.nim`.
+
+**The fix writes each backtick, period and capital, and leaves each cut for hand.** A claim that
+ends on a function word (`WORDS_CUT`), on another mark, or on `e.g.` is cut. So is a lowercase line
+after a sentence end. A fix would hide the cut, so each one stays for hand. Backticks and a period
+that would widen a line past `LINE_MAX` stay for hand too. A capital widens nothing, so it is
+written.
+
+- The check and the fixer share one reading (`prose`), so the rule is written once (Article II.1).
+- The fixer runs after the fixer of articles, so a claim whose article goes takes its capital
+  after (`chain.nim`).
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
+  runs `checkClaims` and `fixClaims` alone on each file that `git ls-files` lists. It gives 13
+  reports, and the fix changes the 12 lines that the card of rule 2 gives. A second
+  run writes nothing, and `knoller --check` keeps the count of each other rule.
+- Cost: two spaces inside a line, outside backticks, read as an aligned column, so a sentence
+  spaced so reads none.
+- Cost: a `#` comment of code at an odd step that reads as no code, as `# echo x`, reads as prose.
+  A `#` line of prose that holds a call glued to a name reads as code, so it takes no report.
+
+**A comment in its own language reads names alone.** Where the caller says that the comments of a
+file keep their articles, the chain runs `checkBackticks` and `fixBackticks` in place of the full
+forms. VI.10 lets such a language set its own capitals and periods, and a name takes backticks in
+every language.
+
+- Verified by `suites/test_claims.nim`: the chain reports a capital, a name and a period in the
+  default mode, and the name alone in the other mode.
 
 ## Names
 
