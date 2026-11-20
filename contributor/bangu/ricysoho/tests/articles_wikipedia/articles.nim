@@ -755,7 +755,7 @@ const
           "zasti fa lo ji'i 630 cmavo .i ku'i lo zasti cumki cmavo cu ci'i mei .i ji'a cmavo " &
           "tarmi mupli fa zo mu'ei .e zo poi'i vu'o noi nu'o catni se zanru cmavo .i lo cmavo " &
           "cu se pilno fi lo nu stura lo jufra",
-      verdict: "",
+      verdict: "Grammar selbri-4 134",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",

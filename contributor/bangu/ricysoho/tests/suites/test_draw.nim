@@ -8,7 +8,7 @@
 ##
 ## ni'o le cipra pe le papri cu cipra lo du'u le papri cu jarco le mitxra ne'i `JavaScript` to
 ##     `tests/browser/suite_page.nim` toi
-##   .i lo flalu cu tcidu ro bimoi se ciska pe lo selci'agri
+##   .i lo flalu cu tcidu ro boi bimoi se ciska pe lo selci'agri
 ##   .i le jbezba cu tcidu ro le selci'a ta'i lo nu tcidu le mulselci'a
 ##   .i lo flalu cu tcidu ji'a le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
 
@@ -25,7 +25,7 @@ import ./corpora
 
 
 const
-  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
+  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro boi xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
     ##   .i lo flalu pu tcidu 243 selci'a ca lo nu le cipra cu se jmina
@@ -51,7 +51,7 @@ type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]
 
 
 func readPool(): seq[ReadingDrawn] =
-  ## tcidu ro bimoi se ciska pe lo selci'agri ta'i lo nu tcidu le mulselci'a
+  ## tcidu ro boi bimoi se ciska pe lo selci'agri ta'i lo nu tcidu le mulselci'a
   ##   .i ro le selci'a cu se kansa le selci'a be fi `NIF` be'o pe vo'a .e le pagbu pe vo'a
   let texts = textsCorpora()
   for k in countup(0, texts.high, STEP_CORPORA):

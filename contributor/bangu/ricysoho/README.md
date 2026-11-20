@@ -24,6 +24,9 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i denpa bu poi zvati lo jbini be re lerfu cu se tcidu ta'i zo pi mu'u zoi gy. li 3.14 .gy.
   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu se tcidu ta'i zo ki'o mu'u zoi gy.
       li 1,000 .gy.
+  .i ro porsi be lo valsi pe `PA` cu du pa namcu to `CLL 18.6` toi
+  .i se ki'u bo le genturfa'i cu tcidu pa namcu po'o fi zoi gy. le 10moi .gy.
+  .i zo boi fendi re namcu poi lamji mu'u lo'u ro boi remei le'u
 
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
@@ -573,13 +576,13 @@ ni'o so mupli cu na'e mapti su'o javni pe `CLL 21.1`
   .i `Architect` jdice di'u bu'u `#815`
   .i `PROVENANCE.md` cmene le javni poi ro le so mupli cu na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu 16493 lo 17495 jufra pe `Tatoeba`
+ni'o le genturfa'i cu tcidu 16492 lo 17495 jufra pe `Tatoeba`
   .i ro klesi be lo drata cu na'e mapti su'o javni pe `CLL 1.1`
   .i `PROVENANCE.md` cmene ro klesi .e lo javni .e lo namcu pe le klesi
   .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
       na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu 76 lo 86 pagbu be le ci prosa
+ni'o le genturfa'i cu tcidu 75 lo 86 pagbu be le ci prosa
   .i lo traji be lo ka clani cu vasru 458 valsi
   .i le genturfa'i cu tcidu 783 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
   .i ro le nu to'e curmi cu drani ja'i `CLL`

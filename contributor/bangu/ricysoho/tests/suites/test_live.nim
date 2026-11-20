@@ -5,7 +5,7 @@
 ##
 ## ni'o lo spisa cu jalge lo cunso nu katna poi seljdi lo tsiju
 ##   .i le nu katna cu ka'e zvati ne'i lo valsi
-##   .i le cipra cu katna ro remoi se ciska pe le selci'aste ge'u .e lo selci'a poi selzba fi lo
+##   .i le cipra cu katna ro boi remoi se ciska pe le selci'aste ge'u .e lo selci'a poi selzba fi lo
 ##       valsi poi galfi lo pu valsi to `texts_built.nim` toi
 ##   .i ki'u bo le selci'aste cu vasru so'u le valsi
 ##   .i ne'i le flalu pe lo jdima ro selci'avla cu spisa
@@ -98,6 +98,8 @@ const
   DRAWS_NUMBERED = 40
     ## lo klani be lo cunso nu katna be ro selci'a pe le flalu pe denpa bu .e slaka bu poi zvati lo
     ##     jbini be lo lerfu
+  WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi sinxa lo lerfu pe `0` bi'o `9` to `CLL 18.2` toi
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
@@ -109,7 +111,7 @@ const
     ##       mulno
   COUNT_CORPORA_LEAST = 950
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo mivyselci'a
-    ##   .i ro remoi se ciska pe le 1941 selci'a cu se tcidu
+    ##   .i ro boi remoi se ciska pe le 1941 selci'a cu se tcidu
     ##   .i ki'u bo lo jdima be ro selci'a cu du lo pilji be li 3 bei lo jdima be lo nu tcidu le
     ##       selci'a ta'i lo mulno
     ##   .i lo jdima be lo nu tcidu lo xadba be le selci'aste cu jibni `12 s` ne'i lo cikryzba
@@ -120,8 +122,8 @@ const
   COUNT_SENTENCES_CORPORA_LEAST = 450
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo nu tcidu ro jufra pe ke'a ta'i lo
     ##     porsi
-    ##   .i ro vomoi se ciska pe le 1941 selci'a cu se tcidu
-    ##   .i le flalu poi tcidu ro remoi se ciska cu na tcidu le selci'a
+    ##   .i ro boi vomoi se ciska pe le 1941 selci'a cu se tcidu
+    ##   .i le flalu poi tcidu ro boi remoi se ciska cu na tcidu le selci'a
     ##   .i di'u selcu'a ki'u lo jdima be le cipra
   COUNT_SENTENCES_LEAST = 600
     ## lo jufra poi le porsi be lo valsi cu tcidu ke'a po'o zi'e noi le flalu pe le nu katna cu
@@ -592,7 +594,7 @@ suite "Internal: Live text":
       rng = initRand(SEED)
       count = 0
     for k, (key, text, whole) in pool:
-      if k mod 2 == 1: continue  # ro remoi se ciska ki'u lo jdima be le cipra
+      if k mod 2 == 1: continue  # ro boi remoi se ciska ki'u lo jdima be le cipra
       checkpoint key & ": " & text
       let live = text.readLive(text.cutsRandom(rng, PIECE_CORPORA_MOST))
       check live.nif == whole.reading.toNifParts  # le flalu pe le stedu be `live.nim`
@@ -629,8 +631,8 @@ suite "Internal: Live text":
       rng = initRand(SEED)
       count = 0
     for k, (key, text, whole) in pool:
-      # ro vomoi se ciska
-      #   .i le flalu poi tcidu ro remoi se ciska cu na tcidu le selci'a
+      # ro boi vomoi se ciska
+      #   .i le flalu poi tcidu ro boi remoi se ciska cu na tcidu le selci'a
       if k mod 4 != 1: continue
       checkpoint key & ": " & text
       let live = text.readLive(text.cutsRandom(rng, PIECE_CORPORA_MOST), is_sentences = true)
@@ -790,6 +792,23 @@ suite "Internal: Live text":
         check live.is_held  # le stedu be `live.nim`
         check live.is_grown  # le stedu be `live.nim`
         check live.is_tied  # `ChangeNif` pe `live.nim`
+
+
+  test "Run of number words reads typed byte by byte as read whole, and grows":
+    # `Architect` jdice `D3 a` bu'u `#991`
+    #   .i lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
+    #   .i se ki'u bo pa valsi pe `PA` poi se ciska cu cenba lo tricu pe lo pu valsi
+    var texts = @["le pano moi .i le 10moi", "li su'i pareci du li xa"]
+    for a in WORDS_DIGITS:
+      for b in WORDS_DIGITS:
+        texts.add "le " & a & " " & b & " moi .i le " & a & " boi " & b & " moi"
+    for text in texts:
+      checkpoint text
+      let live = text.readLive(toSeq(1 ..< text.len), is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`
+      check live.is_held  # le stedu be `live.nim`
+      check live.is_grown  # le stedu be `live.nim`
+      check live.is_tied  # `ChangeNif` pe `live.nim`
 
 
   test "Bytes read grow with length of text, word by word":
