@@ -16,22 +16,32 @@
 ##     not drift. Field of its type is deleted too, and that deletion is held.
 ##   New package moves, as Architect ruled on #981 (comment 7053327767): `buf` pairs messages of
 ##     two sides by full name, and rule `FILE_SAME_PACKAGE` refuses new package of file of same
-##     path. So where one package of base is gone and one new package stands, each shipped
-##     schema reads under new package first (`underPackage`), and each field stays held, file
-##     renamed or not.
+##     path. So each side first builds to image, whose packages and names of types `buf` parsed
+##     and resolved. Where one package of base is gone and one new package stands, shipped image
+##     takes new package (`underPackage`), and branch is held against that image. So each field
+##     stays held, file renamed or not.
+##     Image names each type in full, so package moves by exact name: no form of statement or
+##       comment, nor package nested under moved one, reads wrong.
 ##     New package beside `Any`, `service` or `extend` is refused, since full name of message
-##       reaches data or path there; so is folder whose packages split, so that none maps to one.
+##       reaches data or path there; so is folder whose packages do not map one to one, by split
+##       or merge.
+##   Rejected: rewrite of text of each shipped schema. Read of statement by text misses forms
+##     that `buf` reads, as comment before statement, and name of package nested under moved one
+##     reads as moved; each miss passes break of renamed file (#996).
 ##
 ##   Cost: import resolves against schema's own folder, as Nim library of Status and
 ##     `protobufjs` resolve it, so schema importing from another folder fails to compile here.
 ##   Cost: `buf` is fetched where store lacks it (`bufbuild.nim`), and only where branch changed
 ##     schema in folder base also holds.
 ##   Cost: package whose messages move into other package of its folder, which base holds
-##     already, is held by `FILE_SAME_PACKAGE` alone, on file of same path.
+##     already, is held by `FILE_SAME_PACKAGE` alone, on file of same path; so where file goes,
+##     break of moved message passes.
+##   Cost: each side builds to image before compare, so `buf` runs three times for each folder
+##     held, not once.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, osproc, sequtils, strutils]
+import std/[json, options, os, osproc, sequtils, strutils]
 from ../../knoller/src/knoller/command import runGit
 import ./[bufbuild, findings, tree]
 
@@ -43,12 +53,8 @@ const
     ## Config each module carries: category holding bytes and JSON text, never file layout,
     ##   and rule holding presence of each field.
   CODE_BREAKING = 100  ## Exit code of `buf` where it found breaking change or compile error.
-  OPENING_PACKAGE = "package "  ## Opening of statement that declares package of schema.
-  NAME_ANY = "google.protobuf.Any"  ## Type whose data names full name of message it holds.
-  OPENINGS_FULL_NAME = ["service ", "extend "]
-    ## Openings of statements whose full name reaches path of method, or name of extension.
-  MARKS_BEFORE_NAME = Whitespace + {'(', '<'}
-    ## Marks that may stand before qualified name of type, as in `(pkg.Message)`.
+  EXT_IMAGE = ".json"  ## Extension of image that `buf build` writes of side; it selects JSON.
+  NAME_ANY = ".google.protobuf.Any"  ## Full name of type whose data names message it holds.
   SIDES = ["before", "after"]  ## Module folders under work: shipped, then branch.
 
 
@@ -98,54 +104,88 @@ proc findingsBreaking*(output, folder: string): seq[Finding] =
       )
 
 
-func packageDeclared*(text: string): string =
-  ## Read package schema text declares: name after `package` of first line opening with it, up to
-  ##   `;`; empty where text declares none.
-  for line in text.splitLines:
-    let statement = line.strip
-    if statement.startsWith(OPENING_PACKAGE) and statement.endsWith(";"):
-      return statement[OPENING_PACKAGE.len ..< statement.high].strip
-  ""
+func entries(node: JsonNode, key: string): seq[JsonNode] =
+  ## Read list `key` of descriptor in image; empty where `buf` wrote none, as it omits empty list.
+  let entry = node{key}
+  if entry != nil and entry.kind == JArray: entry.elems else: @[]
 
 
-func packagesDeclared(schemas: openArray[(string, string)]): seq[string] =
-  ## Read each package schemas declare, once, sorted.
-  for (_, text) in schemas:
-    let name = text.packageDeclared
-    if name notin result: result.add name
-  result.sort
+func isOwn(file: JsonNode): bool =
+  ## Decide whether file of image is schema of folder, and no file that schema imports.
+  not file{"bufExtension", "isImport"}.getBool
 
 
-func isFullNameExposed*(text: string): bool =
-  ## Decide whether schema text holds `google.protobuf.Any`, or statement opening `service` or
-  ##   `extend`: there full name of message reaches type URL, path of method, or name of extension.
-  if NAME_ANY in text: return true
-  for line in text.splitLines:
-    let statement = line.strip
-    if OPENINGS_FULL_NAME.anyIt(statement.startsWith(it)): return true
+func packagesBuilt(image: JsonNode): seq[string] =
+  ## Read each package that schemas of image declare, once each; empty is root package.
+  for file in image.entries("file"):
+    let package = file{"package"}.getStr
+    if file.isOwn and package notin result: result.add package
 
 
-func underPackage*(text, old, new: string): string =
-  ## Write schema text under package `new` in place of `old`: its statement `package`, and each
-  ##   name qualified by `old` after space, `(` or `<`, or after `.` that opens full name.
-  ##   Name that this misses fails to compile under `new`, so check refuses rather than passes.
+func isNameExposed(message: JsonNode): bool =
+  ## Decide whether message, or one nested in it, declares extension or field of `Any`.
+  if message.entries("extension").len > 0: return true
+  for field in message.entries("field"):
+    if field{"typeName"}.getStr == NAME_ANY: return true
+  message.entries("nestedType").anyIt(it.isNameExposed)
+
+
+func isFullNameExposed(image: JsonNode): bool =
+  ## Decide whether schema of image holds `service`, `extend` or field of `google.protobuf.Any`:
+  ##   there full name of message reaches path of method, name of extension, or type URL.
+  for file in image.entries("file"):
+    if not file.isOwn: continue
+    if file.entries("service").len > 0 or file.entries("extension").len > 0: return true
+    if file.entries("messageType").anyIt(it.isNameExposed): return true
+
+
+func scopeFull(package: string): string =
+  ## Write prefix of each full name in `package`: `.` and package; empty for root package.
+  if package.len > 0: "." & package else: ""
+
+
+func namesDefined(message: JsonNode, scope: string): seq[string] =
+  ## Read full name of message under `scope`, then of each enum and message nested in it.
+  let name = scope & "." & message{"name"}.getStr
+  result.add name
+  for nested in message.entries("enumType"): result.add name & "." & nested{"name"}.getStr
+  for nested in message.entries("nestedType"): result.add nested.namesDefined(name)
+
+
+proc moveFields(message: JsonNode; names: openArray[string]; old, new: string) =
+  ## Write each field of message, and of each message nested in it, whose type is one of `names`
+  ##   under scope `new` in place of scope `old`.
+  for field in message.entries("field"):
+    let name = field{"typeName"}.getStr
+    if name in names: field["typeName"] = %(new & name[old.len .. ^1])
+  for nested in message.entries("nestedType"): nested.moveFields(names, old, new)
+
+
+proc underPackage(image: JsonNode; old, new: string) =
+  ## Write image under package `new` in place of `old`: each schema of `old` declares `new`, and
+  ##   each field whose type `old` defines names it under `new`. Match is by full name that `buf`
+  ##   resolved, so no form of text, nor package nested under `old`, moves wrong.
+  let (scope_old, scope_new) = (old.scopeFull, new.scopeFull)
+  var names: seq[string]
+  for file in image.entries("file"):
+    if not file.isOwn or file{"package"}.getStr != old: continue
+    for nested in file.entries("enumType"): names.add scope_old & "." & nested{"name"}.getStr
+    for message in file.entries("messageType"): names.add message.namesDefined(scope_old)
+  for file in image.entries("file"):
+    if not file.isOwn: continue
+    if file{"package"}.getStr == old:
+      if new.len > 0: file["package"] = %new else: file.delete("package")
+    for message in file.entries("messageType"): message.moveFields(names, scope_old, scope_new)
+
+
+proc imageBuilt(binary, work, side: string): Option[JsonNode] =
+  ## Read image that `buf build` writes of module `side` under `work`; none where it does not
+  ##   compile, so that `buf breaking` names that error itself.
   let
-    statement = OPENING_PACKAGE & old & ";"
-    qualified = old & "."
-  var i = 0
-  while i < text.len:
-    let before = (if i > 0: text[i - 1] else: '\n')
-    if before in Whitespace and text.continuesWith(statement, i):
-      result.add OPENING_PACKAGE & new & ";"
-      i += statement.len
-      continue
-    let is_opened = before == '.' and (i < 2 or text[i - 2] in MARKS_BEFORE_NAME)
-    if i > 0 and (before in MARKS_BEFORE_NAME or is_opened) and text.continuesWith(qualified, i):
-      result.add new & "."
-      i += qualified.len
-      continue
-    result.add text[i]
-    inc i
+    image = side & EXT_IMAGE
+    (_, code) = execCmdEx(quoteShellCommand([binary, "build", side, "-o", image]),
+      workingDir = work)
+  if code == 0: return some(parseJson(readFile(work / image)))
 
 
 proc breakingFindings*(
@@ -153,30 +193,37 @@ proc breakingFindings*(
 ): seq[Finding] =
   ## Run `buf breaking` of schemas `after` against schemas `before`, each `(name, text)` of
   ##   `folder`, with each side written under scratch work as module of its own.
-  ##   Where one package of `before` is gone and one new package stands, `before` reads under it
-  ##     (`underPackage`); new package beside full name in data, or split of packages, is finding.
-  let
-    gone = packagesDeclared(before).filterIt(it notin packagesDeclared(after))
-    added = packagesDeclared(after).filterIt(it notin packagesDeclared(before))
-    moved = "`" & gone.join("`, `") & "` to `" & added.join("`, `") & "`"
-  var shipped = @before
-  if gone.len > 0 and added.len > 0:
-    if before.anyIt(it[1].isFullNameExposed) or after.anyIt(it[1].isFullNameExposed):
-      return @[finding(folder, 0, "Schema folder takes new package beside `Any`, `service` or " &
-        "`extend`, where full name of message reaches data or path; keep package; got " &
-        moved & ".")]
-    if gone.len != 1 or added.len != 1:
-      return @[finding(folder, 0, "Schema folder changes package, and no one package of base " &
-        "maps to one of branch, so no field is held; move one package whole; got " & moved & ".")]
-    shipped = before.mapIt((it[0], it[1].underPackage(gone[0], added[0])))
+  ##   Where one package of `before` is gone and one new package stands, branch is held against
+  ##     image of `before` under new package (`underPackage`); new package beside full name in
+  ##     data, or packages that do not map one to one, is finding.
   let work = getTempDir() / "koch_schemas_" & $getCurrentProcessId()
-  for (side, schemas) in [(SIDES[0], shipped), (SIDES[1], @after)]:
+  for (side, schemas) in [(SIDES[0], @before), (SIDES[1], @after)]:
     createDir(work / side)
     writeFile(work / side / "buf.yaml", CONFIG_BREAKING)
     for (name, text) in schemas: writeFile(work / side / name, text)
   defer: removeDir(work)
+  var against = SIDES[0]
+  let images = SIDES.mapIt(imageBuilt(binary, work, it))
+  if images.allIt(it.isSome):
+    let
+      packages = images.mapIt(it.get.packagesBuilt)
+      gone = packages[0].filterIt(it notin packages[1])
+      added = packages[1].filterIt(it notin packages[0])
+      moved = "`" & gone.join("`, `") & "` to `" & added.join("`, `") & "`"
+    if gone.len > 0 and added.len > 0:
+      if images.anyIt(it.get.isFullNameExposed):
+        return @[finding(folder, 0, "Schema folder takes new package beside `Any`, `service` " &
+          "or `extend`, where full name of message reaches data or path; keep package; got " &
+          moved & ".")]
+      if gone.len != 1 or added.len != 1:
+        return @[finding(folder, 0, "Schema folder changes package, and no one package of " &
+          "base maps to one of branch, so no field is held; move one package whole; got " &
+          moved & ".")]
+      images[0].get.underPackage(gone[0], added[0])
+      against = SIDES[0] & EXT_IMAGE
+      writeFile(work / against, $images[0].get)
   let (output, code) = execCmdEx(
-    quoteShellCommand([binary, "breaking", SIDES[1], "--against", SIDES[0],
+    quoteShellCommand([binary, "breaking", SIDES[1], "--against", against,
       "--error-format", "json"]),
     workingDir = work,
   )
