@@ -3,6 +3,8 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+# Opened with `{.all.}`, so suite holds private `scales` to its reference over whole domain.
+import ../../src/pga_visualiser/motors {.all.}
 
 
 
@@ -92,6 +94,32 @@ suite "Motors":
         screw = wedgeDotAnti(turn.get, slide)
       check normWeight(screw)[Basis.scalarAnti] =~ 1.0
       check exp(log(screw)) =~ screw
+
+
+  test "both series of the half-angle hold their reference to a trillionth, at every angle":
+    # Fault: closed form of second series, taken from crossing at 1e-4, lost about `3ε/a²` of
+    #   its digits there, so two arms of `scales` disagreed by 2e-8 (repository issue 970).
+    proc reference(angle: float): (float, float) =
+      ## Read both series term by term near zero, where neither cancels, else closed form.
+      if abs(angle) >= 0.5:
+        return (sin(angle) / angle, (angle * cos(angle) - sin(angle)) / (angle * angle * angle))
+      let square = angle * angle
+      var (term_first, term_second) = (1.0, -1.0 / 3.0)
+      for n in 0..<20:
+        result[0] += term_first
+        result[1] += term_second
+        term_first *= -square / float((2*n + 2) * (2*n + 3))
+        term_second *= -square * float(n + 2) / float((n + 1) * (2*n + 4) * (2*n + 5))
+    check scales(0.0) == (1.0, -1.0 / 3.0)
+    for step in -480 .. 20:
+      for sign in [1.0, -1.0]:
+        let angle = sign * pow(10.0, float(step) / 40.0)
+        if abs(angle) > PI: continue
+        let
+          (first, second) = scales(angle)
+          (first_reference, second_reference) = reference(angle)
+        check abs(first - first_reference) <= 1.0e-12 * abs(first_reference)
+        check abs(second - second_reference) <= 1.0e-12 * abs(second_reference)
 
 
   test "the identity moves nothing and a motor undoes itself":
