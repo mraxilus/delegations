@@ -121,6 +121,8 @@ suite "Skips":
       # gate inside suite reports, though gate around suite holds both
     let nested = "when A:\n  when B:\n    suite \"S\":\n      test \"a\":\n        check b\n"
     check nested.found.len == 0  # each gate around suite configures it
+    check "when A:\n  suite(\"S\"):\n    test \"a\":\n      check b\n".found.len == 1
+      # cost: suite written as call is unread, so gate around it reports its test
 
 
   test "skip of generated code, and file outside `tests` of package, report none":

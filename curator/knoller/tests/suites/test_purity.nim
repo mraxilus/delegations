@@ -173,6 +173,19 @@ suite "Style §1":
     check proven(source).sites == @[source.site("proc b")]
 
 
+  test "distinct `ref` and distinct `pointer` point too, and type no scope at end names is unread":
+    # Kinds beside case of `D1 a` of #980 below. Cost: `Local` names nothing at end of module, so
+    #   check of it never answers, and `inner` proves though it takes `ref`.
+    let source = "{.experimental: \"strictFuncs\".}\n\ntype\n" &
+      "  Owned = distinct ref int\n  Raw = distinct pointer\n\n" &
+      "proc owned(o: Owned): int =\n  1\n\nproc raw(r: Raw): int =\n  2\n\n" &
+      "proc outer(): int =\n  type Local = ref object\n    x: int\n\n" &
+      "  proc inner(c: Local): int =\n    c.x\n\n  inner(Local(x: 1))\n"
+    let sites = proven(source).sites
+    check source.site("proc owned") notin sites and source.site("proc raw") notin sites
+    check source.site("proc inner") in sites
+
+
   test "default argument reads as part of body, so routine whose default reads environment stays":
     # Ruling `D6 a` of #980: `initToolchains` of knoller stays `proc`, since each call leaving its
     #   argument out reads environment. Default with no effect leaves candidate as it stands.
