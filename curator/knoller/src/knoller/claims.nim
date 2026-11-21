@@ -3,8 +3,10 @@
 ##   Comments are those `comments` of `outlines.nim` reads, so doc, run of `#` lines and trailing
 ##     comment group as outline groups them.
 ##   Commented code holds no prose: `#` comment whose first line stands at even step, or reads as
-##     code (`isCode`). Nor does line without step (`isStepless`), aligned column or deeper line
-##     that continues it, or `#` line that reads as code. Two spaces after closing mark, comma or
+##     code (`isCode`), and `#` line that reads as code (`linesCode`). Hand comments code with no
+##     space after marker, and tool with one, so both read as code (ruling `D3 a` of #980); article
+##     check reads same lines (`articles.nim`). Nor does line without step (`isStepless`), aligned
+##     column or deeper line that continues it hold prose. Two spaces after closing mark, comma or
 ##     semicolon space prose, and align no column. Generated doc stands in string, so rule reads
 ##     none, as Architect ruled on rule 2 of #443.
 ##   Bare span takes backticks. Path is word with file extension (`EXTENSIONS_FILE`), as
@@ -129,6 +131,11 @@ const
     ## Sentence of message of each fault, which value follows.
   OPERATORS_CODE = [" != ", " &= ", " *= ", " += ", " -= ", " /= ", " = ", " == ", " =~ "]
     ## Operators between spaces that make `#` line code, where name or bracket stands before.
+  CHARS_NAMING = {
+    '!', '$', '%', '&', '*', '+', '-', '/', '<', '=', '>', '?', '@', '\\', '^', '|', '~'
+  }
+    ## Characters of operator name or export marker, so `(` or `[` glued after one opens call or
+    ##   signature, as `<=(` and `toggle*(` do.
 
 
 func isFound(sorted: openArray[string], word: string): bool =
@@ -368,8 +375,9 @@ func wordLast(text: string): string =
 
 func isCode(text: string): bool =
   ## Decide whether text of `#` comment reads as code, outside backticks and quotes: nested
-  ##   marker, call or index glued to name, assignment or comparison after name, line ending in
-  ##   `=`, or keyword opening line that ends in `:`.
+  ##   marker, call or index glued to name, operator name, export marker or name in backticks,
+  ##   assignment or comparison after name, line ending in `=`, or keyword opening line that ends
+  ##   in `:`.
   if text.startsWith("#"): return true
   let (masked, _) = text.masks
   var plain = text
@@ -378,13 +386,27 @@ func isCode(text: string): bool =
   plain = plain.strip(leading = false)
   if plain.len == 0: return false
   for k in 1 ..< plain.len:
-    if plain[k] in {'(', '['} and plain[k - 1] in IdentChars: return true
+    let is_glued = plain[k - 1] in IdentChars + CHARS_NAMING or text[k - 1] == '`'
+    if plain[k] in {'(', '['} and is_glued: return true
   for operator in OPERATORS_CODE:
     var k = plain.find(operator)
     while k > 0:
       if plain[k - 1] in IdentChars + {')', ']'}: return true
       k = plain.find(operator, k + 1)
   plain.endsWith(" =") or (plain.wordFirst(0).isKeyword and plain.endsWith(":"))
+
+
+func linesCode*(c: Comment): seq[bool] =
+  ## Decide of each line of comment whether it holds commented code, which holds no prose: every
+  ##   line of `#` comment whose first line stands at even step or reads as code (`isCode`), else
+  ##   each `#` line that reads as code. Doc holds none.
+  result = newSeq[bool](c.lines.len)
+  if c.kind != KindComment.Plain: return
+  let first = c.lines.mapIt(it.text.strip.len > 0).find(true)
+  if first < 0: return
+  if c.lines[first].step mod 2 == 0 or c.lines[first].text.isCode:
+    return newSeqWith(c.lines.len, true)
+  for i, l in c.lines: result[i] = l.text.isCode
 
 
 func isClosable(text: string): bool =
@@ -456,16 +478,15 @@ func prose(source: string, is_full: bool): seq[Prose] =
     names = source.names
     lines = source.split('\n')
   for c in source.comments:
-    let first = c.lines.mapIt(it.text.strip.len > 0).find(true)
-    if first < 0: continue
-    let is_plain = c.kind == KindComment.Plain
-    if is_plain and (c.lines[first].step mod 2 == 0 or c.lines[first].text.isCode): continue
+    if c.lines.allIt(it.text.strip.len == 0): continue
+    let code = c.linesCode
+    if code.allIt(it): continue
     var
       stepless = c.lines.isStepless
       is_aligned = false  # Line above is aligned column, or deeper line that continues one.
     for i, l in c.lines:
       is_aligned = l.text.isAligned or (is_aligned and l.step > c.lines[i - 1].step)
-      if is_aligned or (is_plain and l.text.isCode): stepless[i] = true
+      if is_aligned or code[i]: stepless[i] = true
     let
       spans = c.lines.mapIt(it.text.spans(names))
       faults =
