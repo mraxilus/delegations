@@ -163,6 +163,7 @@ func named(source: string, stems: openArray[(int, string)]): string =
   ##     Field that carries alignment opens with `NIM_ALIGN(<bytes>)`, which is skipped.
   ##   Renamed instance reads `tyObject_<type>__<hash>`, as one type per object did, so every
   ##     reader below sees one stem per library type. Count no stem names keeps its C name.
+  ##   First stem of shared count wins, since `multiReplace` applies earliest rename at each place.
   var counts: Table[string, int]
   let lines = source.splitLines
   for line in lines:

@@ -42,6 +42,12 @@ else:
     General, Scalar
 
 
+func basesAntieven(): Bases {.compileTime.} =
+  ## Choose bases of even antigrade, which motion operator holds alone.
+  for b in Basis:
+    if int(b.gradeAnti) mod 2 == 0: result.incl b
+
+
 const
   OBJECTS* {.define: "pga_benchmark.objects".} = (when defined(testing): 64 else: 1024)
     ## Objects per sample pool; small under `-d:testing` so suites stay quick.
@@ -49,11 +55,19 @@ const
     ## Timed rounds per measurand; median and minimum over rounds are measurements reported.
   SIZE_MULTIVECTOR* = sizeof(Multivector)
     ## Bytes one dense multivector occupies, i.e. 8 × 2^DIMENSIONS.
+  BASES_MOTOR* = basesAntieven()
+    ## Bases of motor, its antieven part; transform reads motor at this type where library can.
+  STEM_MOTOR* = "MultivectorMotor"
+    ## Stem inspector gives typed motor by its count, half of every basis; model sizes it so.
   STEMS_MULTIVECTOR* = [
     (sizeof(Multivector) div sizeof(Coefficient), "Multivector"),
     (sizeof(MultivectorScalars) div sizeof(Coefficient), "MultivectorScalars"),
+    (card(BASES_MOTOR), STEM_MOTOR),
   ]
-    ## Name library type of each element count, since C names every `MultivectorOf` alike.
+    ## Name type of each element count, since C names every `MultivectorOf` alike.
+    ##   Cost: count names first stem that holds it, so motor reads as scalars at rga2d, which
+    ##     hold same two bases. Elsewhere each type of half of bases reads as motor at same bytes,
+    ##     so stem does not tell motor from flector part, or from any other type of half of bases.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."

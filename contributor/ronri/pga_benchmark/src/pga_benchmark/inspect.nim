@@ -37,9 +37,15 @@ const
     ## Key component read shares with its `var` twin; read is declared first.
 
 
-func stemLibrary(k: Kind): string =
-  ## Read C stem library takes for operand: `float` for scalar, dense multivector else.
-  if k == Kind.Scalar: "float" else: "Multivector"
+func stemLibrary(k: Kind, is_typed: bool): string =
+  ## Read C stem library takes for operand: `float` for scalar, motor's stem where typed, since
+  ##   catalogue types motor alone and stops build else, and dense multivector else.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
+  if k == Kind.Scalar: return "float"
+  if is_typed:
+    doAssert $k == "Motor", "Typed stem exists for motor alone; got `" & $k & "`."
+    return STEM_MOTOR
+  "Multivector"
 
 
 func stemReference(k: Kind): string =
@@ -49,12 +55,13 @@ func stemReference(k: Kind): string =
 
 func keyLibrary(p: Measurand): string =
   ## Get key of library function measurand's expression calls; empty where it composes several.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
   let head = p.headEmitted
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], i in p.typed)
   head & "(" & stems.join(",") & ")"
 
 
@@ -77,7 +84,7 @@ func keyDense(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], is_typed = false)
   p.nameDense & "(" & stems.join(",") & ")"
 
 
