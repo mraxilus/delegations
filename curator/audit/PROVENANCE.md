@@ -6,9 +6,9 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 3dfc796190bac2d1 |
+| Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
+| Pruned  | 4d68cc2896c55a1ea05de40fae41dc06feda7051 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -1251,6 +1251,10 @@ newest first. It demands that the commit immediately before every `fix` is a `te
 scope, one test to one fix, with nothing between them. So the priority of the Architect,
 "every mistake becomes a test", holds by a check and not by prose alone.
 
+- The subjects keep each line of history together (`git log --topo-order`). In order of date, a
+  merge of a branch built at the same time puts its commits between a test and its fix. Verified
+  by `suites/test_tree.nim`, with two branches whose dates interleave.
+
 - Rejected: any earlier `test` of the scope on the branch. One token test then satisfies every
   later fix, so it measures the order of kinds and nothing of the pairing.
 - Rejected: a match across the history of `main`, which needs the whole log. It would still
@@ -2196,9 +2200,7 @@ against the committed file, and reports the first differing line.
   is compared against nothing.
 - `auditTree` is a `proc`, because it composes a check that reads JSON, which Nim marks
   effectful. Every rule it composes stays pure, and `layout.nim` still reads paths only.
-- Verified by `suites/test_dependencies.nim`. Verified by hand against the real lock, recorded
-  2026-09-06: a stored copy that holds `nim >= 2.2.6` names `rga_visualiser.nimble:13`, and
-  the restored lock is silent.
+- Verified by `suites/test_dependencies.nim`.
 
 **The lock names its nimble copy after the nimble file of its project.** `atlas rep` writes the
 copy under the name in `nimbleFile.filename`. A lock that names another file writes a second
@@ -2942,8 +2944,9 @@ blank lines, the doc position and the literal defaults follow, because a joined 
 type change widths. Spacing runs before wrapping, because the spaces it adds are width that
 wrapping measures.
 
-Wrapping runs separators, then signatures, then calls, then trailing separators. A layout joins
-groups with the separator it reads, and a trailing separator goes only where no layout wrote one.
+Wrapping runs separators, then signatures, then calls, then continuations. A layout joins groups
+with the separator it reads. No fixer adds a separator after the last item of a list, since that
+separator marks the split that the hand wants (D2 of #980).
 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
@@ -2975,7 +2978,7 @@ list. The list on every kind of Nim syntax:
 - `checkDocs`, the place of a one-line doc (STYLE.md §5);
 - `checkDefaults`, a type that a literal default gives (X.12);
 - `checkSpacing`, the spaces inside an expression (X.9);
-- `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5);
+- `checkSeparators`, `checkSignatures` and `checkCalls` (X.3, STYLE.md §5);
 - `checkMessages`, the backticks around a value that a message echoes (IV.4);
 - `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
 - `checkParentheses`, the parentheses that group what the parser groups anyway (X.4);
@@ -3006,8 +3009,8 @@ These findings have a fixer:
   before other code (STYLE.md §2);
 - a late `strictFuncs`, moved to that place;
 - `return result`, which goes or becomes `return` by its place (STYLE.md §5);
-- each layout rule of the next section: separators, signatures, calls, trailing separators,
-  import brackets, unordered lists, spaces, blank lines, doc position and literal defaults;
+- each layout rule of the next section: separators, signatures, calls, import brackets,
+  unordered lists, spaces, blank lines, doc position and literal defaults;
 - each rule of `## Content fixes` and `## Semantic pass`.
 
 **The place of `return result` decides its fix.** STYLE.md §5 allows a bare `return` only for an
@@ -3081,36 +3084,19 @@ No fixer of the chain writes a range out of the form of X.9. Verified by `suites
 source in that form goes through every fixer unwritten. A split call, a joined call and a wrapped
 signature keep each range.
 
-**Two generated data files of `rga_visualiser` held most of its call findings, 2026-10-02.**
-They were `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They
-held 11,583 of its 12,134 call rewrites: 11,252 and 331. A curator branch cannot fence them,
-because it never writes contributor code (CURATOR.md, duty 3). So their project fences them, or
-fixes them, on its own branch.
-
 **The whole-tree proof: no fix changes what code means.** Verified by hand, 2026-10-02, with a
 scratch program over `fixEntries`, `auditTree` and the parser of the compiler. The program fixed
 every Nim file of the tree in memory, on branch `main`, so scope refused nothing.
 
-- The fix wrote 173 contributor files, and no curator file. The curator code took the same
-  fixes in its own commits. The two locked nimble files stayed as written.
-- Reports by rule:
-  - calls 12,493, spaces 2,627, trailing comments 1,351;
-  - parameter separators 587, test blank lines 502, doc positions 363;
-  - signatures 191, unordered lists 142, helper blank lines 48, literal defaults 48;
-  - import brackets 19, tuple separators 11, trailing separators 6, banners 2.
-- Reports by project: `rga_visualiser` 15,477, `dance_ontology` 2,317, `pga_benchmark` 596.
-- Lines added and removed: `rga_visualiser` 98,540 and 27,048, `dance_ontology` 3,315 and 2,246,
-  `pga_benchmark` 965 and 841.
-- The static pass reported 0 findings before and after. The layout checks reported 18,709
-  findings before and 35 after.
-- A second fix wrote nothing.
-- The parser of the compiler read 131 changed files to the same tree as before. It read the
-  other 42 to the same tree once order and dropped types are normalised. That covers merged
-  import brackets, sorted lists, and a type that a literal default gives.
+- The fix wrote contributor files alone. The curator code took the same fixes in its own
+  commits, and the locked nimble files stayed as written.
+- The static pass reported 0 findings before and after, and a second fix wrote nothing.
+- The parser of the compiler read each changed file to the same tree as before, once order and
+  dropped types are normalised. That covers merged import brackets, sorted lists, and a type that
+  a literal default gives.
 - `nim check` read each changed file with the same result before and after, on its own pin and
-  config. It passed 142 on the C backend and 6 on the JavaScript backend, and 25 failed both
-  times.
-- A file that failed lacks a native library or a vendored source, or is a broken prototype.
+  config. A file that failed both times lacks a native library or a vendored source, or is a
+  broken prototype.
 
 ## Content fixes
 
@@ -3160,6 +3146,36 @@ the two lines after the last pragma that opens the module, with a blank line on 
 - Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
   `suites/test_checker.nim`. The tree holds no finding of these four rules.
 
+**The chain joins an interpolated string only in a project that declares no `formatValue`.**
+Interpolation calls `formatValue` in place of `$`, so a join could print a value otherwise where a
+project declares one (rule 21 of #443). The context of a fix reads each `.nim` file of the tree. It
+names the nimble file of each project where a file declares one (`nimbleProject`).
+
+- Verified by `suites/test_fixes.nim`: a join stays split where another file of the project
+  declares `formatValue`, and joins where no file of the tree does.
+- Cost: a `formatValue` that a dependency declares, outside the tree, is unread.
+
+**The context of a fix reads three more facts of each project for a fixer of one file.** These are
+the defaults of its configurations (rule 14 of #443), and the constants that each of its modules
+exports (rule 12). The third is the names of its modules (rules 8, 9 and 15). The fix and the
+fence warning of each entry take those of its project. The record of `curator/knoller` gives the
+reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
+
+- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that
+  the project builds on join them, from the modules that `readFacts` reads (`## Facts of the
+  compiler`).
+- The queries of the semantic pass read the names of the tree alone, since a library adds no axis
+  value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
+  the case rename of its declaration into one rename, whose rule is that of the case.
+- A cut rename keeps each word that the glossaries list, as the case rename of the audit keeps it.
+  Knoller takes its jargon alone, so where a glossary lists a word, the two tools can differ.
+  Verified by `suites/test_fixes.nim`, with a glossary and with none.
+- Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
+  another module becomes `when`. Each does so only where the tree holds the module of the constant.
+- Verified by `suites/test_fixes.nim`. A landmark index takes an alias of another module of its
+  project, or of its library alone, and never one of another project. A glued `anti` renames at
+  each use, where another module of the project declares its word.
+
 **An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
 `proc main` above the block, and the block calls `main()`. The routine takes the doc
 `TODO: Document.` (VI.1), because only a reader can say what it does. The body keeps its lines
@@ -3196,26 +3212,14 @@ reason, and the finding stays for the hand.
 2026-10-03, with the scratch program of `## Layout fixes`, which now asks the semantic pass too.
 It fixed every Nim file of the tree on branch `main`, with the checkouts of `koch fetch-deps`.
 
-- The fix wrote 182 contributor files, and no curator file. The curator code took the same
-  fixes in its own commits.
-- Reports of the content rules by project:
-  - `rga_visualiser`: `to<Target>` 474, tables 59, profiler imports 7, conversions 7, messages 3;
-  - `dance_ontology`: messages 66, `to<Target>` 61, tables 1, conversion 1;
-  - `pga_benchmark`: tables 22, conversions 12, profiler imports 4, `to<Target>` 3.
-- The layout rules gave 18,411 more reports, close to the figures of the layout proof.
-- Lines added and removed: `rga_visualiser` 99,020 and 27,522, `dance_ontology` 3,431 and
-  2,362, `pga_benchmark` 1,013 and 878.
-- Findings before and after: tables 100 and 18, messages 72 and 3, profiler imports 11 and 0,
-  `to<Target>` 538 and 0, conversions 20 and 0. A table that stays would cross 100 runes.
+- The fix wrote contributor files alone, and the curator code took the same fixes in its own
+  commits. A table that stays would cross 100 runes.
 - The static pass reported 0 findings before and after. A second fix wrote nothing.
-- The semantic pass resolved 34 sites, in four of the files, in 8 s.
-- The parser of the compiler read 107 changed files to the same tree as before. It read the
-  other 75 to the same tree once normalised. To the normalisation of the layout proof, it adds
-  four steps. It drops a pair of parentheses and the profiler import, reads `x.f` as `f(x)`, and
-  drops backticks in a string.
+- The parser of the compiler read each changed file to the same tree as before, once
+  normalised. To the normalisation of the layout proof, it adds four steps. It drops a pair of
+  parentheses and the profiler import, reads `x.f` as `f(x)`, and drops backticks in a string.
 - `nim check` read each changed file with the same result before and after, on its own pin and
-  config. It passed 151 on the C backend and 6 on the JavaScript backend, and 25 failed both
-  times.
+  config.
 
 ## Semantic pass
 
@@ -3245,7 +3249,8 @@ the root files, which import across projects. A rename that would write a file t
 leaves out is refused, and the finding stays for the hand.
 
 - A rename reports the rule of the check that knoller names, such as `name case (V.1)`. A name
-  that breaks its case and coins an abbreviation takes one rename, which settles both rules.
+  that breaks its case and coins an abbreviation takes one rename, which settles both rules. So
+  does a name that breaks its case and its cut (V.2).
 - Verified by `suites/test_fixes.nim`, which renames across two files of a tree.
 
 **The entry move alone has a second proof, on commit `c4c0d400`, which holds more entry blocks.**
@@ -3253,6 +3258,95 @@ Verified by hand, 2026-10-04, with the same program and the engine of `dance_ont
 block moved, and the parser read each written file to the same tree once its body returns under
 its block. `nim check` gave each written file the same result before and after, and a second run
 moved nothing.
+
+## Facts of the compiler
+
+**`koch fix` reads the uses of private symbols, the pure routines and the library of each project
+through the readers of knoller's command line.** `readFacts` calls `resolveMarkers`, `resolvePures`
+and `modulesLibrary`, which knoller exports for it. So koch and the command line read each fact
+alike (Article II.1). The fix verb of `koch.nim` passes the facts to `initContext`, as it passes
+the answers of the semantic pass. The record of knoller gives each rule (`## Sibling markers`,
+`## Pure routines` and `## Names of a package`).
+
+- Each reader reads the project of a file as git lists it, with the checkouts of its lock.
+- A file at the root lies in no project, so it asks for no fact. The readers of knoller read the
+  whole tree as the project of such a file.
+- The readers name no define, as D2 a of #886 rules for the command line. So rules 7 and 11 read a
+  file under `tests/` without `-d:testing`, though the conversion pass names it (`## Semantic
+  pass`).
+- Rejected: a second reading in the audit with the defines of the stubs, since the counts of the
+  two callers would drift apart.
+- Cost: rules 7 and 11 read no branch that only `-d:testing` takes.
+- Verified by `suites/test_fixes.nim`, through the real compiler on a fresh repository. It holds a
+  marker, a `func`, and an alias of a library that only `nim.cfg` names.
+
+**The fix writes the edits of rules 7, 9 and 11 before the chain, in the order of the command
+line.** The renames come first, then the conversions, the landmark aliases, the sibling markers and
+`func`. A marker that moves a trailing doc to the next line moves that line. So each later report
+traces back to the line as given (`originApplied`).
+
+- Each finding of these rules that no edit writes stays for hand, and prints as a finding left. So
+  does each call of a constructor that the package calls both ways, since no fix writes a form.
+- An edit of a marker or a `func` answers one finding of its rule on its line. Knoller drops each
+  report on a line that holds an edit of its rule, so the two tools can differ there. Unverified,
+  since no case puts two such findings on one line.
+- The fix reads again each index that the alias edits leave, from the source that they wrote,
+  which keeps its lines. It reads the calls of constructors on the source as given. Knoller checks
+  its fixed text instead. So an index that a conversion writes bare reports in knoller alone, until
+  the next run writes its alias.
+- Cost: two markers or two `func` on one line match their edits by line and rule alone. So where
+  one of them stays, the finding left can name the other one. How often a line holds two is
+  unmeasured.
+- A fenced landmark index or constructor call counts in the warning of its fence, which reads the
+  names. A fenced marker or `proc` prints as left, since the fence warning reads no uses and no
+  pures.
+- A file whose uses or pures the compiler resolved none prints a warning with its reason.
+- Verified by `suites/test_fixes.nim`, with uses and pures written by hand, and with the names of
+  a tree. It holds an index of several aliases before and after a written one, and a fenced call
+  of a constructor.
+
+**Verified by run, 2026-11-20, over the nine projects, with the checkouts of each lock and the
+engine of `dance_ontology`.** `koch fix --dry-run --all --branch:main` reports each of the five
+rules where `knoller --check <project>` reports it, with the same counts. Both read the files of
+`e31b5d15`, with Nim 2.4.0. The dry run over the repository ran at `cbf1e68b`, so both tools ran
+again on `curator/audit` and `curator/knoller`, whose files differ there. A script outside the
+tree matched each report of the two outputs by rule, path and line.
+
+| Rule | Project | Rewrites | Left for hand |
+| --- | --- | --- | --- |
+| 7 | `pga_visualiser` | 1 | 0 |
+| 8 | `knoller` | 3 | 0 |
+| 8 | `pga_benchmark` | 0 | 5 |
+| 8 | `pga_visualiser` | 0 | 1 |
+| 8 | `dance_ontology` | 0 | 1 |
+| 9 | `pga_benchmark` | 2 | 0 |
+| 9 | `pga_visualiser` | 1 | 0 |
+| 11 | `pga_visualiser` | 33 | 1 warning |
+| 11 | `dance_ontology` | 13 | 0 |
+| 11 | `rictadni` | 3 | 0 |
+| 11 | `pga_benchmark` | 1 | 1 warning |
+| 11 | `knoller` | 1 | 0 |
+| 15, constructor | `pga_visualiser` | 0 | 1 |
+
+- Each other project takes none of these rules. The compound argument of rule 15 gives the same
+  counts as before the wiring.
+- The rewrites of rule 11 in `pga_benchmark` and `knoller` are `mergeAllocations` and
+  `initToolchains`, at the code of `cbf1e68b`. The code of D1 a of #980 (2026-11-20) and of D6 a
+  (2026-11-21) keeps each a `proc`, as `## Pure routines` of knoller gives.
+- The run read the code before `4998481a` and `ea179bdf`. The first changes no count, since the run
+  left no index of rule 9 for hand. The second changes only the warning of a refused rename, and
+  the table counts that rename as one site.
+- Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
+  it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
+  proves nothing of, and each tool prints it once.
+- Cost: the dry run over the repository took 330 s at `329659da`, before the wiring, and 875 s at
+  `cbf1e68b`, after it. The tree of the second run held the refactor of `63df2e45`, uncommitted.
+  Each figure is one run of the debug build that `nim r` makes, on 4 cores at 2.10 GHz. The load
+  of the two runs differed, and no file records it.
+- Cost: over the files of `curator/knoller` at `a6903afe`, `koch fix --dry-run` built at `329659da`
+  took 25.9 s, and built at `a6903afe` took 77.9 s. Each is one run, back to back on 2026-11-20,
+  under a load of 1.0 to 1.9. The time added is unprofiled. The compiler calls for uses and
+  pures, and the queries of each cut rename, add to it.
 
 ## Parser proof
 
@@ -3273,21 +3367,6 @@ of knoller, under Content fixes.
   parts joined.
 - Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
   pin, the group that the parser refuses stays, and a second fix writes nothing.
-- Verified by hand, 2026-10-05, with `koch fix --dry-run --branch:main` at `main` and at this
-  head, and the dependencies that `koch fetch-deps` restored:
-  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 28.9 s;
-  - `pga_benchmark`: 263 and 264, in 7.6 s and 9.8 s. The one more is `(⊛m)` at line 35 of
-    `proposals/03-partner-sign/laws.nim`, which the guard on the head of a command keeps at `main`;
-  - `dance_ontology`: 1121 and 1119, in 18.1 s and 20.2 s. The two fewer are
-    `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
-  - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
-    line is the same, so the new lines are code that waits for its own fix.
-- Verified by hand, 2026-10-05: koch built at `80954e6` gives the same output as koch built at
-  `6e5140d`, byte for byte. Each ran
-  `koch fix --dry-run --branch:main`, with no checkout that `koch fetch-deps` restores:
-  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 30.4 s;
-  - `pga_benchmark`: 1 to fix on both, in 6.1 s and 6.0 s;
-  - `dance_ontology`: 1 to fix on both, in 12.2 s and 11.8 s.
 
 ## Fixed waits
 
@@ -4261,10 +4340,7 @@ form that opens no claim. It holds `No prediction` with and without a block, and
 **Verified by hand on 2026-11-20, through koch built at `ff2fa434`.** `koch hook stop` passes or
 refuses each case of the guide and a reply to a refusal, on small transcripts in the shape of the
 harness. No suite runs `main` of koch, so this run holds the dispatch of the stop branch. A row
-of `No prediction` passes where no call took a block, and a cell of `-` is refused. At
-`ff2fa434`, 89 of the 92 probes of the earlier critics give the verdict and reason that they give
-at `7a912117`, word for word. Probes S05, S10 and S15, refused at `7a912117`, pass, since the
-label and the word of the kind line read as comment 7027197745 rules.
+of `No prediction` passes where no call took a block, and a cell of `-` is refused.
 
 - Each of 222 breaks of the rules fails a test of `suites/test_hooks.nim`, on 2026-11-20. A break
   is one edit of a scratch copy of `hooks.nim` at `ff2fa434`, with which the suite builds and runs.
@@ -4307,15 +4383,8 @@ transcript, so another copy gives its own figures.
   in a fence. So each of the 7 cells of the stop of entry 413 is a claim, with its confidence, of
   a block that no call took. At the stop of entry 882, the reflection quotes 8 claims whole, 2
   before a full stop.
-- At `40bee07a`, the base of this pull request, each stop gives the same verdict and refuses the
-  same items. At the 5 stops that the block checks refuse, the rule of a call and the rule of a
-  cell read in other words. The other 49 reasons are the same word for word.
-- Cost: `koch hook stop` on the whole copy takes a median of 227 ms at `40bee07a` and 241 ms at
-  `ff2fa434`. A second set gives 246 ms and 239 ms. Each median is of 20 runs on 2026-11-20,
-  which alternate between the builds. The runs of one build in one set span 97 to 121 ms, so the
-  gap stays inside that spread.
-  They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.40 to 0.57, as
-  `/proc/loadavg` gave it before and after each set.
+- Cost: `koch hook stop` on the whole copy takes a median of 241 ms at `ff2fa434`. The 20 runs
+  ran on 2026-11-20, on 4 cores of a Xeon at 2.10 GHz.
 
 ## Log of claims
 
@@ -4814,9 +4883,6 @@ Joined, `nim r koch test curator/audit` took 3.8 s to 4.2 s warm, against 31.9 s
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
 change to one project adds the suites of that project. An unscoped run pays every project.
-On the same machine and date, `nim r koch test <project>` took 627.5 s for `dance_ontology`
-and 236.6 s for `rga_visualiser`. It took 18.2 s cold for `pga_benchmark`, and 2.8 s for
-`curator/probe`.
 
 **Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `test` jobs
 started within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s

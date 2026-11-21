@@ -1,5 +1,5 @@
 ## Read Nim source as tokens, as compiler's lexer reads them (`compiler/lexer.nim`), for layout
-##   rules no single line shows: separators, wrapping, trailing separators, operator spacing.
+##   rules no single line shows: separators, wrapping, operator spacing.
 ##   Token holds kind, byte span and line; whitespace between tokens is what layout rules read.
 ##   Lexer's own rules, kept so token here is token there:
 ##   - run of operator characters is one operator (`OpChars`, and glyphs `unicodeOprLen`
