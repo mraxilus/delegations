@@ -588,7 +588,7 @@ ni'o le genturfa'i cu tcidu 16492 lo 17495 jufra pe `Tatoeba`
 
 ni'o le genturfa'i cu tcidu 74 lo 86 pagbu be le ci prosa
   .i lo traji be lo ka clani cu vasru 458 valsi
-  .i le genturfa'i cu tcidu 783 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
+  .i le genturfa'i cu tcidu 780 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
   .i ro le nu to'e curmi cu drani ja'i `CLL`
 
 ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le genturfa'i cu tcidu
