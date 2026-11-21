@@ -2917,8 +2917,9 @@ blank lines, the doc position and the literal defaults follow, because a joined 
 type change widths. Spacing runs before wrapping, because the spaces it adds are width that
 wrapping measures.
 
-Wrapping runs separators, then signatures, then calls, then trailing separators. A layout joins
-groups with the separator it reads, and a trailing separator goes only where no layout wrote one.
+Wrapping runs separators, then signatures, then calls, then continuations. A layout joins groups
+with the separator it reads. No fixer writes a separator after the last item of a list, since that
+separator marks the split that the hand wants (D2 of #980).
 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
@@ -2950,7 +2951,7 @@ list. The list on every kind of Nim syntax:
 - `checkDocs`, the place of a one-line doc (STYLE.md §5);
 - `checkDefaults`, a type that a literal default gives (X.12);
 - `checkSpacing`, the spaces inside an expression (X.9);
-- `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5);
+- `checkSeparators`, `checkSignatures` and `checkCalls` (X.3, STYLE.md §5);
 - `checkMessages`, the backticks around a value that a message echoes (IV.4);
 - `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
 - `checkParentheses`, the parentheses that group what the parser groups anyway (X.4);
@@ -2981,8 +2982,8 @@ These findings have a fixer:
   before other code (STYLE.md §2);
 - a late `strictFuncs`, moved to that place;
 - `return result`, which goes or becomes `return` by its place (STYLE.md §5);
-- each layout rule of the next section: separators, signatures, calls, trailing separators,
-  import brackets, unordered lists, spaces, blank lines, doc position and literal defaults;
+- each layout rule of the next section: separators, signatures, calls, import brackets,
+  unordered lists, spaces, blank lines, doc position and literal defaults;
 - each rule of `## Content fixes` and `## Semantic pass`.
 
 **The place of `return result` decides its fix.** STYLE.md §5 allows a bare `return` only for an
