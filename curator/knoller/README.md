@@ -74,12 +74,31 @@ knoller [--check] [--nim:path] path...
   compile. The pass runs in the nearest directory that holds a nimble file, with the compiler that
   proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
   warning that says why. A toolchain with no `nimsuggest` beside its compiler, or on `PATH`,
-  resolves no file, and the warning names the tool.
+  resolves no file, and the warning names the tool. A receiver in `SCREAMING_SNAKE_CASE` is a
+  global, so a value, and its conversion is a candidate too, as `FLOAT_TOLERANCE.float` is.
+- A sibling can reach a private symbol through `{.all.}`. Where its own module never uses it, the
+  symbol takes `{.used.}` and a comment that names the sibling (`marker-used`). An `{.all.}` that
+  reaches no private symbol goes. Knoller asks `nimsuggest` where each use of each private symbol
+  stands, in the entry of each file that opens its module with `{.all.}`. A suite needs no marker,
+  and an import of another project is not read. An `{.all.}` goes only where its file also checks
+  clean without it.
+- A `proc` whose body shows no effect becomes a `func` where the compiler checks it as one under
+  `strictFuncs` (`func-pure`). A lock, a wait and a signal count as effects, and so does an effect
+  in a default argument. A parameter of a `ref` or `ptr` type keeps the `proc`, since another
+  holder can change its object during the call. A `func` that takes one reports, and the fix
+  writes `proc`. The compiler reads the file from stdin in its own directory, so nothing is
+  written there.
+  A file that checks clean on no backend keeps each `proc`, and prints one warning that says why.
 - A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
   renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
   that holds a nimble file, and writes only the files you name. A rename that would write another
   file stays as written, and prints one warning at its declaration that says why. Run knoller on
   `.` at the root of a project to let such a rename write every file it reaches.
+- Knoller renames a name whose words break the cut of V.2 at every use too. A property leads its
+  value of one letter, so `𝐦_grade` becomes `grade_𝐦`. A word glued after `anti` leads it, so
+  `antibasis` becomes `basis_anti`. An axis value goes last, so `left_name` becomes `name_left`.
+  An axis value is a field of a wrapper that the package declares, as `Chiral[T]` holds `left`.
+  Where the name also breaks its case, one rename settles both.
 - A name that holds a value in another representation leads with a name of its chain, where it
   holds one (V.2): `c_dual_flags = c.dual.toFlags`, never `flags_c`. A `to<Target>` call, a type
   conversion or `$` at the end of a chain of steps changes the representation. A step is a field
@@ -91,6 +110,11 @@ knoller [--check] [--nim:path] path...
   macro, `static:` block or compile-time routine that it nests in. A `define…` is a macro, and an
   `emit…` is a `func` or a `proc` that returns `NimNode`. The kind never fixes the verb, so a
   macro of another name passes. Knoller renames nothing here either.
+- A landmark index that a conversion writes bare becomes the alias of its type (V.8), so
+  `Grade(1)` becomes `Grade.vector`. Where two aliases name one index, knoller writes `low` or
+  `high`, so `Grade(0)` becomes `Grade.low`. An alias is a template or a routine whose one
+  parameter is `typedesc[T]`. Knoller reads aliases from the package and from the library under
+  each `--path` of the `nim.cfg` beside its nimble file.
 - A routine closes with `Of` only where its name spells a generic type (V.3). Knoller reads that
   from the words alone. The first word is `to`, `init`, `emit`, `construct` or `define`, and two
   words or more follow it, as in `toMultivectorOf`. A type closes with `Of` only where an alias of
@@ -104,6 +128,12 @@ knoller [--check] [--nim:path] path...
   first argument (STYLE.md §5). A module path, such as `tessellate.emitObject`, stays. Knoller
   cannot rewrite four shapes in place, so each is a finding for hand. They are a receiver above
   the dot, a generic call, a command call, and arguments that open below the bracket.
+- A `to<Target>` call by dot on a compound argument in parentheses becomes a prefix call
+  (STYLE.md §5), so `(a + b).toX(c)` becomes `toX(a + b, c)`. A constructor `init…` that the
+  package declares takes one call form. Knoller reports each call in the form that fewer calls
+  across the package take, or in both forms where they tie, and writes neither form.
+- Knoller reads the names of a package from its modules that the run names, by the nimble file
+  of the package. Files with no nimble file above read as one package.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -116,7 +146,10 @@ path:line: <rule-id> fixed
 path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
+path:line: debug-output warning: <message>
 path: type-conversion warning: <message>
+path: marker-used warning: <message>
+path: func-pure warning: <message>
 path:line: name-case warning: <message>
 needless-parentheses warning: <message>
 N fixed.
@@ -154,6 +187,8 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | Id | Rule |
 |----|------|
 | `type-conversion` | A type conversion is a prefix call, `T(x)`, and never `x.T`. |
+| `marker-used` | A private symbol only a sibling uses has its marker. An `{.all.}` reaches one. |
+| `func-pure` | A routine with no effect beyond its parameters is a `func`. |
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
 | `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
 | `line-ending` | A line holds no carriage return. No fix reaches it. |
@@ -173,15 +208,23 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `representation-head` | A name holding a value in another representation leads with it. |
+| `name-cut` | A name opens with its head: property first, `anti` after its word, axis value last. |
 | `routine-suffix` | A routine closes with `Of` only where its name spells a generic type. |
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |
+| `landmark-alias` | A landmark index stands as the alias that its type declares, never bare. |
 | `article-in-comment` | A comment holds no article. |
+| `comment-form` | A claim takes a capital and a period. A path, literal or name takes backticks. |
+| `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
+| `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
+| `interpolation-braces` | An interpolated string takes each value in braces, never by `&`. |
+| `message-echo` | A message echoes each value in backticks, wherever it stands. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
+| `conversion-prefix` | A conversion of a compound is a prefix call. A constructor takes one form. |
 | `generation-call` | A call of a `define…` or `emit…` routine is a prefix call. |
 | `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |
@@ -195,25 +238,30 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
+| `compile-time-family` | A compile-time family carries `compileTime`, and no runtime pragma. |
+| `when-static` | A runtime branch on what the build fixes is `when`, never `if`. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
 | `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
-| `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
+| `debug-output` | A test labels what it prints outside a condition. Other debug output warns. |
+| `skip-reason` | A skip gives its reason, and a gap is a test that skips. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
+| `configuration-block` | Blocks of one configuration join. A default comes before its complement. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
+| `definition-blank-lines` | Blank lines before a definition follow its kind and the kind above. |
 | `doc-position` | A doc stands where the shape of its declaration puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |
 | `parameter-separators` | Commas stand between parameters, and semicolons between groups. |
 | `tuple-separators` | A tuple type takes commas between its fields. |
-| `signature-wrapping` | A signature wraps its parameters only where it must. |
-| `call-wrapping` | A call takes one argument to a line only where it must. |
+| `signature-wrapping` | A signature wraps only where it must, or where its last separator asks. |
+| `call-wrapping` | A call splits only where it must, or where its last comma asks. |
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
-| `trailing-separator` | A list of one item to a line ends in a separator. |
 | `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
+| `stage-comment` | A stage of three lines of code or more opens with a comment if another does. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
 

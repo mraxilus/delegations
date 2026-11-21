@@ -45,6 +45,31 @@ suite "Tree":
       @["refactor(alpha): rename x", "feat(alpha): add x"]  # newest first, base excluded
 
 
+  test "subjects keep each line of history together, so test stands right below its fix":
+    # Case found on #980: merge of branch built at same time put its commit, by date, between
+    #   test and its fix, and ladder of `commits.nim` refused fix.
+    let root = repoTemp()
+    defer: removeDir(root)
+    proc commitAt(subject, path, date: string) =
+      ## Commit one file at committer date, which `git log` orders by unless told otherwise.
+      root.writeInto(DIRECTORY_ALPHA & "/" & path, subject & "\n")
+      discard root.git("add -A")
+      putEnv("GIT_COMMITTER_DATE", date)
+      defer: delEnv("GIT_COMMITTER_DATE")
+      discard root.git("commit -q -m '" & subject & "'")
+    discard root.git("checkout -q -b left")
+    commitAt("test(alpha): hold x", "a.nim", "2026-01-01T00:00:01Z")
+    discard root.git("checkout -q main")
+    discard root.git("checkout -q -b right")
+    commitAt("docs(alpha): note y", "b.md", "2026-01-01T00:00:02Z")
+    discard root.git("checkout -q left")
+    commitAt("fix(alpha): mend x", "a.nim", "2026-01-01T00:00:03Z")
+    discard root.git("merge -q --no-edit right")
+    for found in [subjects(root, "main"), commitsBranch(root, "main").mapIt(it.subject)]:
+      check found.len == 3
+      check found.find("test(alpha): hold x") == found.find("fix(alpha): mend x") + 1
+
+
   test "newest commit outside window, empty when none is that old":
     let root = repoTemp()
     defer: removeDir(root)

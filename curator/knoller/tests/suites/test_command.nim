@@ -8,8 +8,11 @@
 {.experimental: "strictFuncs".}
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
-from ../../src/knoller/command {.all.} import joined, nimblesNearest, Part
+import ../../src/knoller/[
+  command, compilers, edits, markers, proofs, purity, reports, rewrites, rules, symbols,
+]
+from ../../src/knoller/command {.all.} import
+  joined, nimblesNearest, Part, resolveMarkers, resolvePures
 import ./stubs
 
 
@@ -103,8 +106,9 @@ suite "Command line":
       "a.nim: strictfuncs fixed",  # whole file: path alone
       "a.nim:1: expression-spacing fixed",
       "a.nim:1: trailing-comment fixed",
+      "a.nim:2: definition-blank-lines fixed",
       "a.nim:2: parameter-separators fixed",
-      "4 fixed.",
+      "5 fixed.",
     ]  # sorted by path, line, then rule id
     check outcome.code == 0  # nothing left
     let again = outcome([outcome.written[0]], [], is_check = false)
@@ -114,7 +118,7 @@ suite "Command line":
   test "check writes nothing, reports each change due, and exits 1 where any":
     let outcome = outcome([("a.nim", DIRTY)], [], is_check = true)
     check outcome.written.len == 0
-    check outcome.lines[^1] == "4 to fix."
+    check outcome.lines[^1] == "5 to fix."
     check outcome.lines[0] == "a.nim: strictfuncs to fix"
     check outcome.code == 1
     check outcome([("b.nim", CLEAN)], [], is_check = true).code == 0  # nothing due
@@ -208,6 +212,25 @@ suite "Command line":
     check fenced.code == 1  # fence keeps line from fixer, never from finding
 
 
+  test "command line keeps each join of package whose file declares `formatValue`":
+    let
+      module = "{.experimental: \"strictFuncs\".}\n\nlet m = &\"y is {y}, from \" & $x  ## Text.\n"
+      format = "{.experimental: \"strictFuncs\".}\n\nproc formatValue*(result: var string; " &
+        "value: int; specifier: string) =\n  ## Write value.\n  result.add $value\n"
+      due = "a/a.nim:3: interpolation-braces to fix"
+    for (files, nimbles, is_due) in [
+      (@[("a/a.nim", module)], @{"a/a.nim": "a/a.nimble"}, true),
+      (@[("a/a.nim", module), ("a/b.nim", format)],
+        @{"a/a.nim": "a/a.nimble", "a/b.nim": "a/a.nimble"}, false),  # one package
+      (@[("a/a.nim", module), ("b/b.nim", format)],
+        @{"a/a.nim": "a/a.nimble", "b/b.nim": "b/b.nimble"}, true),  # other package
+    ]:
+      let outcome = outcome(files, [], is_check = true, nimbles = nimbles.toTable)
+      check outcome.lines.anyIt(it.startsWith(due)) == is_due
+      check outcome.lines.anyIt(it.startsWith("a/a.nim:3: interpolation-braces left: ")) ==
+        not is_due
+
+
   test "command line reads no file as drive code, so fixed wait passes under `tests` or `tools`":
     # Case held: command line read each file under directory `tests` or `tools`, at any depth, as
     #   drive code, which is layout of this repository, so it reported fixed wait of drive in any
@@ -226,7 +249,7 @@ suite "Command line":
     #   (D2 of #572).
     let source =
         "import std/json\n\nfunc toJSON*(text: string): JsonNode = parseJson(text)\n" &
-        "  ## Parse.\ntype GLContext* = object  ## Context.\n"
+        "  ## Parse.\n\ntype GLContext* = object  ## Context.\n"
     for path in ["a.nim", "a.nims", "a.nimble"]:
       let
         given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
@@ -251,7 +274,8 @@ suite "Command line":
       outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
-        "expression-spacing breaks once at line 3; got lines `2` to `4`.",
+        "definition-blank-lines breaks once at line 3 and expression-spacing once at line 3; " &
+        "got lines `2` to `4`.",
       "0 to fix.",
     ]
     check outcome.code == 0  # break inside fence alone fails nothing
@@ -470,6 +494,24 @@ suite "Command line":
     check unread.code == 0  # warning changes no exit code
 
 
+  test "pass of markers or of pure routines that resolves none warns, and changes no exit code":
+    # Case of review of record of rules 7 and 11: each warning of `part` stood with no test.
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = x * 2\n  ## Double.\n"
+    let failed = outcome(
+      [("a.nim", source)],
+      [],
+      is_check = true,
+      uses = {"a.nim": Uses(reason: "no nimsuggest serves pin")}.toTable,
+      pures = {"a.nim": Pures(reason: "source checks clean in no configuration")}.toTable,
+    )
+    check "a.nim: marker-used warning: Semantic pass resolved no use, so each private symbol " &
+      "and `{.all.}` stays as written; got `no nimsuggest serves pin`." in failed.lines
+    check "a.nim: func-pure warning: Compiler proved no routine pure, so each `proc` stays as " &
+      "written; got `source checks clean in no configuration`." in failed.lines
+    check failed.code == 0
+
+
   test "file holding conversion candidate is resolved in its project, and none other is asked":
     let root = createTempDir("knoller_", "_answers")
     defer: removeDir(root)
@@ -490,6 +532,88 @@ suite "Command line":
     check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
     let outcome = outcome(files, [], is_check = true, directory = root, answers = answers)
     check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
+
+
+  test "private symbol and `{.all.}` resolve in project of file, and run fixes each it reports":
+    # Domain: symbol sibling reaches and own module never uses; `{.all.}` reaching nothing, and
+    #   one reaching symbol template declares, which pass cannot read, so compile keeps it.
+    let root = createTempDir("knoller_", "_markers")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/a.nim", pragma & "func helper(x: int): int = x + 1\n\nfunc other*(x: int): int = x\n" &
+        "\ntemplate declare() =\n  func hidden(x: int): int = x\n\ndeclare()\n"),
+      ("p/b.nim", pragma & "import ./a {.all.}\n\necho helper(1)\n"),
+      ("p/c.nim", pragma & "import ./a {.all.}\n\necho other(1)\n"),
+      ("p/d.nim", pragma & "import ./a {.all.}\n\necho hidden(1)\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/a.nim", "p/b.nim", "p/c.nim", "p/d.nim"].mapIt((it, readFile(root / it)))
+      uses = files.resolveMarkers("", root, toolchains)
+      checked = outcome(files, [], is_check = true, directory = root, uses = uses)
+      fixed = outcome(files, [], is_check = false, directory = root, uses = uses)
+    check "p/a.nim:3: marker-used to fix" in checked.lines
+    check "p/c.nim:3: marker-used to fix" in checked.lines
+    check checked.lines.filterIt("marker-used" in it).len == 2  # `b.nim` and `d.nim` reach
+    var texts = initTable[string, string]()
+    for (path, text) in fixed.written: texts[path] = text
+    check "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in texts["p/a.nim"]
+    check texts["p/c.nim"].contains("import ./a\n")
+
+
+  test "private symbol its own module uses inside interpolated string takes no marker (Q2)":
+    # Case: `BANDS` of `design/rig.nim:77` of `dance_ontology`, which `design/floors.nim` reaches
+    #   and `rig.nim` uses inside `&"…{BANDS[…]}…"` alone; pass lists no use there, as strformat
+    #   parses braces from text, and compiler counts it, so it hints none (ruling of rule 7).
+    let root = createTempDir("knoller_", "_interpolated")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/rig.nim", pragma & "import std/strformat\n\nconst BANDS = [\"low\", \"high\"]\n\n" &
+        "func label*(k: int): string = &\"band {BANDS[k]}\"\n\nconst LONE = 3\n"),
+      ("p/floors.nim", pragma & "from ./rig {.all.} import BANDS, LONE\n\necho BANDS[0], LONE\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/rig.nim", "p/floors.nim"].mapIt((it, readFile(root / it)))
+      uses = files.resolveMarkers("", root, toolchains)
+      lines = outcome(files, [], is_check = true, directory = root, uses = uses).lines
+    check lines.filterIt("marker-used" in it) == @["p/rig.nim:9: marker-used to fix"]  # `LONE`
+
+
+  test "`proc` compiler proves resolves in project of file, and run fixes it, included or not":
+    let root = createTempDir("knoller_", "_pures")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/a.nim", pragma & "proc twice*(x: int): int = x * 2\n\nproc shout*(x: int) = echo x\n"),
+      ("p/tests/test_b.nim", pragma & "type Cell = object\n  x: int\n\ninclude \"suites.nim\"\n"),
+      ("p/tests/suites.nim", "proc read(c: Cell): int = c.x\n\necho read(Cell(x: 1))\n"),
+      ("p/c.nim", pragma & "import std/json\n\nfunc size*(n: JsonNode): int = n.len\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/a.nim", "p/tests/suites.nim", "p/c.nim"].mapIt((it, readFile(root / it)))
+      pures = files.resolvePures("", root, toolchains)
+      checked = outcome(files, [], is_check = true, directory = root, pures = pures)
+    check pures["p/a.nim"].sites == @[(3, 0)]  # `shout` names output, so stays
+    check pures["p/tests/suites.nim"].sites == @[(1, 0)]  # `Cell` stands in its includer
+    check "p/a.nim:3: func-pure to fix" in checked.lines
+    check "p/tests/suites.nim:1: func-pure to fix" in checked.lines
+    check pures["p/c.nim"].pointing == @[(5, 0)]  # no `proc` stands there, and `func` points
+    check "p/c.nim:5: func-pure to fix" in checked.lines
+    let fixed = outcome(files, [], is_check = false, directory = root, pures = pures)
+    check fixed.written.anyIt(it[0] == "p/a.nim" and "func twice*(x: int): int = x * 2" in it[1])
 
 
   test "command line passes no define, so file under `tests` compiles as any other does":
@@ -582,7 +706,7 @@ suite "Command line":
     let dirty = outcomeProven(
       [("a.nim", DIRTY & "let S = @(x) + 1  ## One.\n")], [], true, "/", proverFailing
     )
-    check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
+    check dirty.code == 1 and dirty.lines[^1] == "6 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 
 

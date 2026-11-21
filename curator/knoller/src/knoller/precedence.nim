@@ -19,7 +19,8 @@
 ##     break of `wrapping.nim` reads every level.
 ##   Checks and fixer share one reading (`mixtures`), so each rule is written once (Article
 ##     II.1). Elements of one depth (`elements`) are exported, since message shape reads
-##     operators of its value there (`messages.nim`).
+##     operators of its value there (`messages.nim`); so are expressions of each depth
+##     (`segments`, `tailCommand`), which join of interpolations reads by precedence.
 ##
 ##   Cost: scanner, never parser; command call nested inside operand (`a and f b or c`) reads
 ##     from its last head, so such expression may stay unreported.
@@ -180,7 +181,7 @@ func isBreakStatement(tokens: openArray[Token], k: int, source: string): bool =
   before.precedenceOperator(source) < 0
 
 
-func segments(
+func segments*(
   tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[seq[Element]] =
   ## Split one bracket depth into expressions between delimiters, nested depths included.
@@ -216,7 +217,7 @@ func segments(
     inc k
 
 
-func tailCommand(segment: seq[Element], tokens: openArray[Token]): seq[Element] =
+func tailCommand*(segment: seq[Element], tokens: openArray[Token]): seq[Element] =
   ## Read expression command call holds after its last head: element after two operands apart
   ##   by space with no operator between, or after operand and prefix operator spaced so.
   var start = 0
