@@ -14,15 +14,21 @@
 ##     (`IS_RIGID* = not IS_CONFORMAL`), else with `not`. Default is read from define of package
 ##     (`readConfigurations`), so condition no define gives, as `defined(js)` target sets, names
 ##     no order.
+##   Pair: block with no other branch whose condition is false by default, whose next line past
+##     blank lines opens block of its complement at its indent, with no other branch either, puts
+##     default last, so it reports, as two-way `when` does (ruling `D3 a` of #980). Complement
+##     reads as fix of two-way `when` writes it, either way, spaces aside. Fix swaps blocks whole,
+##     blank lines between as written; definition or comment between keeps both apart, as for
+##     join.
 ##   Head carrying trailing comment, or body whose indent differs from block it joins, stays for
-##     hand, so fix writes no comment away. Check and fixer share one reading (`sites`), so rule is
-##     written once (Article II.1).
+##     hand, so fix writes no comment away; pair moves each head whole, comment with it. Check and
+##     fixer share one reading (`sites`), so rule is written once (Article II.1).
 ##
 ##   Cost: scanner on lines, never parser: body runs while lines stand deeper than head, so line
 ##     of string at column 0 ends it. Branch on line of its head (`when C: a`) and `elif` chain
 ##     are unread.
-##   Cost: order is read in two-way branch alone, so complementary blocks side by side, default
-##     last, pass, though X.11 asks default first there too (`PROVENANCE.md`, Open questions).
+##   Cost: complement written otherwise, as `not IS_RIGID` beside `not IS_CONFORMAL`, names no
+##     pair, so its order is unread.
 
 {.experimental: "strictFuncs".}
 
@@ -42,13 +48,14 @@ type
   KindSite {.pure.} = enum  ## Define how site breaks rule.
     Join  ## Block of configuration standing next to block of same one.
     Order  ## Two-way branch putting default last.
+    Pair  ## Block of configuration standing next to block of its complement, default last.
 
   Site = object  ## Define one place breaking rule, at `when` head.
     kind: KindSite
     head: int  ## Zero-based line of head reported: second head for join.
     first: int  ## Zero-based line of first head, for join.
-    other: int  ## Zero-based line of `else:`, for order.
-    last: int  ## Zero-based last line of body of `else:`, for order.
+    other: int  ## Zero-based line of `else:`, for order, or of second head, for pair.
+    last: int  ## Zero-based last line of body of `else:`, for order, or of second block, for pair.
     complement: string  ## Condition true where head's is false, for order.
     is_fixable: bool  ## Whether fix may write site; head with trailing comment stays for hand.
 
@@ -125,6 +132,13 @@ func complement(condition: string; configurations: Configurations): string =
     configurations.complements[words[0]]
   elif words.len == 2 and words[0] == "not": words[1]
   else: "not " & condition.strip
+
+
+func isComplement(a, b: string; configurations: Configurations): bool =
+  ## Decide whether condition is complement of other, either way, as fix of two-way branch
+  ##   writes it, spaces aside.
+  a.complement(configurations).replace(" ", "") == b.replace(" ", "") or
+    b.complement(configurations).replace(" ", "") == a.replace(" ", "")
 
 
 func isOpen(lines, code: seq[string]; at: int): bool =
@@ -206,21 +220,29 @@ func sites(source: string; configurations: Configurations): seq[Site] =
         )
       continue
 
-    # Block with no other branch joins next block of same configuration, blank lines between.
+    # Block with no other branch joins next block of same configuration, blank lines between,
+    #   and stands after next block of its complement where it puts default last, as two-way
+    #   branch reads it (ruling `D3 a` of #980). Fix writes no head there, so none stays for hand.
     var next = last + 1
     while next < lines.len and lines[next].strip.len == 0: inc next
     if next >= lines.len or lines[next].indentWidth != lines[h].indentWidth: continue
     let configuration_next = code[next].condition
-    if configuration_next.len == 0 or
-        configuration_next.replace(" ", "") != configuration.replace(" ", ""):
-      continue
-    if extent(lines, code, next).branches.len > 0: continue
-    result.add Site(
-      kind: KindSite.Join,
-      head: next,
-      first: h,
-      is_fixable: '#' notin views[next] and lines.bodyIndent(h) == lines.bodyIndent(next),
-    )
+    if configuration_next.len == 0: continue
+    let (last_next, branches_next) = extent(lines, code, next)
+    if branches_next.len > 0: continue
+    if configuration_next.replace(" ", "") == configuration.replace(" ", ""):
+      result.add Site(
+        kind: KindSite.Join,
+        head: next,
+        first: h,
+        is_fixable: '#' notin views[next] and lines.bodyIndent(h) == lines.bodyIndent(next),
+      )
+    elif configuration.isComplement(configuration_next, configurations):
+      let (is_known, value) = configuration.valueDefault(configurations)
+      if is_known and not value:
+        result.add Site(
+          kind: KindSite.Pair, head: h, other: next, last: last_next, is_fixable: true
+        )
   result.sort(proc (a, b: Site): int = cmp(a.head, b.head))
 
 
@@ -231,7 +253,8 @@ func written(line, view: string): string =
 
 
 func checkConfigurations*(path, source: string; configurations: Configurations): seq[Report] =
-  ## Report blocks of one configuration side by side, and two-way branch putting default last.
+  ## Report blocks of one configuration side by side, and two-way branch or pair of complementary
+  ##   blocks putting default last.
   let
     lines = source.split('\n')
     views = source.codeAndComments.split('\n')
@@ -246,15 +269,16 @@ func checkConfigurations*(path, source: string; configurations: Configurations):
         MESSAGE_JOIN & head & "` at lines `" & $(site.first + 1) & "` and `" & $(site.head + 1) &
           "`.",
       )
-    of KindSite.Order:
+    of KindSite.Order, KindSite.Pair:
       result.add initReport(
         path, site.head + 1, Rule.BlockConfiguration, MESSAGE_ORDER & head & "` first."
       )
 
 
 func fixConfigurations*(path, source: string; configurations: Configurations): Fix =
-  ## Join blocks of one configuration side by side, and swap two-way branch putting default last,
-  ##   last site first, reading source again after each, so lines above keep their numbers.
+  ## Join blocks of one configuration side by side, and swap two-way branch or pair of
+  ##   complementary blocks putting default last, last site first, reading source again after
+  ##   each, so lines above keep their numbers.
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
@@ -279,6 +303,16 @@ func fixConfigurations*(path, source: string; configurations: Configurations): F
           ":"
       lines = before[0 ..< site.head] & order.mapIt(before[it]) & before[site.last + 1 .. ^1]
       lines[site.head] = head
+      origin = origin[0 ..< site.head] & order.mapIt(origin[it]) & origin[site.last + 1 .. ^1]
+    of KindSite.Pair:
+      # Swap blocks whole, heads with them; blank lines between stay between.
+      var close = site.other - 1
+      while close > site.head and lines[close].strip.len == 0: dec close
+      let
+        order = toSeq(site.other .. site.last) & toSeq(close + 1 ..< site.other) &
+          toSeq(site.head .. close)
+        before = lines
+      lines = before[0 ..< site.head] & order.mapIt(before[it]) & before[site.last + 1 .. ^1]
       origin = origin[0 ..< site.head] & order.mapIt(origin[it]) & origin[site.last + 1 .. ^1]
   result.source = lines.join("\n")
   if result.fixed.len > 0: result.origin = origin

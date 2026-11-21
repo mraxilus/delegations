@@ -1,7 +1,8 @@
 ## Hold that each gap of coverage shows in run (Article IX.9), as Architect ruled on rule 17 of
 ##   #443: skip gives its reason after it, on comment line right above it at its indent, or in echo
 ##   of text there. Gap inside test that runs, and test under bare `when`, report too; each stays
-##   for hand, since no text gives reason.
+##   for hand, since no text gives reason. Bare `when` around whole suite configures suite, so
+##   test under it passes (ruling `D3 a` of #980).
 
 {.experimental: "strictFuncs".}
 
@@ -97,6 +98,29 @@ suite "Skips":
     check (gated & "else:\n  test \"a\":\n    skip()  # Needs browser.\n").found.len == 0
     check "when isMainModule:\n  test \"a\":\n    check b\n".found.len == 0  # entry of module
     check "when A:\n  when B:\n    test \"a\":\n      check b\n".found.len == 1  # test reports once
+
+
+  test "test under bare `when` around whole suite passes, and under one inside suite reports":
+    # Ruling `D3 a` of #980: gate around whole suite configures suite, and skips no test in it.
+    #   Cases: `tests/suites/test_arenas_frame.nim:10` of `pga_visualiser` at `16a573cc`, gate
+    #   around suite, cut to its first test; `tests/suites/test_share.nim:36`, gate inside suite.
+    let around = "when not defined(js):\n  suite \"Frame Arenas\":\n    var\n" &
+      "      backing_first: array[512, byte]\n\n\n" &
+      "    test \"a frame carves from one block while the other holds the frame before it\":\n" &
+      "      var arenas = initArenasFrame(backing_first, backing_second)\n"
+    check around.found.len == 0
+    let inside = "suite \"Share\":\n  test \"a\":\n    check b\n\n\n  when not defined(js):\n" &
+      "    test \"a desktop frame is owned by the file its code is in\":\n      let paths = [1]\n"
+    check inside.found == @[
+      (7, "Test that cannot run under configuration skips there, so run keeps it; got " &
+        "`test \"a desktop frame is owned by the file its code is in\":` under " &
+        "`when not defined(js):`."),
+    ]
+    check ("when A:\n  suite \"S\":\n    test \"a\":\n      check b\n" &
+      "    when B:\n      test \"c\":\n        check d\n").found.mapIt(it[0]) == @[6]
+      # gate inside suite reports, though gate around suite holds both
+    let nested = "when A:\n  when B:\n    suite \"S\":\n      test \"a\":\n        check b\n"
+    check nested.found.len == 0  # each gate around suite configures it
 
 
   test "skip of generated code, and file outside `tests` of package, report none":

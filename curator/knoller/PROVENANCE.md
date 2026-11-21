@@ -1137,14 +1137,16 @@ counts read the bullets of X.2 in this order:
 - A declarative call after another stacks in its family, so no line and one line pass. Knoller
   cannot tell two families apart, so a run of two or more becomes one.
 - A declarative call after a routine takes up to two, as the call of a template right under it
-  (STYLE.md §2).
+  (STYLE.md §2). A documented one-line call takes one there, as Q3 gives a documented one-line
+  definition (D3 a of #980). A documented call over several lines is no one-line definition, so
+  it takes up to two, as a call with no doc does.
 - An undocumented one-line routine after another stacks in its group. Up to two lines pass, since
   X.2 gives no count between two groups. The first helper of a group takes two.
 - A declaration block after another takes one.
 - A documented one-line definition that no bullet above names takes one after any definition
-  (Q3). So a documented call after a routine takes up to two, as a call does.
+  (Q3).
 - Knoller reads Q3 after the imports too, since Q3 says that the definition below a run sets its
-  count.
+  count. Its case is `tools/head.nim:17` of `pga_visualiser`, two lines after the imports.
 - Every other definition takes two, a routine of several lines among them (Q2). So the check
   reports one line and three lines.
 - Inside a second-tier section, each count caps at one, since siblings there take one (X.2). Q1
@@ -1167,7 +1169,9 @@ counts read the bullets of X.2 in this order:
 - The rule joins `checkFormatting` and the chain. The static pass of `curator/audit` does not
   read it until the projects fix their runs (step 4 of #443).
 - Verified by `suites/test_definitions.nim`. It holds one case of each shape that rule 13 of #443
-  names. A law runs over each pair of forms, each count from 0 to 3 and each tier.
+  names, and the documented one-line call that D3 a of #980 names. A law runs over each pair of
+  forms, each count from 0 to 3 and each tier. The imports stand above alone there, since the rule
+  reads no run before them.
 - Verified by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of the
   chain and the command line.
 - Verified by measurement at commit `14bab954`, 2026-11-20, with a driver that calls
@@ -1178,10 +1182,17 @@ counts read the bullets of X.2 in this order:
   One line that it removes holds spaces alone. A second check of each fixed copy gives 0 reports.
 - Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0 on 2026-11-20.
   `rga3d` gives 33 OK, 0 FAILED and 5 SKIPPED. `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
-- Verified by measurement at commit `14bab954`, 2026-11-20, with the same driver over the `.nim`,
-  `.nims` and `.nimble` files that git tracks in each project. Knoller gives 36, audit 42,
-  assayer 5, probe 5 and `pga_benchmark` 316. `pga_visualiser` gives 193, `dance_ontology` 531,
-  `rictadni` 24 and `ricysoho` 117, which is 1,269.
+- Verified by measurement over the projects of the repository at `16a573cc`, 2026-11-21. A driver
+  calls `checkDefinitions` alone on the `.nim`, `.nims` and `.nimble` files that git tracks in
+  each project. Knoller at `fd3bc4b5` and knoller at `1bed07fd` give the same reports at each
+  project. Knoller gives 39, audit 42, assayer 5, probe 5 and `pga_benchmark` 316.
+  `pga_visualiser` gives 193, `dance_ontology` 531, `rictadni` 24 and `ricysoho` 117, which is
+  1,272. A search of each file that git tracks finds no documented one-line call at module level
+  there, so the ruling changes no report.
+- Verified by `koch fix --dry-run --branch:main` over each project of the same tree, with koch
+  built at `fd3bc4b5` and at `1bed07fd`, 2026-11-21. Each gives 1,007 fixes of this rule, and the
+  two outputs are the same, byte for byte. The count differs from that of the driver, since the
+  chain runs every fixer, and leaves each file that does not settle as written.
 
 ## Configuration blocks
 
@@ -1198,6 +1209,14 @@ configuration that a build gets by default comes first (X.11).** The Architect r
 - A two-way `when` whose condition is false by default puts its default last, so it reports. The
   fix swaps its branches. The new head names the complement by the constant that names it, as
   `IS_RIGID* = not IS_CONFORMAL`, or else with `not`.
+- Two blocks of complementary configurations side by side put the default last where the first
+  condition is false by default. So they report too, and the fix swaps the two blocks (D3 a of
+  #980). Each block holds no other branch. The default reads as the two-way `when` reads it. The
+  second condition is the complement of the first as the fix of a two-way `when` writes it, either
+  way, spaces aside. So `IS_RIGID` and `not IS_CONFORMAL` each complement `IS_CONFORMAL`.
+- The fix of such a pair moves each block whole, with its head and the comment of its head, so
+  neither stays for hand. The blank lines between the blocks stay as written. A definition or a
+  comment between them keeps them apart, as it keeps two blocks of one configuration apart.
 - The default comes from the define of the package. A module-level constant with a `define` or
   `booldefine` pragma and a literal `true` or `false` gives it, with its type stated or not. So
   does a constant written `not` of such a constant. The audit reads them over each project
@@ -1222,18 +1241,20 @@ configuration that a build gets by default comes first (X.11).** The Architect r
   and runs by `nim c -r -d:testing -d:nimUnittestAbortOnError:on` and the matrix line of its stub.
   rga3d gives 33 OK, 5 SKIPPED and 0 FAILED, and cga3d gives 28 OK, 10 SKIPPED and 0 FAILED, as
   the library as given does.
-- Verified by hand with that driver over the repository at `0b795b5f`, 2026-11-20. It gives no
-  report. Only `HAS_FORMS_DENSE` of `pga_benchmark` gives a default, and it guards no two-way
-  branch.
+- Verified by hand with a driver over the projects of the repository at `16a573cc`, 2026-11-21.
+  It reads the defaults of each project, and runs the check on each file that git tracks there.
+  Knoller at `fd3bc4b5` and knoller at `1bed07fd` give no report, and so does
+  `koch fix --dry-run --branch:main` built at each. Only `HAS_FORMS_DENSE` of `pga_benchmark`
+  gives a default, and it guards one import on one line, so no two-way branch and no pair.
+- Verified by hand with that driver on a copy of the PGA library at `3d9696e`, 2026-11-21.
+  Knoller at `fd3bc4b5` and knoller at `1bed07fd` each give the 1 report at `Formal`.
 - Rejected: a join of every block of one configuration in a section, which takes `■` and `□` of
   `pga/operators.nim` out of their family.
 - Cost: knoller reads the lines with a scanner, and never with a parser. A body runs while its
   lines stand deeper than its head, so a line of a string at column 0 ends it. A branch on the
   line of its head, as `when C: a`, and a chain with `elif` are unread.
-- Cost: the rule reads the order of a two-way branch alone. So two blocks of complementary
-  configurations side by side, with the default last, pass, though X.11 asks for the default
-  first there too. A scan of each pair of blocks in the library and the repository at
-  `0b795b5f` finds no such pair, 2026-11-20.
+- Cost: a complement written in another form names no pair, so the order of the pair is unread.
+  An example is `not IS_RIGID` beside `not IS_CONFORMAL`.
 
 ## Docs
 
@@ -1267,6 +1288,8 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
   does a doc on the line above a declaration that is no routine, at its indent, because it stands
   out of place.
+- A doc that opens the file is the doc of the module, and of no declaration (D3 a of #980). So
+  missing doc reports the declaration right below it, and writes its placeholder there.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
   string and a character literal hold no bracket and no comment for it. A line whose last token
   is `,`, or an operator that ends in `=` or `&`, continues its statement.
@@ -1366,10 +1389,17 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - A doc above a type, a field, a global binding or an enum member moves where missing doc writes
   it. It joins the line where it fits, else it takes the next line, one level in. A value over
   brackets takes it after its close.
-- A doc moves from above only where a blank line, a `#` comment or the start of the file stands
-  above it. A doc right below other code stays, because that code can own it. So does a doc that
-  a declaration holds as its own. A doc above a local binding stays, since a local binding takes
-  none.
+- A doc moves from above only where a blank line or a `#` comment stands above it. A doc right
+  below other code stays, because that code can own it. So does a doc that a declaration holds as
+  its own. A doc above a local binding stays, since a local binding takes none.
+- A doc that opens the file stays where it stands, as the doc of the module, since `nim doc` reads
+  it so (D3 a of #980). `nim jsondoc` of 2.4.0 reads it as the description of the module, and
+  gives the binding right below it no doc. Once missing doc writes its placeholder there, it
+  reads both. Verified by hand, 2026-11-21, on one probe before the placeholder and one after.
+- Elsewhere at module level, `nim jsondoc` of 2.4.0 reads a doc above a declaration into the
+  description of the module too. So the move gives that doc to its declaration. Verified by hand,
+  2026-11-21, on one probe of a doc under a blank line, one under a `#` comment and one past other
+  code. A probe after the move reads the doc as that of its declaration alone.
 - A one-line doc can stand on the line below the first line of a value over lines. It moves after
   the `=` that ends that first line, where it fits. Otherwise it moves after the close of the
   value, joined where it fits, else one level in. `nim doc` reads none below an `=` that ends the
@@ -1398,10 +1428,18 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   Missing doc then writes `## TODO: Document.` in the body, so the doc above and the placeholder
   both stand. Verified by hand through the whole chain, 2026-11-20, on one probe of each kind of
   routine body.
-- Cost: a doc at the start of a file moves onto a declaration right below it. `nim doc` reads it as
-  the doc of the module. No Nim file of the tree at `93613d68` opens with a doc right above a
-  declaration. Verified by a script over each file that `git ls-files '*.nim'` lists, 2026-11-20.
-  Verified by `suites/test_declarations.nim`, and by hand with `nim jsondoc` of 2.4.0, 2026-11-20.
+- Cost: a doc right below a blank line or a `#` comment that opens the file moves onto a
+  declaration right below it. `nim doc` reads such a doc as the doc of the module too. Knoller
+  reads the start of the file as its first line, which is the narrowest reading of D3 a. Verified
+  by `suites/test_declarations.nim`, whose cases of `type Order` and of `# Sizes.` move so.
+- No Nim file of the tree at `16a573cc` opens with a doc right above a declaration. Nor does one
+  hold such a doc below blank lines or `#` comments alone. Verified by a scan of each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists, 2026-11-21.
+- Verified by hand with a driver over the projects of the repository at `16a573cc`, 2026-11-21.
+  It runs `checkDocs` and `checkDocsMissing` alone on each file that git tracks in each project.
+  Knoller at `fd3bc4b5` and knoller at `1bed07fd` give the same 36 reports of doc position and
+  1,056 of missing doc. `koch fix --dry-run --branch:main` built at each gives 23 and 861 fixes.
+  On a copy of the PGA library at `3d9696e`, each knoller gives 2 and 51 reports.
 
 ## Stages
 
@@ -2572,23 +2610,35 @@ no text gives the reason (`checkSkips`).
   its own level shows in the run as skipped, so it holds no gap.
 - A test under a `when` with no other branch leaves the run where its condition is false, so it
   reports, once for each test. `when isMainModule:` names no configuration.
+- A gate around a whole suite configures the suite, and skips no test in it, so a test under it
+  passes (D3 a of #980). The read of the gates above a test ends at its suite. So a gate inside
+  the suite reports, and so does a gate above a test with no suite between them.
 - A test under `quote do:` is generated code, and so is a skip under it. So neither reports.
 - Verified by `suites/test_skips.nim`. Its cases quote `tests/suites.nim` of the PGA library at
-  `3d9696e`, and each case names its cut.
+  `3d9696e`, and each case names its cut. Its cases of a gate around a suite and of a gate inside
+  one quote `tests/suites/test_arenas_frame.nim` and `tests/suites/test_share.nim` of
+  `pga_visualiser` at `16a573cc`.
 - Verified by hand with knoller at `44b16354` on the PGA library at `3d9696e`, 2026-11-20. A driver
   imports `knoller` and runs `checkSkips` alone on each file that
   `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
   library. It gives 8 reports, as the ruling counts. They are lines 288, 308, 331, 346, 358, 371,
-  380 and 432 of `tests/suites.nim`.
-- Verified by hand with that driver over the repository at `44b16354`, 2026-11-20. It gives 44
-  reports, each a test of `pga_visualiser` under a bare gate. Of them, 17 stand under a gate
-  inside a suite, and 27 under a gate around a whole suite. The ruling counts 17 there, as 16
-  tests under a gate and 1 skip. That skip gives its reason above the head of its branch, so it
-  passes here.
+  380 and 432 of `tests/suites.nim`. Knoller at `1bed07fd` gives the same 8, verified by hand on
+  a copy of the library at `3d9696e`, 2026-11-21.
+- Verified by hand with that driver over the projects of the repository at `16a573cc`,
+  2026-11-21. It reads each project by `git ls-files`, with the nimble file of the project.
+  Knoller at `fd3bc4b5` gives 44 reports, each a test of `pga_visualiser` under a bare gate.
+  Knoller at `1bed07fd` gives 17, each a test under a gate inside a suite. They are 14 in
+  `tests/suites/test_scene.nim` and 3 in `tests/suites/test_share.nim`.
+- The 27 that pass stand under a gate around a whole suite. They are 19 in `test_orrery.nim`, 4 in
+  `test_arenas_frame.nim` and 4 in `test_image.nim`, under `tests/suites`.
+- The ruling of rule 17 counts 17 places in `pga_visualiser`. Of them, 16 are a test under a
+  gate, and 1 is a skip. That skip gives its reason above the head of its branch, so it passes
+  here. So knoller reports one test more than the ruling counts.
 - Cost: knoller reads the lines with a scanner, and never with a parser. A test reads from a line
   that opens with `test` and ends in `:`, and a line at its indent or shallower ends it. So a
   test on one line, as `test "a": skip()`, and a head as `test("a"):` are unread. A line of a
-  string at column 0 inside a test ends its body there.
+  string at column 0 inside a test ends its body there. A suite reads alike from a line that
+  opens with `suite`, so a gate around `suite("a"):` reports each test under it.
 - Cost: any comment right above a skip reads as its reason, a commented-out line of code too.
 
 ## Staging
@@ -2908,12 +2958,6 @@ there is unverified.
 
 - Why does rule 11 report 50 routines where the ruling counts 22? `pga_visualiser` takes 33
   against 16, and `dance_ontology` 13 against 6.
-- Does a documented declarative call after a routine take one, as Q3 gives a documented
-  one-line definition, or up to two, as a call does? Knoller gives it up to two now.
-- Do two blocks of complementary configurations side by side, with the default last, report, and
-  does the fix swap them? X.11 asks for the default first, and no place holds such a pair yet.
-- Does a test under a gate around a whole suite report, as one under a gate inside a suite does?
-  27 of the 44 reports of `pga_visualiser` stand under such a gate.
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
   git URL. Its check needs the package list of nimble, which the proxy of the machine of a
   delegate refuses with status 405. Atlas reads the form through an override (`## Package`).

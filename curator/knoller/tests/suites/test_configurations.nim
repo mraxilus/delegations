@@ -1,7 +1,9 @@
 ## Hold that definitions of one configuration standing next to each other share one block, and
 ##   that configuration build gets by default comes first (Article X.11), as Architect ruled on
 ##   rule 14 of #443: fix joins two blocks only where nothing stands between them, and swaps
-##   branches of two-way `when` whose default stands last; definition never leaves its family.
+##   branches of two-way `when` whose default stands last, or two blocks of complementary
+##   configurations side by side whose default stands last (ruling `D3 a` of #980); definition
+##   never leaves its family.
 
 {.experimental: "strictFuncs".}
 
@@ -110,12 +112,64 @@ suite "Configurations":
       "when IS_RIGID:\n  a()\nwhen IS_CONFORMAL:\n  c()\n",  # family differing by configuration
       "when isMainModule:\n  a()\nwhen isMainModule:\n  c()\n",  # entry block, no configuration
       "when compileOption(\"x\"):\n  a()\nwhen compileOption(\"x\"):\n  b()\n",  # option, none
-      "when IS_CONFORMAL:\n  a()\nwhen IS_RIGID:\n  b()\n",  # cost: order of two-way branch alone
       "when IS_CONFORMAL:\n  let s = \"\"\"\nx\n\"\"\"\nwhen IS_CONFORMAL:\n  b()\n",
         # cost: line of string at column 0 ends body
     ]:
       check kept.found.len == 0
       check kept.fixed == kept
+
+
+  test "blocks of complementary configurations side by side, default last, report and swap":
+    # Ruling `D3 a` of #980: X.11 asks default first beside complement too, so pair that puts it
+    #   last reports, as two-way branch does, and fix swaps blocks, blank lines between kept.
+    let source = "when IS_CONFORMAL:\n  func a*() = discard\n\n\nwhen IS_RIGID:\n" &
+      "  func b*() = discard\n"
+    check source.found == @[(1, ORDER & "when IS_CONFORMAL:` first.")]
+    check source.fixed == "when IS_RIGID:\n  func b*() = discard\n\n\nwhen IS_CONFORMAL:\n" &
+      "  func a*() = discard\n"
+    check source.fixed.found.len == 0
+    check fixConfigurations("a.nim", source, library()).fixed.mapIt(it.line) == @[1]
+    check fixConfigurations("a.nim", source, library()).origin == @[5, 6, 3, 4, 1, 2, 7]
+    for (written, swapped) in [
+      (
+        "when IS_CONFORMAL:\n  a()\nwhen not IS_CONFORMAL:\n  b()\n",
+        "when not IS_CONFORMAL:\n  b()\nwhen IS_CONFORMAL:\n  a()\n",
+      ),  # complement written with `not`
+      (
+        "when not IS_RIGID:\n  a()\nwhen IS_RIGID:\n  b()\n",
+        "when IS_RIGID:\n  b()\nwhen not IS_RIGID:\n  a()\n",
+      ),  # first condition written with `not`
+      (
+        "when IS_CONFORMAL:  # Flat parts.\n  a()\nwhen IS_RIGID:  # Round parts.\n  b()\n",
+        "when IS_RIGID:  # Round parts.\n  b()\nwhen IS_CONFORMAL:  # Flat parts.\n  a()\n",
+      ),  # each head keeps its comment, since fix writes no head
+      (
+        "type\n  Formal*[T] = object\n    when IS_CONFORMAL:\n      flat*, round*: T\n" &
+          "    when IS_RIGID:\n      round*: T\n",
+        "type\n  Formal*[T] = object\n    when IS_RIGID:\n      round*: T\n" &
+          "    when IS_CONFORMAL:\n      flat*, round*: T\n",
+      ),  # `FORMAL` written as pair, among fields of object
+    ]:
+      checkpoint written
+      check written.found.len == 1
+      check written.fixed == swapped
+      check swapped.found.len == 0
+    let both = readConfigurations([ALGEBRA, "const HAS_DENSE* {.booldefine.} = true\n"])
+    for kept in [
+      "when IS_RIGID:\n  a()\nwhen IS_CONFORMAL:\n  b()\n",  # default first
+      "when IS_CONFORMAL:\n  a()\nb()\nwhen IS_RIGID:\n  c()\n",  # definition between
+      "when IS_CONFORMAL:\n  a()\n# Rigid.\nwhen IS_RIGID:\n  c()\n",  # comment between
+      "when IS_CONFORMAL:\n  a()\nwhen IS_RIGID:\n  b()\nelse:\n  c()\n",  # other branch
+      "when IS_CONFORMAL:\n  a()\nwhen HAS_DENSE:\n  b()\n",  # no complement, though default
+      "when defined(js):\n  a()\nwhen not defined(js):\n  b()\n",  # no define gives default
+      "when not IS_RIGID:\n  a()\nwhen not IS_CONFORMAL:\n  b()\n",
+        # cost: complement written otherwise names no pair
+      "proc p() =\n  ## Do.\n  when IS_CONFORMAL:\n    a()\n  when IS_RIGID:\n    b()\n",
+        # inside routine
+    ]:
+      checkpoint kept
+      check checkConfigurations("a.nim", kept, both).len == 0
+      check fixConfigurations("a.nim", kept, both).source == kept
 
 
   test "chain and command line read defaults of package across its modules":

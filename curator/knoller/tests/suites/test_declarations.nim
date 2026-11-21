@@ -90,8 +90,8 @@ suite "Declarations":
       "definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
     check order.fixed.isSettled
     check fixDocs("a.nim", order).origin == @[1, 3, 4, 5]  # joined line traces to declaration
-    check "## Size.\nconst N = 3\n".fixed == "const N = 3  ## Size.\n"
-      # start of file stands above doc; cost: `nim doc` reads it as doc of module
+    check "## Module.\n\n## Size.\nconst N = 3\n".fixed == "## Module.\n\nconst N = 3  ## Size.\n"
+      # doc above declaration past start of file moves; doc opening file stays (below)
     let kinds = "# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
       "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n" &
       "    ## Depth.\n    depth: int\n" &
@@ -106,6 +106,37 @@ suite "Declarations":
       "const P = (1, 1)\n  ## Pair,\n  ##   held twice.\n\nconst T = [\n  1,\n]  ## Table.\n"
         # where missing doc writes it: joined where it fits, else next line; value at its close
     check kinds.fixed.isSettled
+
+
+  test "doc opening file stays as doc of module, and declaration right below it takes its own":
+    # Ruling `D3 a` of #980: `nim doc` reads doc opening file as doc of module, so doc position
+    #   leaves it, and missing doc reads declaration below it as one holding none.
+    const opening = [
+      ("## Size.\nconst N* = 3\n", 2, "## Size.\nconst N* = 3  ## TODO: Document.\n"),
+      (
+        "## Size,\n##   in units.\nconst N* = 3\n",
+        3,
+        "## Size,\n##   in units.\nconst N* = 3  ## TODO: Document.\n",
+      ),  # doc of several lines
+      ("## Mass.\nlet m = 1.0\n", 2, "## Mass.\nlet m = 1.0  ## TODO: Document.\n"),
+      (
+        "## Box.\ntype Box = object\n  width: int  ## Width.\n",
+        2,
+        "## Box.\ntype Box = object  ## TODO: Document.\n  width: int  ## Width.\n",
+      ),
+      (
+        "## Do.\nproc f() =\n  discard\n",
+        2,
+        "## Do.\nproc f() =\n  ## TODO: Document.\n  discard\n",
+      ),  # routine, whose doc above neither rule moves
+    ]  ## Source opening with doc, line of declaration below it, and source missing doc writes.
+    for (source, line, documented) in opening:
+      checkpoint source
+      check source.isSettled  # doc position moves nothing, and fix writes nothing
+      check checkDocsMissing("a.nim", source).mapIt(it.line) == @[line]
+      check source.documented == documented
+      check documented.isDocumented
+      check documented.isSettled
 
 
   test "doc that block, value or declaration above may own, and doc of local binding, stay":
@@ -253,7 +284,7 @@ suite "Declarations":
       "func g() =\n  ##[ Block doc. ]##\n  discard\n",
       "macro m(): untyped =\n  ## Emit.\n  quote do:\n    proc h() = discard\n",
       "# Bounds of order.\nfunc low(a: O): O {.borrow.}\nfunc next(a: O): O = succ(a)\n",
-      "## Doc above.\nconst N = 3\n",  # out of place, which doc position reads
+      "\n## Doc above.\nconst N = 3\n",  # out of place, which doc position reads
       "const N = 3  ## TODO: Document.\n",  # doc waiting for text
     ]:
       check kept.isDocumented
