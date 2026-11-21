@@ -11,11 +11,13 @@
 ##     skip is none, and test whose body skips at its own level shows in run as skipped, so it
 ##     holds no gap.
 ##   Test under `when` with no other branch leaves run where its condition is false, so it reports;
-##     `when isMainModule:` names no configuration. Code under `quote do:` is generated, so its
-##     skip and TODO are none of file's.
+##     `when isMainModule:` names no configuration. Such gate around whole suite configures
+##     suite, and skips no test in it, so test under it passes; gate inside suite reports (ruling
+##     `D3 a` of #980). Code under `quote do:` is generated, so its skip and TODO are none of
+##     file's.
 ##
 ##   Cost: scanner on lines, never parser: test reads from line opening with `test` and ending in
-##     `:`, and line at its indent or shallower ends it.
+##     `:`, suite alike from `suite`, and line at its indent or shallower ends it.
 
 {.experimental: "strictFuncs".}
 
@@ -40,6 +42,12 @@ func isTest(code: string): bool =
   ## Decide whether line of code view opens test: `test`, blanked name, and `:`.
   let s = code.strip
   s.startsWith("test ") and s.endsWith(":")
+
+
+func isSuite(code: string): bool =
+  ## Decide whether line of code view opens suite: `suite`, blanked name, and `:`.
+  let s = code.strip
+  s.startsWith("suite ") and s.endsWith(":")
 
 
 func isSkip(code: string): bool =
@@ -136,8 +144,10 @@ func checkSkips*(path, source, nimble: string): seq[Report] =
           result.add initReport(path, k + 1, Rule.ReasonSkip, MESSAGE_GAP & text & "`.")
 
     # Test under `when` with no other branch leaves run where its condition is false; innermost
-    #   such gate reports, once for each test.
+    #   such gate reports, once for each test. Gate around whole suite configures suite, and
+    #   skips no test in it, so read ends at suite (ruling `D3 a` of #980).
     for j in heads:
+      if code[j].isSuite: break
       let
         head = lines[j].indentWidth
         gate = lines[j].codeText(views[j])
