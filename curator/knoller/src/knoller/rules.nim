@@ -104,7 +104,6 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   WrappingCall = "call wrapping"  ## Call takes one argument to line only where it must.
   WrappingOperator = "operator wrapping"  ## Line fitting nowhere breaks after binary operator.
   IndentContinuation = "continuation indent"  ## Line after operator takes four spaces more.
-  SeparatorTrailing = "trailing separator"  ## List of one item to line ends in separator.
   DocMissing = "missing doc"
     ## Declaration takes doc, which reads `## TODO: Document.` while it waits for text.
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.

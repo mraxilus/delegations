@@ -109,7 +109,6 @@ const CITATIONS*: array[Rule, string] = [
   Rule.WrappingCall: "X.3",
   Rule.WrappingOperator: "STYLE.md §5",
   Rule.IndentContinuation: "STYLE.md §5",
-  Rule.SeparatorTrailing: "X.3",
   Rule.DocMissing: "VI.1",
   Rule.CommentAbove: "X.1",
   Rule.CommentStage: "VI.4",

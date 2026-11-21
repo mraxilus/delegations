@@ -25,10 +25,9 @@
 ##   - blank lines beside suites, tests and helpers, and between definitions, then doc position
 ##     and literal defaults, since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
-##   - wrapping last, separators, signatures, calls, continuations, then trailing separators:
-##     layouts join groups with separator they read, call layout breaks line at operator where
-##     no call split fits, continuation indent follows lines call layout moves, and trailing
-##     separator goes only where no layout wrote one.
+##   - wrapping last, separators, signatures, calls, then continuations: layouts join groups
+##     with separator they read, call layout breaks line at operator where no call split fits,
+##     and continuation indent follows lines call layout moves.
 ##   - missing doc after wrapping: doc joins line only as wrapping leaves it, since doc trailing
 ##     line that opens bracket keeps call apart that wrapping would join;
 ##   - comment next: plain `#` trailing comment of line still wide moves to own line above,
@@ -180,8 +179,7 @@ func checkFormattingUnfenced(
     ]
     checks_after = [
       checkDefinitions, checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures,
-      checkCalls, checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove,
-      checkStages,
+      checkCalls, checkContinuations, checkDocsMissing, checkCommentsAbove, checkStages,
     ]
 
   # Run checks in order of chain: configuration blocks, which read defaults of package, then
@@ -216,7 +214,7 @@ func checkFormatting*(
   ##   conditions and needless parentheses, STYLE.md §5 `to<Target>` calls and dotted call
   ##   statements, suites and tests, STYLE.md §1 helpers, X.2 blank lines between definitions, doc
   ##   position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures, calls, operator
-  ##   breaks, continuations and trailing separators, and X.1 comments above.
+  ##   breaks and continuations, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists, STYLE.md §3
   ##   profiler import, STYLE.md §2 compile-time family and STYLE.md §3 branch on what build
   ##   fixes, which reads `constants` other modules of package export. Fenced lines are read by
