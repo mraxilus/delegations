@@ -366,6 +366,9 @@ suite "Claims":
   test "commented code and fenced code hold no prose":
     for kept in [
       "#func `<=`(a, b: Order): bool {.borrow.}\n",
+      "# func <=(a, b: Order): bool {.borrow.}\n",  # space that tool leaves, operator named
+      "# func `<=`(a, b: Order): bool {.borrow.}\n",
+      "# proc toggle*(flag: var bool): bool\n",  # name that its `*` exports
       "#  let count_items = seq[int]\n#     y\n",
       "## Do.\n##   ```nim\n##   let x = seq[int]\n##   ```\n",
       COMMENTED,

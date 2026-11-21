@@ -76,6 +76,21 @@ suite "Article VI":
       @[(1, "`#[ x ]#` in line comment")]  # markers of line comment are its text
 
 
+  test "VI.5 commented code holds no article, commented by hand or by tool, as D3 a rules":
+    for code in [
+      "#func <=(a, b: Order): bool {.borrow.}\n",  # `cayleys.nim:48` of PGA library, by hand
+      "# func <=(a, b: Order): bool {.borrow.}\n",  # same line as tool comments it
+      "# func `<=`(a, b: Order): bool {.borrow.}\n",  # its name in backticks
+      "# result = a vector\n",  # line that reads as code
+      "# TODO: Fit.\n#   let x = a value\n",  # line of code under prose
+    ]:
+      checkpoint code
+      check checkArticles("a.nim", code).len == 0
+      check fixArticles("a.nim", code).source == code  # fixer reads code as check does
+    check checkArticles("a.nim", "# Read the row.\n#   let x = a value\n").mapIt(it.line) ==
+      @[1]  # prose above code still reports
+
+
 
 suite "Article VI fixes":
   test "VI.5 article naming value, capital, glued punctuation, code and quote stay":
