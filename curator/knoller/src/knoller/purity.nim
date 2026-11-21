@@ -28,6 +28,8 @@
 ##     `pointer`, distinct one too, since other holder or thread can change it during call
 ##     (ruling `D1 a` of #980); `var` alone keeps none, as §1 lets `func` write it. Check of each
 ##     type stands after source, so no line moves, and its error refuses its routine (`probed`).
+##     Type naming generic parameter of its routine takes no check, since no scope at end of
+##     module names it, and `nim check` of 2.4.0 crashes with no line on some such checks.
 ##   Check of source as given asks same of each `func` whose types name more than builtin types
 ##     and containers of value (`isPointingAsked`); its error leaves that check clean. Check reports
 ##     each `func` that points as `proc` (ruling `D5 a` of #980), and fixer writes `proc`, same
@@ -79,6 +81,8 @@ type
     types: seq[string]
       ## Type of each parameter group as written; group its default alone types reads as `typeof`
       ##   of default. Compiler reads `var` type as type it holds, so `var` of `ref` points too.
+      ##   Type naming generic parameter of routine is left out, since no scope at end of module
+      ##   names it.
     is_candidate: bool  ## Shape admits it: body, no foreign pragma, no routine taken, own code.
 
 
@@ -147,6 +151,8 @@ const
   ]
     ## Words of type that point at nothing: container of value and modifier, whose argument
     ##   decides alone; container of `ref` keeps no `proc` (ruling `D1 a` of #980).
+  SEPARATORS_TYPE = {' ', '[', ']', ',', '(', ')', ':', '.', '*', '{', '}', '=', '\n', '"', '\''}
+    ## Characters between words of type as written.
 
 
 func ids(names: openArray[string]): HashSet[string] =
@@ -199,6 +205,25 @@ func parameterTypes(
   result = result.deduplicate
 
 
+func genericNames(
+  source: string; tokens: openArray[Token]; partners: openArray[int]; open: int
+): seq[string] =
+  ## Read name of each generic parameter of list opening at token `open`: word opening list or
+  ##   following its separator, nested brackets skipped.
+  var
+    k = open + 1
+    is_name = true  # Next word names parameter, as after `[`, `,` or `;`.
+  while k < partners[open]:
+    let t = tokens[k]
+    if t.kind in {KindToken.Comma, KindToken.Semicolon}: is_name = true
+    elif t.kind == KindToken.Word and is_name:
+      result.add t.spelling(source)
+      is_name = false
+    elif t.kind != KindToken.Comment: is_name = false
+    if t.kind == KindToken.Open and partners[k] > k: k = partners[k]
+    inc k
+
+
 func parameterDefaults(
   source: string; tokens: openArray[Token]; partners: openArray[int]; open: int
 ): seq[int] =
@@ -246,7 +271,7 @@ func routines(source: string; keyword = KEYWORD_PROC): seq[Routine] =
       j = k + 2
       bodied = -1
       parameters = -1  # Token opening list of parameters.
-      words_head: seq[string]
+      words_head, generics: seq[string]
     while j < tokens.len and tokens[j].line == tokens[j - 1].line:
       let s = tokens[j].spelling(source)
       if tokens[j].kind == KindToken.Comment: break
@@ -255,6 +280,8 @@ func routines(source: string; keyword = KEYWORD_PROC): seq[Routine] =
         break
       if tokens[j].kind == KindToken.Open and partners[j] > j:
         if s == "(" and parameters < 0: parameters = j
+        if s == "[" and parameters < 0 and generics.len == 0:
+          generics = genericNames(source, tokens, partners, j)
         for m in j .. partners[j]:
           if tokens[m].kind == KindToken.Word: words_head.add tokens[m].spelling(source)
         j = partners[j] + 1
@@ -263,7 +290,10 @@ func routines(source: string; keyword = KEYWORD_PROC): seq[Routine] =
       inc j
 
     if parameters >= 0:
-      routine.types = parameterTypes(source, tokens, partners, parameters)
+      let named = generics.ids
+      routine.types = parameterTypes(source, tokens, partners, parameters).filterIt(
+        not it.split(SEPARATORS_TYPE).anyIt(it.len > 0 and it.identity in named)
+      )
       routine.defaults = parameterDefaults(source, tokens, partners, parameters)
 
     # Body: rest of `=` line, else lines indented deeper than head.
@@ -404,9 +434,10 @@ func isAskedPointing(routine: Routine): bool =
   ##   number and plain word, so compiler answers whether it points.
   let builtins = TYPES_BUILTIN.ids
   routine.is_candidate and routine.types.anyIt(
-    it.split({' ', '[', ']', ',', '(', ')', ':', '.', '*', '{', '}', '=', '\n', '"', '\''})
-      .anyIt(it.len > 0 and it[0] notin {'0' .. '9'} and it.identity notin builtins and
-        it notin WORDS_PLAIN)
+    it.split(SEPARATORS_TYPE).anyIt(
+      it.len > 0 and it[0] notin {'0' .. '9'} and it.identity notin builtins and
+        it notin WORDS_PLAIN
+    )
   )
 
 
