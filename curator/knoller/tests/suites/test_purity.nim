@@ -350,6 +350,16 @@ suite "Style §1":
     check not "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = 2 * x\n".asksPointing
 
 
+  test "file asked for `func` alone, which checks clean in no configuration, warns nothing":
+    # Case of run over projects: proposals of `pga_benchmark` hold `func` asked and no candidate,
+    #   and check clean nowhere, so reason would say each `proc` stays where none stands.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n" &
+      "func size(n: JsonNode): int =\n  n.len\n\nlet y: int = \"a\"\n"
+    check source.asksPointing
+    let pures = proven(source)
+    check pures.reason.len == 0 and pures.pointing.len == 0 and pures.sites.len == 0
+
+
   test "check reports each `proc` compiler proves, and fix writes `func` off fenced line":
     let
       source = "proc f(x: int): int = x\nproc g(x: int): int = x\nlet h = 1\n"
