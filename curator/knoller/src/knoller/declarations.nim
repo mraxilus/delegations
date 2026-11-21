@@ -36,9 +36,11 @@
 ##     line holding `#` comment. Doc trailing line keeps lines below that continue it.
 ##   Doc above type, field, global binding or enum member moves where missing doc writes it
 ##     (`target`), where blank line or `#` comment stands above it. Doc right below other code,
-##     or that declaration holds as its own, stays: either may own it. Doc opening file stays too,
-##     as doc of module, since `nim doc` reads it so (ruling `D3 a` of #980; `nim jsondoc` of Nim
-##     2.4.0).
+##     or that declaration holds as its own, stays: either may own it. Doc that only blank lines
+##     and `#` comments stand above stays too, as doc of module, since `nim doc` reads it so
+##     (rulings `D3 a` and `D1 a` of #980; `nim jsondoc` of Nim 2.4.0). Doc below code or other
+##     doc moves, though `nim doc` reads module's there too, since hand that wrote it above
+##     declaration meant it for that one.
 ##   One-line doc inside value over lines, where `nim doc` reads none, moves after `=` ending
 ##     first line where it fits, else after close of value; inside value opening `block`, it
 ##     stays for hand, as missing doc leaves such value. Binding of any reach reads so, and so
@@ -66,8 +68,6 @@
 ##     first line in `block:` or inside bracket, where `nim doc` reads none (`nim jsondoc` of
 ##     Nim 2.2.12 and 2.4.0).
 ##   Cost: doc trailing first line of value over brackets, or of signature, stays unread there.
-##   Cost: doc under blank line or `#` comment opening file moves onto declaration right below
-##     it, though `nim doc` reads it as doc of module too (`nim jsondoc` of Nim 2.4.0).
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of
@@ -348,6 +348,13 @@ func placements(source: string): seq[Placement] =
       quoted[below] = true
       inc below
 
+  # First line holding code or opening doc: doc whose run opens there is doc of module.
+  var heading = lines.len
+  for k in 0 ..< lines.len:
+    if code[k].strip.len > 0 or opening[k]:
+      heading = k
+      break
+
   # Read each declaration that takes doc, once for each line.
   let found = source.declarations
   var seen: seq[int]  # Line of each declaration read, so names sharing line read once.
@@ -369,14 +376,14 @@ func placements(source: string): seq[Placement] =
       indent = lines[i].indentWidth
 
     # Read doc above at declaration's indent, which block opening above may own, and line below
-    #   signature, whose indent routine's doc takes; doc opening file is module's, as `nim doc`
-    #   reads it (ruling `D3 a` of #980).
+    #   signature, whose indent routine's doc takes; doc under blank lines and `#` comments alone
+    #   is module's, as `nim doc` reads it (rulings `D3 a` and `D1 a` of #980).
     var top = i - 1
     while top >= 0 and opening[top] and lines[top].indentWidth == indent: dec top
     var below = e + 1
     while below < lines.len and lines[below].strip.len == 0: inc below
     let
-      is_owned = top < 0 or (lines[top].strip.len > 0 and lines[top].indentWidth < indent)
+      is_owned = heading > top or (lines[top].strip.len > 0 and lines[top].indentWidth < indent)
       outline = line_doc + 1
     result.add Placement(
       line: i,
