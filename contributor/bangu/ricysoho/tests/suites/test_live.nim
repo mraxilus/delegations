@@ -833,14 +833,16 @@ suite "Internal: Live text":
       check live.is_tied  # `ChangeNif` pe `live.nim`
 
 
-  test "Currency sign reads typed byte by byte or in pieces as read whole, and grows":
-    # `Architect` jdice `D1 a` .e `D2 a` .e `D3 a` bu'u `#1003`
+  test "Sign of money or number reads typed byte by byte or in pieces as read whole, and grows":
+    # `Architect` jdice `D1 a` .e `D2 a` .e `D3 a` .e `D4 b` bu'u `#1003`
     #   .i lo jdini sinxa cu sinxa lo valsi va'o lo nu pencu pa namcu
+    #   .i lo sinxa pe lo namcu cu sinxa lo valsi va'o lo nu zvati lo stuzi poi le javni cu cusku
     #   .i ro selci'a cu se tcidu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi cu katna
     var rng = initRand(SEED)
     for text in [
         "mi ponse €5 .e $6", "lo jdima cu du 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
-        "5 € .i 5€6 .i mi ponse £5", "€", "mi ponse $5$"]:
+        "5 € .i 5€6 .i mi ponse £5", "€", "mi ponse $5$", "li -5% .e li ½ .i mi ponse ~5€",
+        "li π .i li 2π .i li 5-3 .i li −5 .i 5.%"]:
       for draw in 0 .. DRAWS_NUMBERED:
         let cuts = (if draw == 0: toSeq(1 ..< text.len) else: text.cutsRandom(rng, PIECE_MOST))
         checkpoint text & " cut at " & $cuts

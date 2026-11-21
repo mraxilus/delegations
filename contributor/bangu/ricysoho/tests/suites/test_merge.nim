@@ -170,6 +170,8 @@ const
     "zoi gy. ab'h .gy. cu melbi",  # lo selci'a poi zo zoi sitna ke'a ralte `'` .e `h`
     # lo valsi poi lo jdini sinxa cu sinxa ke'a cu vasru no stuzi to `#1003` toi
     "mi ponse €5 .e $6 .i do ponse 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
+    # le pamoi valsi pe lo sinxa pe lo namcu cu vasru le stuzi pe le sinxa to `#1003` toi
+    "li -5% .e li ½ cu namcu .i mi ponse ~5€", "li π .i li ∞ .i li +5 .i li −5",
   ]
     ## lo selci'a poi selfi'i gi'e se tcidu ca lo nu tcidu le mulselci'a
     ##   .i lo pagbu be ro le selci'a cu se jmina fo lo selci'a be fi `NIF` be'o pe le selci'a
