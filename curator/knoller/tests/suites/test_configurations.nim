@@ -88,6 +88,7 @@ suite "Configurations":
       "when defined(js):\n  a()\nelse:\n  b()\n",  # target sets symbol, so no define gives it
       "when IS_CONFORMAL:\n  a()\nelif DIMENSIONS > 3:\n  b()\nelse:\n  c()\n",  # three branches
       "proc p() =\n  ## Do.\n  when IS_CONFORMAL:\n    a()\n  else:\n    b()\n",  # inside routine
+      "const C = block:\n  when IS_CONFORMAL:\n    1\n  else:\n    2\n",  # inside value of block
       "when IS_CONFORMAL: a()\nelse: b()\n",  # branches on lines of heads
     ]:
       check kept.found.len == 0
@@ -166,6 +167,9 @@ suite "Configurations":
         # cost: complement written otherwise names no pair
       "proc p() =\n  ## Do.\n  when IS_CONFORMAL:\n    a()\n  when IS_RIGID:\n    b()\n",
         # inside routine
+      "const C = block:\n  var c = 0\n  when IS_CONFORMAL:\n    inc c\n" &
+        "  when IS_RIGID:\n    inc c, 2\n  c\n",
+        # inside value of block, as `CATALOGUE` of `pga_benchmark`
     ]:
       checkpoint kept
       check checkConfigurations("a.nim", kept, both).len == 0
