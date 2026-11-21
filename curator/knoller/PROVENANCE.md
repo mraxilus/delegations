@@ -837,9 +837,10 @@ then the fix of one rule alone, on a copy of the library.
   output differs by the 3 reports alone.
 
 **Verified by run over the projects of the repository at `16a573cc`.** A driver with the code of
-knoller at `bca6a142` read each project as one package, by `git ls-files`, with the checkouts of
-each lock and the engine of `dance_ontology` (2026-11-20). `koch fix --dry-run --branch:main` read
-the five projects that hold a routine of this rule, over the same tree.
+knoller at `bca6a142` read each project as one package, by `git ls-files` (2026-11-20). It read
+them with the checkouts of each lock and the engine of `dance_ontology`. Then
+`koch fix --dry-run --branch:main` read the five projects that hold a routine of this rule, over
+the same tree.
 
 - Sibling markers: 1 report from the driver, the `{.all.}` of `tests/suites/test_marker.nim:9` of
   `pga_visualiser`, as the ruling counts.
@@ -1467,8 +1468,8 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - `koch fix --dry-run --branch:main`, built at each, gives 23 and 861 fixes over the same tree. Of
   the 36, the 14 docs of a value that opens `block` stay for hand, so koch fixes the other 22. It
   fixes 1 more, at `curator/audit/src/checker.nim:79`, where the chain also fixes expression
-  spacing. Of the 1,056 reports of missing doc, 188 stand in the 11 files that do not settle,
-  which the chain leaves as written. The cause of the other 7 is unmeasured.
+  spacing. Of the 1,056 reports of missing doc, 188 stand in the files that do not settle, which
+  the chain leaves as written. The cause of the other 7 is unmeasured.
 
 ## Stages
 
@@ -2988,8 +2989,7 @@ there is unverified.
 
 - Why does rule 11 make 49 routines a `func` where the ruling counts 22? `pga_visualiser` takes
   33 against 16, and `dance_ontology` 13 against 6.
-- Why does rule 17 report 17 tests in `pga_visualiser`, where the ruling counts 16 tests and 1
-  skip?
+- Why does rule 17 report one test more in `pga_visualiser` than the ruling counts?
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
   git URL. Its check needs the package list of nimble, which the proxy of the machine of a
   delegate refuses with status 405. Atlas reads the form through an override (`## Package`).
