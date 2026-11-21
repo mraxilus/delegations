@@ -81,6 +81,20 @@ suite "Internal: Symbols":
       "\"\"\\nim\\bin\\nim.exe\" \"check\" \"-\" < \"\\T\\t\" > \"\\T\\o\" 2>&1\""
 
 
+  test "line moves into directory caller names, through either shell":
+    check lineRedirected("/t/nim", ["check", "-"], "/tmp/t", "/tmp/o", directory = "/p q") ==
+      "cd '/p q' && /t/nim check - < /tmp/t > /tmp/o"
+    check lineRedirected(
+      "\\nim\\bin\\nim.exe",
+      ["check", "-"],
+      "\\T\\t",
+      "\\T\\o",
+      cmd = "\\Windows\\system32\\cmd.exe",
+      directory = "\\p q",
+    ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"cd /d \"\\p q\" && \"\\nim\\bin\\nim.exe\" \"check\" \"-\" < \"\\T\\t\" > \"\\T\\o\"\""
+
+
   test "path reads with separator `/` on Windows, and `\\` stays name character on POSIX":
     check slashed("\\r\\tests\\a\\t1.nim", '\\') == "/r/tests/a/t1.nim"  # joined on Windows
     check slashed("/r/tests/a\\b.nim", '/') == "/r/tests/a\\b.nim"
@@ -274,6 +288,27 @@ suite "Internal: Symbols":
       directory: directory,
     ))
     check jobs.mapParallel(cleaned, workers = 4) == toSeq(1 .. 8).mapIt(it mod 2 == 0)
+
+
+  test "checks on several workers at once each run in their own directory, and move no other":
+    # Case held: `startProcess` given `workingDir` moves directory of whole process around spawn on
+    #   POSIX, so workers moved it under each other, and suite stayed in directory that test removed
+    #   (#1001). Domain: eight directories, each holding module that only its own text imports.
+    let before = getCurrentDir()
+    var
+      roots: seq[string]
+      jobs: seq[Checking]
+    for k in 1 .. 8:
+      let root = createTempDir("knoller_", "_checks")
+      roots.add root
+      writeFile(root / "own" & $k & ".nim", "const VALUE* = " & $k & "\n")
+      jobs.add Checking(
+        text: "import own" & $k & "\nstatic: doAssert VALUE == " & $k & "\n", directory: root
+      )
+    defer:
+      for root in roots: removeDir(root)
+    check jobs.mapParallel(cleaned, workers = 4) == repeat(true, 8)
+    check getCurrentDir() == before
 
 
   test "compiler that does not start leaves check unclean, and says so":
