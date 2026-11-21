@@ -255,11 +255,10 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `expression-spacing` | A space stands only where the expression rule puts it. |
 | `parameter-separators` | Commas stand between parameters, and semicolons between groups. |
 | `tuple-separators` | A tuple type takes commas between its fields. |
-| `signature-wrapping` | A signature wraps its parameters only where it must. |
-| `call-wrapping` | A call takes one argument to a line only where it must. |
+| `signature-wrapping` | A signature wraps its parameters only where it must, or where its last separator keeps it split. |
+| `call-wrapping` | A call takes one argument to a line only where it must, or where its last comma keeps it split. |
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
-| `trailing-separator` | A list of one item to a line ends in a separator. |
 | `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `stage-comment` | A stage of three lines of code or more opens with a comment if another does. |
