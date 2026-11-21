@@ -76,7 +76,7 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 |--------|-------------|
 | Antieven pairs for any 𝐧 | A reflection operator transforms each multivector to zero (D49 f) |
 | Every pair for full operands | 204 multiplies and 607 adds at rga4d, more adds than the chain |
-| Table of both types for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator, so a full 𝐧 takes the chain (D1 b) |
+| Table for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator (D1 b) |
 | Chain as one function | Closes D08, but spends what the chain spends |
 | A pair counted twice | 105 adds more at rga4d, one for each of 112 doubled terms, less 7 |
 
