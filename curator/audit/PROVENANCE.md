@@ -3332,8 +3332,8 @@ tree matched each report of the two outputs by rule, path and line.
 - Each other project takes none of these rules. The compound argument of rule 15 gives the same
   counts as before the wiring.
 - The rewrites of rule 11 in `pga_benchmark` and `knoller` are `mergeAllocations` and
-  `initToolchains`, at the code of `cbf1e68b`. The code of D1 a of #980 keeps `mergeAllocations` a
-  `proc`, and `## Pure routines` of knoller names `initToolchains` as a false report.
+  `initToolchains`, at the code of `cbf1e68b`. The code of D1 a and D6 a of #980 keeps each a
+  `proc`, as `## Pure routines` of knoller gives.
 - The run read the code before `4998481a` and `ea179bdf`. The first changes no count, since the run
   left no index of rule 9 for hand. The second changes only the warning of a refused rename, and
   the table counts that rename as one site.
