@@ -173,11 +173,14 @@ suite "Style §1":
     check proven(source).sites == @[source.site("proc b")]
 
 
-  test "default argument is no part of body, so routine whose default reads environment proves":
-    # Cost of record: `initToolchains` of knoller reads as pure, though its default calls `getEnv`.
+  test "default argument reads as part of body, so routine whose default reads environment stays":
+    # Ruling `D6 a` of #980: `initToolchains` of knoller stays `proc`, since each call leaving its
+    #   argument out reads environment. Default with no effect leaves candidate as it stands.
     let source = "{.experimental: \"strictFuncs\".}\n\nimport std/os\n\n" &
-      "proc home(path = getEnv(\"HOME\")): string =\n  path\n\necho home()\n"
-    check proven(source).sites == @[source.site("proc home")]
+      "proc home(path = getEnv(\"HOME\")): string =\n  path\n\n" &
+      "proc scaled(x: int, k = 2): int =\n  x * k\n\necho home(), scaled(1)\n"
+    check candidatesPure([("a.nim", source)])["a.nim"] == @[source.site("proc scaled")]
+    check proven(source).sites == @[source.site("proc scaled")]
 
 
   test "routine taking `ref` or `ptr` parameter stays `proc`, since other holder can change it":
@@ -189,7 +192,7 @@ suite "Style §1":
       "proc read(c: Cell): int =\n  c.x\n\nproc aliased(a: Alias): int =\n  a.len\n\n" &
       "proc deref(p: ptr int): int =\n  p[]\n\nproc raw(p: pointer): bool =\n  p.isNil\n\n" &
       "proc handled(h: Handle): int =\n  1\n\nproc held(c: var Cell): int =\n  c.x\n\n" &
-      "proc fresh(n = newJObject()): int =\n  n.len\n\nproc twice(x: int): int =\n  2 * x\n\n" &
+      "proc fresh(c = Cell(x: 1)): int =\n  c.x\n\nproc twice(x: int): int =\n  2 * x\n\n" &
       "proc bump(x: var int) =\n  inc x\n"
     check candidatesPure([("a.nim", source)])["a.nim"].len == 11
     check proven(source).sites == @[source.site("proc twice"), source.site("proc bump")]
