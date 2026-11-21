@@ -100,9 +100,10 @@ const
     ##     jbini be lo lerfu
   WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi sinxa lo lerfu pe `0` bi'o `9` to `CLL 18.2` toi
-  WORDS_RUNS = ["pa", "ki'o", "by", "lo'a", ".abu", "slaka bu"]
+  WORDS_RUNS = ["pa", "ki'o", "by", "lo'a", ".abu", "slaka bu", "lau by", "tei by foi"]
     ## lo valsi pe `PA` .e lo lerfu valsi poi le flalu pe lo lerfu porsi cu cipra lo remei be ke'a
     ##   .i re le valsi cu du lo lerfu valsi poi zo bu cu lidne ke'a to `CLL 17.4` toi
+    ##   .i re le valsi cu se krasi zo lau .a zo tei to le javni pe li 987 toi
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
