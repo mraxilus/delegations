@@ -242,8 +242,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   that promotes every comma to a semicolon is wrong here, so configure it or ignore it.
 - A signature that does not fit on its line wraps its parameters onto one line of their own.
   Where that line does not fit either, put one parameter, or one group of a shared type, on
-  each line, with no separator after the last. Put the return type and the pragmas on the
-  closing line:
+  each line. No separator follows the last. Put the return type and the pragmas on the closing
+  line:
 
   ```nim
   func filterFactors(
