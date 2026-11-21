@@ -820,42 +820,50 @@ the landmark aliases.
 
 **Each reader runs its compiler calls on a pool of threads, one for each core (`pools.nim`).** A
 call of `nim check` or of `nimsuggest` takes about a second, and its caller waits for the answer.
-One after another, the 60 calls of `koch fix --dry-run curator/knoller` take 64 s of 111 s, while
-three of the four cores wait (the profile on #1001).
+At `b585ea65`, before the pool, the 59 calls of rules 7 and 11 in `koch fix --dry-run
+curator/knoller` run one after another. They take 61 s of 111 s, while three of the four cores
+wait (the profile on #1001).
 
 - `resolvePures` gives each file to a thread of the pool. `resolveMarkers` gives a thread each
   importer for `nimsuggest`, each module for its hints, and each importer for the checks of its
-  `{.all.}`. Each step of a project ends before the next starts, since each reads the answers of
-  the one before.
+  `{.all.}`. The confirmations read the answers of both steps before them, so they run last. The
+  hints read none of the answers of `nimsuggest`, and run after them all the same.
 - A thread runs a whole job, so the checks of one file run in turn, as `provenPure` asks them. The
   answers keep the order of their jobs, so each table takes them as one loop gives them.
-- Each job and each answer passes by value. ORC counts references without atomics, so two threads
-  never count one object, and a string, a sequence and a table copy whole.
-- `checked` gives the compiler its text through a file and takes its output through a file, by the
-  shell, and its process opens no pipe. A child that another thread starts meanwhile inherits each
-  pipe open then. So its copy of the write end of a pipe of text would keep the compiler waiting
-  for the end of the text.
+- No job and no answer holds a `ref`, since ORC counts references without atomics, and two threads
+  must never count one object. A thread reads its job in place, and its answer moves into the
+  sequence of the caller.
+- `checked` gives the compiler its text through a file, and takes its output through a file, by
+  the redirection of the shell. Its process opens no pipe. A child that another thread starts
+  meanwhile inherits each pipe open then. So its copy of the write end of a pipe of text would stop
+  the compiler before the end of the text, for ever.
 - The shell moves into the directory of each run (`lineRedirected`). On POSIX, `startProcess` given
   `workingDir` moves the directory of the whole process around the spawn, so two threads would move
   it under each other.
 - An importer whose every `{.all.}` reaches a symbol checks nothing, since that check would confirm
   nothing.
-- Verified by `suites/test_pools.nim`, and by `suites/test_symbols.nim`, which runs more checks than
-  threads at once through the real compiler, each in a directory of its own.
+- Verified by `suites/test_pools.nim`, for the order of the answers, the jobs side by side and the
+  exceptions. Verified by `suites/test_symbols.nim`, which runs more checks than threads at once
+  through the real compiler. In one case, each check takes a directory of its own. The importer
+  that checks nothing and the order of the steps hold by the runs below alone.
 - Rejected: a pool of compiler processes, which turns the loop of each prover into a state machine
   across files.
 - Rejected: `malebolgia` or `taskpools`, the first dependency of knoller for one routine.
 - Cost: a job after the first that raised still runs. The caller raises that first one again as
   `CatchableError`, with its message, whatever the count of threads.
+- Cost: the hints could run beside `nimsuggest`, and wait for it.
 
 **Verified by run of `koch fix --dry-run curator/knoller` over the tree at `b585ea65`,
 2026-11-21.** Koch built at `b585ea65` and at `41c24818` prints the same 2,454 lines in each of
-three runs, which ran in turn. The median falls from 116.9 s to 67.4 s, on 4 cores at 2.10 GHz
-under a load of 1.0 to 1.4.
+three runs, and the runs alternate between the two builds. The median falls from 116.9 s to
+67.4 s. Each build is the debug build that `nim c` makes, on 4 cores at 2.10 GHz. The load average
+of one minute, read from `/proc/loadavg` after each run, is 1.05 to 1.36.
 
-- Over the same tree, each project that `koch list-projects --all` lists ran once with each build.
-  Each ran under a branch of its own, with no checkout of a lock. Each prints the same text with
-  both builds, and the sum of their times falls from 1,347.7 s to 776.7 s.
+- Over the same tree, each other project that `koch list-projects --all` lists ran once with each
+  build, under a branch of its own. Each prints the same text with both builds. With the first run
+  of each build on knoller, the sum of their times falls from 1,347.7 s to 776.7 s.
+- The tree holds no checkout of a lock. So each file that imports a package of a lock stays
+  unresolved with each build, and warns.
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 `knoller --check pga.nim pga tests`, built at `bca6a142`, reports `func-pure` at
@@ -880,6 +888,10 @@ then the fix of one rule alone, on a copy of the library.
   17.8 s at `e6c931b1`, with them. It ran on 4 cores at 2.10 GHz, under a load near 2 from other
   work. Each figure is the median of three runs, each with an empty cache of Nim, 2026-11-20. The
   output differs by the 3 reports alone.
+- Cost: at `b585ea65`, the same command takes 68.4 s, and built at `207bb857`, with the pool,
+  54.3 s. Both builds print the same 266 lines in each of three runs, which alternate between the
+  builds. Each figure is the median of those runs of debug builds, 2026-11-21, under a load of 1.00
+  to 1.95 while a subagent ran beside them.
 
 **Verified by run over the projects of the repository at `16a573cc`.** A driver with the code of
 knoller at `bca6a142` read each project as one package, by `git ls-files` (2026-11-20). It read
@@ -908,7 +920,7 @@ the same tree.
   `pga_benchmark`. Six hold only a `func` that the rule asks about, and stay silent. They are four
   other `laws.nim` of proposals of `pga_benchmark`, `src/desktop/panel.nim` of `pga_visualiser` and
   `simulation/engine.nim` of `dance_ontology`.
-- Cost: the time of each pass over the projects is unmeasured as a pair.
+- Cost: the time of each pass over the projects at `16a573cc` is unmeasured as a pair.
 
 ## Tests
 
