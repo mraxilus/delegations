@@ -4413,6 +4413,90 @@ transcript, so another copy gives its own figures.
   They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.40 to 0.57, as
   `/proc/loadavg` gave it before and after each set.
 
+## Log of claims
+
+**`stop` adds each scored claim of each reflection to the log of claims of its role.** A log is
+`claims.txtpb`, the text format of one `Log` of `src/claims.proto`, with one `Claim` to a line.
+#964 asks for it, and its ruling (comment 7016211726) puts each log beside the record of its
+project. So a tool can join the logs, for figures by delegate, model, effort, project and kind.
+Each row names its project, the role of the branch that wrote it. Its field `delegate` holds the
+`sessionId` of the delegate.
+
+- A claim is a row of the first table with column `Predicted` of a `## Reflection` of the
+  current model turn. Its cell is a whole claim of a block that a call took. `No prediction`, a
+  cell that quotes no claim, and a cell under `State` that no marker opens give no row.
+- A reflection counts wherever it stands in the turn, below a sign-off too, since its marks hold
+  there. Its key keeps the reflection that a reply writes again from a second row.
+- The claim takes the latest call before the reflection whose block holds it, of the kind that
+  the line `**Subagent:**` of the reflection names. Where no call of that kind holds it, a call
+  of any kind serves. So the claim of the block of a critic takes the call of the critic.
+- The kind is the `subagent_type` of the call. The model is the `resolvedModel` of its result,
+  else the input `model`. The effort is the input `effort`, else the `effort:` of its template.
+- The state is the marker that opens the cell under `State`, and the confidence is the
+  percentage of the cell under `Confidence`. The tokens and the cost are the first `<n> tokens`
+  and `$<x>` of the line `**Subagent:**`. A call of `critic` that this line does not name reads
+  the line `**Critic:**`.
+- A claim whose percentiles end it takes the last three numbers of its text. Its outcome is the
+  first number of its cell under `Result`, so `GUIDE.md` asks that this cell opens with it.
+- The address is the `sessionId`, the `uuid` of the entry of the reflection, and the number of
+  the row. The key is the `sessionId`, the call, the position of the claim in its block, and the
+  state. So a later mark of a claim that waits adds a row, and the same mark adds none.
+- Verified by `suites/test_claims_log.nim`, over transcripts of a `reviewer` and its `critic`,
+  of a `critic` alone, and of three calls whose blocks hold one claim.
+- Verified by hand on 2026-11-20, by `koch hook stop` built at `176d9e7a`, over a frozen copy of
+  the transcript of the delegate on #963. The copy holds 7,442 entries, and ends at the
+  reflection of a `critic` at `max`. The 3 rows read `resolvedModel` and the input `effort` of
+  a call in the background. Assumed: a call in the foreground carries both the same way.
+
+**The branch of the checkout names the log, in the scope that its role may write.** A branch
+`contributor/<domain>/<project>/<name>` or `curator/<project>/<name>` writes `claims.txtpb` at the
+root of its project. A root branch `curator/<name>` writes `curator/audit/claims.txtpb`, since
+`checkLayout` takes only the index directly under `curator/`. Each other checkout writes
+`~/.cache/koch/claims/waiting.txtpb`, outside the tree, with the project `curator`.
+
+- The root curator keeps `main` detached, and no hook writes in that checkout (`CURATOR.md`,
+  Branch and commits). So `nim r koch claims` in the worktree of a root branch moves the rows
+  that wait outside the tree into its log. Each other branch refuses them.
+- A new log opens with a comment that names its schema. `stop` writes no row whose key the log
+  or the waiting file holds. It reads the current turn at each stop, a reply to a refusal too.
+- `logStop` holds the work of `stop` for the log. A write that fails prints its error, counts
+  none, and refuses no turn.
+- Each row is one line, so `.gitattributes` gives each log the merge driver `union`. Two branches
+  that add rows to one log then merge clean, by `git merge-tree` too. Git reads the attribute
+  from the working tree, or from `HEAD` in a bare repository, and never from the merged commits.
+  Verified by hand with git 2.43.0 in scratch repositories, on 2026-11-20.
+- Verified by `suites/test_claims_log.nim`, in scratch roots.
+- Cost: the log of the audit project holds the rows of the root curator too, each with its own
+  project.
+
+**`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
+exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
+hook needs no library and no `protoc` at each stop, and one row stays one line, as `union`
+needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 as it is.
+
+- `protoc --encode` reads each line against the schema, and refuses a misspelt field. Then the
+  suite compares each field that `protoc --decode` prints. Verified by
+  `suites/test_claims_log.nim`, and by hand on 2026-11-20: a field name misspelt in `lineClaim`
+  fails that test.
+- `tools/build.nim` declares `protobuf-compiler` through its verb `system`, so the runner installs
+  `protoc` for the suite.
+- Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as Data
+  asks. It would be the first dependency of the audit project, with `protoc` at each stop of each
+  delegate. `protoc` 3.21.12 prints one row over 17 lines, measured by hand on 2026-11-20.
+- Rejected: `buf convert` for the suite, which drops a misspelt field with no error
+  (`bufbuild.nim`).
+- Rejected: tokens summed from the transcript of the subagent. Its cost would need a price for
+  each model in code, and the reflection states both.
+- Cost: a cell that `stop` refuses gives no row until a reflection quotes its claim whole.
+- Cost: one claim in the blocks of several calls of one kind takes the latest such call alone.
+  So replays of one prompt at several levels need a reflection for each run.
+- Cost: rows that wait outside the tree are lost where the machine ends before `koch claims`
+  moves them.
+- Cost: each machine that runs the audit suite needs `protoc`, as `nim r koch list-packages
+  curator/audit` names it.
+- Cost: whether the merge of GitHub applies `union` is unmeasured. A branch that it refuses
+  merges `main` in its own checkout, where git applies it.
+
 ## Skills
 
 **A skill holds the moment of an act, and points at the section of the charter that binds the

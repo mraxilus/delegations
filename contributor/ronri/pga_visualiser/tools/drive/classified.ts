@@ -21,8 +21,6 @@ const KINDS_CLASSIFIED = [
   'point', 'horizon point', 'line', 'horizon line', 'plane', 'horizon plane',
 ];
 
-/** Word bridge names multivector with no geometry by; such object draws no marker. */
-const WORD_NOTHING = 'mixed grade, nothing to draw';
 
 /** Places left drag may start from, tried in turn until one stands over nothing to drag. */
 const STARTS_ORBIT: Array<[number, number]> = [
@@ -134,12 +132,13 @@ export async function driveClassifiedOnce(page: Page): Promise<void> {
   }
 
   // Every object at once, each with marker, pulse and label of its own.
-  const drawable = await page.evaluate((word) => {
+  // Drawable is one of kinds: each other word, as zero or scalar, names value with no marker.
+  const drawable = await page.evaluate((words) => {
     nimSelectClear();
     nimSelectAddAll(nimSceneHandles());
     refreshSelectionSnapshot();
-    return nimSceneHandles().filter((one) => nimObjectKindWord(one) !== word).length;
-  }, WORD_NOTHING);
+    return nimSceneHandles().filter((one) => words.includes(nimObjectKindWord(one))).length;
+  }, KINDS_CLASSIFIED);
   counted.push(await countFrames(page, 'every object selected', drawable));
 
   // Pointer resting on point standing in view, which overlay marks as hovered.

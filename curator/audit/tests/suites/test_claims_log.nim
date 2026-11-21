@@ -1,0 +1,431 @@
+## Replicate log of claims: rows of reflection read from transcript, line of each, its key, its
+##   path and project by branch, and file `stop` writes, reads back and moves.
+##   Text format of each line is read back through `protoc` against `claims.proto`, field by
+##     field: `--encode` refuses misspelt field, which `buf convert` drops with no error, as
+##     Architect ruled on #989 (comment 7053329096).
+##   Cost: round trip runs `protoc`, which `tools/build.nim` declares, so machine lacking it fails.
+
+{.experimental: "strictFuncs".}
+
+import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
+import std/unittest
+import ../../src/[claims_log, hooks]
+
+
+const
+  KINDS = ["critic", "resolver", "reviewer"]  ## Kinds templates of scratch root name.
+  DELEGATE = "s1"  ## `sessionId` of each entry of reflection.
+  UUID = "u9"  ## `uuid` of entry of reflection.
+  STAMP = "2026-11-20T11:57:03.512Z"  ## `timestamp` of entry of reflection.
+  MODEL = "claude-opus-5-5"  ## Model result of each call names, unless test names other.
+  PROJECT = "contributor/bangu/rictadni"  ## Project rows of `BRANCH` belong to.
+  BRANCH = "contributor/bangu/rictadni/outside-names"  ## Branch whose log suite writes.
+  PREDICTION_REVIEWER = """## Prediction
+
+**Subagent:** reviewer of the diff, fresh context.
+
+- Judgement: the race leads the findings (70%). Resolution criterion: it is the first finding.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
+  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+"""
+    ## Block of reviewer: one claim with label, and one number.
+  PREDICTION_CRITIC = """## Prediction
+
+**Subagent:** critic of the report, fresh context.
+
+- it fails one claim of the report (65%). Resolution criterion: the report of the critic.
+"""
+    ## Optional block of critic, with no label.
+  REFLECTION = """## Reflection
+
+**Subagent:** reviewer of the diff, 170,000 tokens and $1.10 at list price, 57 calls, 15 min.
+**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min.
+
+| State | Confidence | Predicted | Result |
+| --- | --- | --- | --- |
+| ✅ | 70% | the race leads the findings | it leads, as "high" \| first |
+| ⬜ | 80% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 320,000, above |
+| ⬜ | 60% | No prediction | the resolver took none |
+| ⬜ | 60% | a claim of no block | none |
+| ⏸️ | 65% | it fails one claim of the report | waits on the resolver |
+"""
+    ## Reflection whose rows are claim of reviewer, number, missed prediction, cell quoting no
+    ##   claim, and claim of critic.
+  REFLECTION_RACE = """## Reflection
+
+**Subagent:** reviewer of the diff, 90,000 tokens and $0.60 at list price, 30 calls, 8 min.
+
+| State | Confidence | Predicted | Result |
+| --- | --- | --- | --- |
+| ✅ | 70% | the race leads the findings | it leads |
+"""
+    ## Reflection on reviewer whose one row quotes claim that several blocks hold.
+
+
+func lineUser(text, kind: string): string =
+  ## Write transcript line of user entry holding text, from origin of kind.
+  $(%*{"type": "user", "origin": {"kind": kind}, "message": {"content": text}}) & "\n"
+
+
+func lineSaid(text: string, uuid = ""): string =
+  ## Write transcript line of assistant entry holding text that ends model turn, as entry of
+  ##   delegate `DELEGATE` at `STAMP`, with uuid.
+  $(%*{"type": "assistant", "uuid": uuid, "timestamp": STAMP, "sessionId": DELEGATE, "message": {
+    "content": [{"type": "text", "text": text}], "stop_reason": "end_turn",
+  }}) & "\n"
+
+
+func inputAgent(kind, effort, model: string): JsonNode =
+  ## Write input of `Agent` call of kind, with effort and model where each is given.
+  result = %*{"subagent_type": kind, "description": "Do the work", "prompt": "Do it."}
+  if effort.len > 0: result["effort"] = %effort
+  if model.len > 0: result["model"] = %model
+
+
+func lineResult(id: string, resolved: string): string =
+  ## Write transcript line of launch notice of call of id, whose result names model resolved, or
+  ##   none where it is empty.
+  var result_tool = %*{"status": "async_launched", "agentId": "a" & id}
+  if resolved.len > 0: result_tool["resolvedModel"] = %resolved
+  $(%*{"type": "user", "message": {"content": [{
+    "type": "tool_result", "tool_use_id": id, "content": "Async agent launched.",
+  }]}, "toolUseResult": result_tool}) & "\n"
+
+
+func linesAgent(kind: string; effort = ""; id = ""; model = ""; resolved = MODEL): string =
+  ## Write transcript lines of `Agent` call of kind, with input effort and model where given, and
+  ##   its launch notice; id is `toolu_<kind>` where none is given.
+  let
+    named = (if id.len > 0: id else: "toolu_" & kind)
+    call = %*{"type": "assistant", "message": {"content": [{
+      "type": "tool_use", "id": named, "name": "Agent", "input": inputAgent(kind, effort, model),
+    }], "stop_reason": "tool_use"}}
+  $call & "\n" & lineResult(named, resolved)
+
+
+func linesCalling(text, kind, effort, id: string): string =
+  ## Write transcript lines of one assistant entry holding text, then `Agent` call of kind in same
+  ##   message, its launch notice, and text that ends model turn.
+  let entry = %*{"type": "assistant", "uuid": UUID, "timestamp": STAMP, "sessionId": DELEGATE,
+    "message": {"content": [
+      {"type": "text", "text": text},
+      {"type": "tool_use", "id": id, "name": "Agent", "input": inputAgent(kind, effort, "")},
+    ], "stop_reason": "tool_use"}}
+  $entry & "\n" & lineResult(id, MODEL) & lineSaid("Done.")
+
+
+func lineHandback(name: string): string =
+  ## Write transcript line of hand-back of subagent of kind name.
+  $(%*{"type": "user", "isMeta": true, "origin": {
+    "kind": "peer", "from": "a" & name, "name": name, "handback": true,
+  }, "message": {"content": "[Subagent hand-back] Report."}}) & "\n"
+
+
+func linesPredicted(prediction, kind: string; effort = ""; id = ""; model = ""): string =
+  ## Write transcript lines of block in turn of its own, timer, and call of kind it serves.
+  lineSaid(prediction) & lineUser("timer", "task-notification") &
+    linesAgent(kind, effort, id, model) & lineSaid("Started.") & lineHandback(kind)
+
+
+func transcript(reflection = REFLECTION): string =
+  ## Write transcript of reviewer and its critic, each with its block in turn of its own, then
+  ##   reflection in last turn.
+  lineUser("Review the diff.", "human") &
+    linesPredicted(PREDICTION_REVIEWER, "reviewer", "medium") &
+    linesPredicted(PREDICTION_CRITIC, "critic") & lineSaid(reflection, UUID)
+
+
+proc claimsRead(text: string): seq[Claim] =
+  ## Read claims of last turn of transcript, with effort `xhigh` for template of critic.
+  text.parseTurn.subagents.claimsTurn(KINDS, {"critic": "xhigh"}.toTable, PROJECT)
+
+
+proc rootTemplates(): string =
+  ## Make scratch root whose templates name each of `KINDS`, critic with effort `xhigh`.
+  result = createTempDir("claims_", "_root")
+  createDir(result / DIRECTORY_AGENTS)
+  for kind in KINDS:
+    let effort = (if kind == "critic": "effort: xhigh\n" else: "")
+    writeFile(result / DIRECTORY_AGENTS / kind & ".md", "---\nname: " & kind & "\n" & effort &
+      "---\n")
+
+
+proc protoc(verb, input: string): tuple[output: string, code: int] =
+  ## Run `protoc` with verb `--encode` or `--decode` of `claims.Log`, in folder of `claims.proto`,
+  ##   on input; give its output whole and its exit code.
+  ##   Output is read whole, never by line, since `--encode` writes bytes that reading by line
+  ##     changes; input is small, so writing all of it first fills no pipe.
+  let process = startProcess(
+    "protoc",
+    currentSourcePath().parentDir / "../../src",
+    [verb & "=claims.Log", "claims.proto"],
+    options = {poUsePath, poStdErrToStdOut},
+  )
+  process.inputStream.write(input)
+  process.inputStream.close()
+  result.output = process.outputStream.readAll
+  result.code = process.waitForExit
+  process.close
+
+
+
+suite "Log of claims":
+  test "each number of text reads with its groups and decimal part, and nothing around it":
+    check "100,000, 160,000 and 300,000".numbersIn == @[100_000.0, 160_000.0, 300_000.0]
+    check "$0.06, $0.13 and $0.30".numbersIn == @[0.06, 0.13, 0.30]
+    check "52 of 60, 2.4°, 1,23".numbersIn == @[52.0, 60.0, 2.4, 1.0, 23.0]
+    check "1.75.0 and 9.".numbersIn == @[1.75, 9.0]  # digit after point opens no number
+    check "none here".numbersIn.len == 0
+
+
+  test "claim has position of its bullet, with or without label, and number ends at percentiles":
+    let number = "tokens summed over its requests: 100,000, 160,000 and 300,000"
+    check PREDICTION_REVIEWER.positionClaim("Judgement: the race leads the findings") == 1
+    check PREDICTION_REVIEWER.positionClaim("the race leads the findings") == 1
+    check PREDICTION_REVIEWER.positionClaim(number) == 2
+    check PREDICTION_REVIEWER.positionClaim("the race leads") == 0
+    check PREDICTION_REVIEWER.isNumber("Work: " & number)
+    check PREDICTION_REVIEWER.isNumber(number)
+    check not PREDICTION_REVIEWER.isNumber("the race leads the findings")
+    check not PREDICTION_REVIEWER.isNumber("tokens summed over its requests")
+
+
+  test "each row quoting claim of block call took is claim, with its call, marks and figures":
+    let claims = transcript().claimsRead
+    check claims.mapIt(it.text) == @[
+      "the race leads the findings",
+      "tokens summed over its requests: 100,000, 160,000 and 300,000",
+      "it fails one claim of the report",
+    ]
+    let first = claims[0]
+    check first.date == "2026-11-20"
+    check first.delegate == DELEGATE
+    check first.project == PROJECT
+    check (first.kind, first.call) == ("reviewer", "toolu_reviewer")
+    check first.model == MODEL
+    check first.effort == "medium"  # input of call, ahead of template
+    check first.confidence == 0.7
+    check first.state == State.Hit
+    check (first.tokens, first.cost) == (170_000, 1.1)
+    check first.address == DELEGATE & "/" & UUID & "/1"
+    check first.key == DELEGATE & "/toolu_reviewer/1/STATE_HIT"
+    check first.result == "it leads, as \"high\" | first"
+    check first.number.isNone
+
+
+  test "number takes its percentiles from its text, and its outcome from its result":
+    let number = transcript().claimsRead[1]
+    check number.state == State.Miss
+    check number.confidence == 0.8
+    check number.key == DELEGATE & "/toolu_reviewer/2/STATE_MISS"
+    check number.number.isSome
+    let percentiles = number.number.get
+    check (percentiles.low, percentiles.median, percentiles.high) == (1e5, 1.6e5, 3e5)
+    check percentiles.outcome == some(320_000.0)
+    let silent = transcript(REFLECTION.replace("320,000, above", "above")).claimsRead[1]
+    check silent.number.get.outcome.isNone
+
+
+  test "claim of block of critic takes call of critic, with its line and effort of template":
+    let critic = transcript().claimsRead[2]
+    check (critic.kind, critic.call) == ("critic", "toolu_critic")
+    check critic.effort == "xhigh"
+    check (critic.tokens, critic.cost) == (50_000, 0.35)
+    check critic.state == State.Waiting
+    check critic.address == DELEGATE & "/" & UUID & "/5"
+    check critic.key == DELEGATE & "/toolu_critic/1/STATE_WAITING"
+
+
+  test "critic that line `**Subagent:**` names reads that line, as replay of critic does":
+    let
+      reflection = "## Reflection\n\n**Subagent:** critic of replay C2, 12,709,459 tokens and " &
+        "$5.57 at list price, 40 calls, 31 min.\n\n| State | Confidence | Predicted | Result " &
+        "|\n| --- | --- | --- | --- |\n| ✅ | 65% | it fails one claim of the report | it does |\n"
+      text = lineUser("Check the report.", "human") &
+        linesPredicted(PREDICTION_CRITIC, "critic", "max") & lineSaid(reflection, UUID)
+      claims = text.claimsRead
+    check claims.len == 1
+    check (claims[0].kind, claims[0].effort) == ("critic", "max")
+    check (claims[0].tokens, claims[0].cost) == (12_709_459, 5.57)
+
+
+  test "claim takes latest call before reflection, of kind that reflection names":
+    # Two calls of reviewer, critic, and reviewer after reflection each hold one claim;
+    #   reflection names reviewer, so second call of reviewer takes it.
+    let
+      critic = PREDICTION_CRITIC.replace("it fails one claim of the report",
+        "the race leads the findings")
+      text = lineUser("Review the diff.", "human") &
+        linesPredicted(PREDICTION_REVIEWER, "reviewer", "low", "toolu_r1") &
+        linesPredicted(PREDICTION_REVIEWER, "reviewer", "high", "toolu_r2") &
+        linesPredicted(critic, "critic", "", "toolu_c1") & lineSaid(PREDICTION_REVIEWER) &
+        lineUser("timer", "task-notification") &
+        linesCalling(REFLECTION_RACE, "reviewer", "max", "toolu_r3")
+      claims = text.claimsRead
+    check claims.len == 1
+    check (claims[0].call, claims[0].effort) == ("toolu_r2", "high")
+
+
+  test "model is result's, else input's, of call":
+    let
+      text = lineUser("Review the diff.", "human") &
+        lineSaid(PREDICTION_REVIEWER) & lineUser("timer", "task-notification") &
+        linesAgent("reviewer", "", "", "opus", "") & lineSaid("Started.") &
+        lineHandback("reviewer") & lineSaid(REFLECTION_RACE, UUID)
+      claims = text.claimsRead
+    check claims.len == 1
+    check claims[0].model == "opus"
+    check claims[0].effort == ""  # neither call nor template of reviewer names one
+
+
+  test "missed prediction, cell quoting no claim, row with no marker, and earlier turn give none":
+    let rows = transcript().claimsRead
+    check rows.allIt(it.text notin ["No prediction", "a claim of no block"])
+    check transcript(REFLECTION.replace("| ✅ | 70% |", "| yes | 70% |")).claimsRead.len == 2
+    check (transcript() & lineSaid("Done.")).claimsRead.len == 0  # reflection is of earlier turn
+
+
+  test "line writes each field in order of schema, escaped, and leaves out each default":
+    let claim = transcript().claimsRead[0]
+    check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
+      "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" model: " &
+      "\"claude-opus-5-5\" effort: \"medium\" text: \"the race leads the findings\" " &
+      "confidence: 0.7 state: STATE_HIT marker: MARKER_DELEGATE tokens: 170000 cost: 1.1 " &
+      "address: \"s1/u9/1\" key: \"s1/toolu_reviewer/1/STATE_HIT\" result: " &
+      "\"it leads, as \\\"high\\\" | first\" }"
+    check Claim(text: "a\\b\n\t\x01").lineClaim ==
+      "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
+
+
+  test "protoc reads each line back against schema, field by field, and refuses misspelt field":
+    var claims = transcript().claimsRead
+    claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled)
+    claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit)
+    let (encoded, code) = protoc("--encode", HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join)
+    check code == 0
+    let (decoded, back) = protoc("--decode", encoded)
+    check back == 0
+    check decoded.count("claims {") == claims.len
+    for field in [  # as `protoc` prints each field it read, by name, from first row and others
+      "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"claude-opus-5-5\"",
+      "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
+      "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
+      "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",
+      "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
+      "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
+      "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
+      "text: \"a\\\\b\\n\\t\\001\"",
+    ]:
+      check decoded.splitLines.anyIt(it.strip == field)
+    check protoc("--encode", "claims { dat: \"2026-11-20\" }\n").code != 0  # misspelt field
+
+
+  test "driver of audit declares `protoc` that suite reads log with":
+    let (output, code) = execCmdEx(
+      "nim r --hints:off tools/build.nim system",
+      workingDir = currentSourcePath().parentDir / "../..",
+    )
+    check code == 0
+    check output.splitLines.anyIt(it.strip == "protobuf-compiler")
+
+
+  test "escaped quote in text is no key, so only field opens one":
+    let line = Claim(text: "key: \"x\"", key: "s/c/1/STATE_HIT").lineClaim
+    check line.keysIn == ["s/c/1/STATE_HIT"].toHashSet
+    check "claims { text: \"none\" }".keysIn.len == 0
+
+
+  test "branch names log and project in scope it writes, and checkout outside grammar names none":
+    check pathLog(BRANCH) == PROJECT & "/claims.txtpb"
+    check pathLog("curator/knoller/rule-names") == "curator/knoller/claims.txtpb"
+    check pathLog("curator/claims-log") == PATH_LOG_CURATOR
+    for branch in ["HEAD", "main", "claude/fix-x", "contributor/nowhere/x/y"]:
+      check pathLog(branch) == ""
+    check projectBranch(BRANCH) == PROJECT
+    check projectBranch("curator/audit/rule-names") == "curator/audit"
+    check projectBranch("curator/claims-log") == "curator"
+    check projectBranch("HEAD") == "curator"  # root curator alone keeps checkout detached
+
+
+  test "rows reach log of branch once each, and wait outside tree for checkout of none":
+    let
+      root = createTempDir("claims_", "_root")
+      waiting = root / "outside" / FILE_WAITING
+      claims = transcript().claimsRead
+      path = root / pathLog(BRANCH)
+    check appendClaims(root, BRANCH, waiting, claims) == claims.len
+    let first = readFile(path)
+    check first == HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join
+    check appendClaims(root, BRANCH, waiting, claims) == 0  # each key written once
+    check readFile(path) == first
+    check not fileExists(waiting)
+    check appendClaims(root, "HEAD", waiting, claims[0 .. 1]) == 2  # no branch, so rows wait
+    check appendClaims(root, "HEAD", waiting, claims) == 1  # two of them wait already
+    check readFile(waiting).startsWith(HEADER_LOG)
+    check readFile(waiting).keysIn == claims.mapIt(it.key).toHashSet
+    let other = createTempDir("claims_", "_other")
+    check appendClaims(other, BRANCH, waiting, claims) == 0  # each waits, so log takes none
+    check not fileExists(other / pathLog(BRANCH))
+    removeDir(root)
+    removeDir(other)
+
+
+  test "stop logs reflection written again once, and later mark of claim that waits once more":
+    let
+      root = rootTemplates()
+      waiting = root / "outside" / FILE_WAITING
+      first = transcript()
+      again = first & lineSaid(REFLECTION.replace("| ⬜ | 60% | a claim of no block | none |\n",
+        ""), "u10")
+      later = again & lineSaid("## Reflection\n\n**Subagent:** critic of the report.\n\n" &
+        "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n" &
+        "| ✅ | 65% | it fails one claim of the report | the resolver marks it |\n", "u11")
+    check logStop(root, BRANCH, waiting, first.parseTurn.subagents) == 3
+    check logStop(root, BRANCH, waiting, first.parseTurn.subagents) == 0  # reply reads it again
+    check logStop(root, BRANCH, waiting, again.parseTurn.subagents) == 0  # same keys
+    check logStop(root, BRANCH, waiting, later.parseTurn.subagents) == 1
+    let keys = readFile(root / pathLog(BRANCH)).keysIn
+    check DELEGATE & "/toolu_critic/1/STATE_WAITING" in keys
+    check DELEGATE & "/toolu_critic/1/STATE_HIT" in keys
+    check keys.len == 4
+    removeDir(root)
+
+
+  test "stop whose log cannot be written counts none and raises nothing":
+    let root = rootTemplates()
+    createDir(root / "contributor/bangu")
+    writeFile(root / PROJECT, "")  # project folder is file, so log cannot go under it
+    check logStop(root, BRANCH, root / FILE_WAITING, transcript().parseTurn.subagents) == -1
+    check not fileExists(root / FILE_WAITING)
+    removeDir(root)
+
+
+  test "rows waiting outside tree move into log of root branch once each, and file goes":
+    let
+      root = createTempDir("claims_", "_move")
+      waiting = root / "outside" / FILE_WAITING
+      claims = transcript().claimsRead
+      branch = "curator/claims-log"
+    check appendClaims(root, "HEAD", waiting, claims) == claims.len
+    for other in ["claude/fix-x", BRANCH, "curator/audit/rule-names"]:
+      check moveClaims(root, other, waiting) == (0, "")  # rows of root curator stay waiting
+    check fileExists(waiting)
+    discard appendClaims(root, branch, root / "none.txtpb", claims[0 .. 0])
+    check moveClaims(root, branch, waiting) == (claims.len - 1, PATH_LOG_CURATOR)
+    check not fileExists(waiting)
+    let text = readFile(root / PATH_LOG_CURATOR)
+    check text.startsWith(HEADER_LOG)
+    check text.keysIn == claims.mapIt(it.key).toHashSet
+    check text.count(claims[0].key) == 1
+    removeDir(root)
+
+
+  test "effort of each template reads by its kind, and template naming none adds none":
+    let root = createTempDir("claims_", "_templates")
+    createDir(root / DIRECTORY_AGENTS)
+    writeFile(root / DIRECTORY_AGENTS / "critic.md", "---\nname: critic\neffort: xhigh\n---\n")
+    writeFile(root / DIRECTORY_AGENTS / "driver.md", "---\nname: driver\n---\n")
+    check readEfforts(root) == {"critic": "xhigh"}.toTable
+    check readKinds(root) == @["critic", "driver"]
+    removeDir(root)

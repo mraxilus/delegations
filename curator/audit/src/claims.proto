@@ -1,0 +1,63 @@
+// Schema of log of claims: one `Claim` for each row of each reflection (#964).
+//   Each project keeps log `claims.txtpb` beside its record, and curator keeps one in
+//     `curator/audit/`, as Architect ruled on #964; `stop` appends rows (`claims_log.nim`).
+//   Log is text format of one `Log`, one row to line, so `merge=union` of `.gitattributes`
+//     joins rows two branches append.
+//   Field numbers carry versions of format: field joins under new number, and leaves only with
+//     its number and name reserved (CONTRIBUTOR.md, Data).
+//   Only `outcome` is `optional`, since result of number can be zero; each other field reads
+//     as zero, empty or unspecified where reflection gives none.
+
+syntax = "proto3";
+
+package claims;
+
+// Define log: rows in order `stop` appended them.
+message Log {
+  repeated Claim claims = 1;
+}
+
+// Define one scored claim: what delegate predicted, and how its reflection marked it.
+message Claim {
+  string date = 1;  // Day of reflection, as `2026-11-20`, in UTC.
+  string delegate = 2;  // Id of delegate: `sessionId` of its transcript.
+  string project = 3;  // Role of branch that writes row, as `curator/audit`; `curator` outside it.
+  string kind = 4;  // Kind of subagent, as `reviewer`.
+  string call = 5;  // Id of tool use of call that claim takes.
+  string model = 6;  // Model harness ran subagent on, as `claude-opus-5-5`.
+  string effort = 7;  // Effort of call, else of template of its kind, as `high`.
+  string text = 8;  // Claim, as cell under `Predicted` quotes it.
+  double confidence = 9;  // Confidence of claim, from 0.51 to 0.98; 0.8 for number.
+  State state = 10;  // State reflection marks.
+  Marker marker = 11;  // Who marked state.
+  int64 tokens = 12;  // Tokens of subagent, summed over its requests, as reflection gives them.
+  double cost = 13;  // Cost of subagent in dollars, at list price, as reflection gives it.
+  string address = 14;  // Id of delegate, `uuid` of entry of reflection, and row, by `/`.
+  string key = 15;  // Delegate, call, position of claim in its block, and state, by `/`.
+  Number number = 16;  // Percentiles and outcome of claim that is number; absent otherwise.
+  string result = 17;  // Cell under `Result`.
+}
+
+// Define number claim: its three percentiles, and value its result gives.
+message Number {
+  double low = 1;  // 10th percentile.
+  double median = 2;  // 50th percentile.
+  double high = 3;  // 90th percentile.
+  optional double outcome = 4;  // First number of cell under `Result`; absent where none.
+}
+
+// Define state of claim, as marker of first cell of row gives it.
+enum State {
+  STATE_UNSPECIFIED = 0;
+  STATE_HIT = 1;  // ✅: claim holds.
+  STATE_MISS = 2;  // ⬜: claim fails, or holds only in part.
+  STATE_ANNULLED = 3;  // ➖: claim is ambiguous or annulled, so it takes no score.
+  STATE_WAITING = 4;  // ⏸️: claim waits on later event.
+}
+
+// Define who marked state of claim.
+enum Marker {
+  MARKER_UNSPECIFIED = 0;
+  MARKER_DELEGATE = 1;  // Delegate, in table of its reflection.
+  MARKER_RESOLVER = 2;  // Resolver, in its report.
+}

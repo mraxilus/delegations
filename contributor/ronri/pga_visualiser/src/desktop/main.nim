@@ -186,7 +186,7 @@ const
     ## Keep every this-many-th pixel in both directions.
     ##   Storyboard's GIF then stays short preview.
   WIDTH_KIND_WORD = 32
-    ## Bound length of kind word alone, longest being "mixed grade, nothing to draw".
+    ## Bound length of kind word alone, longest being "horizon plane, nothing to draw".
   WIDTH_EXPORT_MAX* {.define: "visualiser.width_export_max".} = 3840
     ## Bound largest window pixel readback or PNG export is ever asked to cover.
   HEIGHT_EXPORT_MAX* {.define: "visualiser.height_export_max".} = 2160

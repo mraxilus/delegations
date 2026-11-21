@@ -204,7 +204,8 @@ Each claim follows these rules for forecasting:
   and the tree alone.
 - **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
   confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
-  result falls between them, and a result on either percentile counts as inside.
+  result falls between them, and a result on either percentile counts as inside. Its cell under
+  `Result` opens with the value, as `170,000, inside`, since the log of claims reads that number.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
@@ -264,6 +265,10 @@ Then the subagent runs, and these steps follow:
   no reflection after it. It refuses a cell under `Predicted` that is neither a whole claim of a
   block that a call took, nor `No prediction`. A reply to a refusal passes unread, so the hook
   holds no step there.
+- **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
+  log is `claims.txtpb` beside your record, and each row is one `Claim` of
+  `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
+  Commit the log in a commit of its own, as `chore(<project>): log the claims of the reviewer`.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 

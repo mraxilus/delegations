@@ -19,6 +19,64 @@ suite "Picking":
     cameraAround(Position(x: 0, y: 0, z: 0), distance, Direction(x: 1, y: 0, z: 0))
 
 
+  test "each reader of a frame's placements answers as it does placing each object itself":
+    # Mutant of whole form of each reader passed every case, since no case handed it frame's
+    #   placements whole (repository issue 970).
+    let
+      camera = cameraAround(Position(x: 0.5, y: -0.3, z: 0.2), 14.0, Direction(x: 3, y: 2, z: 1))
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+    var
+      scene = initScene()
+      picked: Selection
+    # Five kinds per sample, as many samples as capacity holds, up to eight.
+    for i in 0..<min(8, OBJECTS_MAX div 5):
+      for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i]]:
+        picked.toggle scene.addObject(m, "o" & $scene.bound, inkCycled(scene.bound))
+    var whole = newSeq[Placement](OBJECTS_MAX)
+    for handle in 0..<scene.bound:
+      whole[handle] = toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    check whole.isWhole and not whole[0 ..< scene.bound].isWhole
+
+    func isSame(a, b: Placement): bool =
+      ## Compare two placements field by field, each position and direction to rounding.
+      a.kind == b.kind and a.at =~ b.at and a.toward =~ b.toward and
+        a.axes.axis_first =~ b.axes.axis_first and a.axes.axis_second =~ b.axes.axis_second and
+        a.axes.normal =~ b.axes.normal
+
+    func isSame(a, b: Option[Position]): bool =
+      ## Compare two answers of place, none to none or each position to rounding.
+      a.isSome == b.isSome and (a.isNone or a.get =~ b.get)
+
+    # Whole form reads placement handed it, by handle.
+    var swapped = whole
+    swap(swapped[0], swapped[1])
+    check placementAt(swapped, scene, 0).isSame(whole[1])
+    for handle in 0..<scene.bound:
+      check placementAt(whole, scene, handle).isSame(placementAt([], scene, handle))
+      check isBackdropUnder(scene, handle, scale, width_pick, height_pick, whole) ==
+          isBackdropUnder(scene, handle, scale, width_pick, height_pick)
+    for x in countup(20, width_pick, 60):
+      for y in countup(20, height_pick, 60):
+        let cursor = ScreenPosition(x: float(x), y: float(y), depth: 0.0)
+        check pickAt(
+          scene, camera, scale, view_projection, width_pick, height_pick, cursor, whole
+        ) == pickAt(scene, camera, scale, view_projection, width_pick, height_pick, cursor)
+        for handle in 0..<scene.bound:
+          check positionUnderPointerOn(
+            scene, handle, camera, scale, width_pick, height_pick, cursor, whole
+          ).isSame(
+            positionUnderPointerOn(scene, handle, camera, scale, width_pick, height_pick, cursor)
+          )
+    check aimFor(scene, picked, none(Preview), whole) == aimFor(scene, picked, none(Preview))
+    MESHES_SCENE.clearMeshes
+    MESHES_SCENE.addLatticesPicked(SCRATCH, scale, scene, picked, whole)
+    let count_whole = MESHES_SCENE.ribbons.count
+    MESHES_SCENE.clearMeshes
+    MESHES_SCENE.addLatticesPicked(SCRATCH, scale, scene, picked)
+    check count_whole > 0 and count_whole == MESHES_SCENE.ribbons.count
+
+
   test "a zoom with a selection anchors only near the depth looked at, and free flight at any":
     # Camera tilted down at origin from ten units.
     #   Point on sight line at one and half orbit distances is anchor; point eight off is
