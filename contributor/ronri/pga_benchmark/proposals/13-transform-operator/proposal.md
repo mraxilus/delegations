@@ -86,8 +86,9 @@ is counted from its two tables, and the operator as the evaluation reads its C:
   compiler, the first time a program calls it. At cga6d a full multivector by a motor type adds
   4.7 s to the build of a program. It also adds 35 MiB to the peak of the compiler. At rga4d it
   adds 0.06 s, inside the spread of the builds.
-- **Build of `import pga`.** It builds no table. In the evaluation, it takes 10.43 s at cga6d
-  against 9.91 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.5 MiB, as at pin.
+- **Build of `import pga`.** It builds no table. In the evaluation, it takes 11.02 s at cga6d
+  against 10.67 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.3 MiB, against
+  210.2 MiB at pin.
 - **Size.** At rga4d the function holds 82 lines of C, inline in each caller.
 - **Dimensions.** The adds grow faster than the multiplies. For a full 𝐦 by a motor type at
   cga5d, the table spends 408 multiplies and 2 191 adds. The chain spends 2 048 and 1 984 there.
