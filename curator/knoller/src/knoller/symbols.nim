@@ -423,6 +423,11 @@ proc checked*(
   ##     directory, and run takes streams of caller, so it opens no pipe (`lineRedirected`).
   ##     Child another thread starts meanwhile inherits each pipe open then (`pools.nim`): its
   ##     copy of write end of pipe of text would keep compiler waiting on end of text for ever.
+  ##   Compiler `findExe` finds nowhere runs no shell, and says so: `sh` and `cmd` give missing
+  ##     command exit codes of their own, so code alone would not tell it on each platform.
+  if findExe(nim).len == 0:
+    result.reason = "compiler did not run: no compiler at " & nim
+    return
   let cache = createTempDir("knoller_check_", "")
   defer: removeDir(cache)
   let
