@@ -826,11 +826,13 @@ then the fix of one rule alone, on a copy of the library.
 
 - Sibling markers: 2 reports, and the fix writes +2 −2 lines. Each drops an `{.all.}` that reaches
   no private symbol, as the ruling counts.
-- Pure routines: 1 report, `generateUpTo`, and the fix writes +1 −1 lines, as the ruling counts.
-  The driver ran before D5 a, so it reads neither `func` of `pga/emitters.nim`.
+- Pure routines: 1 report from the driver at `bca6a142`, `generateUpTo`, and the fix writes +1 −1
+  lines, as the ruling counts. That build reads no `func` that takes a `ref` or `ptr` parameter.
 - `knoller --check .`, built at `d0d4e976`, also reports `func-pure` at lines 9 and 28 of
   `pga/emitters.nim`, 2026-11-21. There `emitFunc` and `emitTypeDef` are each a `func` that takes
-  a `NimNode`, so the fix writes `proc` (D5 a of #980).
+  a `NimNode`, so the fix writes `proc` (D5 a of #980). The copy that this build fixes, every rule
+  at once, builds with Nim 2.4.0 in each configuration of `tests/`. Each of rga2d to rga6d gives 33
+  OK, 0 failed and 5 skipped, and each of cga3d to cga6d gives 28 OK, 0 failed and 10 skipped.
 - Each rule finds nothing more on its fixed copy.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and 5
   skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For pure routines, rga5d gives 33 OK, 0
@@ -1005,7 +1007,7 @@ An argument splits its own call only where that call is the whole argument.
   its new indent.
 - A call that spans lines, with a comma after its last argument on a line before its `)`, is
   never joined (`isTrailed`). That comma marks the split that the hand wants. So such a call
-  keeps one argument to a line, even where it fits. A split that knoller makes writes no such
+  keeps one argument to a line, even where it fits. A split that knoller makes ends with no such
   comma, so it joins again once the call fits, as after a rename that shortens it. Verified by
   `suites/test_wrapping.nim`: the `newEnum` call of `algebra.nim` of the PGA library stays, and
   a split call joins once a rename lets it fit.
@@ -1023,23 +1025,26 @@ An argument splits its own call only where that call is the whole argument.
   a keyword that opens one, `;`, `do`, or `:` at the end of a line outside a condition.
 - A line break that joining could read again stays, such as one between two operands.
 
-**No fixer writes a separator after the last item of a list (X.3).** That separator is the one
-mark of a split that the hand wants. A fixer that wrote it would make each of its splits
+**No fixer adds a separator after the last item of a list (X.3).** That separator is the one
+mark of a split that the hand wants. A fixer that added it would make each of its splits
 permanent, since the mark keeps a call or a signature split where it fits. So no list gains one: a
-call, parameters, an array, a seq, a set, a table, a tuple, a constructor or an import bracket. A
+call, parameters, an array, a seq, a set, a table, a tuple of several items, a constructor or an
+import bracket. A
 separator that the hand wrote stays. The Architect ruled so on D2 of
 [the rules walk (#980)](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070).
 
 - Each compiler accepts the separator in each of these lists, and `;` after the last parameter
   group. Verified by hand with 2.2.12, 2026-10-02, and with 2.4.0, 2026-10-29.
-- A list that no call opens keeps its rows either way, since no fixer joins it.
-- Verified by `suites/test_wrapping.nim`, `suites/test_chain.nim` and `suites/test_regressions.nim`.
-  The blocks of `cayleys.nim` of the PGA library at lines 271, 338 and 604 keep their lines, and
-  gain no separator.
+- A list that no call or signature opens, such as an array, keeps its rows with or without the
+  separator, since no fixer joins it.
+- Verified by `suites/test_wrapping.nim`, `suites/test_chain.nim` and `suites/test_regressions.nim`:
+  a call one argument to a line, too wide to join, keeps its lines and gains no separator. The
+  cases of `suites/test_chain.nim` take the shapes of lines 331, 410 and 693 of `pga/cayleys.nim`
+  of the PGA library at `3d9696e`.
 - Cost: the mark reads alike whether the hand wants the split or wrote the separator by habit.
-  The tree holds many such separators on calls and signatures too wide to join, since the rule
-  before D2 asked for each. Each keeps its list split. Once #980 merges, the fixes of each project
-  under #443 drop each of them once, as the ruling says.
+  The tree holds many such separators on calls and signatures too wide to join, and each keeps
+  its list split. Their drop waits on the fixes of each project under #443 (D2 of #980), since no
+  fixer removes a separator.
 
 **Adjacent imports of one directory share one bracket, and a bracket of one module drops it
 (X.5).** The merged statement takes the place of the first, and its items sort as bracket items
@@ -1326,9 +1331,11 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
   does a doc on the line above a declaration that is no routine, at its indent, because it stands
   out of place.
-- A doc that only blank lines and `#` comments stand above is the doc of the module (D3 a and
-  D1 a of #980). It is the doc of no declaration. So missing doc reports the declaration right
-  below it, and writes its placeholder there.
+- A doc that only blank lines and `#` comments stand above is the doc of the module, as
+  [D3 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7054999563) and
+  [D1 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070) of #980 rule.
+  It is the doc of no declaration. So missing doc reports the declaration right below it, and
+  writes its placeholder there.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
   string and a character literal hold no bracket and no comment for it. A line whose last token
   is `,`, or an operator that ends in `=` or `&`, continues its statement.
@@ -1432,7 +1439,8 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   below other code stays, because that code can own it. So does a doc that a declaration holds as
   its own. A doc above a local binding stays, since a local binding takes none.
 - A doc that only blank lines and `#` comments stand above stays where it stands, as the doc of
-  the module. The Architect ruled so on D3 a and on
+  the module. The Architect ruled so on
+  [D3 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7054999563) and on
   [D1 a of #980](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070),
   since `nim doc` reads it so. So a license header or a block comment above it changes nothing.
 - Doc position reads the first line of the file that holds code or opens a doc. A doc whose run
@@ -2100,7 +2108,7 @@ words.
 
 **Commented code holds no article, as comment form reads it (VI.10).** The check and the fixer
 skip each line that comment form reads as code (`linesCode` of `claims.nim`). There `a` names a
-value, as in `#func <=(a, b: Order)`, and no article. The Architect ruled so on
+value, as in the commented `func` of `pga/cayleys.nim:48`, and no article. The Architect ruled so on
 [D3 a of #980](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070).
 Code commented by hand, with no space after the marker, and by a tool, with one, both read as
 code (`## Claims`).
@@ -2108,7 +2116,8 @@ code (`## Claims`).
 - Verified by `suites/test_articles.nim`: line 48 of `pga/cayleys.nim` of the PGA library reports
   nothing, in either form. A line of code under prose reports nothing, and the fixer leaves it.
 - Verified by run on the PGA library at `3d9696e`, 2026-11-21. `knoller --check .`, built at
-  `d0d4e976`, leaves one article for hand, `the` at `pga/multivectors.nim:37`.
+  `d0d4e976`, leaves one article for hand, `the` at `pga/multivectors.nim:37`. It reports nothing
+  at `pga/cayleys.nim:48`.
 
 **The caller says of each file whether its comments drop their articles.** `formatted`,
 `checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
@@ -2197,8 +2206,10 @@ bare. The rule reads no string that a generator passes as a doc.
   export marker, or to a name in backticks. So `# func <=(a, b: Order)` reads as code. So does an
   assignment or comparison after a name. It is also a line that ends in `=`, a keyword line that
   ends in `:`, or a nested marker.
-- The hand comments code with no space after the marker, and a tool leaves one, so both read as
-  code (D3 a of #980). The check of articles reads the same lines (`linesCode`, `## Articles`).
+- The hand comments code with no space after the marker, and a tool leaves one. So both read as
+  code, as the Architect ruled on
+  [D3 a of #980](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070).
+  The check of articles reads the same lines (`linesCode`, `## Articles`).
 - A line without a step holds no prose, as the outline reads it (`isStepless`). Nor does an
   aligned column, that is two spaces or more between words outside backticks and quotes. Nor does
   a deeper line that continues one, or a `#` line that reads as code.
