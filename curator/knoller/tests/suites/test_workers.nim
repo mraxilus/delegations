@@ -17,6 +17,10 @@ var
 func squared(n: int): int = n * n  ## Answer square of job, so answer names job it came from.
 
 
+func spelled(n: int): seq[string] = newSeqWith(n mod 7 + 1, $n)
+  ## Answer job spelled out, one to seven times, so answer holds memory its worker allocated.
+
+
 proc thread(n: int): int = getThreadId()  ## Answer id of thread job ran in.
 
 
@@ -45,6 +49,10 @@ suite "Workers":
     check mapParallel(toSeq(1 .. 3), squared, workers = 1) == @[1, 4, 9]  # caller alone
     check mapParallel(@[2], squared) == @[4]  # one for each core
     check mapParallel(newSeq[int](), squared, workers = 4).len == 0  # no job
+
+
+  test "answers holding text that worker allocated reach caller whole":
+    check mapParallel(toSeq(1 .. 200), spelled, workers = 4) == toSeq(1 .. 200).mapIt(it.spelled)
 
 
   test "jobs run side by side, one for each worker":
