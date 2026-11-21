@@ -8,11 +8,11 @@
 ##   Each band gives count, share of hits, and 90% credible band of share: 5th and 95th
 ##     percentiles of Beta posterior from uniform prior, `Beta(hits + 1, misses + 1)`.
 ##   Group holds claims whose named fields agree, sorted by key; each figure names its count.
-##   Mass of Beta comes from continued fraction of incomplete Beta, by modified Lentz method
-##     (Numerical Recipes, 3rd edition, 6.4), and percentile from bisection on that mass.
+##   Mass of Beta comes from continued fraction of incomplete Beta (Numerical Recipes, 3rd
+##     edition, 6.4), by modified Lentz method, and percentile from bisection on that mass.
 ##
-##   Cost: bisection takes `ITERATIONS_BISECTION` masses for each percentile, each up to
-##     `ITERATIONS_FRACTION` terms; log of thousands of claims stays well under second.
+##   Cost: each percentile takes `ITERATIONS_BISECTION` masses of up to `ITERATIONS_FRACTION`
+##           terms each.
 
 {.experimental: "strictFuncs".}
 
@@ -22,7 +22,11 @@ import ./claims_log
 
 type
   Field* {.pure.} = enum  ## Define field of claim that groups claims (#964).
-    Delegate, Model, Effort, Project, Kind
+    Delegate  ## `sessionId` of delegate whose reflection gives claim.
+    Model  ## Model of call claim takes.
+    Effort  ## Effort of call claim takes.
+    Project  ## Role of branch that wrote row of claim.
+    Kind  ## Kind of subagent of call claim takes.
 
   Band* = object  ## Define band of confidence of track record, and claims that fall in it.
     low*: int  ## Lowest percentage of band.
@@ -43,7 +47,6 @@ type
   Group* = object  ## Define claims whose named fields agree.
     key*: string  ## Values of named fields, in order of `Field`, by `SEPARATOR_KEY`.
     claims*: seq[Claim]  ## Claims of group, in order of log.
-
 
 const
   CONFIDENCE_EVEN = 0.5  ## Confidence of coin, against which baseline score counts.
@@ -85,8 +88,8 @@ func flooredFraction(value: float): float =
 
 
 func fractionBeta(x, a, b: float): float =
-  ## Continued fraction of incomplete Beta at `x`, by modified Lentz method (Numerical Recipes,
-  ##   3rd edition, 6.4); converges fast for `x` below `(a + 1) / (a + b + 2)`.
+  ## Continued fraction of incomplete Beta at `x` (Numerical Recipes, 3rd edition, 6.4), by
+  ##   modified Lentz method; converges fast for `x` below `(a + 1) / (a + b + 2)`.
   let
     sum = a + b
     above = a + 1
@@ -95,7 +98,7 @@ func fractionBeta(x, a, b: float): float =
     c = 1.0
     d = 1 / flooredFraction(1 - sum * x / above)
   result = d
-  for m in 1 .. ITERATIONS_FRACTION:
+  for m in 1..ITERATIONS_FRACTION:
     let
       step = float(m)
       even = step * (b - step) * x / ((below + 2 * step) * (a + 2 * step))
@@ -111,8 +114,8 @@ func fractionBeta(x, a, b: float): float =
 
 
 func massBeta*(x, a, b: float): float =
-  ## Mass of `Beta(a, b)` at or below `x`: regularized incomplete Beta `I_x(a, b)` (Numerical
-  ##   Recipes, 3rd edition, 6.4), from continued fraction on side where it converges fast.
+  ## Mass of `Beta(a, b)` at or below `x`: regularized incomplete Beta `I_x(a, b)`, from
+  ##   continued fraction on side where it converges fast (Numerical Recipes, 3rd edition, 6.4).
   if x <= 0: return 0
   if x >= 1: return 1
   let front = exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * ln(x) + b * ln(1 - x))
@@ -125,7 +128,7 @@ func percentileBeta*(mass, a, b: float): float =
   var
     low = 0.0
     high = 1.0
-  for _ in 1 .. ITERATIONS_BISECTION:
+  for _ in 1..ITERATIONS_BISECTION:
     let middle = (low + high) / 2
     if massBeta(middle, a, b) < mass: low = middle else: high = middle
   (low + high) / 2
@@ -185,7 +188,7 @@ func figures*(claims: openArray[Claim]): Figures =
   result.bands = claims.bands
 
 
-func value*(claim: Claim; field: Field): string =
+func value*(claim: Claim, field: Field): string =
   ## Value of field of claim.
   case field
   of Field.Delegate: claim.delegate
@@ -195,13 +198,13 @@ func value*(claim: Claim; field: Field): string =
   of Field.Kind: claim.kind
 
 
-func groups*(claims: openArray[Claim]; fields: set[Field]): seq[Group] =
+func groups*(claims: openArray[Claim], fields: set[Field]): seq[Group] =
   ## Groups of claims whose named fields agree, sorted by key; one group of all claims where no
   ##   field is named.
   var by_key: Table[string, seq[Claim]]
   for claim in claims:
-    let key = toSeq(fields).mapIt(claim.value(it)).join(SEPARATOR_KEY)
+    let key = fields.toSeq.mapIt(claim.value(it)).join(SEPARATOR_KEY)
     by_key.mgetOrPut(key, @[]).add claim
-  var keys = toSeq(by_key.keys)
+  var keys = by_key.keys.toSeq
   keys.sort
   for key in keys: result.add Group(key: key, claims: by_key[key])
