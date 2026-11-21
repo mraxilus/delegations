@@ -2918,7 +2918,7 @@ type change widths. Spacing runs before wrapping, because the spaces it adds are
 wrapping measures.
 
 Wrapping runs separators, then signatures, then calls, then continuations. A layout joins groups
-with the separator it reads. No fixer writes a separator after the last item of a list, since that
+with the separator it reads. No fixer adds a separator after the last item of a list, since that
 separator marks the split that the hand wants (D2 of #980).
 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
