@@ -1145,8 +1145,9 @@ counts read the bullets of X.2 in this order:
 - A declaration block after another takes one.
 - A documented one-line definition that no bullet above names takes one after any definition
   (Q3).
-- Knoller reads Q3 after the imports too, since Q3 says that the definition below a run sets its
-  count. Its case is `tools/head.nim:17` of `pga_visualiser`, two lines after the imports.
+- Knoller reads Q3 after the imports too, as D3 a of #980 rules, since Q3 says that the definition
+  below a run sets its count. Its case is `tools/head.nim:17` of `pga_visualiser`, two lines after
+  the imports.
 - Every other definition takes two, a routine of several lines among them (Q2). So the check
   reports one line and three lines.
 - Inside a second-tier section, each count caps at one, since siblings there take one (X.2). Q1
@@ -1225,9 +1226,10 @@ configuration that a build gets by default comes first (X.11).** The Architect r
 - A condition that no define gives names no order, as `defined(js)`, which the target sets.
   `isMainModule` and `compileOption(…)` name no configuration.
 - The rule reads each `when` at module level or in a branch of one, in a type section, and among
-  the fields of an object. A `when` inside a routine holds no definition, so it is unread.
-- A head with a trailing comment stays for hand, so the fix writes no comment away. So does a body
-  whose indent differs from the block that it joins.
+  the fields of an object. A `when` inside a routine or inside a `block:` value holds no
+  definition, so it is unread, and so is a pair there.
+- Outside a pair, a head with a trailing comment stays for hand, so the fix writes no comment
+  away. So does a body whose indent differs from the block that it joins.
 - Verified by `suites/test_configurations.nim`, which quotes `Formal` of `pga/cayleys.nim` and the
   constants of `pga/algebra.nim` of the PGA library at `3d9696e`, and by `suites/test_fixes.nim`
   of `curator/audit`. They hold each bullet above, and the two costs below.
@@ -1245,7 +1247,9 @@ configuration that a build gets by default comes first (X.11).** The Architect r
   It reads the defaults of each project, and runs the check on each file that git tracks there.
   Knoller at `fd3bc4b5` and knoller at `1bed07fd` give no report, and so does
   `koch fix --dry-run --branch:main` built at each. Only `HAS_FORMS_DENSE` of `pga_benchmark`
-  gives a default, and it guards one import on one line, so no two-way branch and no pair.
+  gives a default, and it guards one import on one line, so the rule reads no two-way branch and
+  no pair. The pair of `IS_RIGID` and `IS_CONFORMAL` in `CATALOGUE` of `pga_benchmark` stands
+  inside a `block:` value, and its project gives neither a default.
 - Verified by hand with that driver on a copy of the PGA library at `3d9696e`, 2026-11-21.
   Knoller at `fd3bc4b5` and knoller at `1bed07fd` each give the 1 report at `Formal`.
 - Rejected: a join of every block of one configuration in a section, which takes `■` and `□` of
@@ -1438,8 +1442,12 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - Verified by hand with a driver over the projects of the repository at `16a573cc`, 2026-11-21.
   It runs `checkDocs` and `checkDocsMissing` alone on each file that git tracks in each project.
   Knoller at `fd3bc4b5` and knoller at `1bed07fd` give the same 36 reports of doc position and
-  1,056 of missing doc. `koch fix --dry-run --branch:main` built at each gives 23 and 861 fixes.
-  On a copy of the PGA library at `3d9696e`, each knoller gives 2 and 51 reports.
+  1,056 of missing doc. On a copy of the PGA library at `3d9696e`, each knoller gives 2 and 51
+  reports.
+- `koch fix --dry-run --branch:main`, built at each, gives 23 and 861 fixes over the same tree. Of
+  the 36, the 14 docs of a value that opens `block` stay for hand, so koch fixes the other 22. It
+  fixes 1 more, at `curator/audit/src/checker.nim:79`, where the chain also fixes expression
+  spacing.
 
 ## Stages
 
