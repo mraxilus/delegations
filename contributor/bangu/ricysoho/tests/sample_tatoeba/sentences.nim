@@ -30,7 +30,7 @@ type SentenceTatoeba* = object
 
 
 const
-  COUNT_FEATURES_TATOEBA* = 599
+  COUNT_FEATURES_TATOEBA* = 601
     ## lo te kancu be lo tcila pe lo se tcidu zi'e poi le mupli cu jarco ke'a ca lo nu ciska
   SENTENCES_TATOEBA* = [
     SentenceTatoeba(id: 602555, text: "ko'a puze'i stali", owner: "remod", verdict: ""),
@@ -494,6 +494,7 @@ const
       owner: "gleki",
       verdict: "Grammar time 1030",
     ),
+    SentenceTatoeba(id: 2368741, text: "ro da zo'u .e'a do da cinba", owner: "gleki", verdict: ""),
     SentenceTatoeba(id: 2376850, text: "la tom cu je'u na nelci do", owner: "gleki", verdict: ""),
     SentenceTatoeba(
       id: 2376859,
@@ -532,12 +533,6 @@ const
           "selja'e lonu mi jdika cpacu .i lonu mi jdika cpacu kei selja'e lonu mi jdika djica " &
           ".i lonu mi jdika djica kei selja'e lonu mi zenba cpacu",
       owner: "rprije",
-      verdict: "",
-    ),
-    SentenceTatoeba(
-      id: 2513762,
-      text: "da me lo se gunka noi .ei zukte",
-      owner: "gleki",
       verdict: "",
     ),
     SentenceTatoeba(id: 2514131, text: "mi citka lo badna ku po'o", owner: "gleki", verdict: ""),
@@ -681,6 +676,12 @@ const
       verdict: "",
     ),
     SentenceTatoeba(
+      id: 3267869,
+      text: "mi djica lo ka da zo'u sanga da",
+      owner: "gleki",
+      verdict: "",
+    ),
+    SentenceTatoeba(
       id: 3292661,
       text: "mi djica tu'a lo ckafi joi ta'o ladru",
       owner: "gleki",
@@ -697,6 +698,12 @@ const
       text: "pe'u e'o ko dunda vo lo taigrteil zei bisyladru joi ri'ornimre bo titnanba",
       owner: "nonong",
       verdict: "",
+    ),
+    SentenceTatoeba(
+      id: 3668385,
+      text: "mi pu te vecnu lo pare fe'i re sovda",
+      owner: "gleki",
+      verdict: "Grammar number 812",
     ),
     SentenceTatoeba(
       id: 3692857,
@@ -808,12 +815,6 @@ const
       text: "tu'a pu ku na ka'e se rivbi",
       owner: "iifle",
       verdict: "Grammar gek 807",
-    ),
-    SentenceTatoeba(
-      id: 4167562,
-      text: "roda poi ke'a panono ce'iva'e birti zo'u la'a lo ni djuno da kei na banzu",
-      owner: "Wuzzy",
-      verdict: "",
     ),
     SentenceTatoeba(
       id: 4167581,
@@ -976,6 +977,12 @@ const
     SentenceTatoeba(id: 8648007, text: "mi nasai ai xrani le ninmu", owner: "shou", verdict: ""),
     SentenceTatoeba(id: 8671615, text: "la tom. na'eze'uba xrukla", owner: "shou", verdict: ""),
     SentenceTatoeba(
+      id: 8679774,
+      text: "mi ba zukte ro da noi pe'i drani",
+      owner: "shou",
+      verdict: "",
+    ),
+    SentenceTatoeba(
       id: 8721221,
       text: "mi zmadu le cnano fi lo kamjunmre be",
       owner: "shou",
@@ -1042,6 +1049,15 @@ const
       text: "lo tuple be la .tam. cu jai fi'o ba'o klama fe'u pu cecla",
       owner: "nabyspi3",
       verdict: "Grammar tense-modal 815",
+    ),
+    SentenceTatoeba(
+      id: 11188530,
+      text: "ca le zi cerni de'i li 2022 pi'e 10 pi'e 16 mi viska la .maikl. goi my. zi'e poi " &
+          "danseke gi'e fraso zi'e noi damva'u bu'u le panka ne'i le la .lulus. daplu ca lo nu " &
+          "mi klama le iptsa gusta .i le tsani cu blanu .i solgu'i .i za'adai my. pu viska le " &
+          "pamoi snime gunse ca le zi citsi",
+      owner: "nonong",
+      verdict: "",
     ),
     SentenceTatoeba(id: 11998882, text: ".i je'e", owner: "Theocracy", verdict: ""),
     SentenceTatoeba(

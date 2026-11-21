@@ -1,4 +1,4 @@
-## cipra lo du'u `splitLujvo` mapti lo seljdi be lo te karbi genturfa'i ne'i lo vopa valsi poi cipra
+## cipra lo du'u `splitLujvo` mapti lo seljdi be lo te karbi genturfa'i ne'i lo 41 valsi poi cipra
 ##     lo lerjo'e pe `CLL 4.11`
 ##   .i lo pinka pe ro xusra cu sitna lo javni pe `CLL` ge'u zi'e poi jdice fi le valsi
 ##   .i le pinka cu cusku lo samtci poi tugni le cipra ku'o ba lo nu sitna le javni

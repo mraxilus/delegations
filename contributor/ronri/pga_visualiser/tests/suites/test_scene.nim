@@ -241,6 +241,18 @@ suite "Scene":
       check differs == (operation notin OPERATIONS_SLIDING)
 
 
+  test "a sum or a difference of two scales of one object is zero only where it cancels":
+    # Mutant read difference off scale-free copies, as product: point less twice itself then
+    #   read as zero, since both copies are one (repository issue 970).
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i]]:
+        for ratio in [2.0, 0.5, 1.0e3, -4.0]:
+          check applyOperation(Operation.Subtract, m, ratio * m) =~ (1.0 - ratio) * m
+          check applyOperation(Operation.Add, m, ratio * m) =~ (1.0 + ratio) * m
+        check applyOperation(Operation.Subtract, m, m).coefficientLargest == 0.0
+        check applyOperation(Operation.Add, m, -1.0 * m).coefficientLargest == 0.0
+
+
   test "meet finds where a line crosses a plane even far outside its own drawn disc":
     # `mesh.addPlane`'s disc is only rendering choice -- plane it represents is.
     #   same infinite object algebraically either way, and `WedgeAnti` (meet) reads
@@ -463,6 +475,51 @@ suite "Scene":
       # Attitude of line is its direction, which is point lying in horizon.
       check kindText(⊖LINES[i]) == "horizon point"
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
+
+
+  test "a value of no kind is named for what it is, and mixed grade only where it is mixed":
+    # Fault: zero, scalar and antiscalar each read "mixed grade, nothing to draw", so dot of
+    #   two points said it gave mixed grade (repository issue 970).
+    for scale in [1.0e-6, 1.0, -3.0, 1.0e6]:
+      check kindText(initElement(Basis.scalar, scale)) == "scalar, nothing to draw"
+      check kindText(initElement(Basis.E1234, scale)) == "antiscalar, nothing to draw"
+      check kindText(scale * (1.0 + POINTS[0])) == "mixed grade, nothing to draw"
+      # Rounding on other grades, under billionth of largest, reads as grade it stands on.
+      check kindText(initElement(Basis.scalar, scale) + (1.0e-12 * scale) * POINTS[0]) ==
+          "scalar, nothing to draw"
+    for zero in [0.0, -0.0]:
+      check kindText(initElement(Basis.scalar, zero)) == "zero, nothing to draw"
+    check kindText(applyOperation(Operation.Dot, POINTS[0], POINTS[1])) ==
+        "scalar, nothing to draw"
+    check kindText(applyOperation(Operation.Wedge, POINTS[0], POINTS[0])) ==
+        "zero, nothing to draw"
+    # Storyboard step `10_wedge_volume` stands for antiscalar, as record says.
+    var seeded = initScene()
+    addSeeds(seeded)
+    for step in STEPS:
+      if step.stem == "10_wedge_volume":
+        check kindText(seeded.applyStep(step)) == "antiscalar, nothing to draw"
+
+
+  test "a value that is not finite says so, and a subnormal one reads its grade and draws nothing":
+    # Fault: value with NaN, infinite or subnormal coefficient read "zero, nothing to draw", so
+    #   subnormal antiscalar said it was zero (repository issue 970, D5).
+    for m in [initElement(Basis.scalar, NaN), initElement(Basis.E1234, NaN),
+        initElement(Basis.scalar, Inf), initElement(Basis.E1234, -Inf),
+        initElement(Basis.scalar, Inf) + POINTS[0], POINTS[0] + initElement(Basis.E1, NaN),
+        LINES[0] + initElement(Basis.E12, Inf), PLANES[0] + initElement(Basis.E321, NaN)]:
+      check kindText(m) == "not finite, nothing to draw"
+    for scale in [1.0e-310, -1.0e-310, 5.0e-324]:
+      check kindText(initElement(Basis.scalar, scale)) == "scalar, nothing to draw"
+      check kindText(initElement(Basis.E1234, scale)) == "antiscalar, nothing to draw"
+    check kindText(1.0e-310 * (1.0 + POINTS[0])) == "mixed grade, nothing to draw"
+    # Subnormal object names its kind, and draws nothing, as `classify` gives it no kind.
+    for i in 0..<SAMPLES:
+      for (m, word) in [(POINTS[i], "point"), (LINES[i], "line"), (PLANES[i], "plane"),
+          (⊖LINES[i], "horizon point")]:
+        let tiny = 1.0e-310 * m
+        check classify(tiny).isNone
+        check kindText(tiny) == word & ", nothing to draw"
 
 
   test "a line a metre long prints the terms it carries, and no rounding beside them":
@@ -955,6 +1012,64 @@ suite "Scene":
       check loaded[1].geometry =~ POINTS[1]
 
 
+    test "a scene saves with the magic PGAS, and one that opens with RGAS still loads":
+      # Fault: each scene saved opened with `RGAS`, old name of project (repository issue 978).
+      #   Architect ruled on rename that tools write new name and readers take old one
+      #   (repository issue 946). Bytes after magic did not change.
+      var original = initScene()
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      discard original.addObject(POINTS[1], "b", Ink.Jade)
+      let
+        path_new = getTempDir() / "visualiser_suite_scene_magic.pgascene"
+        path_old = getTempDir() / "visualiser_suite_scene_magic_old.pgascene"
+      check saveScene(original, path_new).contains("Saved 2")
+      defer: removeFile(path_new)
+      let bytes = readFile(path_new)
+      check bytes[0..<4] == "PGAS"
+      writeFile(path_old, "RGAS" & bytes[4..^1])
+      defer: removeFile(path_old)
+      for path in [path_new, path_old]:
+        var loaded = initScene()
+        check loadScene(loaded, path).contains("Loaded 2")
+        check loaded.len == 2
+        check loaded[0].label.toText == "a"
+        check loaded[1].geometry =~ POINTS[1]
+
+
+    test "a scene loads under each magic read, and is refused under each change of one byte":
+      # Domain of magic, whole: each magic read loads, and each change of one byte of one that
+      #   is no magic read is refused. Stated here, not read off `scene`, so list there is held.
+      const
+        magics_read = ["PGAS", "RGAS"]  ## Magics reader takes: name PGA, and name before it.
+        changes_refused = 2 * 4 * 255 - 2
+          ## Changes of one byte of each magic read that read none: P and R swap twice.
+      var original = initScene()
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      let
+        path_saved = getTempDir() / "visualiser_suite_scene_magic_saved.pgascene"
+        path_changed = getTempDir() / "visualiser_suite_scene_magic_changed.pgascene"
+      check saveScene(original, path_saved).contains("Saved 1")
+      defer: removeFile(path_saved)
+      defer: removeFile(path_changed)
+      let body = readFile(path_saved)[4..^1]
+      var refused = 0
+      for magic in magics_read:
+        writeFile(path_changed, magic & body)
+        var loaded = initScene()
+        check loadScene(loaded, path_changed).contains("Loaded 1")
+        for at in 0..<len(magic):
+          for code in 0..255:
+            var changed = magic
+            changed[at] = char(code)
+            if changed in magics_read: continue
+            writeFile(path_changed, changed & body)
+            var kept = initScene()
+            discard kept.addObject(POINTS[1], "keep", Ink.Jade)
+            if loadScene(kept, path_changed).contains("not a scene file") and kept.len == 1:
+              inc refused
+      check refused == changes_refused
+
+
     test "every multi-byte field is written little-endian, whatever the host":
       # Bytes themselves, not round trip: round trip passes on any byte order as.
       #   long as one build writes and reads it, and second implementation of this
@@ -1029,7 +1144,9 @@ suite "Scene":
       ##   for one would only ever produce today's, and reading it exercised would be
       ##   its own writing spelled backwards. Ink is taken as raw ordinal for same
       ##   reason -- old file's ordinals name enum that is gone.
-      result = MAGIC_SCENE & char(version) & char(ord(Basis.high) + 1)
+      # Magic as such file holds: builds before name PGA wrote `RGAS` at each older version.
+      result = (if version < VERSION_SCENE: "RGAS" else: MAGIC_SCENE) & char(version) &
+          char(ord(Basis.high) + 1)
       var
         count = uint32(len(saved))
         count_bytes = newString(4)

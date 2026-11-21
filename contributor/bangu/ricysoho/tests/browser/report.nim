@@ -24,7 +24,7 @@
 ##
 ## ni'o ro srera poi le papri cu renro ke'a .a ro nupre poi le papri cu to'e curmi ke'a zi'e noi no
 ##     fancu cu spuda ke'a selsku gi'e rinka lo nu le nu cipra cu sisti sepi'o lo famna'u poi du li
-##     pa
+##     1
 ##   .i se ki'u bo lo nu cipra poi spofu cu fliba ca lo nu spofu
 ##   .i le nu cipra cu na denpa lo rairtei pe le sabji samtci
 
@@ -97,7 +97,7 @@ method failureOccurred*(formatter: ReporterPage, checkpoints: seq[string], stack
 proc reportError(event: JsObject) =
   ## cusku lo srera poi le papri cu renro ke'a .a lo nupre poi le papri cu to'e curmi ke'a zi'e noi
   ##     no fancu cu spuda ke'a
-  ##   .i ba bo sisti le nu cipra sepi'o lo famna'u poi du li pa
+  ##   .i ba bo sisti le nu cipra sepi'o lo famna'u poi du li 1
   let error = (if event.reason.isUndefined: event.message else: event.reason)
   report "Page should throw no error; got `" & $error.toString().to(cstring) & "`."
   reportEnd(1)

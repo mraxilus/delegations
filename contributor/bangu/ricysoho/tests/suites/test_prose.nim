@@ -53,7 +53,7 @@ const
     ##     porsi
   FLOOR_ERASED = 150
     ## lo mecraiterkancu be lo stuzi poi le flalu pe lo nu vimcu cu tcidu ke'a
-    ##   .i le flalu cu tcidu paxare stuzi
+    ##   .i le flalu cu tcidu 162 stuzi
     ##   .i le stuzi cu zvati lo jbini be lo valsi pe ro mupli poi vasru no nu vimcu
     ##   .i ku'i le flalu cu tcidu no stuzi poi se lidne zo zo .a zo zoi .a zo la'o
 
@@ -90,6 +90,15 @@ func leaves(node: Node): seq[int] =
   for child in node.children: result.add child.leaves
 
 
+func shape(node: Node): string =
+  ## ciska le tarmi be le tricu ta'i lo lerpoi
+  ##   .i lo genvla cu se ciska ta'i lo namcu pe vo'a po'o
+  if node.is_terminal: return $node.at
+  result = node.rule & "<" & $node.number & ">("
+  for child in node.children: result.add child.shape & " "
+  result.add ")"
+
+
 
 suite "Chapter 4":
   test "Section 4.6":
@@ -123,7 +132,7 @@ suite "Chapter 6":
 suite "Chapter 13":
   test "Section 13.1-2":
     # lo cnivla cu krasi le selci'a
-    #   .i le javni pe li no cu tcidu le cnivla
+    #   .i le javni pe li 0 cu tcidu le cnivla
     check ".ui la djan klama".terminalsRead.get[0] ==
         Selmaho.Ui.toTerminal  # `CLL 13.2` mupli
     check ".ui mi facki fi le mi mapku".terminalsRead.isSome  # `CLL 13.9` mupli
@@ -277,7 +286,48 @@ suite "Chapter 19":
 
 
 
+const
+  SIGNS_PROSE = [
+    ("€", "ronru'u"), ("$", "rupnu"), ("£", "rupnu"), ("¢", "fepni"),
+    ("¥", "ponjo ja jungo rupnu"),
+  ]
+    ## lo jdini sinxa .e lo valsi poi le sinxa cu sinxa ke'a to `D1 a` pe `#1003` toi
+  NUMBERS_PROSE = ["5", "86,000,704.75"]  ## lo namcu poi le jdini sinxa cu pencu ke'a
+  FRAMES_PROSE = [
+    "_ cu cmalu", "mi ponse _", "mi dunda _ do", "lo jdima cu du _", "mi ponse ci _",
+    "mi ponse _ .e _",
+  ]
+    ## lo jufra poi ro sumti po'u `_` cu jdini klani
+  COUNT_AMOUNTS = 120  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+
+
+
 suite "Internal: Prose":
+  test "Each currency sign at each place of a sumti reads as the tree of its words written out":
+    # `Architect` jdice `D2 a` bu'u `#1003`
+    #   .i lo jdini sinxa cu sinxa lo valsi po'o
+    #   .i se ki'u bo lo tricu pe le selci'a cu mintu lo tricu pe le valsi
+    var count = 0
+    for (sign, words) in SIGNS_PROSE:
+      for number in NUMBERS_PROSE:
+        for amount in [sign & number, number & sign]:
+          let spelled = "lo " & words & " be li " & number & " be'o ku"
+          for frame in FRAMES_PROSE:
+            let (a, b) = (frame.replace("_", amount).readText, frame.replace("_", spelled).readText)
+            checkpoint frame.replace("_", amount)
+            check a.is_read and b.is_read
+            if a.is_read and b.is_read:
+              check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+              check a.tree.shape == b.tree.shape
+            inc count
+    check count == COUNT_AMOUNTS  # `IX.3`
+    # lo jdini klani cu sumti gi'e na selbri
+    check not "lo jdima cu €5".readText.is_read
+    # zo zo sitna zo lo noi krasi le jdini klani
+    #   .i se ki'u bo le gerna cu to'e curmi le selci'a
+    check not "zo €5 cu valsi".readText.is_read
+
+
   test "Words of each tree, in order, are words of text that erasure leaves":
     var count = 0
     for text in EXAMPLES:
@@ -318,7 +368,7 @@ suite "Internal: Prose":
       check ("zo " & entry.word).terminalsRead ==
           some(@[Selmaho.Zo.toTerminal])  # `CLL 19.10`
       inc count
-    # musobi valsi pe le liste cu vasru pa cmavo
+    # 598 valsi pe le liste cu vasru pa cmavo
     check count >= 590  # ja'i `IX.3` lo bandu cu ralte lo cmavo pe le liste
 
 
@@ -337,4 +387,4 @@ suite "Internal: Prose":
     check "la la .uras. klama".terminalsRead.isSome  # `CLL 21.1`
     # lo cmavo be `LAU` cu nitcu pa lervla
     check "la lau .ras. klama".refusalRead ==
-        some((RefusalText.Grammar, 8))  # le javni pe li sobize pe `CLL 21.1`
+        some((RefusalText.Grammar, 8))  # le javni pe li 987 pe `CLL 21.1`

@@ -27,7 +27,7 @@
 ##   .i le porsi cu du lo porsi be le cmene bei fi lo stuzi
 ##   .i se ki'u bo `BAI` lidne `BAhE`
 ##
-## ni'o jdima fa lo nu `Selmaho` vasru parere cmima
+## ni'o jdima fa lo nu `Selmaho` vasru 122 cmima
 ##   .i ro selma'o pe `CLL 20` selra'a pa cmima
 ##   .i le liste cu ciska lo selma'o be ro cmavo ta'i lo cmene to `tools/lists.nim` toi
 ##   .i lo cmene poi na zvati le liste pe `CLL 20` rinka lo nu le galfi samtci cu fliba

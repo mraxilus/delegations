@@ -23,17 +23,35 @@
 ##     opening with note stays for hand, since its outline may elaborate note or text.
 ##   Missing doc passes one-line borrow or forward stacked under group comment (VI.1), code
 ##     inside `quote do:`, whose generator carries docs through parameter, and doc on line above
-##     at declaration's indent, which stands out of place rather than missing. Stack is run of
-##     routines on one line each, at one indent, group comment right above it, `#` and never doc.
+##     declaration that is no routine, at its indent, which stands out of place rather than
+##     missing; doc that only blank lines and `#` comments stand above is module's, so declaration
+##     below it takes its own. Stack is run of routines on one line each, at one indent, group
+##     comment right above it, `#` and never doc.
 ##   Forward declaration takes doc of its routine, since `nim doc` reads doc there and drops doc
 ##     of definition (read in `nim doc` of Nim 2.2.12 and 2.4.0); fixer leaves its move for hand.
-##   Doc position: one-line doc of type, field, binding and enum member stands on declaration's
-##     own line, two spaces before `##`, where joined line fits `LINE_MAX`; otherwise on next
-##     line, one level in. Doc of two or more lines stays where it is.
+##   Doc position (VI.9): each doc stands where `nim doc` reads it, in one position for each
+##     shape (STYLE.md §5). One-line doc of type, field, binding and enum member stands on
+##     declaration's own line, two spaces before `##`, where joined line fits `LINE_MAX`;
+##     otherwise on next line, one level in, as does next-line doc of several lines, or under
+##     line holding `#` comment. Doc trailing line keeps lines below that continue it.
+##   Doc above type, field, global binding or enum member moves where missing doc writes it
+##     (`target`), where blank line or `#` comment stands above it. Doc right below other code,
+##     or that declaration holds as its own, stays: either may own it. Doc that only blank lines
+##     and `#` comments stand above stays too, as doc of module, since `nim doc` reads it so
+##     (#980: `D3 a` on file's start, `D1 a` on comments above; `nim jsondoc` of Nim 2.4.0). Doc
+##     below code or other doc moves, though `nim doc` reads module's there too, since hand that
+##     wrote it above declaration meant it for that one.
+##   One-line doc inside value over lines, where `nim doc` reads none, moves after `=` ending
+##     first line where it fits, else after close of value; inside value opening `block`, it
+##     stays for hand, as missing doc leaves such value. Binding of any reach reads so, and so
+##     doc missing doc counts on first line inside value moves, or waits for hand.
+##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
+##     after blank line or off that indent moves there. One-line doc under bare `type` joins
+##     keyword line, as group doc of block.
 ##   Doc position reads declaration as line of code inside `type`, `const`, `let` or `var`
 ##     section, at any depth of object, enum or branch, or such keyword's own line holding one
-##     declaration. Line that continues expression, opens block, ends in bracket left open, or
-##     carries `#` comment is none, and routine's doc keeps its own position.
+##     declaration (`movesLine`); line that continues expression declares nothing. Doc above and
+##     routine's doc it reads from declarations missing doc reads (`movesPlaced`).
 ##   Default of parameter (X.12): type goes where literal default gives exactly that type:
 ##     `int` of integer literal, `float` of float literal, `bool` of `true` or `false`, `string`
 ##     of string literal, `char` of character literal; `T` of `default(T)`, and `Option[T]` of
@@ -41,13 +59,15 @@
 ##     there literal fixes another type, or none.
 ##   Default read in routine, routine type and lambda; template and macro stay, since their
 ##     parameter without type reads otherwise.
-##   Checks and fixers share one reading (`writesDoc`, `movesDoc`, `defaults`), so each rule is
-##     written once (Article II.1).
+##   Checks and fixers share one reading (`placements`, `movesDoc`, `defaults`), so each rule is
+##     written once (Article II.1): `placements` reads where doc of each declaration stands and
+##     where `nim doc` reads it (`target`), and missing doc writes from it (`writesDoc`).
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: doc opening line right below declaration's counts though value runs on past it, as
 ##     first line in `block:` or inside bracket, where `nim doc` reads none (`nim jsondoc` of
 ##     Nim 2.2.12 and 2.4.0).
+##   Cost: doc trailing first line of value over brackets, or of signature, stays unread there.
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of
@@ -78,17 +98,53 @@ type
     indent: int  ## Spaces before doc written on own line, or before note moved above.
     got: string  ## Value message echoes: declaration, e.g. `const SAMPLES`, or doc holding note.
 
+  Placement = object
+    ## Define where doc of declaration stands, and what decides where `nim doc` reads it, so
+    ##   missing doc and doc position read one place.
+    line: int  ## Zero-based line of declaration.
+    kind: KindName
+    last: int  ## Zero-based line its value, type or signature ends on.
+    doc: int  ## Zero-based line of doc standing in place; `-1` for none.
+    offset: int  ## Byte offset of `##` on line `doc`, where doc trails code; else its indent.
+    is_trailing: bool  ## Doc in place trails code of its line.
+    is_outlined: bool  ## Line below doc in place opens doc too, at deeper indent.
+    is_stacked: bool  ## One-line borrow or forward standing under group comment (VI.1).
+    is_above: bool
+      ## Doc on line above, at declaration's indent, that neither block above nor module owns.
+    is_forward: bool  ## Forward declaration with no body, whose routine follows.
+    is_block: bool  ## Value opens `block` on declaration's line.
+    is_equals: bool  ## `=` closes first line outside bracket, with no string or comment past it.
+    is_case: bool  ## Value is `case` expression, whose doc trailing last branch reads not.
+    is_commented_first: bool  ## Comment trails code of declaration's line.
+    is_commented_last: bool  ## Comment trails code of line value or type ends on.
+    first: string  ## Text of declaration's line.
+    closing: string  ## Text of line value or type ends on.
+    indent_body: int  ## Spaces before doc written on own line: body's indent, else one level in.
+    shown: string  ## Declaration as message echoes it, e.g. `const SAMPLES`.
+
   Shape {.pure.} = enum  ## Define move doc takes.
     Join  ## Next-line doc joins declaration's line.
     Split  ## Trailing doc widening line takes next line.
     Indent  ## Next-line doc that cannot join takes indent one level in.
+    Above  ## Doc above declaration moves where missing doc writes it.
+    Inside  ## One-line doc inside value joins `=` ending its first line.
+    Close  ## One-line doc inside value moves after its close.
+    Block  ## Doc inside value opening `block`, which hand moves after `=`.
+    Signature  ## Doc on routine's signature line takes line after it.
+    Blank  ## Blank line between routine's signature and its doc goes.
+    Body  ## Routine's doc takes indent of body.
+    Group  ## One-line doc under bare `type` joins keyword line.
 
   MoveDoc = object
-    ## Define one doc to move: declaration line, shape, lines replacing declaration and doc.
-    line: int  ## Zero-based line of declaration.
+    ## Define one doc to move: declaration line, shape, lines replacing span that holds both.
+    line: int  ## Zero-based line of declaration, which report names.
     shape: Shape  ## Move doc takes, which message names.
-    last: int  ## Zero-based last line replaced: doc's line, or declaration's own.
-    lines: seq[string]  ## Lines standing from `line` to `last` once doc moves.
+    first: int  ## Zero-based first line replaced: doc's line above, or declaration's own.
+    last: int  ## Zero-based last line replaced.
+    lines: seq[string]  ## Lines standing from `first` to `last` once doc moves; none for hand.
+    origins: seq[int]  ## Zero-based line of source each of `lines` comes from.
+    got: string  ## Declaration message echoes, e.g. `const N`.
+    indent: int  ## Indent of doc as found, which message echoes where indent is wrong.
 
   Default = object
     ## Define type to drop from parameter: byte span from name's end to `=`, and type read.
@@ -138,8 +194,14 @@ func isOpeningBlock(code: string): bool =
   words.len > 1 and (words[^1] == "block" or words[^2] == "block")
 
 
-func writesDoc(source: string): seq[WriteDoc] =
-  ## Find each declaration with no doc in its place, and each doc holding design note.
+func isJoinable(line: string; is_commented: bool; doc: string): bool =
+  ## Decide whether doc joins line: line holds no comment, and joined line fits.
+  not is_commented and not (line.strip(leading = false) & ' '.repeat(GAP_COMMENT) & doc).isWide
+
+
+func placements(source: string): seq[Placement] =
+  ## Read where doc of each declaration that takes one stands, once for each line, and what
+  ##   decides where `nim doc` reads it.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
@@ -253,11 +315,6 @@ func writesDoc(source: string): seq[WriteDoc] =
         return (below, lines[below].indentWidth)
     (-1, -1)
 
-  func isJoinable(j: int): bool =
-    ## Decide whether doc joins line `j`: line holds no comment, and joined line fits.
-    not commented[j] and
-        not (lines[j].strip(leading = false) & ' '.repeat(GAP_COMMENT) & DOC_EMPTY).isWide
-
   # Mark lines statements run past or open inside brackets, docs trail or open, routine keywords,
   #   and generated code.
   var depth = 0  # Brackets open before token.
@@ -291,15 +348,23 @@ func writesDoc(source: string): seq[WriteDoc] =
       quoted[below] = true
       inc below
 
+  # First line holding code or opening doc: doc whose run opens there is doc of module.
+  var heading = lines.len
+  for k in 0 ..< lines.len:
+    if code[k].strip.len > 0 or opening[k]:
+      heading = k
+      break
+
   # Read each declaration that takes doc, once for each line.
   let found = source.declarations
-  var seen: seq[int]  # Line of each declaration written, so names sharing line write once.
+  var seen: seq[int]  # Line of each declaration read, so names sharing line read once.
   for d in found:
     let i = d.line - 1
     if i < 0 or i >= lines.len or i in seen or quoted[i]: continue
     if d.kind in {KindName.Parameter, KindName.Placeholder}: continue
     if nested[i] and d.kind != KindName.Routine: continue
     if d.kind == KindName.Binding and d.reach != Reach.Global: continue
+    seen.add i
     let
       (e, is_bodied) =
         case d.kind
@@ -310,70 +375,98 @@ func writesDoc(source: string): seq[WriteDoc] =
       (line_doc, offset) = docPlaced(i, e, d.kind)
       indent = lines[i].indentWidth
 
+    # Read doc above at declaration's indent, which block opening above may own, and line below
+    #   signature, whose indent routine's doc takes; doc under blank lines and `#` comments alone
+    #   is module's, as `nim doc` reads it (#980: `D3 a` on file's start, `D1 a` on comments above).
+    var top = i - 1
+    while top >= 0 and opening[top] and lines[top].indentWidth == indent: dec top
+    var below = e + 1
+    while below < lines.len and lines[below].strip.len == 0: inc below
+    let
+      is_owned = heading > top or (lines[top].strip.len > 0 and lines[top].indentWidth < indent)
+      outline = line_doc + 1
+    result.add Placement(
+      line: i,
+      kind: d.kind,
+      last: e,
+      doc: line_doc,
+      offset: offset,
+      is_trailing: line_doc >= 0 and trailing[line_doc] >= 0,
+      is_outlined: line_doc >= 0 and outline < lines.len and opening[outline] and
+        lines[outline].indentWidth > indent,
+      is_stacked: d.kind == KindName.Routine and isStacked(i),
+      is_above: d.kind != KindName.Routine and i > 0 and opening[i-1] and
+        lines[i-1].indentWidth == indent and not is_owned,
+      is_forward: d.kind == KindName.Routine and not is_bodied and
+        found.anyIt(it.kind == KindName.Routine and it.name == d.name and it.line > d.line),
+      is_block: code[i].isOpeningBlock,
+      is_equals: endings[i] == "=" and not (i + 1 < lines.len and spanned[i+1]) and
+        code[i].count({'(', '[', '{'}) <= code[i].count({')', ']', '}'}),
+      is_case: " = case " in code[i],
+      is_commented_first: commented[i],
+      is_commented_last: commented[e],
+      first: lines[i],
+      closing: lines[e],
+      indent_body:
+        if d.kind == KindName.Routine and below < lines.len and lines[below].indentWidth > indent:
+          lines[below].indentWidth
+        else: indent + STEP_INDENT,
+      shown:
+        case d.kind
+        of KindName.Routine: d.keyword & " " & d.name
+        of KindName.Binding: section(i) & " " & d.name
+        else: ($d.kind).toLowerAscii & " " & d.name,
+    )
+
+
+func target(p: Placement, doc: string): (int, ShapeWrite) =
+  ## Read line doc of placement takes, and how, where `nim doc` reads it: below routine's
+  ##   signature; on declaration's one line, else below it; for value or type over lines, after
+  ##   `=` closing first line, else at its close. Forward declaration's waits for doc its routine
+  ##   holds. Doc text decides whether joined line fits.
+  let
+    shape_first =
+      if p.first.isJoinable(p.is_commented_first, doc): ShapeWrite.Join else: ShapeWrite.Below
+    shape_last =
+      if p.closing.isJoinable(p.is_commented_last, doc): ShapeWrite.Join else: ShapeWrite.Below
+  if p.is_forward: (p.last, ShapeWrite.Forward)
+  elif p.kind == KindName.Routine: (p.last, ShapeWrite.Below)
+  elif p.last == p.line: (p.line, shape_first)
+  elif p.is_block: (p.line, ShapeWrite.Block)
+  elif p.is_equals and shape_first == ShapeWrite.Join: (p.line, ShapeWrite.Join)  # below `=` none
+  elif p.is_case: (p.last, ShapeWrite.Below)  # doc trailing last branch reads not
+  else: (p.last, shape_last)
+
+
+func writesDoc(source: string): seq[WriteDoc] =
+  ## Find each declaration with no doc in its place, and each doc holding design note.
+  let lines = source.split('\n')
+  for p in source.placements:
     # Pass doc in place, unless it holds design note.
-    if line_doc >= 0:
-      let doc = lines[line_doc][offset .. ^1].strip
+    if p.doc >= 0:
+      let doc = lines[p.doc][p.offset .. ^1].strip
       if not doc.startsWith(MARKER_NOTE) or doc == DOC_EMPTY: continue
-      let
-        below = line_doc + 1
-        is_outlined = below < lines.len and opening[below] and lines[below].indentWidth > indent
-      seen.add i
       result.add WriteDoc(
-        line: i,
-        shape: if is_outlined: ShapeWrite.Hand else: ShapeWrite.Note,
-        at: line_doc,
-        offset: offset,
-        indent: indent,
+        line: p.line,
+        shape: if p.is_outlined: ShapeWrite.Hand else: ShapeWrite.Note,
+        at: p.doc,
+        offset: p.offset,
+        indent: p.first.indentWidth,
         got: doc,
       )
       continue
 
     # Pass borrow or forward under group comment, and doc above at declaration's indent unless
-    #   block opening above owns it.
-    if d.kind == KindName.Routine and isStacked(i): continue
-    var top = i - 1
-    while top >= 0 and opening[top] and lines[top].indentWidth == indent: dec top
-    let is_owned = top >= 0 and lines[top].strip.len > 0 and lines[top].indentWidth < indent
-    if d.kind != KindName.Routine and i > 0 and opening[i-1] and
-        lines[i-1].indentWidth == indent and not is_owned:
-      continue
-
-    # Write doc where `nim doc` reads it: below routine's signature; on declaration's one line,
-    #   else below it; for value or type over lines, after `=` closing first line, else at its
-    #   close. Forward declaration's waits for doc its routine holds.
-    seen.add i
-    let
-      shown =
-        case d.kind
-        of KindName.Routine: d.keyword & " " & d.name
-        of KindName.Binding: section(i) & " " & d.name
-        else: ($d.kind).toLowerAscii & " " & d.name
-      is_forward = d.kind == KindName.Routine and not is_bodied and
-          found.anyIt(it.kind == KindName.Routine and it.name == d.name and it.line > d.line)
-      # `=` closing first line outside bracket, with no string or comment running past it.
-      is_equals = endings[i] == "=" and not (i + 1 < lines.len and spanned[i+1]) and
-          code[i].count({'(', '[', '{'}) <= code[i].count({')', ']', '}'})
-      (at, shape) =
-        if is_forward: (e, ShapeWrite.Forward)
-        elif d.kind == KindName.Routine: (e, ShapeWrite.Below)
-        elif e == i: (i, if isJoinable(i): ShapeWrite.Join else: ShapeWrite.Below)
-        elif code[i].isOpeningBlock: (i, ShapeWrite.Block)
-        elif is_equals and isJoinable(i): (i, ShapeWrite.Join)  # doc below `=` parses not
-        elif " = case " in code[i]: (e, ShapeWrite.Below)  # doc trailing last branch reads not
-        else: (e, if isJoinable(e): ShapeWrite.Join else: ShapeWrite.Below)
-    var below = e + 1  # First line of routine's body, whose indent its doc takes.
-    while below < lines.len and lines[below].strip.len == 0: inc below
-    let indent_body =
-      if d.kind == KindName.Routine and below < lines.len and lines[below].indentWidth > indent:
-        lines[below].indentWidth
-      else: indent + STEP_INDENT
+    #   block opening above, or module, owns it; write doc where `nim doc` reads it.
+    if p.is_stacked or p.is_above: continue
+    let (at, shape) = p.target(DOC_EMPTY)
     result.add WriteDoc(
-      line: i,
+      line: p.line,
       shape: shape,
       at: at,
       offset: -1,
-      indent: indent_body,
-      got: shown,
+      indent: p.indent_body,
+      got: p.shown,
     )
 
 
@@ -424,13 +517,17 @@ func fixDocsMissing*(path, source: string): Fix =
   if writes.len > 0: result.origin = origin
 
 
-func movesDoc(source: string): seq[MoveDoc] =
-  ## Find each one-line doc of declaration standing where rule puts it not.
+func movesLine(source: string): seq[MoveDoc] =
+  ## Find each doc of type, field, binding or enum member out of its position, by line it hangs
+  ##   from: one-line doc that joins its line or takes indent one level in, trailing doc too
+  ##   wide, doc of several lines or under comment off that indent, one-line doc inside value over
+  ##   lines, and one-line doc under bare `type`.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
     kept = source.codeAndComments.split('\n')
     tokens = source.tokens
+    partners = tokens.partners
   var
     firsts = newSeqWith(lines.len, -1)  # First token of each line opening there.
     lasts = newSeqWith(lines.len, -1)  # Last code token ending on each line.
@@ -448,6 +545,15 @@ func movesDoc(source: string): seq[MoveDoc] =
     if t.kind == KindToken.Open: inc depth
     elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
 
+  func marker(k: int): int =
+    ## Find byte offset of `#` trailing code of line `k`; `-1` where none.
+    kept[k].find('#', code[k].strip(leading = false).len)
+
+  func joined(k: int, doc: string): string =
+    ## Join doc to line `k`, two spaces before its marker.
+    lines[k].strip(leading = false) & ' '.repeat(GAP_COMMENT) & doc
+
+  # Read each line of code opening there, outside brackets, with doc lines below it.
   for d in 0 ..< lines.len:
     let first = firsts[d]
     if first < 0 or code[d].strip.len == 0 or spanned[d] or depths[d] > 0 or lasts[d] < 0:
@@ -457,12 +563,36 @@ func movesDoc(source: string): seq[MoveDoc] =
       stripped = code[d].strip
       ending = tokens[lasts[d]]
       text_ending = ending.spelling(source)
+      indent = lines[d].indentWidth
+      inner = ' '.repeat(indent + STEP_INDENT)
+    var below = d + 1
+    while below < lines.len and isDoc(code[below], kept[below]) and
+        lines[below].indentWidth > indent:
+      inc below
+    let docs = below - d - 1  # Doc lines below at deeper indent.
+
+    # Group doc of bare `type` joins keyword line, where it fits.
+    if stripped == "type":
+      if docs == 1 and marker(d) < 0 and not joined(d, lines[d + 1].strip).isWide:
+        result.add MoveDoc(
+          line: d,
+          shape: Shape.Group,
+          first: d,
+          last: d + 1,
+          lines: @[joined(d, lines[d + 1].strip)],
+          origins: @[d],
+        )
+      continue
     if word in KEYWORDS_ROUTINE or stripped in KEYWORDS_SECTION or stripped.startsWith("{"):
       continue
-    if ending.kind in {KindToken.Open, KindToken.Comma, KindToken.Operator} or
-        text_ending in KEYWORDS_CONTINUING:
+
+    # Line continuing expression declares nothing, but value it opens may hold doc; section
+    #   keyword opens statement, wherever token before it stands.
+    let is_opening = text_ending == "=" or code[d].isOpeningBlock or ending.kind == KindToken.Open
+    if not is_opening and (ending.kind in {KindToken.Open, KindToken.Comma, KindToken.Operator} or
+        text_ending in KEYWORDS_CONTINUING):
       continue
-    if first > 0:
+    if first > 0 and word notin KEYWORDS_SECTION:
       var previous = first - 1
       while previous > 0 and tokens[previous].kind == KindToken.Comment: dec previous
       let before = tokens[previous]
@@ -473,50 +603,226 @@ func movesDoc(source: string): seq[MoveDoc] =
 
     # Declaration context: section keyword on line, or above it through enclosing lines.
     var
-      is_declared = word in KEYWORDS_SECTION
+      section = if word in KEYWORDS_SECTION: word else: ""
       parent = d
-    while not is_declared and code[parent].indentWidth > 0:
-      let indent = code[parent].indentWidth
+    while section.len == 0 and code[parent].indentWidth > 0:
+      let indent_parent = code[parent].indentWidth
       dec parent
-      while parent >= 0 and (code[parent].strip.len == 0 or code[parent].indentWidth >= indent):
+      while parent >= 0 and
+          (code[parent].strip.len == 0 or code[parent].indentWidth >= indent_parent):
         dec parent
       if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
-      is_declared = code[parent].wordFirst in KEYWORDS_SECTION
-    if not is_declared: continue
+      if code[parent].wordFirst in KEYWORDS_SECTION: section = code[parent].wordFirst
+    if section.len == 0: continue
 
-    # Count doc lines below at deeper indent; read trailing comment on declaration's line.
-    let indent = lines[d].indentWidth
-    var below = d + 1
-    while below < lines.len and isDoc(code[below], kept[below]) and
-        lines[below].indentWidth > indent:
-      inc below
-    let
-      docs = below - d - 1
-      marker = kept[d].find('#', code[d].strip(leading = false).len)
-      inner = ' '.repeat(indent + STEP_INDENT)
-    if marker < 0 and docs == 1:
+    # One-line doc inside value over lines, which `nim doc` reads not: after `=` ending first
+    #   line where it fits, else after close; value opening `block` waits for hand.
+    if is_opening:
+      if docs != 1 or below >= lines.len or code[below].strip.len == 0 or
+          lines[below].indentWidth <= indent:
+        continue
       let
         doc = lines[d + 1].strip
-        joined = lines[d] & ' '.repeat(GAP_COMMENT) & doc
-      if not joined.isWide:
-        result.add MoveDoc(line: d, shape: Shape.Join, last: d + 1, lines: @[joined])
+        named = if word in KEYWORDS_SECTION: stripped[word.len .. ^1] else: stripped
+        name = named.identifierAt(0)
+        shown = section & " " & name
+        is_balanced = code[d].count({'(', '[', '{'}) <= code[d].count({')', ']', '}'})
+      if code[d].isOpeningBlock:
+        result.add MoveDoc(line: d, shape: Shape.Block, first: d, last: d + 1, got: shown)
+        continue
+      if text_ending == "=" and is_balanced and marker(d) < 0 and not joined(d, doc).isWide:
+        result.add MoveDoc(
+          line: d,
+          shape: Shape.Inside,
+          first: d,
+          last: d + 1,
+          lines: @[joined(d, doc)],
+          origins: @[d],
+          got: shown,
+        )
+        continue
+
+      # Close of value: partner of bracket ending its first line, else its last line deeper.
+      var close = below
+      if ending.kind == KindToken.Open and partners[lasts[d]] > lasts[d]:
+        close = tokens[partners[lasts[d]]].line
+      else:
+        for k in below ..< lines.len:
+          if lines[k].strip.len == 0: continue
+          if lines[k].indentWidth <= indent: break
+          close = k
+      var move = MoveDoc(line: d, shape: Shape.Close, first: d + 1, last: close, got: shown)
+      for k in below .. close:
+        move.lines.add lines[k]
+        move.origins.add k
+      if marker(close) < 0 and not joined(close, doc).isWide:
+        move.lines[^1] = joined(close, doc)
+      else:
+        move.lines.add inner & doc
+        move.origins.add d + 1
+      result.add move
+      continue
+
+    # Doc right below declaration's line: one line joins where it fits, else stands one level
+    #   in, as does doc of several lines or under `#` comment; doc trailing line keeps lines
+    #   below that continue it; trailing doc too wide splits.
+    let
+      at = marker(d)
+      is_trailed = at >= 0 and kept[d][at .. ^1].startsWith("##")
+    if at < 0 and docs == 1:
+      let doc = lines[d + 1].strip
+      if not (lines[d] & ' '.repeat(GAP_COMMENT) & doc).isWide:
+        result.add MoveDoc(
+          line: d,
+          shape: Shape.Join,
+          first: d,
+          last: d + 1,
+          lines: @[lines[d] & ' '.repeat(GAP_COMMENT) & doc],
+          origins: @[d],
+        )
       elif lines[d + 1].indentWidth != indent + STEP_INDENT:
-        let shaped = @[lines[d], inner & doc]
-        result.add MoveDoc(line: d, shape: Shape.Indent, last: d + 1, lines: shaped)
-    elif marker >= 0 and docs == 0 and kept[d][marker .. ^1].startsWith("##") and
-        lines[d].isWide:
-      let declared = lines[d][0 ..< marker].strip(leading = false)
+        result.add MoveDoc(
+          line: d,
+          shape: Shape.Indent,
+          first: d,
+          last: d + 1,
+          lines: @[lines[d], inner & doc],
+          origins: @[d, d + 1],
+          indent: lines[d + 1].indentWidth,
+        )
+    elif docs >= 1 and not is_trailed:
+      if toSeq(d + 1 ..< below).allIt(lines[it].indentWidth == indent + STEP_INDENT): continue
+      var move = MoveDoc(
+        line: d,
+        shape: Shape.Indent,
+        first: d + 1,
+        last: below - 1,
+        indent: lines[d + 1].indentWidth,
+      )
+      for k in d + 1 ..< below:
+        move.lines.add inner & lines[k].strip
+        move.origins.add k
+      result.add move
+    elif is_trailed and docs == 0 and lines[d].isWide:
+      let declared = lines[d][0 ..< at].strip(leading = false)
       if declared.isWide: continue
       result.add MoveDoc(
         line: d,
         shape: Shape.Split,
+        first: d,
         last: d,
-        lines: @[declared, inner & lines[d][marker .. ^1]],
+        lines: @[declared, inner & lines[d][at .. ^1]],
+        origins: @[d, d],
       )
 
 
+func movesPlaced(source: string): seq[MoveDoc] =
+  ## Find each doc of declaration that missing doc reads out of place, by its placement: doc above
+  ##   type, field, binding or enum member, which moves where missing doc writes it; routine's
+  ##   doc on its signature line, after blank line, or off indent of its body.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    kept = source.codeAndComments.split('\n')
+    found = source.placements
+
+  func isLineDoc(k: int): bool =
+    ## Decide whether line `k` holds `##` doc alone.
+    k >= 0 and k < lines.len and isDoc(code[k], kept[k])
+
+  # Lines of doc each declaration holds in place, which no doc above takes again.
+  var held: seq[int]
+  for p in found:
+    if p.doc < 0: continue
+    held.add p.doc
+    var k = p.doc + 1
+    while isLineDoc(k):
+      held.add k
+      inc k
+
+  # Read doc of each declaration from its placement, above it or below routine's signature.
+  for p in found:
+    let indent = p.first.indentWidth
+    if p.kind != KindName.Routine:
+      # Doc above, under blank line or comment, that no declaration holds.
+      if not p.is_above or p.doc >= 0: continue
+      var top = p.line - 1
+      while isLineDoc(top) and lines[top].indentWidth == indent: dec top
+      if top >= 0 and code[top].strip.len > 0: continue
+      if toSeq(top + 1 ..< p.line).anyIt(it in held): continue
+      let
+        docs = toSeq(top + 1 ..< p.line).mapIt(lines[it].strip)
+        (at, shape) = p.target(if docs.len == 1: docs[0] else: '#'.repeat(LINE_MAX))
+      var move = MoveDoc(line: p.line, shape: Shape.Above, first: top + 1, last: at, got: p.shown)
+      if shape notin {ShapeWrite.Join, ShapeWrite.Below}:
+        result.add move  # value opening `block`, whose doc waits for hand
+        continue
+      for k in p.line .. at:
+        move.lines.add lines[k]
+        move.origins.add k
+      if shape == ShapeWrite.Join:
+        move.lines[^1] = lines[at].strip(leading = false) & ' '.repeat(GAP_COMMENT) & docs[0]
+      else:
+        for k, doc in docs:
+          move.lines.add ' '.repeat(p.indent_body) & doc
+          move.origins.add top + 1 + k
+      result.add move
+      continue
+
+    # Routine's doc opens line after signature, at indent of body: first code line below doc
+    #   deeper than routine, else one level in.
+    if p.doc < 0 or p.is_forward or p.is_stacked: continue
+    if p.is_trailing and p.doc != p.last: continue
+    var after = p.doc + 1
+    while isLineDoc(after): inc after
+    var body = after
+    while body < lines.len and lines[body].strip.len == 0: inc body
+    let
+      indent_body =
+        if body < lines.len and lines[body].indentWidth > indent: lines[body].indentWidth
+        else: indent + STEP_INDENT
+      inner = ' '.repeat(indent_body)
+    if p.is_trailing:
+      var move = MoveDoc(
+        line: p.line,
+        shape: Shape.Signature,
+        first: p.doc,
+        last: after - 1,
+        lines: @[lines[p.doc][0 ..< p.offset].strip(leading = false)],
+        origins: @[p.doc],
+        got: p.shown,
+      )
+      move.lines.add inner & lines[p.doc][p.offset .. ^1].strip
+      move.origins.add p.doc
+      for k in p.doc + 1 ..< after:
+        move.lines.add inner & lines[k].strip
+        move.origins.add k
+      result.add move
+    elif p.doc > p.last + 1 or
+        toSeq(p.doc ..< after).anyIt(lines[it].indentWidth != indent_body):
+      var move = MoveDoc(
+        line: p.line,
+        shape: if p.doc > p.last + 1: Shape.Blank else: Shape.Body,
+        first: p.last + 1,
+        last: after - 1,
+        got: p.shown,
+        indent: lines[p.doc].indentWidth,
+      )
+      for k in p.doc ..< after:
+        move.lines.add inner & lines[k].strip
+        move.origins.add k
+      result.add move
+
+
+func movesDoc(source: string): seq[MoveDoc] =
+  ## Find each doc out of its position (VI.9; STYLE.md §5), by line it hangs from and by its
+  ##   placement, in order of first line each replaces.
+  (source.movesLine & source.movesPlaced).sortedByIt((it.first, it.line))
+
+
 func checkDocs*(path, source: string): seq[Report] =
-  ## Report one-line doc of type, field, binding or enum member out of its position.
+  ## Report doc of type, field, binding, enum member, routine or `type` section out of its
+  ##   position (VI.9; STYLE.md §5).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for move in source.movesDoc:
     let message =
@@ -526,21 +832,45 @@ func checkDocs*(path, source: string): seq[Report] =
       of Shape.Split:
         "Doc widening its line past `" & $LINE_MAX & "` takes next line; got it on " &
           "declaration's line."
-      of Shape.Indent: "Doc on next line stands one level in; got indent `" &
-        $source.split('\n')[move.line + 1].indentWidth & "`."
+      of Shape.Indent: "Doc on next line stands one level in; got indent `" & $move.indent & "`."
+      of Shape.Above:
+        "Doc stands after its declaration, never above it; got it above `" & move.got & "`."
+      of Shape.Inside:
+        "Doc of value over lines stands after `=` ending its first line; got it below `" &
+          move.got & "`."
+      of Shape.Close:
+        "Doc of value over brackets stands after its close; got it below `" & move.got & "`."
+      of Shape.Block:
+        "Doc of value opening `block` stands after `=`, with `block` on next line; got it " &
+          "below `" & move.got & "`."
+      of Shape.Signature:
+        "Doc of routine stands on line after its signature; got it on signature line of `" &
+          move.got & "`."
+      of Shape.Blank:
+        "Doc of routine stands on line right after its signature; got blank line above it in `" &
+          move.got & "`."
+      of Shape.Body:
+        "Doc of routine stands at indent of its body; got indent `" & $move.indent & "` in `" &
+          move.got & "`."
+      of Shape.Group: "Group doc of `type` section stands on keyword line; got it on next line."
     result.add initReport(path, move.line + 1, Rule.PositionDoc, message)
 
 
 func fixDocs*(path, source: string): Fix =
-  ## Move each doc check reports, last first; each new line traces to line it replaced.
-  let moves = source.movesDoc
+  ## Move each doc check reports, last first, but those left for hand and any whose lines one
+  ##   moved before holds; each new line traces to line it came from.
   var
+    moves: seq[MoveDoc]
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
+  for move in source.movesDoc:
+    if move.lines.len == 0: continue
+    if moves.len > 0 and move.first <= moves[^1].last: continue
+    moves.add move
   for move in moves.reversed:
-    let traced = toSeq(0 ..< move.lines.len).mapIt(origin[min(move.line + it, move.last)])
-    lines = lines[0 ..< move.line] & move.lines & lines[move.last + 1 .. ^1]
-    origin = origin[0 ..< move.line] & traced & origin[move.last + 1 .. ^1]
+    let traced = move.origins.mapIt(origin[it])
+    lines = lines[0 ..< move.first] & move.lines & lines[move.last + 1 .. ^1]
+    origin = origin[0 ..< move.first] & traced & origin[move.last + 1 .. ^1]
   result.source = lines.join("\n")
   for move in moves: result.fixed.add initReport(path, move.line + 1, Rule.PositionDoc)
   if moves.len > 0: result.origin = origin

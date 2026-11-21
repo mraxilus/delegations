@@ -42,7 +42,7 @@ _Avoid_: metaphor, phrase
 
 **tanru unit**:
 pa valsi pe lo tanru ge'u joi lo cmavo poi jorne le valsi
-  .i zoi gy. tanru-unit .gy. cmene lo taurpau le gerna pe `CLL` to `21.2` .e le javni pe li pamure
+  .i zoi gy. tanru-unit .gy. cmene lo taurpau le gerna pe `CLL` to `21.2` .e le javni pe li 152
       toi
   .i lo jalge be lo cmavo be zoi gy. SE .gy. po'o cu vajni
   .i lo taurpau be lu se se ciska li'u cu du lu ciska li'u

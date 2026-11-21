@@ -176,9 +176,9 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    at once.
 
    Where a failed case still carries a meaningful value, return that value beside a named flag.
-   A message ends by echoing each value in backticks, context included, as in
-   ``"…; got `{value}` for `{key}`."``, so an empty value stays visible. An expensive check runs
-   under the assertions flag.
+   A message echoes each value in backticks, context included, so that an empty value stays
+   visible. ``"…; got `{value}` for `{key}`."`` is one such form, and a message need not take
+   it. An expensive check runs under the assertions flag.
 5. Decide the policy for each special case: zero, empty, NaN, overflow, and a zero norm. Express it
    in the return type, as IV.4 has it. Where no invalid value is possible, return the plain value.
    Compare computed floats only through a relative tolerance with an absolute floor, and poison
@@ -197,12 +197,15 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
 8. Make each routine correct for each value of each type that it takes. A routine can hold
    several forms, as a fast table beside a general chain. Where a form is correct for some values
    only, give those values a type that holds no other value. Only that type reaches that form,
-   and no test of a value at runtime selects it. Where no type can hold those values, as for an
-   empty input, a runtime test can select the form. Every other type keeps the general form.
+   and no test of a value at runtime selects it. Where no type can hold those values, a runtime
+   test can select the form. An empty input is such a value, and so is an operation that a
+   person picks at runtime, as from a catalogue.
 
-   Where these types are instances of one generic type, as `MultivectorOf[B]` is, each routine
-   that takes one instance takes every instance. Where a value has no result, the routine follows
-   IV.4: its return type says so, or it fails at the earliest boundary.
+   Every other type keeps the general form. Where these types are instances of one generic type,
+   as `MultivectorOf[B]` is, a routine that takes a narrower instance takes every instance. A
+   routine that takes only the whole instance, as `Multivector` is, keeps it. Where a value has
+   no result, the routine follows IV.4: its return type says so, or it fails at the earliest
+   boundary.
 
 ```nim
 func `==`*(m, n: Multivector): bool {.error:
@@ -331,12 +334,17 @@ CAYLEYS_WEDGE  # module constant
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
+   The two spaces count from where the sentence of the parent starts. A capitalised word with a
+   colon, as `TODO:` or `Cost:`, is a tag, and its sentence starts after it. A line two spaces
+   deeper that opens in lowercase continues the sentence above it, and is no claim of its own.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
    procedure that it forwards to carries one line. The length of a doc follows the weight of
    the concept, and not the size of the body.
 4. Inside a function, each paragraph that a blank line opens takes one short comment that
-   names the goal of the stage, verb first. A reader who skims only the comments reconstructs
-   the algorithm. Never narrate the syntax.
+   names the goal of the stage, verb first. The comment completes the sentence "This stage runs
+   to …", so it names why the stage runs, and never how. Where you cannot write it yet, write
+   `TODO: Describe stage's purpose.` in its place. A reader who skims only the comments
+   reconstructs the algorithm. Never narrate the syntax.
 5. Prose in a comment is telegraphic, with no articles, in every comment of every language in
    the tree. That covers a header, a stage comment, a banner, and glue in a second language.
    A checker enforces it. A file kind that the checker does not read is a file kind that does
@@ -356,9 +364,9 @@ CAYLEYS_WEDGE  # module constant
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
-    comment takes backticks, so that a reader and the checker take it as a name. A project of
-    `bangu` that the Architect approves follows its own language for capitals and periods in
-    its comments. The checker lists each such project.
+    comment takes backticks, so that a reader and the checker take it as a name. A citation of
+    the charter, as STYLE.md §5, takes none. A project of `bangu` that the Architect approves
+    follows its own language for capitals and periods, and the checker lists it.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -467,9 +475,9 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 ##   NOTE: Partially true in current implementation, but should be at end state.
 
 # TODO: Represent multivector primitives using more compact data types.
-#   At cost of additional meta-programming, this affords:
-#     - More optimization with SoA (how much more over SIMD of multivectors?),
-#     - Simpler reasoning about objects resulting from operations.
+#         At cost of additional meta-programming, this affords:
+#           - More optimization with SoA (how much more over SIMD of multivectors?),
+#           - Simpler reasoning about objects resulting from operations.
 ```
 
 ## Article IX: Tests replicate the authority
@@ -549,15 +557,15 @@ suite "Chapter 2":
      banner takes the one blank line of the banner.
 3. A call stays on its own line where it fits. A signature that does not fit first wraps its
    parameters onto one line of their own. Where that line does not fit either, it takes one
-   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
-   separator where the list would not fit joined on one line. A declarative call names its
+   parameter, or one group of a shared type, to a line. A declarative call names its
    arguments, and so do a code-generating call and a constructor. A positional call stays
    positional.
 
-   A call written one argument to a line, with a separator after its last argument, stays so
-   where it would fit. That separator is the one mark of the split that the hand wants. A call
-   without it that does not fit keeps the line breaks of the hand while each line fits.
-   Otherwise it takes one argument to a line, with that separator.
+   A call or a signature written one item to a line, with a separator after its last item,
+   stays so where it would fit. That separator is the one mark of the split that the hand
+   wants, and no tool adds it. So a list that a tool splits ends with no separator, and joins
+   again where it fits. A call without the mark that does not fit keeps the line breaks of the
+   hand while each line fits. Otherwise it takes one argument to a line.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
@@ -628,9 +636,11 @@ suite "Chapter 2":
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
     in two groups, the bare pragmas first, then those that take an argument.
-11. Definitions that exist under one configuration sit together in one conditional block inside
-    their section. The configurations come in one fixed order across the project. Inside a
-    routine, a nested helper comes first, after the doc.
+11. Definitions that exist under one configuration sit in a conditional block beside the family
+    that they belong to. Definitions of one configuration that stand next to each other share one
+    block. Where a family differs by configuration, its blocks stand next to each other. The
+    configuration that a build gets by default comes first. Inside a routine, a nested helper
+    comes first, after the doc.
 12. A parameter with a default states its type only where the default does not fix it, and a
     field states its type always. Only a literal fixes it, `default(T)` and `none(T)` among
     them, so a default from a named constant states its type.
@@ -639,7 +649,7 @@ suite "Chapter 2":
 defineOperator(
   symbols = "∧",
   docs = "Multiply multivectors through exterior product, i.e. 𝐦 ∧ 𝐧.",
-  cayley = CAYLEYS_WEDGE.base,
+  cayley = CAYLEYS_WEDGE.base
 )
 
 let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)

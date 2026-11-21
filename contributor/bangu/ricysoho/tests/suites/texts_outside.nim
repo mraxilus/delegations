@@ -27,9 +27,9 @@
 ##   .i jdima fa lo nu lo linji poi ciska lo jufpau ne'i lo stuzi be lo valsi mu'u lo'u datkypi'u
 ##       gairki'e le'u cmima no selcmi
 ##
-## ni'o `cmavo.txt` ciska lo cmavo ne'i le pamoi stuzi bi'o le papamoi stuzi gi'e ralte denpa bu poi
+## ni'o `cmavo.txt` ciska lo cmavo ne'i le pamoi stuzi bi'o le 11moi stuzi gi'e ralte denpa bu poi
 ##     sinxa lo denpa to `CLL 3.3` toi
-##   .i `cmavo.txt` ciska lo selma'o ne'i le paremoi stuzi bi'o le renomoi stuzi
+##   .i `cmavo.txt` ciska lo selma'o ne'i le 12moi stuzi bi'o le 20moi stuzi
 ##   .i `*` pe le stuzi cu sinxa lo gunma be lo cmavo be'o noi se tcidu ta'i su'o re cmavo
 
 {.experimental: "strictFuncs".}

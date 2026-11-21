@@ -75,6 +75,18 @@ func faultsJoinedRead(path, content: string): seq[string] =
     for fault in text.faultsJoined(text.readingMarked): result.add fault.why
 
 
+func faultsNumbersRead(path, content: string): seq[string] =
+  ## dunda lo krinu be ro namcu poi na mapti le javni be lo nu ciska lo lerfu pe `0` bi'o `9`
+  for text in texts(path, content):
+    for fault in text.faultsNumbers(text.readingMarked): result.add fault.why
+
+
+func faultsRunsRead(path, content: string): seq[string] =
+  ## dunda lo krinu be ro namcu .e ro lerfu porsi poi vasru lo valsi pe `PA` .e lo lerfu valsi
+  for text in texts(path, content):
+    for fault in text.faultsRuns(text.readingMarked): result.add fault.why
+
+
 proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table[string,
     seq[string]]] =
   ## tcidu ro selci'a pe le vi selgu'a pa roi gi'e dunda ro linji pe ro datnyvei
@@ -117,6 +129,38 @@ suite "Internal: Prose of project, in lojban":
     for (text, marked) in PROJECT.readings: found.add text.faultsJoined(marked)
     found.show
     check found.len == 0  # `#890`
+
+  test "Each number holds digits where it holds two or follows li, and boi parts two numbers":
+    var found: seq[Error]
+    for (text, marked) in PROJECT.readings: found.add text.faultsNumbers(marked)
+    found.show
+    check found.len == 0  # le javni be lo nu ciska lo lerfu pe `0` bi'o `9`
+    for (prose, count) in [
+        ("ni'o li pa cu namcu\n", 1), ("ni'o li 1 cu namcu\n", 0),
+        ("ni'o li ni'u pa cu namcu\n", 1), ("ni'o li ni'u 1 cu namcu\n", 0),
+        ("ni'o le renopa mlatu cu klama\n", 1), ("ni'o le 201 mlatu cu klama\n", 0),
+        ("ni'o lo pa remoi mlatu cu klama\n", 2), ("ni'o lo pa boi remoi mlatu cu klama\n", 0),
+        ("ni'o lo 02 mlatu cu klama\n", 1), ("ni'o li 0 pi 079 cu namcu\n", 0),
+        ("ni'o li 2026 pi'e 11 pi'e vo cu detri\n", 1),
+        ("ni'o li 2026 pi'e 11 pi'e 4 cu detri\n", 0), ("ni'o zo pa cu cmavo\n", 0),
+        ("ni'o lo'u li pa le'u cu sitna\n", 0), ("ni'o lu li pa li'u cu sitna\n", 0),
+        ("ni'o li 3.14 cu namcu\n", 0), ("ni'o li 1,000 cu namcu\n", 0),
+        ("ni'o li 1,000.05 cu namcu\n", 0)]:
+      checkpoint prose
+      check faultsNumbersRead("README.md", prose).len == count  # `CLL 18.2` .e `CLL 18.6`
+
+  test "Each run of number words or letters holds one kind, as boi parts a number from a letter":
+    var found: seq[Error]
+    for (text, marked) in PROJECT.readings: found.add text.faultsRuns(marked)
+    found.show
+    check found.len == 0  # `CLL 17.9`
+    for (prose, count) in [
+        ("ni'o no denpa bu\n", 1), ("ni'o no boi denpa bu\n", 0),
+        ("ni'o le pa by. moi cu klama\n", 1), ("ni'o le pa boi by. moi cu klama\n", 0),
+        ("ni'o le by. pa moi cu klama\n", 1), ("ni'o le by. boi pa moi cu klama\n", 0),
+        ("ni'o by. cy. cu klama\n", 0), ("ni'o le pare moi cu klama\n", 0)]:
+      checkpoint prose
+      check faultsRunsRead("README.md", prose).len == count  # `CLL 17.9`
 
   test "Selbri after be clause, me or kei takes cu, and selbri after name, pronoun or ku none":
     for (prose, count) in [

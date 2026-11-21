@@ -100,37 +100,37 @@ const
     ##   .i ro le selci'a cu selka'a ta'i ro lo re tadji
   COUNT_READ_LEAST = 1800
     ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a
-    ##   .i le selci'aste cu vasru pasovopa selci'a
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pabicipa
+    ##   .i le selci'aste cu vasru 1941 selci'a
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 1831
   COUNT_PARTED_LEAST = 100
     ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a zi'e
     ##     poi selka'a fi su'o re jgena
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pacici
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 133
   COUNT_MARKED_LEAST = 350
     ## lo klani be lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a
     ##   .i le selci'a cu pagbu le selci'aste gi'a selzba
     ##   .i ro nu katna cu se kancu
     ##   .i no pagbu be le selci'a cu vasru lo srejge
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li cibibi
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 388
   COUNT_RUNS_LEAST = 900
     ## lo klani be lo porsi be lo pagbu be'o poi se jmina gi'e sruri lo srejge
     ##   .i le porsi cu pagbu lo selci'a pe le selci'aste ge'u .a lo selci'a poi selzba
     ##   .i ro nu katna cu se kancu
     ##   .i va'o lo nu le selci'a pe le porsi cu se tcidu po'o kei le selci'a cu dunda le mi'uvla
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li socize
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 937
   RUNS_OUTSIDE_MOST = 0.1
     ## lo frinu pe lo porsi poi lo selci'a pe ke'a dunda lo datyvla va'o lo nu le selci'a cu se
     ##     tcidu po'o
     ##   .i le frinu cu mleca ja du le vi namcu
-    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li no pi no ze so
+    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 0 pi 079
     ##   .i ro le porsi cu frica ki'u lo valsi poi bancu lo krasi be le porsi
   COUNT_BUILT_READ_LEAST = 200
     ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li rexaci
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 263
   COUNT_BUILT_SU_LEAST = 30
     ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a kei gi'e vasru
     ##     zo su poi fanmo lo selci'a poi lidne zo su
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li voxa
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 46
   MARKS_TRAILING = {' ', '\t', '\n', '.', ','}
     ## lo sinxa poi zvati lo jbini be lo valsi gi'e fanmo lo selci'a
     ##   .i `NIF` dunda no stuzi pe le sinxa
@@ -168,6 +168,8 @@ const
     # lo cmavo be zoi gy. BAhE .gy. cu lidne zo zoi
     "ba'e zoi gy. a'h .gy. ui su ko",  # .i se ki'u bo lo se sitna cu vomoi valsi
     "zoi gy. ab'h .gy. cu melbi",  # lo selci'a poi zo zoi sitna ke'a ralte `'` .e `h`
+    # lo valsi poi lo jdini sinxa cu sinxa ke'a cu vasru no stuzi to `#1003` toi
+    "mi ponse €5 .e $6 .i do ponse 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
   ]
     ## lo selci'a poi selfi'i gi'e se tcidu ca lo nu tcidu le mulselci'a
     ##   .i lo pagbu be ro le selci'a cu se jmina fo lo selci'a be fi `NIF` be'o pe le selci'a
@@ -252,9 +254,9 @@ const
     ## lo selci'a poi selzba
     ##   .i lo mivypau be le selci'a cu na mapti lo flalu
     ##   .i ku'i lo pagbu be le selci'a ta'i lo nu tcidu le mulselci'a cu mapti le flalu
-    ##   .i le ci selci'a cu pagbu lo cinonono selci'a poi selzba sepi'o lo tsiju pe le cipra gi'e
+    ##   .i le ci selci'a cu pagbu lo 3000 selci'a poi selzba sepi'o lo tsiju pe le cipra gi'e
     ##       selka'a ta'i ro lo re tadji
-    ##   .i lo namcu pe le ci selci'a cu du li panoremuso .e li pasopavopa .e li remucimuvo
+    ##   .i lo namcu pe le ci selci'a cu du li 10259 .e li 19141 .e li 25354
     ##
     ## ni'o ro mupli cu vasru lo du'u xu kau lo nu tcidu le mulselci'a cu curmi le selci'a pe le
     ##     mupli kei .e lo jgena poi lo nu jmina lo mivypau cu dunda ke'a ta'i le tarmi pe
@@ -304,7 +306,7 @@ const
       # lo tcita poi vasru re lerfu poi fanmo lo linji
     (HEADER & "(s\xFF (KOhA 0 2 \"mi\"))\n",
       "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
-      # lo tcita poi vasru pa me `byte` me'u poi zmadu li pazeci
+      # lo tcita poi vasru pa me `byte` me'u poi zmadu li 173
     (HEADER & "(srera 0 sumti_6 (nitcu 5))\n", "le cmene po'u lo kunti cmene", 0),
       # lo genvla poi se cmene no da
     (
@@ -317,8 +319,8 @@ const
     ##   .i ro le selci'a cu vasru no tarmi poi `nif.nim` ciska ke'a
     ##   .i ro le selci'a cu kansa lo pagbu be lo krinu be'o .e lo namcu pe lo jgena poi lo nu jmina
     ##       cu cusku ke'a
-    ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
-    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u pa
+    ##   .i li 0 cu krasi lo nu kancu lo jgena poi se lidne lo minde
+    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u 1
 
 
 

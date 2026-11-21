@@ -59,7 +59,7 @@
 ##   .i pa zunsna cu ka'e lidne le porsi
 ##   .i lo pamoi pagbu be le porsi cu du pa karsna .a pa karsna remei
 ##   .i zoi gy. ' .gy. lidne ro datpau be le porsi
-##   .i le pano sakli karsna poi `CLL 4.2` jmina ke'a pamoi ne'i lo cmavo poi lo karsna cu krasi
+##   .i le 10 sakli karsna poi `CLL 4.2` jmina ke'a pamoi ne'i lo cmavo poi lo karsna cu krasi
 ##       ke'a ku'o po'o ki'u lo nu `CLL 3.4` to'e curmi le sakli karsna ne'i ro valsi poi na sepli
 ##   .i `Cy` .e `y` .e `y'y` lerfu cmavo to `CLL 4.2` .e `CLL 17.2` toi
 ##
@@ -105,7 +105,7 @@ const
     ##   .i lo rafsi poi seltai `CVV` ku'o to `CLL 4.6` toi .e lo cmavo to `CLL 4.2` toi cu vasru le
     ##       karsna remei
   DIPHTHONGS_CMAVO* = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## le pano karsna remei poi `CLL 4.2` jmina ke'a lo cmavo poi seltai `VV`
+    ## le 10 karsna remei poi `CLL 4.2` jmina ke'a lo cmavo poi seltai `VV`
     ##   .i le karsna remei cu sakli karsna
     ##   .i `CLL 3.4` curmi lo sakli karsna ne'i lo valsi poi sepli .e lo cmene .e lo fu'ivla gi'e
     ##       to'e curmi le sakli karsna ne'i ro datyvla
@@ -240,7 +240,7 @@ func isCmavo*(text: string): bool =
   ##
   ## ni'o `VV` du pa karsna remei .a `V'V` to le remoi javni pe `CLL 4.1` toi
   ##   .i ne'i lo cmavo poi lo karsna cu krasi ke'a ku'o le pamoi karsna remei cu ka'e du ji'a pa le
-  ##       pano sakli karsna poi `CLL 4.2` jmina ke'a
+  ##       10 sakli karsna poi `CLL 4.2` jmina ke'a
   ##   .i zoi gy. ' .gy. lidne ro karsna poi se lidne le pamoi karsna remei
   ##
   ## ni'o lo denpa poi lidne lo karsna cu na selci'a vi
