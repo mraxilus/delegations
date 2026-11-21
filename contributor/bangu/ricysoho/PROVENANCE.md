@@ -1039,7 +1039,10 @@ ni'o `EBNF` pe `CLL 21.1` curmi lo nu re porsi be lo valsi pe `PA` .a lo lerfu v
   .i le vreji .e lo pinka pe le samtci cu ciska zo boi ba lo klani poi lidne lo namcu mu'u lo'u ro
       boi remei le'u
   .i ji'a le vreji .e lo pinka cu ciska zo boi ba lo namcu poi lidne lo lerfu valsi mu'u lo'u ro
-      boi slaka bu le'u Verified by `suites/test_prose_own.nim`.
+      boi slaka bu le'u
+  .i ki'u bo no namcu pe le vreji .e lo pinka cu vasru lo lerfu valsi
+  .i ji'a no lerfu porsi pe le vreji .e lo pinka cu vasru lo valsi pe `PA`
+      Verified by `suites/test_prose_own.nim`.
   .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u no drata zo ro pe le vreji .e lo pinka
       cu lidne lo valsi pe `PA`
 
@@ -1067,7 +1070,8 @@ ni'o de'i `2026-11-20` pa ju'agri pe `Wikipedia` po'o cu se to'e curmi ki'u le n
   .i lo'u ro by. le'u cu du pa namcu
   .i se ki'u bo zo be cu nitcu lo sumti
   .i ji'a `2093718` .e `9144760` pe `Tatoeba` cu se to'e curmi bu'u le javni pe li 817
-  .i ku'i le re jufra cu se to'e curmi bu'u lo drata javni ca `89576aa5`
+  .i ji'a vo ju'agri pe `Alice` noi lu lo xe fanva li'u skicu ke'a cu se to'e curmi bu'u le javni
+      pe li 817
   .i le nu fanta cu jdice no drata seljdi pe le mulvei .e lo mupli pe `CLL`
 
 ## ni'o ni'o ni'o lo genturfa'i pe `Earley`
@@ -1803,7 +1807,7 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Stress | 30 | 5912012 | 3.9 |
 | Stream Shape | 28 | 4412245 | 4.1 |
 | Stream Hyphen | 24 | 1484737 | 4.11 |
-| Grammar tanru-unit-2 152 | 23 | 2864592 | 152 |
+| Grammar tanru-unit-2 152 | 22 | 2864592 | 152 |
 | Grammar paragraphs 4 | 21 | 2793895 | 97 |
 | Grammar tail-terms 71 | 15 | 1576931 | 111 |
 | Grammar sumti-tail-1 112 | 13 | 5181396 | 152 |
@@ -1814,8 +1818,8 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Cluster | 8 | 13820484 | 3.6 |
 | Grammar selbri 130 | 7 | 12406452 | 4.8 |
 | Grammar sentence 40 | 7 | 656510 | 972 |
-| Grammar sumti-5 95 | 6 | 5183488 | 383 |
 | Grammar guhek 808 | 5 | 2802254 | 972 |
+| Grammar sumti-5 95 | 5 | 5183488 | 383 |
 | Grammar sumti-tail 111 | 5 | 2063807 | 111 |
 | Grammar free 32 | 4 | 634760 | 4.8 |
 | Grammar gihek 818 | 4 | 2108189 | 131 |
@@ -1828,6 +1832,7 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Split | 3 | 4285480 | 3.3 |
 | Grammar gek 807 | 2 | 3989793 | 97 |
 | Grammar jek 805 | 2 | 2312326 | 131 |
+| Grammar lerfu-string 817 | 2 | 9144760 | 97 |
 | Grammar mex 310 | 2 | 3855768 | 812 |
 | Grammar operand-3 385 | 2 | 3807272 | 385 |
 | Grammar relative-clause 122 | 2 | 8639562 | 122 |
@@ -1944,7 +1949,7 @@ ni'o jdima fa lo nu `accent` pe `Oz` sinxa lo nu basna
   .i `Oz` sinxa ji'a lo nu basna kei poi na ralju mu'u zoi gy. jbìbì'o .gy.
   .i `CLL 3.9` to'e curmi lo nu lo nu basna kei poi ralju gi'e na drani cu zvati pa brivla
 
-ni'o **le genturfa'i cu tcidu 783 lo 856 ju'agri pe `Alice` ge'u .e 56 lo 173 ju'agri pe
+ni'o **le genturfa'i cu tcidu 780 lo 856 ju'agri pe `Alice` ge'u .e 56 lo 173 ju'agri pe
     `Oz`**
   .i lo ju'agri pe `Oz` vasru ji'i 300 valsi
   .i lo ju'agri pe `Oz` zi'e poi traji lo ka ce'u clani cu vasru 2233 valsi
@@ -1963,6 +1968,8 @@ ni'o ne'i `Alice` lo nu sitna cu so'i roi cfari ne'i pa ju'agri gi'e sisti ne'i 
       le re javni pe li 97 .e li 300 toi
   .i su'o drata cu vasru pa porsi be fi lo teirma'o be'o poi le re javni pe li 972 .e li 1030
       cu to'e curmi ke'a ku'o gi'a ciska pa valsi ta'i lo barda lerfu to `CLL 3.9` toi
+  .i vo ju'agri cu punji pa valsi pe `PA` ba pa lerfu valsi gi'e na punji zo boi lo jbini be le re
+      valsi mu'u lo'u .abu ji'i re roi le'u to `CLL 17.9` .e le javni pe li 817 toi
 
 ni'o ne'i `Oz` so'i ju'agri poi se to'e curmi cu punji pa brivla jo'u pa cmene ba zo la to le javni
     pe li 97 toi
@@ -4624,7 +4631,9 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
 - ny.mai **lo nu fanta lo nu lo lerfu porsi cu mulno**
   .i ro boi remei cu kancu `89576aa5` .e `8afcc329` noi fanta lo nu lo lerfu porsi cu mulno
   .i ro namcu pe le vi pagbu cu selmre de'i `2026-11-20` sepi'o `callgrind` pe `valgrind 3.22.0`
-  .i ro jbezba cu selzba sepi'o `-d:release`
+  .i ro jbezba cu selzba sepi'o `-d:release` gi'e tcidu ro selci'a pe `textsCorpora` pe
+      `suites/corpora.nim` pa roi
+  .i le selci'a cu mintu ca `89576aa5` .e `8afcc329`
   .i `ReaderLive` cu tcidu ro valsi pa roi ne'i ro selci'a gi'e pilno
       `31,756,083,398 instructions` ca `89576aa5` gi'e pilno `31,578,549,079 instructions` ca
       `8afcc329`
