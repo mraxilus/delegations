@@ -700,6 +700,32 @@ helps, add none. The ruling goes where the decision says, as for any decision. A
 explains a decision pushes and posts nothing, so it takes no sign-off. After the last ruling,
 close each turn as The sign-off says.
 
+#### An explanation asked again
+
+**When the Architect asks again about an explanation, explain it again in full and from the
+start.** This holds for an explanation of a decision, of code or of math. The skill `explain`
+points here too. Such an explanation is long, because the Architect asked for it in full.
+
+1. **Start from nothing.** Say what each symbol, word and rule means before the first step that
+   uses it, as "A decision explained" asks of each name.
+2. **Take one small example with real values.** Carry it through each step, from the inputs to
+   the result.
+3. **Show each step.** Give each line of the math, and each value between the lines. Leave no
+   step for the reader to add.
+4. **Show the real code as it stands.** Give the level that the Architect names, as the source,
+   the expansion or the output, with its file and line.
+5. **Explain the code part by part, in the order that it runs.** Say what each name and each
+   call does in plain words, where it first appears.
+6. **Show what each part does on the example.** Give the values that a run printed, and never a
+   value that you did not see. Where a value does not show, add a print line to a copy in
+   scratch, and say so.
+7. **Use no idea that the steps do not need.** Where an idea helps, explain it first, as point 1
+   asks.
+8. **Say what the explanation takes as given**, as the entries of a table, and offer to show
+   where it comes from.
+9. **Where the question compares two ways, carry the same example through both**, with the cost
+   of each.
+
 #### The table
 
 The work opens with a rule line, `---`. Each pull request then takes a group: a bold line, and a
