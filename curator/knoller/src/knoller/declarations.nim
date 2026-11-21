@@ -737,7 +737,7 @@ func movesPlaced(source: string): seq[MoveDoc] =
   for p in found:
     let indent = p.first.indentWidth
     if p.kind != KindName.Routine:
-      # Doc above, under blank line, comment or start of file, that no declaration holds.
+      # Doc above, under blank line or comment, that no declaration holds.
       if not p.is_above or p.doc >= 0: continue
       var top = p.line - 1
       while isLineDoc(top) and lines[top].indentWidth == indent: dec top
