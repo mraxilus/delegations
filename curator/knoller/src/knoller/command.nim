@@ -67,7 +67,7 @@ import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, s
 import ./[
   chain, compilers, configurations, conversions, cuts, edits, fences, idioms, landmarks, markers,
   messages, names, packages, parentheses, pins, proofs, purity, reports, rewrites, rules, staging,
-  symbols,
+  symbols, workers,
 ]
 
 
@@ -120,6 +120,28 @@ type
       ## Rewrite, finding left, and warning of fence or debug output, unsorted.
     unsettled: string  ## Why fixers leave file as written (`Fix.unsettled`); empty if settled.
     asked: seq[string]  ## Source chain asked parser about and no answer holds yet.
+
+  JobHints = object  ## Define module rule 7 checks with hints, so compiler names symbol never used.
+    text: string  ## Text of module.
+    directory: string  ## Absolute directory module checks in.
+    nim: string  ## Compiler checking it.
+
+  JobMarkers = object
+    ## Define `{.all.}` imports of one importer that pass reads reaching nothing, which check of
+    ##   importer without each confirms.
+    importer: string  ## Path of importer, relative to project.
+    text: string  ## Text of importer.
+    prefix, suffix: string  ## Text of includer around importer; empty where importer is entry.
+    folder: string  ## Absolute directory importer checks in.
+    nim: string  ## Compiler checking it.
+    sites: seq[(int, int)]  ## One-based line and zero-based byte column of each such import.
+
+  JobPure = object  ## Define file rule 11 asks compiler about, as `provenPure` reads it.
+    source: string  ## Text of file.
+    sites: seq[(int, int)]  ## One-based line and zero-based byte column of each candidate.
+    directory: string  ## Absolute directory file proves in.
+    nim: string  ## Compiler proving it.
+    prefix, suffix: string  ## Text of includer around file; empty where file is entry.
 
 
 proc parseOptions*(arguments: openArray[string]): Option[Options] =
@@ -809,6 +831,35 @@ proc scopeProject(
     if file notin result.mapIt(it[0]): result.add (file, source)
 
 
+proc resolved(requests: seq[Request]): seq[Answer] = resolve(requests)
+  ## Answer requests of one importer through semantic pass, so worker runs them (`workers.nim`).
+
+
+proc hinted(job: JobHints): Checked = checkedBackend(job.text, job.directory, job.nim, [], true)[0]
+  ## Check module with hints, as `checkedBackend` does, so worker runs it.
+
+
+proc reached(job: JobMarkers): seq[(int, int)] =
+  ## Answer each import of `sites` importer needs all same: importer checks clean with it, and
+  ##   not without it; none where importer checks clean on no backend.
+  let (before, defines) =
+    checkedBackend(job.prefix & job.text & job.suffix, job.folder, job.nim, [])
+  if not before.is_clean: return
+  for site in job.sites:
+    var only = Uses()
+    only.imports[site] = false
+    let without = job.text.applied(editsMarkers(job.importer, job.text, only, [])[0])
+    if not checked(job.prefix & without & job.suffix, job.folder, job.nim, defines).is_clean:
+      result.add site
+
+
+proc proved(job: JobPure): Pures =
+  ## Prove one file as `provenPure` does, under no define, so worker runs it.
+  provenPure(
+    job.source, job.sites, job.directory, job.nim, [newSeq[string]()], job.prefix, job.suffix
+  )
+
+
 proc resolveMarkers*(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Uses] =
@@ -821,6 +872,10 @@ proc resolveMarkers*(
   ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
   ##   cannot read, as symbol template declares; file checking clean on no backend confirms nothing.
   ##   `koch fix` reads uses through it too (`fixes.nim` of `curator/audit`), so both read alike.
+  ##   Each step of project runs its calls on workers (`workers.nim`): `nimsuggest` of each
+  ##     importer, hints of each module, then confirmation of each importer, whose own checks run
+  ##     in turn; answers keep order of loop. Importer whose every import reaches symbol checks
+  ##     nothing, since its check would confirm nothing.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
@@ -845,41 +900,49 @@ proc resolveMarkers*(
           texts = initTable[string, string]()
           answers: seq[(string, Answer)]
         for (file, text) in scope: texts[file] = text
-        for importer in opened.mapIt(it[0]).deduplicate:
-          let requests = opened.filterIt(it[0] == importer).mapIt(Request(
+        let importers = opened.mapIt(it[0]).deduplicate
+        var asked: seq[seq[Request]]  # Requests of each importer, in order of importers.
+        for importer in importers:
+          asked.add opened.filterIt(it[0] == importer).mapIt(Request(
             query: queryUses(it[1], texts[it[1]]),
             root: project,
             directory: project,
             includer: scope.includer(importer),
             bin: bin,
           ))
-          for answer in resolve(requests): answers.add (importer, answer)
+        for k, found in asked.mapParallel(resolved):
+          for answer in found: answers.add (importers[k], answer)
 
         # Read hints of each module opened, as compiler confirms which symbol it never uses.
-        let compiler = if bin.len == 0: NIM else: bin / NIM
+        let
+          compiler = if bin.len == 0: NIM else: bin / NIM
+          modules = opened.mapIt(it[1]).deduplicate
         var unused = initTable[string, seq[(int, string)]]()
-        for module in opened.mapIt(it[1]).deduplicate:
-          let (hinted, _) =
-            checkedBackend(texts[module], (project / module).parentDir, compiler, [], true)
-          if hinted.is_clean: unused[module] = hinted.unused
+        let hints = modules.mapIt(JobHints(
+          text: texts[it], directory: (project / it).parentDir, nim: compiler
+        )).mapParallel(hinted)
+        for k, module in modules:
+          if hints[k].is_clean: unused[module] = hints[k].unused
         uses = usesPackage(scope, answers, project, unused)
 
         # Confirm each `{.all.}` reaching nothing: file checks clean without it, where with it.
-        for importer in opened.mapIt(it[0]).deduplicate:
+        var confirms: seq[JobMarkers]
+        for importer in importers:
           if importer notin uses: continue
-          let
-            text = texts[importer]
-            (prefix, suffix) = scope.enclosing(importer)
-            folder = (project / importer).parentDir
-            (before, defines) = checkedBackend(prefix & text & suffix, folder, compiler, [])
-          if not before.is_clean: continue
-          for site in toSeq(uses[importer].imports.keys):
-            if uses[importer].imports[site]: continue
-            var only = Uses()
-            only.imports[site] = false
-            let without = text.applied(editsMarkers(importer, text, only, [])[0])
-            if not checked(prefix & without & suffix, folder, compiler, defines).is_clean:
-              uses[importer].imports[site] = true
+          let sites = toSeq(uses[importer].imports.keys).filterIt(not uses[importer].imports[it])
+          if sites.len == 0: continue  # check would confirm nothing, so none runs
+          let (prefix, suffix) = scope.enclosing(importer)
+          confirms.add JobMarkers(
+            importer: importer,
+            text: texts[importer],
+            prefix: prefix,
+            suffix: suffix,
+            folder: (project / importer).parentDir,
+            nim: compiler,
+            sites: sites,
+          )
+        for k, sites in confirms.mapParallel(reached):
+          for site in sites: uses[confirms[k].importer].imports[site] = true
       gathered[project] = uses
     result[path] = gathered[project].getOrDefault(absolute.relativePath(project, '/'))
 
@@ -894,10 +957,16 @@ proc resolvePures*(
   ##   `bin` gives, as project alone compiles it, since command line names no define
   ##   (`symbols.nim`). Included file proves inside text of file including it.
   ##   `koch fix` proves through it too (`fixes.nim` of `curator/audit`), so both prove alike.
+  ##   Each file proves on worker of its own (`workers.nim`), and table takes answers in order of
+  ##     files, as loop proving one after another would give them.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
     found = initTable[string, (seq[(string, string)], Table[string, seq[(int, int)]])]()
+    jobs: seq[JobPure]
+    placed: seq[(string, Pures, int)]
+      # Path of each answer in order of files, with answer known before compiler, else index of
+      #   its job.
   for (path, source) in files:
     if path.dialect != some(Dialect.Module): continue
     let
@@ -913,18 +982,20 @@ proc resolvePures*(
     if sites.len == 0 and not source.isPointingAsked: continue
     let (bin, reason) = bin(absolute, nim, seen, toolchains)
     if reason.len > 0:
-      result[path] = Pures(reason: reason)
+      placed.add (path, Pures(reason: reason), -1)
       continue
     let (prefix, suffix) = scope.enclosing(relative)
-    result[path] = provenPure(
-      source,
-      sites,
-      absolute.parentDir,
-      if bin.len == 0: NIM else: bin / NIM,
-      [newSeq[string]()],
-      prefix,
-      suffix,
+    placed.add (path, Pures(), jobs.len)
+    jobs.add JobPure(
+      source: source,
+      sites: sites,
+      directory: absolute.parentDir,
+      nim: if bin.len == 0: NIM else: bin / NIM,
+      prefix: prefix,
+      suffix: suffix,
     )
+  let proven = jobs.mapParallel(proved)
+  for (path, pures, k) in placed: result[path] = if k < 0: pures else: proven[k]
 
 
 proc planRenames*(

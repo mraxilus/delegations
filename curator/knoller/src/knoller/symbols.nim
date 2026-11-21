@@ -130,7 +130,10 @@ const
   COMMAND_USES = "use"  ## Command listing definition and every use of each symbol at site.
   TEMP_PREFIX = "knoller_suggest_"  ## Opening of name of each temporary file of run.
   FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
-  CODES_MISSING = [126, 127]  ## Exit codes of shell where compiler did not start.
+  CODES_MISSING = [126, 127, 9009]
+    ## Exit codes of shell where compiler did not start: 126 and 127 of `sh`, 9009 of `cmd`.
+  FILE_TEXT = "text.nim"  ## File in private directory of check that holds text compiler reads.
+  FILE_OUTPUT = "output.txt"  ## File in private directory of check that holds what compiler says.
   MARK_ERROR = " Error: "  ## Text between place and message of error line of compiler.
   MARK_UNUSED = "is declared but not used [XDeclaredButNotUsed]"
     ## Closing of hint compiler gives of private symbol its module never uses.
@@ -231,17 +234,26 @@ func enclosing*(files: openArray[(string, string)], path: string): (string, stri
 
 
 func lineRedirected*(
-  tool: string; arguments: openArray[string]; commands, answers: string; cmd = ""
+  tool: string; arguments: openArray[string]; commands, answers: string; cmd = "";
+  is_merged = false; directory = "",
 ): string =
   ## Render line running tool with arguments, reading commands from file and writing answers to
   ##   file: through `sh` where `cmd` is empty, else through `cmd` at that path, as Windows
   ##   needs. Every word is quoted there, since no path holds `"` on Windows; `/d` skips
   ##   AutoRun commands, `/v:off` reads `!` as itself, and `/s` strips outer quotes alone.
+  ##   Where caller merges (`is_merged`), errors go to file of answers too, as both shells write.
+  ##   Where caller names directory, line moves into it first, so run moves no directory of
+  ##     caller: `startProcess` given `workingDir` moves that of whole process on POSIX, around
+  ##     spawn, so workers would move it under each other (`workers.nim`).
+  let merged = if is_merged: " 2>&1" else: ""
   if cmd.len == 0:
-    return (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
-      commands.quoteShellPosix & " > " & answers.quoteShellPosix
-  let inner = (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" & commands &
-    "\" > \"" & answers & '"'
+    let moved = if directory.len > 0: "cd " & directory.quoteShellPosix & " && " else: ""
+    return moved & (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
+      commands.quoteShellPosix & " > " & answers.quoteShellPosix & merged
+  let
+    moved = if directory.len > 0: "cd /d \"" & directory & "\" && " else: ""
+    inner = moved & (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" &
+      commands & "\" > \"" & answers & '"' & merged
   '"' & cmd & "\" /d /v:off /s /c \"" & inner & '"'
 
 
@@ -282,8 +294,10 @@ proc ask(entry: Entry, is_js: bool): Asked =
   result.answers = path.changeFileExt(TEMP_ANSWERS)
   let
     cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
-    line = lineRedirected(tool, arguments, result.commands, result.answers, cmd)
-  result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
+    line = lineRedirected(
+      tool, arguments, result.commands, result.answers, cmd, directory = entry.directory
+    )
+  result.process = startProcess(line, options = {poEvalCommand})
 
 
 proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
@@ -405,18 +419,35 @@ proc checked*(
   ##   configuration resolve as for file there and nothing is written there; cache sits in
   ##   private temporary directory removed after. Reason says why compiler did not run. Where
   ##   caller asks hints (`is_hinting`), each symbol hint names declared and never used reads too.
+  ##   Shell gives compiler text from file and writes its output and errors to file, both in that
+  ##     directory, and run takes streams of caller, so it opens no pipe (`lineRedirected`).
+  ##     Child another worker starts meanwhile inherits each pipe open then (`workers.nim`): its
+  ##     copy of write end of pipe of text would keep compiler waiting on end of text for ever.
   let cache = createTempDir("knoller_check_", "")
   defer: removeDir(cache)
   let
     hints = if is_hinting: "--hints:on" else: "--hints:off"
-    command = (@[nim, "check", hints, "--warnings:off", "--nimcache:" & cache] & @defines &
-      @["-"]).mapIt(it.quoteShell).join(" ")
-  let (output, code) =
-    try:
-      execCmdEx(
-        command, options = {poStdErrToStdOut, poEvalCommand}, workingDir = directory, input = text
-      )
-    except OSError as e: (e.msg, CODES_MISSING[1])
+    arguments = @["check", hints, "--warnings:off", "--nimcache:" & cache] & @defines & @["-"]
+    cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
+    line = lineRedirected(
+      nim,
+      arguments,
+      cache / FILE_TEXT,
+      cache / FILE_OUTPUT,
+      cmd,
+      is_merged = true,
+      directory = directory,
+    )
+  writeFile(cache / FILE_TEXT, text)
+  var
+    output = ""
+    code = CODES_MISSING[1]
+  try:
+    let process = startProcess(line, options = {poEvalCommand, poParentStreams})
+    code = process.waitForExit
+    process.close
+    if fileExists(cache / FILE_OUTPUT): output = readFile(cache / FILE_OUTPUT)
+  except OSError as e: output = e.msg
   let last = if output.strip.len == 0: "no output" else: output.strip.splitLines[^1]
   if code in CODES_MISSING:
     result.reason = "compiler did not run: " & last
