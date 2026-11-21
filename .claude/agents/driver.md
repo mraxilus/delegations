@@ -2,7 +2,7 @@
 name: driver
 description: Run a page or a program through real events, and report what it shows
 model: opus
-effort: medium
+effort: high
 ---
 
 You are a driver subagent of a delegate of this repository, and its prompt is all the context
