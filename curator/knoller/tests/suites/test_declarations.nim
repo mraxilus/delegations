@@ -80,26 +80,28 @@ suite "Declarations":
 
   test "doc above its declaration moves after it: onto its line where it fits, else next line":
     # Case held: `type Order` of `pga/cayleys.nim` of PGA library at `3d9696e`, line 47, whose doc
-    #   stands on line above it (ruling on rule 5 of #443).
-    let order = "\n## Define type definition for transwedge order.\n" &
+    #   stands on line above it, below code (ruling on rule 5 of #443).
+    let order = "import std/math\n\n## Define type definition for transwedge order.\n" &
       "type Order = distinct range[0..DIMENSIONS]\n#func `<=`(a, b: Order): bool {.borrow.}\n"
     check checkDocs("a.nim", order).mapIt((it.line, it.message)) == @[
-      (3, "Doc stands after its declaration, never above it; got it above `type Order`."),
+      (4, "Doc stands after its declaration, never above it; got it above `type Order`."),
     ]
-    check order.fixed == "\ntype Order = distinct range[0..DIMENSIONS]  ## Define type " &
-      "definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
+    check order.fixed == "import std/math\n\ntype Order = distinct range[0..DIMENSIONS]  ## " &
+      "Define type definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
     check order.fixed.isSettled
-    check fixDocs("a.nim", order).origin == @[1, 3, 4, 5]  # joined line traces to declaration
+    check fixDocs("a.nim", order).origin == @[1, 2, 4, 5, 6]  # joined line traces to declaration
     check "## Module.\n\n## Size.\nconst N = 3\n".fixed == "## Module.\n\nconst N = 3  ## Size.\n"
       # doc above declaration past start of file moves; doc opening file stays (below)
-    let kinds = "# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
+    let kinds = "## Module.\n\n# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
       "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n" &
       "    ## Depth.\n    depth: int\n" &
       "  Kind = enum  ## Kind.\n    A  ## First.\n\n    ## Second.\n    B\n\n" &
       "## Name, " & "x".repeat(60) & ".\nconst NAME = \"" & "y".repeat(40) & "\"\n\n" &
       "## Pair,\n##   held twice.\nconst P = (1, 1)\n\n## Table.\nconst T = [\n  1,\n]\n"
-    check checkDocs("a.nim", kinds).mapIt(it.line) == @[3, 6, 13, 18, 21, 25, 28]
-    check kinds.fixed == "# Sizes.\nconst N* = 3  ## Size.\n\nlet m = 1.0  ## Mass.\n\n" &
+    check checkDocs("a.nim", kinds).mapIt(it.line) == @[5, 8, 15, 20, 23, 27, 30]
+      # doc of module opens file, so `# Sizes.` and doc below it stand past it
+    check kinds.fixed == "## Module.\n\n# Sizes.\nconst N* = 3  ## Size.\n\n" &
+      "let m = 1.0  ## Mass.\n\n" &
       "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n    depth: int  ## Depth.\n" &
       "  Kind = enum  ## Kind.\n    A  ## First.\n\n    B  ## Second.\n\n" &
       "const NAME = \"" & "y".repeat(40) & "\"\n  ## Name, " & "x".repeat(60) & ".\n\n" &
@@ -108,9 +110,10 @@ suite "Declarations":
     check kinds.fixed.isSettled
 
 
-  test "doc opening file stays as doc of module, and declaration right below it takes its own":
-    # Ruling `D3 a` of #980: `nim doc` reads doc opening file as doc of module, so doc position
-    #   leaves it, and missing doc reads declaration below it as one holding none.
+  test "doc under no code or doc stays as doc of module, and declaration below takes its own":
+    # Rulings `D3 a` and `D1 a` of #980: `nim doc` reads doc that only blank lines and `#`
+    #   comments stand above as doc of module, so doc position leaves it, and missing doc reads
+    #   declaration below it as one holding none.
     const opening = [
       ("## Size.\nconst N* = 3\n", 2, "## Size.\nconst N* = 3  ## TODO: Document.\n"),
       (
@@ -129,7 +132,19 @@ suite "Declarations":
         2,
         "## Do.\nproc f() =\n  ## TODO: Document.\n  discard\n",
       ),  # routine, whose doc above neither rule moves
-    ]  ## Source opening with doc, line of declaration below it, and source missing doc writes.
+      (
+        "# Copyright 2026.\n\n## Products.\nconst N* = 3\n",
+        4,
+        "# Copyright 2026.\n\n## Products.\nconst N* = 3  ## TODO: Document.\n",
+      ),  # under license header and blank line
+      (
+        "#[\n  License.\n]#\n## Products.\nconst N* = 3\n",
+        5,
+        "#[\n  License.\n]#\n## Products.\nconst N* = 3  ## TODO: Document.\n",
+      ),  # under block comment
+    ]
+      ## Source opening with doc of module, line of declaration below it, and source missing doc
+      ##   writes.
     for (source, line, documented) in opening:
       checkpoint source
       check source.isSettled  # doc position moves nothing, and fix writes nothing
@@ -284,7 +299,7 @@ suite "Declarations":
       "func g() =\n  ##[ Block doc. ]##\n  discard\n",
       "macro m(): untyped =\n  ## Emit.\n  quote do:\n    proc h() = discard\n",
       "# Bounds of order.\nfunc low(a: O): O {.borrow.}\nfunc next(a: O): O = succ(a)\n",
-      "\n## Doc above.\nconst N = 3\n",  # out of place, which doc position reads
+      "const M = 2  ## Mass.\n\n## Doc above.\nconst N = 3\n",  # out of place: position reads it
       "const N = 3  ## TODO: Document.\n",  # doc waiting for text
     ]:
       check kept.isDocumented
