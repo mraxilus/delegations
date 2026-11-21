@@ -289,11 +289,13 @@ const
     ##   .i le sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` .e `CLL 18.9` toi
   LUT_CMAVO_BY_SUFFIX = [("%", "ce'i")]
     ## lo sinxa poi se lidne lo namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
-    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+    ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    ##   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
     ##   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
   LUT_CMAVO_BY_CONSTANT = [("π", @["pai"]), ("∞", @["ci'i"]), ("½", @["pa", "fi'u", "re"])]
     ## lo sinxa poi sinxa pa namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
-    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+    ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    ##   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
     ##   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
   SIGNS_STREAM = block:
     ## ro sinxa poi le genturfa'i cu tcidu ke'a
@@ -726,13 +728,14 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##   .i ro stuzi pe le sinxa cu zvati no valsi
   ##   .i se ki'u bo le porsi be lo valsi cu mintu le porsi be lo stuzi
   ##
-  ## ni'o lo sinxa pe `LUT_CMAVO_BY_PREFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu cu
-  ##     se lidne le sinxa kei .e lo nu no lerfu cu lidne le sinxa
+  ## ni'o lo sinxa pe `LUT_CMAVO_BY_PREFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu pe
+  ##     `0` bi'o `9` cu se lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu lidne le sinxa
   ##   .i `Architect` jdice le valsi pe ro sinxa .e le stuzi pe le sinxa bu'u `#1003` ta'i `D4 b`
-  ##   .i lo sinxa pe `LUT_CMAVO_BY_SUFFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu cu
-  ##       lidne le sinxa kei .e lo nu no lerfu cu se lidne le sinxa
-  ##   .i lo sinxa pe `LUT_CMAVO_BY_CONSTANT` cu du pa namcu gi'e se tcidu va'o lo nu no lerfu .e no
-  ##       sinxa cu pencu le sinxa
+  ##   .i lo sinxa pe `LUT_CMAVO_BY_SUFFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu pe
+  ##       `0` bi'o `9` cu lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
+  ##   .i lo sinxa pe `LUT_CMAVO_BY_CONSTANT` cu du pa namcu gi'e se tcidu va'o lo nu no lerfu pe
+  ##       `0` bi'o `9` .e no sinxa cu pencu le sinxa
+  ##   .i le stuzi pe le re klesi be lo sinxa cu denpa `D6` pe `#1003`
   ##   .i ki'u bo bu'u lo drata stuzi le valsi cu sinxa lo drata namcu .a no namcu to `CLL 18.4` toi
   ##   .i lo drata sinxa cu se to'e curmi
   ##   .i lo jdini klani cu vasru ro sinxa pe le namcu to `CLL 18.3` toi
@@ -779,8 +782,8 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       constant = LUT_CMAVO_BY_CONSTANT.signAt(text, at)
     if prefix.isSome:
       let (sign, word) = LUT_CMAVO_BY_PREFIX[prefix.get]
-      # lo lerfu cu se lidne le sinxa
-      #   .ije no lerfu cu lidne le sinxa to `D4 b` toi
+      # lo lerfu pe `0` bi'o `9` cu se lidne le sinxa
+      #   .ije no lerfu pe `0` bi'o `9` cu lidne le sinxa to `D4 b` toi
       if is_digit_before or not (at + sign.len < finish and text[at + sign.len] in DIGITS_STREAM):
         return refuse(Refusal.Sign, at, sign)
       closed()
@@ -790,8 +793,8 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       continue
     if suffix.isSome:
       let (sign, word) = LUT_CMAVO_BY_SUFFIX[suffix.get]
-      # lo lerfu cu lidne le sinxa
-      #   .ije no lerfu cu se lidne le sinxa
+      # lo lerfu pe `0` bi'o `9` cu lidne le sinxa
+      #   .ije no lerfu pe `0` bi'o `9` cu se lidne le sinxa
       if not is_digit_before or (at + sign.len < finish and text[at + sign.len] in DIGITS_STREAM):
         return refuse(Refusal.Sign, at, sign)
       occurrences.add sign.occurrenceSigned(word, at)
@@ -801,7 +804,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       let
         (sign, words) = LUT_CMAVO_BY_CONSTANT[constant.get]
         after = at + sign.len  # le stuzi poi se lidne le sinxa
-      # no lerfu .e no sinxa cu pencu le sinxa
+      # no lerfu pe `0` bi'o `9` .e no sinxa cu pencu le sinxa
       if is_digit_before or SIGNS_STREAM.anyIt(at - it.len >= start and
           text.continuesWith(it, at - it.len)) or
           (after < finish and (text[after] in DIGITS_STREAM or text.isSignAt(after))):

@@ -198,7 +198,7 @@ type
     Sign
       ## lo jdini sinxa cu pencu no namcu .a re namcu
       ##   .ija le namcu poi le sinxa cu pencu ke'a cu pencu lo drata jdini sinxa
-      ##   .ija lo sinxa pe lo namcu cu zvati lo stuzi poi le sinxa cu sinxa no namcu bu'u ke'a
+      ##   .ija lo sinxa pe lo namcu cu zvati lo stuzi poi le javni pe `wordsWritten` na cusku ke'a
       ##   .i `Architect` jdice lo du'u lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e
       ##       curmi kei bu'u `#1003` ta'i `D3 a`
       ##   .i ji'a ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu lo jdini klani cu vasru lo valsi
