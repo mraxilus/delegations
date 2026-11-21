@@ -1490,10 +1490,10 @@ Verified by driven check:
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
 `placeInto` writes give what `placeObject` gave. Each reader answers alike from the placements of a
-frame and from placing each object. Verified by `suites.nim`: each exit of placing tests the horizon
-of its object once at most. A line and a plane through the origin are among them, and each lands
-where the reads alone land. Assumed: that no edit of the desktop lands between `placeEdited` and the
-emission of its frame, which no check drives.
+frame and from placing each object, `anchorFor` among them. Verified by `suites.nim`: each exit of
+placing tests the horizon of its object once at most. A line and a plane through the origin are
+among them, and each lands where the reads alone land. Assumed: that no edit of the desktop lands
+between `placeEdited` and the emission of its frame, which no check drives.
 
 ## Scene storage
 
@@ -2627,6 +2627,7 @@ mirrors `renderer.nim`, and a person keeps the two in step by hand.
 *Checked.* Verified by `suites.nim`:
 
 - the widening reference against the algebra;
+- the step off a segment against the join from 1e-6 to 1e6, and its refusal under a unit;
 - the near crossing of a line within a pixel of its recorded place, in a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
 - the static corners of the disc as two triangles that tile its box;
@@ -3104,10 +3105,9 @@ of two basis elements is the right complement of the product of their left compl
 pure slide falls out of the same expression, because its direction is zero, and so does a pure turn.
 No branch means no branch to get wrong.
 
-`ANGLE_SERIES` at 1e-4 chooses the series over the closed form. `a*cos(a) - sin(a)` subtracts two
-values near `a` to reach one near `a³/3`, so it loses about `3ε/a²` of its digits. At an `a` of 1e-6
-the closed form keeps about four. The next term of the series is `a⁴/840`, under 1e-19 at that
-crossing, so the two arms agree there.
+`ANGLE_SERIES` at 0.1 chooses the series, through `a⁶`, over the closed form. That form subtracts
+two values near `a` to reach one near `a³/3`, and loses `3ε/a²`: 7e-14 at 0.1. The next term of the
+series is under 1e-14. Rejected: a crossing at 1e-4, where the closed form is 7e-8 off.
 
 **`log` takes the short way round.** A motor and its negation carry every point alike, so `log`
 reads one with a negative antiscalar through its negation. The half-angle then stays at or under
@@ -3129,8 +3129,8 @@ back with `carried`. Nothing else in the tree names a motor.
 - a turn about a line off the origin, which carries the origin about that line;
 - a horizon line, which names no axis and turns nothing;
 - a slide that carries every point by one offset, in two terms and no more;
-- `exp(log(Q))` against `Q`, and unit weight, over 64 seeded screws, one in seven of them
-  at a half-angle below `ANGLE_SERIES`;
+- `exp(log(Q))` against `Q`, and unit weight, over 64 screws, each seventh far below `ANGLE_SERIES`;
+- both series of the half-angle against twenty terms of each, to a trillionth, up to `π`;
 - the identity, the inverse through `~∘`, and the grade that survives a sandwich;
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
@@ -3477,7 +3477,7 @@ destination, and a removal of an object clears the highlight on both paths.
 
 - both boundaries of each radius, and all three priority pairings;
 - a horizon point picked;
-- the disc bound sampled from inside the view;
+- the disc bound over three decades of radius, from just outside its sphere to 1e4 radii off;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
 - a point reads as backdrop at 0.8 of its fill depth, as a handle at 1.25 of it and 1,000 units;
 - the ground reads as backdrop from 9 units, and as a handle from 12, under nine tenths covered;
