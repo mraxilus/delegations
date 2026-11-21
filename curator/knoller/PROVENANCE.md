@@ -818,6 +818,45 @@ the landmark aliases.
 - Verified by `suites/test_command.nim`, on a fresh repository through the real compiler, and by
   `suites/test_purity.nim` for the configurations.
 
+**Each reader runs its compiler calls on a pool of threads, one for each core (`pools.nim`).** A
+call of `nim check` or of `nimsuggest` takes about a second, and its caller waits for the answer.
+One after another, the 60 calls of `koch fix --dry-run curator/knoller` take 64 s of 111 s, while
+three of the four cores wait (the profile on #1001).
+
+- `resolvePures` gives each file to a thread of the pool. `resolveMarkers` gives a thread each
+  importer for `nimsuggest`, each module for its hints, and each importer for the checks of its
+  `{.all.}`. Each step of a project ends before the next starts, since each reads the answers of
+  the one before.
+- A thread runs a whole job, so the checks of one file run in turn, as `provenPure` asks them. The
+  answers keep the order of their jobs, so each table takes them as one loop gives them.
+- Each job and each answer passes by value. ORC counts references without atomics, so two threads
+  never count one object, and a string, a sequence and a table copy whole.
+- `checked` gives the compiler its text through a file and takes its output through a file, by the
+  shell, and its process opens no pipe. A child that another thread starts meanwhile inherits each
+  pipe open then. So its copy of the write end of a pipe of text would keep the compiler waiting
+  for the end of the text.
+- The shell moves into the directory of each run (`lineRedirected`). On POSIX, `startProcess` given
+  `workingDir` moves the directory of the whole process around the spawn, so two threads would move
+  it under each other.
+- An importer whose every `{.all.}` reaches a symbol checks nothing, since that check would confirm
+  nothing.
+- Verified by `suites/test_pools.nim`, and by `suites/test_symbols.nim`, which runs more checks than
+  threads at once through the real compiler, each in a directory of its own.
+- Rejected: a pool of compiler processes, which turns the loop of each prover into a state machine
+  across files.
+- Rejected: `malebolgia` or `taskpools`, the first dependency of knoller for one routine.
+- Cost: a job after the first that raised still runs. The caller raises that first one again as
+  `CatchableError`, with its message, whatever the count of threads.
+
+**Verified by run of `koch fix --dry-run curator/knoller` over the tree at `b585ea65`,
+2026-11-21.** Koch built at `b585ea65` and at `41c24818` prints the same 2,454 lines in each of
+three runs, which ran in turn. The median falls from 116.9 s to 67.4 s, on 4 cores at 2.10 GHz
+under a load of 1.0 to 1.4.
+
+- Over the same tree, each project that `koch list-projects --all` lists ran once with each build.
+  Each ran under a branch of its own, with no checkout of a lock. Each prints the same text with
+  both builds, and the sum of their times falls from 1,347.7 s to 776.7 s.
+
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 `knoller --check pga.nim pga tests`, built at `bca6a142`, reports `func-pure` at
 `pga/algebra.nim:172`. It reports `marker-used` at `pga/operators.nim:10` and `tests/suites.nim:11`.
