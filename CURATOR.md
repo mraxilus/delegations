@@ -340,10 +340,14 @@ and the shared allowance. This section adds only what differs for a curator.
     labelled with its new role, and one for each other project whose code names it.
 
     The moved project renames its module folder and each name that follows it, and writes the
-    meaning of its name in its records. It proposes each change to a contract before it makes
-    it. A contract is a name that people or files outside the tree hold, as a format line or a
-    name of the environment. A project that locks the moved one keeps building at its pin, and
-    moves its lock once the moved project renames its inside. The skill `move` points here.
+    meaning of its name in its records. A contract is a name that files or people outside the
+    tree hold, as a format line or a variable. The tools of the moved project write only its new
+    name, and each reader still takes the old name. So a file, a folder or a variable that a
+    person holds still works. Only a file that is an artifact of history keeps the old name. The
+    project proposes only a change to a contract that cannot follow this rule.
+
+    A project that locks the moved one keeps building at its pin, and moves its lock once the
+    moved project renames its inside. The skill `move` points here.
 
 ## How to review a project
 
