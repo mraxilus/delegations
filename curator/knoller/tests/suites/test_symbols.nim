@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/symbols
+import ../../src/knoller/[pools, symbols]
 
 
 const
@@ -19,10 +19,20 @@ const
   NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
 
 
+type Checking = object  ## Define one check thread of pool runs: text, and directory it checks in.
+  text: string  ## Text compiler reads from stdin.
+  directory: string  ## Absolute directory check runs in.
+
+
 proc writeInto(root, path, content: string) =
   ## Write content at path under root, creating directories it needs.
   createDir((root / path).parentDir)
   writeFile(root / path, content)
+
+
+proc cleaned(job: Checking): bool =
+  ## Answer whether compiler building suite checks text clean, so thread of pool runs check.
+  checked(job.text, job.directory, getCurrentCompilerExe(), []).is_clean
 
 
 suite "Internal: Symbols":
@@ -55,6 +65,34 @@ suite "Internal: Symbols":
     ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
       "\"\"\\nim\\bin\\nimsuggest.exe\" \"--v3\" \"\\r\\a b.nim\" " &
       "< \"\\T\\c\" > \"\\T\\a\"\""
+
+
+  test "check reads text and writes output and errors to one file, through either shell":
+    check lineRedirected("/t/nim", ["check", "-"], "/tmp/t", "/tmp/o", is_merged = true) ==
+      "/t/nim check - < /tmp/t > /tmp/o 2>&1"
+    check lineRedirected(
+      "\\nim\\bin\\nim.exe",
+      ["check", "-"],
+      "\\T\\t",
+      "\\T\\o",
+      cmd = "\\Windows\\system32\\cmd.exe",
+      is_merged = true,
+    ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"\"\\nim\\bin\\nim.exe\" \"check\" \"-\" < \"\\T\\t\" > \"\\T\\o\" 2>&1\""
+
+
+  test "line moves into directory caller names, through either shell":
+    check lineRedirected("/t/nim", ["check", "-"], "/tmp/t", "/tmp/o", directory = "/p q") ==
+      "cd '/p q' && /t/nim check - < /tmp/t > /tmp/o"
+    check lineRedirected(
+      "\\nim\\bin\\nim.exe",
+      ["check", "-"],
+      "\\T\\t",
+      "\\T\\o",
+      cmd = "\\Windows\\system32\\cmd.exe",
+      directory = "\\p q",
+    ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"cd /d \"\\p q\" && \"\\nim\\bin\\nim.exe\" \"check\" \"-\" < \"\\T\\t\" > \"\\T\\o\"\""
 
 
   test "path reads with separator `/` on Windows, and `\\` stays name character on POSIX":
@@ -237,3 +275,47 @@ suite "Internal: Symbols":
     check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
     check answers[0].globals[name].len == 0  # no symbol takes long name
     check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read
+
+
+  test "checks on several threads at once each end, with answer check alone gives":
+    # Case held: `nim check` read its text through pipe, and child another thread started meanwhile
+    #   kept copy of its write end, so compiler waited on end of text for ever (#1001). Domain:
+    #   clean text and text holding error, on more jobs than threads.
+    let directory = createTempDir("knoller_", "_checks")
+    defer: removeDir(directory)
+    let jobs = toSeq(1 .. 8).mapIt(Checking(
+      text: if it mod 2 == 0: "let a = " & $it & "\n" else: "let a: int = \"x\"\n",
+      directory: directory,
+    ))
+    check jobs.mapParallel(cleaned, threads = 4) == toSeq(1 .. 8).mapIt(it mod 2 == 0)
+
+
+  test "checks on several threads at once each run in their own directory, and move no other":
+    # Case held: `startProcess` given `workingDir` moves directory of whole process around spawn on
+    #   POSIX, so threads moved it under each other, and suite stayed in directory that test removed
+    #   (#1001). Domain: eight directories, each holding module that only its own text imports.
+    let before = getCurrentDir()
+    var
+      roots: seq[string]
+      jobs: seq[Checking]
+    for k in 1 .. 8:
+      let root = createTempDir("knoller_", "_checks")
+      roots.add root
+      writeFile(root / "own" & $k & ".nim", "const VALUE* = " & $k & "\n")
+      jobs.add Checking(
+        text: "import own" & $k & "\nstatic: doAssert VALUE == " & $k & "\n", directory: root
+      )
+    defer:
+      for root in roots: removeDir(root)
+    check jobs.mapParallel(cleaned, threads = 4) == repeat(true, 8)
+    check getCurrentDir() == before
+
+
+  test "compiler that does not start leaves check unclean, and says so":
+    let directory = createTempDir("knoller_", "_checks")
+    defer: removeDir(directory)
+    # Case held: through `cmd` of Windows, check of path naming no compiler said nothing of
+    #   compiler that did not run, as `sh` does (#1014). Domain: path naming no file.
+    let answer = checked("let a = 1\n", directory, directory / "nim-absent", [])
+    check not answer.is_clean and answer.reason.startsWith("compiler did not run: ")
+    check answer.reason.contains("nim-absent")  # names compiler it looked for, on each platform
