@@ -765,17 +765,34 @@ func headNamed(grammar: Grammar, name: string): int {.compileTime.} =
   doAssert false, "Rule should take name; got `" & name & "`."
 
 
+func firsts(grammar: Grammar, head: int): seq[Terminal] {.compileTime.} =
+  ## liste ro genvla poi ka'e cfari lo porsi poi le jvasni pe `head` cu binxo ke'a
+  var
+    seen = @[head]  # ro jvasni poi pu se tcidu
+    todo = @[head]  # ro jvasni poi ca'o denpa lo nu se tcidu
+  while todo.len > 0:
+    let code = todo.pop
+    for production in grammar.heads[code]:
+      for symbol in grammar.productions[production].body:
+        if symbol.is_terminal:
+          if Terminal(symbol.code) notin result: result.add Terminal(symbol.code)
+          break
+        if symbol.code notin seen:
+          seen.add symbol.code
+          todo.add symbol.code
+        if not grammar.nullable[symbol.code]: break
+
+
 const
   HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` noi ckini li 812
   HEAD_LERFU_STRING = GRAMMAR_EBNF.headNamed("lerfu-string")
     ## le jvasni pe `lerfu-string` noi ckini li 817
-  TERMINALS_JOINING = [
-    Selmaho.Pa.toTerminal, Selmaho.By.toTerminal, Selmaho.Bu.toTerminal, Selmaho.Lau.toTerminal,
-    Selmaho.Tei.toTerminal,
-  ]
+  TERMINALS_JOINING =
+    @[Selmaho.Pa.toTerminal] & GRAMMAR_EBNF.firsts(GRAMMAR_EBNF.headNamed("lerfu-word"))
     ## lo genvla poi ka'e cfari lo valsi pe `PA` .a lo lerfu valsi
     ##   .i ro valsi pe `PA` .a lo lerfu valsi ka'e jorne lo namcu .a lo lerfu porsi poi lidne ke'a
     ##       to le javni pe li 812 .e li 817 .e li 987 toi
+    ##   .i le genvla pe lo lerfu valsi cu se facki fi le javni pe li 987
 
 
 func isJoiningAt(terminals: openArray[Terminal], at: int): bool =
