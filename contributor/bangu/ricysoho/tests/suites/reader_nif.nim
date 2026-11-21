@@ -48,6 +48,9 @@ export merge, nif_read
 
 
 const
+  SIGNS_CURRENCY = ["€", "$", "£", "¢", "¥"]
+    ## lo jdini sinxa poi le genturfa'i cu tcidu ke'a to `D1 a` pe `#1003` toi
+    ##   .i ro stuzi pe le sinxa cu zvati no valsi
   TAG_ERROR = "srera"
     ## lo tcita be lo srejge
     ##   .i le tcita cu gismu ja'i lo seljdi pe `#859`
@@ -244,27 +247,46 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
   ##   .i ji'a jdice lo du'u ro stuzi poi no pezli cu vasru ke'a du lo sinxa poi zvati lo jbini be
   ##       lo valsi .a lo lerfu po'u slaka bu poi zvati lo jbini be re valsi pe pa se ciska valsi to
   ##       `CLL 3.3` toi
+  ##
+  ## ni'o lo pezli poi vasru no stuzi cu sinxa lo valsi poi lo jdini sinxa cu sinxa ke'a
+  ##   .i se ki'u bo le pamoi stuzi pe le pezli poi se lidne cu ka'e mintu le pamoi stuzi pe le
+  ##       pezli
+  ##   .i ji'a ro stuzi pe lo jdini sinxa pe `SIGNS_CURRENCY` cu ka'e zvati no pezli
+  ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D2 a`
   var
     counts = newSeq[int](text.len)  # lo klani be lo pezli poi vasru lo stuzi
     last = -1  # lo pamoi stuzi pe lo pezli poi lidne
-  var leaves: seq[int]
+    is_last_empty = false  # lo du'u xu kau le pezli poi lidne cu vasru no stuzi
+    leaves: seq[int]
   marked.tree.addLeaves(leaves)
   for u in leaves:
     template unit: untyped = marked.units[u]
       ## datcme le pagbu
       ##   .i `let` zbasu lo fukpi be le pagbu
-    let first = marked.occurrences[unit.words[0]].start
-    if first <= last: return false
-    last = first
+    let
+      first = marked.occurrences[unit.words[0]].start
+      is_empty =
+        unit.words.allIt(marked.occurrences[it].start == marked.occurrences[it].finish)
+    if first < last or (first == last and not is_last_empty): return false
+    (last, is_last_empty) = (first, is_empty)
     for w in unit.words:
       template word: untyped = marked.occurrences[w]
         ## datcme le valsi
         ##   .i `let` zbasu lo fukpi be le valsi
       if word.start > word.finish or word.finish > text.len: return false  # lo kutselsitna
       for b in word.start ..< word.finish: inc counts[b]
-  for b in 0 ..< text.len:
+  var b = 0
+  while b < text.len:
     if counts[b] > 1: return false
-    if counts[b] == 0 and text[b] notin MARKS_BOUNDARY and text[b] != ',': return false
+    if counts[b] == 0 and text[b] notin MARKS_BOUNDARY and text[b] != ',':
+      # lo jdini sinxa cu zvati no pezli
+      let signs = SIGNS_CURRENCY.filterIt(text.continuesWith(it, b))
+      if signs.len == 0: return false
+      for s in b ..< b + signs[0].len:
+        if counts[s] != 0: return false
+      b += signs[0].len
+      continue
+    inc b
   true
 
 

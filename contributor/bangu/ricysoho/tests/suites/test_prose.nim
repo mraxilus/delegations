@@ -90,6 +90,15 @@ func leaves(node: Node): seq[int] =
   for child in node.children: result.add child.leaves
 
 
+func shape(node: Node): string =
+  ## ciska le tarmi be le tricu ta'i lo lerpoi
+  ##   .i lo genvla cu se ciska ta'i lo namcu pe vo'a po'o
+  if node.is_terminal: return $node.at
+  result = node.rule & "<" & $node.number & ">("
+  for child in node.children: result.add child.shape & " "
+  result.add ")"
+
+
 
 suite "Chapter 4":
   test "Section 4.6":
@@ -278,6 +287,27 @@ suite "Chapter 19":
 
 
 suite "Internal: Prose":
+  test "Text with currency signs reads as tree of its words written out":
+    # `Architect` jdice `D2 a` bu'u `#1003`
+    #   .i lo jdini sinxa cu sinxa lo valsi po'o
+    #   .i se ki'u bo lo tricu pe le selci'a cu mintu lo tricu pe le valsi
+    for (signed, spelled) in [
+        ("mi ponse €5 .e $6", "mi ponse lo ronru'u be li 5 be'o ku .e lo rupnu be li 6 be'o ku"),
+        ("lo jdima cu du 86,000,704.75€",
+          "lo jdima cu du lo ronru'u be li 86,000,704.75 be'o ku"),
+        ("mi ponse ci ¥5", "mi ponse ci lo ponjo ja jungo rupnu be li 5 be'o ku"),
+        ("lo jdima be lo cukta cu du 50¢", "lo jdima be lo cukta cu du lo fepni be li 50 be'o ku"),
+        ("£5 cu cmalu", "lo rupnu be li 5 be'o ku cu cmalu")]:
+      checkpoint signed
+      let (a, b) = (signed.readText, spelled.readText)
+      check a.is_read and b.is_read
+      if not a.is_read or not b.is_read: continue
+      check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+      check a.tree.shape == b.tree.shape
+    # lo jdini klani cu sumti gi'e na selbri
+    check not "lo jdima cu €5".readText.is_read
+
+
   test "Words of each tree, in order, are words of text that erasure leaves":
     var count = 0
     for text in EXAMPLES:

@@ -136,11 +136,15 @@ const
   TEXTS_COVERED = [
     "le,nu mi klama", "mi KLAmaku", "zoi gy. a, b .gy. cu glico", "mi klama si si fa'omi do",
     "mi html ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
+    "mi ponse €5 .e $6", "lo jdima cu du 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
+    "5 € .i 5€6 .i mi ponse £5",
   ]
     ## lo selci'a poi selfi'i fi le flalu pe lo gacri
     ##   .i le selci'a cu vasru slaka bu .e lo brale'u .e lo nu sitna poi vasru lo sinxa ku'o .e lo
     ##       valsi poi no pagbu cu vasru ke'a ku'o .e lo valsi poi zvati lo jbini be lo valsi .e lo
     ##       cnivla poi tcita le valsi
+    ##   .i ji'a le selci'a cu vasru lo jdini sinxa poi pencu pa namcu ku'o .e lo jdini sinxa poi se
+    ##       to'e curmi to `#1003` toi
   EXAMPLES_MARKED = [
     # le selci'avla cu zvati lo jbini be lo sumti .e lo brirebla poi sruri le selci'avla
     (
