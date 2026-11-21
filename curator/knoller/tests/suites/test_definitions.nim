@@ -1,9 +1,9 @@
 ## Hold blank lines between definitions (X.2), as #443 rules them: each run of other count is
 ##   reported and fixed, cases of PGA library at `3d9696e` among them; second-tier sibling takes
 ##   one (Q1), routine of several lines takes two (Q2), and documented one-line definition takes
-##   one after any definition (Q3). Runs beside banner and nested helper, after statement or
-##   pragma line, and inside string, are never read; fix changes nothing else, and nothing second
-##   time.
+##   one after any definition or imports (Q3), call after routine among them (ruling `D3 a` of
+##   #980). Runs beside banner and nested helper, after statement or pragma line, and inside
+##   string, are never read; fix changes nothing else, and nothing second time.
 
 {.experimental: "strictFuncs".}
 
@@ -103,6 +103,24 @@ suite "Definitions":
     check one.isSettled
 
 
+  test "documented one-line call after routine takes one, as Q3 gives documented definition":
+    # Ruling `D3 a` of #980: documented one-line call after routine reads Q3, never bullet of call
+    #   after routine; call with no doc, or over lines, takes up to two still.
+    let
+      routine = "template foo*(x: int) = discard  ## Do.\n\n\nproc r*() =\n  ## Do.\n  discard\n"
+      documented = routine & "\n\nfoo(1)  ## Count.\n"
+    check documented.messages == @["9: " & DOC & "2`."]
+    check documented.fixed == routine & "\nfoo(1)  ## Count.\n"
+    check documented.fixed.isSettled
+    check (routine & "foo(1)  ## Count.\n").messages == @["7: " & DOC & "0`."]
+    for kept in [
+      routine & "\n\nfoo(1)\n",  # no doc: call after routine takes up to two
+      routine & "foo(1)\n",
+      routine & "\n\nfoo(\n  1,\n)  ## Count.\n",  # call over lines is no one-line definition
+    ]:
+      check kept.isSettled
+
+
   test "undocumented one-line helpers stack; borrow counts as one line; first helper takes two":
     # Cases: `cayleys.nim:49` and `50`, borrow and iterator under type; `algebra.nim:121`,
     #   borrows that stack, one of them wrapped.
@@ -183,6 +201,19 @@ suite "Definitions":
     check imports.fixed.isSettled
 
 
+  test "documented one-line definition after imports takes one, as one below sets (Q3)":
+    # Case: `tools/head.nim:17` of `pga_visualiser` at `16a573cc`, two lines after imports.
+    let imports = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n\n" &
+      "const DIGITS_SHORT = 7  ## Digits of commit finding names, as `git log --oneline` " &
+      "prints.\n"
+    check imports.messages == @["6: " & DOC & "2`."]
+    check imports.fixed == imports.replace("json\n\n\nconst", "json\n\nconst")
+    check imports.fixed.isSettled
+    check "import std/json\n\nfunc d*(): int = 1  ## Count.\n".isSettled  # routine alike
+    check "template foo*(x: int) = discard  ## Do.\nimport std/json\n\nfoo(1)  ## Count.\n"
+      .isSettled  # call alike
+
+
   test "sibling inside second-tier section takes one, and first-tier sibling takes two (Q1)":
     # Case: `operators.nim:346`, two lines once `#[[ Norms ]]#` is second tier, as hand writes
     #   it; knoller changes tier of no banner.
@@ -213,6 +244,8 @@ suite "Definitions":
   test "each pair of forms takes count X.2 gives it, and second tier caps each bound at one":
     # Law over small domain: form above, form below, count 0 to 3, and tier of section. Row
     #   gives counts first-tier run passes with; second tier caps each bound at one (Q1).
+    #   Documented one-line call reads Q3 after routine (ruling `D3 a` of #980). Imports stand
+    #   above alone, since rule reads no run before them.
     const
       forms = [
         ("call", "foo(1)\n"),
@@ -220,16 +253,20 @@ suite "Definitions":
         ("helper", "func h(): int = 1\n"),
         ("documented", "func d*(): int = 1  ## Count.\n"),
         ("block", "const\n  A* = 1  ## Count.\n"),
+        ("documented call", "foo(2)  ## Count.\n"),
+        ("imports", "import std/strutils\n"),
       ]  ## Name and text of each form, call of template module declares among them.
       counts = [
-        [0 .. 1, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # call above
-        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # routine of several lines above
-        [0 .. 2, 2 .. 2, 0 .. 2, 1 .. 1, 2 .. 2],  # undocumented one-line helper above
-        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # documented one-line routine above
-        [2 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 1 .. 1],  # declaration block above
+        [0 .. 1, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2, 0 .. 1],  # call above
+        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2, 1 .. 1],  # routine of several lines above
+        [0 .. 2, 2 .. 2, 0 .. 2, 1 .. 1, 2 .. 2, 1 .. 1],  # undocumented one-line helper above
+        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2, 1 .. 1],  # documented one-line routine above
+        [2 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 1 .. 1, 1 .. 1],  # declaration block above
+        [0 .. 1, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2, 0 .. 1],  # documented one-line call above
+        [2 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2, 1 .. 1],  # imports above
       ]  ## Counts passing between form above, by row, and form below, by column, as `forms`.
     for a in 0 ..< forms.len:
-      for b in 0 ..< forms.len:
+      for b in 0 ..< forms.len - 1:
         for is_second in [false, true]:
           for count in 0 .. 3:
             let
