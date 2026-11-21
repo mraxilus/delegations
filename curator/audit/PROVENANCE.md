@@ -3342,11 +3342,11 @@ tree matched each report of the two outputs by rule, path and line.
 - Cost: over the files of `curator/knoller` at `b585ea65`, `koch fix --dry-run` takes 116.9 s built
   there, and 67.4 s built at `41c24818`. The second build runs the compiler calls of rules 7 and 11
   on a pool of threads (`## Caller of both rules` of knoller). Each figure is the median of three
-  runs in turn, on 4 cores at 2.10 GHz, 2026-11-21.
-- Cost: of 110.8 s in the profile on #1001, uses take 31.3 s, pure routines 34.8 s and cut renames
-  3.1 s. The static part takes 41.8 s, and asks no compiler.
-- Cost: each project that `koch list-projects --all` lists ran once with each build, and prints the
-  same text. Their times sum to 1,347.7 s and 776.7 s.
+  alternating runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-21.
+- Cost: at `b585ea65`, the profile on #1001 gives 110.8 s. Uses take 31.3 s, pure routines 34.8 s
+  and cut renames 3.1 s. The static part takes 41.8 s, and asks no compiler. With no checkout of a
+  lock, each project prints the same text with both builds. Their times sum to 1,347.7 s and
+  776.7 s, with the first run of knoller.
 
 ## Parser proof
 
