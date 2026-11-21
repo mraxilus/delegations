@@ -3,7 +3,8 @@
 ##   Syntax picks candidates (`candidatesPure`), since it cannot prove routine pure: `proc` with
 ##     body, of no foreign pragma, taking no routine, outside code macro emits (`quote`,
 ##     `genAst`), code template substitutes, and code `compiles` tests, whose verdict clean
-##     check of module never proves, whose body
+##     check of module never proves, whose body, with default of each parameter, which runs at
+##     each call leaving its argument out (ruling `D6 a` of #980),
 ##   - names no effect of `EFFECTS`: output, input, files, clock, random numbers, environment,
 ##     process, address, and lock, wait and signal, which another thread sees (STYLE.md §1), so
 ##     answer of routine taking one depends on order of threads, and is no deterministic
@@ -35,9 +36,7 @@
 ##   Cost: effect is read from names, so name of `EFFECTS` used otherwise, as field `write`,
 ##     keeps routine `proc`; fewer reports, never false one.
 ##   Cost: compiler accepts write library routine makes through `ref` in field or container of
-##     parameter, as `[]=` of `std/json` makes, and default argument is no part of body, so
-##     `initToolchains` reads as pure though its default reads environment. Each adds false
-##     report.
+##     parameter, as `[]=` of `std/json` makes, and adds false report.
 ##   Cost: `ref` in field or container of parameter, type naming generic parameter, type no scope
 ##     at end of module names, and `cstring`, which reads as string, keep no `proc`, though other
 ##     holder can change what each reaches. Each can add false report.
@@ -65,6 +64,7 @@ type
     name: string
     first: int  ## Index of `proc` token.
     body: seq[int]  ## Index of each token of body, comment left out.
+    defaults: seq[int]  ## Index of each token of default of each parameter, comment left out.
     lines: Slice[int]  ## Zero-based lines from `proc` to end of body.
     types: seq[string]
       ## Type of each parameter group as written; group its default alone types reads as `typeof`
@@ -182,6 +182,28 @@ func parameterTypes(
   result = result.deduplicate
 
 
+func parameterDefaults(
+  source: string; tokens: openArray[Token]; partners: openArray[int]; open: int
+): seq[int] =
+  ## Read index of each token of default of each parameter of list opening at token `open`,
+  ##   comment left out; bracket of name or type is skipped whole.
+  var
+    k = open + 1
+    is_default = false
+  while k < partners[open]:
+    let t = tokens[k]
+    if t.kind in {KindToken.Comma, KindToken.Semicolon}: is_default = false
+    elif t.kind == KindToken.Operator and t.spelling(source) == "=" and not is_default:
+      is_default = true
+    elif is_default and t.kind != KindToken.Comment:
+      let last = if t.kind == KindToken.Open and partners[k] > k: partners[k] else: k
+      for m in k .. last:
+        if tokens[m].kind != KindToken.Comment: result.add m
+      k = last
+    elif t.kind == KindToken.Open and partners[k] > k: k = partners[k]
+    inc k
+
+
 func routines(source: string): seq[Routine] =
   ## Read each `proc` declaration of source: site, name, body tokens and whether shape admits it.
   let
@@ -222,7 +244,9 @@ func routines(source: string): seq[Routine] =
       if tokens[j].kind == KindToken.Word: words_head.add s
       inc j
 
-    if parameters >= 0: routine.types = parameterTypes(source, tokens, partners, parameters)
+    if parameters >= 0:
+      routine.types = parameterTypes(source, tokens, partners, parameters)
+      routine.defaults = parameterDefaults(source, tokens, partners, parameters)
 
     # Body: rest of `=` line, else lines indented deeper than head.
     let head_line = t.line
@@ -297,9 +321,10 @@ func candidatesPure*(files: openArray[(string, string)]): Table[string, seq[(int
     let tokens = source.tokens
     for routine in source.routines:
       let
-        words = routine.body.filterIt(tokens[it].kind == KindToken.Word)
+        read = routine.body & routine.defaults  # Default runs at each call leaving it out.
+        words = read.filterIt(tokens[it].kind == KindToken.Word)
           .mapIt(tokens[it].spelling(source).identity)
-        called = callees(source, tokens, routine.body).mapIt(it.identity)
+        called = callees(source, tokens, read).mapIt(it.identity)
         is_effect = words.anyIt(it in effects or it in globals)
         is_unknown = called.anyIt(
           it notin declared and it notin transforms and it notin builtins and not it.isKeyword
