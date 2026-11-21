@@ -7,7 +7,7 @@
 ##   .i se ki'u bo no lo nu cuncu'a kei poi fasnu pu le mupli cu galfi le mupli
 ##   .i lo nu zbasu lo rafsi cu se rapli va'o lo nu lo lerfu pe le rafsi cu na mapti lo tarmi be le
 ##       rafsi ja'i lo zunsna remei javni pe `CLL 3.6` jo'u `CLL 3.7`
-##   .i lo nu lo rafsi poi seltai `CVV` seltai `CV'V` cu cunso fi li pa fi'u re lo'o to `CLL 4.6`
+##   .i lo nu lo rafsi poi seltai `CVV` seltai `CV'V` cu cunso fi li 1 fi'u re lo'o to `CLL 4.6`
 ##       toi
 
 {.experimental: "strictFuncs".}
@@ -19,7 +19,7 @@ import ../../src/ricysoho/forms
 
 const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
-    ## lo paze zunsna poi `C` sinxa ke'a ja'i `CLL 4.1 rule 3`
+    ## lo 17 zunsna poi `C` sinxa ke'a ja'i `CLL 4.1 rule 3`
   ORDER_VOWELS = "aeiou"
     ## lo mu karsna poi `V` sinxa ke'a ja'i `CLL 4.1 rule 1`
     ##   .i `y` na cmima le mu karsna

@@ -955,6 +955,64 @@ suite "Scene":
       check loaded[1].geometry =~ POINTS[1]
 
 
+    test "a scene saves with the magic PGAS, and one that opens with RGAS still loads":
+      # Fault: each scene saved opened with `RGAS`, old name of project (repository issue 978).
+      #   Architect ruled on rename that tools write new name and readers take old one
+      #   (repository issue 946). Bytes after magic did not change.
+      var original = initScene()
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      discard original.addObject(POINTS[1], "b", Ink.Jade)
+      let
+        path_new = getTempDir() / "visualiser_suite_scene_magic.pgascene"
+        path_old = getTempDir() / "visualiser_suite_scene_magic_old.pgascene"
+      check saveScene(original, path_new).contains("Saved 2")
+      defer: removeFile(path_new)
+      let bytes = readFile(path_new)
+      check bytes[0..<4] == "PGAS"
+      writeFile(path_old, "RGAS" & bytes[4..^1])
+      defer: removeFile(path_old)
+      for path in [path_new, path_old]:
+        var loaded = initScene()
+        check loadScene(loaded, path).contains("Loaded 2")
+        check loaded.len == 2
+        check loaded[0].label.toText == "a"
+        check loaded[1].geometry =~ POINTS[1]
+
+
+    test "a scene loads under each magic read, and is refused under each change of one byte":
+      # Domain of magic, whole: each magic read loads, and each change of one byte of one that
+      #   is no magic read is refused. Stated here, not read off `scene`, so list there is held.
+      const
+        magics_read = ["PGAS", "RGAS"]  ## Magics reader takes: name PGA, and name before it.
+        changes_refused = 2 * 4 * 255 - 2
+          ## Changes of one byte of each magic read that read none: P and R swap twice.
+      var original = initScene()
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      let
+        path_saved = getTempDir() / "visualiser_suite_scene_magic_saved.pgascene"
+        path_changed = getTempDir() / "visualiser_suite_scene_magic_changed.pgascene"
+      check saveScene(original, path_saved).contains("Saved 1")
+      defer: removeFile(path_saved)
+      defer: removeFile(path_changed)
+      let body = readFile(path_saved)[4..^1]
+      var refused = 0
+      for magic in magics_read:
+        writeFile(path_changed, magic & body)
+        var loaded = initScene()
+        check loadScene(loaded, path_changed).contains("Loaded 1")
+        for at in 0..<len(magic):
+          for code in 0..255:
+            var changed = magic
+            changed[at] = char(code)
+            if changed in magics_read: continue
+            writeFile(path_changed, changed & body)
+            var kept = initScene()
+            discard kept.addObject(POINTS[1], "keep", Ink.Jade)
+            if loadScene(kept, path_changed).contains("not a scene file") and kept.len == 1:
+              inc refused
+      check refused == changes_refused
+
+
     test "every multi-byte field is written little-endian, whatever the host":
       # Bytes themselves, not round trip: round trip passes on any byte order as.
       #   long as one build writes and reads it, and second implementation of this
@@ -1029,7 +1087,9 @@ suite "Scene":
       ##   for one would only ever produce today's, and reading it exercised would be
       ##   its own writing spelled backwards. Ink is taken as raw ordinal for same
       ##   reason -- old file's ordinals name enum that is gone.
-      result = MAGIC_SCENE & char(version) & char(ord(Basis.high) + 1)
+      # Magic as such file holds: builds before name PGA wrote `RGAS` at each older version.
+      result = (if version < VERSION_SCENE: "RGAS" else: MAGIC_SCENE) & char(version) &
+          char(ord(Basis.high) + 1)
       var
         count = uint32(len(saved))
         count_bytes = newString(4)

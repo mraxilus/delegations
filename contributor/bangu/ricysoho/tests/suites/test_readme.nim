@@ -11,7 +11,7 @@
 ##   .i le pamoi minde cu sitna zo la'o ne'i lo vo'a selci'a be fi `Nim`
 ##   .i le lerfu po'u `'` pe zo la'o fanmo le nu sitna pe lo minde samtci
 ##   .i se ki'u bo lo minde samtci cu dunda `dy.` `Nim` ta'i lo datnyvei
-##   .i lo jalge be le minde cu du li pa
+##   .i lo jalge be le minde cu du li 1
 ##
 ## ni'o `README.md` se tcidu ta'i lo selci'a ca lo nu fanva
 ##   .i no minde pe `README.md` selpli vi
@@ -31,7 +31,7 @@ const
     ## lo krasi be lo pamoi linji be lo minde be'o ne'i lo girzu be lo linji be'o pe `README.md`
   COUNT_COMMANDS_LEAST = 8
     ## lo mecraiterkancu be lo minde poi sitna lo selci'a gi'e zvati `README.md`
-    ##   .i ca lo nu jmina le cipra kei `README.md` vasru pano minde poi sitna lo selci'a
+    ##   .i ca lo nu jmina le cipra kei `README.md` vasru 10 minde poi sitna lo selci'a
 
 
 

@@ -5,8 +5,8 @@
 ##       ciska le mupli
 ##   .i lo dacti pe `parseLojban` mintu `ReadingText` ro datnypau
 ##
-## ni'o va'o lo nu ro vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF` be'o
-##     pe le jufra
+## ni'o va'o lo nu ro boi vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF`
+##     be'o pe le jufra
 ##   .i le selci'a cu se tcidu ta'i le velski be le tarmi gi'e rapyzba le multricu pe le jufra
 ##       sepi'o le tcidu pe le jbena cipra to `suites/reader_nif.nim` toi
 ##   .i `parseLojbanToNif` dunda lo selci'a be fi `NIF` be'o poi mintu le selci'a pe le mupli poi le
@@ -16,9 +16,9 @@
 ##   .i se ki'u bo va'o lo nu tcidu le mulmupli kei le temci cu zenba fi ji'i `13 s`
 ##   .i le jbecipra cu tcidu ro selci'a pe lo selci'agri
 ##
-## ni'o le mupli cu pilno bixa lo bibi javni poi selcme ne'i `CLL 21.1`
+## ni'o le mupli cu pilno 86 lo 88 javni poi selcme ne'i `CLL 21.1`
 ##   .i le gerna .e le tcidu be lo porsi be lo valsi cu to'e curmi su'o le jufra
-##   .i le se to'e curmi cu du voso jufra
+##   .i le se to'e curmi cu du 49 jufra
 ##   .i se ki'u bo pa nu cipra cu cipra lo so'e pagbu be le genturfa'i ne'i `JavaScript` to
 ##       `sample_tatoeba/sentences.nim` toi
 ##
@@ -60,9 +60,9 @@ import ./report
 
 
 const
-  STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro vomoi jufra pe le mupli
+  STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro boi vomoi jufra pe le mupli
   COUNT_TREES_LEAST = 40
-    ## lo du'u xo kau lo mupaso jufra poi le flalu cu cuxna ke'a se tcidu
+    ## lo du'u xo kau lo 519 jufra poi le flalu cu cuxna ke'a se tcidu
     ##   .i le flalu cu tcidu le tricu pe ro le jufra
 
 
@@ -103,7 +103,7 @@ suite "Internal: JavaScript build":
     check reading.units.length.to(int) == 4  # ro valsi cu selvau pa genvla
     # le genvla pe lo brivla
     check reading.units[1].terminal.to(cstring) == "BRIVLA"  # `CLL 21.1`
-    # le javni pe li no cu krasi le tricu
+    # le javni pe li 0 cu krasi le tricu
     check reading.tree.rule.to(cstring) == "text"  # `CLL 21.1`
     check reading.tree.number.to(int) == 0
 
@@ -114,12 +114,12 @@ suite "Internal: JavaScript build":
     check typo.refusal.to(cstring) == "Grammar"  # `CLL 21.1` to'e curmi
     check typo.start.to(int) == 12  # lo stuzi poi zoi gy. zarc .gy. cfari bu'u ke'a
     # le javni cu ca'o kalri vi gi'e traji lo ka nenri
-    check typo.rule.to(cstring) == "sumti-6 97"  # le javni pe li soze
+    check typo.rule.to(cstring) == "sumti-6 97"  # le javni pe li 97
     # lo zunsna cu romoi
     check typo.stream.occurrences[3].reading.kind.to(cstring) == "Cmene"  # `CLL 4.8`
     # `.i.ai` .a `.ia.i`
     #   .i selfi'i
-    let tie = parseLojban("iai")  # `CLL 4.9` le javni pe li ci
+    let tie = parseLojban("iai")  # `CLL 4.9` le javni pe li 3
     check tie.refusal.to(cstring) == "Stream"
     # re fendi cu nitcu lo mecraide'a
     check tie.stream.refusal.to(cstring) == "Split"  # `CLL 3.3`
@@ -156,7 +156,7 @@ suite "Internal: JavaScript build":
     # zo la'o
     #   .i selfi'i
     let quoted = $parseLojbanToNif("la'o gy. Größe .gy.")  # `CLL 19.10`
-    # lo stuzi poi na mleca li parebi cu pagre lo lerpoi pe `JavaScript`
+    # lo stuzi poi na mleca li 128 cu pagre lo lerpoi pe `JavaScript`
     check "\"Größe\"" in quoted  # le stuzi pe `UTF-8` na selga'i
 
 

@@ -73,7 +73,7 @@
 ##   .i se ki'u bo lo pagbu pe le rafsi cu ralte lo lerfu po'u `brod`
 ##
 ## ni'o lo cmavo poi se tcidu ta'i lo nu mulno cu ponse lo selma'o be vo'a
-##   .i le ma'oste cu dunda le selma'o to le renomoi ckupau be `CLL` toi
+##   .i le ma'oste cu dunda le selma'o to le 20moi ckupau be `CLL` toi
 ##   .i lo cmavo poi no liste cu vasru ke'a ponse no selma'o mu'u lo cipma'o po'u zo ku'a'e
 ##
 ## ni'o lo pagbu be lo lujvo cu ponse no selma'o
@@ -205,7 +205,7 @@ type
         ## lo rafsi poi le selci'a cu ciska ke'a
         ##   .i le datnypau cu kunti va'o lo nu le valsi cu mulseltcidu
       selmaho*: Option[Selmaho]
-        ## lo selma'o poi le ma'oste cu dunda ke'a lo cmavo poi mulno se tcidu to le renomoi ckupau
+        ## lo selma'o poi le ma'oste cu dunda ke'a lo cmavo poi mulno se tcidu to le 20moi ckupau
         ##     be `CLL` toi
         ##   .i va'o lo drata le datnypau cu kunti
     of false:
@@ -223,7 +223,7 @@ const
     'u', 'v', 'x', 'y', 'z', '\'',
   }
     ## lo lerfu poi lo valsi cu vasru ke'a ne'i lo raltai
-    ##   .i le lerfu cu du lo karsna .e `y` .e lo paze zunsna .e zoi gy. ' .gy. to `CLL 3.1` .e
+    ##   .i le lerfu cu du lo karsna .e `y` .e lo 17 zunsna .e zoi gy. ' .gy. to `CLL 3.1` .e
     ##       `CLL 3.6` toi
   MARKS_STREAM* = block:
     ## lo lerfu poi sinxa lo porsi be lo valsi be'o .enai lo valsi

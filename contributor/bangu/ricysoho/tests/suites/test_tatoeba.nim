@@ -42,21 +42,21 @@ import ../sample_tatoeba/sentences
 const IDS_REFUSED = [
   # `sepide` fanmo lo karsna
   #   .i se ki'u bo `sepide` na cmene
-  #   .i le javni pe li cire cu na curmi lo nu `se pi de` se lidne `mi'e`
+  #   .i le javni pe li 32 cu na curmi lo nu `se pi de` se lidne `mi'e`
   634760,  # `CLL 4.8`
   # `NAI` na ka'e se lidne `CAhA`
   #   .i le jufra cu vasru `ka'enai`
-  645249,  # le javni pe li sozere
+  645249,  # le javni pe li 972
   # lo cmene po'u `jim` cu ka'e sumti va'o po'o lo nu `la` lidne le cmene
-  645284,  # le javni pe li soze
+  645284,  # le javni pe li 97
   # `NAI` na ka'e se lidne `CAhA`
   #   .i le jufra cu vasru `ka'enai`
-  656510,  # le javni pe li sozere
+  656510,  # le javni pe li 972
   # `na` lidne lo selbri gi'e no roi se lidne le selbri
-  657753,  # le javni pe li pacipa
+  657753,  # le javni pe li 131
   # `ba'e` rinka lo nu `pei` seivla
   #   .i no javni cu curmi lo nu le valsi cu se lidne `.i`
-  678056,  # le javni pe li papanono
+  678056,  # le javni pe li 1100
   # `s` .e `b` nitcu lo nu `y` zvati lo jbini be le re lerfu
   #   .i le jufra cu vasru `dusybarda`
   1484737,  # `CLL 4.11`
@@ -65,62 +65,65 @@ const IDS_REFUSED = [
   1502454,  # `CLL 4.8`
   # `xotli` noi brivla cu se lidne `ti` noi rebysu'i
   #   .i se ki'u bo `le` bilga lo nu lidne `ti`
-  1576931,  # le javni pe li papapa
+  1576931,  # le javni pe li 111
   # lo cmavo be `NAhE` be'o poi lidne lo sumti cu nitcu `bo`
   #   .i le jufra cu vasru `je'a bo ko'a`
-  2024281,  # le javni pe li soze
-  2063807,  # le javni pe li papapa lo'o to `la do` nitcu lo selbri poi se lidne `do` toi
+  2024281,  # le javni pe li 97
+  2063807,  # le javni pe li 111 lo'o to `la do` nitcu lo selbri poi se lidne `do` toi
   # `na` lidne lo selbri
   #   .i no javni cu curmi lo nu `bo` se lidne `na`
-  2108189,  # le javni pe li pacipa
+  2108189,  # le javni pe li 131
   # lo cmene po'u `tom` cu ka'e sumti va'o po'o lo nu `la` lidne le cmene
-  2119742,  # le javni pe li soze
+  2119742,  # le javni pe li 97
   # `djunko` fliba le cipra pe `slinku'i`
   #   .i ki'u bo `badjunko` lujvo
   2159050,  # `CLL 4.7`
   # `je` jongau lo selbri
   #   .i ku'i `cu` cfari no selbri
-  2253980,  # le javni pe li pacivo
+  2253980,  # le javni pe li 134
   # `NAI` na ka'e se lidne `NA`
   #   .i le jufra cu vasru `ja'anai`
-  2312326,  # le javni pe li pacipa
+  2312326,  # le javni pe li 131
   # lo cmavo be `GIhA` cu jongau lo brirebla
   #   .i `je` no roi jongau lo brirebla
-  2332321,  # le javni pe li muno
+  2332321,  # le javni pe li 50
   # `la` cu ka'e lidne lo cmene
   #   .i `lo` no roi lidne lo cmene
   #   .i le jufra cu vasru `lo tom`
-  2577894,  # le javni pe li soze
+  2577894,  # le javni pe li 97
   # lo cmavo be `NAhE` cu lidne lo valsi poi le cmavo cu natfe ke'a ku'o gi'e no roi zvati lo fanmo
   #   .i le jufra cu vasru `je'a`
-  2626994,  # le javni pe li sozere
+  2626994,  # le javni pe li 972
   # `bei` lidne lo me `term`
   #   .i ku'i `se irsi` selbri
-  2688629,  # le javni pe li paxapa
+  2688629,  # le javni pe li 161
   # lo cmene po'u `borg` cu ka'e sumti va'o po'o lo nu `la` lidne le cmene
-  2793895,  # le javni pe li soze
+  2793895,  # le javni pe li 97
   # ne'i lo tcita `SE` cu ka'e lidne lo cmavo be `BAI` po'o
   #   .i `SE` no roi lidne `ne'i` noi cmavo be `FAhA`
-  2802254,  # le javni pe li sozere
+  2802254,  # le javni pe li 972
   # `pe'e je` jongau lo me `term`
   #   .i `je` poi na se lidne `pe'e` cu no roi se lidne `vau`
-  2803459,  # le javni pe li bipa
+  2803459,  # le javni pe li 81
   2808680,  # `CLL 20` to `di'ai` cmima no selma'o poi `CLL 1.1` dunda ke'a toi
   # `NAI` se lidne no brivla
   #   .i le jufra cu vasru `djica nai`
-  2853152,  # le javni pe li pamure
+  2853152,  # le javni pe li 152
   # `NAI` se lidne no brivla
   #   .i le jufra cu vasru `slabu nai`
-  2864592,  # le javni pe li pamure
+  2864592,  # le javni pe li 152
   # `NAI` se lidne no brivla
   #   .i le jufra cu vasru `lakne nai`
-  2988210,  # le javni pe li pamure
+  2988210,  # le javni pe li 152
   # `NAI` se lidne no cmavo be `KOhA`
   #   .i le jufra cu vasru `mi nai`
-  3083055,  # le javni pe li soze
+  3083055,  # le javni pe li 97
+  # lo mekso poi klani lo sumti cu nitcu zo vei
+  #   .i ku'i le jufra cu vasru lo'u lo pare fe'i re sovda le'u
+  3668385,  # le javni pe li 300
   # lo cmavo be `MOhE` cu lidne lo sumti
   #   .i ku'i `namcrgogolo` brivla
-  3807272,  # le javni pe li cibimu
+  3807272,  # le javni pe li 385
   # le valsi poi fanmo le selci'a pe `zoi` du le valsi poi cfari le selci'a
   #   .i ne'i le jufra lo cfavla cu du `gy`
   #   .i ku'i lo famvla cu du `dy`
@@ -128,16 +131,16 @@ const IDS_REFUSED = [
   3843946,  # `CLL 3.1` to `H` .e `!` na'e lerfu la lojban. toi
   # `NAI` se lidne no cmavo be `PA`
   #   .i le jufra cu vasru `su'e nai`
-  3855768,  # le javni pe li bipare
+  3855768,  # le javni pe li 812
   # lo cmavo be `LAhE` cu lidne lo sumti
   #   .i ku'i `pu ku` me `term`
-  3989793,  # le javni pe li soze
-  4167581,  # le javni pe li papare lo'o to `ku` fanmo lo sumti toi to ku'i `djuno` selbri toi
+  3989793,  # le javni pe li 97
+  4167581,  # le javni pe li 112 lo'o to `ku` fanmo lo sumti toi to ku'i `djuno` selbri toi
   # lo lerfu po'u slaka bu cu fendi lo slaka pe pa porsi be lo lerfu gi'e zvati lo stuzi poi no
   #     denpa cu ka'e zvati ke'a
   4225380,  # `CLL 3.3`
   # `je ca bo` lidne lo selbri gi'e no roi lidne `cu`
-  4226728,  # le javni pe li pacimu
+  4226728,  # le javni pe li 135
   # `i'e` .e `ei'e` selkra lo karsna
   #   .i se ki'u bo le selci'a cu bilga lo nu denpa bu cu lidne pa le re valsi
   4285480,  # `CLL 3.3`
@@ -146,35 +149,35 @@ const IDS_REFUSED = [
   4412245,  # `CLL 4.1`
   # `GA` cu ka'e lidne `NAI` gi'e no roi lidne `JA`
   #   .i le jufra cu vasru `ganai`
-  4436842,  # le javni pe li binoze
+  4436842,  # le javni pe li 807
   # `nu` lidne lo bridi
   #   .i ku'i `lo ckafi` vasru no selbri
-  5181396,  # le javni pe li pamure
+  5181396,  # le javni pe li 152
   # lo lerfu po'u zoi gy. ' .gy. zvati lo jbini be re karsna gi'e no roi zvati lo datstu
   #   .i le jufra cu vasru `mi''a`
   5181743,  # `CLL 3.3`
   # lo me `ek` .a lo me `joik` cu jongau lo namcu
   #   .i `je` no roi jongau lo namcu
   #   .i le jufra cu vasru `pa je su'e`
-  5183488,  # le javni pe li cibici
+  5183488,  # le javni pe li 383
   # lo brale'u cu sinxa lo slaka poi se basna ku'o .a lo karsna pe le slaka gi'e no roi sinxa lo
   #     zunsna po'o
   #   .i le jufra cu vasru `Mi`
   5912012,  # `CLL 3.9`
   # `ne` lidne lo me `term`
   #   .i ku'i `facki` selbri
-  8639562,  # le javni pe li parere
-  8721221,  # le javni pe li paxano lo'o to `be` nitcu lo me `term` poi se lidne `be` toi
+  8639562,  # le javni pe li 122
+  8721221,  # le javni pe li 160 lo'o to `be` nitcu lo me `term` poi se lidne `be` toi
   # lo me `term` cu lidne `cu`
   #   .i se ki'u bo `na ku` na ka'e se lidne `cu`
-  8738058,  # le javni pe li vono
+  8738058,  # le javni pe li 40
   # `jai` lidne pa tcita
   #   .i le tcita cu lidne lo brivla
   #   .i ku'i `pu` cfari lo remoi tcita
-  10789002,  # le javni pe li pamure
+  10789002,  # le javni pe li 152
   # `ziri` fanmo lo karsna
   #   .i se ki'u bo `ziri` na cmene
-  #   .i se ki'u bo `la zi` na'e mapti le javni pe li soze
+  #   .i se ki'u bo `la zi` na'e mapti le javni pe li 97
   12406452,  # `CLL 4.8`
   # `s` frica `b` lo ka voksa
   #   .i se ki'u bo no valsi cu vasru `sb`

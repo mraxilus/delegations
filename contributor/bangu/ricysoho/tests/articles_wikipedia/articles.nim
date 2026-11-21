@@ -26,7 +26,7 @@ type
     article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri
     index* {.requiresInit.}: int
       ## lo namcu pe le ju'agri ne'i le prosa
-      ##   .i le namcu pe le pamoi ju'agri cu du li pa
+      ##   .i le namcu pe le pamoi ju'agri cu du li 1
     text* {.requiresInit.}: string
       ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji
     verdict* {.requiresInit.}: string
@@ -150,7 +150,7 @@ const
           "certu pu ji'i le ni'u3000moi noi ca lo tcepru rakso .e lo misro cu pilno lo zmadu " &
           "certu cmaci .iku'i lo drani nu tadni be lo cmaci pu cfari zu'e lo tcepru xelso ca " &
           "le ni'u 600moi ku bi'o le ni'u 300moi",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "cmaci",
@@ -175,7 +175,7 @@ const
           "finti so'i lo ciska ciste noi se pilno cazi .i lo cabna ciska ciste cu gasnu le " &
           "du'u lo cmaci cu mutce zmadu frili pi'o lo certu .ijeku'i lo to'e certu cu lifri " &
           "loza'i nandu .i so'u sinxa cu se smuni so'a datni",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "cmaci",
@@ -197,7 +197,7 @@ const
           "be la .niuton. pu mukti lenu lo ka lojdra cu pu se xrupli ca le 19xyxy ctona'a .i " &
           "loi cmacypre cazi casnu lo skami se sidju cipra .i ki'u ledu'u lonu lo clani nu " &
           "kanji cu cipra birti cu nandu keikei ri cu la'acu'i na banzu lojdra",
-      verdict: "Stream Letter",
+      verdict: "Grammar tanru-unit-2 152",
     ),
     ParagraphWikipedia(
       article: "cmaci",
@@ -229,7 +229,7 @@ const
           "la kurt.gydel pu cipra ledu'u lo cmaci na ka'e se smuni lo logji .iseki'ubo la " &
           "karl.poper pu lojycpa ledu'u so'a lo cmaci jufra cu simsa lo rarna jufra loka lifri " &
           "bo nibli",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "cmaci",
@@ -657,7 +657,7 @@ const
           "fa su'o bangu poi se jicmu lo logji gi'e zifre selcpa gi'e se pilno ku'o de'i li " &
           "1987 .i lo na'e ralju te finti cu nu cipra lo ka lo nu pilno ce'u cu galfi lo tadji " &
           "be lo nu pensi",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
@@ -674,7 +674,7 @@ const
           "jitro lo selci'a be bau .i gy. ganzu fi la .lojbangirz. mu'i lo nu finti lo cnino " &
           "lojbau .i ba za bo la .lojban. co'a vajmau la .loglan .i la .lojban. ca ti noi " &
           "nanca 2016 moi cu bangu ji'i 200 prenu",
-      verdict: "Stream Letter",
+      verdict: "Grammar sumti-6 97",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
@@ -682,7 +682,7 @@ const
       text: "lo lojbo gerna cu se krasi lo bridi logji .i lo valsi cu se krasi lo xa bangu po'u " &
           "lo jugbau jo'u lo glibau jo'u lo sanbau jo'u lo xinbau jo'u lo rabybau jo'u lo " &
           "rukybau .i zmiku lo ka finti lo valsi poi traji lo ka simsa lo valsi be ro by.",
-      verdict: "",
+      verdict: "Grammar number 812",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
@@ -693,14 +693,14 @@ const
           "denpa bu le'u .i me'o denpa bu sruri lo cmevla gi'e lamji lo karsna poi tolfa'o lo " &
           "valsi ku'o .e me'o iy'y pe lo valsi fanmo .i me'o .y'y .e me'o slaka bu bi'ai se " &
           "sepsi'u lo slaka .i me'o .u'y .e me'o .i'y vu'o poi lidne lo karsna cu xabykarsna",
-      verdict: "Stream Letter",
+      verdict: "Stream Shape",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
       index: 6,
       text: "ni'o 26 da lojbo lerfu .i lo nu pilno lo na lojbo lerfu tu'a lo cmavo pe lo mekso " &
           ".a lo namcu .a lo lerfu cu jai cafne .i ca'irselzau fa lo nu basti lo namcu cmavo",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
@@ -755,7 +755,7 @@ const
           "zasti fa lo ji'i 630 cmavo .i ku'i lo zasti cumki cmavo cu ci'i mei .i ji'a cmavo " &
           "tarmi mupli fa zo mu'ei .e zo poi'i vu'o noi nu'o catni se zanru cmavo .i lo cmavo " &
           "cu se pilno fi lo nu stura lo jufra",
-      verdict: "Stream Letter",
+      verdict: "Grammar selbri-4 134",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",
@@ -763,7 +763,7 @@ const
       text: "ni'o lo gismu cu lerfu mu mei je slaka bo re mei valsi .i ro gismu cu se tarmi la'e " &
           "zoi .tam. ZZKZK .tam. lu'u .a la'e zoi .tam. ZKZZK .tam .i gismu mupli fa zo mlatu " &
           ".e zo gerku .i ca zasti fa lo ji'i 1400 ca'irselzau gismu",
-      verdict: "Stream Letter",
+      verdict: "",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",

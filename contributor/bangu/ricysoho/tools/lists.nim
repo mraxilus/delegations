@@ -21,7 +21,7 @@
 ##
 ## ni'o le samtci datnyvei cu ralte ro datnypau poi lo javni cu nitcu ke'a ku'o gi'e ralte no drata
 ##     datni pagbu to `entries.nim` toi
-##   .i se ki'u bo ro stecmi cu selci'a fi pa linji poi tceto'u gi'e vasru me'i panono stuzi
+##   .i se ki'u bo ro stecmi cu selci'a fi pa linji poi tceto'u gi'e vasru me'i 100 stuzi
 ##   .i no datnypau cu nitcu lo nu se fendi fi su'o re linji
 ##
 ## ni'o le ma'oste cu ralte ro linji poi vasru pa cmavo po'o
@@ -143,7 +143,7 @@ proc readSource*(name: string): Source =
 
 func field(line: string, first, last: int): string =
   ## tcidu lo stuzi po'u `first` bi'o `last`
-  ##   .i lo namcu pe le pamoi stuzi cu du li pa ja'i `entries.nim`
+  ##   .i lo namcu pe le pamoi stuzi cu du li 1 ja'i `entries.nim`
   ##   .i lo kutle'u poi zvati lo fanmo be le se tcidu cu selvi'u
   if line.len < first: return ""
   line[first - 1 .. min(last, line.len) - 1].strip

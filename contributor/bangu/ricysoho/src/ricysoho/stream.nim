@@ -16,7 +16,10 @@
 ## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
 ##   .i lo kutle'u .e denpa bu cu fendi lo valsi
 ##   .i denpa bu cu sinxa lo denpa
+##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi gi'e na fendi to `isBoundary`
+##       toi
 ##   .i slaka bu cu fendi lo slaka ne'i lo valsi
+##   .i ku'i slaka bu poi se lidne pa lerfu cu sinxa zo ki'o gi'a se to'e curmi
 ##   .i lo brale'u cu sinxa lo slaka poi se basna
 ##
 ## ni'o le genturfa'i cu tcidu pa valsi fi lo selci'avla poi zvati lo jbini be lo sinxa ku'o va'o lo
@@ -56,7 +59,7 @@
 ##   .i se ki'u bo no ve fendi cu punji lo denpa lo stuzi be slaka bu
 ##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu gi'e no roi
 ##       tcidu lo'u ka .i le'u fi `ka,i`
-##   .i ba bo le genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi selcu'a
+##   .i ba bo le genturfa'i cu jdice fi ro boi slaka bu sepi'o lo valsi poi selcu'a
 ##
 ## ni'o jdima fa lo nu va'o lo nu lo brale'u cu zvati kei slaka bu cu ka'e rinka lo nu le selci'avla
 ##     cu se fendi
@@ -79,7 +82,7 @@
 ##   .i se ki'u bo le tadji be lo nu fendi cu selfi'i le genturfa'i gi'e selzba fi lo javni pe
 ##       `CLL 3.9` .e `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
 ##   .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da
-##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li ci
+##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li 3
 ##   .i di'u se kanpe
 ##   .i lo valsi poi selci'a ta'i lo nu sepli cu cliva le tadji
 ##
@@ -189,7 +192,7 @@ type
     pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
       ## le slaka karsna poi lo brale'u cu sinxa lo nu basna be ke'a
-      ##   .i li no cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
+      ##   .i li 0 cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
       ##   .i slaka bu cu fendi lo karsna
       ##   .i no da va'o lo nu le selci'a cu sinxa no nu basna
     breaks*: seq[int]
@@ -223,7 +226,7 @@ type
       ##   .i le stuzi cu selpoi
     breaks: seq[int]  ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a to le stuzi cu selpoi toi
     commas: seq[int]
-      ## lo stuzi be ro slaka bu ne'i le porsi
+      ## lo stuzi be ro boi slaka bu ne'i le porsi
       ##   .i le stuzi cu selpoi ta'i `breaks`
 
   Score = object
@@ -233,7 +236,7 @@ type
     pauses: int  ## lo mecrailai be lo denpa pe lo ve fendi poi le valsi cu fanmo ke'a
     ties: int
       ## lo klani be lo ve fendi poi le valsi cu fanmo ke'a gi'e nitcu lo mecraide'a
-      ##   .i li re cu sinxa li su'o re
+      ##   .i li 2 cu sinxa li su'o re
     befores: seq[int]
       ## lo krasi be lo valsi poi lidne le valsi ne'i ro ve fendi poi nitcu lo mecraide'a
       ##   .i no da va'o lo nu le valsi cu pamoi
@@ -245,14 +248,28 @@ type
       ##   .i no denpa cu seljdi
     count: int
       ## lo klani be lo ve fendi poi nitcu lo mecraide'a
-      ##   .i li no .a li pa .a li re
-      ##   .i li re cu sinxa li su'o re
+      ##   .i li 0 .a li 1 .a li 2
+      ##   .i li 2 cu sinxa li su'o re
 
 
 const
+  DIGITS_STREAM = {'0'..'9'}
+    ## lo lerfu pe `0` bi'o `9`
+    ##   .i ro le lerfu cu sinxa pa cmavo pe `PA` to `CLL 18.2` toi
+    ##   .i `CLL 3.1` na liste le lerfu
+    ##   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `DIGITS_STREAM` cu sinxa ke'a to `CLL 18.2` toi
+  WORD_DECIMAL = "pi"
+    ## le cmavo poi denpa bu cu sinxa ke'a va'o lo nu zvati lo jbini be re lerfu
+    ##   .i lo mupli po'u `CLL 18.6` cu pilno zo pi
+  WORD_GROUP = "ki'o"
+    ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
+    ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
   MARKS_BOUNDARY* = Whitespace + {'.'}
-    ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
+    ## lo sinxa poi ka'e fendi lo valsi to `CLL 3.3` toi
     ##   .i lo kutle'u .e denpa bu
+    ##   .i denpa bu poi zvati lo jbini be re lerfu cu na fendi to `isBoundary` toi
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}
     ## lo brale'u pe ro lerfu
     ##   .i lo brale'u cu sinxa lo nu basna
@@ -320,7 +337,7 @@ func refusalMarks(text: string, start, finish: int): Option[ReadingStream] =
 func toSpelling(text: string, start, finish: int): Spelling =
   ## vimcu lo sinxa le selci'avla
   ##   .i ro brale'u cu binxo lo cmale'u
-  ##   .i ro slaka bu cu selvi'u
+  ##   .i ro boi slaka bu cu selvi'u
   for at in start ..< finish:
     if text[at] == ',':
       result.breaks.add result.letters.len
@@ -411,7 +428,7 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
   ##       ke'a to `CLL 3.3` .e `CLL 4.9` toi
   ##   .i no denpa cu zvati lo stuzi be slaka bu
   ##   .i kancu lo ve fendi poi nitcu lo mecraide'a
-  ##   .i li re cu sinxa li su'o re
+  ##   .i li 2 cu sinxa li su'o re
   ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
   ##
   ## ni'o `words[j][i]` vasru lo valsi pe lo lerfu po'u `j ..< i`
@@ -561,8 +578,30 @@ func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period
   if is_needed: Pause.Inferred else: Pause.Absent
 
 
-func wordsWritten(text: string, start, finish: int): ReadingStream =
+func isBoundary*(text: string, at: int): bool =
+  ## jdice lo du'u xu kau le lerfu poi zvati `at` cu fendi lo selci'avla
+  ##   .i lo kutle'u cu fendi
+  ##   .i denpa bu cu fendi va'o po'o lo nu na zvati lo jbini be re lerfu pe `DIGITS_STREAM`
+  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi to `D1 a` pe `#991` toi
+  let c = text[at]
+  if c in Whitespace: return true
+  if c != '.': return false
+  not (at > 0 and text[at - 1] in DIGITS_STREAM and at + 1 < text.len and
+      text[at + 1] in DIGITS_STREAM)
+
+
+func isBoundarySettled*(text: string, at: int): bool =
+  ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
+  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `DIGITS_STREAM` cu na fendi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
+  ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
+  text.isBoundary(at) and
+    not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in DIGITS_STREAM)
+
+
+func wordsLetters(text: string, start, finish: int): ReadingStream =
   ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
+  ##   .i le selci'avla cu vasru no lerfu pe `DIGITS_STREAM`
   ##   .i lo denpa na seljdi
   ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a
   ##   .i le pagbu cu sinxa ja lerfu ja ve fendi
@@ -586,6 +625,49 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
+func wordsWritten(text: string, start, finish: int): ReadingStream =
+  ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
+  ##   .i ro lerfu pe `DIGITS_STREAM` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo
+  ##       poi le lerfu cu sinxa ke'a
+  ##   .i se ki'u bo zoi gy. 10moi .gy. cu se tcidu ta'i zo pa .e zo no .e zo moi
+  ##   .i denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi le genturfa'i cu tcidu ke'a
+  ##       ta'i zo pi
+  ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi poi le
+  ##       genturfa'i cu tcidu ke'a ta'i zo ki'o
+  ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
+  ##   .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi to `CLL 3.3` toi
+  ##   .i `wordsLetters` tcidu ro drata pagbu
+  var
+    occurrences: seq[Occurrence]
+    at = start
+  while at < finish:
+    if text[at] in DIGITS_STREAM:
+      occurrences.add Occurrence(
+        start: at, finish: at + 1, text: $text[at], stress: none(int),
+        reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
+      )
+      inc at
+      continue
+    if at > start and text[at - 1] in DIGITS_STREAM and text[at] in {'.', ','}:
+      # denpa bu cu zvati ne'i le selci'avla va'o po'o lo nu lo lerfu cu lidne ke'a to
+      #     `isBoundary` toi
+      var count = 0  # lo klani be lo lerfu poi slaka bu cu lidne ke'a
+      while at + 1 + count < finish and text[at + 1 + count] in DIGITS_STREAM: inc count
+      if text[at] == ',' and count != 3: return refuse(Refusal.Comma, at)
+      occurrences.add Occurrence(
+        start: at, finish: at + 1, text: $text[at], stress: none(int),
+        reading: (if text[at] == '.': WORD_DECIMAL else: WORD_GROUP).readWord,
+      )
+      inc at
+      continue
+    let first = at
+    while at < finish and text[at] notin DIGITS_STREAM: inc at
+    let letters = text.wordsLetters(first, at)
+    if not letters.is_read: return letters
+    occurrences.add letters.occurrences
+  ReadingStream(is_read: true, occurrences: occurrences)
+
+
 func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
   ## facki lo stuzi be lo selci'a poi se sitna
   ##   .i le selci'a cu cfari bu'u `start` gi'e fanmo pu lo bavla'i se ciska valsi poi ciska
@@ -594,15 +676,15 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
   ##   .i dunda no da va'o lo nu no selci'avla poi ciska `delimiter` se lidne to `CLL 19.10` toi
   var at = start
   while at < text.len:
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       inc at
       continue
     let first = at
-    while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+    while at < text.len and not text.isBoundary(at): inc at
     if text[first ..< at].toLowerAscii.replace(",", "") != delimiter: continue
     var (a, b) = (start, first - 1)
-    while a <= b and text[a] in MARKS_BOUNDARY: inc a
-    while b >= a and text[b] in MARKS_BOUNDARY: dec b
+    while a <= b and text.isBoundary(a): inc a
+    while b >= a and text.isBoundary(b): dec b
     return some(a .. b)
   none(Slice[int])
 
@@ -637,7 +719,7 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
   while at < text.len:
     # klama pa'o lo sinxa poi zvati lo jbini be lo valsi
     #   .i ralte lo du'u denpa bu cu zvati
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       is_period = is_period or text[at] == '.'
       inc at
       continue
@@ -645,7 +727,7 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
     # lebna lo selci'avla poi fanmo pu lo bavla'i sinxa poi zvati lo jbini be lo valsi
     #   .i tcidu lo valsi pe le selci'avla
     let start = at
-    while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+    while at < text.len and not text.isBoundary(at): inc at
     let written = text.wordsWritten(start, at)
     if not written.is_read: return written
     let words = written.occurrences

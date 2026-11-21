@@ -22,7 +22,7 @@
 ##   .i lo nu vimcu `y` cu ka'e rinka lo nu lo datrafsi cu stali gi'e se jmina ja'i `CLL 4.11`
 ##       sepi'o no lerjo'e
 ##   .i mupli fa lo nu zo kramliste se fendi fi `kra` jo'u `mli` jo'u `ste`
-##   .i papabi lo sososoxa terjo'e poi simsa ku'o pe le girzu cu rapselfendi
+##   .i 118 lo 9996 terjo'e poi simsa ku'o pe le girzu cu rapselfendi
 ##   .i le namcu cu selmre
 ##   .i se ki'u bo le cipra cu xusra no da fi le rafsi poi vasru vo lerfu
 ##
@@ -85,15 +85,15 @@ const
   SAMPLES_FLOOR_ADDED = SAMPLES div 2
     ## lo mupli poi bilga lo nu vasru lo terjo'e poi ponse no lerjo'e kei ca lo nu lo jvacipra pe lo
     ##     nu jmina lo lerjo'e cu gunka
-    ##   .i zepanono mupli cu se tcidu
+    ##   .i 7100 mupli cu se tcidu
   SAMPLES_FLOOR_REMOVED = SAMPLES div 4
     ## lo mupli poi bilga lo nu vasru lo lerjo'e poi se lidne lo cmarafsi kei ca lo nu lo jvacipra
     ##     pe lo nu vimcu cu gunka
-    ##   .i cicipaci mupli cu se tcidu
+    ##   .i 3313 mupli cu se tcidu
   JUNCTIONS_FLOOR_IMPERMISSIBLE = 5000
     ## lo rafsi poi seltai `CVC` gi'e lidne lo gismu zi'e poi `step 4b` pe `CLL 4.11` bilga lo nu
     ##     jdice lo du'u lo zunsna remei pe ke'a na selcru
-    ##   .i mucirexa le rafsi cu se tcidu
+    ##   .i 5326 le rafsi cu se tcidu
   LENGTH_MIN = 2
     ## lo mecraiterkancu be lo rafsi pe pa cunpoi
     ##   .i ro lujvo cu vasru su'o re rafsi to `CLL 4.6` toi
@@ -104,7 +104,7 @@ const
   ENTRIES_FLOOR_ENGLISH = 600
     ## lo linji poi selci'a ta'i lo glisni gi'e vasru su'o re kikyvla zi'e poi le jvacipra cu tcidu
     ##     ke'a
-    ##   .i zexaze linji cu se tcidu
+    ##   .i 767 linji cu se tcidu
   FORMS_MEDIAL = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
     ## lo tarmi poi `step 1` pe `CLL 4.11` curmi ke'a bu'u lo stuzi poi lidne lo romoi rafsi
     ##   .i lo rafsi poi seltai le tarmi cu vasru ci lerfu gi'a vasru vo lerfu
@@ -117,7 +117,7 @@ const
   SAMPLES_FLOOR_BROKEN = 1100
     ## lo mecraiterkancu be lo porsi pe `SAMPLES_RUN` zi'e poi `step 5` punji `y` lo pamoi te jorne
     ##     pe ke'a
-    ##   .i parereze porsi cu se tcidu va'o lo nu lo tsiju cu du `0`
+    ##   .i 1227 porsi cu se tcidu va'o lo nu lo tsiju cu du `0`
   TRIPLES_NAMED = ["ndj", "ndz", "ntc", "nts"]
     ## lo zunsna cimei poi `CLL 3.7` to'e curmi ke'a ta'i lo nu cusku ke'a
   LUT_RAFSI_BY_FORM = constructRafsiByForm()
@@ -275,7 +275,7 @@ proc drawSequencesRun(): seq[seq[string]] =
   ##   .i lo tsiju cu jdice le porsi
   ##
   ## ni'o le krapoi cu se gunma lo rafsi poi seltai `CVC`
-  ##   .i lo te kancu be le rafsi cu du li pa bi'o li vo
+  ##   .i lo te kancu be le rafsi cu du li 1 bi'o li 4
   ##   .i ro terjo'e ne'i le krapoi zo'u bapli lo nu le terjo'e cu zbasu lo zunsna remei poi ka'e
   ##       krasi lo valsi kei ne'i pa fi'u re lo nu cuxna
   ##   .i la'e di'u fasnu va'o lo nu su'o zunsna remei poi ka'e krasi lo valsi cu selkra lo zunsna
@@ -519,7 +519,7 @@ suite "Chapter 4":
       count_impermissible = 0
     for last in LUT_RAFSI_BY_FORM[Form.Cvccv] & LUT_RAFSI_BY_FORM[Form.Ccvcv]:
       if finals.allIt(it[0] != last[0]): finals.add last
-    # ro lo paze zunsna cu krasi lo stegi'u
+    # ro lo 17 zunsna cu krasi lo stegi'u
     check finals.len == CONSONANTS.card  # `CLL 3.6`
     # mulcipra
     for first in LUT_RAFSI_BY_FORM[Form.Cvc]:  # ro sterafsi poi seltai `CVC`
@@ -595,8 +595,8 @@ suite "Chapter 4":
     for (rafsi, word, expected) in forms_gerku_zdani:
       check isRoundTrip(rafsi, word)  # `CLL 4.13` to le xa tarmi be lo'u gerku zdani le'u toi
       # `CLL 4.13`
-      #   .i li mubizebi cu drani
-      #   .i ku'i `V` pe zo gerzda du li re
+      #   .i li 5878 cu drani
+      #   .i ku'i `V` pe zo gerzda du li 2
       check score(toPieces(rafsi)) == expected  # `CLL 4.13`
       check score(toPieces(["ger", "zda"])) <= expected  # `CLL 4.13` to zo gerzda cu ka'e jinga toi
     let forms_bloti_klesi = [
@@ -631,7 +631,7 @@ suite "Chapter 4":
       (@["logj", "bau", "girzu"], "logjybaugirzu"),
       (@["logj", "bang", "girzu"], "logjybangygirzu"),
     ]:
-      # le pare tarmi be lo'u logji bangu girzu le'u
+      # le 12 tarmi be lo'u logji bangu girzu le'u
       check isRoundTrip(rafsi, word)  # `CLL 4.13`
     check score(toPieces(["loj", "ban", "gri"])) == 8827  # `CLL 4.13` zoi gy. 8827 versus 8796 .gy.
     check score(toPieces(["loj", "bau", "gri"])) == 8796  # `CLL 4.13` zoi gy. 8827 versus 8796 .gy.

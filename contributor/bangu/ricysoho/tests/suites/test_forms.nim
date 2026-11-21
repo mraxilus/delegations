@@ -38,7 +38,7 @@
 ##   .i `form` tcidu lo ralju lerfu po'o
 ##   .i lo tcidu pe `tanru.nim` to'e curmi slaka bu pu lo nu retsku fi su'o tarmi
 ##
-## ni'o jdima fa lo nu le cipra cu tcidu ji'i paxanononononono lerpoi
+## ni'o jdima fa lo nu le cipra cu tcidu ji'i 16000000 lerpoi
 ##   .i le cipra po'o cu gunka ze'a `2.02 s` bi'o `2.13 s` ca lo nu le fanva na troci lo nu le
 ##       samtci cu sutra
 ##   .i lo nu merli cu selci'a ne'i `PROVENANCE.md` ne'i le pagbu poi selcme lu lo namcu li'u
@@ -57,7 +57,7 @@ import ./texts_outside
 
 const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
-    ## le paze zunsna poi zoi gy. C .gy. sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
+    ## le 17 zunsna poi zoi gy. C .gy. sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
   ORDER_VOWELS = "aeiou"
     ## le mu karsna poi zoi gy. V .gy. sinxa ke'a
     ##   .i zoi gy. V .gy. na sinxa `y` to le pamoi javni pe `CLL 4.1` toi
@@ -70,7 +70,7 @@ const
     ## lo karsna remei poi `VV` sinxa ke'a zi'e poi na se fendi to le remoi javni pe `CLL 4.1` toi
     ##   .i le vi liste cu rapselci'a gi'e sepli `forms.nim`
   GLIDES_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## le pano sakli karsna pe le liste pe `CLL 3.4`
+    ## le 10 sakli karsna pe le liste pe `CLL 3.4`
     ##   .i `CLL 4.2` jmina le sakli karsna lo cmavo poi seltai `VV`
     ##   .i le vi liste cu rapselci'a
   ALPHABET_CMAVO = "'abceiouy"
@@ -86,10 +86,10 @@ const
     ##   .i lo tsiju cu jdice le ma'orgunma
   FLOOR_COMPOUND = 1500
     ## lo nityjimte be lo te kancu be le cmavo gunma poi vasru su'o re cmavo
-    ##   .i ca lo nu le tsiju cu du `0` kei le te kancu cu du li paxacimu
+    ##   .i ca lo nu le tsiju cu du `0` kei le te kancu cu du li 1635
   FLOOR_CMAVO_SIMPLE = 590
     ## lo nityjimte be lo te kancu be lo linji pe `cmavo.txt` zi'e poi vasru pa cmavo po'o
-    ##   .i le te kancu poi se tcidu cu du li musobi
+    ##   .i le te kancu poi se tcidu cu du li 598
   ROWS_SAKLI = [
     (Form.Cvc, "123", "sak"),
     (Form.Cvc, "124", "sal"),
@@ -131,8 +131,8 @@ const
   FLOOR_MUTATION = 3080
     ## lo nityjimte be lo te kancu be le se galfi poi ralte lo tarmi be lo gismu
     ##   .i ki'u la'e di'u le se cipra cu vasru le re seljdi
-    ##   .i le jimte cu xadba li xapaxano
-    ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li xapaxano
+    ##   .i le jimte cu xadba li 6160
+    ##   .i ca lo nu le tsiju cu du li 0 kei le te kancu cu du li 6160
   SAMPLES_INSERTION = 2000
     ## lo valsi poi `y` .a zoi gy. ' .gy. selpu'i fi ke'a
     ##   .i le stodi cu te kancu le valsi pe ro klesi po'u lo cmavo .e lo gismu .e lo lujvo
@@ -287,7 +287,7 @@ proc insertUncounted(text: string): string =
 proc drawLengthened(words: seq[string]): seq[string] =
   ## cuxna lo valsi pe `words`
   ##   .i lo te kancu cu du `SAMPLES_LONG`
-  ##   .i ro le valsi cu te jmina lo lerfu poi lo te kancu be ke'a cu cmima li pa bi'o li vo
+  ##   .i ro le valsi cu te jmina lo lerfu poi lo te kancu be ke'a cu cmima li 1 bi'o li 4
   ##   .i lo tsiju cu jdice le nu cuxna .e le nu jmina
   result = newSeqOfCap[string](SAMPLES_LONG)
   for _ in 1..SAMPLES_LONG:
@@ -356,7 +356,7 @@ iterator samples[T](pool: seq[T]): lent T =
 suite "Chapter 4":
   test "Section 4.1":
     for length in 0..2:
-      for text in texts(positionsAny(length)):  # ro le sosoci lerpoi
+      for text in texts(positionsAny(length)):  # ro le 993 lerpoi
         check text.form.isNone  # ja'i `CLL 4.6` lo rafsi poi traji lo ka cmalu cu vasru ci lerfu
     # ja'i le pamoi javni pe `CLL 4.1` zoi gy. V .gy. na sinxa `y`
     #   .i le lerpoi cu selzba
@@ -417,7 +417,7 @@ suite "Chapter 4":
     check "ki'e'u'e".isCmavo  # `Example 4.4`
     # `CLL 4.2` cusku zoi gy. ten additional diphthongs .gy.
     for text in GLIDES_ON: check text.isCmavo
-    # ja'i `CLL 4.2` le pano sakli karsna cu mintu le pano sakli karsna pe le liste pe `CLL 3.4`
+    # ja'i `CLL 4.2` le 10 sakli karsna cu mintu le 10 sakli karsna pe le liste pe `CLL 3.4`
     check sorted(DIPHTHONGS_CMAVO) == sorted(GLIDES_ON)  # `CLL 4.2`
     # ja'i `CLL 17.2` ro le valsi cu du pa cmavo be zoi gy. BY .gy.
     for text in ["by", "cy", "dy", "zy", "y'y"]: check text.isCmavo
@@ -463,7 +463,7 @@ suite "Chapter 4":
     let generated = cmavoGenerated(LENGTH_CMAVO)
     var count_cmavo = 0
     for length in 0..LENGTH_CMAVO:
-      for text in texts(newSeqWith(length, ALPHABET_CMAVO)):  # ro le musozebizepa lerpoi
+      for text in texts(newSeqWith(length, ALPHABET_CMAVO)):  # ro le 597871 lerpoi
         # ja'i `CLL 4.2` lo tarmi poi selzba ta'i lo nu jmina pa pagbu ro roi cu tugni `isCmavo`
         check text.isCmavo == (text in generated)  # `CLL 4.2`
         if text.isCmavo: inc count_cmavo
@@ -501,7 +501,7 @@ suite "Chapter 4":
     check not isBrivla("bababla")  # `CLL 4.3`
     check not isBrivla("")  # ja'i `CLL 4.3` no karsna cu fanmo
     for length in 1..7:
-      for text in texts(newSeqWith(length, "bla'y")):  # ro le sozexamumu lerpoi
+      for text in texts(newSeqWith(length, "bla'y")):  # ro le 97655 lerpoi
         # ja'i `CLL 4.3` le ci selkai
         #   .i lo nu basna na selci'a
         check isBrivla(text) == isBrivlaRestated(text)  # `CLL 4.3`
@@ -535,18 +535,18 @@ suite "Chapter 4":
     check "ninmu".form == some(Form.Cvccv)  # `Example 4.18` pe `CLL 4.4`
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
       check text.isGismu  # `Examples 4.11-18` pe `CLL 4.4`
-    for text in texts(positionsNotation("CVCCV")):  # ro le pararebiremu lerpoi
+    for text in texts(positionsNotation("CVCCV")):  # ro le 122825 lerpoi
       let expected = if isPairPermissible(text[2], text[3]): some(Form.Cvccv) else: none(Form)
       # ja'i `CLL 4.4` lo midju zunsna remei pe `CVC/CV` bilga lo ka se curmi po'o
       check text.form == expected  # `CLL 4.4`
     var count_ccvcv = 0
-    for text in texts(positionsNotation("CCVCV")):  # ro le pararebiremu lerpoi
+    for text in texts(positionsNotation("CCVCV")):  # ro le 122825 lerpoi
       let expected = if isPairInitial(text[0], text[1]): some(Form.Ccvcv) else: none(Form)
       # `CLL 4.4` skicu lo zunsna remei poi krasi `CCVCV` ku'o fo zoi gy. permissible initial pair
       #     .gy.
       check text.form == expected  # `CLL 4.4`
       if text.isGismu: inc count_ccvcv
-    # ja'i `CLL 4.4` ro valsi poi seltai `CCVCV` selkra pa le vobi zunsna remei poi ka'e krasi lo
+    # ja'i `CLL 4.4` ro valsi poi seltai `CCVCV` selkra pa le 48 zunsna remei poi ka'e krasi lo
     #     valsi ja'i le vomoi javni pe `CLL 4.1`
     check count_ccvcv == 48 * 5 * 17 * 5  # `CLL 4.4`
     let (words_cmavo, words_gismu) = wordsListed()
@@ -567,7 +567,7 @@ suite "Chapter 4":
       lut_words_by_stem.mgetOrPut(text[0..3], @[]).add text
     for stem, words in lut_words_by_stem:
       if stem == "brod": check words == @["broda", "brode", "brodi", "brodo", "brodu"]  # `CLL 4.4`
-      # ja'i `CLL 4.4` no re datygi'u cu frica fi lo fanmo karsna po'o
+      # ja'i `CLL 4.4` naku su'o re datygi'u cu frica fi lo fanmo karsna po'o
       else: check words.len == 1
     check lut_words_by_stem.hasKey("brod")  # ja'i `CLL 4.4` mu brivla cu ka'e basti ro selbri
     for text in words_cmavo:
@@ -590,14 +590,14 @@ suite "Chapter 4":
   test "Section 4.6":
     var counts: array[Form, int]
     for length in 3..4:
-      for text in texts(positionsAny(length)):  # ro le somucicipare lerpoi
+      for text in texts(positionsAny(length)):  # ro le 953312 lerpoi
         let found = text.form
         check found == text.formRestated  # lo tarmi pe `CLL 4.6` ja'i lo sinxa pe `CLL 4.1`
         if found.isSome: inc counts[found.get]
     # `CLL 4.6` cusku zoi gy. only if .gy.
     #   .i `CCV` rafsi va'o lo nu le zunsna remei cu ka'e krasi lo valsi
     check counts[Form.Ccv] == 48 * 5  # `CLL 4.6`
-    # ja'i `CLL 4.6` ro rafsi poi seltai `CCVC` selkra pa le vobi zunsna remei pe le vomoi javni pe
+    # ja'i `CLL 4.6` ro rafsi poi seltai `CCVC` selkra pa le 48 zunsna remei pe le vomoi javni pe
     #     `CLL 4.1`
     check counts[Form.Ccvc] == 48 * 5 * 17  # `CLL 4.6`
     # ja'i `CLL 4.6` le karsna remei cu du `ai` jo'u `ei` jo'u `oi` jo'u `au`
@@ -658,7 +658,7 @@ suite "Chapter 4":
       #   .i `CLL 4.6` cusku zoi gy. in place of .gy.
       check isPairPermissible(second.hyphenBefore, second[0])  # `CLL 4.6`
     for first in vowels_paired:
-      for second in vowels_paired:  # ro le pazezerevopa remei
+      for second in vowels_paired:  # ro le 177241 boi remei
         # `CLL 4.6` skicu lo nu `CVV` lidne `CVV` kei fo zoi gy. would be no consonant cluster .gy.
         check not isBrivla(first & second)  # `CLL 4.6`
         # `CLL 4.6` cusku zoi gy. hyphen is always required .gy.
