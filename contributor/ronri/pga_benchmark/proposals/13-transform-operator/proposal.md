@@ -3,8 +3,8 @@
 **What it is.** `m ⟇⟇~∘ n` transforms 𝐦 by 𝐧 in one call: the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, which pin spells
 in three steps. Its typed form builds the table of that sandwich from the types of both operands,
 when the code compiles. So each value of each type transforms exactly, and the result takes the
-bases that the table reaches. Two full multivectors take the three steps of pin. The alias
-`transform` of `pga.nim` reads the operator.
+bases that the table reaches. A full operator takes the three steps of pin, whatever the type of
+𝐦 is. The alias `transform` of `pga.nim` reads the operator.
 
 **What it is for.** At pin a transform spells three steps, two antiproducts and an antireverse,
 which is gap cause D08. With this proposal the transform by a motor type is one function. At
@@ -40,10 +40,11 @@ runtime baselines.
   product reads 2𝐧ᵢ, as 𝐧ᵢ + 𝐧ᵢ, so each term of the rigid table weighs ±1.
 - **Result type.** The result takes the bases that the table reaches, through `zeroNamed` of P14.
   So a motor transforms a vector to a vector, and a full multivector to a full one.
-- **Full operands.** `Multivector` is the instance of `MultivectorOf` over every basis, so two
-  full multivectors take a function of their own. It spells the three steps of pin. A table over
-  every pair spends 204 multiplies and 607 adds at rga4d, which is more adds than the chain. A
-  typed 𝐦 by a full 𝐧 takes the table of both types, which the open decision names.
+- **Full operator.** `Multivector` is the instance of `MultivectorOf` over every basis. So a full
+  𝐧 takes a function of its own, generic in 𝐦 alone, which Nim picks over the form of two types.
+  It spells the three steps of pin for each type of 𝐦, as the Architect ruled (D1 b). A table
+  over every pair spends 204 multiplies and 607 adds at rga4d, which is more adds than the chain.
+  Code that needs speed types both the object and the operator.
 - **Body.** A macro names the doubled basis and the product of each pair once. Then it writes each
   coefficient of the result as a sum over the bases of 𝐦, through `emitBasis` and `emitSum` of
   P04. Each of its loops walks each term once, so a table over every pair builds at six
@@ -56,9 +57,10 @@ runtime baselines.
 - **Alias.** `transform(m, n)` reads `m ⟇⟇~∘ n`, as the Architect ruled (D50 a). Its row joins the
   compound operators of the header of `pga.nim`.
 - **Tests.** Two tests join the suite `Typed operators` of P04. One holds the operator near the
-  chain for nine pairs of types, and its type to the bases that the chain reaches. The table and
-  the chain sum their terms in other orders, so they agree within the tolerance of `=~` alone.
-  The other test holds two full multivectors to the chain exactly, and the alias to the operator.
+  chain for seven pairs of typed operators, and its type to the bases that the chain reaches. The
+  table and the chain sum their terms in other orders, so they agree within the tolerance of `=~`
+  alone. The other test holds a full, a vector and an even 𝐦 by a full operator to the chain
+  exactly. It also holds the type of that result to full, and the alias to the operator.
 
 Each cell gives multiplies, and adds with subtractions, for a full 𝐦 by a motor type. The chain
 is counted from its two tables, and the operator as the evaluation reads its C:
@@ -74,6 +76,7 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 |--------|-------------|
 | Antieven pairs for any 𝐧 | A reflection operator transforms each multivector to zero (D49 f) |
 | Every pair for full operands | 204 multiplies and 607 adds at rga4d, more adds than the chain |
+| Table of both types for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator, so a full 𝐧 takes the chain (D1 b) |
 | Chain as one function | Closes D08, but spends what the chain spends |
 | A pair counted twice | 105 adds more at rga4d, one for each of 112 doubled terms, less 7 |
 
@@ -93,15 +96,10 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 
 ## Open decisions
 
-The Architect ruled D48 a, D49 f and D50 a on
-[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). One decision
-waits on [the typed transform of P13 (#990)](https://github.com/mraxilus/delegations/pull/990).
-
-- **A typed 𝐦 by a full 𝐧.** D49 f says that a whole multivector takes the three steps of pin.
-  This text reads it as two full operands, so a typed 𝐦 by a full 𝐧 takes the table of both
-  types. At rga4d a vector by a full 𝐧 then spends 112 multiplies and 156 adds, against 384 and
-  352 of the chain. All bases but the scalar spend 202 multiplies and 595 adds, which is more
-  adds than the chain.
+None. The Architect ruled D48 a, D49 f and D50 a on
+[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
+ruled D1 b on [the typed transform of P13 (#990)](https://github.com/mraxilus/delegations/pull/990),
+so a full operator takes the chain, whatever the type of 𝐦 is.
 
 ## Landing
 
@@ -132,10 +130,11 @@ waits on [the typed transform of P13 (#990)](https://github.com/mraxilus/delegat
 `laws.nim` holds the operator equal to the chain on 256 seeded samples of ten pairs of types, at
 each of the nine algebras. The pairs take a full multivector by a motor part, a flector part and
 a vector. They take a vector, a bivector and a motor part by a motor part, and a vector by a
-vector. They take a vector and a motor part by a full multivector, and two full multivectors.
+vector. They take a vector, a motor part and a full multivector by a full multivector.
 
 The laws also hold the type of each result to the bases that the chain reaches, and the alias
-equal to the chain. Five count claims hold the multiplies of each transform measurand: 82 at rga4d
+equal to the chain. By a full multivector, they hold the result to the chain bit for bit, and its
+type to full. Five count claims hold the multiplies of each transform measurand: 82 at rga4d
 and 23 at rga3d. The operator spends no zero fill, intermediate or error check there.
 
 Its evaluation of 2026-11-20 times the transforms at ×0.28 of pin at rga4d, 19.9 ns against 71.6
@@ -143,6 +142,6 @@ to 71.7 ns. At rga3d they take ×0.27, 4.8 ns against 17.9 ns. The other measura
 ×1.08. The suites pass at the four algebras, with the two tests of this proposal.
 
 The counts of the chain, of the other algebras and of the forms that lost come from scripts that
-read the tables of pin. So do the counts of the open decision. The build of one call is the median
-of four builds of a program with the call, against four without it. The scripts are not committed,
-so these figures are assumed until a claim holds them.
+read the tables of pin. The build of one call is the median of four builds of a program with the
+call, against four without it. The scripts are not committed, so these figures are assumed until
+a claim holds them.
