@@ -618,7 +618,9 @@ block, with no `*`. It is a routine, an operator among them, a type or a single 
 - The caller asks each module in the entry of each file that opens it with `{.all.}`. So the
   uses of that file and of the module stand in one answer.
 - A use maps to the file of the package that its path ends with, below the folder that the root
-  names. So a backslash or a short ancestor, as Windows writes a root, changes no use.
+  names. So a backslash or a short ancestor, as Windows writes a root, changes no use. Verified by
+  `suites/test_markers.nim`, with the root as the answers name it, a short ancestor, a root of
+  Windows and a separator at the end.
 - The site of a name is its last byte, and the site of an operator is the first byte past its
   backtick. The implicit `result` of a routine answers at columns 0 to 5, so a site at column 5
   of `func toBasis` answers `result`. Verified by hand with the `nimsuggest` of 2.4.0, 2026-11-20.
@@ -737,14 +739,16 @@ at its head, as `'reset' can have side effects` does where `reset` writes throug
   `$` calls `echo`.
 - Verified by `suites/test_purity.nim`, and by `suites/test_command.nim` for the warning.
 
-**A routine that takes a parameter of a `ref` or `ptr` type stays a `proc` (D1 a of #980).** The
-Architect ruled so on 2026-11-20. Another holder of the object, or another thread, can change it
-during the call. So the routine is no deterministic transformation of its arguments, whether it
-writes or only reads.
+**A routine that takes a parameter of a `ref` or `ptr` type stays a `proc` (D1 a of #980,
+2026-11-20).** The Architect ruled so in the comment of that date. Another holder of the object,
+or another thread, can change it during the call. So the routine is no deterministic
+transformation of its arguments, whether it writes or only reads.
 
 - The compiler answers whether each parameter type points: a `ref`, a `ptr` or a `pointer`, and a
   `distinct` one of each. The check of each type stands after the source, so no line moves, and its
   error refuses its routine (`probed`).
+- A type that names a generic parameter of its routine takes no check. No scope at the end of the
+  module names it, so its check could never answer.
 - A parameter that its default alone types reads as `typeof` of the default.
 - A `var` parameter of a value type keeps no routine a `proc`, as the Architect ruled, since
   STYLE.md §1 lets a `func` write it. A `var` of a `ref` type points all the same.
@@ -758,23 +762,34 @@ writes or only reads.
   a generic parameter, and a type that no scope at the end of the module names. A `cstring` reads
   as a string, so it stays unread too. Each can add a false report.
 - Verified by `suites/test_purity.nim`, with a case for each kind of type that points, and one for
-  each cost.
+  each cost. A case cut from `MultivectorOf[B]` of `pga_benchmark` holds a type that names a
+  generic parameter.
+- Cost: `nim check` of 2.4.0 crashes with no line on some checks of a generic type. Its parameter
+  is a `static set` that a field reads, and the argument names nothing at the end of the module.
+  Then the file proves nothing. A file with a candidate warns, with the crash as its reason, and a
+  file with none stays silent. Verified by hand with 2.4.0 on `Of[Zork]`, 2026-11-21.
 
 **A `func` that takes a parameter of a `ref` or `ptr` type reports, and the fix writes `proc` (D5 a
-of #980).** The Architect ruled so on 2026-11-21, so the rule holds D1 a in both directions. The
-check of the source as given asks the compiler about each such `func`, as `probed` asks about each
-candidate.
+of #980).** The Architect ruled so on 2026-11-21, so the rule holds the ruling of 2026-11-20 in
+both directions. The check of the source as given asks the compiler about each such `func`, as
+`probed` asks about each candidate.
 
-- A `func` is asked where one of its types names more than builtin types, numbers and the words of
+- The check asks the compiler about each `func` whose shape admits a candidate (`is_candidate`).
+  One of the types of that `func` must also name more than builtin types, numbers and the words of
   `WORDS_PLAIN` (`isPointingAsked`). Those words are the containers of value and the modifiers.
 - The error of each check of a `func` leaves the check of the source clean, since the caller reads
-  it (`checkedBackend`). So a file that holds a candidate takes no new compile.
+  it (`checkedBackend`). So a file that holds a candidate takes no new compile. A crash of the
+  compiler names no line, so it leaves that check unclean (the cost above).
 - The fix writes `proc` for `func`, which has the same width. A `func` whose forward declaration
   stands keeps it for hand, since the kinds of the pair must match.
 - Cost: a file that holds such a `func` and no candidate takes one check of the source as given,
   where none ran before. Its time is unmeasured, and #1001 holds the work to make it faster.
 - Cost: where that check is clean in no configuration, its `func` stays unread. The file warns
-  nothing, since no `proc` stays there, as a proposal of `pga_benchmark` shows.
+  nothing, since no `proc` stays there. Six files of the projects stand so, as the count below
+  gives.
+- Cost: the shape leaves out a `func` that takes a routine, and one with a foreign pragma or no
+  body. It also leaves out one inside a template or in code that a macro emits. A `ref` parameter
+  of such a `func` adds no report.
 - Verified by `suites/test_purity.nim`, by `suites/test_command.nim` for a file with no candidate,
   and by `suites/test_fixes.nim` of `curator/audit` for `koch fix`.
 
@@ -821,27 +836,32 @@ then the fix of one rule alone, on a copy of the library.
   work. Each figure is the median of three runs, each with an empty cache of Nim, 2026-11-20. The
   output differs by the 3 reports alone.
 
-**Verified by run, 2026-11-20, over the projects of the repository at `16a573cc`, with the code of
-knoller at `bca6a142`.** The driver read each project as one package, by `git ls-files`, with the
-checkouts of each lock and the engine of `dance_ontology`.
+**Verified by run over the projects of the repository at `16a573cc`.** A driver with the code of
+knoller at `bca6a142` read each project as one package, by `git ls-files`, with the checkouts of
+each lock and the engine of `dance_ontology` (2026-11-20). `koch fix --dry-run --branch:main` read
+the five projects that hold a routine of this rule, over the same tree.
 
-- Sibling markers: 1 report, the `{.all.}` of `tests/suites/test_marker.nim:9` of
+- Sibling markers: 1 report from the driver, the `{.all.}` of `tests/suites/test_marker.nim:9` of
   `pga_visualiser`, as the ruling counts.
-- Pure routines: 51 reports. `pga_visualiser` takes 33, `dance_ontology` 13, `rictadni` 3,
-  `pga_benchmark` 1 and `knoller` 1. The ruling counts 22, as 16 and 6. The page names a short
-  list of pure routines of the standard library, and does not give it. So `TRANSFORMS` is the list
-  of this rule. The cause of the difference is unmeasured (`## Open questions`).
-- With D1 a of #980, 50 remain, since `mergeAllocations` stays a `proc`. Over the same tree,
-  `koch fix --dry-run --branch:main` of the five projects, built at `a4ece9d7` and at `2f049cfe`,
-  differs by that report alone, 4,901 changes against 4,900 (2026-11-20).
-- With D5 a and D6 a of #980, 144 reports stand, by the same command over the same tree. Of them,
-  95 are of a `func` that points: 59 in `pga_benchmark`, 24 in `dance_ontology`, 11 in `rictadni`
-  and 1 in `pga_visualiser`. `initToolchains` goes, since its default reads the environment. The
-  run built koch at `fd3bc4b5` and at `4c35d439` (2026-11-21).
-- The count of pure routines is a floor. `src/desktop/main.nim` of `pga_visualiser` proved
-  nothing, since the run had no `dependencies/imgui`. Nor did
-  `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
-  configuration.
+- Pure routines: 150 reports, by koch built at `0ca2555c` (2026-11-21). Of them, 49 make a `proc` a
+  `func`: 33 in `pga_visualiser`, 13 in `dance_ontology` and 3 in `rictadni`. The ruling counts 22,
+  as 16 and 6. The page names a short list of pure routines of the standard library, and does not
+  give it. So `TRANSFORMS` is the list of this rule. The cause of the difference is unmeasured
+  (`## Open questions`).
+- The other 101 are of a `func` that points: 65 in `pga_benchmark`, 24 in `dance_ontology`, 11 in
+  `rictadni` and 1 in `pga_visualiser`.
+- The ruling of 2026-11-20 keeps `mergeAllocations` of `pga_benchmark` a `proc`. Koch built at
+  `a4ece9d7` and at `2f049cfe` differs by that report alone, 4,901 changes against 4,900. D6 a
+  keeps `initToolchains` of knoller a `proc`, as koch built at `fd3bc4b5` and at `4c35d439` shows.
+- Six of the 101 stand since a type that names a generic parameter takes no check. They are the
+  `func`s of `tests/suites.nim` of `pga_benchmark` that take a `JsonNode`. Koch built at `4c35d439`
+  gives 144 over the same tree, since the crash of the compiler there hid them.
+- The count is a floor. Eight files check clean in no configuration, so the rule reads none of
+  their routines. Two hold a candidate and warn: `src/desktop/main.nim` of `pga_visualiser`, since
+  the run had no `dependencies/imgui`, and `proposals/04-basis-set-forms/laws.nim` of
+  `pga_benchmark`. Six hold only a `func` that the rule asks about, and stay silent. They are four
+  other `laws.nim` of proposals of `pga_benchmark`, `src/desktop/panel.nim` of `pga_visualiser` and
+  `simulation/engine.nim` of `dance_ontology`.
 - Cost: the time of each pass over the projects is unmeasured as a pair.
 
 ## Tests
@@ -1447,7 +1467,8 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - `koch fix --dry-run --branch:main`, built at each, gives 23 and 861 fixes over the same tree. Of
   the 36, the 14 docs of a value that opens `block` stay for hand, so koch fixes the other 22. It
   fixes 1 more, at `curator/audit/src/checker.nim:79`, where the chain also fixes expression
-  spacing.
+  spacing. Of the 1,056 reports of missing doc, 188 stand in the 11 files that do not settle,
+  which the chain leaves as written. The cause of the other 7 is unmeasured.
 
 ## Stages
 
@@ -2641,7 +2662,8 @@ no text gives the reason (`checkSkips`).
   `test_arenas_frame.nim` and 4 in `test_image.nim`, under `tests/suites`.
 - The ruling of rule 17 counts 17 places in `pga_visualiser`. Of them, 16 are a test under a
   gate, and 1 is a skip. That skip gives its reason above the head of its branch, so it passes
-  here. So knoller reports one test more than the ruling counts.
+  here. So knoller reports one test more than the ruling counts. The cause of the difference is
+  unmeasured (`## Open questions`).
 - Cost: knoller reads the lines with a scanner, and never with a parser. A test reads from a line
   that opens with `test` and ends in `:`, and a line at its indent or shallower ends it. So a
   test on one line, as `test "a": skip()`, and a head as `test("a"):` are unread. A line of a
@@ -2964,8 +2986,10 @@ there is unverified.
 
 ## Open questions
 
-- Why does rule 11 report 50 routines where the ruling counts 22? `pga_visualiser` takes 33
-  against 16, and `dance_ontology` 13 against 6.
+- Why does rule 11 make 49 routines a `func` where the ruling counts 22? `pga_visualiser` takes
+  33 against 16, and `dance_ontology` 13 against 6.
+- Why does rule 17 report 17 tests in `pga_visualiser`, where the ruling counts 16 tests and 1
+  skip?
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
   git URL. Its check needs the package list of nimble, which the proxy of the machine of a
   delegate refuses with status 405. Atlas reads the form through an override (`## Package`).
