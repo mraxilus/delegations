@@ -119,6 +119,10 @@ Every rule below serves it:
   (`.claude/hooks.sh`). So the hooks of the curator run the checker of `main`, and never one
   that is not merged. The detached checkout also makes the hooks refuse each write and commit
   in it. So the app shows no work of the curator, and its sign-off links each open pull request.
+- **The log of claims of the root curator.** The `stop` hook adds each row of a reflection to
+  the log of the branch, and never writes in the detached checkout. So the rows of the root
+  curator wait outside the tree. `nim r koch claims` in the worktree of a root branch moves them
+  into `curator/audit/claims.txtpb`, which you commit in a commit of its own.
 - A branch that a tool named for you (`claude/...`) is outside the grammar and fails
   `check-scope`.
   Push to a branch inside it, and where the tool decides the name, ask the Architect.
@@ -443,6 +447,7 @@ alone.
 | `check-drift` | charter, stamp code base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
+| `claims` | rows of the log of claims outside the tree | moves them into the log of the branch |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |

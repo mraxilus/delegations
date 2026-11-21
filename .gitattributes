@@ -1,2 +1,4 @@
 # Keep LF endings on every platform so rules stamp and form check agree everywhere.
 * text=auto eol=lf
+# Join rows two branches add to one log of claims, since each row is one line (#964).
+claims.txtpb merge=union
