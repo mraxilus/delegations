@@ -256,7 +256,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `parameter-separators` | Commas stand between parameters, and semicolons between groups. |
 | `tuple-separators` | A tuple type takes commas between its fields. |
 | `signature-wrapping` | A signature wraps only where it must, or where its last separator asks. |
-| `call-wrapping` | A call splits one argument to a line where it must, or its last comma asks. |
+| `call-wrapping` | A call splits only where it must, or where its last comma asks. |
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
 | `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
