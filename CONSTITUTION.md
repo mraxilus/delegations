@@ -560,7 +560,7 @@ suite "Chapter 2":
 
    A call or a signature written one item to a line, with a separator after its last item,
    stays so where it would fit. That separator is the one mark of the split that the hand
-   wants, and no tool writes it. So a list that a tool splits ends with no separator, and joins
+   wants, and no tool adds it. So a list that a tool splits ends with no separator, and joins
    again where it fits. A call without the mark that does not fit keeps the line breaks of the
    hand while each line fits. Otherwise it takes one argument to a line.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one

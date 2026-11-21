@@ -242,8 +242,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   that promotes every comma to a semicolon is wrong here, so configure it or ignore it.
 - A signature that does not fit on its line wraps its parameters onto one line of their own.
   Where that line does not fit either, put one parameter, or one group of a shared type, on
-  each line. No separator follows the last. Put the return type and the pragmas on the closing
-  line:
+  each line. No separator follows the last, unless the hand wants the split to stay (below). Put
+  the return type and the pragmas on the closing line:
 
   ```nim
   func filterFactors(
@@ -257,10 +257,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - A call or a signature written one item to a line, with a separator after its last item, stays
   so even where it fits. That separator is the one mark of the split that the hand wants, so
-  knoller never writes it. A call without it joins its line where it fits, as a signature does.
-  Where it does not fit, it keeps the line breaks of the hand while each line fits. Otherwise it
-  puts one argument on each line, with no comma after the last. A generator call and a
-  constructor name their arguments, and a positional call stays positional:
+  knoller never adds it. A call without it joins its line where it fits, as a signature without it
+  does. Where it does not fit, it keeps the line breaks of the hand while each line fits.
+  Otherwise it puts one argument on each line, with no comma after the last. A generator call and
+  a constructor name their arguments, and a positional call stays positional:
 
   ```nim
   CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
