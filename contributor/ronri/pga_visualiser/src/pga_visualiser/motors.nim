@@ -66,11 +66,12 @@ const
     ## Name bases carrying line's direction, which is half of bivector that turns.
   BASES_SLIDE = [Basis.E23, Basis.E31, Basis.E12]
     ## Name bases carrying line's moment, which is half of bivector that slides.
-  ANGLE_SERIES = 1.0e-4
+  ANGLE_SERIES = 0.1
     ## Take series below this half-angle, in radians, rather than closed form.
     ##   `a*cos(a) - sin(a)` subtracts two values near `a` to reach one near `a³/3`, so it
-    ##   loses about `3ε/a²` of its digits. At `a` of 1e-6 closed form keeps about four.
-    ##   Series' own next term is `a⁴/840`, under 1e-19 here, so crossing is smooth.
+    ##   loses about `3ε/a²` of its digits: 7e-14 here, and 7e-8 at 1e-4.
+    ##   Series runs through `a⁶`, so its next term, `a⁸/1330560` of second, is under 1e-14 here.
+    ##   Crossing stands near where two errors meet, 0.12, so each arm holds 1e-13 of truth.
 
 const MOTOR_IDENTITY* = 1.0.e1234
   ## Hold motor that moves nothing, i.e. 𝟙.
@@ -114,7 +115,10 @@ func scales(angle: float): (float, float) =
   ##   Series below `ANGLE_SERIES`, closed form above; see that constant for why.
   if abs(angle) < ANGLE_SERIES:
     let square = angle * angle
-    (1.0 - square / 6.0, -1.0 / 3.0 + square / 30.0)
+    (
+      1.0 - square / 6.0 * (1.0 - square / 20.0 * (1.0 - square / 42.0)),
+      -1.0 / 3.0 + square / 30.0 * (1.0 - square / 28.0 * (1.0 - square / 54.0)),
+    )
   else:
     let (cosine, sine) = (cos(angle), sin(angle))
     (sine / angle, (angle * cosine - sine) / (angle * angle * angle))
