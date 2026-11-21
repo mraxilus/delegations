@@ -147,8 +147,7 @@ suite "Chain":
   test "every layout rule settles in one run, and second run writes nothing":
     let found = checkFormatting("a.nim", LAYOUT, Dialect.Module)
     for rule in ["First-tier banner", "Binary operator", "Parameters take", "Signature", "Call",
-                 "trailing separator", "share one bracket", "alphabetised", "`=` takes",
-                 "takes doc comment"]:
+                 "share one bracket", "alphabetised", "`=` takes", "takes doc comment"]:
       check found.anyIt(rule in it.message)  # each rule reported
     let fix = formatted("a.nim", LAYOUT, Dialect.Module)
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
@@ -157,7 +156,7 @@ suite "Chain":
         "  ## TODO: Document.\n\nproc g(a: int) = discard\n  ## TODO: Document.\n\n" &
         "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
         "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
-        "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
+        "  second_item_named_at_length_so_list_crosses_column\n]  ## TODO: Document.\n" &
         "echo h(q = 1)\nexport x, y\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).len == 0  # all cleared
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
@@ -344,9 +343,9 @@ suite "Chain":
 suite "Repair that widens its line":
   test "spacing past `LINE_MAX` splits call crossing it, arguments one level in":
     check (HEAD & PICKING).fixed == HEAD & "  let\n    lateral = tangent_half_view * hypot(\n" &
-        "      clip_x / depth * float(width) / float(height),\n      clip_y / depth,\n    )\n"
+        "      clip_x / depth * float(width) / float(height),\n      clip_y / depth\n    )\n"
     check (HEAD & GIF).fixed == HEAD & "  let compressed = encodeLempelZivWelch(\n    arena,\n" &
-        "    dictionary,\n    indices.toOpenArray(0, width * height - 1),\n  )\n"
+        "    dictionary,\n    indices.toOpenArray(0, width * height - 1)\n  )\n"
     for source in [PICKING, GIF]: check (HEAD & source).fixed.isSettled
 
 
@@ -372,7 +371,7 @@ suite "Repair that widens its line":
   test "message shape fitting no call split breaks after operator, flat in its argument":
     check (HEAD & FACES).fixed == HEAD & "  if code != 0:\n    raise newException(\n" &
         "      OSError,\n      \"`koch fetch-assets` would not serve every face; got exit `\" & " &
-        "$code & \"` --\\n`\" & written &\n      \"`.\",\n    )\n"
+        "$code & \"` --\\n`\" & written &\n      \"`.\"\n    )\n"
     check (HEAD & FACES).fixed.isSettled
 
 
@@ -423,7 +422,7 @@ suite "Repair that widens its line":
     check hugged.fixed.isSettled
 
 
-  test "group one item to line that would not fit joined takes comma, lines and chain kept":
+  test "group one item to line takes no comma from fixer, and keeps its lines and chain":
     let
       chained = HEAD & "  result[m][n].add BasisSigned(\n    basis: product_to.basis,\n" &
         "    is_negated: (\n      m_from.is_negated xor\n      n_from.is_negated xor\n" &
@@ -432,9 +431,9 @@ suite "Repair that widens its line":
         "    is_negated: b_to_signed.is_negated xor b_to_complement.is_negated\n  )]\n"
       sliced = HEAD & "  result[b] = @[BasisSigned(\n    basis: result[b][0].basis,\n" &
         "    is_negated: result[b][0].is_negated xor basis.is_negated\n  )]\n"
-    check chained.fixed == chained.replace("    )\n  )\n", "    ),\n  )\n")  # `cayleys.nim:271`
-    check dual.fixed == dual.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:338`
-    check sliced.fixed == sliced.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:604`
+    check chained.fixed == chained  # `cayleys.nim:271`
+    check dual.fixed == dual  # `:338`
+    check sliced.fixed == sliced  # `:604`
     for source in [chained, dual, sliced]: check source.fixed.isSettled  # second run
 
 

@@ -508,9 +508,8 @@ suite "Regressions":
 
   test "3. chains stay flat at their first piece, and block head keeps four spaces":
     holds ASSERTS, ASSERTS  # message chain of `doAssert IS_RIGID or DIMENSIONS >= 3,` (ruling 2)
-    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
-      "          )\n        )\n", "          ),\n        )\n",
-    )  # chain of `xor` after `is_negated: (` stays flat (ruling 2)
+    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements")
+      # chain of `xor` after `is_negated: (` stays flat (ruling 2)
     holds FILTERS, FILTERS  # `if (...) or` keeps four spaces (ruling 10)
     holds BARE, BARE  # bare value opening its statement line keeps four spaces
     holds HEADED, HEADED.replace(
@@ -539,12 +538,11 @@ suite "Regressions":
     holds BORROWS, BORROWS.replace("(T: typedesc) =\n", "(T: typedesc) =\n  ## TODO: Document.\n")
 
 
-  test "7. call keeps hand's breaks, and group one item to line takes trailing comma":
+  test "7. call keeps hand's breaks, and group one item to line takes no comma from fixer":
     holds ENUM, ENUM.staged.replace(" for a `", " for `")  # split by trailing comma; X.9 articles
     holds ANTI, ANTI.replace("Cayley1D; complements", "Cayley1D, complements")  # breaks kept
-    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
-      "          )\n        )\n", "          ),\n        )\n",
-    )  # block of line 271 keeps its flat chain and gains `),`
+    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements")
+      # block of line 271 keeps its flat chain, and gains no comma
 
 
   test "8. dotted call statement takes command form, where its argument is one call":

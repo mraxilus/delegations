@@ -124,8 +124,8 @@ suite "Fixes":
       @["First-tier banner takes three blank lines before it (X.2); got `2`."]  # X.2 alone wired
     check checkIdioms(path, LAYOUT).len == 0
     let found = checkFormatting(path, LAYOUT, Kind.Nim).toFindings
-    for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
-                 "share one bracket", "alphabetised", "`=` takes", "(VI.1)"]:
+    for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "share one bracket",
+                 "alphabetised", "`=` takes", "(VI.1)"]:
       check found.anyIt(rule in it.message)  # each rule reported
     let (written, fixed, refused, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1
@@ -139,7 +139,7 @@ suite "Fixes":
         "  ## TODO: Document.\n\nproc g(a: int) = discard\n  ## TODO: Document.\n\n" &
         "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
         "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
-        "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
+        "  second_item_named_at_length_so_list_crosses_column\n]  ## TODO: Document.\n" &
         "echo h(q = 1)\nexport x, y\n"
     check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
@@ -168,7 +168,7 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [entry(path, spaced)]).written[0].content == ranged
     let (written, fixed, _, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, wide)])
     check written[0].content == head & "let x = foo(\n  s[0..<n],\n" &
-        "  t[1 .. ^1],\n  " & "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n" &
+        "  t[1 .. ^1],\n  " & "a".repeat(40) & ",\n  " & "b".repeat(26) & "\n" &
         ")  ## TODO: Document.\nf(s[0..<n], t[1 .. ^1])\nproc h(\n  " & "a".repeat(20) &
         ": range[0..9], " & "b".repeat(24) & ": array[0..<4, int], c: int\n): int = c\n" &
         "  ## TODO: Document.\n"

@@ -163,8 +163,8 @@ suite "Findings":
     check found.toFindings.mapIt(it.message) == @[
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
       "their own, else one group to line (X.3); got `3` lines.",
-      "Call stays on its line where it fits, else takes one argument to line with trailing " &
-      "comma (X.3); got `4` lines.",
+      "Call stays on its line where it fits, else takes one argument to line (X.3); got `4` " &
+      "lines.",
       "Line fitting nowhere breaks after its operator of lowest precedence (STYLE.md §5); got " &
       "`101` runes.",
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`.",

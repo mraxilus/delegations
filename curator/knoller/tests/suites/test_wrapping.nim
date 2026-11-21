@@ -27,14 +27,14 @@ const
     "  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(\n" &
     "    CAYLEYS_DUAL.base.right,\n" &
     "    CAYLEYS_WEDGE.base,\n" &
-    "    Chirality.Right,\n" &
+    "    Chirality.Right\n" &
     "  )\n"
     ## STYLE.md §5 call example, as written there.
   EXAMPLE_DECLARATIVE =
     "defineOperator(\n" &
     "  symbols = \"∧\",\n" &
     "  docs = \"Multiply multivectors through exterior product, i.e. 𝐦 ∧ 𝐧.\",\n" &
-    "  cayley = CAYLEYS_WEDGE.base,\n" &
+    "  cayley = CAYLEYS_WEDGE.base\n" &
     ")\n"
     ## Article X example of declarative call, as written there.
   NAME_LONG = "constructProductsAcrossEveryOrderOfGradeAndChirality"
@@ -49,7 +49,7 @@ func fixed(source: string): string =
 func messages(source: string): seq[string] =
   ## Collect messages every wrapping check reports over source.
   (checkSeparators("a.nim", source) & checkSignatures("a.nim", source) &
-    checkCalls("a.nim", source) & checkTrailing("a.nim", source)).mapIt(it.message)
+    checkCalls("a.nim", source)).mapIt(it.message)
 
 
 func isSettled(source: string): bool =
@@ -81,7 +81,7 @@ suite "Wrapping":
     let wrapped = "proc g(\n  a, b: int,\n  c: string,\n) = discard\n"
     check fixSeparators("a.nim", wrapped).source ==
       "proc g(\n  a, b: int;\n  c: string;\n) = discard\n"  # trailing too, lines kept
-    check wrapped.fixed == "proc g(a, b: int; c: string) = discard\n"  # then joined, as it fits
+    check wrapped.fixed == "proc g(\n  a, b: int;\n  c: string;\n) = discard\n"  # mark keeps split
     let typed = "type P = proc (a: int; b: int): int\nlet l = proc (a: int; b: int): int = a\n"
     check typed.fixed ==
       "type P = proc (a: int, b: int): int\nlet l = proc (a: int, b: int): int = a\n"
@@ -107,12 +107,16 @@ suite "Wrapping":
       groups = ["alpha: Cayley1D", "beta: Spatial[Cayley2D]", "gamma: Chirality", "delta: Space",
                 "epsilon: Grade", "zeta: Order"]
       wide = "func " & NAME_LONG & "(" & groups.join(", ") & "): int =\n  discard\n"
-    check wide.fixed == "func " & NAME_LONG & "(\n" & groups.mapIt("  " & it & ",\n").join &
-      "): int =\n  discard\n"  # parameters fit no line of their own either
+    check wide.fixed == "func " & NAME_LONG & "(\n" & groups.mapIt("  " & it).join(",\n") &
+      "\n): int =\n  discard\n"  # parameters fit no line of their own either; none after last
     check wide.fixed.isSettled
+    let marked = "func f(\n  a: int,\n  b: int,\n): int =\n  a\n"
+    check marked.isSettled  # separator after last group marks split hand wants, though it fits
+    check marked.replace("b: int,\n", "b: int\n").fixed == "func f(a: int, b: int): int =\n  a\n"
+      # without it, split joins where it fits
 
 
-  test "parameters take one line of their own where it fits, so one layout stands for each":
+  test "parameters take one line of their own where it fits, and mark keeps hand's split":
     check EXAMPLE_PARAMETERS_LINE.isSettled
     let indented = EXAMPLE_PARAMETERS_LINE.replace("\n  cayley", "\n    cayley")
     check indented.fixed == EXAMPLE_PARAMETERS_LINE  # re-indented one level
@@ -121,12 +125,16 @@ suite "Wrapping":
     check flat.fixed == EXAMPLE_PARAMETERS_LINE  # 102 runes on one line
     check EXAMPLE_GROUPS.isSettled
     let lines_group = "func constructProductsTransitional(\n  complement, dual: Cayley1D;\n" &
-      "  wedges: Spatial[Cayley2D];\n  chirality: Chirality;\n  space: Space;\n" &
+      "  wedges: Spatial[Cayley2D];\n  chirality: Chirality;\n  space: Space\n" &
       "): array[Order, Cayley2D] {.compileTime.} =\n  discard\n"
     check lines_group.fixed == EXAMPLE_GROUPS  # parameters line of 91 runes fits
+    check lines_group.replace("space: Space\n", "space: Space;\n").isSettled  # mark keeps it
+    let operator = "macro defineOperator(\n  symbols, docs: static[string];\n" &
+      "  cayley: static[Cayley2D];\n  as_unary: static[bool] = false;\n): untyped =\n  discard\n"
+    check operator.isSettled  # `operators.nim` of PGA library: one group to line, as hand marked
     let single = "proc " & NAME_LONG & "(parameter_named_at_length: Multivector): Multivector =\n"
-    check single.fixed == "proc " & NAME_LONG & "(\n  parameter_named_at_length: Multivector,\n" &
-      "): Multivector =\n"  # one item to line takes separator
+    check single.fixed == "proc " & NAME_LONG & "(\n  parameter_named_at_length: Multivector\n" &
+      "): Multivector =\n"  # parameters line, no separator after last
     check single.fixed.isSettled
 
 
@@ -137,14 +145,14 @@ suite "Wrapping":
     check checkSignatures("a.nim", body).len == 0  # moving body and wrapping are two answers
 
 
-  test "call that fits joins; one that fits not takes one argument to line, trailing comma":
+  test "call that fits joins; one that fits not takes one argument to line, none after last":
     check fixCalls("a.nim", "foo(\n  a,\n  b\n)\n").source == "foo(a, b)\n"  # no comma after last
     check fixCalls("a.nim", "x\nfoo(\n  a\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
     check "if foo(\n  a\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
     let wide = "  result.add " & NAME_LONG & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
     check wide.fixed == "  result.add " & NAME_LONG & "(\n    path,\n    line,\n" &
-      "    \"message long enough to cross column one hundred\",\n  )\n"
+      "    \"message long enough to cross column one hundred\"\n  )\n"  # no comma after last
     let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
       "\",\n  )\n"  # comma after last argument: one argument to line
@@ -162,7 +170,9 @@ suite "Wrapping":
     check bare.fixed.isSettled
     let wide = "  result.add " & NAME_LONG & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
-    check wide.fixed.isSettled  # its comma keeps it split on second run
+    check wide.fixed.isSettled  # split fits no line, so second run keeps it
+    check wide.fixed.replace(NAME_LONG, "f").fixed == "  result.add f(path, line, \"message " &
+      "long enough to cross column one hundred\")\n"  # split knoller made joins after rename
     let hugged = "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
       "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
     check hugged.isSettled  # call hand hugs keeps its hug, inner one to line
@@ -175,7 +185,7 @@ suite "Wrapping":
     let crossing = shared.replace("b_to.is_negated\n", "b_to.is_negated_at_length\n")
     check crossing.fixed == "      result[b].add BasisSigned(\n        basis: b_to.basis,\n" &
       "        is_negated: b_from.is_negated xor term.is_negated xor " &
-      "b_to.is_negated_at_length,\n      )\n"  # shared line crosses `LINE_MAX`: one to line
+      "b_to.is_negated_at_length\n      )\n"  # shared line crosses `LINE_MAX`: one to line
     check crossing.fixed.isSettled
     let hand = "foo(alpha_argument_held_at_great_length, beta_argument_held_at_great_length,\n" &
       "    gamma_argument_held_at_great_length)\n"
@@ -186,7 +196,7 @@ suite "Wrapping":
     let nested = "let x = outer(first_argument_of_outer, " & NAME_LONG & "(inner_first, " &
       "inner_second_argument))\n"
     check nested.fixed == "let x = outer(\n  first_argument_of_outer,\n  " & NAME_LONG &
-      "(inner_first, inner_second_argument),\n)\n"
+      "(inner_first, inner_second_argument)\n)\n"
     check nested.fixed.isSettled
 
 
@@ -196,7 +206,7 @@ suite "Wrapping":
     check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
         "\" &\n    name,\n  )\n"  # argument opens its line, so continuation stays flat
     let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
-    check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
+    check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ]\n)\n"
     check rows.fixed.isSettled
 
 
@@ -219,7 +229,7 @@ suite "Wrapping":
     let call = "  result.add finding(path, \"" & "x".repeat(60) & "\" & name & \"" &
         "y".repeat(30) & "\")\n"
     check call.fixed == "  result.add finding(\n    path,\n    \"" & "x".repeat(60) &
-        "\" & name &\n    \"" & "y".repeat(30) & "\",\n  )\n"  # argument opens line: flat
+        "\" & name &\n    \"" & "y".repeat(30) & "\"\n  )\n"  # argument opens line: flat
     let condition = "  if " & "a".repeat(45) & " and " & "b".repeat(45) & ":\n    discard\n"
     check condition.fixed == "  if " & "a".repeat(45) & " and\n      " & "b".repeat(45) &
         ":\n    discard\n"  # condition four in, body two
@@ -236,7 +246,7 @@ suite "Wrapping":
     let split = "  let total = first_value + combine(alpha_argument, beta_argument, " &
         "gamma_argument, delta_argument_name)\n"  # 103 runes
     check split.fixed == "  let total = first_value + combine(\n    alpha_argument,\n" &
-        "    beta_argument,\n    gamma_argument,\n    delta_argument_name,\n  )\n"
+        "    beta_argument,\n    gamma_argument,\n    delta_argument_name\n  )\n"
     for kept in [
       "  let x = " & "a".repeat(45) & " + " & "b".repeat(45) & "  # Why.\n",  # comment
       "  let x = " & "a".repeat(30) & " + " & "b".repeat(48) & " * " & "c".repeat(48) & "\n",
@@ -369,38 +379,22 @@ suite "Wrapping":
       "foo(a) do (x: int):\n  discard\n",
     ]:
       check checkCalls("a.nim", kept).len == 0
-    check "foo(\n  a,  # Why.\n  b\n)\n".fixed == "foo(\n  a,  # Why.\n  b,\n)\n"  # trailing alone
+    check "foo(\n  a,  # Why.\n  b\n)\n".isSettled  # no rule writes separator after last
 
 
-  test "list one item to line takes trailing separator where it would not fit joined":
+  test "no list takes separator after its last item from fixer, and one hand wrote stays":
     let
       (x, y) = ("\"" & "x".repeat(50) & "\"", "\"" & "y".repeat(50) & "\"")
       lists = "let\n  a = @[\n    " & x & ",\n    " & y & "\n  ]\n  b = {\n    " & x & ",\n    " &
         y & "\n  }\n  c = (\n    " & x & ",\n    " & y & "\n  )\n  d = Foo(\n    x: 1,  # Why.\n" &
         "    y: 2\n  )\n"
-    check checkTrailing("a.nim", lists).len == 4  # comment keeps `Foo` from joining
-    check lists.fixed == lists.replace(y & "\n", y & ",\n").replace("y: 2\n", "y: 2,\n")
-    check lists.fixed.isSettled
-    let imported = "import ./[\n  " & "a".repeat(50) & ",\n  " & "b".repeat(50) & "\n]\n"
-    check imported.fixed == imported.replace("b\n]", "b,\n]")
-    check fixTrailing("a.nim", imported).source == imported.fixed  # rule alone writes it
-    for kept in [
-      "let a = (\n  b\n)\n",
-      "let a = @[1, 2,\n  3, 4]\n",
-      "type T = array[\n  3,\n  int\n]\n",
-      "let a = @[\n  1,\n  2\n]\n",  # fits joined: rows kept, no comma
-      "foo(\n  " & x & ", " & y & "\n)\n",  # items share line: comma would mark one to line
-    ]:
-      check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
+      imported = "import ./[\n  " & "a".repeat(50) & ",\n  " & "b".repeat(50) & "\n]\n"
+    for bare in [lists, imported]:
+      check bare.isSettled  # array, set, tuple, constructor and import bracket take none
+    check lists.replace(y & "\n", y & ",\n").replace("y: 2\n", "y: 2,\n").isSettled
+    check imported.replace("b\n]", "b,\n]").isSettled  # separator hand wrote stays
     check "foo(\n  a,\n  b\n)\n".fixed == "foo(a, b)\n"  # fits joined: call joins, no comma
 
-
-  test "trailing separator held on no line widens it, and keeps width guard on held line":
-    # Item line of 100 runes; separator makes 101.
-    let near = "let a = @[\n  1,\n  " & "x".repeat(48) & " + " & "y".repeat(47) & "\n]\n"
-    check fixTrailing("a.nim", near, Held()).source == near.replace("y\n]", "y,\n]")
-    check fixTrailing("a.nim", near, Held(lines: @[3])).source == near  # its line held
-    check near.fixed == near  # two-argument form holds every line
 
 
   test "clean source passes through unchanged":
