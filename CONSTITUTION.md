@@ -554,15 +554,15 @@ suite "Chapter 2":
      banner takes the one blank line of the banner.
 3. A call stays on its own line where it fits. A signature that does not fit first wraps its
    parameters onto one line of their own. Where that line does not fit either, it takes one
-   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
-   separator where the list would not fit joined on one line. A declarative call names its
+   parameter, or one group of a shared type, to a line. A declarative call names its
    arguments, and so do a code-generating call and a constructor. A positional call stays
    positional.
 
-   A call written one argument to a line, with a separator after its last argument, stays so
-   where it would fit. That separator is the one mark of the split that the hand wants. A call
-   without it that does not fit keeps the line breaks of the hand while each line fits.
-   Otherwise it takes one argument to a line, with that separator.
+   A call or a signature written one item to a line, with a separator after its last item,
+   stays so where it would fit. That separator is the one mark of the split that the hand
+   wants, and no tool writes it. So a list that a tool splits ends with no separator, and joins
+   again where it fits. A call without the mark that does not fit keeps the line breaks of the
+   hand while each line fits. Otherwise it takes one argument to a line.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
@@ -646,7 +646,7 @@ suite "Chapter 2":
 defineOperator(
   symbols = "∧",
   docs = "Multiply multivectors through exterior product, i.e. 𝐦 ∧ 𝐧.",
-  cayley = CAYLEYS_WEDGE.base,
+  cayley = CAYLEYS_WEDGE.base
 )
 
 let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
