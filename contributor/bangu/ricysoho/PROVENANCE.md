@@ -830,15 +830,19 @@ ni'o **lo jdini sinxa poi pencu pa namcu cu sinxa lo jdini klani
   .i zo be'o .e zo ku cu se lidne le namcu**
   .i `Architect` jdice di'u bu'u `#1003` ta'i `D1 a` .e `D2 a` .e `D3 a`
   .i zoi gy. € .gy. sinxa zo ronru'u noi `jbovlaste` vasru ke'a
+  .i de'i `2026-11-21` `vlasisku` cu jarco zo ronru'u
   .i zoi gy. $ .gy. .e zoi gy. £ .gy. cu sinxa zo rupnu
   .i zoi gy. ¢ .gy. sinxa zo fepni
   .i zoi gy. ¥ .gy. sinxa lo'u ponjo ja jungo rupnu le'u
   .i ro le sinxa poi na du zoi gy. € .gy. cu sinxa lo rupnu pe su'o re gugde
-  .i se ki'u bo le valsi pe le sinxa cu cusku no gugde
+  .i se ki'u bo lo valsi pe zoi gy. $ .gy. .e zoi gy. £ .gy. .e zoi gy. ¢ .gy. cu cusku no gugde
+  .i lo valsi pe zoi gy. ¥ .gy. cu cusku le re gugde poi pilno le sinxa
   .i le genturfa'i cu tcidu lo'u lo ronru'u be li mu be'o ku le'u fi zoi gy. €5 .gy. .e
       zoi gy. 5€ .gy. Verified by `suites/test_stream.nim`.
-  .i le tricu pe ro jdini klani cu du le tricu pe le valsi poi se ciska
-      Verified by `suites/test_prose.nim`.
+  .i ne'i ro jufra pe `FRAMES_PROSE` le tricu pe ro jdini klani cu du le tricu pe le valsi poi se
+      ciska Verified by `suites/test_prose.nim`.
+  .i re jdini sinxa poi lamji cu sinxa re jdini klani mu'u zoi gy. 5€€5 .gy. ki'u lo nu ro le sinxa
+      cu pencu pa namcu Verified by `suites/test_stream.nim`.
   .i ji'a le mivyselci'a cu tcidu le jdini klani ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso
       stuzi cu katna Verified by `suites/test_live.nim`.
 
@@ -850,7 +854,8 @@ ni'o **lo jdini klani cu sumti gi'e fanmo zo ku**
   .i ku'i zoi gy. lo jdima cu du €5 .gy. cu se tcidu Verified by `suites/test_prose.nim`.
   .i se to'e cuxna fa lo klani poi claxu zo be'o .e zo ku
   .i ki'u bo da'i zo .e poi se lidne le klani cu jorne le namcu pe le klani lo drata klani
-  .i ji'a se to'e cuxna fa lo'u mu ronru'u le'u ki'u lo nu lo namcu poi lidne cu pagbu le namcu
+  .i ji'a se to'e cuxna fa lo'u mu ronru'u le'u
+  .i da'i lo namcu poi lidne le jdini klani cu pagbu le namcu pe le klani
 
 ni'o **ro valsi poi lo jdini sinxa cu sinxa ke'a cu vasru no stuzi
   .i le valsi poi lidne le namcu cu cfari bu'u le pamoi stuzi pe le namcu
@@ -860,18 +865,21 @@ ni'o **ro valsi poi lo jdini sinxa cu sinxa ke'a cu vasru no stuzi
   .i lo pezli poi vasru no stuzi cu ka'e cfari bu'u le stuzi poi le bavla'i pezli cu cfari bu'u ke'a
       Verified by `suites/test_marks.nim`.
   .i `NIF` ciska le valsi ta'i lo genvla poi le re stuzi pe ke'a cu mintu gi'e ciska le valsi mu'u
-      `(LE 3 3 "lo")`
+      `(LE 3 3 "lo")` Verified by `suites/test_nif.nim`.
   .i se to'e cuxna fa lo nu le valsi pe le sinxa cu vasru le stuzi pe le sinxa
   .i ki'u bo da'i le valsi poi lidne lo namcu cu vasru lo stuzi poi se lidne le namcu
   .i jdima fa lo nu no valsi cu jarco le stuzi pe le jdini sinxa
 
 ni'o **lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e curmi ta'i `Sign`
-  .i ji'a pa namcu cu ponse pa jdini sinxa po'o**
-  .i `Architect` jdice di'u bu'u `#1003` ta'i `D3 a`
+  .i ji'a ro namcu cu ponse su'e pa jdini sinxa**
+  .i `Architect` jdice lo du'u lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e curmi kei
+      bu'u `#1003` ta'i `D3 a`
+  .i ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu lo jdini klani cu vasru lo valsi pe pa sinxa
+      po'o to `D2 a` toi
   .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. 5 € .gy. .e zoi gy. 5€6 .gy. .e zoi gy. $5$ .gy.
       Verified by `suites/test_stream.nim`.
-  .i le cipra cu tcidu ro selci'a poi vasru su'e xa pagbu po'u `1` .a zoi gy. $ .gy. .a
-      zoi gy. € .gy. .a lo kutle'u
+  .i le cipra cu tcidu ro selci'a poi vasru su'e xa pagbu po'u `1` .a `a` .a zoi gy. $ .gy. .a
+      zoi gy. € .gy. .a zoi gy. ¥ .gy. .a lo kutle'u
   .i ro le selci'a cu se tcidu ja'i lo fancu poi ciska le javni gi'e pilno no fancu pe
       `stream.nim` Verified by `suites/test_stream.nim`.
 
@@ -4725,3 +4733,8 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
       namcu poi jorne lo cmavo pe `MOI`
   .i le tricu pe `CLL 21.1` vasru le remei
   .i no samtci pagbu cu ca tcidu lo selsmu fi le tricu
+- ny.mai **zo zo poi lidne lo jdini sinxa**
+  .i zo zo sitna zo lo noi krasi le jdini klani
+  .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy.
+      Verified by `suites/test_prose.nim`.
+  .i `Architect` jdice no da fi le nu zo zo sitna le mulno jdini klani
