@@ -314,5 +314,8 @@ suite "Internal: Symbols":
   test "compiler that does not start leaves check unclean, and says so":
     let directory = createTempDir("knoller_", "_checks")
     defer: removeDir(directory)
+    # Case held: through `cmd` of Windows, check of path naming no compiler said nothing of
+    #   compiler that did not run, as `sh` does (#1014). Domain: path naming no file.
     let answer = checked("let a = 1\n", directory, directory / "nim-absent", [])
     check not answer.is_clean and answer.reason.startsWith("compiler did not run: ")
+    check answer.reason.contains("nim-absent")  # names compiler it looked for, on each platform
