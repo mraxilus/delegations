@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | e65b5ec5f37320386d84695b2c8bd551ecffc0f2 |
+| Pruned  | 4d68cc2896c55a1ea05de40fae41dc06feda7051 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2200,9 +2200,7 @@ against the committed file, and reports the first differing line.
   is compared against nothing.
 - `auditTree` is a `proc`, because it composes a check that reads JSON, which Nim marks
   effectful. Every rule it composes stays pure, and `layout.nim` still reads paths only.
-- Verified by `suites/test_dependencies.nim`. Verified by hand against the real lock, recorded
-  2026-09-06: a stored copy that holds `nim >= 2.2.6` names `rga_visualiser.nimble:13`, and
-  the restored lock is silent.
+- Verified by `suites/test_dependencies.nim`.
 
 **The lock names its nimble copy after the nimble file of its project.** `atlas rep` writes the
 copy under the name in `nimbleFile.filename`. A lock that names another file writes a second
@@ -3369,15 +3367,6 @@ of knoller, under Content fixes.
   parts joined.
 - Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
   pin, the group that the parser refuses stays, and a second fix writes nothing.
-- Verified by hand, 2026-10-05, with `koch fix --dry-run --branch:main` at `main` and at this
-  head, and the dependencies that `koch fetch-deps` restored:
-  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 28.9 s;
-  - `pga_benchmark`: 263 and 264, in 7.6 s and 9.8 s. The one more is `(⊛m)` at line 35 of
-    `proposals/03-partner-sign/laws.nim`, which the guard on the head of a command keeps at `main`;
-  - `dance_ontology`: 1121 and 1119, in 18.1 s and 20.2 s. The two fewer are
-    `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
-  - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
-    line is the same, so the new lines are code that waits for its own fix.
 
 ## Fixed waits
 
@@ -4351,10 +4340,7 @@ form that opens no claim. It holds `No prediction` with and without a block, and
 **Verified by hand on 2026-11-20, through koch built at `ff2fa434`.** `koch hook stop` passes or
 refuses each case of the guide and a reply to a refusal, on small transcripts in the shape of the
 harness. No suite runs `main` of koch, so this run holds the dispatch of the stop branch. A row
-of `No prediction` passes where no call took a block, and a cell of `-` is refused. At
-`ff2fa434`, 89 of the 92 probes of the earlier critics give the verdict and reason that they give
-at `7a912117`, word for word. Probes S05, S10 and S15, refused at `7a912117`, pass, since the
-label and the word of the kind line read as comment 7027197745 rules.
+of `No prediction` passes where no call took a block, and a cell of `-` is refused.
 
 - Each of 222 breaks of the rules fails a test of `suites/test_hooks.nim`, on 2026-11-20. A break
   is one edit of a scratch copy of `hooks.nim` at `ff2fa434`, with which the suite builds and runs.
@@ -4397,15 +4383,8 @@ transcript, so another copy gives its own figures.
   in a fence. So each of the 7 cells of the stop of entry 413 is a claim, with its confidence, of
   a block that no call took. At the stop of entry 882, the reflection quotes 8 claims whole, 2
   before a full stop.
-- At `40bee07a`, the base of this pull request, each stop gives the same verdict and refuses the
-  same items. At the 5 stops that the block checks refuse, the rule of a call and the rule of a
-  cell read in other words. The other 49 reasons are the same word for word.
-- Cost: `koch hook stop` on the whole copy takes a median of 227 ms at `40bee07a` and 241 ms at
-  `ff2fa434`. A second set gives 246 ms and 239 ms. Each median is of 20 runs on 2026-11-20,
-  which alternate between the builds. The runs of one build in one set span 97 to 121 ms, so the
-  gap stays inside that spread.
-  They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.40 to 0.57, as
-  `/proc/loadavg` gave it before and after each set.
+- Cost: `koch hook stop` on the whole copy takes a median of 241 ms at `ff2fa434`. The 20 runs
+  ran on 2026-11-20, on 4 cores of a Xeon at 2.10 GHz.
 
 ## Log of claims
 
@@ -4863,9 +4842,6 @@ Joined, `nim r koch test curator/audit` took 3.8 s to 4.2 s warm, against 31.9 s
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
 change to one project adds the suites of that project. An unscoped run pays every project.
-On the same machine and date, `nim r koch test <project>` took 627.5 s for `dance_ontology`
-and 236.6 s for `rga_visualiser`. It took 18.2 s cold for `pga_benchmark`, and 2.8 s for
-`curator/probe`.
 
 **Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `test` jobs
 started within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s
