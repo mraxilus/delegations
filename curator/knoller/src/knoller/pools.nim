@@ -1,15 +1,15 @@
-## Run independent jobs on worker threads, at most one for each core, and return each answer in
+## Run independent jobs on threads of pool, at most one for each core, and return each answer in
 ##   order of its job, as one loop over jobs would return them.
 ##   Semantic pass asks compiler once for each job and waits on answer: 60 calls of
 ##     `koch fix --dry-run curator/knoller` take 64 s of 111 s, one after another, while three of
 ##     four cores wait (profile of #1001, 2026-11-21).
 ##   Job and answer pass by value, never by `ref`: ORC counts references without atomics, so
 ##     object two threads count would race, while string, sequence and table copy whole.
-##   Worker takes next job by atomic counter, so long job delays no job queued behind it.
-##   One worker runs each job in thread of caller, so caller of one job starts no thread.
-##   Exception of job is caught in its worker, and caller raises it again once every worker
+##   Thread takes next job by atomic counter, so long job delays no job queued behind it.
+##   Pool of one thread is caller itself, so caller of one job starts no thread.
+##   Exception of job is caught in its thread, and caller raises it again once every thread
 ##     ended: first in order of jobs, as one loop would raise it. It is raised as
-##     `CatchableError` with its message, whatever count of workers ran, since exception object,
+##     `CatchableError` with its message, whatever count of threads ran, since exception object,
 ##     which ORC counts, stays in thread that raised it.
 ##
 ##   Rejected: pool of compiler processes, which turns loop of each prover into state machine
@@ -22,18 +22,18 @@
 import std/[atomics, cpuinfo, typedthreads]
 
 
-type Pool[T, U] = object  ## Define jobs, answers and counter workers share.
+type Pool[T, U] = object  ## Define jobs, answers and counter threads of pool share.
   jobs: ptr UncheckedArray[T]  ## Jobs caller holds.
   answers: ptr UncheckedArray[U]  ## Answer of each job, at its index.
   raised: ptr UncheckedArray[bool]  ## Whether each job raised.
   failures: ptr UncheckedArray[string]  ## Message of exception each job raised.
   count: int  ## Jobs in all.
-  next: Atomic[int]  ## Index of next job any worker takes.
+  next: Atomic[int]  ## Index of next job any thread takes.
   run: proc (job: T): U {.nimcall, gcsafe.}  ## Routine answering one job.
 
 
 proc work[T, U](pool: ptr Pool[T, U]) {.thread.} =
-  ## Answer each job counter gives worker, until none is left.
+  ## Answer each job counter gives thread, until none is left.
   while true:
     let k = pool.next.fetchAdd(1)
     if k >= pool.count: return
@@ -44,10 +44,10 @@ proc work[T, U](pool: ptr Pool[T, U]) {.thread.} =
 
 
 proc mapParallel*[T, U](
-  jobs: openArray[T]; run: proc (job: T): U {.nimcall, gcsafe.}; workers = countProcessors()
+  jobs: openArray[T]; run: proc (job: T): U {.nimcall, gcsafe.}; threads = countProcessors()
 ): seq[U] =
-  ## Answer each job by `run`, `workers` at once at most, one for each core where caller names
-  ##   none; answers stand in order of their jobs.
+  ## Answer each job by `run`, on `threads` at once at most, one for each core where caller
+  ##   names none; answers stand in order of their jobs.
   result = newSeq[U](jobs.len)
   if jobs.len == 0: return
   var
@@ -61,11 +61,11 @@ proc mapParallel*[T, U](
       count: jobs.len,
       run: run,
     )
-  let count = min(max(workers, 1), jobs.len)
+  let count = min(max(threads, 1), jobs.len)
   if count == 1: work(pool.addr)
   else:
-    var threads = newSeq[Thread[ptr Pool[T, U]]](count)
-    for thread in threads.mitems: createThread(thread, work[T, U], pool.addr)
-    joinThreads(threads)
+    var running = newSeq[Thread[ptr Pool[T, U]]](count)
+    for thread in running.mitems: createThread(thread, work[T, U], pool.addr)
+    joinThreads(running)
   for k in 0 ..< jobs.len:
     if raised[k]: raise newException(CatchableError, failures[k])

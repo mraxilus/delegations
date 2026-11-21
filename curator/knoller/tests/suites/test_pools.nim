@@ -1,10 +1,10 @@
-## Replicate worker pool of `workers.nim` header: answers in order of jobs, jobs side by side,
+## Replicate pool of threads of `pools.nim` header: answers in order of jobs, jobs side by side,
 ##   and exception of job raised again in caller once every job ran.
 
 {.experimental: "strictFuncs".}
 
 import std/[atomics, sequtils, typedthreads, unittest]
-import ../../src/knoller/workers
+import ../../src/knoller/pools
 
 
 const BARRIER = 4  ## Jobs that must stand at barrier at once before any leaves it.
@@ -18,7 +18,7 @@ func squared(n: int): int = n * n  ## Answer square of job, so answer names job 
 
 
 func spelled(n: int): seq[string] = newSeqWith(n mod 7 + 1, $n)
-  ## Answer job spelled out, one to seven times, so answer holds memory its worker allocated.
+  ## Answer job spelled out, one to seven times, so answer holds memory its thread allocated.
 
 
 proc thread(n: int): int = getThreadId()  ## Answer id of thread job ran in.
@@ -43,34 +43,34 @@ proc raised(n: int): int =
 
 
 
-suite "Workers":
-  test "answers keep order of their jobs, whatever worker answers each":
-    check mapParallel(toSeq(1 .. 100), squared, workers = 4) == toSeq(1 .. 100).mapIt(it * it)
-    check mapParallel(toSeq(1 .. 3), squared, workers = 1) == @[1, 4, 9]  # caller alone
+suite "Pools":
+  test "answers keep order of their jobs, whatever thread answers each":
+    check mapParallel(toSeq(1 .. 100), squared, threads = 4) == toSeq(1 .. 100).mapIt(it * it)
+    check mapParallel(toSeq(1 .. 3), squared, threads = 1) == @[1, 4, 9]  # caller alone
     check mapParallel(@[2], squared) == @[4]  # one for each core
-    check mapParallel(newSeq[int](), squared, workers = 4).len == 0  # no job
+    check mapParallel(newSeq[int](), squared, threads = 4).len == 0  # no job
 
 
-  test "answers holding text that worker allocated reach caller whole":
-    check mapParallel(toSeq(1 .. 200), spelled, workers = 4) == toSeq(1 .. 200).mapIt(it.spelled)
+  test "answers holding text that thread allocated reach caller whole":
+    check mapParallel(toSeq(1 .. 200), spelled, threads = 4) == toSeq(1 .. 200).mapIt(it.spelled)
 
 
-  test "jobs run side by side, one for each worker":
+  test "jobs run side by side, one for each thread":
     ARRIVED.store(0)
-    check mapParallel(toSeq(1 .. BARRIER), waited, workers = BARRIER) == repeat(BARRIER, BARRIER)
+    check mapParallel(toSeq(1 .. BARRIER), waited, threads = BARRIER) == repeat(BARRIER, BARRIER)
 
 
-  test "one worker answers in thread of caller, and several answer in threads of their own":
+  test "pool of one thread answers in thread of caller, and larger pool in threads of its own":
     let caller = getThreadId()
-    check mapParallel(toSeq(1 .. 3), thread, workers = 1).allIt(it == caller)
-    check mapParallel(toSeq(1 .. 3), thread, workers = 3).allIt(it != caller)
+    check mapParallel(toSeq(1 .. 3), thread, threads = 1).allIt(it == caller)
+    check mapParallel(toSeq(1 .. 3), thread, threads = 3).allIt(it != caller)
 
 
   test "exception of first job that raised is raised again in caller, once every job ran":
-    for workers in [1, 4]:
+    for threads in [1, 4]:
       STARTED.store(0)
       var message = ""
-      try: discard mapParallel(toSeq(1 .. 8), raised, workers = workers)
+      try: discard mapParallel(toSeq(1 .. 8), raised, threads = threads)
       except CatchableError as e: message = e.msg
       check message == "job 3 failed"  # first in order of jobs, not first to finish
-      check STARTED.load == 8  # each job ran, so one worker reads as several do
+      check STARTED.load == 8  # each job ran, so pool of one thread reads as larger one does

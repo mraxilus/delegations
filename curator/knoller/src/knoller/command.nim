@@ -66,8 +66,8 @@
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
   chain, compilers, configurations, conversions, cuts, edits, fences, idioms, landmarks, markers,
-  messages, names, packages, parentheses, pins, proofs, purity, reports, rewrites, rules, staging,
-  symbols, workers,
+  messages, names, packages, parentheses, pins, pools, proofs, purity, reports, rewrites, rules,
+  staging, symbols,
 ]
 
 
@@ -832,11 +832,11 @@ proc scopeProject(
 
 
 proc resolved(requests: seq[Request]): seq[Answer] = resolve(requests)
-  ## Answer requests of one importer through semantic pass, so worker runs them (`workers.nim`).
+  ## Answer requests of one importer through semantic pass, run by thread of pool (`pools.nim`).
 
 
 proc hinted(job: JobHints): Checked = checkedBackend(job.text, job.directory, job.nim, [], true)[0]
-  ## Check module with hints, as `checkedBackend` does, so worker runs it.
+  ## Check module with hints, as `checkedBackend` does, so thread of pool runs it.
 
 
 proc reached(job: JobMarkers): seq[(int, int)] =
@@ -854,7 +854,7 @@ proc reached(job: JobMarkers): seq[(int, int)] =
 
 
 proc proved(job: JobPure): Pures =
-  ## Prove one file as `provenPure` does, under no define, so worker runs it.
+  ## Prove one file as `provenPure` does, under no define, so thread of pool runs it.
   provenPure(
     job.source, job.sites, job.directory, job.nim, [newSeq[string]()], job.prefix, job.suffix
   )
@@ -872,7 +872,7 @@ proc resolveMarkers*(
   ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
   ##   cannot read, as symbol template declares; file checking clean on no backend confirms nothing.
   ##   `koch fix` reads uses through it too (`fixes.nim` of `curator/audit`), so both read alike.
-  ##   Each step of project runs its calls on workers (`workers.nim`): `nimsuggest` of each
+  ##   Each step of project runs its calls on threads of pool (`pools.nim`): `nimsuggest` of each
   ##     importer, hints of each module, then confirmation of each importer, whose own checks run
   ##     in turn; answers keep order of loop. Importer whose every import reaches symbol checks
   ##     nothing, since its check would confirm nothing.
@@ -957,7 +957,7 @@ proc resolvePures*(
   ##   `bin` gives, as project alone compiles it, since command line names no define
   ##   (`symbols.nim`). Included file proves inside text of file including it.
   ##   `koch fix` proves through it too (`fixes.nim` of `curator/audit`), so both prove alike.
-  ##   Each file proves on worker of its own (`workers.nim`), and table takes answers in order of
+  ##   Each file proves on thread of pool (`pools.nim`), and table takes answers in order of
   ##     files, as loop proving one after another would give them.
   var
     seen = initTable[string, Pinning]()

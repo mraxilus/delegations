@@ -244,7 +244,7 @@ func lineRedirected*(
   ##   Where caller merges (`is_merged`), errors go to file of answers too, as both shells write.
   ##   Where caller names directory, line moves into it first, so run moves no directory of
   ##     caller: `startProcess` given `workingDir` moves that of whole process on POSIX, around
-  ##     spawn, so workers would move it under each other (`workers.nim`).
+  ##     spawn, so threads of pool would move it under each other (`pools.nim`).
   let merged = if is_merged: " 2>&1" else: ""
   if cmd.len == 0:
     let moved = if directory.len > 0: "cd " & directory.quoteShellPosix & " && " else: ""
@@ -421,7 +421,7 @@ proc checked*(
   ##   caller asks hints (`is_hinting`), each symbol hint names declared and never used reads too.
   ##   Shell gives compiler text from file and writes its output and errors to file, both in that
   ##     directory, and run takes streams of caller, so it opens no pipe (`lineRedirected`).
-  ##     Child another worker starts meanwhile inherits each pipe open then (`workers.nim`): its
+  ##     Child another thread starts meanwhile inherits each pipe open then (`pools.nim`): its
   ##     copy of write end of pipe of text would keep compiler waiting on end of text for ever.
   let cache = createTempDir("knoller_check_", "")
   defer: removeDir(cache)

@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[symbols, workers]
+import ../../src/knoller/[pools, symbols]
 
 
 const
@@ -19,7 +19,7 @@ const
   NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
 
 
-type Checking = object  ## Define one check worker runs: text, and directory it checks in.
+type Checking = object  ## Define one check thread of pool runs: text, and directory it checks in.
   text: string  ## Text compiler reads from stdin.
   directory: string  ## Absolute directory check runs in.
 
@@ -31,7 +31,7 @@ proc writeInto(root, path, content: string) =
 
 
 proc cleaned(job: Checking): bool =
-  ## Answer whether compiler building suite checks text clean, so worker runs check.
+  ## Answer whether compiler building suite checks text clean, so thread of pool runs check.
   checked(job.text, job.directory, getCurrentCompilerExe(), []).is_clean
 
 
@@ -277,22 +277,22 @@ suite "Internal: Symbols":
     check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read
 
 
-  test "checks on several workers at once each end, with answer check alone gives":
-    # Case held: `nim check` read its text through pipe, and child another worker started meanwhile
+  test "checks on several threads at once each end, with answer check alone gives":
+    # Case held: `nim check` read its text through pipe, and child another thread started meanwhile
     #   kept copy of its write end, so compiler waited on end of text for ever (#1001). Domain:
-    #   clean text and text holding error, on more jobs than workers.
+    #   clean text and text holding error, on more jobs than threads.
     let directory = createTempDir("knoller_", "_checks")
     defer: removeDir(directory)
     let jobs = toSeq(1 .. 8).mapIt(Checking(
       text: if it mod 2 == 0: "let a = " & $it & "\n" else: "let a: int = \"x\"\n",
       directory: directory,
     ))
-    check jobs.mapParallel(cleaned, workers = 4) == toSeq(1 .. 8).mapIt(it mod 2 == 0)
+    check jobs.mapParallel(cleaned, threads = 4) == toSeq(1 .. 8).mapIt(it mod 2 == 0)
 
 
-  test "checks on several workers at once each run in their own directory, and move no other":
+  test "checks on several threads at once each run in their own directory, and move no other":
     # Case held: `startProcess` given `workingDir` moves directory of whole process around spawn on
-    #   POSIX, so workers moved it under each other, and suite stayed in directory that test removed
+    #   POSIX, so threads moved it under each other, and suite stayed in directory that test removed
     #   (#1001). Domain: eight directories, each holding module that only its own text imports.
     let before = getCurrentDir()
     var
@@ -307,7 +307,7 @@ suite "Internal: Symbols":
       )
     defer:
       for root in roots: removeDir(root)
-    check jobs.mapParallel(cleaned, workers = 4) == repeat(true, 8)
+    check jobs.mapParallel(cleaned, threads = 4) == repeat(true, 8)
     check getCurrentDir() == before
 
 
