@@ -1443,9 +1443,9 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - Elsewhere at module level, `nim jsondoc` of 2.4.0 reads a doc above a declaration into the
   description of the module too. So the move gives that doc to its declaration, since the hand
   that wrote it there meant it for that one. That holds for a doc below another doc at the start
-  of the file too. Verified by hand, 2026-11-21, on one probe of a doc under a blank line, one past
-  other code and one below a doc of the module. A probe after the move reads the doc as that of
-  its declaration alone.
+  of the file too. Verified by hand, 2026-11-21, on one probe of a doc under a blank line past
+  other code, and one below a doc of the module. A probe after each move reads the doc as that
+  of its declaration, and the doc of the module stays.
 - A one-line doc can stand on the line below the first line of a value over lines. It moves after
   the `=` that ends that first line, where it fits. Otherwise it moves after the close of the
   value, joined where it fits, else one level in. `nim doc` reads none below an `=` that ends the
