@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-11-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 4cb93057ea6f11b0 |
+| Rules   | 2f8b5d4008e4cf4b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be `Architect` be'o .e
