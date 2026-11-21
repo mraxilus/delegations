@@ -2,9 +2,9 @@
 
 `⟇⟇~∘` transforms 𝐦 by 𝐧 in one call: the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, which pin spells in three steps. Its
 typed form builds the table of that sandwich from the types of both operands, when the code
-compiles. So each value of each type transforms exactly. Two full multivectors take the three steps
-of pin. `pga.nim` names the operator `transform`, and two tests of the suite `Typed operators` hold
-both to the chain. Every edit quotes text of P04.
+compiles. So each value of each type transforms exactly. A full operator takes the three steps of
+pin, whatever the type of 𝐦 is. `pga.nim` names the operator `transform`, and two tests of the
+suite `Typed operators` hold both to the chain. Every edit quotes text of P04.
 
 ## Edit `pga/operators.nim`
 
@@ -18,8 +18,9 @@ both to the chain. Every edit quotes text of P04.
 
 # Sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ reads table built from types of both operands, when code compiles:
 #   pairs of bases of 𝐧, both orders summed, against bases of 𝐦. So each value of each type
-#   transforms exactly, and motor type reads its antieven pairs alone. Two full multivectors take
-#   three steps of pin instead, since table over every pair grows past them with dimension.
+#   transforms exactly, and motor type reads its antieven pairs alone. Full operator takes three
+#   steps of pin instead, whatever type 𝐦 has: table over every pair of 𝐧 grows past them with
+#   dimension, and code that needs speed types its operator.
 
 type
   TermSandwich = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
@@ -146,8 +147,8 @@ func `⟇⟇~∘`*[A, B: static Bases](
   emitSandwichedByBasis(A, B, result, m, n)
 
 
-func `⟇⟇~∘`*(m, n: Multivector): Multivector {.inline.} =
-  ## Transform full multivector by full operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, through three steps of pin.
+func `⟇⟇~∘`*[A: static Bases](m: MultivectorOf[A], n: Multivector): Multivector {.inline.} =
+  ## Transform multivector of any type by full operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, in three steps of pin.
   (n ⟇ m) ⟇ (~∘ n)
 
 
@@ -184,7 +185,7 @@ func projectOrthogonalAnti*[A, B: static Bases](
 func transform*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = m ⟇⟇~∘ n
-  ## Transform multivector by operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, reading table of both types.
+  ## Transform multivector by operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, as `⟇⟇~∘` reads it.
 ```
 
 ## Edit `tests/suites.nim`
