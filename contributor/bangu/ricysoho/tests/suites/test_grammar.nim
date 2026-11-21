@@ -182,8 +182,6 @@ const
     ## lo selma'o be lo valsi poi ka'e jorne lo namcu .a lo lerfu porsi poi lidne ke'a
     ##   .i ro valsi pe `PA` .e ro lerfu valsi cu cfari pa cmima to le javni pe li 812 .e li 817
     ##       .e li 987 toi
-  HEAD_LERFU = GRAMMAR_EBNF.headNamed("lerfu-string")
-    ## le jvasni pe `lerfu-string` noi ckini li 817
 
 
 
@@ -470,6 +468,14 @@ suite "Chapter 17":
     check "le by. tei cy. dy. foi moi".runsRead == @[1 .. 5]  # le javni pe li 817 .e li 987
 
 
+  test "Words that join a number or lerfu string are the first words of PA and of lerfu-word":
+    # ro valsi pe `PA` .e ro lerfu valsi cu se krasi pa cmima be `SELMAHO_JOINING`
+    check TERMINALS_JOINING.len == SELMAHO_JOINING.len  # le javni pe li 987
+    for selmaho in SELMAHO_JOINING:
+      checkpoint $selmaho
+      check selmaho.toTerminal in TERMINALS_JOINING  # le javni pe li 812 .e li 817 .e li 987
+
+
   test "Each pair of letter and number words is one run before moi, and two where boi parts them":
     # lo lerfu porsi .e lo namcu cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi
     #   .i zo boi fendi re porsi poi lamji to `CLL 17.9` toi
@@ -479,7 +485,7 @@ suite "Chapter 17":
     for entry in LIST_CMAVO:
       if entry.selmaho == Selmaho.By: letters.add entry.word
       elif entry.selmaho == Selmaho.Pa: digits.add entry.word
-    check letters.len == COUNT_BY + WORDS_BU.len
+    check letters.len == COUNT_BY + WORDS_BU.len  # le liste pe `cmavo.nim` .e `CLL 17.4`
     for a in letters & digits:
       for b in letters & digits:
         if a in digits and b in digits: continue  # le flalu pe `CLL 18.6` cu cipra le remei
@@ -748,7 +754,7 @@ suite "Internal: Grammar":
           # le nu cuxna cu facki no namcu .e no lerfu porsi poi fanmo pu le valsi
           var is_held = true
           for start in 0 ..< i:
-            for head in [HEAD_NUMBER, HEAD_LERFU]:
+            for head in [HEAD_NUMBER, HEAD_LERFU_STRING]:
               if chart.choose(head, start, i): is_held = false
           check is_held
           inc count
