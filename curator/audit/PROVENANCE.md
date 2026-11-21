@@ -3339,14 +3339,14 @@ tree matched each report of the two outputs by rule, path and line.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
   it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
   proves nothing of, and each tool prints it once.
-- Cost: the dry run over the repository took 330 s at `329659da`, before the wiring, and 875 s at
-  `cbf1e68b`, after it. The tree of the second run held the refactor of `63df2e45`, uncommitted.
-  Each figure is one run of the debug build that `nim r` makes, on 4 cores at 2.10 GHz. The load
-  of the two runs differed, and no file records it.
-- Cost: over the files of `curator/knoller` at `a6903afe`, `koch fix --dry-run` built at `329659da`
-  took 25.9 s, and built at `a6903afe` took 77.9 s. Each is one run, back to back on 2026-11-20,
-  under a load of 1.0 to 1.9. The time added is unprofiled. The compiler calls for uses and
-  pures, and the queries of each cut rename, add to it.
+- Cost: over the files of `curator/knoller` at `b585ea65`, `koch fix --dry-run` takes 116.9 s built
+  there, and 67.4 s built at `41c24818`. The second build runs the compiler calls of rules 7 and 11
+  on a pool of threads (`## Caller of both rules` of knoller). Each figure is the median of three
+  runs in turn, on 4 cores at 2.10 GHz, 2026-11-21.
+- Cost: of 110.8 s in the profile on #1001, uses take 31.3 s, pure routines 34.8 s and cut renames
+  3.1 s. The static part takes 41.8 s, and asks no compiler.
+- Cost: each project that `koch list-projects --all` lists ran once with each build, and prints the
+  same text. Their times sum to 1,347.7 s and 776.7 s.
 
 ## Parser proof
 
