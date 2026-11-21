@@ -42,6 +42,14 @@ from ./reader_prose import errorsMessage, faultsNumbersMessage, textsRecord
 
 
 const
+  EXAMPLE_NIF_SIGN = (
+    text: "€5",
+    module: "(.nif27)\n(.lang \"cll-21.1\")\n(sumti_6 0 (LE 3 3 \"lo\") (tanru_unit_1 111 " &
+      "(tanru_unit_2 (BRIVLA 3 3 \"ronruhu\")) (linkargs (BE 3 3 \"be\") (sumti_6 83 (LI 3 3 " &
+      "\"li\") (number 310 (PA 3 4 \"5\"))) (BEhO 4 4 \"beho\"))) (KU 4 4 \"ku\"))\n",
+  )
+    ## lo jdini klani poi lo jdini sinxa cu sinxa ke'a to `#1003` toi
+    ##   .i ro valsi pe le jdini sinxa cu vasru no stuzi gi'e se ciska ta'i re mintu stuzi
   COUNT_TREES_LEAST = 1800
     ## lo klani be lo selci'a poi se tcidu gi'e pagbu le 1941 selci'a pe le selci'aste
     ##   .i le flalu cu tcidu lo tricu pe ro le selci'a
@@ -218,6 +226,14 @@ suite "Internal: NIF":
   test "Example 6.98 writes as module suites hold, byte for byte":
     let reading = EXAMPLE_NIF.text.readText
     check reading.toNif == EXAMPLE_NIF.module  # lo krapinka pe `nif.nim` to le mupli toi
+    check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
+
+
+  test "Word that a currency sign stands for writes two equal bytes and its letters":
+    # `Architect` jdice `D2 a` bu'u `#1003`
+    #   .i ro valsi pe le jdini klani cu vasru no stuzi
+    let reading = EXAMPLE_NIF_SIGN.text.readText
+    check reading.toNif == EXAMPLE_NIF_SIGN.module  # lo krapinka pe `nif.nim` to le mupli toi
     check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
 
 

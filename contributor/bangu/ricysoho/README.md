@@ -32,6 +32,14 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i se ki'u bo le genturfa'i cu tcidu pa lerfu porsi po'o fi lo'u by. cy. le'u
   .i zo boi fendi re porsi poi lamji mu'u lo'u xy. boi ro le'u
 
+ni'o le genturfa'i cu tcidu lo jdini sinxa poi pencu pa namcu ta'i lo jdini klani to `#1003` toi
+  .i se ki'u bo le genturfa'i cu tcidu lo'u lo ronru'u be li mu be'o ku le'u fi zoi gy. €5 .gy. .e
+      zoi gy. 5€ .gy.
+  .i zoi gy. $ .gy. .e zoi gy. £ .gy. cu sinxa zo rupnu
+  .i zoi gy. ¢ .gy. sinxa zo fepni
+  .i zoi gy. ¥ .gy. sinxa lo'u ponjo ja jungo rupnu le'u
+  .i le genturfa'i cu to'e curmi lo jdini sinxa poi pencu no namcu .a re namcu mu'u zoi gy. 5 € .gy.
+
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
 
