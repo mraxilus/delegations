@@ -944,7 +944,8 @@ func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused:
     starts.add at
     at += piece.len
 
-  # le namcu cu porsi lo lerfu po'u `1` .e lo sinxa poi lidne ja se lidne le lerfu
+  # facki ro namcu
+  #   .i le namcu cu porsi lo lerfu po'u `1` .e lo sinxa poi lidne ja se lidne le lerfu
   var first = 0  # le pamoi pagbu pe le namcu
   while first < pieces.len:
     if not isDigit(first) and not (pieces[first] in ["-", "−"] and isDigit(first + 1)):
