@@ -251,8 +251,8 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
   ## ni'o lo pezli poi vasru no stuzi cu sinxa lo valsi poi lo jdini sinxa cu sinxa ke'a
   ##   .i se ki'u bo le pamoi stuzi pe le pezli poi se lidne cu ka'e mintu le pamoi stuzi pe le
   ##       pezli
-  ##   .i ji'a ro stuzi pe lo jdini sinxa pe `SIGNS_CURRENCY` cu ka'e zvati no pezli
-  ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D2 a`
+  ##   .i ji'a ro stuzi pe lo jdini sinxa pe `SIGNS_CURRENCY` poi pencu lo namcu cu ka'e zvati no
+  ##       pezli
   var
     counts = newSeq[int](text.len)  # lo klani be lo pezli poi vasru lo stuzi
     last = -1  # lo pamoi stuzi pe lo pezli poi lidne
@@ -279,9 +279,13 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
   while b < text.len:
     if counts[b] > 1: return false
     if counts[b] == 0 and text[b] notin MARKS_BOUNDARY and text[b] != ',':
-      # lo jdini sinxa cu zvati no pezli
+      # lo jdini sinxa poi pencu lo namcu cu zvati no pezli
       let signs = SIGNS_CURRENCY.filterIt(text.continuesWith(it, b))
       if signs.len == 0: return false
+      let
+        is_after = b > 0 and text[b - 1] in Digits
+        is_before = b + signs[0].len < text.len and text[b + signs[0].len] in Digits
+      if not is_after and not is_before: return false
       for s in b ..< b + signs[0].len:
         if counts[s] != 0: return false
       b += signs[0].len
