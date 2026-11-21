@@ -295,12 +295,15 @@ suite "Log of claims":
       "\"it leads, as \\\"high\\\" | first\" }"
     check Claim(text: "a\\b\n\t\x01").lineClaim ==
       "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
+    check Claim(text: "a", marker: Marker.Resolver).lineClaim ==
+      "claims { text: \"a\" marker: MARKER_RESOLVER }"
 
 
   test "protoc reads each line back against schema, field by field, and refuses misspelt field":
     var claims = transcript().claimsRead
     claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit)
+    claims.add Claim(text: "b", state: State.Miss, marker: Marker.Resolver)
     let (encoded, code) = protoc("--encode", HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join)
     check code == 0
     let (decoded, back) = protoc("--decode", encoded)
@@ -315,7 +318,7 @@ suite "Log of claims":
       "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
       "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
       "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
-      "text: \"a\\\\b\\n\\t\\001\"",
+      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER",
     ]:
       check decoded.splitLines.anyIt(it.strip == field)
     check protoc("--encode", "claims { dat: \"2026-11-20\" }\n").code != 0  # misspelt field

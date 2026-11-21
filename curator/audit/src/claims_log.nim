@@ -40,6 +40,11 @@ type
   State* {.pure.} = enum  ## Define state of claim, in order of enum `State` of `claims.proto`.
     Unspecified, Hit, Miss, Annulled, Waiting
 
+  Marker* {.pure.} = enum  ## Define who marked state, in order of enum `Marker` of `claims.proto`.
+    Unspecified  ## No marker named; line writes delegate, as each row of `stop` is.
+    Delegate  ## Delegate, in table of its reflection.
+    Resolver  ## Resolver, in table of its report.
+
   Number* = object  ## Define number claim: its percentiles, and value its result gives.
     low*: float  ## 10th percentile.
     median*: float  ## 50th percentile.
@@ -57,6 +62,7 @@ type
     text*: string  ## Claim, as cell under `Predicted` quotes it.
     confidence*: float  ## Percentage of cell under `Confidence`, as fraction.
     state*: State  ## Marker opening cell under `State`.
+    marker*: Marker  ## Who marked state; delegate where none is named.
     tokens*: int  ## Tokens line of reflection gives for call.
     cost*: float  ## Dollars line of reflection gives for call.
     address*: string  ## Delegate, `uuid` of entry of reflection, and row from 1, by `/`.
@@ -87,7 +93,8 @@ const
   NAMES_STATE: array[State, string] =
     ["STATE_UNSPECIFIED", "STATE_HIT", "STATE_MISS", "STATE_ANNULLED", "STATE_WAITING"]
     ## Name of each value of enum `State` of `claims.proto`.
-  MARKER_DELEGATE = "MARKER_DELEGATE"  ## Value of `Marker` of row table of delegate gives.
+  NAMES_MARKER: array[Marker, string] = ["MARKER_UNSPECIFIED", "MARKER_DELEGATE", "MARKER_RESOLVER"]
+    ## Name of each value of enum `Marker` of `claims.proto`.
   LABELS_CRITIC = ["**critic:**", "**critic**:"]
     ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
   WORD_TOKENS = " tokens"  ## Word after count of tokens, as line of reflection writes it.
@@ -240,6 +247,7 @@ func claimsTurn*(
         text: quoted,
         confidence: row[1].confidenceCell,
         state: state,
+        marker: Marker.Delegate,
         tokens: figures.tokens,
         cost: figures.cost,
         address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
@@ -293,7 +301,8 @@ func lineClaim*(claim: Claim): string =
   if claim.text.len > 0: put "text", claim.text.quotedText
   if claim.confidence != 0: put "confidence", $claim.confidence
   if claim.state != State.Unspecified: put "state", NAMES_STATE[claim.state]
-  put "marker", MARKER_DELEGATE
+  let marker = (if claim.marker == Marker.Unspecified: Marker.Delegate else: claim.marker)
+  put "marker", NAMES_MARKER[marker]
   if claim.tokens != 0: put "tokens", $claim.tokens
   if claim.cost != 0: put "cost", $claim.cost
   if claim.address.len > 0: put "address", claim.address.quotedText
