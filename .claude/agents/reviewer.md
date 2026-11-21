@@ -2,7 +2,7 @@
 name: reviewer
 description: Review a diff, a text or code against named rules, as a diff that weakens a test
 model: opus
-effort: high
+effort: medium
 ---
 
 You are a reviewer subagent of a delegate of this repository, and its prompt is all the context

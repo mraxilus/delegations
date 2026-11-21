@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f52e8f8e8f4f2a1d |
+| Rules   | 3dfc796190bac2d1 |
 | Pruned  | 6ed293192c184658e451559ebaee8bca91602836 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -1489,10 +1489,11 @@ Verified by driven check:
 - one frame of the page classifies each live object once, in each state that it counts.
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
-`placeInto` writes give what `placeObject` gave. Verified by `suites.nim`: each exit of placing
-tests the horizon of its object once at most. A line and a plane through the origin are among them,
-and each lands where the reads alone land. Assumed: that no edit of the desktop lands between
-`placeEdited` and the emission of its frame, which no check drives.
+`placeInto` writes give what `placeObject` gave. Each reader answers alike from the placements of a
+frame and from placing each object. Verified by `suites.nim`: each exit of placing tests the horizon
+of its object once at most. A line and a plane through the origin are among them, and each lands
+where the reads alone land. Assumed: that no edit of the desktop lands between `placeEdited` and the
+emission of its frame, which no check drives.
 
 ## Scene storage
 
@@ -2715,13 +2716,12 @@ bound. What the library costs is the library's (Render paths). The check names t
 copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,038 objects it reads
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all.
 
-**The hang of the selection menu writes its place field by field too** (Interaction model). The
-page hangs the menu on each frame that it shows, and an object built into the result of the hang
-costs one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
-anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls,
-and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene
-has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
-`pointMenuHung`.
+**The hang of the selection menu writes its place field by field too** (Interaction model). The page
+hangs the menu on each frame that it shows, and an object built into the result of the hang costs
+one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
+anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls, and
+fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene has
+objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in `pointMenuHung`.
 
 **A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
 template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
