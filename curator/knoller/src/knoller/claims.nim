@@ -4,9 +4,10 @@
 ##     comment group as outline groups them.
 ##   Commented code holds no prose: `#` comment whose first line stands at even step, or reads as
 ##     code (`isCode`), and `#` line that reads as code (`linesCode`). Hand comments code with no
-##     space after marker, and tool with one, so both read as code (ruling `D3 a` of #980); article
-##     check reads same lines (`articles.nim`). Nor does line without step (`isStepless`), aligned
-##     column or deeper line that continues it hold prose. Two spaces after closing mark, comma or
+##     space after marker, and tool with one, so both read as code (#980, `D3 a` on commented
+##     code); article check reads same lines (`articles.nim`). Nor does line without step
+##     (`isStepless`), aligned column or deeper line that continues it hold prose. Two spaces
+##     after closing mark, comma or
 ##     semicolon space prose, and align no column. Generated doc stands in string, so rule reads
 ##     none, as Architect ruled on rule 2 of #443.
 ##   Bare span takes backticks. Path is word with file extension (`EXTENSIONS_FILE`), as

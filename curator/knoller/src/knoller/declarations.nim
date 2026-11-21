@@ -24,9 +24,9 @@
 ##   Missing doc passes one-line borrow or forward stacked under group comment (VI.1), code
 ##     inside `quote do:`, whose generator carries docs through parameter, and doc on line above
 ##     declaration that is no routine, at its indent, which stands out of place rather than
-##     missing; doc opening file is module's, so declaration below it takes its own. Stack is run
-##     of routines on one line each, at one indent, group comment right above it, `#` and never
-##     doc.
+##     missing; doc that only blank lines and `#` comments stand above is module's, so declaration
+##     below it takes its own. Stack is run of routines on one line each, at one indent, group
+##     comment right above it, `#` and never doc.
 ##   Forward declaration takes doc of its routine, since `nim doc` reads doc there and drops doc
 ##     of definition (read in `nim doc` of Nim 2.2.12 and 2.4.0); fixer leaves its move for hand.
 ##   Doc position (VI.9): each doc stands where `nim doc` reads it, in one position for each
@@ -38,9 +38,9 @@
 ##     (`target`), where blank line or `#` comment stands above it. Doc right below other code,
 ##     or that declaration holds as its own, stays: either may own it. Doc that only blank lines
 ##     and `#` comments stand above stays too, as doc of module, since `nim doc` reads it so
-##     (rulings `D3 a` and `D1 a` of #980; `nim jsondoc` of Nim 2.4.0). Doc below code or other
-##     doc moves, though `nim doc` reads module's there too, since hand that wrote it above
-##     declaration meant it for that one.
+##     (#980: `D3 a` on file's start, `D1 a` on comments above; `nim jsondoc` of Nim 2.4.0). Doc
+##     below code or other doc moves, though `nim doc` reads module's there too, since hand that
+##     wrote it above declaration meant it for that one.
 ##   One-line doc inside value over lines, where `nim doc` reads none, moves after `=` ending
 ##     first line where it fits, else after close of value; inside value opening `block`, it
 ##     stays for hand, as missing doc leaves such value. Binding of any reach reads so, and so
@@ -377,7 +377,7 @@ func placements(source: string): seq[Placement] =
 
     # Read doc above at declaration's indent, which block opening above may own, and line below
     #   signature, whose indent routine's doc takes; doc under blank lines and `#` comments alone
-    #   is module's, as `nim doc` reads it (rulings `D3 a` and `D1 a` of #980).
+    #   is module's, as `nim doc` reads it (#980: `D3 a` on file's start, `D1 a` on comments above).
     var top = i - 1
     while top >= 0 and opening[top] and lines[top].indentWidth == indent: dec top
     var below = e + 1

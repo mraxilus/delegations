@@ -32,7 +32,7 @@
 ##     signature, stands at body's indent, every continuation line of head moves by one step, so
 ##     shallowest takes `STEP_CONTINUATION` past head's first line (`liftsHead`).
 ##   Mark: separator after last item of call or signature spanning lines marks split hand wants
-##     (X.3, `isMarked`), so list keeps one item to line though it fits. Fixer never writes it,
+##     (X.3, `isMarked`), so list keeps one item to line though it fits. Fixer never adds it,
 ##     so split it makes joins again where list fits, as after rename that shortens it; nor
 ##     inserts it into other list, whose rows hand keeps either way.
 ##   Checks and fixers share one reading (`separators`, `isMarked`, `rewritesSignature`,

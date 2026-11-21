@@ -14,8 +14,8 @@
 ##     word above.
 ##   Commented code holds no prose (VI.10), so check and fixer skip each line comment form
 ##     reads as code (`linesCode` of `claims.nim`): hand comments it with no space after
-##     marker, and tool with one, as Architect ruled (`D3 a` of #980). So `#func <=(a, b)`
-##     names value `a`, never article.
+##     marker, and tool with one, as Architect ruled (#980, `D3 a` on commented code). So
+##     `#func <=(a, b)` names value `a`, never article.
 ##
 ##   Cost: variable named `a` before noun stays article to fixer, as in `scale a vector`; fix
 ##     deletes it, and reading holds that case, which VI.10 asks in backticks anyway.
