@@ -1637,6 +1637,57 @@ suite "Mesh":
     check directionAcross(a, b, Position(x: 3, y: 6, z: 9)).isNone
 
 
+  test "a segment steps off as the join does at every scale, and refuses at tolerance of one unit":
+    # Untested below unit scale (repository issue 970). Cross is judged at scale one, as
+    #   ribbon shaders' sibling tests are: segment whose cross is no more than tolerance
+    #   refuses, where scale-free join still names direction.
+    func scaled(at: Position, factor: float): Position =
+      ## Move place `factor` times as far from origin.
+      Position(x: factor * at.x, y: factor * at.y, z: factor * at.z)
+    var (stepped, refused) = (0, 0)
+    for factor in [1.0e-6, 1.0e-4, 1.0e-2, 1.0, 1.0e3, 1.0e6]:
+      for i in 0..<SAMPLES:
+        let
+          tail = PLACES[i].scaled(factor)
+          head = PLACES[(i + 7) mod SAMPLES].scaled(factor)
+          eye = PLACES[(i + 13) mod SAMPLES].scaled(factor)
+          computed = directionAcross(tail, head, eye)
+          algebraic = directionNormal(tail.toMultivector ∧ head.toMultivector ∧ eye.toMultivector)
+        if norm(cross(head - tail, eye - tail)) > TOLERANCE_ABS:
+          inc stepped
+          check computed.isSome and algebraic.isSome
+          if computed.isSome and algebraic.isSome: check computed.get =~ algebraic.get
+        else:
+          inc refused
+          check computed.isNone
+    check stepped > 0 and refused > 0
+
+
+  test "the anchor of a placement is the anchor of its multivector, override included":
+    # Untested against its twin (repository issue 970): frame's form of `anchorFor` reads
+    #   placement, and form that reads multivector is its reference, for every kind.
+    # View origin moved to eye, as each frame moves it, so both forms read about it.
+    var camera = cameraAround(Position(x: 0.5, y: -0.3, z: 0.2), 14.0, Direction(x: 3, y: 2, z: 1))
+    let
+      (eye, frame) = camera.moveOriginView
+      scale = camera.drawExtentFor(eye, frame, 600, 0.0)
+    check norm(camera.originView - ORIGIN) > 1.0
+    var (answered, refused) = (0, 0)
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i], Multivector(),
+          1.0 + POINTS[i]]:
+        for override in [none(Position), some(PLACES[(i + 3) mod SAMPLES])]:
+          let
+            reference = anchorFor(m, override, scale)
+            placed = anchorFor(toPlacement(m, override), scale)
+          check placed.isSome == reference.isSome
+          if reference.isSome and placed.isSome:
+            inc answered
+            check placed.get =~ reference.get
+          else: inc refused
+    check answered > 0 and refused > 0
+
+
   test "grid cells are one fixed size, at every reach the camera asks for":
     # Size this replaced doubled with reach, so reader who dollied out found.
     #   ground silently re-scaled under them and no distance read off it was comparable
