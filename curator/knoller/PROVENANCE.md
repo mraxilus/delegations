@@ -832,7 +832,7 @@ then the fix of one rule alone, on a copy of the library.
   `pga/emitters.nim`, 2026-11-21. There `emitFunc` and `emitTypeDef` are each a `func` that takes
   a `NimNode`, so the fix writes `proc` (D5 a of #980). The copy that this build fixes, every rule
   at once, builds with Nim 2.4.0 in each configuration of `tests/`. Each of rga2d to rga6d gives 33
-  OK, 0 failed and 5 skipped, and each of cga3d to cga6d gives 28 OK, 0 failed and 10 skipped.
+  OK, 0 failed and 5 skipped. Each of cga3d to cga6d gives 28 OK, 0 failed and 10 skipped.
 - Each rule finds nothing more on its fixed copy.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and 5
   skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For pure routines, rga5d gives 33 OK, 0
@@ -1028,13 +1028,13 @@ An argument splits its own call only where that call is the whole argument.
 **No fixer adds a separator after the last item of a list (X.3).** That separator is the one
 mark of a split that the hand wants. A fixer that added it would make each of its splits
 permanent, since the mark keeps a call or a signature split where it fits. So no list gains one: a
-call, parameters, an array, a seq, a set, a table, a tuple of several items, a constructor or an
-import bracket. A
+call, parameters, an array, a seq, a set, a table, a tuple, a constructor or an import bracket. A
 separator that the hand wrote stays. The Architect ruled so on D2 of
 [the rules walk (#980)](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070).
 
-- Each compiler accepts the separator in each of these lists, and `;` after the last parameter
-  group. Verified by hand with 2.2.12, 2026-10-02, and with 2.4.0, 2026-10-29.
+- Each compiler accepts the separator in each of these lists, where a tuple holds several items,
+  and `;` after the last parameter group. Verified by hand with 2.2.12, 2026-10-02, and with
+  2.4.0, 2026-10-29.
 - A list that no call or signature opens, such as an array, keeps its rows with or without the
   separator, since no fixer joins it.
 - Verified by `suites/test_wrapping.nim`, `suites/test_chain.nim` and `suites/test_regressions.nim`:
@@ -1331,9 +1331,10 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
   does a doc on the line above a declaration that is no routine, at its indent, because it stands
   out of place.
-- A doc that only blank lines and `#` comments stand above is the doc of the module, as
+- A doc that only blank lines and `#` comments stand above is the doc of the module. The
+  Architect ruled so on
   [D3 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7054999563) and
-  [D1 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070) of #980 rule.
+  [D1 a](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070) of #980.
   It is the doc of no declaration. So missing doc reports the declaration right below it, and
   writes its placeholder there.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
