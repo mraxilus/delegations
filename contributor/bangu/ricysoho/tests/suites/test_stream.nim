@@ -316,6 +316,14 @@ func refusalNamed(text: string): Option[(string, int)] =
   if reading.is_read: none((string, int)) else: some(($reading.refusal, reading.start))
 
 
+func refusalSigned(text: string): Option[(int, string)] =
+  ## tcidu le porsi gi'e dunda le stuzi .e le tcila pe le nu to'e curmi ta'i `Sign`
+  ##   .i dunda no da va'o lo nu le porsi cu se tcidu gi'a se to'e curmi ta'i lo drata javni
+  let reading = text.readStream
+  if reading.is_read or reading.refusal != Refusal.Sign: none((int, string))
+  else: some((reading.start, reading.detail))
+
+
 func widthsRead(text: string): Option[seq[int]] =
   ## tcidu le porsi gi'e liste lo klani be lo stuzi pe ro valsi ta'i lo porsi
   ##   .i dunda no da va'o lo nu le porsi cu se to'e curmi
@@ -914,7 +922,8 @@ func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: O
 
 
 func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
-  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D4 b` .e `D2 a` .e `D3 a` pe `#1003`
+  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D4 b` .e `D2 a` .e `D3 a` pe `#1003` ge'u .e lo
+  ##     stuzi poi `D6 b` .e `D7 a` cu stidi ke'a
   ##   .i dunda lo cmavo .a le stuzi pe le sinxa poi se to'e curmi
   ##   .i ro pagbu cu cmima `MARKS_PREFIXED`
   ##   .i zoi gy. - .gy. .e zoi gy. − .gy. cu se tcidu va'o lo nu lo lerfu po'u `1` cu se lidne le
@@ -1164,17 +1173,28 @@ suite "Internal: Stream":
         check text.isSpanned  # le flalu pe lo stuzi
       # le valsi cu vasru ro stuzi pe le sinxa
       check ("li " & sign & "5").widthsRead == some(@[2, sign.len, 1])
-      # le sinxa poi na lidne lo lerfu ku'o .a le sinxa poi se lidne lo lerfu cu se to'e curmi
+      # le sinxa poi na lidne lo lerfu pe `0` bi'o `9` ku'o .a le sinxa poi se lidne lo lerfu pe
+      #     `0` bi'o `9` cu se to'e curmi
+      #   .i le tcila cu du le sinxa poi cfari bu'u le stuzi
       for (text, at) in [
           (sign, 0), ("li " & sign, 3), (sign & " 5", 0), ("5" & sign & "5", 1), ("5" & sign, 1),
           (sign & sign & "5", 0), (sign & "a5", 0), (sign & "π", 0), (sign & "∞", 0),
           (sign & "€5", 0), (sign & "$5", 0), ("€" & sign & "5", 0), (sign & ".5", 0)]:
         checkpoint text
-        check text.refusalNamed == some(("Sign", at))
+        check text.refusalSigned == some((at, text.character(at)))
+      # lo kutle'u .e denpa bu poi na zvati lo jbini be re lerfu cu na fendi lo namcu
+      #   .i se ki'u bo le valsi cu jorne le namcu poi lidne ke'a to `CLL 18.6` toi
+      for (text, cmavo) in [
+          ("li 5 " & sign & "3", @["li", "mu", word, "ci"]),
+          ("li 5." & sign & "3", @["li", "mu", word, "ci"]),
+          ("li 5%" & sign & "3", @["li", "mu", "ce'i", word, "ci"])]:
+        checkpoint text
+        check text.cmavoRead == some(cmavo)
 
 
   test "Percent sign reads as ce'i right after a digit, where no digit follows":
-    # `Architect` jdice `D4 b` bu'u `#1003`
+    # `Architect` jdice zo ce'i bu'u `#1003` ta'i `D4 b`
+    #   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
     #   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
     for (text, cmavo) in [
         ("li 35%", @["li", "ci", "mu", "ce'i"]),
@@ -1188,11 +1208,14 @@ suite "Internal: Stream":
         ("%", 0), ("li %", 3), ("5 %", 2), ("5%5", 1), ("%5", 0), ("5%%", 2), ("a%", 1),
         ("5.%", 2)]:
       checkpoint text
-      check text.refusalNamed == some(("Sign", at))
+      check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u na fendi lo namcu to `CLL 18.6` toi
+    check "li 5% 5".cmavoRead == some(@["li", "mu", "ce'i", "mu"])
 
 
   test "Constant sign reads as its words where no digit or other sign touches it":
-    # `Architect` jdice `D4 b` bu'u `#1003`
+    # `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    #   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
     #   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
     for (sign, words) in CONSTANTS_RULED:
       for (text, cmavo) in [
@@ -1209,10 +1232,12 @@ suite "Internal: Stream":
           ("2" & sign, 1), (sign & "2", 0), (sign & sign, 0), ("5%" & sign, 2),
           ("5€" & sign, 4), (sign & "€5", 0), (sign & "-5", 0), ("$" & sign, 0)]:
         checkpoint text
-        check text.refusalNamed == some(("Sign", at))
-    # lo kutle'u na fendi lo namcu to `CLL 18.6` toi
-    #   .i se ki'u bo lo'u ci pa fi'u re le'u cu sinxa li 31 fi'u re lo'o to `CLL 18.7` toi
+        check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u .e denpa bu poi na zvati lo jbini be re lerfu cu na fendi lo namcu to
+    #     `CLL 18.6` toi
+    #   .i se ki'u bo lo'u ci pa fi'u re le'u cu sinxa li 31 fi'u re lo'o to `CLL 18.3` toi
     check "li 3 ½".cmavoRead == some(@["li", "ci", "pa", "fi'u", "re"])
+    check "li 5.π".cmavoRead == some(@["li", "mu", "pai"])
 
 
   test "Amount opens before the sign of its number":
@@ -1233,15 +1258,17 @@ suite "Internal: Stream":
     # le jdini sinxa cu pencu lo lerfu pe `0` bi'o `9` to `D3 a` toi
     for (text, at) in [("€-5", 0), ("$-5", 0), ("-€5", 0), ("5%€", 2)]:
       checkpoint text
-      check text.refusalNamed == some(("Sign", at))
+      check text.refusalSigned == some((at, text.character(at)))
     # lo jdini sinxa poi se lidne lo namcu poi fanmo zoi gy. % .gy. cu krasi lo drata jdini klani
     let five = @["lo", "ronru'u", "be", "li", "mu"]
     check "€5%€5".cmavoRead == some(five & @["ce'i", "be'o", "ku"] & five & @["be'o", "ku"])
     check "€5%€5".isSpanned  # le flalu pe lo stuzi
 
 
-  test "Each text of digits, letters, number signs and spaces reads as ruling D4 b reads it":
+  test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
     # `Architect` jdice `D4 b` .e `D2 a` .e `D3 a` bu'u `#1003`
+    #   .i le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ½ .gy. cu denpa `D6`
+    #   .i lo sinxa poi pencu lo drata sinxa cu denpa `D7`
     #   .i le flalu cu tcidu ro selci'a poi `MARKS_PREFIXED` cu zbasu ke'a
     #   .i `prefixedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
     var
@@ -1255,7 +1282,8 @@ suite "Internal: Stream":
           text = pieces.join
           (words, refused) = pieces.prefixedRead
         checkpoint text
-        if refused.isSome: check text.refusalNamed == some(("Sign", refused.get))
+        if refused.isSome:
+          check text.refusalSigned == some((refused.get, text.character(refused.get)))
         else:
           check text.cmavoRead == some(words)
           check text.isSpanned  # le flalu pe lo stuzi

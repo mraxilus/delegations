@@ -338,7 +338,7 @@ suite "Internal: Prose":
 
 
   test "Each number sign at each place of a number reads as the tree of its words written out":
-    # `Architect` jdice `D4 b` bu'u `#1003`
+    # `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
     #   .i lo sinxa pe lo namcu cu sinxa lo valsi po'o
     #   .i se ki'u bo lo tricu pe le selci'a cu mintu lo tricu pe le valsi
     var
@@ -350,7 +350,7 @@ suite "Internal: Prose":
         # lo jdini klani cu vasru le sinxa pe le namcu to `CLL 18.3` toi
         pairs.add (sign & number & "€", "lo ronru'u be li " & word & " " & number & " be'o ku",
           @FRAMES_PROSE)
-      pairs.add (number & "%", number & " ce'i", @FRAMES_NUMBER)  # `CLL 18.10`
+      pairs.add (number & "%", number & " ce'i", @FRAMES_NUMBER)  # `CLL 18.3`
     for (sign, words) in CONSTANTS_PROSE: pairs.add (sign, words, @FRAMES_NUMBER)
     pairs.add ("-5%", "ni'u 5 ce'i", @FRAMES_NUMBER)
     for (text, spelled, frames) in pairs:
