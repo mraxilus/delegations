@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 2f8b5d4008e4cf4b |
+| Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | e65b5ec5f37320386d84695b2c8bd551ecffc0f2 |
 
@@ -1830,6 +1830,35 @@ and name reserved passes too. The shipped version is the schema at the tip of ba
 - Cost: a message deleted whole passes, because bytes carry no name of a message. A field of its
   type, where one exists, is deleted too, and the check holds that deletion.
 - Cost: a folder new on the branch, or gone from base, passes, because nothing shipped holds it.
+
+**`check-schemas` holds a folder that takes a new package against its shipped image under that
+package.** `buf` pairs the messages of two sides by their full names, so under a new package it
+pairs none. Its rule `FILE_SAME_PACKAGE` holds only a file of the same path, so `buf` alone passes
+each break of a renamed file. So the check first builds each side to an image, which holds each
+package and each full name as `buf` parsed them. Where one package of base is gone and one new
+package stands, `underPackage` writes the shipped image under the new package. The Architect
+ruled this on #981 (comment 7053327767).
+
+- Each field whose type the gone package defines takes the new package too, matched by full name.
+  So no form of the statement or of a comment reads wrong, and a nested package keeps its name.
+  The root package moves both ways.
+- The check refuses a new package beside an `Any`, a `service` or an `extend` in the image. There
+  the full name reaches data or a path. It also refuses packages that do not map one to one.
+- Verified by `suites/test_schemas.nim`: a new package alone, a break under it, and a renamed
+  file. It holds the statement and a name in forms that a read of text misses, the root package, a
+  nested package and an import. It also holds `Any`, `service` and `extend`, a split and a merge.
+  On 2026-11-21, each mutant that drops one step of `underPackage` or of its readers failed a test.
+- Rejected: a rewrite of the text of each shipped schema. It misses forms that `buf` reads, as a
+  comment before the statement, and moves a nested package. Each miss passes a break (#996).
+- Rejected: `except: [FILE_SAME_PACKAGE]`. A run of `buf` 1.75.0 on `exchanges.proto` of rictadni
+  at `970a233d`, on 2026-11-20, shows the trap. Under it, a new package with a retyped and a
+  renumbered field gives 0 findings. Under the new package, the same change gives 3.
+- Cost: a package may move its messages into another package that its folder holds already. Only
+  `FILE_SAME_PACKAGE` holds that move, so where the file goes, a break passes. A run of `buf`
+  1.75.0 at `5dddf336`, on 2026-11-21, gives 1 finding for the same path and 0 for a new one.
+- Cost: each side builds to an image first, so `buf` runs three times for each folder held. In the
+  cloud container of Claude Code, on 2026-11-21, a folder of one schema took 0.064 s at `14e8939f`
+  and 0.137 s at `5dddf336`. Each figure is the mean of 20 runs.
 
 **`buf` 1.75.0 comes from the registry of npm, checked against its SHA-512.** npm serves the
 binary of each platform as a tarball, and publishes its digest beside it. `bufbuild.nim` pins

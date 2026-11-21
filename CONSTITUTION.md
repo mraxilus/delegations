@@ -197,12 +197,15 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
 8. Make each routine correct for each value of each type that it takes. A routine can hold
    several forms, as a fast table beside a general chain. Where a form is correct for some values
    only, give those values a type that holds no other value. Only that type reaches that form,
-   and no test of a value at runtime selects it. Where no type can hold those values, as for an
-   empty input, a runtime test can select the form. Every other type keeps the general form.
+   and no test of a value at runtime selects it. Where no type can hold those values, a runtime
+   test can select the form. An empty input is such a value, and so is an operation that a
+   person picks at runtime, as from a catalogue.
 
-   Where these types are instances of one generic type, as `MultivectorOf[B]` is, each routine
-   that takes one instance takes every instance. Where a value has no result, the routine follows
-   IV.4: its return type says so, or it fails at the earliest boundary.
+   Every other type keeps the general form. Where these types are instances of one generic type,
+   as `MultivectorOf[B]` is, a routine that takes a narrower instance takes every instance. A
+   routine that takes only the whole instance, as `Multivector` is, keeps it. Where a value has
+   no result, the routine follows IV.4: its return type says so, or it fails at the earliest
+   boundary.
 
 ```nim
 func `==`*(m, n: Multivector): bool {.error:

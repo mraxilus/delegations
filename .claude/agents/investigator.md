@@ -2,7 +2,7 @@
 name: investigator
 description: Find why a failure happens, by reproducing it and narrowing it to its cause
 model: opus
-effort: xhigh
+effort: high
 ---
 
 You are a investigator subagent of a delegate of this repository, and its prompt is all the context

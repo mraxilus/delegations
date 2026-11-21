@@ -2,7 +2,7 @@
 name: builder
 description: Make one independent, well defined change in its own worktree, and commit it
 model: opus
-effort: max
+effort: xhigh
 ---
 
 You are a builder subagent of a delegate of this repository, and its prompt is all the context
