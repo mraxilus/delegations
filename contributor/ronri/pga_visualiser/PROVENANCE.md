@@ -4253,16 +4253,16 @@ rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013`
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
 (`scene.multivectorText`, `scene.kindText`). A value of no kind is named as it is: zero, scalar,
-antiscalar or mixed grade. Diagnostics readings keep `%.*f` through `appendFixed`, because a live
-number that changes width is harder to read. Fixed char storage is read through `format.toText`,
-never `$toCstring`, which casts its *address* and reads empty on the JS backend.
+antiscalar, mixed grade or not finite. A subnormal object names its kind, but draws nothing: only
+the word lifts it by a power of two. Diagnostics readings keep `%.*f` through `appendFixed`, because
+a live number that changes width is harder to read. Fixed char storage is read through
+`format.toText`, never `$toCstring`, which casts its *address* and reads empty on the JS backend.
 
 *Checked.* Verified by `suites.nim` on both backends: 17,001 values across 25 decades, including
 every exact eighth. There were zero disagreements against the `%.4g` of C, and zero between
 backends. The JS entry point pins the text of the tie cases. A C-only `magnitudesAgree` stays green
 while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`. The suite
-holds each word of no kind from 1e-6 to 1e6, but a NaN, infinite or subnormal coefficient can read
-zero (issue 970).
+holds each word of no kind from subnormal values to 1e6, and at NaN and infinity (issue 970).
 
 ## Animation
 
