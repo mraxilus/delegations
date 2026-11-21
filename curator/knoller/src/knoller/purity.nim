@@ -29,7 +29,7 @@
 ##     (ruling `D1 a` of #980); `var` alone keeps none, as §1 lets `func` write it. Check of each
 ##     type stands after source, so no line moves, and its error refuses its routine (`probed`).
 ##   Check of source as given asks same of each `func` whose types name more than builtin types
-##     and containers of value (`asksPointing`); its error leaves that check clean. Check reports
+##     and containers of value (`isPointingAsked`); its error leaves that check clean. Check reports
 ##     each `func` that points as `proc` (ruling `D5 a` of #980), and fixer writes `proc`, same
 ##     width, unless forward declaration of routine stands, whose kind must match.
 ##   Included file checks inside text of file including it, which caller passes around it
@@ -410,7 +410,7 @@ func isAskedPointing(routine: Routine): bool =
   )
 
 
-func asksPointing*(source: string): bool =
+func isPointingAsked*(source: string): bool =
   ## Whether compiler answers for some `func` of source whether its parameter type points.
   source.routines(KEYWORD_FUNC).anyIt(it.isAskedPointing)
 

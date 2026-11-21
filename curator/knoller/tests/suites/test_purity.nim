@@ -335,7 +335,7 @@ suite "Style §1":
       "func held(c: var Cell): int =\n" &
       "  c.x\n\nfunc bump(x: var int) =\n  inc x\n\nfunc ahead(c: Cell): int\n\n" &
       "func ahead(c: Cell): int =\n  c.x\n\necho size(newJObject()), ahead(Cell())\n"
-    check source.asksPointing
+    check source.isPointingAsked
     let pures = proven(source)
     check pures.sites.len == 0
     check pures.pointing ==
@@ -347,7 +347,8 @@ suite "Style §1":
     let (edits, reports) = editsPure("a.nim", source, pures, [])
     check source.applied(edits).count("proc ") == 2
     check reports.mapIt(it.line) == pures.pointing[0 .. 1].mapIt(it[0])
-    check not "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = 2 * x\n".asksPointing
+    let plain = "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = 2 * x\n"
+    check not plain.isPointingAsked
 
 
   test "file asked for `func` alone, which checks clean in no configuration, warns nothing":
@@ -355,7 +356,7 @@ suite "Style §1":
     #   and check clean nowhere, so reason would say each `proc` stays where none stands.
     let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n" &
       "func size(n: JsonNode): int =\n  n.len\n\nlet y: int = \"a\"\n"
-    check source.asksPointing
+    check source.isPointingAsked
     let pures = proven(source)
     check pures.reason.len == 0 and pures.pointing.len == 0 and pures.sites.len == 0
 

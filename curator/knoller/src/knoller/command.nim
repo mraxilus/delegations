@@ -888,7 +888,7 @@ proc resolvePures*(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Pures] =
   ## Prove, through compiler, each `proc` of modules files name that checks as `func`, and each
-  ##   `func` whose parameter type points, which stays `proc` (`asksPointing`), keyed by
+  ##   `func` whose parameter type points, which stays `proc` (`isPointingAsked`), keyed by
   ##   path as named. Candidates read across every Nim file git lists in project of file,
   ##   nearest directory holding nimble file; each proves in its own directory, with toolchain
   ##   `bin` gives, as project alone compiles it, since command line names no define
@@ -910,7 +910,7 @@ proc resolvePures*(
       (scope, candidates) = found[project]
       relative = absolute.relativePath(project, '/')
       sites = candidates.getOrDefault(relative)
-    if sites.len == 0 and not source.asksPointing: continue
+    if sites.len == 0 and not source.isPointingAsked: continue
     let (bin, reason) = bin(absolute, nim, seen, toolchains)
     if reason.len > 0:
       result[path] = Pures(reason: reason)
