@@ -821,9 +821,6 @@ the landmark aliases.
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 `knoller --check pga.nim pga tests`, built at `bca6a142`, reports `func-pure` at
 `pga/algebra.nim:172`. It reports `marker-used` at `pga/operators.nim:10` and `tests/suites.nim:11`.
-`knoller --check .`, built at `d0d4e976`, also reports `func-pure` at lines 9 and 28 of
-`pga/emitters.nim`, 2026-11-21. There `emitFunc` and `emitTypeDef` are each a `func` that takes a
-`NimNode`, so the fix writes `proc` (D5 a of #980).
 The counts below come from a driver outside the tree. It calls the resolvers of the command line,
 then the fix of one rule alone, on a copy of the library.
 
@@ -831,6 +828,9 @@ then the fix of one rule alone, on a copy of the library.
   no private symbol, as the ruling counts.
 - Pure routines: 1 report, `generateUpTo`, and the fix writes +1 −1 lines, as the ruling counts.
   The driver ran before D5 a, so it reads neither `func` of `pga/emitters.nim`.
+- `knoller --check .`, built at `d0d4e976`, also reports `func-pure` at lines 9 and 28 of
+  `pga/emitters.nim`, 2026-11-21. There `emitFunc` and `emitTypeDef` are each a `func` that takes
+  a `NimNode`, so the fix writes `proc` (D5 a of #980).
 - Each rule finds nothing more on its fixed copy.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and 5
   skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For pure routines, rga5d gives 33 OK, 0
@@ -1024,7 +1024,7 @@ An argument splits its own call only where that call is the whole argument.
 - A line break that joining could read again stays, such as one between two operands.
 
 **No fixer writes a separator after the last item of a list (X.3).** That separator is the one
-mark of a split that the hand wants. A fixer that wrote it would make each split that it makes
+mark of a split that the hand wants. A fixer that wrote it would make each of its splits
 permanent, since the mark keeps a call or a signature split where it fits. So no list gains one: a
 call, parameters, an array, a seq, a set, a table, a tuple, a constructor or an import bracket. A
 separator that the hand wrote stays. The Architect ruled so on D2 of
@@ -1326,9 +1326,9 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
   does a doc on the line above a declaration that is no routine, at its indent, because it stands
   out of place.
-- A doc that only blank lines and `#` comments stand above is the doc of the module, and of no
-  declaration (D3 a and D1 a of #980). So missing doc reports the declaration right below it, and
-  writes its placeholder there.
+- A doc that only blank lines and `#` comments stand above is the doc of the module (D3 a and
+  D1 a of #980). It is the doc of no declaration. So missing doc reports the declaration right
+  below it, and writes its placeholder there.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
   string and a character literal hold no bracket and no comment for it. A line whose last token
   is `,`, or an operator that ends in `=` or `&`, continues its statement.
@@ -1432,20 +1432,20 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   below other code stays, because that code can own it. So does a doc that a declaration holds as
   its own. A doc above a local binding stays, since a local binding takes none.
 - A doc that only blank lines and `#` comments stand above stays where it stands, as the doc of
-  the module, since `nim doc` reads it so. The Architect ruled so on D3 a and on
-  [D1 a of #980](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070).
-  So a license header or a block comment above it changes nothing. Doc position reads the first
-  line of the file that holds code or opens a doc, and a doc whose run opens there is the
-  module's. `nim jsondoc` of 2.4.0 reads it as the description of the module, and gives the
-  binding right below it no doc. Once missing doc writes its placeholder there, it reads both.
-  Verified by hand, 2026-11-21, on probes under no line, under a license header and under a block
-  comment, and on one probe after the placeholder.
+  the module. The Architect ruled so on D3 a and on
+  [D1 a of #980](https://github.com/mraxilus/delegations/pull/980#issuecomment-7062317070),
+  since `nim doc` reads it so. So a license header or a block comment above it changes nothing.
+- Doc position reads the first line of the file that holds code or opens a doc. A doc whose run
+  opens there is the module's. `nim jsondoc` of 2.4.0 reads it as the description of the
+  module, and gives the binding right below it no doc. Once missing doc writes its placeholder
+  there, it reads both. Verified by hand, 2026-11-21, on probes under no line, under a license
+  header and under a block comment, and on one probe after the placeholder.
 - Elsewhere at module level, `nim jsondoc` of 2.4.0 reads a doc above a declaration into the
   description of the module too. So the move gives that doc to its declaration, since the hand
   that wrote it there meant it for that one. That holds for a doc below another doc at the start
-  of the file too. Verified by hand, 2026-11-21, on one probe of a doc under a blank line past
-  other code, and one below a doc of the module. A probe after each move reads the doc as that
-  of its declaration, and the doc of the module stays.
+  of the file too. Verified by hand, 2026-11-21, on a probe of a doc under a blank line past
+  code, and on one below a doc of the module. A probe after each move reads the doc as that of
+  its declaration, and the doc of the module stays.
 - A one-line doc can stand on the line below the first line of a value over lines. It moves after
   the `=` that ends that first line, where it fits. Otherwise it moves after the close of the
   value, joined where it fits, else one level in. `nim doc` reads none below an `=` that ends the
@@ -2194,11 +2194,11 @@ bare. The rule reads no string that a generator passes as a doc.
 - The comments are those that `comments` of `outlines.nim` gives, so both rules read one grouping.
 - Commented code holds no prose. It is a `#` comment whose first line stands at an even step, or
   reads as code (`isCode`). Code there is a call or index glued to a name, to an operator name or
-  export marker, or to a name in backticks, as `# func <=(a, b: Order)` writes it. It is also an
-  assignment or comparison after a name, a line that ends in `=`, a keyword line that ends in
-  `:`, or a nested marker. The hand comments code with no space after the marker, and a tool
-  leaves one, so both read as code (D3 a of #980). The check of articles reads the same lines
-  (`linesCode`, `## Articles`).
+  export marker, or to a name in backticks. So `# func <=(a, b: Order)` reads as code. So does an
+  assignment or comparison after a name. It is also a line that ends in `=`, a keyword line that
+  ends in `:`, or a nested marker.
+- The hand comments code with no space after the marker, and a tool leaves one, so both read as
+  code (D3 a of #980). The check of articles reads the same lines (`linesCode`, `## Articles`).
 - A line without a step holds no prose, as the outline reads it (`isStepless`). Nor does an
   aligned column, that is two spaces or more between words outside backticks and quotes. Nor does
   a deeper line that continues one, or a `#` line that reads as code.
