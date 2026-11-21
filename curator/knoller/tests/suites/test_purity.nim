@@ -361,6 +361,24 @@ suite "Style §1":
     check pures.reason.len == 0 and pures.pointing.len == 0 and pures.sites.len == 0
 
 
+  test "type naming generic parameter of its routine is never asked, so its file proves":
+    # Case of review of #980: check of `MultivectorOf[B]` of `pga_benchmark` at end of module
+    #   crashes `nim check` of 2.4.0 with no line, so file proved nothing and lost candidates.
+    #   Such type names nothing there, so check of it could never answer.
+    let
+      types = "{.experimental: \"strictFuncs\".}\n\ntype\n  Basis = enum\n    E1, E2\n" &
+        "  Of[S: static set[Basis]] = object\n    x: array[S.card, float]\n\n"
+      asked = types & "func f[B: static set[Basis]](b: Of[B]): int = 1\n\n" &
+        "proc g(x: int): int = x + 1\n"
+      candidate = types & "proc h[B: static set[Basis]](b: Of[B]): int = 2\n\n" &
+        "proc g(x: int): int = x + 1\n"
+    check not asked.isPointingAsked
+    check proven(asked).sites == @[asked.site("proc g")]
+    let pures = proven(candidate)
+    check pures.reason.len == 0
+    check pures.sites == @[candidate.site("proc h"), candidate.site("proc g")]
+
+
   test "check reports each `proc` compiler proves, and fix writes `func` off fenced line":
     let
       source = "proc f(x: int): int = x\nproc g(x: int): int = x\nlet h = 1\n"
