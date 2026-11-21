@@ -11,6 +11,8 @@ The Architect asks you to explain decisions, not to decide them.
 
 1. Follow `GUIDE.md`, section "A decision explained". It covers `/explain`, `/explain D2` and
    `/explain all`.
-2. Record each ruling with `/rule`.
+2. Where the Architect asks again about an explanation, follow section "An explanation asked
+   again" as well.
+3. Record each ruling with `/rule`.
 
 If this file and the charter disagree, the charter wins.

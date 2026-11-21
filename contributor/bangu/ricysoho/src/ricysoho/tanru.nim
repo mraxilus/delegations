@@ -195,6 +195,14 @@ type
       ## lo selci'avla poi se lidne zo fa'o noi fanmo lo se tcidu to `CLL 19.15` toi
       ##   .i no da se to'e curmi
       ##   .i lo porsi be lo valsi cu na tcidu le selci'avla
+    Sign
+      ## lo jdini sinxa cu pencu no namcu .a re namcu
+      ##   .ija le namcu poi le sinxa cu pencu ke'a cu pencu lo drata jdini sinxa
+      ##   .i `Architect` jdice lo du'u lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e
+      ##       curmi kei bu'u `#1003` ta'i `D3 a`
+      ##   .i ji'a ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu lo jdini klani cu vasru lo valsi
+      ##       pe pa sinxa po'o to `D2 a` toi
+      ##   .i le tcila cu du le sinxa
 
   Reading* = object  ## lo jalge be lo nu tcidu lo selci'a ta'i pa valsi
     case is_word*: bool

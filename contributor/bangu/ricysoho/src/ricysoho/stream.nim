@@ -185,10 +185,14 @@ type
       ##   .i le stuzi cu fanmo le valsi
       ##   .i va'o lo nu zo zoi .a zo la'o sitna lo selci'a kei le stuzi cu se lidne le selci'a
       ##   .i slaka bu poi zvati lo jbini be re valsi pe pa selci'avla cu zvati no le re valsi
+      ##   .i va'o lo nu lo jdini sinxa cu sinxa le valsi kei le stuzi cu du `start` to `inferred`
+      ##       toi
     text*: string
       ## lo lerfu pe le valsi ta'i lo raltai
       ##   .i ro lerfu cu cmalu
       ##   .i slaka bu cu se vimcu to `CLL 3.3` toi
+      ##   .i va'o lo nu lo jdini sinxa cu sinxa le valsi kei le lerfu cu du le valsi gi'e na se
+      ##       ciska ne'i le selci'a
     pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
       ## le slaka karsna poi lo brale'u cu sinxa lo nu basna be ke'a
@@ -266,6 +270,22 @@ const
   WORD_GROUP = "ki'o"
     ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
     ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
+  LUT_WORDS_BY_SIGN = [
+    ("€", @["ronru'u"]), ("$", @["rupnu"]), ("£", @["rupnu"]), ("¢", @["fepni"]),
+    ("¥", @["ponjo", "ja", "jungo", "rupnu"]),
+  ]
+    ## lo jdini sinxa .e lo valsi poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D1 a`
+    ##   .i `jbovlaste` vasru zo ronru'u
+    ##   .i ro drata sinxa cu sinxa lo rupnu pe su'o re gugde
+    ##   .i se ki'u bo lo valsi pe `$` .e `£` .e `¢` cu cusku no gugde
+    ##   .i lo valsi pe `¥` cu cusku le re gugde poi pilno le sinxa
+  WORDS_AMOUNT_OPENING = ["lo"]  ## le valsi poi krasi lo klani be lo jdini
+  WORDS_AMOUNT_LINKING = ["be", "li"]  ## le valsi poi lidne le namcu
+  WORDS_AMOUNT_CLOSING = ["be'o", "ku"]
+    ## le valsi poi fanmo lo klani be lo jdini
+    ##   .i no bavla'i valsi cu zvati le klani
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D2 a`
   MARKS_BOUNDARY* = Whitespace + {'.'}
     ## lo sinxa poi ka'e fendi lo valsi to `CLL 3.3` toi
     ##   .i lo kutle'u .e denpa bu
@@ -625,6 +645,24 @@ func wordsLetters(text: string, start, finish: int): ReadingStream =
   ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
+func signAt(text: string, at: int): Option[int] =
+  ## dunda lo namcu pe le jdini sinxa pe `LUT_WORDS_BY_SIGN` poi cfari bu'u `at`
+  ##   .i dunda no da va'o lo nu no jdini sinxa cu cfari bu'u `at`
+  for k in 0 ..< LUT_WORDS_BY_SIGN.len:
+    if text.continuesWith(LUT_WORDS_BY_SIGN[k][0], at): return some(k)
+  none(int)
+
+
+func inferred(words: openArray[string], at: int): seq[Occurrence] =
+  ## zbasu lo valsi poi lo jdini sinxa cu sinxa ke'a
+  ##   .i ro le valsi cu vasru no stuzi gi'e cfari bu'u `at`
+  ##   .i le lerfu pe le valsi cu du le valsi
+  for word in words:
+    result.add Occurrence(
+      start: at, finish: at, text: word, stress: none(int), reading: word.readWord,
+    )
+
+
 func wordsWritten(text: string, start, finish: int): ReadingStream =
   ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
   ##   .i ro lerfu pe `DIGITS_STREAM` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo
@@ -637,11 +675,32 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
   ##   .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi to `CLL 3.3` toi
   ##   .i `wordsLetters` tcidu ro drata pagbu
+  ##
+  ## ni'o lo jdini sinxa poi pencu pa namcu cu sinxa lo jdini klani to `#1003` toi
+  ##   .i zo lo .e lo valsi pe le sinxa .e zo be .e zo li cu lidne le namcu
+  ##   .i zo be'o .e zo ku cu se lidne le namcu
+  ##   .i lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e curmi
+  ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D2 a` .e `D3 a`
+  ##   .i ji'a ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu le jdini klani cu vasru lo valsi
+  ##       pe pa sinxa po'o
+  ##
+  ## ni'o ro valsi pe le jdini klani cu vasru no stuzi
+  ##   .i ro stuzi pe le sinxa cu zvati no valsi
+  ##   .i se ki'u bo le porsi be lo valsi cu mintu le porsi be lo stuzi
   var
     occurrences: seq[Occurrence]
     at = start
+    opened = none(int)  # lo namcu pe le valsi poi krasi le namcu poi ca'o se tcidu
+    opening = start  # le stuzi pe le pamoi lerfu pe le namcu
+    signed = none(int)  # le jdini sinxa poi lidne le namcu
+  template closed() =
+    # fanmo le namcu
+    #   .i jmina zo be'o .e zo ku va'o lo nu lo jdini sinxa cu lidne le namcu
+    if signed.isSome: occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
+    (opened, signed) = (none(int), none(int))
   while at < finish:
     if text[at] in DIGITS_STREAM:
+      if opened.isNone: (opened, opening) = (some(occurrences.len), at)
       occurrences.add Occurrence(
         start: at, finish: at + 1, text: $text[at], stress: none(int),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
@@ -660,11 +719,33 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       )
       inc at
       continue
+    let sign = text.signAt(at)
+    if sign.isSome:
+      let
+        size = LUT_WORDS_BY_SIGN[sign.get][0].len
+        is_after = opened.isSome
+        is_before = at + size < finish and text[at + size] in DIGITS_STREAM
+      # le sinxa cu pencu pa namcu po'o to `D3 a` toi
+      #   .i ro namcu cu ponse su'e pa sinxa to `D2 a` toi
+      if is_after == is_before or signed.isSome:
+        return refuse(Refusal.Sign, at, text.character(at))
+      let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign.get][1] & @WORDS_AMOUNT_LINKING
+      if is_after:
+        occurrences.insert(words.inferred(opening), opened.get)
+        occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
+        (opened, signed) = (none(int), none(int))
+      else:
+        occurrences.add words.inferred(at + size)
+        signed = sign
+      at += size
+      continue
+    closed()
     let first = at
-    while at < finish and text[at] notin DIGITS_STREAM: inc at
+    while at < finish and text[at] notin DIGITS_STREAM and text.signAt(at).isNone: inc at
     let letters = text.wordsLetters(first, at)
     if not letters.is_read: return letters
     occurrences.add letters.occurrences
+  closed()
   ReadingStream(is_read: true, occurrences: occurrences)
 
 
