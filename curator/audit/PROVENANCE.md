@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 2f8b5d4008e4cf4b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
+| Pruned  | e65b5ec5f37320386d84695b2c8bd551ecffc0f2 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -3057,36 +3057,19 @@ No fixer of the chain writes a range out of the form of X.9. Verified by `suites
 source in that form goes through every fixer unwritten. A split call, a joined call and a wrapped
 signature keep each range.
 
-**Two generated data files of `rga_visualiser` held most of its call findings, 2026-10-02.**
-They were `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They
-held 11,583 of its 12,134 call rewrites: 11,252 and 331. A curator branch cannot fence them,
-because it never writes contributor code (CURATOR.md, duty 3). So their project fences them, or
-fixes them, on its own branch.
-
 **The whole-tree proof: no fix changes what code means.** Verified by hand, 2026-10-02, with a
 scratch program over `fixEntries`, `auditTree` and the parser of the compiler. The program fixed
 every Nim file of the tree in memory, on branch `main`, so scope refused nothing.
 
-- The fix wrote 173 contributor files, and no curator file. The curator code took the same
-  fixes in its own commits. The two locked nimble files stayed as written.
-- Reports by rule:
-  - calls 12,493, spaces 2,627, trailing comments 1,351;
-  - parameter separators 587, test blank lines 502, doc positions 363;
-  - signatures 191, unordered lists 142, helper blank lines 48, literal defaults 48;
-  - import brackets 19, tuple separators 11, trailing separators 6, banners 2.
-- Reports by project: `rga_visualiser` 15,477, `dance_ontology` 2,317, `pga_benchmark` 596.
-- Lines added and removed: `rga_visualiser` 98,540 and 27,048, `dance_ontology` 3,315 and 2,246,
-  `pga_benchmark` 965 and 841.
-- The static pass reported 0 findings before and after. The layout checks reported 18,709
-  findings before and 35 after.
-- A second fix wrote nothing.
-- The parser of the compiler read 131 changed files to the same tree as before. It read the
-  other 42 to the same tree once order and dropped types are normalised. That covers merged
-  import brackets, sorted lists, and a type that a literal default gives.
+- The fix wrote contributor files alone. The curator code took the same fixes in its own
+  commits, and the locked nimble files stayed as written.
+- The static pass reported 0 findings before and after, and a second fix wrote nothing.
+- The parser of the compiler read each changed file to the same tree as before, once order and
+  dropped types are normalised. That covers merged import brackets, sorted lists, and a type that
+  a literal default gives.
 - `nim check` read each changed file with the same result before and after, on its own pin and
-  config. It passed 142 on the C backend and 6 on the JavaScript backend, and 25 failed both
-  times.
-- A file that failed lacks a native library or a vendored source, or is a broken prototype.
+  config. A file that failed both times lacks a native library or a vendored source, or is a
+  broken prototype.
 
 ## Content fixes
 
@@ -3202,26 +3185,14 @@ reason, and the finding stays for the hand.
 2026-10-03, with the scratch program of `## Layout fixes`, which now asks the semantic pass too.
 It fixed every Nim file of the tree on branch `main`, with the checkouts of `koch fetch-deps`.
 
-- The fix wrote 182 contributor files, and no curator file. The curator code took the same
-  fixes in its own commits.
-- Reports of the content rules by project:
-  - `rga_visualiser`: `to<Target>` 474, tables 59, profiler imports 7, conversions 7, messages 3;
-  - `dance_ontology`: messages 66, `to<Target>` 61, tables 1, conversion 1;
-  - `pga_benchmark`: tables 22, conversions 12, profiler imports 4, `to<Target>` 3.
-- The layout rules gave 18,411 more reports, close to the figures of the layout proof.
-- Lines added and removed: `rga_visualiser` 99,020 and 27,522, `dance_ontology` 3,431 and
-  2,362, `pga_benchmark` 1,013 and 878.
-- Findings before and after: tables 100 and 18, messages 72 and 3, profiler imports 11 and 0,
-  `to<Target>` 538 and 0, conversions 20 and 0. A table that stays would cross 100 runes.
+- The fix wrote contributor files alone, and the curator code took the same fixes in its own
+  commits. A table that stays would cross 100 runes.
 - The static pass reported 0 findings before and after. A second fix wrote nothing.
-- The semantic pass resolved 34 sites, in four of the files, in 8 s.
-- The parser of the compiler read 107 changed files to the same tree as before. It read the
-  other 75 to the same tree once normalised. To the normalisation of the layout proof, it adds
-  four steps. It drops a pair of parentheses and the profiler import, reads `x.f` as `f(x)`, and
-  drops backticks in a string.
+- The parser of the compiler read each changed file to the same tree as before, once
+  normalised. To the normalisation of the layout proof, it adds four steps. It drops a pair of
+  parentheses and the profiler import, reads `x.f` as `f(x)`, and drops backticks in a string.
 - `nim check` read each changed file with the same result before and after, on its own pin and
-  config. It passed 151 on the C backend and 6 on the JavaScript backend, and 25 failed both
-  times.
+  config.
 
 ## Semantic pass
 
@@ -3378,12 +3349,6 @@ of knoller, under Content fixes.
     `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
   - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
     line is the same, so the new lines are code that waits for its own fix.
-- Verified by hand, 2026-10-05: koch built at `80954e6` gives the same output as koch built at
-  `6e5140d`, byte for byte. Each ran
-  `koch fix --dry-run --branch:main`, with no checkout that `koch fetch-deps` restores:
-  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 30.4 s;
-  - `pga_benchmark`: 1 to fix on both, in 6.1 s and 6.0 s;
-  - `dance_ontology`: 1 to fix on both, in 12.2 s and 11.8 s.
 
 ## Fixed waits
 
