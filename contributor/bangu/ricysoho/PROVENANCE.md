@@ -815,7 +815,7 @@ ni'o le nu tcidu denpa bu ta'i zo pi cu frica `CLL 3.3` noi cusku lo du'u denpa 
   .i lo mupli po'u `CLL 18.6` du lo'u ci pi pa vo pa mu le'u
   .i lo mupli po'u `CLL 18.11` du lo'u pa ki'o re ci vo ki'o mu xa ze le'u
 
-ni'o se to'e cuxna fa lo nu ro slaka bu poi se lidne pa lerfu cu se tcidu ta'i zo ki'o
+ni'o se to'e cuxna fa lo nu ro boi slaka bu poi se lidne pa lerfu cu se tcidu ta'i zo ki'o
   .i ki'u bo da'i le genturfa'i cu tcidu zoi gy. 3,14 .gy. ta'i li 3014
   .i ku'i `CLL 18.3` cusku zoi gy. In some cultures, a comma is used instead of a period in the
       symbolic version of Example 18.6 .gy.
@@ -1013,15 +1013,36 @@ ni'o **lo namcu cu na mulno pu lo valsi pe `PA`
   .i zo boi fendi re namcu mu'u lo'u le pa boi no moi le'u Verified by `suites/test_grammar.nim`.
   .i `Architect` jdice di'u bu'u `#991` ta'i `D3 a`
 
-ni'o `EBNF` pe `CLL 21.1` curmi lo nu re namcu cu lamji
-  .i se ki'u bo `isHeld` pe `grammar.nim` cu fanta lo nu `number` cu mulno pu lo valsi pe `PA`
+ni'o **lo lerfu porsi .e lo namcu cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi
+  .i se ki'u bo ro porsi be lo lerfu valsi .e lo valsi pe `PA` cu du pa lerfu porsi .a pa namcu**
+  .i `CLL 17.9` cusku lo du'u zo boi fanmo lo lerfu porsi .e lo namcu gi'e cusku zoi gy. it is
+      required when two of these appear in a row .gy.
+  .i `CLL 17.25` ciska lo'u .abu dunda by. cy. le'u gi'e cusku zoi gy. by. cy. is a single lerfu
+      string .gy.
+  .i `CLL 17.27` ciska lo'u xy. boi ro prenu cu prami le'u gi'e cusku zoi gy. requires the first
+      boi to separate the lerfu string xy. from the digit string ro .gy.
+  .i se ki'u bo le genturfa'i cu to'e curmi lo'u xy. ro prenu cu prami le'u .e lo'u mi viska re vy.
+      le'u Verified by `suites/test_grammar.nim`.
+  .i `Architect` jdice di'u bu'u `#992` ta'i `D1 a`
+
+ni'o `EBNF` pe `CLL 21.1` curmi lo nu re porsi be lo valsi pe `PA` .a lo lerfu valsi cu lamji
+  .i se ki'u bo `isHeld` pe `grammar.nim` cu fanta lo nu `number` .a `lerfu-string` cu mulno pu lo
+      valsi pe `PA` .a lo lerfu valsi
+  .i ro valsi pe `PA` .e ro lerfu valsi cu se krasi pa genvla pe `TERMINALS_JOINING` to le javni pe
+      li 812 .e li 817 .e li 987 toi
+  .i le genvla cu du `PA` .a `BY` .a `BU` .a `LAU` .a `TEI`
   .i le nu fanta cu fasnu ne'i `fillSets` .e `fillCompletions`
-  .i se ki'u bo le tricu .e lo ricpau cu vasru no namcu poi lidne lo valsi pe `PA`
-      Verified by `suites/test_grammar.nim`.
+  .i se ki'u bo le tricu .e lo ricpau cu vasru no namcu .e no lerfu porsi poi lidne lo valsi pe `PA`
+      .a lo lerfu valsi Verified by `suites/test_grammar.nim`.
   .i va'o lo nu no nu fanta kei le tricu cu tcidu zo pa pe lo'u le pano moi le'u ta'i lo klani to lu
       lo nu cuxna lo tricu li'u toi
   .i le vreji .e lo pinka pe le samtci cu ciska zo boi ba lo klani poi lidne lo namcu mu'u lo'u ro
       boi remei le'u
+  .i ji'a le vreji .e lo pinka cu ciska zo boi ba lo namcu poi lidne lo lerfu valsi mu'u lo'u ro
+      boi slaka bu le'u
+  .i ki'u bo no namcu pe le vreji .e lo pinka cu vasru lo lerfu valsi
+  .i ji'a no lerfu porsi pe le vreji .e lo pinka cu vasru lo valsi pe `PA`
+      Verified by `suites/test_prose_own.nim`.
   .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u no drata zo ro pe le vreji .e lo pinka
       cu lidne lo valsi pe `PA`
 
@@ -1042,6 +1063,16 @@ ni'o de'i `2026-11-20` pa jufra be le mulvei pe `Tatoeba` .e pa ju'agri pe `Wiki
   .i `3668385` .e `5180323` cu se to'e curmi bu'u le javni pe li 812
   .i ki'u bo lo mekso poi klani lo sumti cu nitcu zo vei to le javni pe li 300 toi
   .i le nu fanta cu jdice no drata seljdi pe le mulvei
+
+ni'o de'i `2026-11-20` pa ju'agri pe `Wikipedia` po'o cu se to'e curmi ki'u le nu fanta lo namcu pu
+    lo lerfu valsi
+  .i le romoi be le vomoi ju'agri pe `lo jbobau` cu du lo'u lo valsi be ro by. le'u
+  .i lo'u ro by. le'u cu du pa namcu
+  .i se ki'u bo zo be cu nitcu lo sumti
+  .i ji'a `2093718` .e `9144760` pe `Tatoeba` cu se to'e curmi bu'u le javni pe li 817
+  .i ji'a vo ju'agri pe `Alice` noi lu lo xe fanva li'u skicu ke'a cu se to'e curmi bu'u le javni
+      pe li 817
+  .i le nu fanta cu jdice no drata seljdi pe le mulvei .e lo mupli pe `CLL`
 
 ## ni'o ni'o ni'o lo genturfa'i pe `Earley`
 
@@ -1607,8 +1638,8 @@ ni'o **le cipra cu tcidu ro mupli poi le cukta cu cusku lo du'u ke'a drani**
   .i le cipra cu xusra lo te kancu be lo mupli poi se tcidu
 
 ni'o lo linji poi vasru lo sinxa poi na lojbo cu na se tcidu
-  .i lo sinxa poi na lojbo cu du lo nacle'u pe lo cmene be lo sumstu ge'u .a ci denpa bu .a lo cukla
-      grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a zoi gy. - .gy.
+  .i lo sinxa poi na lojbo cu du lo nacle'u pe lo cmene be lo sumstu ge'u .a ci boi denpa bu .a lo
+      cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a zoi gy. - .gy.
   .i va'o lo nu ro linji pe pa mupli cu vasru lo sinxa poi na lojbo kei no linji pe le mupli cu se
       tcidu Verified by `suites/test_corpus.nim`.
   .i le cipra cu xusra lo te kancu be lo mupli poi lo sinxa poi na lojbo cu vimcu ke'a ku'o gi'e
@@ -1776,7 +1807,7 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Stress | 30 | 5912012 | 3.9 |
 | Stream Shape | 28 | 4412245 | 4.1 |
 | Stream Hyphen | 24 | 1484737 | 4.11 |
-| Grammar tanru-unit-2 152 | 23 | 2864592 | 152 |
+| Grammar tanru-unit-2 152 | 22 | 2864592 | 152 |
 | Grammar paragraphs 4 | 21 | 2793895 | 97 |
 | Grammar tail-terms 71 | 15 | 1576931 | 111 |
 | Grammar sumti-tail-1 112 | 13 | 5181396 | 152 |
@@ -1787,8 +1818,8 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Cluster | 8 | 13820484 | 3.6 |
 | Grammar selbri 130 | 7 | 12406452 | 4.8 |
 | Grammar sentence 40 | 7 | 656510 | 972 |
-| Grammar sumti-5 95 | 6 | 5183488 | 383 |
 | Grammar guhek 808 | 5 | 2802254 | 972 |
+| Grammar sumti-5 95 | 5 | 5183488 | 383 |
 | Grammar sumti-tail 111 | 5 | 2063807 | 111 |
 | Grammar free 32 | 4 | 634760 | 4.8 |
 | Grammar gihek 818 | 4 | 2108189 | 131 |
@@ -1801,6 +1832,7 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Stream Split | 3 | 4285480 | 3.3 |
 | Grammar gek 807 | 2 | 3989793 | 97 |
 | Grammar jek 805 | 2 | 2312326 | 131 |
+| Grammar lerfu-string 817 | 2 | 9144760 | 97 |
 | Grammar mex 310 | 2 | 3855768 | 812 |
 | Grammar operand-3 385 | 2 | 3807272 | 385 |
 | Grammar relative-clause 122 | 2 | 8639562 | 122 |
@@ -1859,12 +1891,13 @@ ni'o jdima fa lo nu lo linji poi pagbu lo jufra poi cfari ne'i lo pu linji cu se
     pagbu be lo liste Verified by `suites/test_wikipedia.nim`.
   .i le cipra cu sitna lo pu linji poi le linji cu se tcidu va'o lo nu kansa ke'a
 
-ni'o **75 lo 86 ju'agri cu se tcidu
+ni'o **74 lo 86 ju'agri cu se tcidu
   .i ro ju'agri poi se to'e curmi cu na'e mapti su'o javni be fi `CLL`**
   .i vo ju'agri cu vasru lo lerfu pe `0` bi'o `9` gi'e se to'e curmi ki'u lo drata
   .i lo remoi be zo kei pe `keikei` ne'i `cmaci` cu fanmo no da to `CLL 11.1` toi
   .i `1987 so'o` ne'i `lo jbobau` cu nitcu zo boi to `CLL 18.6` toi
   .i `ro su'o re moi` ne'i `lo jbobau` cu nitcu zo boi to `CLL 18.6` toi
+  .i `ro by.` ne'i `lo jbobau` cu nitcu zo boi to `CLL 17.9` toi
   .i zoi gy. a'y .gy. ne'i `lo jbobau` cu mapti no tarmi be lo cmavo to `CLL 4.2` toi
   .i ci ju'agri cu pagbu lo jufra poi cfari ne'i lo pu linji
   .i mupli fa lo nu ne'i `cmaci` le remoi linji .e le cimoi linji cu pagbu lo jufra poi cfari ne'i
@@ -1916,7 +1949,7 @@ ni'o jdima fa lo nu `accent` pe `Oz` sinxa lo nu basna
   .i `Oz` sinxa ji'a lo nu basna kei poi na ralju mu'u zoi gy. jbìbì'o .gy.
   .i `CLL 3.9` to'e curmi lo nu lo nu basna kei poi ralju gi'e na drani cu zvati pa brivla
 
-ni'o **le genturfa'i cu tcidu 783 lo 856 ju'agri pe `Alice` ge'u .e 56 lo 173 ju'agri pe
+ni'o **le genturfa'i cu tcidu 780 lo 856 ju'agri pe `Alice` ge'u .e 56 lo 173 ju'agri pe
     `Oz`**
   .i lo ju'agri pe `Oz` vasru ji'i 300 valsi
   .i lo ju'agri pe `Oz` zi'e poi traji lo ka ce'u clani cu vasru 2233 valsi
@@ -1935,6 +1968,8 @@ ni'o ne'i `Alice` lo nu sitna cu so'i roi cfari ne'i pa ju'agri gi'e sisti ne'i 
       le re javni pe li 97 .e li 300 toi
   .i su'o drata cu vasru pa porsi be fi lo teirma'o be'o poi le re javni pe li 972 .e li 1030
       cu to'e curmi ke'a ku'o gi'a ciska pa valsi ta'i lo barda lerfu to `CLL 3.9` toi
+  .i vo ju'agri cu punji pa valsi pe `PA` ba pa lerfu valsi gi'e na punji zo boi lo jbini be le re
+      valsi mu'u lo'u .abu ji'i re roi le'u to `CLL 17.9` .e le javni pe li 817 toi
 
 ni'o ne'i `Oz` so'i ju'agri poi se to'e curmi cu punji pa brivla jo'u pa cmene ba zo la to le javni
     pe li 97 toi
@@ -2544,12 +2579,12 @@ ni'o **lo tcidu be lo mivyselci'a cu tcidu lo selci'a ro spisa
 
 ni'o **lo tcidu be lo mivyselci'a cu ralte lo mulcmi pe le romoi pagbu poi se tcidu**
   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali kei .e lo nu le bavla'i
-      genvla cu stali lo ka ce'u cmima `PA`
-  .i ki'u bo le bavla'i genvla cu jdice lo du'u xu kau pa namcu cu mulno ne'i le selcmi to `isHeld`
-      toi
+      genvla cu stali lo ka ce'u cmima `TERMINALS_JOINING`
+  .i ki'u bo le bavla'i genvla cu jdice lo du'u xu kau pa namcu .a pa lerfu porsi cu mulno ne'i le
+      selcmi to `isHeld` toi
   .i se ki'u bo ro spisa cu tisna lo selcmi poi se lidne le pamoi genvla poi cenba
   .i ji'a ro spisa cu tisna le selcmi poi lidne le genvla va'o lo nu le genvla .e le pu genvla cu
-      frica lo ka ce'u cmima `PA` Verified by `suites/test_grammar.nim`.
+      frica lo ka ce'u cmima `TERMINALS_JOINING` Verified by `suites/test_grammar.nim`.
   .i le cipra cu tcidu ro boi cimoi selci'a pe le selci'agri ta'i lo nu le selci'a cu zenba gi'e
       cenba
   .i ji'a le cipra cu vimcu pa genvla pe le midju be ro selci'a
@@ -2642,7 +2677,7 @@ ni'o **denpa bu poi romoi gi'e se lidne pa lerfu cu na fendi ca lo nu lo selci'a
   .i le se tcidu cu mintu le se tcidu be le mulselci'a Verified by `suites/test_live.nim`.
   .i le cipra cu ciska le javni gi'e pilno no fancu pe `stream.nim` .e `live.nim`
 
-ni'o jdima fa lo nu le valsi poi lidne pa denpa bu poi romoi cu na se tcidu
+ni'o jdima fa lo nu le valsi poi lidne pa boi denpa bu poi romoi cu na se tcidu
   .i mupli fa lo nu `3` pe zoi gy. mi viska li 3. .gy. cu na se tcidu ca lo nu no lerfu cu se
       ciska ba ri
 
@@ -4593,6 +4628,19 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
       pilno `37,487,945,054 instructions`
   .i `readText` cu tcidu ro selci'a ta'i lo mulno gi'e pilno `5,441,331,898 instructions` ca
       `0be7efae` gi'e pilno `5,396,715,603 instructions` ca `f86b429f`
+- ny.mai **lo nu fanta lo nu lo lerfu porsi cu mulno**
+  .i ro boi remei cu kancu `89576aa5` .e `8afcc329` noi fanta lo nu lo lerfu porsi cu mulno
+  .i ro namcu pe le vi pagbu cu selmre de'i `2026-11-20` sepi'o `callgrind` pe `valgrind 3.22.0`
+  .i ro jbezba cu selzba sepi'o `-d:release` gi'e tcidu ro selci'a pe `textsCorpora` pe
+      `suites/corpora.nim` pa roi
+  .i le selci'a cu mintu ca `89576aa5` .e `8afcc329`
+  .i `ReaderLive` cu tcidu ro valsi pa roi ne'i ro selci'a gi'e pilno
+      `31,756,083,398 instructions` ca `89576aa5` gi'e pilno `31,578,549,079 instructions` ca
+      `8afcc329`
+  .i se ki'u bo `ReaderLive` cu pilno lo samtci minde poi mleca fo `0.56%`
+  .i `readText` cu tcidu ro selci'a ta'i lo mulno gi'e pilno `5,385,489,986 instructions` ca
+      `89576aa5` gi'e pilno `5,262,697,274 instructions` ca `8afcc329`
+  .i se ki'u bo `readText` cu pilno lo samtci minde poi mleca fo `2.28%`
 
 ## Open questions
 
@@ -4625,9 +4673,3 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
       namcu poi jorne lo cmavo pe `MOI`
   .i le tricu pe `CLL 21.1` vasru le remei
   .i no samtci pagbu cu ca tcidu lo selsmu fi le tricu
-- ny.mai **lo lerfu porsi poi lidne lo valsi pe `PA` .a lo lerfu valsi**
-  .i `CLL 17.9` cusku lo du'u lo'u by. cy. le'u cu du pa lerfu porsi mu'u `CLL 17.25`
-  .i `CLL 17.9` cusku lo du'u zo boi fendi lo'u xy. le'u lo'u ro le'u mu'u `CLL 17.27`
-  .i le genturfa'i cu fanta no nu `lerfu-string` cu mulno pu lo valsi pe `PA` .a lo lerfu valsi
-  .i ji'a le genturfa'i cu fanta no nu `number` cu mulno pu lo lerfu valsi
-  .i `D3 a` bu'u `#991` cu srana lo porsi be lo valsi pe `PA` po'o

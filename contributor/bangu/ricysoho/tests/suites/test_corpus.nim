@@ -19,9 +19,9 @@
 ##       .e lo nu claxu le valsi
 ##
 ## ni'o lo linji poi vasru lo sinxa pe le cukta zi'e poi na lojbo cu na se tcidu
-##   .i le sinxa cu du lo nacle'u pe lo cmene be lo sumstu be'o to `CLL 2.5` toi ge'u .a ci denpa bu
-##       .a lo cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a zoi gy. -
-##       .gy.
+##   .i le sinxa cu du lo nacle'u pe lo cmene be lo sumstu be'o to `CLL 2.5` toi ge'u .a ci boi
+##       denpa bu .a lo cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a
+##       zoi gy. - .gy.
 ##   .i va'o lo nu ro linji pe pa mupli cu vasru lo sinxa poi na lojbo kei no linji pe le mupli cu
 ##       se tcidu
 ##

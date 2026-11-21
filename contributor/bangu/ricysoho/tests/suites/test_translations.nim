@@ -34,7 +34,7 @@ import ../../tools/[tatoeba, translations]
 const
   ROOT = currentSourcePath().parentDir.parentDir.parentDir
     ## le vi selgu'a noi le papri cu cnita ke'a
-  COUNTS = [("alis", 856, 783), ("oz", 173, 56)]
+  COUNTS = [("alis", 856, 780), ("oz", 173, 56)]
     ## lo cmene be ro xe fanva be'o jo'u lo te kancu be lo ju'agri be'o jo'u lo te kancu be lo
     ##     ju'agri poi se tcidu
     ##   .i ro le te kancu cu mapti le stopapri

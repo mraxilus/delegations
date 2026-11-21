@@ -150,6 +150,8 @@ const
   RULE_SENTENCE = "sentence"  ## lo javni poi pa jufra cu mapti ke'a
   RULE_TERMS = "terms"  ## lo javni poi lo porsi be lo sumti cu mapti ke'a
   RULE_TAIL = "bridi-tail"
+  RULE_NUMBER = "number"  ## lo javni poi lo porsi be lo valsi pe `PA` cu mapti ke'a
+  RULE_LERFU_STRING = "lerfu-string"  ## lo javni poi lo porsi be lo lerfu valsi cu mapti ke'a
     ## lo javni poi le selbri pe pa jufra ge'u .e le sumti poi se lidne le selbri cu mapti ke'a
   RULE_SELBRI = "selbri"  ## lo javni poi pa selbri cu mapti ke'a
   TERMINALS_JOINING = [TERMINAL_BRIVLA, Selmaho.Se.toTerminal, Selmaho.Nu.toTerminal,
@@ -852,6 +854,32 @@ func faultsJoined*(text: Text, marked: ReadingMarked): seq[Error] =
     let start = marked.occurrences[marked.units[at].words[0]].start
     result.add Error(path: text.path, place: text.place(start),
       why: "selbri after open tanru, with no cu")
+
+
+func mixedTree(node: Node, found: var seq[int]) =
+  ## jmina lo stuna'u be le pamoi pagbu be ro namcu poi vasru lo lerfu valsi ku'o .e ro lerfu porsi
+  ##     poi vasru lo valsi pe `PA`
+  ##   .i zo boi fendi lo namcu .e lo lerfu porsi poi lamji to `CLL 17.9` toi
+  ##   .i lo jgena pe lo srera cu na se cipra
+  if node.is_terminal: return
+  let is_mixed = node.stop.isNone and (
+    (node.rule == RULE_NUMBER and node.children.anyIt(not it.is_terminal)) or
+    (node.rule == RULE_LERFU_STRING and node.children.anyIt(it.is_terminal)))
+  if is_mixed:
+    found.add node.spanUnits.first
+    return
+  for child in node.children: mixedTree(child, found)
+
+
+func faultsRuns*(text: Text, marked: ReadingMarked): seq[Error] =
+  ## dunda ro namcu .e ro lerfu porsi pe le selci'a poi vasru lo valsi pe `PA` .e lo lerfu valsi
+  ##   .i `marked` se tcidu fi le selci'a
+  var found: seq[int]
+  mixedTree(marked.tree, found)
+  for at in found:
+    let start = marked.occurrences[marked.units[at].words[0]].start
+    result.add Error(path: text.path, place: text.place(start),
+      why: "number and letter with no boi between them")
 
 
 func digitRead(occurrence: Occurrence): int =
