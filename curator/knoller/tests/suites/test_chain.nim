@@ -431,9 +431,9 @@ suite "Repair that widens its line":
         "    is_negated: b_to_signed.is_negated xor b_to_complement.is_negated\n  )]\n"
       sliced = HEAD & "  result[b] = @[BasisSigned(\n    basis: result[b][0].basis,\n" &
         "    is_negated: result[b][0].is_negated xor basis.is_negated\n  )]\n"
-    check chained.fixed == chained  # `cayleys.nim:271`
-    check dual.fixed == dual  # `:338`
-    check sliced.fixed == sliced  # `:604`
+    check chained.fixed == chained  # `cayleys.nim:331` of PGA library at `3d9696e`, its `,` cut
+    check dual.fixed == dual  # shape of `:410` there
+    check sliced.fixed == sliced  # shape of `:693` there
     for source in [chained, dual, sliced]: check source.fixed.isSettled  # second run
 
 

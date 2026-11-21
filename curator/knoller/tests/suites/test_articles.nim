@@ -78,9 +78,9 @@ suite "Article VI":
 
   test "VI.5 commented code holds no article, commented by hand or by tool, as D3 a rules":
     for code in [
-      "#func <=(a, b: Order): bool {.borrow.}\n",  # `cayleys.nim:48` of PGA library, by hand
-      "# func <=(a, b: Order): bool {.borrow.}\n",  # same line as tool comments it
-      "# func `<=`(a, b: Order): bool {.borrow.}\n",  # its name in backticks
+      "#func `<=`(a, b: Order): bool {.borrow.}\n",  # `cayleys.nim:48` of PGA library, by hand
+      "# func `<=`(a, b: Order): bool {.borrow.}\n",  # same line as tool comments it
+      "# func <=(a, b: Order): bool {.borrow.}\n",  # operator name bare, glued to `(`
       "# result = a vector\n",  # line that reads as code
       "# TODO: Fit.\n#   let x = a value\n",  # line of code under prose
     ]:

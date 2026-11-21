@@ -37,6 +37,16 @@ const
     "  cayley = CAYLEYS_WEDGE.base\n" &
     ")\n"
     ## Article X example of declarative call, as written there.
+  EXAMPLE_CONTINUATION =
+    "result.add BasisSigned(\n" &
+    "  basis: product.basis,\n" &
+    "  is_negated: (\n" &
+    "    m_from.is_negated xor\n" &
+    "    n_from.is_negated xor\n" &
+    "    term.is_negated\n" &
+    "  )\n" &
+    ")\n"
+    ## STYLE.md §5 example of call whose argument opens its own line, as written there.
   NAME_LONG = "constructProductsAcrossEveryOrderOfGradeAndChirality"
     ## Name long enough to push signature or call past `LINE_MAX`.
 
@@ -131,7 +141,10 @@ suite "Wrapping":
     check lines_group.replace("space: Space\n", "space: Space;\n").isSettled  # mark keeps it
     let operator = "macro defineOperator(\n  symbols, docs: static[string];\n" &
       "  cayley: static[Cayley2D];\n  as_unary: static[bool] = false;\n): untyped =\n  discard\n"
-    check operator.isSettled  # `operators.nim` of PGA library: one group to line, as hand marked
+    check operator.isSettled  # `operators.nim:65` of PGA library: one group to line, as hand marked
+    let mapping = "macro defineOperator(\n  symbols, docs: static[string];\n" &
+      "  cayley: static[Cayley1D];\n): untyped =\n  discard\n"
+    check mapping.isSettled  # `operators.nim:19`, which fits joined: mark keeps hand's split
     let single = "proc " & NAME_LONG & "(parameter_named_at_length: Multivector): Multivector =\n"
     check single.fixed == "proc " & NAME_LONG & "(\n  parameter_named_at_length: Multivector\n" &
       "): Multivector =\n"  # parameters line, no separator after last
@@ -156,7 +169,8 @@ suite "Wrapping":
     let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
       "\",\n  )\n"  # comma after last argument: one argument to line
-    for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE]: check example.isSettled
+    for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE, EXAMPLE_CONTINUATION]:
+      check example.isSettled
 
 
   test "call one argument to line with comma after last stays so, though it fits on one line":
@@ -393,6 +407,7 @@ suite "Wrapping":
       check bare.isSettled  # array, set, tuple, constructor and import bracket take none
     check lists.replace(y & "\n", y & ",\n").replace("y: 2\n", "y: 2,\n").isSettled
     check imported.replace("b\n]", "b,\n]").isSettled  # separator hand wrote stays
+    check "let a = @[\n  1,\n  2\n]\n".isSettled  # fits joined: rows kept, and no comma written
     check "foo(\n  a,\n  b\n)\n".fixed == "foo(a, b)\n"  # fits joined: call joins, no comma
 
 

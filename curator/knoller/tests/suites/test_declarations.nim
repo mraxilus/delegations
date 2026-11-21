@@ -142,6 +142,11 @@ suite "Declarations":
         5,
         "#[\n  License.\n]#\n## Products.\nconst N* = 3  ## TODO: Document.\n",
       ),  # under block comment
+      (
+        "\n## Size.\nconst N* = 3\n",
+        3,
+        "\n## Size.\nconst N* = 3  ## TODO: Document.\n",
+      ),  # under blank line alone
     ]
       ## Source opening with doc of module, line of declaration below it, and source missing doc
       ##   writes.
