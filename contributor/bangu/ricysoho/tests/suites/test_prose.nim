@@ -299,6 +299,15 @@ const
   ]
     ## lo jufra poi ro sumti po'u `_` cu jdini klani
   COUNT_AMOUNTS = 120  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  PREFIXES_PROSE = [("+", "ma'u"), ("-", "ni'u"), ("−", "ni'u"), ("~", "ji'i")]
+    ## lo sinxa poi lidne lo namcu .e le cmavo poi le sinxa cu sinxa ke'a to `D4 b` pe `#1003` toi
+  CONSTANTS_PROSE = [("π", "pai"), ("∞", "ci'i"), ("½", "pa fi'u re")]
+    ## lo sinxa poi sinxa pa namcu .e le cmavo poi le sinxa cu sinxa ke'a to `D4 b` pe `#1003` toi
+  FRAMES_NUMBER = [
+    "li _ cu barda", "mi ponse _ lo plise", "lo _moi cu klama", "mi ponse lo rupnu be li _ be'o ku",
+  ]
+    ## lo jufra poi ro namcu po'u `_` cu pagbu ke'a
+  COUNT_NUMBERS_SIGNED = 104  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
 
 
 
@@ -326,6 +335,37 @@ suite "Internal: Prose":
     # zo zo sitna zo lo noi krasi le jdini klani
     #   .i se ki'u bo le gerna cu to'e curmi le selci'a
     check not "zo €5 cu valsi".readText.is_read
+
+
+  test "Each number sign at each place of a number reads as the tree of its words written out":
+    # `Architect` jdice `D4 b` bu'u `#1003`
+    #   .i lo sinxa pe lo namcu cu sinxa lo valsi po'o
+    #   .i se ki'u bo lo tricu pe le selci'a cu mintu lo tricu pe le valsi
+    var
+      count = 0
+      pairs: seq[(string, string, seq[string])]  # lo selci'a .e lo valsi .e lo jufra
+    for number in NUMBERS_PROSE:
+      for (sign, word) in PREFIXES_PROSE:
+        pairs.add (sign & number, word & " " & number, @FRAMES_NUMBER)
+        # lo jdini klani cu vasru le sinxa pe le namcu to `CLL 18.3` toi
+        pairs.add (sign & number & "€", "lo ronru'u be li " & word & " " & number & " be'o ku",
+          @FRAMES_PROSE)
+      pairs.add (number & "%", number & " ce'i", @FRAMES_NUMBER)  # `CLL 18.10`
+    for (sign, words) in CONSTANTS_PROSE: pairs.add (sign, words, @FRAMES_NUMBER)
+    pairs.add ("-5%", "ni'u 5 ce'i", @FRAMES_NUMBER)
+    for (text, spelled, frames) in pairs:
+      for frame in frames:
+        let (a, b) = (frame.replace("_", text).readText, frame.replace("_", spelled).readText)
+        checkpoint frame.replace("_", text)
+        check a.is_read and b.is_read
+        if a.is_read and b.is_read:
+          check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+          check a.tree.shape == b.tree.shape
+        inc count
+    check count == COUNT_NUMBERS_SIGNED  # `IX.3`
+    # zo zo sitna le pamoi valsi pe le sinxa
+    #   .i se ki'u bo le gerna cu to'e curmi le selci'a
+    check not "zo ½ cu valsi".readText.is_read
 
 
   test "Words of each tree, in order, are words of text that erasure leaves":
