@@ -3,10 +3,10 @@
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Chain is spelled through operators proposal leaves alone, ⟇ and ~∘, on full multivectors.
 ##   Laws, for each pair of types below: 𝐦 ⟇⟇~∘ 𝐧 equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ of widened operands; its type
-##     holds exactly bases chain reaches over samples; alias `transform` reads same. Two full
-##     multivectors take chain itself.
+##     holds exactly bases chain reaches over samples; alias `transform` reads same.
 ##   Pairs hold motor and flector parts, single grades and full type, so each kind of table runs.
-##     Typed 𝐦 by full 𝐧 takes table of both types too, as it does over every pair of 𝐧.
+##   Full 𝐧 takes chain itself, whatever type 𝐦 has: result equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ bit for bit, and
+##     its type is full, as Architect ruled (D1 b of #990).
 ##   Samples are dense in their types, every coefficient drawn, so each law reads every term.
 
 {.experimental: "strictFuncs".}
@@ -79,6 +79,25 @@ template holdPair(r: var Rand, name: string, M, N: typedesc) =
     doAssert typed <= reached, name & ": type of result must hold no basis that chain misses."
 
 
+template holdFull(r: var Rand, name: string, M: typedesc) =
+  ## Hold sandwich of type `M` by full operator to chain itself, bit for bit, and its type to full.
+  block:
+    for _ in 0 ..< SAMPLES:
+      let
+        m = r.sample(M)
+        n = toMultivector(r.sample(MultivectorOf[basesEvery()]))
+        sandwich = toMultivector(m ⟇⟇~∘ n)
+        chain = (n ⟇ m) ⟇ (~∘ n)
+        alias = toMultivector(transform(m, n))
+      for b in Basis:
+        doAssert sandwich[b] == chain[b], name & ": sandwich must equal chain bit for bit."
+        doAssert alias[b] == chain[b], name & ": alias must equal chain bit for bit."
+      doAssert sandwich =~ (n ⟇ toMultivector(m)) ⟇ (~∘ n),
+        name & ": sandwich must equal chain of widened operands."
+    doAssert typeof(default(M) ⟇⟇~∘ default(Multivector)) is Multivector,
+      name & ": type of result must be full."
+
+
 proc main() =
   var
     r = initRand(SEED)
@@ -100,9 +119,9 @@ proc main() =
   held.inc
   holdPair(r, "full by vector", MultivectorOf[basesEvery()], MultivectorOf[basesOfGrade(1)])
   held.inc
-  holdPair(r, "vector by full", MultivectorOf[basesOfGrade(1)], Multivector)
+  holdFull(r, "vector by full", MultivectorOf[basesOfGrade(1)])
   held.inc
-  holdPair(r, "motor part by full", MultivectorOf[basesAntieven()], Multivector)
+  holdFull(r, "motor part by full", MultivectorOf[basesAntieven()])
   held.inc
   for _ in 0 ..< SAMPLES:
     let

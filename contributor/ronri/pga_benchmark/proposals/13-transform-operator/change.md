@@ -239,13 +239,16 @@ const EMPTY: Bases = {}
     checkTypedSandwich(BIVECTORS, EVEN)
     checkTypedSandwich(EVEN, ODD)
     checkTypedSandwich(SCATTERED, VECTORS)
-    checkTypedSandwich(VECTORS, ALL)
-    checkTypedSandwich(EVEN, ALL)
 
 
-  test "Sandwich: equal chain exactly for full operands, and alias reads operator":
+  test "Sandwich: equal chain exactly for full operator, and alias reads operator":
     for (m, n, _) in sampleMultivectors():
+      let (v, e) = (sampleOf[VECTORS](), sampleOf[EVEN]())
       checkSame(m ⟇⟇~∘ n, (n ⟇ m) ⟇ (~∘ n))
+      checkSame(v ⟇⟇~∘ n, (n ⟇ v) ⟇ (~∘ n))
+      checkSame(e ⟇⟇~∘ n, (n ⟇ e) ⟇ (~∘ n))
+      checkSame(transform(v, n), v ⟇⟇~∘ n)
+    check (sampleOf[VECTORS]() ⟇⟇~∘ sampleOf[ALL]()) is Multivector
     let (v, e) = (sampleOf[VECTORS](), sampleOf[EVEN]())
     check transform(v, e).toMultivector =~ (v ⟇⟇~∘ e).toMultivector
 ```
