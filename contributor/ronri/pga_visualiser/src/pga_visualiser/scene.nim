@@ -1211,7 +1211,7 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   |----------|--------------------------------------------------------------|
 ##   | Bytes    | Field                                                        |
 ##   |----------|--------------------------------------------------------------|
-##   | 4        | Magic `RGAS`, to catch wrong file at glance.                 |
+##   | 4        | Magic `PGAS` catches wrong file at glance; `RGAS` read too.  |
 ##   | 1        | Format version.                                              |
 ##   | 1        | Basis count (terms per multivector); must match this build's |
 ##   |          |   own count, or file was saved under different PGA dimension |
@@ -1259,9 +1259,11 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   Adding version means adding one func.
 
 const
-  MAGIC_SCENE* = "RGAS"
-    ## Open every scene file with these four bytes, under either extension.
-    ##   Kept when extension changed: bytes after it did not, so one reader serves both.
+  MAGIC_SCENE* = "PGAS"  ## Open every scene file this build saves with these four bytes.
+  MAGICS_SCENE_READ* = [MAGIC_SCENE, "RGAS"]
+    ## Name each magic reader takes, under either extension.
+    ##   `RGAS` opened each file saved before project took name PGA. Bytes after magic did
+    ##   not change, so one reader serves both.
   EXTENSION_SCENE* = ".pgascene"  ## Name extension this build saves scene file under.
   EXTENSIONS_SCENE_READ* = [EXTENSION_SCENE, ".rgascene"]
     ## Name each extension page reads scene file under, from its picker or inside zip.
@@ -1324,6 +1326,14 @@ const
     ## Record last palette index version-1 file could name, `Cerise`'s.
     ##   Bounded because fold would otherwise turn any number into some hue, and quietly
     ##   colouring corrupt byte is guessing format refuses everywhere else.
+
+
+func isSceneMagic*(magic: string): bool =
+  ## Decide whether scene file opening with these bytes is one reader takes.
+  ##   Every magic is as long as `MAGIC_SCENE`, so reader reads that many bytes for any.
+  static:
+    for one in MAGICS_SCENE_READ: doAssert len(one) == len(MAGIC_SCENE)
+  magic in MAGICS_SCENE_READ
 
 
 func isSceneVersionReadable*(version: uint8): bool =
@@ -1554,7 +1564,7 @@ when not defined(js):
     defer: file.close
 
     var magic = newString(len(MAGIC_SCENE))
-    if file.readChars(magic) != len(MAGIC_SCENE) or magic != MAGIC_SCENE:
+    if file.readChars(magic) != len(MAGIC_SCENE) or not isSceneMagic(magic):
       return &"`{path}` is not a scene file."
 
     var version_byte: array[1, char]

@@ -501,7 +501,7 @@ suite "Internal: Lists":
 
   test "every committed cmavo entry fits its columns, once, in order":
     for i, entry in LIST_CMAVO:  # ro stecmi
-      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no denpa bu
+      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no boi denpa bu
       # ro valsi cu selci'a pa roi
       if i > 0: check LIST_CMAVO[i - 1].word < entry.word  # ja'i lo porsi be lo stuzi
 

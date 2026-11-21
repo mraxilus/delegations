@@ -27,6 +27,10 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i ro porsi be lo valsi pe `PA` cu du pa namcu to `CLL 18.6` toi
   .i se ki'u bo le genturfa'i cu tcidu pa namcu po'o fi zoi gy. le 10moi .gy.
   .i zo boi fendi re namcu poi lamji mu'u lo'u ro boi remei le'u
+  .i ro porsi be lo lerfu valsi .e lo valsi pe `PA` cu du pa lerfu porsi .a pa namcu to
+      `CLL 17.9` toi
+  .i se ki'u bo le genturfa'i cu tcidu pa lerfu porsi po'o fi lo'u by. cy. le'u
+  .i zo boi fendi re porsi poi lamji mu'u lo'u xy. boi ro le'u
 
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
@@ -582,9 +586,9 @@ ni'o le genturfa'i cu tcidu 16492 lo 17495 jufra pe `Tatoeba`
   .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
       na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu 75 lo 86 pagbu be le ci prosa
+ni'o le genturfa'i cu tcidu 74 lo 86 pagbu be le ci prosa
   .i lo traji be lo ka clani cu vasru 458 valsi
-  .i le genturfa'i cu tcidu 783 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
+  .i le genturfa'i cu tcidu 780 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
   .i ro le nu to'e curmi cu drani ja'i `CLL`
 
 ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le genturfa'i cu tcidu

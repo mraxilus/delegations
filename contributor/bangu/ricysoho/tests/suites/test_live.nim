@@ -100,6 +100,10 @@ const
     ##     jbini be lo lerfu
   WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi sinxa lo lerfu pe `0` bi'o `9` to `CLL 18.2` toi
+  WORDS_RUNS = ["pa", "ki'o", "by", "lo'a", ".abu", "slaka bu", "lau by", "tei by foi"]
+    ## lo valsi pe `PA` .e lo lerfu valsi poi le flalu pe lo lerfu porsi cu cipra lo remei be ke'a
+    ##   .i re le valsi cu du lo lerfu valsi poi zo bu cu lidne ke'a to `CLL 17.4` toi
+    ##   .i re le valsi cu se krasi zo lau .a zo tei to le javni pe li 987 toi
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
@@ -801,6 +805,24 @@ suite "Internal: Live text":
     var texts = @["le pano moi .i le 10moi", "li su'i pareci du li xa"]
     for a in WORDS_DIGITS:
       for b in WORDS_DIGITS:
+        texts.add "le " & a & " " & b & " moi .i le " & a & " boi " & b & " moi"
+    for text in texts:
+      checkpoint text
+      let live = text.readLive(toSeq(1 ..< text.len), is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`
+      check live.is_held  # le stedu be `live.nim`
+      check live.is_grown  # le stedu be `live.nim`
+      check live.is_tied  # `ChangeNif` pe `live.nim`
+
+
+  test "Run of letter and number words reads typed byte by byte as read whole, and grows":
+    # `Architect` jdice `D1 a` bu'u `#992`
+    #   .i lo lerfu porsi .e lo namcu cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi to
+    #       `CLL 17.9` toi
+    #   .i se ki'u bo pa valsi poi se ciska cu cenba lo tricu pe lo pu valsi
+    var texts = @[".abu dunda by. cy. .i xy. boi ro prenu cu prami", "mi viska re boi vy."]
+    for a in WORDS_RUNS:
+      for b in WORDS_RUNS:
         texts.add "le " & a & " " & b & " moi .i le " & a & " boi " & b & " moi"
     for text in texts:
       checkpoint text
