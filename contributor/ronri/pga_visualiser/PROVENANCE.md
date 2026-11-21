@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | f52e8f8e8f4f2a1d |
-| Pruned  | 5a7e3bc6b52c8d61d9f0e545a49f562447845e7e |
+| Pruned  | 6ed293192c184658e451559ebaee8bca91602836 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -3954,7 +3954,7 @@ already written held it. The desktop converts through `std/endians`.
 
 | Bytes | Field |
 |-------|-------|
-| 4 | Magic `RGAS` |
+| 4 | Magic `PGAS`, or `RGAS` in a file saved before the name PGA |
 | 1 | Format version (`VERSION_SCENE` = 7) |
 | 1 | Basis count (16 under this build); must match |
 | 4 | Object count, little-endian `uint32` |
@@ -3971,8 +3971,8 @@ build to read what it wrote.
 names the extension that both front-ends save under, and `EXTENSIONS_SCENE_READ` names both
 extensions. The page reaches them through `nimSceneExtension` and `nimSceneExtensionsRead`, for its
 picker and for the entry that it opens in a zip. The desktop reads a scene from any path. The magic
-stays `RGAS`, because the bytes after it did not change, so one reader serves both. Rejected: the
-magic `PGAS`, which every earlier build refuses.
+is `PGAS`, and `MAGICS_SCENE_READ` takes `RGAS` too, which the page asks through
+`nimSceneReadsMagic`. Cost: an older build refuses each file saved now, as ruled on issue 946.
 
 Only live objects are written, **in creation order** (`nimSceneHandlesCreated`). That order is the
 whole of what version 3 added. Version 4 appended the radius after the geometry of each object.
@@ -4002,22 +4002,22 @@ one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
 radius that is zero, negative or NaN, as it refuses an unknown palette index. Version 1 costs
 colours alone: its ordinals name a palette that no longer exists, folded by the same cycle that
-`inkCycled` walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote
-is refused.
+`inkCycled` walks. `ORDINAL_INK_HIGH_V1` 14 bounds it, refusing a byte that version 1 never wrote.
 
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
 
-*Checked.* Verified by a cross-read, and not by a round-trip: the sixteen-object demo saved,
-reloaded and compared object for object in creation order. Each label, ink, visibility and all
-sixteen coefficients, 304 scalar comparisons, are exactly equal. The desktop saves the
-browser-written file again byte-identical, all 2245 bytes. Both parsers read hand-built files of
-version 1 and version 2 the same, and refuse a file one version ahead. They refuse ordinal 15 in a
-version-1 file, and the version-6 fold is pinned ordinal by ordinal.
+*Checked.* Verified by a cross-read, and not by a round-trip. The sixteen-object demo was saved,
+reloaded and compared in creation order: label, ink, visibility and 16 coefficients, 304 equal
+comparisons. The desktop saves the browser-written file again byte-identical, all 2245 bytes. Both
+parsers read hand-built files of versions 1 and 2 alike, and refuse a file one version ahead and
+ordinal 15 in version 1. The version-6 fold is pinned per ordinal.
 
 Verified by watching: the seeds arrive over 0.480 s, and the sixteen of the demo over 1.84 s in the
-browser. Verified by `suites.nim`: the on-disk bytes of a known float. Assumed: the big-endian host
-path, which is never exercised (see Known limitations).
+browser. Verified by `suites.nim`: the on-disk bytes of a known float, and the magic of each scene
+read. Verified by `koch drive`: the page loads a scene of `RGAS`. Verified by a run on 2026-11-20:
+the reader at `89576aa5` refuses a file of `PGAS`. Assumed: the big-endian host path, which is never
+exercised (see Known limitations).
 
 ## Demo: the solar neighbourhood
 

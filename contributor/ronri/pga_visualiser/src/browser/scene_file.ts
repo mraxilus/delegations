@@ -140,11 +140,12 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   let offset = 0;
   // Both expectations come from `scene.nim` through bridge, for reason `saveScene`.
   //   above gives: literal here is exactly what drifted out of step with format.
-  const magic_wanted = nimSceneMagic();
+  //   Each magic read is as long as one this build writes, and bridge says which it takes.
+  const length_magic = nimSceneMagic().length;
   let magic = '';
-  for (let i = 0; i < magic_wanted.length; i++) magic += String.fromCharCode(view.getUint8(i));
-  offset = magic_wanted.length;
-  if (magic !== magic_wanted) throw new Error('File is not a scene file.');
+  for (let i = 0; i < length_magic; i++) magic += String.fromCharCode(view.getUint8(i));
+  offset = length_magic;
+  if (!nimSceneReadsMagic(magic)) throw new Error('File is not a scene file.');
   // *range* through bridge, not this build's own writing version: every version.
   //   ever written stays readable, and which those are is `scene.isSceneVersionReadable`'s
   //   answer rather than pair of literals here to fall out of step with it.

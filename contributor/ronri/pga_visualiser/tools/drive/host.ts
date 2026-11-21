@@ -102,7 +102,7 @@ export async function driveHostSave(
   report(
     'on the artifact host, a scene saves through the host, as a zip that holds the scene file',
     scene?.filename === 'scene.zip' && typeof entry !== 'string' &&
-      entry.name === 'scene.pgascene' && magic === await page.evaluate(() => nimSceneMagic()),
+      entry.name === 'scene.pgascene' && magic === 'PGAS',
     scene === undefined ? 'host was handed nothing' :
       `${scene.filename}, ${typeof entry === 'string' ? entry : `${entry.name} opens ${magic}`}`,
   );
@@ -144,6 +144,44 @@ export async function driveHostSave(
     'a zip that holds a .rgascene, as older builds saved, loads as the scene it holds',
     renamed === 2 && labels_older.length > 0 && labels_older.join('|') === labels_saved.join('|'),
     `${renamed} names changed; ${labels_older.length} of ${labels_saved.length} objects back; ` +
+      `says "${(await toastSays()).text}"`,
+  );
+
+  // Scene file that opens with `RGAS`, as builds saved before name PGA, loads alike.
+  //   Magics are of one length and bytes after magic did not change, so four bytes swap.
+  const scene_old = typeof entry === 'string' ? Buffer.alloc(0) : Buffer.from(entry.data);
+  if (scene_old.length >= 4) Buffer.from('RGAS').copy(scene_old, 0);
+  await page.evaluate(() => nimSceneClear());
+  await page.setInputFiles('#file-load-scene', {
+    name: 'scene.pgascene', mimeType: 'application/octet-stream', buffer: scene_old,
+  });
+  await waitUntil(page, (count) => nimSceneCount() === count, labels_saved.length)
+    .catch(() => undefined);
+  const labels_magic = await labels();
+  report(
+    'a scene file that opens with RGAS, as older builds wrote, loads as the scene it holds',
+    scene_old.length >= 4 && labels_magic.length > 0 &&
+      labels_magic.join('|') === labels_saved.join('|'),
+    `${labels_magic.length} of ${labels_saved.length} objects back; ` +
+      `says "${(await toastSays()).text}"`,
+  );
+
+  // Scene file under any other magic is refused, and scene loaded before stays whole.
+  const scene_foreign = Buffer.from(scene_old);
+  if (scene_foreign.length >= 4) Buffer.from('XGAS').copy(scene_foreign, 0);
+  await page.setInputFiles('#file-load-scene', {
+    name: 'scene.pgascene', mimeType: 'application/octet-stream', buffer: scene_foreign,
+  });
+  await waitUntil(
+    page, () => (document.getElementById('toast')?.textContent ?? '').includes('not a scene'),
+    null,
+  ).catch(() => undefined);
+  const labels_foreign = await labels();
+  report(
+    'a scene file under any other magic is refused, and the scene stays as it was',
+    scene_foreign.length >= 4 && (await toastSays()).text.includes('not a scene file') &&
+      labels_foreign.join('|') === labels_saved.join('|'),
+    `${labels_foreign.length} of ${labels_saved.length} objects kept; ` +
       `says "${(await toastSays()).text}"`,
   );
 
