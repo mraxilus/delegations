@@ -6,13 +6,12 @@
 ##     alike, so rewrite moves no reading; comment after field stays.
 ##   Signature: one fitting `LINE_MAX` stands on one line, and wrapped one that would fit is
 ##     joined. Otherwise parameters take one line of their own, indented one level, where that
-##     line fits (X.3); else each group takes own line, with trailing separator. Either way
-##     `)` opens closing line with return type and pragmas. One parameter alone on its line is
-##     list written one item to line, so it takes separator.
+##     line fits (X.3); else each group takes own line, separator after each but last. Either
+##     way `)` opens closing line with return type and pragmas.
 ##   Call: one fitting its line stays, and wrapped one that would fit is joined. Otherwise each
-##     argument takes own line, indented one level, with trailing comma, and `)` opens line at
-##     call's indent. Outermost call crossing `LINE_MAX` splits first; each line it leaves is
-##     read again.
+##     argument takes own line, indented one level, comma after each but last, and `)` opens
+##     line at call's indent. Outermost call crossing `LINE_MAX` splits first; each line it
+##     leaves is read again.
 ##   Operator break: line no call split fits, whose hand gave no line breaks, breaks after
 ##     binary operator at its own depth (STYLE.md §5). Lowest precedence breaks first, as lexer
 ##     reads it (`precedence.nim`), and each line takes latest such operator that fits. Break
@@ -32,12 +31,12 @@
 ##   Block head: where line right above body of `if`, `for`, `of` and other heads, or of routine
 ##     signature, stands at body's indent, every continuation line of head moves by one step, so
 ##     shallowest takes `STEP_CONTINUATION` past head's first line (`liftsHead`).
-##   Trailing separator: list written one item to line ends its last item with separator, where
-##     it would not fit joined: call, parameters, array, seq, set, table, tuple of several items,
-##     constructor, import bracket. List that fits joined takes none, since comma marks split
-##     hand wants (X.3): call joins, and other list keeps rows hand gave it.
-##   Checks and fixers share one reading (`separators`, `rewritesSignature`, `rewritesCall`,
-##     `shiftsContinuation`, `insertsTrailing`), so each rule is written once (Article II.1).
+##   Mark: separator after last item of call or signature spanning lines marks split hand wants
+##     (X.3, `isMarked`), so list keeps one item to line though it fits. Fixer never adds it,
+##     so split it makes joins again where list fits, as after rename that shortens it; nor
+##     inserts it into other list, whose rows hand keeps either way.
+##   Checks and fixers share one reading (`separators`, `isMarked`, `rewritesSignature`,
+##     `rewritesCall`, `shiftsContinuation`), so each rule is written once (Article II.1).
 ##
 ##   Left as written, check silent: parameter group without type or default, where `;` ends
 ##     group; signature or call holding comment, long string spanning lines, or block (keyword
@@ -50,12 +49,13 @@
 ##   Bracket spanning lines that no call opens, i.e. hand-shaped array, seq, set or tuple, is
 ##     never reflowed: it moves with its argument, line breaks kept, re-indented. Argument
 ##     wrapped by hand that fits no line keeps its line breaks in same way.
-##   Parenthesis of one item takes no trailing comma, since `(a,)` is tuple and `(a)` grouping.
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); construct it cannot read surely stays as written.
 ##   Cost: fixer never writes line width check reports; rewrite that would, stays to hand.
-##     Trailing separator and continuation fixers are wideners (`reports.nim`): off held line
-##     each writes rewrite that widens line past `LINE_MAX`, and call layout wraps line after.
+##     Continuation fixer is widener (`reports.nim`): off held line it writes rewrite that
+##     widens line past `LINE_MAX`, and call layout wraps line after.
+##   Cost: mark reads alike whether hand wants split or writes separator by habit; either way
+##     list keeps its split.
 ##   Cost: line broken at operator that later fits stays broken, as hand's break does; call
 ##     layout joins only calls.
 ##   Hand-shaped call arguments, such as matrix rows, take one argument to line unless fenced
@@ -99,11 +99,6 @@ type
     lines: seq[string]
     rule: Rule
 
-  Insert = object  ## Define separator to insert after list's last item.
-    line: int  ## Zero-based line of item's last token.
-    at: int  ## Byte offset after item's last token.
-    separator: string
-
   Shift = object  ## Define continuation line to re-indent, and spaces it takes past its base.
     rewrite: Rewrite
     step: int  ## `STEP_CONTINUATION` past statement line, or none past line first piece opens.
@@ -125,7 +120,6 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
-  KEYWORDS_TYPE = ["static", "tuple"]  ## Keywords whose `[` opens type, never constructor.
   STEP_INDENT = 2  ## Spaces one level of wrapping indents (Article X.1).
   STEP_CONTINUATION = 4
     ## Spaces line continuing expression after operator takes beyond line opening it (STYLE.md
@@ -202,6 +196,15 @@ func items(s: Scan, o: int): seq[Item] =
       item.last = k
     inc k
   if item.first >= 0: result.add item
+
+
+func isMarked(s: Scan, o: int): bool =
+  ## Decide whether list bracket `o` opens spans lines with separator after its last item, on
+  ##   line before its closing bracket: mark of split hand wants (X.3), which no fixer writes.
+  if not s.isMultiline(o): return false
+  let items = s.items(o)
+  items.len > 0 and items[^1].separator >= 0 and
+    s.tokens[s.partners[o]].line > s.tokens[items[^1].separator].line
 
 
 func isHolding(s: Scan, item: Item, spellings: openArray[string]): bool =
@@ -336,7 +339,8 @@ func rewritesSignature(s: Scan): seq[Rewrite] =
     if is_unread or groups.len == 0: continue
     if groups.anyIt(s.tokens[it[0].first].line != s.lasts[it[^1].last]): continue
 
-    # Build each layout from head, groups and tail as written.
+    # Build each layout from head, groups and tail as written; last group takes separator only
+    # where hand marked split, which then stays one group to line (X.3).
     let
       line = s.lines[line_first]
       closing = s.lines[line_last]
@@ -350,13 +354,18 @@ func rewritesSignature(s: Scan): seq[Rewrite] =
       inner = ' '.repeat(line.indentWidth + STEP_INDENT)
       one = head & joined & tail
       line_parameters = @[head, inner & joined, margin & tail]
-      lines_group = @[head] & texts.mapIt(inner & it & separator) & @[margin & tail]
+      is_marked = s.isMarked(o)
+    var lines_group = @[head]
+    for k, text in texts:
+      lines_group.add inner & text & (if k < texts.high or is_marked: separator else: "")
+    lines_group.add margin & tail
     var canonical: seq[string]
-    if not one.isWide: canonical = @[one]
+    if is_marked:
+      if lines_group.anyIt(it.isWide): continue
+      canonical = lines_group
+    elif not one.isWide: canonical = @[one]
     elif signature_tail != tail and not (head & joined & signature_tail).isWide: continue
-    elif not line_parameters.anyIt(it.isWide):
-      # One name on its line is list written one item to line, which takes separator (X.3).
-      canonical = if items.len == 1: lines_group else: line_parameters
+    elif not line_parameters.anyIt(it.isWide): canonical = line_parameters
     elif not lines_group.anyIt(it.isWide): canonical = lines_group
     else: continue
     if canonical != s.lines[line_first .. line_last]:
@@ -661,12 +670,9 @@ func fallback(s: Scan; lead: string; a, b: int; trail: string; indent: int): Opt
 
 
 func isTrailed(s: Scan, o: int): bool =
-  ## Decide whether call `(` at `o` spans lines with comma after its last argument, on line
-  ##   before its `)`: mark of split hand wants (X.3), so call keeps one argument to line.
-  if not s.isMultiline(o) or not s.isCallEligible(o): return false
-  let items = s.items(o)
-  items.len > 0 and items[^1].separator >= 0 and
-    s.tokens[s.partners[o]].line > s.tokens[items[^1].separator].line
+  ## Decide whether call `(` at `o` carries mark of split hand wants (`isMarked`), so call keeps
+  ##   one argument to line.
+  s.isCallEligible(o) and s.isMarked(o)
 
 
 func isHug(s: Scan, o: int): bool =
@@ -716,9 +722,10 @@ func layout(
   ##     only that call spans lines (`linesHand`); else outermost call crossing `LINE_MAX` splits,
   ##     one argument to line, each laid out again; else wrapping hand gave stays, re-indented;
   ##     else line breaks after operator, which split that fits no line falls back on too.
-  ##   Call spanning lines with comma after its last argument is never joined (`isTrailed`):
-  ##     outermost call spanning lines splits instead, and call hand hugs around it keeps its hug
-  ##     (`isHug`), so `x.add(Y(` … `))` keeps `))`.
+  ##   Split writes comma after each argument but last, so it joins again once it fits; after
+  ##     last too where hand marked call. Call spanning lines with comma after its last argument
+  ##     is never joined (`isTrailed`): outermost call spanning lines splits instead, and call
+  ##     hand hugs around it keeps its hug (`isHug`), so `x.add(Y(` … `))` keeps `))`.
   ##   Argument splits its crossing call only where that call is whole argument; expression
   ##     holding call has no one split, so its hand wrapping stays, or it breaks after
   ##     operator, or call is left.
@@ -774,6 +781,7 @@ func layout(
       c = s.partners[target]
       arguments = s.items(target)
       closer = ' '.repeat(indent) & ")"
+      is_marked = s.isTrailed(target)
     if arguments.len == 0: break split
     if c == b and s.isHug(target):
       let hug = s.layout(
@@ -786,15 +794,17 @@ func layout(
       )
       if hug.isSome: return hug
     var lines = @[lead & s.flatten(a, target).text]
-    for item in arguments:
-      let argument = s.layout(
-        ' '.repeat(indent + STEP_INDENT),
-        item.first,
-        item.last,
-        ",",
-        indent + STEP_INDENT,
-        is_argument = true,
-      )
+    for k, item in arguments:
+      let
+        comma = if k < arguments.high or is_marked: "," else: ""
+        argument = s.layout(
+          ' '.repeat(indent + STEP_INDENT),
+          item.first,
+          item.last,
+          comma,
+          indent + STEP_INDENT,
+          is_argument = true,
+        )
       if argument.isNone: break split
       lines.add argument.get.lines
     if c == b: lines.add closer & trail
@@ -861,8 +871,8 @@ func checkCalls*(path, source: string): seq[Report] =
         "Line fitting nowhere breaks after its operator of lowest precedence; got `" &
             $s.lines[rewrite.first].runeLen & "` runes."
       else:
-        "Call stays on its line where it fits, else takes one argument to line with trailing " &
-            "comma; got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
+        "Call stays on its line where it fits, else takes one argument to line; got `" &
+            $(rewrite.last - rewrite.first + 1) & "` lines."
     result.add initReport(path, rewrite.first + 1, rewrite.rule, message)
 
 
@@ -1110,119 +1120,18 @@ func fixContinuations(path, source: string; held: Held): Fix =
   )))
 
 
-
-#[ Trailing Separators ]#
-
-func isConstructorOpen(s: Scan, o: int): bool =
-  ## Decide whether bracket `o` opens list of values: array, seq, set, table, tuple, import.
-  ##   `[` or `{` glued after operand indexes or names type; `(` glued after one calls; `{.`,
-  ##   `[.`, `(.` and `[:` open pragma or generic call.
-  let text = s.spelling(o)
-  if text notin ["(", "[", "{"]: return false
-  if o > 0:
-    let is_glued = s.tokens[o - 1].after == s.tokens[o].first
-    if is_glued and s.tokens.isOperandEnd(o - 1, s.source): return false
-    if s.spelling(o - 1) in KEYWORDS_TYPE: return false
-  text != "(" or s.tokens.signature(s.partners, o, s.source) < 0
-
-
-func isFittingJoined(s: Scan, o: int): bool =
-  ## Decide whether group bracket `o` opens would fit `LINE_MAX` joined onto line it opens on,
-  ##   with what follows its closing bracket there; group holding comment or token spanning
-  ##   lines never joins.
-  let c = s.partners[o]
-  for k in o..c:
-    if s.tokens[k].kind == KindToken.Comment or s.lasts[k] > s.tokens[k].line: return false
-  let
-    (line_open, line_close) = (s.tokens[o].line, s.tokens[c].line)
-    head = s.lines[line_open][0 ..< s.tokens[o].first - s.starts[line_open]]
-    tail = s.lines[line_close][s.tokens[c].after - s.starts[line_close]..^1]
-  not (head & s.flatten(o, c).text & tail).isWide
-
-
-func insertsTrailing(s: Scan, held: Held): seq[Insert] =
-  ## Find each list written one item to line whose last item lacks trailing separator, where
-  ##   list would not fit joined (`isFittingJoined`); one whose separator would widen held line
-  ##   is left. List that fits joined takes none: call joins, and hand keeps rows of other list.
-  for o in 0 ..< s.tokens.len:
-    if s.tokens[o].kind != KindToken.Open or s.partners[o] < o: continue
-    let c = s.partners[o]
-    if not s.isLineLast(o) or not s.isLineFirst(c): continue
-    let
-      is_call = s.tokens.isCallOpen(s.partners, o, s.source)
-      is_signature = s.tokens.signature(s.partners, o, s.source) >= 0
-      items = s.items(o)
-    if not (is_call or is_signature or s.isConstructorOpen(o)): continue
-    if items.len == 0 or items[^1].separator >= 0: continue
-    if not items.allIt(s.isLineFirst(it.first)): continue
-    if not items[0 ..< ^1].allIt(s.isLineLast(it.separator)): continue
-    if s.isFittingJoined(o): continue
-    let last = items[^1]
-    if toSeq(last.first .. last.last).anyIt(
-      s.spelling(it) in KEYWORDS_BLOCK or (s.spelling(it) == ":" and s.isLineLast(it)),
-    ):
-      continue
-    var separator = ","
-    if is_signature:
-      let groups = s.groups(items)
-      if groups.len == 0: continue
-      separator = groups.separator
-    elif s.spelling(o) == "(" and not is_call and items.len == 1: continue
-    let
-      line = s.lasts[last.last]
-      at = s.tokens[last.last].after
-      text = s.lines[line]
-      cut = at - s.starts[line]
-    if held.isHeld(line + 1) and (text[0 ..< cut] & separator & text[cut .. ^1]).isWide and
-        not text.isWide:
-      continue
-    result.add Insert(line: line, at: at, separator: separator)
-
-
-func checkTrailing*(path, source: string): seq[Report] =
-  ## Report list written one item to line without trailing separator (X.3).
-  ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for insert in source.scan.insertsTrailing(EVERY):
-    result.add initReport(
-      path,
-      insert.line + 1,
-      Rule.SeparatorTrailing,
-      "List written one item to line takes trailing separator; got none, where `" &
-        insert.separator & "` stands.",
-    )
-
-
-func fixTrailing*(path, source: string; held: Held): Fix =
-  ## Insert each trailing separator check reports, or that widens line off held lines, last
-  ##   first, so earlier offsets hold.
-  result.source = source
-  let inserts = source.scan.insertsTrailing(held)
-  for insert in inserts.reversed:
-    result.source.insert(insert.separator, insert.at)
-  for insert in inserts:
-    result.fixed.add initReport(path, insert.line + 1, Rule.SeparatorTrailing)
-
-
-func fixTrailing*(path, source: string): Fix =
-  ## Insert each trailing separator check reports, last first, so earlier offsets hold.
-  fixTrailing(path, source, EVERY)
-
-
-const STEPS_WRAPPING*: array[5, Step] = [
+const STEPS_WRAPPING*: array[4, Step] = [
   guarded(fixSeparators),
   guarded(fixSignatures),
   guarded(fixCalls),
   widening(fixContinuations),
-  widening(fixTrailing),
 ]
   ## Wrapping fixers in order they run. Separators come first, since layouts join groups with
   ##   separator they read; continuations come after calls, since hand's line breaks that call
-  ##   layout keeps move with their argument, and same round sets their indent; trailing
-  ##   separators come last, adding what neither layout wrote to list left as written.
+  ##   layout keeps move with their argument, and same round sets their indent.
 
 
 func fixWrapping*(path, source: string): Fix =
-  ## Rewrite separators, signatures, calls, continuations, then trailing separators, each line
-  ##   held.
+  ## Rewrite separators, signatures, calls, then continuations, each line held.
   result.source = source
   for step in STEPS_WRAPPING: result = result.chain(step.run(path, result.source, EVERY))

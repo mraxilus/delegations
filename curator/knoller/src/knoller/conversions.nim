@@ -4,7 +4,10 @@
 ##   Type conversion `x.T`: text cannot tell it from field or module path (`rigid3.Point`,
 ##     `Kind.Nim`), so compiler's semantic pass decides (`symbols.nim`). Candidate is name after
 ##     `.` glued to receiver, builtin type or capitalised, whose receiver is neither capitalised
-##     name nor module file imports. It converts where name resolves to type, and receiver to
+##     name nor module file imports. Global, i.e. `SCREAMING_SNAKE_CASE` name of two characters
+##     or more, is value (V.1), never type or module, so it stays receiver of candidate
+##     (`FLOAT_TOLERANCE.float`, rule 15 of #443); one capital is placeholder's (V.12).
+##     It converts where name resolves to type, and receiver to
 ##     value: its last name resolves to variable, constant, parameter, field, enum member or
 ##     routine, or it ends on bracket or literal. Receiver is name with calls, indexes and fields
 ##     glued after it, or bracket group; `x.T` becomes `T(x)`, `.` binding tighter than any
@@ -12,6 +15,8 @@
 ##     (`(a + b).float` becomes `float(a + b)`), tuple aside. Conversion inside receiver of
 ##     another nests (`x.float.int` becomes `int(float(x))`).
 ##   Check and fixer share one reading (`conversions`), so rule is written once (Article II.1).
+##     Check passes over conversion of global until static pass reads its rule (step 4 of
+##     #443), so fix writes it, and `koch check` reports none in any project meanwhile.
 ##
 ##   No fixer, check silent: conversion followed by bracket glued after it (`x.T(y)`, two
 ##     arguments), receiver spanning lines, and name in file semantic pass cannot compile.
@@ -31,11 +36,13 @@ type
     last: int  ## Index of receiver's last token.
     dot: int  ## Index of `.`.
     name: int  ## Index of type name.
+    is_global: bool  ## Receiver ends on name of global, which check passes over for now.
 
   Conversion = object  ## Define `x.T` semantic pass settles: line, edits writing `T(x)`.
     line: int  ## Zero-based line of `.`.
     edits: seq[Edit]
     got: string  ## Conversion as written.
+    is_global: bool  ## Receiver ends on name of global, which check passes over for now.
 
 
 const
@@ -52,6 +59,11 @@ const
     "skLet", "skMacro", "skMethod", "skParam", "skProc", "skResult", "skTemplate", "skVar",
   ]
     ## Symbol kinds receiver's last name resolves to where it is value, or call yielding one.
+
+
+func isGlobal(name: string): bool =
+  ## Decide whether name is global's: `SCREAMING_SNAKE_CASE` of two characters or more (V.1).
+  name.len > 1 and name[0] in {'A' .. 'Z'} and not name.anyIt(it in {'a' .. 'z'})
 
 
 func namesImported(
@@ -112,11 +124,13 @@ func candidates(source: string): seq[Candidate] =
     let
       last = tokens[k - 1]
       first = receiver(tokens, partners, k, source)
+      spelled = last.spelling(source)
+      is_global = last.kind == KindToken.Word and spelled.isGlobal
     if first < 0 or tokens[first].line != name.line: continue
-    if last.kind == KindToken.Word and
-        (last.spelling(source)[0] in {'A' .. 'Z'} or last.spelling(source) in modules):
+    if last.kind == KindToken.Word and not is_global and
+        (spelled[0] in {'A' .. 'Z'} or spelled in modules):
       continue
-    result.add Candidate(first: first, last: k - 1, dot: k, name: k + 1)
+    result.add Candidate(first: first, last: k - 1, dot: k, name: k + 1, is_global: is_global)
 
 
 func queryConversion*(path, source: string): Query =
@@ -174,6 +188,7 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
     var conversion = Conversion(
       line: tokens[c.dot].line,
       got: source[tokens[c.first].first ..< tokens[c.name].after],
+      is_global: c.is_global,
     )
     if isGroup(tokens, partners, c.first, c.last, source):
       conversion.edits = @[
@@ -194,8 +209,10 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
 
 
 func checkConversions*(path, source: string; answer: Answer): seq[Report] =
-  ## Report type conversion written `x.T`, as semantic pass settles it (STYLE.md §5).
+  ## Report type conversion written `x.T`, as semantic pass settles it (STYLE.md §5); conversion
+  ##   of global waits for static pass (#443), so none reports yet.
   for conversion in conversions(source, answer):
+    if conversion.is_global: continue
     result.add initReport(
       path,
       conversion.line + 1,

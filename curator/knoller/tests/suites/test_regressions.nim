@@ -4,13 +4,15 @@
 ##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
 ##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
-##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller.
+##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller,
+##     and of rules of #443, each case of which names its rule.
 ##   Each case keeps its domain test in suite of its rule; this suite adds end-to-end form.
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tables, unittest]
+import std/[os, sequtils, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, proofs, reports]
+import ./sources
 
 
 const
@@ -302,8 +304,171 @@ const
     ## Whole `tests/rga3d/test_rga3d.nim` of PGA library at `d9be8ae`, no newline after its last
     ##   line (#443).
 
+  USED_IN =
+    HEAD &
+    "# Borrow necessary functions for using distinct types (i.e. for added type safety).\n" &
+    "#   Ideally Nim would have feature to auto borrow everything, but prevent interop.\n" &
+    "func `&`(a, b: BasisDigits): BasisDigits {.borrow, compileTime.}\n" &
+    "func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func `not`(a: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func `xor`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func countSetBits(b: BasisFlags): int {.borrow, compileTime.}\n" &
+    "func len(b: BasisDigits): int {.borrow, compileTime.}\n" &
+    "iterator items(b: BasisDigits): char = (for d in string(b): yield d)\n" &
+    "template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in" &
+    " cayleys.nim.\n" &
+    "template `in`(c: char, b: BasisDigits): bool = c in string(b)\n"
+    ## Lines 118 to 128 of `pga/algebra.nim` of PGA library at `3d9696e` (rule 2 of #443).
+  PRIMITIVES =
+    HEAD &
+    "# TODO: Represent multivector primitives using more compact data types.\n" &
+    "#   E.g. Point, Line, Plane, Volume, Motor, Flector.\n" &
+    "#   At cost of additional meta-programming, this affords:\n" &
+    "#     - More optimization with SoA (how much more over SIMD of multivectors?),\n" &
+    "#     - Simpler reasoning about objects resulting from operations.\n" &
+    "#     - IDE support for recognizing resulting objects from operations.\n" &
+    "#   Perhaps base library should only contain full multivector operations for simplicity?\n" &
+    "#     I.e. to serve more as learning reference, optimising where necessary.\n" &
+    "# TODO: Implement SIMD cayley table based macros for operating on arrays of Multivectors.\n"
+    ## Lines 3 to 11 of `pga/multivectors.nim` at `3d9696e` (rule 3 of #443).
+  EXOMORPHISM =
+    HEAD &
+    "func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =\n" &
+    "  ## Construct metric exomorphism 𝐆 from metric 𝖌 simplified as 1D cayley table.\n" &
+    "  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).\n" &
+    "  ##   Likewise with `constructAnti` applied on output:\n" &
+    "  ##     𝔾 via 𝔾𝐦 = 𝐆̲𝐦̲̅, i.e. right complement of 𝐦, left complement of result.\n" &
+    "  ##     Equivalent to expanding as 𝔾 via 𝔾(𝐦 ∨ 𝐧) = (𝔾𝐦) ∨ (𝔾𝐧).\n" &
+    "  result = metric\n" &
+    "\n" &
+    "  for operand in Basis:\n" &
+    "    if operand.grade <= Grade.vector: continue\n" &
+    "    var\n" &
+    "      bases: seq[BasisSigned]\n" &
+    "      is_degenerate = false\n" &
+    "\n" &
+    "    # Determine if any vector component of basis is degenerate.\n" &
+    "    for d in operand.toDigits:\n" &
+    "      let basis = BasisDigits($d).toBasis\n" &
+    "      if result[basis].len == 0:\n" &
+    "        is_degenerate = true\n" &
+    "        break\n" &
+    "      bases.add(result[basis])\n" &
+    "    if is_degenerate: continue\n" &
+    "\n" &
+    "    # Reconstruct resulting signed basis from vector components.\n" &
+    "    var product = multiplyExterior(bases[0], bases[1])\n" &
+    "    assert not product.is_degenerate\n" &
+    "    if len(bases) > 2:\n" &
+    "      for i in 2..<bases.len:\n" &
+    "        product = multiplyExterior(product.basis, bases[i])\n" &
+    "\n" &
+    "    result[operand] = @[product.basis]\n"
+    ## Lines 357 to 387 of `pga/cayleys.nim` at `3d9696e` (rule 4 of #443).
+  BASIS_FLAGS =
+    HEAD &
+    "func toBasis(b: BasisFlags): Basis {.compileTime, noinit.} =\n" &
+    "  ## Convert binary flag representation of basis to associated basis.\n" &
+    "  const lut_basis_by_flags = block:\n" &
+    "    const size_of_flags = BasisFlags(1 shl DIMENSIONS)\n" &
+    "    var lut: array[size_of_flags, Option[Basis]]\n" &
+    "    for b in Basis: lut[b.toFlags] = some(b)\n" &
+    "    lut\n" &
+    "\n" &
+    "  doAssert lut_basis_by_flags[b].isSome, &\"Found invalid basis flags: {int(b):b}\"\n" &
+    "  lut_basis_by_flags[b].get\n"
+    ## Lines 235 to 244 of `pga/algebra.nim` at `3d9696e` (rule 6 of #443).
+  ORDER =
+    HEAD &
+    "## Define type definition for transwedge order.\n" &
+    "type Order = distinct range[0..DIMENSIONS]\n" &
+    "#func `<=`(a, b: Order): bool {.borrow.}\n"
+    ## Lines 46 to 48 of `pga/cayleys.nim` at `3d9696e` (rule 5 of #443).
+  COMPLEMENT =
+    HEAD &
+    "func complement(b: Basis, chirality: Chirality): BasisSigned {.compileTime.} =\n" &
+    "  ## Get complement of basis (right by default).\n" &
+    "  let\n" &
+    "    mask = Basis.scalarAnti.toFlags\n" &
+    "    antibasis = (not b.toFlags and mask).toBasis.toSigned\n" &
+    "    antiscalar = case chirality\n" &
+    "      of Chirality.Left: multiplyExterior(antibasis, b.toSigned)\n" &
+    "      of Chirality.Right: multiplyExterior(b.toSigned, antibasis)\n" &
+    "  BasisSigned(basis: antibasis.basis, is_negated: antiscalar.basis.is_negated)\n"
+    ## Lines 613 to 621 of `pga/cayleys.nim` at `3d9696e` (rules 8 and 15 of #443).
+  TARGET_COMPOUND =
+    HEAD &
+    "proc p() =\n" &
+    "  ## Check.\n" &
+    "  for 𝐦, _, _ in sampleMultivectors():\n" &
+    "    if 𝑡 != 0:\n" &
+    "      check ^((|𝐦).toMultivector) =~ initElement(Basis.scalar, 𝐬 / 𝑡) + 𝟙  # 2.94\n"
+    ## Lines 338, 343 and 344 of `tests/suites.nim` at `3d9696e`, in routine (rule 15 of #443).
+  GRADES =
+    HEAD &
+    "suite \"Chapter 2\":\n" &
+    "  test \"Equation 2.1\":\n" &
+    "    for b, 𝐮 in enumerateBasis():\n" &
+    "      if b.grade == Grade(1):\n" &
+    "        check 𝐮 ∧ 𝐮 =~ 0\n" &
+    "\n\n" &
+    "  test \"Equation 2.2-4\":\n" &
+    "    for b, c, 𝐮, 𝐯 in enumerateBasisPair():\n" &
+    "      if b.grade == Grade(1) and c.grade == Grade(1):\n" &
+    "        check (𝐮 + 𝐯) ∧ (𝐮 + 𝐯) =~ 0  # 2.2a\n" &
+    "\n\n" &
+    "  test \"Equation 2.31\":\n" &
+    "    for b, c, 𝐮, 𝐯 in enumerateBasisPair():\n" &
+    "      if b.gradeAnti == GradeAnti(1) and c.gradeAnti == GradeAnti(1):\n" &
+    "        check 𝐮 ∨ 𝐯 =~ -(𝐯 ∨ 𝐮)\n"
+    ## Lines 140 to 149 and 259 to 262 of `tests/suites.nim` at `3d9696e` (rule 9 of #443).
+  CUTS =
+    HEAD &
+    "type\n" &
+    "  Chiral*[T] = object  ## Pair.\n" &
+    "    left*, right*: T  ## Side.\n" &
+    "\n\n" &
+    "func emitTerm*(\n" &
+    "  left_name: string,\n" &
+    "  left_basis: Basis,\n" &
+    "  operator: string,\n" &
+    "  right_name: string,\n" &
+    "  right_basis: Basis,\n" &
+    "  as_negated = false,\n" &
+    "): NimNode {.compileTime.} =\n" &
+    "  ## Emit AST of signed term for multivector basis assignment.\n" &
+    "  let\n" &
+    "    left = emitSubscript(left_name, left_basis)\n" &
+    "    right = emitSubscript(right_name, right_basis)\n" &
+    "  infix(left, operator, right)\n" &
+    "\n\n" &
+    "func normalized*(m: Multivector): Multivector =\n" &
+    "  ## Normalize multivector.\n" &
+    "  let\n" &
+    "    m_norm_bulk = (`|∙²`m)[Basis.scalar].sqrt\n" &
+    "    reciprocal = if m_norm_bulk != 0: 1.0 / m_norm_bulk else: 1.0\n" &
+    "  const 𝐞ₙ = initElement(Basis.origin)\n" &
+    "  h.basis.initElement(reciprocal) + Basis.infinity.initElement() + 𝐞ₙ\n" &
+    "\n\n" &
+    "func initElement*(b: Basis, scalar = 1.0): Multivector =\n" &
+    "  ## Construct element.\n" &
+    "  let 𝐦_grade = b.grade\n" &
+    "  Multivector(𝐦_grade)\n"
+    ## Names and calls of lines 34 and 35 of `pga/cayleys.nim`, 44 to 55 of `pga/emitters.nim`,
+    ##   371, 372, 398, 405 and 411 of `pga/operators.nim` and 392 of `tests/suites.nim` at
+    ##   `3d9696e`, gathered in one module, which declares wrapper and constructor as library
+    ##   does, so one package holds them (rules 8 and 15 of #443).
 
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
+
+
+func staged(source: string): string =
+  ## Write what compile-time family writes on snippet: `noinit` goes from compile-time routine
+  ##   (STYLE.md §2, rule 10 of #443).
+  source.replace("{.compileTime, noinit.}", "{.compileTime.}")
 
 
 proc fixedBy(source: string; prover: Prover): Fix =
@@ -343,9 +508,8 @@ suite "Regressions":
 
   test "3. chains stay flat at their first piece, and block head keeps four spaces":
     holds ASSERTS, ASSERTS  # message chain of `doAssert IS_RIGID or DIMENSIONS >= 3,` (ruling 2)
-    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
-      "          )\n        )\n", "          ),\n        )\n",
-    )  # chain of `xor` after `is_negated: (` stays flat (ruling 2)
+    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements")
+      # chain of `xor` after `is_negated: (` stays flat (ruling 2)
     holds FILTERS, FILTERS  # `if (...) or` keeps four spaces (ruling 10)
     holds BARE, BARE  # bare value opening its statement line keeps four spaces
     holds HEADED, HEADED.replace(
@@ -357,7 +521,7 @@ suite "Regressions":
   test "4. range takes no space, but beside binary piece or before prefix (ruling 3)":
     holds HEAD & "let r = 2 .. 6  ## Value.\n", HEAD & "let r = 2..6  ## Value.\n"
     holds HEAD & "let b = x in 2 .. 6  ## Value.\n", HEAD & "let b = x in 2..6  ## Value.\n"
-    holds DIGITS, DIGITS  # `[1 .. ^1]`: `..^` would lex one operator
+    holds DIGITS, DIGITS.staged  # `[1 .. ^1]`: `..^` would lex one operator
     holds PARITY, PARITY  # `for j in i + 1 ..< len(digits)`: piece holds binary `+`
 
 
@@ -374,12 +538,11 @@ suite "Regressions":
     holds BORROWS, BORROWS.replace("(T: typedesc) =\n", "(T: typedesc) =\n  ## TODO: Document.\n")
 
 
-  test "7. call keeps hand's breaks, and group one item to line takes trailing comma":
-    holds ENUM, ENUM.replace(" for a `", " for `")  # split by its trailing comma; X.9 articles
+  test "7. call keeps hand's breaks, and group one item to line takes no comma from fixer":
+    holds ENUM, ENUM.staged.replace(" for a `", " for `")  # split by trailing comma; X.9 articles
     holds ANTI, ANTI.replace("Cayley1D; complements", "Cayley1D, complements")  # breaks kept
-    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
-      "          )\n        )\n", "          ),\n        )\n",
-    )  # block of line 271 keeps its flat chain and gains `),`
+    holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements")
+      # block of line 271 keeps its flat chain, and gains no comma
 
 
   test "8. dotted call statement takes command form, where its argument is one call":
@@ -456,3 +619,79 @@ suite "Regressions":
       check written == @[(path, mended)]
       let again = outcome(written, [], is_check = false, nimbles = nimbles)
       check again.lines == @["0 fixed."]  # second run
+
+
+  test "13. path in comment takes backticks, and labels of borrows keep their form (#443)":
+    holds USED_IN, USED_IN.replace("# Used in cayleys.nim.", "# Used in `cayleys.nim`.")
+      # rule 2: lines 121, 122, 123 and 127 of `pga/algebra.nim`
+
+
+  test "14. nuance under tag stands two spaces past sentence after tag (#443)":
+    holds PRIMITIVES, PRIMITIVES.replace("\n#   ", "\n#         ")
+      # rule 3: lines 4 to 10 of `pga/multivectors.nim` gain six spaces, two past `Represent`
+
+
+  test "15. paragraph of routine that comments stage takes placeholder (#443)":
+    holds EXOMORPHISM, EXOMORPHISM.staged.replace(
+      "  result = metric\n\n", "  result = metric\n\n  # TODO: Describe stage's purpose.\n"
+    )  # rule 4: paragraph of line 365 of `pga/cayleys.nim`, which holds no stage comment
+
+
+  test "16. doc above type joins its line (#443)":
+    holds ORDER, HEAD & "type Order = distinct range[0..DIMENSIONS]  ## Define type definition " &
+      "for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
+      # rule 5: line 47 of `pga/cayleys.nim`; commented code below it stays
+
+
+  test "17. bare value of message takes backticks (#443)":
+    holds BASIS_FLAGS, BASIS_FLAGS.staged.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
+      # rule 6: line 243 of `pga/algebra.nim`, whose value stands bare
+
+
+  test "18. dotted `to<Target>` of compound argument becomes prefix call (#443)":
+    holds COMPLEMENT, COMPLEMENT.replace(
+      "(not b.toFlags and mask).toBasis", "toBasis(not b.toFlags and mask)"
+    )  # rule 15: line 617 of `pga/cayleys.nim`; rename of its `antibasis` is planner's
+    holds TARGET_COMPOUND,
+      TARGET_COMPOUND.replace("^((|𝐦).toMultivector)", "^toMultivector(|𝐦)")
+      # rule 15: line 344 of `tests/suites.nim`; group around call goes in same run
+
+
+  test "19. landmark index written bare takes alias package declares (#443)":
+    let
+      files = [("pga/algebra.nim", HEAD & ALIASES), ("tests/suites.nim", GRADES)]
+      nimbles = {"pga/algebra.nim": "pga.nimble", "tests/suites.nim": "pga.nimble"}.toTable
+      outcome = outcome(files, [], is_check = false, nimbles = nimbles)
+      written = outcome.written.toTable["tests/suites.nim"]
+    check outcome.lines.filterIt("landmark-alias" in it) == @[
+      "tests/suites.nim:6: landmark-alias fixed",
+      "tests/suites.nim:12: landmark-alias fixed",
+      "tests/suites.nim:12: landmark-alias fixed",
+      "tests/suites.nim:18: landmark-alias fixed",
+      "tests/suites.nim:18: landmark-alias fixed",
+    ]  # rule 9: lines 142, 148 and 261 of `tests/suites.nim`
+    check written.count("Grade.vector") == 3 and written.count("GradeAnti.vectorAnti") == 2
+    check "Grade(1)" notin written
+    let again = outcome(outcome.written, [], is_check = false, nimbles = nimbles)
+    check not again.lines.anyIt("landmark-alias" in it)  # second run
+
+
+  test "20. name breaking cut and constructor called both ways stay for hand (#443)":
+    let
+      outcome = outcome([("pga/a.nim", CUTS)], [], is_check = true,
+        nimbles = {"pga/a.nim": "pga.nimble"}.toTable)
+      left = outcome.lines.filterIt("name-cut left" in it or "conversion-prefix left" in it)
+    check left == @[
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_basis`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_name`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
+        "`right_basis`.",
+      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
+        "`right_name`.",
+      "pga/a.nim:26: name-cut left: Property leads name, value it belongs to last; got " &
+        "`m_norm_bulk`.",
+      "pga/a.nim:28: conversion-prefix left: Routine takes one call form on plain first " &
+        "argument across package, where `2` calls take dot; got `initElement(Basis.origin)`.",
+      "pga/a.nim:34: name-cut left: Property leads name, value it belongs to last; got " &
+        "`𝐦_grade`.",
+    ]  # rule 8 renames through semantic pass (`test_packages.nim`); rule 15 writes no form

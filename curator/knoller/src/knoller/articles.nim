@@ -12,6 +12,10 @@
 ##   No fixer: capital `A`, `An` or `The`, since `A` is often label and capital opens
 ##     sentence; article with punctuation glued after it (`the.`), at line end, or before
 ##     word above.
+##   Commented code holds no prose (VI.10), so check and fixer skip each line comment form
+##     reads as code (`linesCode` of `claims.nim`): hand comments it with no space after
+##     marker, and tool with one, as Architect ruled (#980, `D3 a` on commented code). So
+##     `#func <=(a, b)` names value `a`, never article.
 ##
 ##   Cost: variable named `a` before noun stays article to fixer, as in `scale a vector`; fix
 ##     deletes it, and reading holds that case, which VI.10 asks in backticks anyway.
@@ -19,7 +23,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
-import ./[reports, tokens]
+import ./[claims, outlines, reports, tokens]
 
 
 const
@@ -112,9 +116,18 @@ func checkArticles*(path: string, lines: openArray[(int, string)]): seq[Report] 
     )
 
 
+func linesCode(source: string): seq[int] =
+  ## Read one-based line of each comment line of source that holds commented code, as comment
+  ##   form reads it (`linesCode` of `claims.nim`).
+  for c in source.comments:
+    for i, is_code in c.linesCode:
+      if is_code: result.add c.lines[i].line + 1
+
+
 func checkArticles*(path, source: string): seq[Report] =
-  ## Report each line whose comments in Nim source hold article (VI.5).
-  checkArticles(path, source.linesComment)
+  ## Report each line whose comments in Nim source hold article (VI.5), commented code aside.
+  let code = source.linesCode
+  checkArticles(path, source.linesComment.filterIt(it[0] notin code))
 
 
 func cutsArticle(source: string): seq[(int, int)] =
@@ -161,8 +174,11 @@ func cutsArticle(source: string): seq[(int, int)] =
 
 
 func fixArticles*(path, source: string): Fix =
-  ## Delete each article `cutsArticle` finds, last first, so earlier offsets hold.
-  let cuts = source.cutsArticle
+  ## Delete each article `cutsArticle` finds outside commented code, last first, so earlier
+  ##   offsets hold.
+  let
+    code = source.linesCode
+    cuts = source.cutsArticle.filterIt(source[0 ..< it[0]].count('\n') + 1 notin code)
   result.source = source
   var reported: seq[int]
   for (first, after) in cuts.reversed:
