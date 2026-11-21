@@ -625,14 +625,26 @@ const WIDTH_KIND_WORD* = 32  ## Bound kind word alone, longest being "mixed grad
 func describeKind*(m: Multivector, storage: var openArray[char], cursor: var int) =
   ## Name geometry multivector stands for into fixed storage, for reporting to user.
   ##   Appends from `cursor` onward; see `formatMultivector`.
+  ##   Value of no kind is named for what it is: zero, scalar, antiscalar, or mixed grade.
+  ##     Grade is read off one `scaleFree` copy, as `kindInto` reads it, so rounding under
+  ##     billionth of largest coefficient reads as zero.
   let kind = classify(m)
-  appendChars(storage, cursor,
-    if kind.isNone: "mixed grade, nothing to draw"
-    else:
+  if kind.isSome:
+    appendChars(storage, cursor,
       case kind.get
       of Kind.Point: (if m.isHorizon: "horizon point" else: "point")
       of Kind.Line: (if m.isHorizon: "horizon line" else: "line")
       of Kind.Plane: (if m.isHorizon: "horizon plane" else: "plane")
+    )
+    return
+  let free = m.scaleFree
+  appendChars(storage, cursor,
+    if free.coefficientLargest == 0.0: "zero, nothing to draw"
+    else:
+      let read = free.grade
+      if read == some(Grade(0)): "scalar, nothing to draw"
+      elif read == some(Grade(4)): "antiscalar, nothing to draw"
+      else: "mixed grade, nothing to draw"
   )
 
 
