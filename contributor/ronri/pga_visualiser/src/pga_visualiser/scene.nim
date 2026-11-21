@@ -619,20 +619,73 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     appendChars(storage, cursor, LUT_NAME_BY_BASIS[Basis.scalar])
 
 
-const WIDTH_KIND_WORD* = 32  ## Bound kind word alone, longest being "mixed grade, nothing to draw".
+const WIDTH_KIND_WORD* = 32
+  ## Bound kind word alone, longest being "horizon plane, nothing to draw".
+
+
+func powerOfTwo(exponent: int): float =
+  ## Build `2^exponent` by doubling, exact on either backend and folded at compile time.
+  result = 1.0
+  for _ in 1..exponent: result *= 2.0
+
+
+const SCALE_SUBNORMAL = powerOfTwo(600)
+  ## Lift subnormal value into normal range, exactly, for reading its grade alone.
+  ##   Takes largest coefficient under `2^-1022` to under `2^-422`, and least `2^-1074` to
+  ##     `2^-474`: its square, which `isHorizon` forms, stays normal, and nothing overflows.
+  ##   Power of two, so lifted copy carries every bit value carried.
+
+
+func isFinite(m: Multivector): bool =
+  ## Report whether every coefficient of `m` is finite, neither NaN nor infinite.
+  for b in Basis:
+    if m[b].classify in {fcNan, fcInf, fcNegInf}: return false
+  true
+
+
+func kindWord(kind: Kind, m: Multivector): string =
+  ## Name kind `m` stands for, with horizon read off `m`.
+  case kind
+  of Kind.Point: (if m.isHorizon: "horizon point" else: "point")
+  of Kind.Line: (if m.isHorizon: "horizon line" else: "line")
+  of Kind.Plane: (if m.isHorizon: "horizon plane" else: "plane")
 
 
 func describeKind*(m: Multivector, storage: var openArray[char], cursor: var int) =
   ## Name geometry multivector stands for into fixed storage, for reporting to user.
   ##   Appends from `cursor` onward; see `formatMultivector`.
+  ##   Value with NaN or infinite coefficient reads "not finite", before `classify`, which
+  ##     can name kind for it.
+  ##   Value of no kind is named for what it is: zero, scalar, antiscalar, or mixed grade.
+  ##     Grade is read off one `scaleFree` copy, as `kindInto` reads it, so rounding under
+  ##     billionth of largest coefficient reads as zero.
+  ##     Subnormal value is read off copy `SCALE_SUBNORMAL` lifts, since `scaleFree` gives zero
+  ##       for it. Object read so names its kind, and says it draws nothing: `classify`,
+  ##       which drawing reads, still names no kind for it.
+  if not m.isFinite:
+    appendChars(storage, cursor, "not finite, nothing to draw")
+    return
   let kind = classify(m)
+  if kind.isSome:
+    appendChars(storage, cursor, kindWord(kind.get, m))
+    return
+  let
+    subnormal = m.coefficientLargest.classify == fcSubnormal
+    lifted = if subnormal: SCALE_SUBNORMAL * m else: m
+  if subnormal:
+    let kind_lifted = classify(lifted)
+    if kind_lifted.isSome:
+      appendChars(storage, cursor, kindWord(kind_lifted.get, lifted))
+      appendChars(storage, cursor, ", nothing to draw")
+      return
+  let free = lifted.scaleFree
   appendChars(storage, cursor,
-    if kind.isNone: "mixed grade, nothing to draw"
+    if free.coefficientLargest == 0.0: "zero, nothing to draw"
     else:
-      case kind.get
-      of Kind.Point: (if m.isHorizon: "horizon point" else: "point")
-      of Kind.Line: (if m.isHorizon: "horizon line" else: "line")
-      of Kind.Plane: (if m.isHorizon: "horizon plane" else: "plane")
+      let read = free.grade
+      if read == some(Grade(0)): "scalar, nothing to draw"
+      elif read == some(Grade(4)): "antiscalar, nothing to draw"
+      else: "mixed grade, nothing to draw"
   )
 
 

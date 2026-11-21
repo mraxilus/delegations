@@ -465,6 +465,51 @@ suite "Scene":
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
+  test "a value of no kind is named for what it is, and mixed grade only where it is mixed":
+    # Fault: zero, scalar and antiscalar each read "mixed grade, nothing to draw", so dot of
+    #   two points said it gave mixed grade (repository issue 970).
+    for scale in [1.0e-6, 1.0, -3.0, 1.0e6]:
+      check kindText(initElement(Basis.scalar, scale)) == "scalar, nothing to draw"
+      check kindText(initElement(Basis.E1234, scale)) == "antiscalar, nothing to draw"
+      check kindText(scale * (1.0 + POINTS[0])) == "mixed grade, nothing to draw"
+      # Rounding on other grades, under billionth of largest, reads as grade it stands on.
+      check kindText(initElement(Basis.scalar, scale) + (1.0e-12 * scale) * POINTS[0]) ==
+          "scalar, nothing to draw"
+    for zero in [0.0, -0.0]:
+      check kindText(initElement(Basis.scalar, zero)) == "zero, nothing to draw"
+    check kindText(applyOperation(Operation.Dot, POINTS[0], POINTS[1])) ==
+        "scalar, nothing to draw"
+    check kindText(applyOperation(Operation.Wedge, POINTS[0], POINTS[0])) ==
+        "zero, nothing to draw"
+    # Storyboard step `10_wedge_volume` stands for antiscalar, as record says.
+    var seeded = initScene()
+    addSeeds(seeded)
+    for step in STEPS:
+      if step.stem == "10_wedge_volume":
+        check kindText(seeded.applyStep(step)) == "antiscalar, nothing to draw"
+
+
+  test "a value that is not finite says so, and a subnormal one reads its grade and draws nothing":
+    # Fault: value with NaN, infinite or subnormal coefficient read "zero, nothing to draw", so
+    #   subnormal antiscalar said it was zero (repository issue 970, D5).
+    for m in [initElement(Basis.scalar, NaN), initElement(Basis.E1234, NaN),
+        initElement(Basis.scalar, Inf), initElement(Basis.E1234, -Inf),
+        initElement(Basis.scalar, Inf) + POINTS[0], POINTS[0] + initElement(Basis.E1, NaN),
+        LINES[0] + initElement(Basis.E12, Inf), PLANES[0] + initElement(Basis.E321, NaN)]:
+      check kindText(m) == "not finite, nothing to draw"
+    for scale in [1.0e-310, -1.0e-310, 5.0e-324]:
+      check kindText(initElement(Basis.scalar, scale)) == "scalar, nothing to draw"
+      check kindText(initElement(Basis.E1234, scale)) == "antiscalar, nothing to draw"
+    check kindText(1.0e-310 * (1.0 + POINTS[0])) == "mixed grade, nothing to draw"
+    # Subnormal object names its kind, and draws nothing, as `classify` gives it no kind.
+    for i in 0..<SAMPLES:
+      for (m, word) in [(POINTS[i], "point"), (LINES[i], "line"), (PLANES[i], "plane"),
+          (⊖LINES[i], "horizon point")]:
+        let tiny = 1.0e-310 * m
+        check classify(tiny).isNone
+        check kindText(tiny) == word & ", nothing to draw"
+
+
   test "a line a metre long prints the terms it carries, and no rounding beside them":
     # Its coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
     #   Term prints against largest coefficient instead, as `classify` reads it, so line
