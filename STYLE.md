@@ -19,7 +19,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect. A lock,
-  a wait and a signal are effects all the same, since another thread sees each one.
+  a wait and a signal are effects all the same, since another thread sees each one. A `ref` or
+  `ptr` parameter keeps a routine a `proc`, since another holder or thread can change its object
+  during the call.
 - Where both mutable and immutable access matter, define an overload pair of `func`s, because
   a `func` may take a `var` parameter. Raw access into storage becomes a `template` pair only
   where the project measured the cost of the call and recorded it:
