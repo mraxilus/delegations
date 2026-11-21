@@ -92,7 +92,7 @@ suite "Declarations":
     check fixDocs("a.nim", order).origin == @[1, 3, 4, 5]  # joined line traces to declaration
     check "## Module.\n\n## Size.\nconst N = 3\n".fixed == "## Module.\n\nconst N = 3  ## Size.\n"
       # doc above declaration past start of file moves; doc opening file stays (below)
-    let kinds ="# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
+    let kinds = "# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
       "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n" &
       "    ## Depth.\n    depth: int\n" &
       "  Kind = enum  ## Kind.\n    A  ## First.\n\n    ## Second.\n    B\n\n" &
