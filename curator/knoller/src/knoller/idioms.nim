@@ -33,6 +33,11 @@
 ##     and stub carries testament header (§6), so only `tests/test_*.nim` can lack it, since
 ##     header makes stub of category; `echo` of value without label, outside condition, is debug
 ##     output (VIII.5).
+##   Debug output warns, and fails no check, as Architect ruled on rule 19 of #443: fix would
+##     change what code prints (`warnDebug`). Build-time printer (`PRINTERS_BUILD`), echo of
+##     syntax tree and `debugEcho` warn in any file; `echo` at top level warns in library module,
+##     outside `tests` and `tools` of package. Module with entry block, or that quits at top level,
+##     is program, which import never runs. Commented print is no code.
 ##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
 ##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
 ##     rules but stub; `strictFuncs`, import order and stub keys are module's (`stepsIdiom` too).
@@ -155,6 +160,10 @@ const
   CLOSERS = {')', ']', '}'}  ## Brackets closing such span.
   PRAGMA_ALL = "{.all.}"
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
+  PRINTERS_BUILD = ["dumpAstGen", "dumpLisp", "dumpTree", "expandMacros"]
+    ## Macros printing code at build time, for debugging alone (VIII.5).
+  READINGS_TREE = ["astGenRepr", "lispRepr", "treeRepr"]  ## Readings of syntax tree as text.
+  PRINTS = ["debugEcho", "echo"]  ## Calls printing value at run time, or at build time in macro.
   CONDITIONS = ["case", "elif", "else", "except", "if", "of", "when"]
     ## Openers making `echo` beneath them conditional, i.e. failure diagnostic.
   PRAGMAS_BUILT_IN = [
@@ -460,6 +469,33 @@ func checkTests(
         Rule.OutputDebug,
         "Test leaves no debug output; label report, or print under failing condition; got `" &
           c.strip & "`.",
+      )
+
+
+func warnDebug*(path, source, nimble: string): seq[Report] =
+  ## Warn of build-time printer, echo of syntax tree and `debugEcho`, in any file, and of `echo` at
+  ##   top level of library module, which prints on each import (VIII.5); `nimble` is nimble file
+  ##   nearest path. No fix, since fix would change what code prints.
+  let
+    lines = source.splitLines
+    code = source.codeOnly.splitLines
+    is_program = code.anyIt(
+      it.startsWith(GUARD_MAIN) or (it.indentWidth == 0 and "quit" in it.wordsCode)
+    )
+    is_library = path.endsWith(EXTENSIONS[Dialect.Module]) and not path.isFileTest(nimble) and
+      not path.isFileTool(nimble) and not is_program
+  for i, c in code:
+    let
+      words = c.wordsCode
+      is_printer = words.anyIt(it in PRINTERS_BUILD)
+      is_tree = words.anyIt(it in PRINTS) and words.anyIt(it in READINGS_TREE)
+      is_top = is_library and c.indentWidth == 0 and c.wordFirst == "echo"
+    if is_printer or is_tree or "debugEcho" in words or is_top:
+      result.add initReport(
+        path,
+        i + 1,
+        Rule.OutputDebug,
+        "Code leaves no debug output, which nothing reads; got `" & lines[i].strip & "`.",
       )
 
 

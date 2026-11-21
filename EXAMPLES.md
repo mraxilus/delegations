@@ -166,7 +166,7 @@ library at `3121342`. The test file carries its word before its name.
 
 ```nim
   # TODO: Create LUT for all possible valid basisflags instead of computing each call.
-  #   Not even sure if this will provide speed-up.
+  #         Not even sure if this will provide speed-up.
 ```
 
 From the header of `pga.nim`, and changed from `isNegatedByJoinLexicographic` in `cayleys.nim`,
@@ -224,6 +224,29 @@ func `∧`*(s: float, m: Multivector): Multivector {.inline, noinit.} =
 Changed from `operators.nim`: the reference writes the second tier as `#[ Wedge ]#`, and X.2
 marks it with `#[[ ]]#`. A child that follows its parent at once keeps its own two blank
 lines.
+
+## X.11: A configuration block beside its family
+
+```nim
+defineOperator(symbols = "∙", …)
+defineOperator(symbols = "∘", …)
+when IS_CONFORMAL:
+  defineOperator(symbols = "■", …)
+  defineOperator(symbols = "□", …)
+⋮
+when IS_RIGID:
+  defineOperator(symbols = "|∙²", …)
+  defineOperator(symbols = "|∘²", …)
+when IS_CONFORMAL:
+  defineOperator(symbols = "|∙²", …)
+  defineOperator(symbols = "|∘²", …)
+  defineOperator(symbols = "|■²", …)
+```
+
+Shortened from `operators.nim` at `3d9696e`. The flat parts `■` and `□` exist only in the
+conformal build. They sit beside the round parts `∙` and `∘`, and not in one block with the
+norms. The squared norms differ by configuration, so their two blocks stand together, and the
+rigid build, which a build gets by default, comes first.
 
 ## STYLE, section 2: A push over foreign bindings
 

@@ -68,8 +68,8 @@ suite "Rules":
       "Suite takes three blank lines before it; got `0`.",  # `blanks.nim:237`
       # `declarations.nim:278`
       "Parameter states its type only where default does not fix it; got `n: int = 1`.",
-      "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
-      "line 3; got lines `2` to `4`.",  # `chain.nim:292`
+      "Fence keeps its lines as written, and inside them definition-blank-lines breaks once at " &
+      "line 3 and expression-spacing once at line 3; got lines `2` to `4`.",  # `chain.nim:292`
     ]
     var
       cited: seq[string]

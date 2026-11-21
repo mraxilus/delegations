@@ -1,5 +1,5 @@
-## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
-##   STYLE.md §1), and fix them (`koch fix`).
+## Enforce blank lines beside suites, tests and nested helpers, and between definitions, in Nim
+##   source (Article X.2, STYLE.md §1), and fix them (`koch fix`).
 ##   Under `tests/` of package (`reports.isFileTest`): suite is first tier and takes three blank
 ##     lines before it; test is second tier and takes two. First child follows its opener at
 ##     once, i.e. test opening suite and suite opening `when` body: no blank line. Suite or test
@@ -18,6 +18,16 @@
 ##   Reads code view (`views.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
 ##     moves. Run lying inside string or block comment spanning lines is never read.
 ##   Checks and fixer share one reading (`runs`), so each rule is written once (Article II.1).
+##   Run before definition at module level, or in `when` branch there, takes count X.2 gives
+##     definition below it (`checkDefinitions`): declarative calls of one family stack,
+##     declarative call after routine takes up to two, undocumented one-line helpers stack,
+##     declaration block after another and documented one-line definition take one, every other
+##     definition two, and inside second-tier section each count caps at one (#443). Documented
+##     one-line call after routine takes one, as Q3 gives documented one-line definition (ruling
+##     `D3 a` of #980). Item is documented by `##` doc on its head line or inside it; nearest
+##     banner above, outside strings, gives tier. `when` counts as definition it holds first,
+##     below it as one it holds last; run after pragma line, statement, banner or free comment is
+##     not read. Fixer shares its reading (`gapsDefinition`).
 ##
 ##   Cost: helper inside `when`, `if` or loop of routine body is unread, since X.11 asks helper
 ##     first in body.
@@ -52,11 +62,53 @@ type
     kept: seq[string]  ## Strings and characters blanked.
     inside: seq[bool]  ## Line after first of string or comment spanning lines.
 
+  Form {.pure.} = enum  ## Define form of item at level, which decides count of run before it.
+    Routine  ## `proc`, `func`, `template` or other routine, with its name.
+    Declaration  ## Block of `type`, `const`, `let` or `var`.
+    Call  ## Declarative call: of template or macro module declares, or of `define…`.
+    When  ## `when` block, which counts as definition it holds first, and last below it.
+    Import  ## `import`, `from`, `include` or `export`.
+    Pragma  ## Pragma line, as `{.push.}`, which opens what follows.
+    Statement  ## Any other code, which defines nothing.
+
+  Item = object  ## Define item at level: its lines, form and shape.
+    head: int  ## Zero-based line item opens on.
+    last: int  ## Zero-based last line of item, its doc and branches included.
+    form: Form
+    is_one_line: bool  ## Code on head line alone, or routine with no body.
+    is_documented: bool  ## Holds `##` doc.
+    branches: seq[seq[Item]]  ## Items of each branch of `when`.
+
+  Spacing {.pure.} = enum  ## Define bullet of X.2 that sets count of run, which names message.
+    Two  ## Every other definition.
+    Block  ## Declaration block after another.
+    Documented  ## Documented one-line definition.
+    Family  ## Declarative call after another.
+    CallRoutine  ## Declarative call after routine.
+    Group  ## Undocumented one-line helper after another.
+
+  Gap = object  ## Define run of blank lines before definition, and counts X.2 lets it hold.
+    first: int  ## Zero-based line run opens on.
+    count: int  ## Blank lines run holds.
+    lo: int  ## Fewest blank lines X.2 lets run hold.
+    hi: int  ## Most blank lines X.2 lets run hold.
+    target: Spacing
+    is_second: bool  ## Inside second-tier section, where two becomes one.
+    line: int  ## Zero-based head line of definition run stands before.
+
 
 const
   LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1, 0]  ## Blank lines each target takes.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.
+  KEYWORDS_DECLARATION = ["const", "let", "type", "var"]  ## Keywords opening declaration block.
+  KEYWORDS_IMPORT = ["export", "from", "import", "include"]  ## Keywords naming other module.
+  KEYWORDS_BRANCH = ["elif", "else", "except", "finally", "of"]
+    ## Keywords opening later branch of block at its own indent.
+  FORMS_DEFINITION = {Form.Routine, Form.Declaration, Form.Call}  ## Forms X.2 counts runs before.
+  OPERATORS = {'=', '+', '-', '*', '/', '<', '>', '@', '$', '~', '&', '%', '|', '!', '?', '^',
+    '.', ':', '\\'}
+    ## Characters of operator, which `=` beside them joins.
 
 
 func toView(source: string): View =
@@ -93,6 +145,12 @@ func isBanner(v: View, i: int): bool =
   let line = v.lines[i]
   (line.startsWith("#[ ") and line.endsWith(" ]#")) or
     (line.startsWith("#[[ ") and line.endsWith(" ]]#"))
+
+
+func isDoc(kept: string): bool =
+  ## Decide whether comment of line, strings blanked, is `##` doc: first `#` opens it.
+  let at = kept.find('#')
+  at >= 0 and kept.continuesWith("##", at)
 
 
 func wordFirst(code: string): string =
@@ -173,6 +231,24 @@ func isOneLine(v: View; i, indent: int): bool =
   ## Decide whether line `i` declares, at indent, routine whose definition stands on that line
   ##   alone: `{.borrow.}` with no body, or body on line of its signature, no doc after it.
   v.isHeadRoutine(i) and v.code[i].indentWidth == indent and v.lineLast(i) == i
+
+
+func isBodied(v: View; head, last: int): bool =
+  ## Decide whether routine from line `head` to `last` holds body: `=` at depth 0, outside
+  ##   backticks, that joins no operator.
+  var
+    depth = 0
+    is_quoted = false
+  for k in head .. last:
+    let code = v.code[k]
+    for j, c in code:
+      if c == '`': is_quoted = not is_quoted
+      elif is_quoted: continue
+      elif c in {'(', '[', '{'}: inc depth
+      elif c in {')', ']', '}'}: dec depth
+      elif c == '=' and depth == 0 and (j == 0 or code[j - 1] notin OPERATORS) and
+          (j + 1 >= code.len or code[j + 1] notin OPERATORS):
+        return true
 
 
 func runs(path, source, nimble: string): seq[Run] =
@@ -267,4 +343,193 @@ func fixBlanks*(path, source: string; nimble = ""): Fix =
       if run.target in {Target.Helper, Target.Stacked}: Rule.LinesBlankHelper
       else: Rule.LinesBlankTest
     result.fixed.add initReport(path, run.line + 1, rule)
+  if found.len > 0: result.origin = origin
+
+
+func isKeywordFirst(code: string, words: openArray[string]): bool =
+  ## Decide whether code line opens with one of words, alone or before space.
+  let word = code.wordFirst
+  word in words and (code.strip.len == word.len or code.strip[word.len] in {' ', ':'})
+
+
+func isBindingSingle(code: string): bool =
+  ## Decide whether code line opens binding naming value on same line, as `idioms.nim` reads it.
+  let word = code.wordFirst
+  word in ["const", "let", "var"] and code.strip.len > word.len and code.strip[word.len] == ' '
+
+
+func itemLast(v: View, i: int): int =
+  ## Find last line of item at level opening on line `i`: its own lines, and each branch of
+  ##   `elif`, `else`, `of`, `except` or `finally` at its indent after it.
+  result = v.lineLast(i)
+  while true:
+    var next = result + 1
+    while next < v.lines.len and (not v.isCode(next) or v.inside[next]): inc next
+    if next >= v.lines.len or v.code[next].indentWidth != v.code[i].indentWidth or
+        not v.code[next].isKeywordFirst(KEYWORDS_BRANCH):
+      return
+    result = v.lineLast(next)
+
+
+func items(v: View; a, b: int; declared: seq[string]): seq[Item] =
+  ## Read each item of level from line `a` to `b`, at indent of its first code line; each `when`
+  ##   holds items of its branches.
+  var i = a
+  while i <= b and (not v.isCode(i) or v.inside[i]): inc i
+  if i > b: return
+  let indent = v.code[i].indentWidth
+  while i <= b:
+    if not v.isCode(i) or v.inside[i] or v.code[i].indentWidth != indent:
+      inc i
+      continue
+    let
+      code = v.code[i].strip
+      word = code.wordFirst
+      callee = code[word.len .. ^1]
+    var item = Item(head: i, last: min(v.itemLast(i), b))
+    item.form =
+      if v.isHeadRoutine(i): Form.Routine
+      elif code.isKeywordFirst(KEYWORDS_DECLARATION): Form.Declaration
+      elif code.isKeywordFirst(["when"]): Form.When
+      elif code.isKeywordFirst(KEYWORDS_IMPORT): Form.Import
+      elif code.startsWith("{."): Form.Pragma
+      elif callee.startsWith("(") and (word in declared or
+          (word.startsWith("define") and word.len > 6 and word[6] in {'A' .. 'Z'})):
+        Form.Call
+      else: Form.Statement
+    if item.form == Form.When:
+      var openers = @[i]
+      for k in i + 1 .. item.last:
+        if v.isCode(k) and not v.inside[k] and v.code[k].indentWidth == indent and
+            v.code[k].isKeywordFirst(KEYWORDS_BRANCH):
+          openers.add k
+      for n, opener in openers:
+        let close = if n + 1 < openers.len: openers[n + 1] - 1 else: item.last
+        item.branches.add v.items(opener + 1, close, declared)
+    item.is_one_line = toSeq(item.head + 1 .. item.last).allIt(not v.isCode(it))
+    if item.form == Form.Routine and not item.is_one_line:
+      item.is_one_line = not v.isBodied(item.head, item.last)
+    item.is_documented = toSeq(item.head .. item.last).anyIt(v.kept[it].isDoc)
+    result.add item
+    i = item.last + 1
+
+
+func held(item: Item, is_first: bool): Item =
+  ## Read definition `when` counts as: one it holds first, or last; statement where none.
+  if item.form != Form.When: return item
+  let branches = item.branches.filterIt(it.len > 0)
+  if branches.len == 0: return Item(form: Form.Statement)
+  (if is_first: branches[0][0] else: branches[^1][^1]).held(is_first)
+
+
+func gaps(v: View; level: seq[Item]; result: var seq[Gap]) =
+  ## Add run before each item of level that follows definition or import, with counts X.2
+  ##   gives it, then runs inside each `when` branch; first item of level is not read.
+  for n, item in level:
+    for branch in item.branches: v.gaps(branch, result)
+    if n == 0: continue
+    let
+      above = level[n - 1].held(is_first = false)
+      below = item.held(is_first = true)
+    if above.form notin FORMS_DEFINITION + {Form.Import} or below.form notin FORMS_DEFINITION:
+      continue
+
+    # Run stands above `#` comments and `##` docs right before item, at its indent.
+    let indent = v.code[item.head].indentWidth
+    var anchor = item.head
+    while anchor > 0 and v.isText(anchor - 1) and not v.isCode(anchor - 1) and
+        not v.inside[anchor - 1] and v.kept[anchor - 1].strip.startsWith("#") and
+        not v.isBanner(anchor - 1) and v.lines[anchor - 1].indentWidth == indent:
+      dec anchor
+    var upper = anchor - 1
+    while upper >= 0 and not v.isText(upper): dec upper
+    if upper != level[n - 1].last: continue  # banner or free comment between
+    let (head_above, head_below) = (v.code[level[n - 1].head], v.code[item.head])
+    if level[n - 1].head == item.head - 1 and head_above.isBindingSingle and
+        head_below.isBindingSingle and head_above.wordFirst == head_below.wordFirst:
+      continue  # single bindings of one keyword, which share it (`idioms.nim`)
+    var gap = Gap(first: upper + 1, count: anchor - upper - 1, line: item.head)
+    if toSeq(gap.first ..< anchor).anyIt(v.inside[it]): continue
+
+    # Count follows form of each side; inside second-tier section, two becomes one. Documented
+    #   one-line call after routine reads Q3, as other documented one-line definition does
+    #   (ruling `D3 a` of #980).
+    let
+      is_helper = below.form == Form.Routine and below.is_one_line and not below.is_documented
+      is_helper_above = above.form == Form.Routine and above.is_one_line and not above.is_documented
+      is_documented_one_line = below.is_one_line and below.is_documented
+    (gap.lo, gap.hi, gap.target) =
+      if below.form == Form.Call and above.form == Form.Call: (0, 1, Spacing.Family)
+      elif below.form == Form.Call and above.form == Form.Routine and not is_documented_one_line:
+        (0, 2, Spacing.CallRoutine)
+      elif is_helper and is_helper_above: (0, 2, Spacing.Group)
+      elif below.form == Form.Declaration and above.form == Form.Declaration: (1, 1, Spacing.Block)
+      elif is_documented_one_line: (1, 1, Spacing.Documented)
+      else: (2, 2, Spacing.Two)
+    var banner = item.head - 1
+    while banner >= 0 and (v.inside[banner] or not v.isBanner(banner)): dec banner
+    gap.is_second = banner >= 0 and v.lines[banner].startsWith("#[[")
+    if gap.is_second:
+      gap.lo = min(gap.lo, 1)
+      gap.hi = min(gap.hi, 1)
+    if gap.count notin gap.lo .. gap.hi: result.add gap
+
+
+func gapsDefinition(source: string): seq[Gap] =
+  ## Find each run between two definitions at module level, or in `when` branch there, or
+  ##   between imports and definition, whose count breaks X.2.
+  let v = source.toView
+  var declared: seq[string]
+  for i in 0 ..< v.lines.len:
+    if not v.isCode(i) or v.inside[i] or v.code[i].wordFirst notin ["macro", "template"]: continue
+    var name = v.code[i].strip[v.code[i].wordFirst.len .. ^1].strip
+    name = name.replace("`", "")
+    var k = 0
+    while k < name.len and name[k] notin {'*', '(', '[', ' ', ':', '='}: inc k
+    declared.add name[0 ..< k]
+  v.gaps(v.items(0, v.lines.len - 1, declared), result)
+  result.sort(proc (x, y: Gap): int = cmp(x.line, y.line))
+
+
+func checkDefinitions*(path, source: string): seq[Report] =
+  ## Report blank lines before definition at module level other than X.2 asks for its kind.
+  ##   Named by its suite and `checkFormatting` alone until static pass calls it.
+  for gap in source.gapsDefinition:
+    let text =
+      case gap.target
+      of Spacing.Two:
+        if gap.is_second: "Sibling inside second-tier section takes one blank line before it"
+        else: "Definition takes two blank lines before it"
+      of Spacing.Block: "Declaration block takes one blank line after another"
+      of Spacing.Documented: "Documented one-line definition takes one blank line after another"
+      of Spacing.Family:
+        "Declarative call stacks in its family, and one blank line separates two families"
+      of Spacing.CallRoutine:
+        "Declarative call takes at most " &
+          (if gap.is_second: "one blank line" else: "two blank lines") & " after routine above it"
+      of Spacing.Group:
+        "Undocumented one-line helper stacks in its group, and at most " &
+          (if gap.is_second: "one blank line separates" else: "two blank lines separate") &
+          " two groups"
+    result.add initReport(
+      path, gap.line + 1, Rule.LinesBlankDefinition, text & "; got `" & $gap.count & "`."
+    )
+
+
+func fixDefinitions*(path, source: string): Fix =
+  ## Set each run `checkDefinitions` reports to count X.2 asks, last run first.
+  let found = source.gapsDefinition
+  var
+    lines = source.split('\n')
+    origin = toSeq(1 .. lines.len)
+  for gap in found.sortedByIt(-it.first):
+    let
+      wanted = gap.count.clamp(gap.lo, gap.hi)
+      after = gap.first + gap.count
+      kept = origin[gap.first ..< gap.first + min(gap.count, wanted)]
+      inserted = newSeq[int](wanted - kept.len)
+    lines = lines[0 ..< gap.first] & newSeq[string](wanted) & lines[after .. ^1]
+    origin = origin[0 ..< gap.first] & kept & inserted & origin[after .. ^1]
+  result.source = lines.join("\n")
+  for gap in found: result.fixed.add initReport(path, gap.line + 1, Rule.LinesBlankDefinition)
   if found.len > 0: result.origin = origin

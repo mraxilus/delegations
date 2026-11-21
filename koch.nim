@@ -570,7 +570,8 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; so does each file knoller's fixers do not settle, with no article, since
     #   fault is tool's. Exit code ignores warnings.
-    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
+    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`);
+    #   compiler and disk under root give rest fixers read across project (`fixes.readFacts`).
     #   Parser of each project's pin proves each needless group (`fixes.fixProven`); run that
     #   proved nothing prints one warning saying why.
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
@@ -587,12 +588,13 @@ proc run(options: Options): int =
     let
       locked = tree.nimblesLocked
       answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
+      (uses, pures, libraries) = readFacts(options.root, entries, locked)
       (fix, failures) = fixProven(
         options.branchOrDefault,
         tree,
         entries,
         locked,
-        initContext(tree, entries, answers, locked),
+        initContext(tree, entries, answers, locked, uses, pures, libraries),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix

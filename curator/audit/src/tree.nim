@@ -192,14 +192,19 @@ proc textAt*(root, revision, path: string): string =
 
 
 proc subjects*(root, base: string): seq[string] =
-  ## List commit subjects reachable from HEAD but not `base`, merges excluded.
-  fieldsGit(root, ["log", "-z", "--format=%s", "--no-merges", base & "..HEAD"])
+  ## List commit subjects reachable from HEAD but not `base`, merges excluded, each line of
+  ##   history together (`--topo-order`): by date, merge of branch built at same time would put
+  ##   its commits between test and its fix, which ladder of `commits.nim` reads as neighbours.
+  fieldsGit(root, ["log", "-z", "--format=%s", "--no-merges", "--topo-order", base & "..HEAD"])
 
 
 proc commitsBranch*(root, base: string): seq[Commit] =
-  ## Read commits reachable from HEAD but not `base`, newest first, merges excluded.
+  ## Read commits reachable from HEAD but not `base`, newest first, merges excluded, each line
+  ##   of history together, as `subjects` reads them.
   ##   Paths come from `diff-tree` of each commit, so rename reads as both of its paths.
-  for hash in fieldsGit(root, ["log", "-z", "--format=%H", "--no-merges", base & "..HEAD"]):
+  for hash in fieldsGit(
+    root, ["log", "-z", "--format=%H", "--no-merges", "--topo-order", base & "..HEAD"]
+  ):
     let
       name = hash.strip
       message = fieldsGit(root, ["log", "-1", "-z", "--format=%s%x1f%b", name])[0]
