@@ -21,15 +21,19 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./knoller/[
-  articles, blanks, chain, command, commands, compilers, conversions, declarations, declared, edits,
-  entry, fences, form, generations, idioms, messages, names, parentheses, pins, precedence, proofs,
-  reports, rewrites, rules, spacing, symbols, targets, tokens, views, waits, wrapping,
+  articles, blanks, chain, claims, command, commands, compilers, configurations, constructors,
+  conversions, cuts, declarations, declared, edits, entry, fences, form, generations, idioms,
+  landmarks, markers, messages, names, outlines, packages, parentheses, pins, precedence, prefixes,
+  proofs, purity, reports, rewrites, rules, skips, spacing, stages, staging, symbols, targets,
+  tokens, views, waits, wrapping,
 ]
 
 export
-  articles, blanks, chain, commands, compilers, conversions, declarations, declared, edits, entry,
-  fences, form, generations, idioms, messages, names, parentheses, pins, precedence, proofs,
-  reports, rewrites, rules, spacing, symbols, targets, tokens, views, waits, wrapping
+  articles, blanks, chain, claims, commands, compilers, configurations, constructors, conversions,
+  cuts, declarations, declared, edits, entry, fences, form, generations, idioms, landmarks, markers,
+  messages, names, outlines, packages, parentheses, pins, precedence, prefixes, proofs, purity,
+  reports, rewrites, rules, skips, spacing, stages, staging, symbols, targets, tokens, views, waits,
+  wrapping
 
 
 when isMainModule:

@@ -110,8 +110,9 @@ suite "Findings":
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
           checkKeysStub("tests/test_a.nim", stub, "a.nimble")
     check found.toFindings.mapIt(it.message) == @[
-      "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
-      "line 3 (X.1); got lines `2` to `4`.",  # fence warning
+      "Fence keeps its lines as written, and inside them definition-blank-lines breaks once " &
+      "at line 3 and expression-spacing once at line 3 (X.1); got lines `2` to `4`.",
+        # fence warning, of two rules
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `#!fix off` and `#!fix on` either side.",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
@@ -162,8 +163,8 @@ suite "Findings":
     check found.toFindings.mapIt(it.message) == @[
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
       "their own, else one group to line (X.3); got `3` lines.",
-      "Call stays on its line where it fits, else takes one argument to line with trailing " &
-      "comma (X.3); got `4` lines.",
+      "Call stays on its line where it fits, else takes one argument to line (X.3); got `4` " &
+      "lines.",
       "Line fitting nowhere breaks after its operator of lowest precedence (STYLE.md §5); got " &
       "`101` runes.",
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`.",
