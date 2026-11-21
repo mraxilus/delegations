@@ -327,6 +327,29 @@ suite "Style §1":
     check provenPure(included, sites["b.nim"], directory, nim, [DEFINES_NONE]).reason.len > 0
 
 
+  test "func taking `ref` or `ptr` parameter reports, and fix writes `proc` unless forward stands":
+    # Ruling `D5 a` of #980: `document` of `pga_benchmark` reads two nodes its caller can change.
+    #   `var` of value type keeps `func`, and forward declaration keeps its pair for hand.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n" &
+      "type Cell = ref object\n  x: int\n\nfunc size(n: JsonNode): int =\n  n.len\n\n" &
+      "func held(c: var Cell): int =\n" &
+      "  c.x\n\nfunc bump(x: var int) =\n  inc x\n\nfunc ahead(c: Cell): int\n\n" &
+      "func ahead(c: Cell): int =\n  c.x\n\necho size(newJObject()), ahead(Cell())\n"
+    check source.asksPointing
+    let pures = proven(source)
+    check pures.sites.len == 0
+    check pures.pointing ==
+      ["func size", "func held", "func ahead(c: Cell): int =\n"].mapIt(source.site(it))
+    let found = checkPure("a.nim", source, pures)
+    check found.mapIt(it.line) == pures.pointing.mapIt(it[0])
+    check found[0].message ==
+      "Routine with parameter of `ref` or `ptr` type is `proc`; got `func size`."
+    let (edits, reports) = editsPure("a.nim", source, pures, [])
+    check source.applied(edits).count("proc ") == 2
+    check reports.mapIt(it.line) == pures.pointing[0 .. 1].mapIt(it[0])
+    check not "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = 2 * x\n".asksPointing
+
+
   test "check reports each `proc` compiler proves, and fix writes `func` off fenced line":
     let
       source = "proc f(x: int): int = x\nproc g(x: int): int = x\nlet h = 1\n"

@@ -651,6 +651,23 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.len == 0
 
 
+  test "`func` taking `ref` or `ptr` becomes `proc`, through pures of context":
+    # Ruling `D5 a` of #980: rule 11 writes `proc` for `func` whose parameter type points.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/json\n\n"
+      pointing = entry(
+        DIRECTORY_AUDIT & "/src/c.nim", head & "func size*(n: JsonNode): int = n.len\n  ## Count.\n"
+      )
+      tree = @[pointing]
+    var pures = initTable[string, Pures]()
+    pures[pointing.path] = Pures(pointing: @[(7, 0)])
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, pures = pures))
+    check plan.written.mapIt((it.path, it.content)) ==
+      @[(pointing.path, pointing.content.replace("func size", "proc size"))]  # STYLE.md §1
+    check plan.fixed.mapIt((it.path, it.line, it.message)) ==
+      @[(pointing.path, 7, "func pure (STYLE.md §1)")]
+
+
   test "facts of each project read from disk under root, as knoller's command line reads them":
     # Case held: `koch fix` read no uses, pures or library from disk, so rules 7, 9 and 11 of #443
     #   read nothing there, where knoller's command line reads each (`resolveMarkers`,

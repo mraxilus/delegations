@@ -597,18 +597,21 @@ suite "Command line":
       ("p/a.nim", pragma & "proc twice*(x: int): int = x * 2\n\nproc shout*(x: int) = echo x\n"),
       ("p/tests/test_b.nim", pragma & "type Cell = object\n  x: int\n\ninclude \"suites.nim\"\n"),
       ("p/tests/suites.nim", "proc read(c: Cell): int = c.x\n\necho read(Cell(x: 1))\n"),
+      ("p/c.nim", pragma & "import std/json\n\nfunc size*(n: JsonNode): int = n.len\n"),
     ])
     check execCmd("git -C " & root.quoteShell & " init -q") == 0
     check execCmd("git -C " & root.quoteShell & " add -A") == 0
     var toolchains = initToolchains()
     let
-      files = ["p/a.nim", "p/tests/suites.nim"].mapIt((it, readFile(root / it)))
+      files = ["p/a.nim", "p/tests/suites.nim", "p/c.nim"].mapIt((it, readFile(root / it)))
       pures = files.resolvePures("", root, toolchains)
       checked = outcome(files, [], is_check = true, directory = root, pures = pures)
     check pures["p/a.nim"].sites == @[(3, 0)]  # `shout` names output, so stays
     check pures["p/tests/suites.nim"].sites == @[(1, 0)]  # `Cell` stands in its includer
     check "p/a.nim:3: func-pure to fix" in checked.lines
     check "p/tests/suites.nim:1: func-pure to fix" in checked.lines
+    check pures["p/c.nim"].pointing == @[(5, 0)]  # no `proc` stands there, and `func` points
+    check "p/c.nim:5: func-pure to fix" in checked.lines
     let fixed = outcome(files, [], is_check = false, directory = root, pures = pures)
     check fixed.written.anyIt(it[0] == "p/a.nim" and "func twice*(x: int): int = x * 2" in it[1])
 
