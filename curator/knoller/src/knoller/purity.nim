@@ -45,7 +45,8 @@
 ##     at end of module names, and `cstring`, which reads as string, keep no `proc`, though other
 ##     holder can change what each reaches. Each can add false report.
 ##   Cost: file holding `func` asked and no candidate takes one check of source as given, where
-##     none ran before; its time is unmeasured.
+##     none ran before; its time is unmeasured. Where that check is clean in no configuration, its
+##     `func` stays unread and warns nothing, since no `proc` stays there.
 ##   Cost: generic body checks where module instantiates it alone, so instantiation in other
 ##     module that compiler would refuse is unread, and can add false report.
 ##   Cost: one `nim check` of file for each configuration and round, 0.61 to 0.76 s for module of
@@ -475,6 +476,7 @@ proc provenPure*(
       refused.add hit
       open = open.filterIt(it notin hit)
   if proving == 0:
+    if sites.len == 0: return  # `func` asked alone: no `proc` stays, so nothing warns
     result.reason = "source checks clean in no configuration: " &
       (if reasons.len > 0: reasons[0] else: "no configuration")
     return
