@@ -427,12 +427,25 @@ proc checked*(
   if not result.is_clean and result.errors.len == 0: result.errors.add (0, last)
 
 
+func cleanBut(checked: Checked; ignored: openArray[int]): Checked =
+  ## Read check as clean where compiler ran and each error stands on zero-based line of
+  ##   `ignored`, whose errors caller reads itself.
+  result = checked
+  if not checked.is_clean and checked.reason.len == 0 and checked.errors.len > 0 and
+      checked.errors.allIt(it[0] - 1 in ignored):
+    result.is_clean = true
+
+
 proc checkedBackend*(
-  text, directory, nim: string; defines: openArray[string]; is_hinting = false
+  text, directory, nim: string;
+  defines: openArray[string];
+  is_hinting = false;
+  ignored: openArray[int] = [],
 ): tuple[checked: Checked, defines: seq[string]] =
   ## Check text as `checked` does, on C backend, else on JavaScript where C refuses it, as
-  ##   semantic pass asks file C rejects; defines name backend that answered.
-  result = (checked(text, directory, nim, defines, is_hinting), @defines)
+  ##   semantic pass asks file C rejects; defines name backend that answered. Error on zero-based
+  ##   line of `ignored` leaves check clean, since caller reads it itself.
+  result = (checked(text, directory, nim, defines, is_hinting).cleanBut(ignored), @defines)
   if result.checked.is_clean or result.checked.reason.len > 0: return
-  let js = checked(text, directory, nim, @defines & @[BACKEND_JS], is_hinting)
+  let js = checked(text, directory, nim, @defines & @[BACKEND_JS], is_hinting).cleanBut(ignored)
   if js.is_clean: result = (js, @defines & @[BACKEND_JS])

@@ -28,6 +28,10 @@
 ##     `pointer`, distinct one too, since other holder or thread can change it during call
 ##     (ruling `D1 a` of #980); `var` alone keeps none, as §1 lets `func` write it. Check of each
 ##     type stands after source, so no line moves, and its error refuses its routine (`probed`).
+##   Check of source as given asks same of each `func` whose types name more than builtin types
+##     and containers of value (`asksPointing`); its error leaves that check clean. Check reports
+##     each `func` that points as `proc` (ruling `D5 a` of #980), and fixer writes `proc`, same
+##     width, unless forward declaration of routine stands, whose kind must match.
 ##   Included file checks inside text of file including it, which caller passes around it
 ##     (`prefix`, `suffix`), since included file compiles inside its includer alone.
 ##   Fixer writes `func` for `proc`, same width, so no line moves or widens; site holding no
@@ -40,6 +44,8 @@
 ##   Cost: `ref` in field or container of parameter, type naming generic parameter, type no scope
 ##     at end of module names, and `cstring`, which reads as string, keep no `proc`, though other
 ##     holder can change what each reaches. Each can add false report.
+##   Cost: file holding `func` asked and no candidate takes one check of source as given, where
+##     none ran before; its time is unmeasured.
 ##   Cost: generic body checks where module instantiates it alone, so instantiation in other
 ##     module that compiler would refuse is unread, and can add false report.
 ##   Cost: one `nim check` of file for each configuration and round, 0.61 to 0.76 s for module of
@@ -58,6 +64,9 @@ type
     sites*: seq[(int, int)]
       ## One-based line and zero-based byte column of `proc` of each routine compiler checks as
       ##   `func`.
+    pointing*: seq[(int, int)]
+      ## One-based line and zero-based byte column of `func` of each routine whose parameter type
+      ##   points, so it is `proc` (ruling `D5 a` of #980).
 
   Routine = object  ## Define `proc` declaration: site, name, and tokens of its body.
     site: (int, int)  ## One-based line and zero-based byte column of `proc`.
@@ -130,6 +139,13 @@ const
     ## Template written after source: whether type points, distinct one included.
   MESSAGE_POINTING = "parameter of `ref` or `ptr` type keeps routine `proc`"
     ## Error of check whose type points.
+  WORDS_PLAIN = [
+    "array", "CountTable", "HashSet", "HSlice", "lent", "openArray", "Option", "OrderedSet",
+    "OrderedTable", "range", "seq", "set", "sink", "Slice", "static", "Table", "tuple", "type",
+    "typedesc", "typeof", "var", "varargs",
+  ]
+    ## Words of type that point at nothing: container of value and modifier, whose argument
+    ##   decides alone; container of `ref` keeps no `proc` (ruling `D1 a` of #980).
 
 
 func ids(names: openArray[string]): HashSet[string] =
@@ -204,8 +220,9 @@ func parameterDefaults(
     inc k
 
 
-func routines(source: string): seq[Routine] =
-  ## Read each `proc` declaration of source: site, name, body tokens and whether shape admits it.
+func routines(source: string; keyword = KEYWORD_PROC): seq[Routine] =
+  ## Read each declaration of source that `keyword` opens: site, name, body tokens and whether
+  ##   shape admits it.
   let
     tokens = source.tokens
     partners = tokens.partners
@@ -213,7 +230,7 @@ func routines(source: string): seq[Routine] =
     code = source.codeOnly.splitLines
     depths = source.indents
   for k, t in tokens:
-    if t.kind != KindToken.Word or t.spelling(source) != KEYWORD_PROC: continue
+    if t.kind != KindToken.Word or t.spelling(source) != keyword: continue
     if k + 1 >= tokens.len or tokens[k + 1].kind notin {KindToken.Word, KindToken.Quoted}:
       continue
     var routine = Routine(
@@ -354,23 +371,47 @@ func written(source: string; sites: openArray[(int, int)]): string =
     result[at ..< at + KEYWORD_FUNC.len] = KEYWORD_FUNC
 
 
-func probed(
-  source: string; found: openArray[Routine]; sites: openArray[(int, int)]; prefix, suffix: string
+func pointed(
+  text: string; found: openArray[Routine]; sites: openArray[(int, int)]
 ): (string, Table[int, (int, int)]) =
-  ## Write source with `func` at each site, inside prefix and suffix, then check of each type of
-  ##   parameter of each routine at sites, whose error refuses it; table maps zero-based line of
-  ##   each error to site. Type no scope at end of module names reads unread (`compiles`).
-  var text = prefix & source.written(sites) & suffix
-  if not text.endsWith('\n'): text.add '\n'
-  text.add CHECK_POINTING
+  ## Write text, then check of each type of parameter of each routine at sites, whose error says
+  ##   type points; table maps zero-based line of each error to site. Type no scope at end of
+  ##   module names reads unread (`compiles`). Text with no type to check stays as it is.
+  result[0] = text
+  if not found.anyIt(it.site in sites and it.types.len > 0): return
+  if not result[0].endsWith('\n'): result[0].add '\n'
+  result[0].add CHECK_POINTING
   for routine in found:
     if routine.site notin sites: continue
     for t in routine.types:
       let call = NAME_POINTING & "(" & t & ")"
-      text.add "when compiles(" & call & "):\n"
-      result[1][text.count('\n')] = routine.site
-      text.add "  when " & call & ": {.error: \"" & MESSAGE_POINTING & "\".}\n"
-  result[0] = text
+      result[0].add "when compiles(" & call & "):\n"
+      result[1][result[0].count('\n')] = routine.site
+      result[0].add "  when " & call & ": {.error: \"" & MESSAGE_POINTING & "\".}\n"
+
+
+func probed(
+  source: string; found: openArray[Routine]; sites: openArray[(int, int)]; prefix, suffix: string
+): (string, Table[int, (int, int)]) =
+  ## Write source with `func` at each site, inside prefix and suffix, then check of each type of
+  ##   parameter of each routine at sites, whose error refuses it (`pointed`).
+  pointed(prefix & source.written(sites) & suffix, found, sites)
+
+
+func isAskedPointing(routine: Routine): bool =
+  ## Whether shape admits routine and one of its parameter types names more than builtin type,
+  ##   number and plain word, so compiler answers whether it points.
+  let builtins = TYPES_BUILTIN.ids
+  routine.is_candidate and routine.types.anyIt(
+    it.split({' ', '[', ']', ',', '(', ')', ':', '.', '*', '{', '}', '=', '\n', '"', '\''})
+      .anyIt(it.len > 0 and it[0] notin {'0' .. '9'} and it.identity notin builtins and
+        it notin WORDS_PLAIN)
+  )
+
+
+func asksPointing*(source: string): bool =
+  ## Whether compiler answers for some `func` of source whether its parameter type points.
+  source.routines(KEYWORD_FUNC).anyIt(it.isAskedPointing)
 
 
 proc provenPure*(
@@ -385,23 +426,31 @@ proc provenPure*(
   ##   under each configuration of defines: candidate stays where any configuration whose source
   ##   checks clean refuses it, and source checking clean in none proves nothing, with reason.
   ##   Included file reads inside `prefix` and `suffix` of its includer.
-  if sites.len == 0: return
   let
     offset = prefix.count('\n')
     found = source.routines.filterIt(it.site in sites)
     spans = found.mapIt((it.site, it.lines))
+    funcs = source.routines(KEYWORD_FUNC).filterIt(it.isAskedPointing)
+    (given, asked) = pointed(prefix & source & suffix, funcs, funcs.mapIt(it.site))
+  if sites.len == 0 and asked.len == 0: return
   var
-    refused: seq[(int, int)]
+    refused, pointing: seq[(int, int)]
     proving = 0
     reasons: seq[string]
   for configuration in (if configurations.len == 0: @[newSeq[string]()] else: @configurations):
-    # Backend whose source as given checks clean: C, else JavaScript, as semantic pass asks.
-    let (before, defines) = checkedBackend(prefix & source & suffix, directory, nim, configuration)
+    # Backend whose source as given checks clean: C, else JavaScript, as semantic pass asks. Error
+    #   of check of `func` asked leaves it clean, and says `func` points.
+    let (before, defines) =
+      checkedBackend(given, directory, nim, configuration, ignored = asked.keys.toSeq)
     if before.reason.len > 0: reasons.add before.reason
     if not before.is_clean:
-      if before.errors.len > 0: reasons.add before.errors[0][1]
+      let own = before.errors.filterIt(it[0] - 1 notin asked)
+      if own.len > 0: reasons.add own[0][1]
       continue
     inc proving
+    for (line, _) in before.errors:
+      let site = asked.getOrDefault(line - 1, (0, 0))
+      if site in asked.values.toSeq and site notin pointing: pointing.add site
 
     # Ask open candidates at once; error inside routine, or of check of its parameter, refuses
     #   it, else ask each alone.
@@ -430,6 +479,7 @@ proc provenPure*(
       (if reasons.len > 0: reasons[0] else: "no configuration")
     return
   result.sites = @sites.filterIt(it notin refused).sorted
+  result.pointing = pointing.sorted
 
 
 func found(source: string; pures: Pures): seq[Routine] =
@@ -438,8 +488,15 @@ func found(source: string; pures: Pures): seq[Routine] =
   source.routines.filterIt(it.site in pures.sites)
 
 
+func foundPointing(source: string; pures: Pures): seq[Routine] =
+  ## Read each routine pures name as pointing whose site still holds `func`.
+  if pures.reason.len > 0: return
+  source.routines(KEYWORD_FUNC).filterIt(it.site in pures.pointing)
+
+
 func checkPure*(path, source: string; pures: Pures): seq[Report] =
-  ## Report each `proc` compiler checks as `func` (STYLE.md §1).
+  ## Report each `proc` compiler checks as `func`, and each `func` whose parameter type points
+  ##   (STYLE.md §1), in order of lines.
   for routine in source.found(pures):
     result.add initReport(
       path,
@@ -448,18 +505,40 @@ func checkPure*(path, source: string; pures: Pures): seq[Report] =
       "Routine with no effect beyond its parameters is `func`; got `" & KEYWORD_PROC & " " &
         routine.name & "`.",
     )
+  for routine in source.foundPointing(pures):
+    result.add initReport(
+      path,
+      routine.site[0],
+      Rule.PureFunc,
+      "Routine with parameter of `ref` or `ptr` type is `proc`; got `" & KEYWORD_FUNC & " " &
+        routine.name & "`.",
+    )
+  result = result.sortedByIt(it.line)
 
 
 func editsPure*(
   path, source: string; pures: Pures; fenced: openArray[int]; held: openArray[Edit] = []
 ): (seq[Edit], seq[Report]) =
-  ## Read edits writing `func` for each `proc` check reports, and one report per routine.
-  ##   Fenced line (X.1) keeps `proc` for hand, and so does span edit of other fixer writes.
-  let starts = source.lineStarts
+  ## Read edits writing `func` for each `proc` check reports, and `proc` for each `func`, and one
+  ##   report per routine. Fenced line (X.1) keeps its keyword for hand, and so does span edit of
+  ##   other fixer writes, and `func` whose forward declaration stands, as kinds must match.
+  let
+    starts = source.lineStarts
+    funcs = source.routines(KEYWORD_FUNC)
   for routine in source.found(pures):
     let
       at = starts[routine.site[0] - 1] + routine.site[1]
       edit = Edit(first: at, after: at + KEYWORD_PROC.len, text: KEYWORD_FUNC)
     if routine.site[0] - 1 in fenced or held.anyIt(it.isTouching(edit)): continue
+    result[0].add edit
+    result[1].add initReport(path, routine.site[0], Rule.PureFunc)
+  for routine in source.foundPointing(pures):
+    let
+      at = starts[routine.site[0] - 1] + routine.site[1]
+      edit = Edit(first: at, after: at + KEYWORD_FUNC.len, text: KEYWORD_PROC)
+      is_forwarded = funcs.anyIt(
+        it.site != routine.site and it.body.len == 0 and it.name.identity == routine.name.identity
+      )
+    if routine.site[0] - 1 in fenced or is_forwarded or held.anyIt(it.isTouching(edit)): continue
     result[0].add edit
     result[1].add initReport(path, routine.site[0], Rule.PureFunc)
