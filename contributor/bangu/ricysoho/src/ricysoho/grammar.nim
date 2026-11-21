@@ -809,8 +809,8 @@ func isHeld(head: int, terminals: openArray[Terminal], at: int): bool =
   ##   .i mupli fa lo nu le genturfa'i cu tcidu lo'u le pano moi le'u ta'i lo 10moi
   ##   .i ji'a lo'u by. cy. le'u cu du pa lerfu porsi to `CLL 17.25` toi
   ##   .i zo boi fendi re porsi poi lamji mu'u lo'u le pa boi no moi le'u .e lo'u xy. boi ro le'u
-  ##   .i `Architect` jdice lo namcu bu'u `#991` ta'i `D3 a`
-  ##   .i ba bo `Architect` jdice lo lerfu porsi bu'u `#992` ta'i `D1 a`
+  ##   .i `Architect` jdice lo du'u lo namcu cu na mulno bu'u `#991` ta'i `D3 a`
+  ##   .i ji'a `Architect` jdice lo du'u lo lerfu porsi cu na mulno bu'u `#992` ta'i `D1 a`
   (head == HEAD_NUMBER or head == HEAD_LERFU_STRING) and terminals.isJoiningAt(at)
 
 
