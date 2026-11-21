@@ -22,11 +22,12 @@
 ##     definition below it (`checkDefinitions`): declarative calls of one family stack,
 ##     declarative call after routine takes up to two, undocumented one-line helpers stack,
 ##     declaration block after another and documented one-line definition take one, every other
-##     definition two, and inside second-tier section each count caps at one (#443). Item is
-##     documented by `##` doc on its head line or inside it; nearest banner above, outside
-##     strings, gives tier. `when` counts as definition it holds first, below it as one it holds
-##     last; run after pragma line, statement, banner or free comment is not read. Fixer shares
-##     its reading (`gapsDefinition`).
+##     definition two, and inside second-tier section each count caps at one (#443). Documented
+##     one-line call after routine takes one, as Q3 gives documented one-line definition (ruling
+##     `D3 a` of #980). Item is documented by `##` doc on its head line or inside it; nearest
+##     banner above, outside strings, gives tier. `when` counts as definition it holds first,
+##     below it as one it holds last; run after pragma line, statement, banner or free comment is
+##     not read. Fixer shares its reading (`gapsDefinition`).
 ##
 ##   Cost: helper inside `when`, `if` or loop of routine body is unread, since X.11 asks helper
 ##     first in body.
@@ -450,16 +451,20 @@ func gaps(v: View; level: seq[Item]; result: var seq[Gap]) =
     var gap = Gap(first: upper + 1, count: anchor - upper - 1, line: item.head)
     if toSeq(gap.first ..< anchor).anyIt(v.inside[it]): continue
 
-    # Count follows form of each side; inside second-tier section, two becomes one.
+    # Count follows form of each side; inside second-tier section, two becomes one. Documented
+    #   one-line call after routine reads Q3, as other documented one-line definition does
+    #   (ruling `D3 a` of #980).
     let
       is_helper = below.form == Form.Routine and below.is_one_line and not below.is_documented
       is_helper_above = above.form == Form.Routine and above.is_one_line and not above.is_documented
+      is_documented_one_line = below.is_one_line and below.is_documented
     (gap.lo, gap.hi, gap.target) =
       if below.form == Form.Call and above.form == Form.Call: (0, 1, Spacing.Family)
-      elif below.form == Form.Call and above.form == Form.Routine: (0, 2, Spacing.CallRoutine)
+      elif below.form == Form.Call and above.form == Form.Routine and not is_documented_one_line:
+        (0, 2, Spacing.CallRoutine)
       elif is_helper and is_helper_above: (0, 2, Spacing.Group)
       elif below.form == Form.Declaration and above.form == Form.Declaration: (1, 1, Spacing.Block)
-      elif below.is_one_line and below.is_documented: (1, 1, Spacing.Documented)
+      elif is_documented_one_line: (1, 1, Spacing.Documented)
       else: (2, 2, Spacing.Two)
     var banner = item.head - 1
     while banner >= 0 and (v.inside[banner] or not v.isBanner(banner)): dec banner
