@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 4d68cc2896c55a1ea05de40fae41dc06feda7051 |
+| Pruned  | 0c9703245256594725239a770bbf31cde1566620 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -3850,8 +3850,7 @@ refuses work before the context, a state before the summary, and a block with no
 - The label of an option and the letter of the pick may stand in bold, as the card of #844
   sets them. The check reads each item of a decision with bold taken out, since bold changes no
   word that it reads.
-- Rejected: a fenced block of YAML. It renders as no table on GitHub, and the `english` check
-  skips fenced text, so its prose would go unchecked.
+- Rejected: a fenced block of YAML, which renders as no table and skips the `english` check.
 - Cost: the check reads shape, and never whether a decision says anything, or whether an option
   is honest.
 - Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
@@ -3929,8 +3928,7 @@ can close a turn that posted nothing.
   reads their filters as `gh` reads them, and each of them lists open issues alone by default.
 - A refusal asks for the read, and no diff. What waits in the queue can change the sign-off, so
   the delegate takes it first, and names it in one line.
-- Rejected: a ledger report of a request that no comment of its role answered. That report lands
-  in the queue that went unread, and up to a day late.
+- Rejected: a ledger report of an unanswered request, which lands a day late in an unread queue.
 - Cost: the hook sees that a read happened, and never that the delegate took what it showed.
 - Cost: a read through any other tool, as a search, counts for nothing.
 - Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
@@ -4013,8 +4011,7 @@ oldest first. One passes where its block keeps its shape, and its groups keep th
 that passed before it. The hook judges each one by the rule of its own span. Every group counts
 where that base sits in that span, and only groups of pull requests elsewhere.
 
-- Rejected: the record of a refusal that the harness writes, the entry `stop_hook_summary`. That
-  ties the check to one more field of the harness, and the replay needs none.
+- Rejected: the entry `stop_hook_summary` of a refusal, one more field of the harness to tie to.
 - Cost: the replay reads the block alone. So a sign-off refused only for a bare number, a bare
   reference or an unread queue still serves as the base. Its rows stand whole.
 - Cost: a group that names a wrong pull request stays until one sign-off shows it `closed`.
@@ -4152,8 +4149,7 @@ of `critic` whose `run_in_background` is false.
   line (comment 6974524232). The working line also ends a block, so one read serves both.
 - Cost: a call of `critic` with no `run_in_background` gives no report by its result. The harness
   runs such a call in the background, and its hand-back is the report.
-- Rejected: a missing field read as the foreground. Under that read, a launch whose status is not
-  `async_launched` counts as a report, so `stop` refuses the turn that makes the launch.
+- Rejected: a missing field read as the foreground, which makes each launch a report.
 - Verified by `suites/test_hooks.nim`: each shape, each entry that is no report, a pair, a
   hand-back of another subagent, and two reports. It holds each order of sign-off and working
   line in the last text, a fence, two sign-offs, and two working lines around a reflection.
@@ -4173,10 +4169,8 @@ block that a call took. Verified by `suites/test_hooks.nim`.
   (comments 7022770415 and 7027197745). Inside one turn, the earliest serves. So of two blocks
   for two subagents of one kind, the first call takes the block of the nearer turn. Verified by
   `suites/test_hooks.nim` (probe F4, and C12 inside one turn).
-- The hook never reads a column of the table other than `Predicted`, as the state or the
-  confidence (comments 6980233163 and 7004976005). Nor does it read the tokens, cost, calls and
-  time of a reflection. It never reads whether the resolver ran, or what it marked (comments
-  6982623146 and 6983032935).
+- The block check reads only the column `Predicted`, and never whether the resolver ran. Section
+  Log of claims gives what `logStop` reads of the other columns.
 - The hook never checks the rules for forecasting of `D1 a` of comment 6982373798, as the side of
   a claim or its percentiles. It never checks whether a claim meets its resolution criterion
   (comment 6982623146), or the effort of a critic (comment 6977822742). It reads the confidence, the
@@ -4280,8 +4274,7 @@ confidence stays in the claim. Where no percentage stands there, the claim ends 
   Verified by `suites/test_hooks.nim`.
 - Cost: a claim that quotes the words of a criterion in its text, as
   `` `. **Resolution criterion:**` ``, ends there. Verified by `suites/test_hooks.nim`.
-- Rejected: the first percentage as the end. It refuses a whole claim that holds a percentage in
-  its text, and passes the part before that percentage.
+- Rejected: the first percentage as the end, which refuses a claim with a percentage in its text.
 - Cost: a percentage in brackets after the confidence, before a mark or the end, is the last one.
   So it ends the claim, and the claim of `- a (70%), as 2 of 54 (4%).` is `a (70%), as 2 of 54`.
   Verified by `suites/test_hooks.nim` (probe F20 of the critic of the claim build).
@@ -4298,8 +4291,7 @@ label too (comment 7022872980), and so are `**Judgement**:`, `__Judgement:__` an
 - Choice: the capital is `A` to `Z`, and a label in bold takes only the forms that the rulings
   write, as `FORMS_LABEL` holds them. So `__Judgement__:`, `***Judgement***:`, italics alone, and
   a run that opens with a letter outside ASCII make no label.
-- Rejected: the text before the first `: ` of a claim as its label. It passes the part after a
-  colon inside a sentence, and the part after words such as `Cost at list price`.
+- Rejected: the text before the first `: ` as label, which passes the part after a colon inside.
 - Cost: a capital word and a colon that open a claim make a label, whatever sentence they open, as
   `Koch: the check passes`. So a cell may drop that word. Verified by `suites/test_hooks.nim`.
 
@@ -4391,9 +4383,8 @@ transcript, so another copy gives its own figures.
 **`stop` adds each scored claim of each reflection to the log of claims of its role.** A log is
 `claims.txtpb`, the text format of one `Log` of `src/claims.proto`, with one `Claim` to a line.
 #964 asks for it, and its ruling (comment 7016211726) puts each log beside the record of its
-project. So a tool can join the logs, for figures by delegate, model, effort, project and kind.
-Each row names its project, the role of the branch that wrote it. Its field `delegate` holds the
-`sessionId` of the delegate.
+project. Each row names its project, the role of the branch that wrote it. Its field `delegate`
+holds the `sessionId` of the delegate, and section Scores of claims joins the logs.
 
 - A claim is a row of the first table with column `Predicted` of a `## Reflection` of the
   current model turn. Its cell is a whole claim of a block that a call took. `No prediction`, a
@@ -4452,23 +4443,32 @@ needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 
   `suites/test_claims_log.nim`, and by hand on 2026-11-20: a field name misspelt in `lineClaim`
   fails that test.
 - `tools/build.nim` declares `protobuf-compiler` through its verb `system`, so the runner installs
-  `protoc` for the suite.
-- Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as Data
-  asks. It would be the first dependency of the audit project, with `protoc` at each stop of each
-  delegate. `protoc` 3.21.12 prints one row over 17 lines, measured by hand on 2026-11-20.
-- Rejected: `buf convert` for the suite, which drops a misspelt field with no error
-  (`bufbuild.nim`).
-- Rejected: tokens summed from the transcript of the subagent. Its cost would need a price for
-  each model in code, and the reflection states both.
+  `protoc` for the suite. Cost: each other machine that runs the suite needs it too.
+- Rejected: bytes, then `protoc --decode`, as Data asks. By hand on 2026-11-21, `protoc` 3.21.12
+  prints a row over 14 lines, and `union` joins two such rows into one block that it refuses.
+- Rejected: `buf convert` in the suite, which drops a misspelt field with no error.
+- Rejected: tokens summed from the transcript of a subagent, whose cost needs a price in code.
 - Cost: a cell that `stop` refuses gives no row until a reflection quotes its claim whole.
 - Cost: one claim in the blocks of several calls of one kind takes the latest such call alone.
   So replays of one prompt at several levels need a reflection for each run.
 - Cost: rows that wait outside the tree are lost where the machine ends before `koch claims`
   moves them.
-- Cost: each machine that runs the audit suite needs `protoc`, as `nim r koch list-packages
-  curator/audit` names it.
 - Cost: whether the merge of GitHub applies `union` is unmeasured. A branch that it refuses
   merges `main` in its own checkout, where git applies it.
+
+## Scores of claims
+
+**`claims_scores.nim` scores each claim as Metaculus does, and gives the figures of each group
+(#964).** The baseline score of a claim is `100 × (ln p − ln 0.5) / ln 2`. Here `p` is the
+confidence for a hit, and one minus it for a miss. A claim annulled, waiting or unmarked takes
+none, and a number scores at 0.8 by its state, the confidence that `GUIDE.md` gives it.
+
+- Each band of confidence, 51% to 60% and on in steps of 10 to 98%, gives its count and share of
+  hits. Its credible band is the 5th and 95th percentiles of `Beta(hits + 1, misses + 1)`.
+- The mass of Beta is the continued fraction of Numerical Recipes, 3rd edition, 6.4.
+- Verified by `suites/test_claims_scores.nim`, against a binomial sum in exact rationals. By hand
+  on 2026-11-21, four mutants of the module each fail it.
+- Cost: no verb reads a log until D1 and D2 of #964 (comment 7063613809) are ruled.
 
 ## Skills
 
