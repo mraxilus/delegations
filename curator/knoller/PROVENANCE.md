@@ -690,6 +690,9 @@ candidate, since it cannot prove a routine pure, and the compiler checks it (`pu
   outside code that `quote` or `genAst` emits, a template substitutes, or `compiles` tests.
 - Its body names no effect of `EFFECTS`. Those are output, input, files, the clock, random numbers,
   the environment, a process and an address, and a lock, a wait and a signal.
+- The rule reads the default of each parameter as part of the body (D6 a of #980). A default runs
+  at each call that leaves its argument out, so its effect is an effect of the call. So
+  `initToolchains` of knoller, whose default reads the environment, stays a `proc`.
 - STYLE.md §1 counts a lock, a wait and a signal as effects, since another thread sees each one.
   The compiler checks each routine of the store of `simulation/walk.nim` of `dance_ontology` as a
   `func`. But the answer of `claimed` depends on the order of the threads. So it is no
@@ -707,8 +710,6 @@ candidate, since it cannot prove a routine pure, and the compiler checks it (`pu
   routine a `proc`. That cost removes reports, and adds none.
 - Cost: the compiler accepts a write that a routine of a library makes through a `ref` inside a
   field or a container of a parameter. `[]=` of `std/json` is such a routine.
-- Cost: a default argument is no part of the body. So `initToolchains` of knoller reads as pure,
-  though its default reads the environment.
 - Verified by `suites/test_purity.nim`, with a case for each cost that adds a false report.
 
 **The compiler checks the source with each candidate written `func`, read from stdin in the
@@ -758,6 +759,24 @@ writes or only reads.
   as a string, so it stays unread too. Each can add a false report.
 - Verified by `suites/test_purity.nim`, with a case for each kind of type that points, and one for
   each cost.
+
+**A `func` that takes a parameter of a `ref` or `ptr` type reports, and the fix writes `proc` (D5 a
+of #980).** The Architect ruled so on 2026-11-21, so the rule holds D1 a in both directions. The
+check of the source as given asks the compiler about each such `func`, as `probed` asks about each
+candidate.
+
+- A `func` is asked where one of its types names more than builtin types, numbers and the words of
+  `WORDS_PLAIN` (`asksPointing`). Those words are the containers of value and the modifiers.
+- The error of each check of a `func` leaves the check of the source clean, since the caller reads
+  it (`checkedBackend`). So a file that holds a candidate takes no new compile.
+- The fix writes `proc` for `func`, which has the same width. A `func` whose forward declaration
+  stands keeps it for hand, since the kinds of the pair must match.
+- Cost: a file that holds such a `func` and no candidate takes one check of the source as given,
+  where none ran before. Its time is unmeasured, and #1001 holds the work to make it faster.
+- Cost: where that check is clean in no configuration, its `func` stays unread. The file warns
+  nothing, since no `proc` stays there, as a proposal of `pga_benchmark` shows.
+- Verified by `suites/test_purity.nim`, by `suites/test_command.nim` for a file with no candidate,
+  and by `suites/test_fixes.nim` of `curator/audit` for `koch fix`.
 
 **The fix writes `func` for `proc`, which has the same width.** So no line moves and no line
 widens. A fenced line keeps its `proc`, and so does a span that another fixer writes. The check
@@ -815,6 +834,10 @@ checkouts of each lock and the engine of `dance_ontology`.
 - With D1 a of #980, 50 remain, since `mergeAllocations` stays a `proc`. Over the same tree,
   `koch fix --dry-run --branch:main` of the five projects, built at `a4ece9d7` and at `2f049cfe`,
   differs by that report alone, 4,901 changes against 4,900 (2026-11-20).
+- With D5 a and D6 a of #980, 144 reports stand, by the same command over the same tree. Of them,
+  95 are of a `func` that points: 59 in `pga_benchmark`, 24 in `dance_ontology`, 11 in `rictadni`
+  and 1 in `pga_visualiser`. `initToolchains` goes, since its default reads the environment. The
+  run built koch at `fd3bc4b5` and at `4c35d439` (2026-11-21).
 - The count of pure routines is a floor. `src/desktop/main.nim` of `pga_visualiser` proved
   nothing, since the run had no `dependencies/imgui`. Nor did
   `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
@@ -2885,10 +2908,6 @@ there is unverified.
 
 - Why does rule 11 report 50 routines where the ruling counts 22? `pga_visualiser` takes 33
   against 16, and `dance_ontology` 13 against 6.
-- Does rule 11 report each `func` that takes a parameter of a `ref` or `ptr` type now, so that its
-  fix writes `proc`? A text search finds about 134 of them.
-- Does an effect in a default argument keep the `proc`, as the default of `initToolchains` reads the
-  environment?
 - Does a documented declarative call after a routine take one, as Q3 gives a documented
   one-line definition, or up to two, as a call does? Knoller gives it up to two now.
 - Do two blocks of complementary configurations side by side, with the default last, report, and
