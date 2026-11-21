@@ -4401,6 +4401,47 @@ needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 
 - Cost: whether the merge of GitHub applies `union` is unmeasured. A branch that it refuses
   merges `main` in its own checkout, where git applies it.
 
+## Scores of claims
+
+**`claims_scores.nim` scores each claim as Metaculus does, and gives the figures of each group.**
+#964 asks for scores and a track record for each delegate, model, effort, project and kind, and
+for each combination of them. The figures take values of `Claim`, so they serve each log that a
+reader joins.
+
+- The baseline score of a claim is `100 × (ln p − ln 0.5) / ln 2`, as #964 gives it. Here `p` is
+  the confidence for a hit, and one minus it for a miss. So a hit at 75% scores 58.5, and a miss
+  at 75% scores −100.
+- A claim that is annulled, waiting or unmarked takes no score. So does a confidence outside 0 to
+  1, which no cell gives, so a row that lost its confidence scores nothing.
+- A number scores at 0.8 by its state, since `GUIDE.md` gives it that confidence. The confidence
+  that its row holds does not count.
+- Verified by `suites/test_claims_scores.nim`, against scores that a second program computed.
+
+**The track record counts the claims of each band of confidence, with the 90% credible band of
+their share of hits.** The bands run from 51% to 60%, and on in steps of 10 to 98%, the span that
+`GUIDE.md` allows. A claim falls in its band by its percentage, rounded, and a confidence outside
+that span falls in the nearest band. Each band gives its count, its mean confidence, its share of
+hits, and the 5th and 95th percentiles of that share.
+
+- The share takes the Beta posterior of a uniform prior, `Beta(hits + 1, misses + 1)`. So a band
+  of four claims with three hits gives a band of 0.34 to 0.92.
+- The mass of Beta is the continued fraction of the incomplete Beta, by the modified Lentz method
+  (Numerical Recipes, 3rd edition, 6.4). The fraction runs on the side of `(a + 1) / (a + b + 2)`
+  where it converges fast. A percentile halves its interval 100 times on that mass.
+- Verified by `suites/test_claims_scores.nim`: each mass and percentile matches a second method
+  within `1e-12`. That method is the binomial sum `P(Binomial(a + b − 1, x) ≥ a)`, which equals
+  `I_x(a, b)` for whole `a` and `b`, in exact rationals.
+- Verified by hand on 2026-11-21: four mutants of the module each fail a test of the suite. They
+  change the prior, the far side of the mass, the score of a miss, and the bound of a band.
+
+**A group holds the claims whose named fields agree.** Its key joins the value of each named
+field, in the order of `Field`, and the groups sort by key. A group keeps its claims in the order
+of the log, and no field named gives one group of all claims.
+
+- Verified by `suites/test_claims_scores.nim`.
+- Cost: no verb reads a log yet, so the figures run over values that a suite builds. Open
+  questions holds the choice of the reader.
+
 ## Skills
 
 **A skill holds the moment of an act, and points at the section of the charter that binds the
@@ -4928,6 +4969,9 @@ pull requests sat on both sides, so the subject of a call does not say which met
   `design/README.md`, `simulation/README.md` and `simulation/verdicts.md` of `dance_ontology`
   added to `PATHS_ENGLISH`, `nim r koch check-files` reported 5 findings, all in `verdicts.md`.
   Until a widening lands, that prose holds Article VI.8 by reading alone.
+- How the figures of the log of claims read a log, and how a number scores by its percentiles.
+  D1 and D2 of the plan on #964 (comment 7063613809) put both to the Architect. A reader by hand
+  would be a second exception to `CONTRIBUTOR.md`, Data, beside the writer of #989.
 - Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and
   terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
   the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
