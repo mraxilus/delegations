@@ -198,7 +198,10 @@ type
     Sign
       ## lo jdini sinxa cu pencu no namcu .a re namcu
       ##   .ija le namcu poi le sinxa cu pencu ke'a cu pencu lo drata jdini sinxa
-      ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D3 a`
+      ##   .i `Architect` jdice lo du'u lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e
+      ##       curmi kei bu'u `#1003` ta'i `D3 a`
+      ##   .i ji'a ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu lo jdini klani cu vasru lo valsi
+      ##       pe pa sinxa po'o to `D2 a` toi
       ##   .i le tcila cu du le sinxa
 
   Reading* = object  ## lo jalge be lo nu tcidu lo selci'a ta'i pa valsi
