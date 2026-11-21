@@ -241,6 +241,18 @@ suite "Scene":
       check differs == (operation notin OPERATIONS_SLIDING)
 
 
+  test "a sum or a difference of two scales of one object is zero only where it cancels":
+    # Mutant read difference off scale-free copies, as product: point less twice itself then
+    #   read as zero, since both copies are one (repository issue 970).
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i]]:
+        for ratio in [2.0, 0.5, 1.0e3, -4.0]:
+          check applyOperation(Operation.Subtract, m, ratio * m) =~ (1.0 - ratio) * m
+          check applyOperation(Operation.Add, m, ratio * m) =~ (1.0 + ratio) * m
+        check applyOperation(Operation.Subtract, m, m).coefficientLargest == 0.0
+        check applyOperation(Operation.Add, m, -1.0 * m).coefficientLargest == 0.0
+
+
   test "meet finds where a line crosses a plane even far outside its own drawn disc":
     # `mesh.addPlane`'s disc is only rendering choice -- plane it represents is.
     #   same infinite object algebraically either way, and `WedgeAnti` (meet) reads
