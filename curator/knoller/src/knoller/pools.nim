@@ -1,10 +1,11 @@
 ## Run independent jobs on threads of pool, at most one for each core, and return each answer in
 ##   order of its job, as one loop over jobs would return them.
-##   Semantic pass asks compiler once for each job and waits on answer: 60 calls of
-##     `koch fix --dry-run curator/knoller` take 64 s of 111 s, one after another, while three of
-##     four cores wait (profile of #1001, 2026-11-21).
-##   Job and answer pass by value, never by `ref`: ORC counts references without atomics, so
-##     object two threads count would race, while string, sequence and table copy whole.
+##   Semantic pass asks compiler once for each job and waits on answer: at `b585ea65`, before
+##     pool, 59 calls of rules 7 and 11 in `koch fix --dry-run curator/knoller` take 61 s of 111 s,
+##     one after another, while three of four cores wait (profile of #1001, 2026-11-21).
+##   Job and answer hold no `ref`: ORC counts references without atomics, so object two threads
+##     count would race. Thread reads its job in place, and its answer moves into sequence of
+##     caller.
 ##   Thread takes next job by atomic counter, so long job delays no job queued behind it.
 ##   Pool of one thread is caller itself, so caller of one job starts no thread.
 ##   Exception of job is caught in its thread, and caller raises it again once every thread
