@@ -766,7 +766,7 @@ check of the source as given asks the compiler about each such `func`, as `probe
 candidate.
 
 - A `func` is asked where one of its types names more than builtin types, numbers and the words of
-  `WORDS_PLAIN` (`asksPointing`). Those words are the containers of value and the modifiers.
+  `WORDS_PLAIN` (`isPointingAsked`). Those words are the containers of value and the modifiers.
 - The error of each check of a `func` leaves the check of the source clean, since the caller reads
   it (`checkedBackend`). So a file that holds a candidate takes no new compile.
 - The fix writes `proc` for `func`, which has the same width. A `func` whose forward declaration
