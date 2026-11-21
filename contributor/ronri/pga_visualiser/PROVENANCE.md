@@ -2273,11 +2273,10 @@ after a flight of 10 s, in the opening scene and in the demo of 360. Only 9 view
 the opening scene, had nothing drawn ahead.
 
 For a point or a plane it is depth along the sight, and never distance, because what a reader turns
-away from is not drawn.
-It is the middle of the object, with no drawn radius taken off. A camera at the surface of a planet
-then reads its radius rather than zero. A near clip of one four-hundredth of that still holds the
-whole planet. It is never the depth of the pointer, which would move the furniture and the depth
-mapping at every pointer move of a still camera.
+away from is not drawn. It is the middle of the object, with no drawn radius taken off. A camera at
+the surface of a planet then reads its radius rather than zero. A near clip of one four-hundredth of
+that still holds the whole planet. It is never the depth of the pointer, which would move the
+furniture and the depth mapping at every pointer move of a still camera.
 
 **A line reaches its distance from the eye**, where any point of it stands ahead. No point of the
 line stands nearer the eye. The near clip stands a four-hundredth of that distance ahead. A point of
@@ -2774,10 +2773,9 @@ into a `DrawScratch`, and emits after. For the lattices and the axes the seam is
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer holds
 while the camera moves. `tessellateObject(placeObject(...))` is what `addObject` is.
 
-Two steps stay on the placing side inside `tessellateObject`: the stand-off of a horizon marker,
-and the two vanishing points of a line. The cut that the panel reports is by kind of work, and not
-by proc.
-`tessellate` takes its scratch as a parameter: the desktop hands it swap arena memory, and the
+Two steps stay on the placing side inside `tessellateObject`: the stand-off of a horizon marker, and
+the two vanishing points of a line. The cut that the panel reports is by kind of work, and not by
+proc. `tessellate` takes its scratch as a parameter: the desktop hands it swap arena memory, and the
 browser a fixed buffer.
 
 **A timed stretch is charged at its end, so nothing leaves it early.** `timed` reads the clock on
@@ -3913,11 +3911,11 @@ other stays selected.
 
 ## Storyboard and seeds
 
-`storyboard.addSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at
-the origin, and `ground`, a plane joined from three points at `z = 0`. `o` must stay off `ground`,
+`storyboard.addSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at the
+origin, and `ground`, a plane joined from three points at `z = 0`. `o` must stay off `ground`,
 because one step projects it onto that plane. `STEPS` is eleven derived steps, and both entry points
-compute the seed count from `scene.len`. One step (`a ^ ground`) is a grade-4 volume, and correctly
-reports "mixed grade, nothing to draw", which is its documented purpose.
+compute the seed count from `scene.len`. One step (`a ^ ground`) is a grade-4 volume, and reports
+"antiscalar, nothing to draw", which is its documented purpose. Verified by `suites.nim`.
 
 Both apps open on the seeds alone. `runStoryboard` tells "reached" from "focal", and draws reached
 but not focal muted rather than hidden. Horizon steps aim the capture through
@@ -4253,16 +4251,18 @@ Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The deskt
 rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
-primitive to build on. Both front-ends print a multivector through one writer
-(`scene.multivectorText`), and the kind of a multivector through one (`scene.kindText`). Diagnostics
-readings keep `%.*f` through `appendFixed`, because a live number that changes width is harder to
-read. Fixed char storage is read through `format.toText`, and never through `$toCstring`. That casts
-the *address* of the storage, and yields an empty string on the JS backend.
+primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
+(`scene.multivectorText`, `scene.kindText`). A value of no kind is named as it is: zero, scalar,
+antiscalar or mixed grade. Diagnostics readings keep `%.*f` through `appendFixed`, because a live
+number that changes width is harder to read. Fixed char storage is read through `format.toText`,
+never `$toCstring`, which casts its *address* and reads empty on the JS backend.
 
 *Checked.* Verified by `suites.nim` on both backends: 17,001 values across 25 decades, including
 every exact eighth. There were zero disagreements against the `%.4g` of C, and zero between
 backends. The JS entry point pins the text of the tie cases. A C-only `magnitudesAgree` stays green
-while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`.
+while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`. The suite
+holds each word of no kind from 1e-6 to 1e6, but a NaN, infinite or subnormal coefficient can read
+zero (issue 970).
 
 ## Animation
 
