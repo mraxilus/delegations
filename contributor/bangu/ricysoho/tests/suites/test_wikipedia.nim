@@ -51,6 +51,9 @@ const KEYS_REFUSED = [
   # le re namcu po'u `1987` .e zo so'o cu nitcu zo boi poi zvati lo jbini be le re namcu
   #   .i va'o lo drata le gerna cu tcidu le re namcu ta'i pa namcu
   ("lo jbobau", 3),  # `CLL 18.6`
+  # zo ro .e zo by. cu nitcu zo boi poi zvati lo jbini be le re porsi
+  #   .i va'o lo drata le gerna cu tcidu lo'u ro by. le'u ta'i pa namcu
+  ("lo jbobau", 4),  # `CLL 17.9`
   # zoi gy. a'y .gy. mapti no tarmi be lo cmavo
   #   .i le ju'agri cu vasru `me'o .a'y`
   ("lo jbobau", 5),  # `CLL 4.2`

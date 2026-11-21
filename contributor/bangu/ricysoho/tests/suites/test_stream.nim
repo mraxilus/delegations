@@ -35,7 +35,7 @@ const
     ## lo lerfu poi le flalu pe `D1 a` cu zbasu lo selci'a sepi'o ke'a
   LENGTH_NUMBERED_MOST = 7
     ## lo selci'a poi le flalu cu zbasu ke'a cu vasru su'e ze lerfu
-    ##   .i se ki'u bo pa slaka bu cu ka'e lidne mu lerfu
+    ##   .i se ki'u bo pa boi slaka bu cu ka'e lidne mu lerfu
   COUNT_NUMBERED = 21845
     ## lo te kancu be ro selci'a poi le flalu cu tcidu ke'a
     ##   .i ro le selci'a cu vasru su'e ze lerfu pe `MARKS_NUMBERED`
@@ -193,7 +193,7 @@ func isSpanned(text: string): bool =
   ## jdice lo du'u ro valsi pe le porsi cu selfa'o ba le romoi lerfu pe vo'a gi'e selfa'o pu lo nu
   ##     lo bavla'i valsi cu cfari
   ##   .i ji'a lo stuzi poi le valsi cu kuspe ke'a ciska le valsi ba lo nu ro brale'u cu binxo lo
-  ##       cmale'u kei .e lo nu ro slaka bu cu selvi'u
+  ##       cmale'u kei .e lo nu ro boi slaka bu cu selvi'u
   ##   .i ja le stuzi cu ciska le selci'a poi se sitna ta'i lo nu selci'a
   ##   .i lo jalge cu jitfa va'o lo nu le porsi cu se to'e curmi
   let reading = text.readStream
