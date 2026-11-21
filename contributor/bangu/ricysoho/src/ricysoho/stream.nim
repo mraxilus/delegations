@@ -266,7 +266,7 @@ const
   WORD_GROUP = "ki'o"
     ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
     ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
-  LUT_WORDS_BY_SIGN* = [
+  LUT_WORDS_BY_SIGN = [
     ("€", @["ronru'u"]), ("$", @["rupnu"]), ("£", @["rupnu"]), ("¢", @["fepni"]),
     ("¥", @["ponjo", "ja", "jungo", "rupnu"]),
   ]
@@ -640,11 +640,12 @@ func wordsLetters(text: string, start, finish: int): ReadingStream =
   ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
-func signAt(text: string, at: int): int =
-  ## dunda lo namcu pe le jdini sinxa pe `LUT_WORDS_BY_SIGN` poi cfari bu'u `at` ku'o .a `-1`
+func signAt(text: string, at: int): Option[int] =
+  ## dunda lo namcu pe le jdini sinxa pe `LUT_WORDS_BY_SIGN` poi cfari bu'u `at`
+  ##   .i dunda no da va'o lo nu no jdini sinxa cu cfari bu'u `at`
   for k in 0 ..< LUT_WORDS_BY_SIGN.len:
-    if text.continuesWith(LUT_WORDS_BY_SIGN[k][0], at): return k
-  -1
+    if text.continuesWith(LUT_WORDS_BY_SIGN[k][0], at): return some(k)
+  none(int)
 
 
 func inferred(words: openArray[string], at: int): seq[Occurrence] =
@@ -680,17 +681,17 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   var
     occurrences: seq[Occurrence]
     at = start
-    opened = -1  # lo namcu pe le valsi poi krasi le namcu poi ca'o se tcidu ku'o .a `-1`
+    opened = none(int)  # lo namcu pe le valsi poi krasi le namcu poi ca'o se tcidu
     opening = start  # le stuzi pe le pamoi lerfu pe le namcu
-    signed = -1  # le jdini sinxa poi lidne le namcu ku'o .a `-1`
+    signed = none(int)  # le jdini sinxa poi lidne le namcu
   template closed() =
     # fanmo le namcu
     #   .i jmina zo be'o .e zo ku va'o lo nu lo jdini sinxa cu lidne le namcu
-    if signed >= 0: occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
-    (opened, signed) = (-1, -1)
+    if signed.isSome: occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
+    (opened, signed) = (none(int), none(int))
   while at < finish:
     if text[at] in DIGITS_STREAM:
-      if opened < 0: (opened, opening) = (occurrences.len, at)
+      if opened.isNone: (opened, opening) = (some(occurrences.len), at)
       occurrences.add Occurrence(
         start: at, finish: at + 1, text: $text[at], stress: none(int),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
@@ -710,20 +711,20 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       inc at
       continue
     let sign = text.signAt(at)
-    if sign >= 0:
+    if sign.isSome:
       let
-        size = LUT_WORDS_BY_SIGN[sign][0].len
-        is_after = opened >= 0
+        size = LUT_WORDS_BY_SIGN[sign.get][0].len
+        is_after = opened.isSome
         is_before = at + size < finish and text[at + size] in DIGITS_STREAM
       # le sinxa cu pencu pa namcu po'o to `D3 a` toi
       #   .i le namcu cu ponse pa sinxa po'o
-      if is_after == is_before or signed >= 0:
+      if is_after == is_before or signed.isSome:
         return refuse(Refusal.Sign, at, text.character(at))
-      let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign][1] & @WORDS_AMOUNT_LINKING
+      let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign.get][1] & @WORDS_AMOUNT_LINKING
       if is_after:
-        occurrences.insert(words.inferred(opening), opened)
+        occurrences.insert(words.inferred(opening), opened.get)
         occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
-        (opened, signed) = (-1, -1)
+        (opened, signed) = (none(int), none(int))
       else:
         occurrences.add words.inferred(at + size)
         signed = sign
@@ -731,7 +732,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       continue
     closed()
     let first = at
-    while at < finish and text[at] notin DIGITS_STREAM and text.signAt(at) < 0: inc at
+    while at < finish and text[at] notin DIGITS_STREAM and text.signAt(at).isNone: inc at
     let letters = text.wordsLetters(first, at)
     if not letters.is_read: return letters
     occurrences.add letters.occurrences
