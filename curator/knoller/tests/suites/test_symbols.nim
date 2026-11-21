@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/symbols
+import ../../src/knoller/[symbols, workers]
 
 
 const
@@ -19,10 +19,20 @@ const
   NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
 
 
+type Checking = object  ## Define one check worker runs: text, and directory it checks in.
+  text: string  ## Text compiler reads from stdin.
+  directory: string  ## Absolute directory check runs in.
+
+
 proc writeInto(root, path, content: string) =
   ## Write content at path under root, creating directories it needs.
   createDir((root / path).parentDir)
   writeFile(root / path, content)
+
+
+proc cleaned(job: Checking): bool =
+  ## Answer whether compiler building suite checks text clean, so worker runs check.
+  checked(job.text, job.directory, getCurrentCompilerExe(), []).is_clean
 
 
 suite "Internal: Symbols":
@@ -55,6 +65,20 @@ suite "Internal: Symbols":
     ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
       "\"\"\\nim\\bin\\nimsuggest.exe\" \"--v3\" \"\\r\\a b.nim\" " &
       "< \"\\T\\c\" > \"\\T\\a\"\""
+
+
+  test "check reads text and writes output and errors to one file, through either shell":
+    check lineRedirected("/t/nim", ["check", "-"], "/tmp/t", "/tmp/o", is_merged = true) ==
+      "/t/nim check - < /tmp/t > /tmp/o 2>&1"
+    check lineRedirected(
+      "\\nim\\bin\\nim.exe",
+      ["check", "-"],
+      "\\T\\t",
+      "\\T\\o",
+      cmd = "\\Windows\\system32\\cmd.exe",
+      is_merged = true,
+    ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"\"\\nim\\bin\\nim.exe\" \"check\" \"-\" < \"\\T\\t\" > \"\\T\\o\" 2>&1\""
 
 
   test "path reads with separator `/` on Windows, and `\\` stays name character on POSIX":
@@ -237,3 +261,23 @@ suite "Internal: Symbols":
     check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
     check answers[0].globals[name].len == 0  # no symbol takes long name
     check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read
+
+
+  test "checks on several workers at once each end, with answer check alone gives":
+    # Case held: `nim check` read its text through pipe, and child another worker started meanwhile
+    #   kept copy of its write end, so compiler waited on end of text for ever (#1001). Domain:
+    #   clean text and text holding error, on more jobs than workers.
+    let directory = createTempDir("knoller_", "_checks")
+    defer: removeDir(directory)
+    let jobs = toSeq(1 .. 8).mapIt(Checking(
+      text: if it mod 2 == 0: "let a = " & $it & "\n" else: "let a: int = \"x\"\n",
+      directory: directory,
+    ))
+    check jobs.mapParallel(cleaned, workers = 4) == toSeq(1 .. 8).mapIt(it mod 2 == 0)
+
+
+  test "compiler that does not start leaves check unclean, and says so":
+    let directory = createTempDir("knoller_", "_checks")
+    defer: removeDir(directory)
+    let answer = checked("let a = 1\n", directory, directory / "nim-absent", [])
+    check not answer.is_clean and answer.reason.startsWith("compiler did not run: ")
