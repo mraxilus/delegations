@@ -99,7 +99,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, sequtils, strutils, uri]
+import std/[algorithm, json, options, os, sequtils, strutils, tables, uri]
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -152,6 +152,9 @@ type
     id*: string  ## Id of tool use, which its result names.
     is_foreground*: bool  ## Input `run_in_background` is false, so result can hold report.
     place*: Place  ## Where call stands.
+    model*: string
+      ## `resolvedModel` of result of call, else input `model`; empty where neither names one.
+    effort*: string  ## Input `effort`; empty where call names none.
 
   Block* = object  ## Define one `## Prediction` or `## Reflection` block of assistant text.
     text*: string  ## Lines after heading, to end of block, each fenced line blanked.
@@ -159,6 +162,9 @@ type
     is_counted*: bool
       ## Heading stands above first `## Sign-off` or working line of last text of its turn, or
       ##   in other text.
+    uuid*: string  ## `uuid` of entry holding block; empty where entry gives none.
+    timestamp*: string  ## `timestamp` of that entry, in ISO 8601; empty where it gives none.
+    delegate*: string  ## `sessionId` of that entry, which names delegate; empty where none.
 
   Subagents* = object  ## Define what transcript says about subagents, by model turn.
     turns*: int  ## Count of model turns; last one is current.
@@ -344,7 +350,7 @@ const
   LABEL_SUBAGENT = "**Subagent:**"
     ## Opening of line of block whose first word after it names kind of call that block serves
     ##   (7017187857).
-  LABELS_SUBAGENT = ["**subagent:**", "**subagent**:"]
+  LABELS_SUBAGENT* = ["**subagent:**", "**subagent**:"]
     ## Forms of `LABEL_SUBAGENT` that line opens with, in lower case: match reads it in any case,
     ##   with colon inside or outside bold (7027197745).
   MARKS_KIND = {'`', '*', '_'}
@@ -354,13 +360,13 @@ const
     ## Marks after word of kind that match drops, once, as in `builder,` (7022770415) and
     ##   `builder.` or `builder:` (7027197745).
   HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
-  KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
+  KIND_CRITIC* = "critic"  ## Kind whose report asks for reflection.
   KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
   TYPE_QUEUED = "queued_command"  ## Type of attachment that hand-back queued inside turn takes.
   STATUS_LAUNCHED = "async_launched"
     ## Status of result of `Agent` call that runs in background: launch notice, and no report.
-  COLUMN_PREDICTED = "Predicted"  ## Column of table of reflection whose cells quote claims.
-  NO_PREDICTION = "No prediction"
+  COLUMN_PREDICTED* = "Predicted"  ## Column of table of reflection whose cells quote claims.
+  NO_PREDICTION* = "No prediction"
     ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
   MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
   MARKS_ITEM = {'.', ')'}  ## Marks after number of item of numbered list, as `1.` or `1)`.
@@ -1951,7 +1957,7 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   )]
 
 
-func kindNamed(text: string, kinds: openArray[string]): string =
+func kindNamed*(text: string, kinds: openArray[string]): string =
   ## Read kind block text names: first word after `**Subagent:**` (7017187857), on first line
   ##   of block that opens with it, after any indent; empty where no line opens so, or that word
   ##   is no kind.
@@ -1995,7 +2001,7 @@ func nearestFirst(subagents: Subagents, blocks: seq[int]): seq[int] =
   blocks.sortedByIt((-subagents.predictions[it].place.turn, it))
 
 
-func blocksTaken(subagents: Subagents, kinds: openArray[string]): seq[int] =
+func blocksTaken*(subagents: Subagents, kinds: openArray[string]): seq[int] =
   ## Read index in `predictions` of block each call took, by index of call; -1 where none.
   ##   Block serves later call where no subagent starts between them, whatever count of turns
   ##     between (7014974932), so call looks back over turns `turnsBack` gives.
@@ -2064,7 +2070,7 @@ func checkPredictions(subagents: Subagents, kinds: openArray[string]): seq[Findi
     )
 
 
-func cellsRow(line: string): seq[string] =
+func cellsRow*(line: string): seq[string] =
   ## Read stripped cells of pipe-table row, `\|` read as `|`; none where line opens with no `|`.
   let s = line.strip
   if not s.startsWith("|"): return
@@ -2084,12 +2090,12 @@ func cellsRow(line: string): seq[string] =
   if cell.strip.len > 0: result.add cell.strip
 
 
-func isRowSeparator(cells: openArray[string]): bool =
+func isRowSeparator*(cells: openArray[string]): bool =
   ## Decide whether row is `| --- | --- |` rule under header.
   cells.len > 0 and cells.allIt(it.len > 0 and it.allCharsInSet({'-', ':'}))
 
 
-func collapsed(text: string): string =
+func collapsed*(text: string): string =
   ## Read text with each run of whitespace as one space, and none at either end.
   text.splitWhitespace.join(" ")
 
@@ -2188,33 +2194,53 @@ func stopClaim(text: string): int =
   if result == text.len and text.endsWith(FULL_STOP): dec result  # no mark: one full stop goes
 
 
-func claims(text: string): seq[string] =
-  ## Read each claim of block text, with its label and without it, as reflection may quote it.
-  ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
+func bulletsClaim(text: string): seq[string] =
+  ## Read text of each bullet of block text that can hold claim, collapsed.
+  ##   Such bullet has no indent, and runs to next blank line, next line opening bullet at any
   ##     indent, next line opening other item (`isItem`, choice), or end of block; each run of
   ##     whitespace reads as one space (7016134603), and `\|` reads as `|`, as cell reads it
   ##     (7022872980).
-  ##   Claim ends where `stopClaim` reads: at its percentiles, at its confidence, at its
-  ##     resolution criterion, or before final full stop of its bullet.
-  ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
-  ##     claim reads whole (7018501890).
-  var
-    bullets: seq[string]
-    is_open = false  # Line continues last bullet: no blank line or item since it opened.
+  var is_open = false  # Line continues last bullet: no blank line or item since it opened.
   for line in text.splitLines:
     if line.isBullet and line[0] in MARKERS_BULLET:
-      bullets.add line[2 .. ^1]
+      result.add line[2 .. ^1]
       is_open = true
     elif line.strip.len == 0 or line.isBullet or line.isItem: is_open = false
-    elif is_open: bullets[^1].add "\n" & line
-  for bullet in bullets:
-    let
-      text = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
-      claim = text[0 ..< text.stopClaim].strip
+    elif is_open: result[^1].add "\n" & line
+  for bullet in result.mitems: bullet = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
+
+
+func claims*(text: string): seq[string] =
+  ## Read each claim of block text, with its label and without it, as reflection may quote it.
+  ##   Claim is text of bullet `bulletsClaim` reads, up to where `stopClaim` reads: its
+  ##     percentiles, its confidence, its resolution criterion, or final full stop of bullet.
+  ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
+  ##     claim reads whole (7018501890).
+  for text in text.bulletsClaim:
+    let claim = text[0 ..< text.stopClaim].strip
     if claim.len == 0: continue
     result.add claim
     let label = claim.labelClaim
     if label.len > 0 and claim.len > label.len: result.add claim[label.len .. ^1]
+
+
+func positionClaim*(text, claim: string): int =
+  ## Read position from 1 of first bullet of block text whose claim, with or without its label,
+  ##   is claim; 0 where none holds it.
+  for k, bullet in text.bulletsClaim:
+    let
+      whole = bullet[0 ..< bullet.stopClaim].strip
+      label = whole.labelClaim
+    if claim == whole or (label.len > 0 and claim == whole[label.len .. ^1]): return k + 1
+
+
+func isNumber*(text, claim: string): bool =
+  ## Decide whether claim, with or without its label, is number of block text: claim of bullet
+  ##   whose percentiles end it, as `stopClaim` reads them (7023048202).
+  let position = text.positionClaim(claim)
+  if position == 0: return false
+  let bullet = text.bulletsClaim[position - 1]
+  bullet.continuesWith(MARK_PERCENTILES, bullet.stopClaim)
 
 
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
@@ -2417,15 +2443,25 @@ proc readPrompt*(root, branch: string): string =
   if path.len > 0 and fileExists(root / path): readFile(root / path) else: ""
 
 
-func nameMatter(text: string): string =
-  ## Read value of `name:` line of front matter, i.e. lines between opening `---` and next one;
+func valueMatter(text, key: string): string =
+  ## Read value of line `<key>:` of front matter, i.e. lines between opening `---` and next one;
   ##   empty where text opens with none, or matter names none.
-  let lines = text.splitLines
+  let
+    lines = text.splitLines
+    opening = key & ":"
   if lines.len == 0 or lines[0].strip != "---": return ""
   for line in lines.toOpenArray(1, lines.high):
     if line.strip == "---": return ""
-    if line.startsWith("name:"): return line["name:".len .. ^1].strip(chars = Whitespace + {'"'})
+    if line.startsWith(opening): return line[opening.len .. ^1].strip(chars = Whitespace + {'"'})
   ""
+
+
+proc readTemplates(root: string): seq[string] =
+  ## Read text of each `*.md` template of `.claude/agents/` of root; none where folder is missing.
+  let directory = root / DIRECTORY_AGENTS
+  if not dirExists(directory): return
+  for kind, path in walkDir(directory):
+    if kind in {pcFile, pcLinkToFile} and path.endsWith(".md"): result.add readFile(path)
 
 
 proc readKinds*(root: string): seq[string] =
@@ -2434,13 +2470,20 @@ proc readKinds*(root: string): seq[string] =
   ##   Kinds are read at each stop and never listed in code, so template added is kind at once.
   ##   Read lives here and not in koch, since no suite runs `main` of koch, and suite reads it
   ##     over scratch root.
-  let directory = root / DIRECTORY_AGENTS
-  if not dirExists(directory): return
-  for kind, path in walkDir(directory):
-    if kind notin {pcFile, pcLinkToFile} or not path.endsWith(".md"): continue
-    let name = readFile(path).nameMatter
+  for text in root.readTemplates:
+    let name = text.valueMatter("name")
     if name.len > 0: result.add name
   result.sort
+
+
+proc readEfforts*(root: string): Table[string, string] =
+  ## Read `effort:` of front matter of each template `readKinds` reads, by its kind; template
+  ##   that names no effort adds none, so its call reads effort of call alone.
+  for text in root.readTemplates:
+    let
+      name = text.valueMatter("name")
+      effort = text.valueMatter("effort")
+    if name.len > 0 and effort.len > 0: result[name] = effort
 
 
 func contextStart*(
@@ -2698,6 +2741,12 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
       let rejected = e.usesRejected
       if rejected.len > 0: result.calls.keepItIf(it.id notin rejected)
       if entries.isReportEntry(i, result.calls): result.reports.add Place(turn: turn, at: at)
+      # Result names model harness ran subagent on, which replaces model input asked for.
+      let model = e{"toolUseResult", "resolvedModel"}.getStr
+      if model.len > 0:
+        for item in e{"message", "content"}.getElems:
+          for call in result.calls.mitems:
+            if call.id.len > 0 and item{"tool_use_id"}.getStr == call.id: call.model = model
       inc at
       continue
     let items = e{"message", "content"}.getElems
@@ -2722,10 +2771,15 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
         result.texts.add place
         let stop = line + pieces[k].len
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_PREDICTION):
-          result.predictions.add Block(text: found.text, place: place, is_counted: true)
+          result.predictions.add Block(
+            text: found.text, place: place, is_counted: true, uuid: e{"uuid"}.getStr,
+            timestamp: e{"timestamp"}.getStr, delegate: e{"sessionId"}.getStr,
+          )
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_REFLECTION):
           result.reflections.add Block(
-            text: found.text, place: place, is_counted: line + found.line < cut
+            text: found.text, place: place, is_counted: line + found.line < cut,
+            uuid: e{"uuid"}.getStr, timestamp: e{"timestamp"}.getStr,
+            delegate: e{"sessionId"}.getStr,
           )
         line = stop
       of TYPES_THINKING[0], TYPES_THINKING[1]: result.thinking.add place
@@ -2738,6 +2792,8 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
           id: item{"id"}.getStr,
           is_foreground: background != nil and background.kind == JBool and not background.getBool,
           place: place,
+          model: item{"input", "model"}.getStr,
+          effort: item{"input", "effort"}.getStr,
         )
       else: discard
 
