@@ -20,8 +20,8 @@ suite "Picking":
 
 
   test "each reader of a frame's placements answers as it does placing each object itself":
-    # Mutant of whole form of each reader passed every case, since no case handed it frame's
-    #   placements whole (repository issue 970).
+    # Guards against break on purpose that no case caught (repository issue 970): no case
+    #   handed frame's placements whole, so wrong read of whole form passed every case.
     let
       camera = cameraAround(Position(x: 0.5, y: -0.3, z: 0.2), 14.0, Direction(x: 3, y: 2, z: 1))
       view_projection = camera.initMatrixViewProjection(width_pick / height_pick)

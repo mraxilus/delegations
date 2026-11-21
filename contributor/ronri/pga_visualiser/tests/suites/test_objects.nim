@@ -84,9 +84,9 @@ suite "Objects":
 
 
   test "a point reads its grade against its largest coefficient, whatever its weight":
-    # Mutant took library's reading off point itself at weight under one, against its absolute
-    #   tolerance: point of half weight beside stray term under billionth read point
-    #   (repository issue 970).
+    # Guards against break on purpose that no case caught (repository issue 970): library's
+    #   reading off point itself at weight under one, against its absolute tolerance, takes
+    #   point of half weight beside stray term under billionth for point.
     # Stray term stays under absolute tolerance, and above billionth of each weight below.
     let
       point = Position(x: 0.25, y: -0.5, z: 0.75).toMultivector
