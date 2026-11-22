@@ -40,6 +40,8 @@ when IS_RIGID and DIMENSIONS == 4:
     POOL_LINE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
     POOL_PLANE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_PLANE`.
     POOL_MOTOR_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
+    POOL_MOTOR_TYPED* {.align(64).}: array[OBJECTS, MultivectorOf[BASES_MOTOR]]
+      ## Images of `POOL_MOTOR` at library's type of motor, its antieven part.
 
 when IS_CONFORMAL and DIMENSIONS == 5:
   var
@@ -66,6 +68,8 @@ when IS_RIGID and DIMENSIONS == 3:
     POOL_POINT_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
     POOL_LINE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
     POOL_MOTOR_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
+    POOL_MOTOR_TYPED* {.align(64).}: array[OBJECTS, MultivectorOf[BASES_MOTOR]]
+      ## Images of `POOL_MOTOR` at library's type of motor, its antieven part.
 
 when IS_CONFORMAL and DIMENSIONS == 4:
   var
@@ -87,13 +91,19 @@ func toUpperAscii(s: string): string {.compileTime.} =
     result.add (if c in 'a'..'z': char(ord(c) - 32) else: c)
 
 
-func namePoolLibrary*(kind: Kind, grade: Option[int]): string {.compileTime.} =
-  ## Name pool feeding library implementation of measurand: dense image, graded dense, or scalar.
+func namePoolLibrary*(kind: Kind, grade: Option[int], is_typed = false): string {.compileTime.} =
+  ## Name pool feeding library implementation of measurand: dense image, graded dense, scalar,
+  ##   or typed image where measurand reads operand at its own type.
   ##   Branches as `if` rather than `case`, since algebras without typed kinds leave
   ##   typed branch unreachable and compiler would say so.
+  ##   Motor alone has typed pool, so typed name of any other kind stops build; `$kind` is
+  ##     compared since conformal kinds hold no motor.
   if kind == Kind.General:
     if grade.isSome: "POOL_GRADED[" & $grade.get & "]" else: "POOL_GENERAL"
   elif kind == Kind.Scalar: "POOL_SCALAR"
+  elif is_typed:
+    doAssert $kind == "Motor", "Typed pool exists for motor alone; got `" & $kind & "`."
+    "POOL_" & toUpperAscii($kind) & "_TYPED"
   else: "POOL_" & toUpperAscii($kind) & "_WIDENED"
 
 
@@ -179,6 +189,7 @@ proc fillPools*(seed = 0) =
       POOL_LINE_WIDENED[i] = POOL_LINE[i].widen
       POOL_PLANE_WIDENED[i] = POOL_PLANE[i].widen
       POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
+      for b in BASES_MOTOR: POOL_MOTOR_TYPED[i][b] = POOL_MOTOR_WIDENED[i][b]
   when IS_CONFORMAL and DIMENSIONS == 5:
     for i in 0..<OBJECTS:
       POOL_POINTROUND[i] = pointRoundRandom()
@@ -200,6 +211,7 @@ proc fillPools*(seed = 0) =
       POOL_POINT_WIDENED[i] = POOL_POINT[i].widen
       POOL_LINE_WIDENED[i] = POOL_LINE[i].widen
       POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
+      for b in BASES_MOTOR: POOL_MOTOR_TYPED[i][b] = POOL_MOTOR_WIDENED[i][b]
   when IS_CONFORMAL and DIMENSIONS == 4:
     for i in 0..<OBJECTS:
       POOL_POINTROUND[i] = pointRoundRandom()
