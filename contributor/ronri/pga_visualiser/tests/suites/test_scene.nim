@@ -242,8 +242,8 @@ suite "Scene":
 
 
   test "a sum or a difference of two scales of one object is zero only where it cancels":
-    # Mutant read difference off scale-free copies, as product: point less twice itself then
-    #   read as zero, since both copies are one (repository issue 970).
+    # Guards against break on purpose that no case caught (repository issue 970): difference
+    #   read off scale-free copies, as product is, takes point less twice itself for zero.
     for i in 0..<SAMPLES:
       for m in [POINTS[i], LINES[i], PLANES[i]]:
         for ratio in [2.0, 0.5, 1.0e3, -4.0]:
