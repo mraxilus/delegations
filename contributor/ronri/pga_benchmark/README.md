@@ -161,7 +161,7 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `3d9696e`, which is the pin. The runtime
+Measured on the pinned compiler and on library head `7ef9f4d`, which is the pin. The runtime
 baselines were timed at the pin, or at a commit that emits the same C. Each evaluation names the
 pin it was timed at. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
