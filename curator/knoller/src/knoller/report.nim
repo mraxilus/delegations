@@ -6,8 +6,9 @@
 ##   Terminal form, block by block where held: location and rule; summary; source line under
 ##     gutter of its number, then marker under its span; `actual` and `expect` in two columns;
 ##     `help:` line. Blank line stands between two blocks, and between two findings.
-##   Line form: `path:line:column: rule: actual="…" expect="…" message="…"`, each value quoted
-##     and escaped, so finding takes one line and each value parses back by its key.
+##   Line form: `path:line:column: rule: actual="…" expect="…" message="…" help="…"`, each value
+##     quoted and escaped, so finding takes one line and each value parses back by its key. Help
+##     stands last, so hook and log keep remedy each finding gives (ruling 7197275206 of #1002).
 ##   Warning prints in both forms, with `warning` after its rule, as knoller marks it on its
 ##     command line (ruling D2 of #1002, option `a`); rewrite is no finding, so its caller keeps
 ##     its one line.
@@ -20,7 +21,6 @@
 ##   Terminal form quotes value that is empty, or whose edge or control character would hide in
 ##     column, as line form quotes it, so each value stays visible (Article IV.4).
 ##
-##   Cost: line form carries no `help`, since STYLE.md §3 gives it none; log reader loses it.
 ##   Cost: marker counts each rune as one column, so wide glyph, as of East Asian text or emoji,
 ##     shifts marker right of its span.
 ##   Cost: path and rule print bare in line form, so path holding `: ` reads ambiguously there.
@@ -204,7 +204,8 @@ func renderTerminal(notice: Notice, is_colored: bool): string =
 
 
 func renderLine(notice: Notice): string =
-  ## Render finding in line form: location parts held, rule, then each value held, quoted.
+  ## Render finding in line form: location parts held, rule, then each value held, quoted, help
+  ##   last.
   var
     parts: seq[string]
     values: seq[string]
@@ -213,6 +214,7 @@ func renderLine(notice: Notice): string =
   if notice.actual.isSome: values.add "actual=" & notice.actual.get.quoted
   if notice.expected.isSome: values.add "expect=" & notice.expected.get.quoted
   values.add "message=" & notice.summary.quoted
+  if notice.help.len > 0: values.add "help=" & notice.help.quoted
   parts.add values.join(" ")
   parts.join(": ")
 
