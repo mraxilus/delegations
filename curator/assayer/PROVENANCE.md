@@ -312,10 +312,10 @@ Both start from an empty cache, on one file that lists the 8 configurations. Ass
 
 ## Toolchain
 
-**The compiler is pinned exactly at 2.4.2**: `requires "nim == 2.4.2"` in `assayer.nimble`. The
-pin is the pin of this project, and it moves apart from the pin of knoller. Assayer compiles the
-knoller of its lock with its own compiler, so its suites verify that pair. Verified by CI run
-45858921855, 2026-11-26: the suites pass on 2.4.2.
+**The compiler is pinned exactly at 2.4.2**: `requires "nim == 2.4.2"` in `assayer.nimble`. The pin
+is the pin of this project, and it moves apart from the pin of knoller. Assayer compiles the knoller
+of its lock with its own compiler, so its suites verify that pair. Verified by the jobs of
+`check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites pass on 2.4.2.
 
 ## Rules audits
 

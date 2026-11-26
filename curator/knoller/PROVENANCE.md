@@ -949,10 +949,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   2026-11-20: each fails with knoller at `d6bc8979`, before those rules.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- Each case asks the parser of the compiler that builds the suite, 2.4.2 in the job of knoller.
-  A case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such
-  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29. 2.4.2
-  gives it too, verified by CI run 45858921855, 2026-11-26.
+- Each case asks the parser of the compiler that builds the suite, 2.4.2 in the job of knoller. A
+  case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such case,
+  verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29. 2.4.2 gives it
+  too, verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
