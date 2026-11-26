@@ -352,10 +352,8 @@ func quoted(cursor: var Cursor): string =
       of 'n': result.add '\n'
       of 'r': result.add '\r'
       of 't': result.add '\t'
-      of 'x':
-        if cursor.at + 2 >= cursor.line.len:
-          raise newException(ValueError, &"Escape of row is cut short; got `{cursor.line}`.")
-        result.add char(parseHexInt(cursor.line[cursor.at+1..cursor.at+2]))
+      of 'x':  # Slice stays inside line: short escape fails in `parseHexInt`, or at closing quote.
+        result.add char(parseHexInt(cursor.line.substr(cursor.at + 1, cursor.at + 2)))
         cursor.at += 2
       else: result.add cursor.line[cursor.at]
     else: result.add cursor.line[cursor.at]
