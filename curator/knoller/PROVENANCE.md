@@ -949,9 +949,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   2026-11-20: each fails with knoller at `d6bc8979`, before those rules.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
+- Each case asks the parser of the compiler that builds the suite, 2.4.2 in the job of knoller.
   A case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such
-  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29.
+  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29. 2.4.2
+  gives it too, verified by CI run 45858921855, 2026-11-26.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
@@ -969,9 +970,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
 operator. A `-` before a digit opens a number after a space or an opening bracket.
 
-- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0. It adds
+- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0 and 2.4.2. It adds
   `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the glyphs of 2.2.12, and commit `27763495` reads the same set as 2.4.0.
-  Verified by hand, 2026-10-29, in the source of each lexer.
+  Verified by hand, 2026-10-29, in the source of each lexer. `unicodeOprLen` of the lexer is the
+  same bytes in 2.4.2, verified by hand, 2026-11-26.
 - Cost: where code on a pin that reads fewer glyphs spells one of them in a name, the scan reads
   it otherwise than that compiler. No code on 2.2.12 did, verified by hand, 2026-10-29.
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
