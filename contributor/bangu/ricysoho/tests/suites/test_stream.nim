@@ -944,7 +944,8 @@ func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused:
   ##   .i zoi gy. - .gy. .a zoi gy. − .gy. cu ka'e lidne le ralju pagbu
   ##   .i ji'a lo jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le ralju pagbu
   ##   .i zoi gy. - .gy. .e zoi gy. − .gy. cu se tcidu va'o lo nu no lerfu po'u `1` cu lidne le
-  ##       sinxa
+  ##       sinxa kei .e lo nu le sinxa cu lidne le ralju pagbu .a lo jdini sinxa poi lidne le ralju
+  ##       pagbu
   ##   .i zoi gy. % .gy. cu se tcidu va'o lo nu lo lerfu po'u `1` cu lidne le sinxa kei .e lo nu no
   ##       lerfu po'u `1` cu se lidne le sinxa
   ##   .i zoi gy. π .gy. .e zoi gy. ½ .gy. cu se tcidu va'o lo nu no lerfu po'u `1` cu pencu le
@@ -1288,15 +1289,23 @@ suite "Internal: Stream":
     #   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b` .e `D7 c`
     #   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
     for (sign, words) in CONSTANTS_RULED:
-      let amount = @["lo", "ronru'u", "be", "li"] & words & @["be'o", "ku"]
       for (text, cmavo) in [
           ("li " & sign, @["li"] & words), ("mi" & sign, @["mi"] & words),
-          (sign & "moi", words & @["moi"]), ("€" & sign, amount), (sign & "€", amount),
-          ("-" & sign & "€", amount[0 .. 3] & @["ni'u"] & amount[4 .. ^1]),
-          ("$-" & sign, @["lo", "rupnu", "be", "li", "ni'u"] & words & @["be'o", "ku"])]:
+          (sign & "moi", words & @["moi"])]:
         checkpoint text
         check text.cmavoRead == some(cmavo)
         check text.isSpanned  # le flalu pe lo stuzi
+      # ro jdini sinxa cu ka'e pencu le sinxa to `D7 c` toi
+      for (currency, names) in SIGNS_RULED:
+        let (opening, closing) = (@["lo"] & names & @["be", "li"], @["be'o", "ku"])
+        for (text, cmavo) in [
+            (currency & sign, opening & words & closing),
+            (sign & currency, opening & words & closing),
+            ("-" & sign & currency, opening & @["ni'u"] & words & closing),
+            (currency & "-" & sign, opening & @["ni'u"] & words & closing)]:
+          checkpoint text
+          check text.cmavoRead == some(cmavo)
+          check text.isSpanned  # le flalu pe lo stuzi
       # le pamoi valsi cu vasru ro stuzi pe le sinxa
       #   .i ro drata valsi cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le sinxa
       check ("li " & sign).startsRead == some(@[0, 3] & (3 + sign.len).repeat(words.len - 1))
@@ -1348,6 +1357,9 @@ suite "Internal: Stream":
     # lo kutle'u cu fendi re namcu
     check "5€ -5".cmavoRead ==
         some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
+    check "5% €5".cmavoRead ==
+        some(@["mu", "ce'i", "lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
+    check "€5% €5".cmavoRead == some(percent & @["lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
 
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":

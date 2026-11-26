@@ -289,8 +289,9 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
         after = b + signs[0].len  # le stuzi poi se lidne le jdini sinxa
         is_after = b > 0 and (text[b - 1] in Digits or
           SIGNS_NUMBER.anyIt(b >= it.len and text.continuesWith(it, b - it.len)))
+        # zoi gy. % .gy. cu krasi no namcu
         is_before = after < text.len and (text[after] in Digits or
-          SIGNS_NUMBER.anyIt(text.continuesWith(it, after)))
+          SIGNS_NUMBER.anyIt(it != "%" and text.continuesWith(it, after)))
       if not is_after and not is_before: return false
       for s in b ..< b + signs[0].len:
         if counts[s] != 0: return false
