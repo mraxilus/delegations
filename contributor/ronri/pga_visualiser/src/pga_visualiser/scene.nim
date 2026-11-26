@@ -593,6 +593,13 @@ const
     ##   Derived from `Basis`, so build of another dimension sizes own buffers.
 
 
+func coefficientLargestFinite(m: Multivector): float =
+  ## Read magnitude of largest finite coefficient; zero where none is.
+  ##   `coefficientLargest` already skips NaN, as `max` does, and reads infinity.
+  for b in Basis:
+    if abs(m[b]) < Inf: result = max(result, abs(m[b]))
+
+
 func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: var int) =
   ## Print multivector into fixed storage, in same shape library's `$` uses.
   ##   Basis elements named exactly as library names them; both GUIs carry font faces covering
@@ -603,7 +610,10 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
   ##   Term prints where it stands over billionth of largest, as `objects.classify` reads it.
   ##     Never against library's absolute tolerance, as `$` judges: line metre long one
   ##     unit out carries coefficients near 1e-12, which that prints as zero.
-  let floor = TOLERANCE_ABS * m.coefficientLargest
+  ##     Largest is read off finite coefficients alone, so each coefficient not finite
+  ##       prints, and so does each term beside it. Infinite largest would floor each term.
+  var floor = TOLERANCE_ABS * m.coefficientLargest
+  if floor == Inf: floor = TOLERANCE_ABS * m.coefficientLargestFinite
   var has_written = false
   for b in Basis:
     if abs(m[b]) <= floor: continue
