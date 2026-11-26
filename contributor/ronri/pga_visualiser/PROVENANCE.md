@@ -1854,8 +1854,7 @@ reads once the reader closes the panel.
 
 - a meet far outside the drawn disc, from both sides of one plane;
 - both halves of a line pickable;
-- a line beside the eye stays within half a pixel of its image, the pivot 19 to 4.7 million units
-  off;
+- a line beside the eye stays within 0.5 px of its image, the pivot 19 to 4.7 million units off;
 - the dome of the horizon plane inserted first;
 - the segment count of the great circle after the eye cut;
 - the fog radii at an eye inside its own fog;
@@ -2321,8 +2320,7 @@ held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
 - a travel step reads back along the rolled frame, to each of the three axes it was asked for;
-- the speed is monotone and under its cap over 4 s, at 0.6321 and 0.9502 of it after one and three
-  τ;
+- the speed is monotone and under its cap over 4 s, at 0.6321 and 0.9502 of it after τ and 3τ;
 - 120 frames of one span cover what one frame of it covers, at three spans;
 - flight steps at the ship's speed, whatever the pointer is over, at any distance to the pivot;
 - after its climb, a long flight at 19 covers 190.000 units in each 10 s span, and never stalls;
@@ -2330,8 +2328,7 @@ held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 - the ship opens at the distance to the pivot of the opening view, and `home` leaves its speed;
 - a held `w` with nothing selected lies along the sight, and keeps the distance to the pivot;
 - a strafe leaves that distance alone;
-- 40 notches onto a lone line, and onto a lone plane, come within 0.0008 of it, past their radius
-  of 0.08;
+- 40 notches onto a lone line or a lone plane come within 0.0008 of it, past their radius of 0.08;
 - the wheel over empty sky with nothing selected does nothing over 200 notches, and two fingers
   spread there keep the distance to the pivot;
 - free flight's wheel comes in to a point eight times as far as the pivot, and the selection's
@@ -2936,7 +2933,7 @@ page of `0fdcfcfc`, the same check read 403 px off the middle, and the drag turn
 unit is one astronomical unit. A join of two points a metre apart, one unit out, carries
 coefficients near 1e-12. The library's `TOLERANCE_ABS` is an absolute 1e-9, so the library alone
 reads that line as no object. So `objects.classify` reads the grade of a copy that `scaleFree`
-divides by its largest coefficient. A coefficient then counts over a billionth of the largest.
+divides by its largest coefficient. A coefficient over a billionth of the largest then counts.
 
 **The copy is skipped where it changes nothing.** Where the weight `E4` is one or more and the
 library reads one grade, the largest coefficient is at least one. The threshold of the copy then
@@ -2944,11 +2941,13 @@ stands at or above that of the library. The copy then keeps a subset of the same
 largest among them, and reads the same grade. Every unit-weight point takes this path.
 
 **Horizon is weight against bulk.** `isHorizon` reads an object as horizon where its weight norm is
-at most a billionth of its bulk norm, past a billion units out. `boundary.position` weighs the
-weight of a point against its bulk in the same way, and `motors.turnAbout` refuses an axis by the
-same rule. The library does not change (Algebra boundary). Norms square to subnormals under 2^-511,
-and to infinity past 2^512. Where both are under 2^-450, or either is infinite, `isHorizon` reads a
-copy scaled exactly by 2^±600, and else pays two tests.
+no more than a billionth of its bulk norm. That is an object more than a billion units out.
+`boundary.position` weighs the weight of a point against its bulk in the same way, and
+`motors.turnAbout` refuses an axis by the same rule. The library does not change (Algebra boundary).
+
+Norms square to subnormals under 2^-511, and to infinity past 2^512. So where both are under 2^-450,
+or either is infinite, `isHorizon` reads a copy scaled exactly by 2^±600. Otherwise it pays two
+tests. Rejected: a `scaleFree` copy on each test, which adds a call and a copy on the normal path.
 
 **An assembled point is read by its weight alone.** `pointFrom` reads a point that a caller builds
 as a unit point plus weightless directions. Its weight is exactly one, and its bulk says only how
@@ -2997,7 +2996,7 @@ slid from, the result is zero. A sum is judged against its larger operand instea
 carries the rounding of where it stood, so the scale of that point keeps rounding far out at zero. A
 point met on its own line then joins with it to nothing, near the origin and two million units out.
 
-The drag and both apply pickers read it so, and the marker judges an eye on its line against both.
+The drag and both apply pickers read it so, and the marker tests an eye on its line in the same way.
 
 **`TOLERANCE_ROUNDING` is `2^(2·4)·ε`, about 5.7e-14**, the worst rounding of one product of two
 multivectors against its factors' scales. Within five units of the world origin, a point met on its
@@ -3005,8 +3004,8 @@ line joins it to about 2e-16 of its operands. Two million units out, at HD 22223
 point stands up to 2e-8 off the line, against a bound of 1.2e-7. Points a metre apart join, about
 either one, to 6.7e-12 of their operands. Measured on 2026-10-05 by a probe that is not kept.
 
-**The panel prints a term against the largest finite one.** `scene.formatMultivector` prints each
-over a billionth of it, and each infinite one. A metre-long line prints its three terms, not `0 𝟏`.
+**The panel prints a term over a billionth of the largest finite one**, and each term that is not
+finite (`scene.formatMultivector`). A metre-long line prints its three terms, not `0 𝟏`.
 
 **Rejected: an absolute tolerance of more places.** With `-d:pga.tolerance_places=12` the suite
 passes, but the floor only moves. The smallest coefficient of a metre join one unit out, beside the
@@ -3017,8 +3016,8 @@ with zero through `=~`. Measured on `f779cec8` on 2026-10-05, by a probe that is
 where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
 
 **Cost: storage far from the world origin still steps**, because each object is stored about the
-world origin alone. A double steps by 0.5 mm at 30 units, and by a metre at 60,000. Two million
-units out it steps 17 to 35 m, as at HD 222237 b. Points a metre apart there are stored as one.
+world origin alone. A double steps 0.5 mm at 30 units, and 1 m at 60,000. Two million units out it
+steps 17 to 35 m, as at HD 222237 b of the demo. Points a metre apart there are stored as one.
 
 Rejected: an exact place stored with each object, because the origins of a calculation stay implicit
 in that calculation. A join holds a metre wherever storage holds one. It runs about the point it
@@ -3051,7 +3050,7 @@ menu offers. The apply section calls it once a frame, and no path calls it for e
 - the catalogue's joins, meets and projections give what the library gives, near and far;
 - the catalogue runs about a local origin exactly the operations that commute with a slide;
 - a line a metre long prints the terms it carries, and no rounding beside them;
-- a value reads in the horizon or out of it alike at each scale, from 2^-1000 to 2^1000;
+- a value reads in the horizon or out of it alike at each scale, on either side of its ratio too;
 - an eye standing on the line has no side to flank it from;
 - a line and a star drawn at a horizon of 4e9 land where the algebra puts them, and the star's
   anchor reads its place;
@@ -4254,7 +4253,7 @@ Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The deskt
 `snprintf("%.4g")` into a stack buffer. The browser uses `format.formatMagnitude`, in Nim, behind
 `nimFormatNumber`: a decimal exponent by `log10`, scaled digits, and **half-to-even** rounding. C
 rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`. Under
-1e-305 the digits scale by 1e308 first, since 10^309 is infinite.
+1e-305 the value scales by 1e308 first, since 10^309 is infinite.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
@@ -4268,8 +4267,8 @@ a live number that changes width is harder to read. Fixed char storage is read t
 every exact eighth, with zero disagreements against C or between backends. The JS entry point pins
 the text of the tie cases. A C-only `magnitudesAgree` stays green while 330 of 7000 values differ
 between the front-ends, so the suite runs under `nim js`. The suite holds each word of no kind from
-subnormal values to 1e6, and at NaN and infinity (issue 970). It holds each magnitude from 2^-1074
-to 1e-300 against C, and each coefficient not finite in print.
+subnormal values to 1e6, and at NaN and infinity (issue 970). It holds each power of two and of ten
+under 1e-300 against C, and each coefficient not finite in print.
 
 ## Animation
 
@@ -4996,5 +4995,6 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
   (Origins, Classification at any scale).
+- Near a tie of four digits, the page can round a magnitude otherwise than C does (issue 1053).
 
 [replications]: https://gitlab.com/mraxilus/replications
