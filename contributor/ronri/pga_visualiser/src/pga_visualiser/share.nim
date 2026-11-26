@@ -158,8 +158,10 @@ func initRingShare*[T](): RingShare[T] =
   for i in 0..<SECONDS_SHARE: result.seconds[i] = -1
 
 
-func add*[T](ring: var RingShare[T], second: int, counts: T) =
+func add*[T](ring: var RingShare[T], second: Natural, counts: T) =
   ## Count `counts` into whole `second`'s bucket, starting it afresh where it held older second.
+  ##   `Natural`, since second before start has no bucket: negative one would index ring
+  ##     below its first, and -1 would read as ring's own mark of empty bucket.
   let at = second mod SECONDS_SHARE
   if ring.seconds[at] != second:
     ring.seconds[at] = second
@@ -167,8 +169,9 @@ func add*[T](ring: var RingShare[T], second: int, counts: T) =
   for i in low(T)..high(T): ring.counts[at][i] += counts[i]
 
 
-func pooled*[T](ring: RingShare[T], second: int): T =
+func pooled*[T](ring: RingShare[T], second: Natural): T =
   ## Sum every bucket inside `SECONDS_SHARE` up to and including whole `second`.
+  ##   `Natural`, as `add` takes it: no bucket holds second before start.
   for at in 0..<SECONDS_SHARE:
     if ring.seconds[at] > second - SECONDS_SHARE and ring.seconds[at] <= second:
       for i in low(T)..high(T): result[i] += ring.counts[at][i]
