@@ -1527,11 +1527,12 @@ context, kind and name, same head first. Lines in no definition follow as other 
 
 **An edit that no longer fits the library at pin still shows its code.** A whole-file replacement
 whose digest the file at pin lacks stands against that file. Its tally reads "digest moved", and a
-note names both digests, so a reader knows that its diff holds each change of the pin since too. A
-quote that the file at pin lacks shows as written, with no line numbers, under its count. `drive`
-names each misfit of an active proposal, and none of a frozen one, which applies at no pin. So a
-deferred or an implemented proposal keeps its code on its page as the pin moves. Rejected: a diff
-against the file that the digest names, since each build that `koch check` runs would then need the
+note names both digests. So its diff holds each change of the pin since, too. A quote that the
+file at pin lacks shows as written, with no line numbers, under its count.
+
+`drive` names each misfit of an active proposal, and none of a frozen one, which applies at no pin.
+So a deferred or an implemented proposal keeps its code on its page as the pin moves. Rejected: a
+diff against the file that the digest names. Each build that `koch check` runs would then need the
 history of the library, and not the pinned checkout alone.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Edits`.
@@ -1691,10 +1692,12 @@ Each function that a Cayley table can express moves to generation, and so gets i
 unrolled at no cost. At the pin `7ef9f4d` the library works this way, and its attitude and
 carrier are generated. Its hand-written `-` carries `noinit` and writes each coefficient, so it
 fills nothing. Its `+` of two multivectors carries `noinit` too, yet its C fills the result with
-zeros before the loop writes it, 128 bytes at rga4d, and P14 writes a `+` with no fill. The cost
-that stays is the fill of the other hand-written functions, as `fills_zero` in the static
+zeros before the loop writes it. That fill is 128 bytes at rga4d, and P14 writes a `+` with no
+fill.
+
+The cost that stays is the fill of the other hand-written functions, as `fills_zero` in the static
 baselines reads. At rga4d the norms, the normalizations, the four projections, the grade
-selections and the supports fill, and at cga4d the compound operations fill too.
+selections and the supports fill. At cga4d the compound operations fill too.
 
 The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
