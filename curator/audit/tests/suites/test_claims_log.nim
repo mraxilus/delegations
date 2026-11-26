@@ -318,6 +318,9 @@ suite "Log of claims":
         "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
     check Claim(text: "a", marker: Marker.Resolver).lineClaim ==
         "claims { text: \"a\" marker: MARKER_RESOLVER }"
+    # `stop` writes no model (`D1 b` of #1025), and schema keeps field, so writer still writes it.
+    check Claim(kind: "reviewer", model: "model-a", text: "a").lineClaim ==
+        "claims { kind: \"reviewer\" model: \"model-a\" text: \"a\" marker: MARKER_DELEGATE }"
 
 
   test "protoc and reader read each line back, field by field, and protoc refuses misspelt field":
@@ -327,6 +330,7 @@ suite "Log of claims":
       marker: Marker.Delegate)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Delegate)
     claims.add Claim(text: "b", state: State.Miss, marker: Marker.Resolver)
+    claims.add Claim(model: "model-a", text: "m", state: State.Hit, marker: Marker.Delegate)
     let
       lines = claims.mapIt(it.lineClaim)
       (encoded, code) = protoc("--encode", HEADER_LOG & lines.mapIt(it & "\n").join)
@@ -343,7 +347,7 @@ suite "Log of claims":
       "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
       "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
       "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
-      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER",
+      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER", "model: \"model-a\"",
     ]:
       check decoded.splitLines.anyIt(it.strip == field)
     check lines.mapIt(it.claimLine) == claims  # each field `protoc` printed, as claim holds it
