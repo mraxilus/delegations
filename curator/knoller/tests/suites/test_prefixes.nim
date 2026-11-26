@@ -7,7 +7,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[prefixes, rules]
+import ../../src/knoller/[prefixes, reports, rules]
 
 
 func fixed(source: string): string =
@@ -45,7 +45,7 @@ suite "Style §5":
       check written.isSettled
     let found = checkPrefixes("a.nim", "let a = 1\nlet m = (a + b).toMultivector\n")
     check found.mapIt((it.line, it.rule)) == @[(2, Rule.PrefixConversion)]
-    check found[0].message.endsWith("got `(a + b).toMultivector`.")
+    check found[0].brief.endsWith("got `(a + b).toMultivector`")
     check fixPrefixes("a.nim", "let m = (a + b).toX\n").fixed.mapIt(it.line) == @[1]
 
 

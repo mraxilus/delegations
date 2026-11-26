@@ -28,13 +28,13 @@ suite "Article IX":
     let found = checkWaits("viewer/tests/test_view.nim", DRIVE_NIM)
     check found.mapIt(it.line) == @[4, 5, 6, 9]  # comment, string and `sleeper` unread
     check found.allIt(it.rule == Rule.WaitFixed)
-    check found.mapIt(it.message) == @[
-      "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
-      "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
-      "Fixed wait reads real clock; wait on condition, or advance clock check moves; got " &
-      "`sleep_async`.",
-      "Fixed wait reads real clock; wait on condition, or move page's clock with " &
-      "`clock.runFor`; got `waitForTimeout`.",
+    check found.mapIt(it.brief) == @[
+      "fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`",
+      "fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`",
+      "fixed wait reads real clock; wait on condition, or advance clock check moves; got " &
+      "`sleep_async`",
+      "fixed wait reads real clock; wait on condition, or move page's clock with " &
+      "`clock.runFor`; got `waitForTimeout`",
     ]  # value echoed as written, replacement of name it compares to
     check checkWaits("a.nim", "let sléep = 1\nlet x = Sleep\n").len == 0  # other names
     check checkWaits("a.nim", "proc f() =\n     oversleep()\n").len == 0  # tail of name unread

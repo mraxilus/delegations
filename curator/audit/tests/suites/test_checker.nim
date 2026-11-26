@@ -4,8 +4,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, unittest]
-import ../../src/[checker, markdown]
+import std/[sequtils, strutils, unittest]
+import ../../src/[checker, findings, markdown]
 
 
 const KOCH = """
@@ -79,7 +79,8 @@ suite "Checker":
     check checkExportsDead(["m.nim"], [dead], ["check gone() == 1\n"]).len == 0
     let found = checkExportsDead(["m.nim"], [dead], [])
     check found[0].path == "m.nim"
-    check found[0].message.endsWith("got `gone`.")
+    check found[0].brief.endsWith("got `gone`; help: drop its `*`, or delete it")
+    check found.anyIt(it.rule == "koch.dead-export")
 
 
   test "dead export drops its `*` where own module calls it, and stays where nothing does":
@@ -101,9 +102,10 @@ suite "Checker":
     check checkSuites(paired).len == 0
     let alone = ["curator/audit/src/form.nim"]
     check checkSuites(alone).len == 1
-    check checkSuites(alone)[0].message.endsWith(
-      "`curator/audit/tests/suites/test_form.nim`; got nothing.",
+    check checkSuites(alone)[0].brief.endsWith(
+      "check module needs suite; help: write `curator/audit/tests/suites/test_form.nim`",
     )
+    check checkSuites(alone).anyIt(it.rule == "koch.check-suite")
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only
     check moduleCheck("curator/audit/src/form.nim") == "form"
     check moduleCheck("curator/probe/src/probe.nim").len == 0  # other projects group differently
@@ -141,9 +143,11 @@ when isMainModule:
     check checkVerbs(KOCH & usage, table).len == 0  # three statements, one set
     let short = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n\nOptions:\n"
     check checkVerbs(KOCH & short, table).len == 1  # usage short
+    check checkVerbs(KOCH & short, table)[0].rule == "koch.usage-verbs"
     let stale = table & "| `audit` | retired |\n"
     check checkVerbs(KOCH & usage, stale).len == 1  # table keeps row for retired verb
     check checkVerbs(KOCH & usage, stale)[0].path == PATH_CURATOR
+    check checkVerbs(KOCH & usage, stale)[0].rule == "koch.verbs-table"
 
 
   test "usage text must print every option parser takes, and no other":
@@ -154,6 +158,7 @@ when isMainModule:
     let short = "Usage: koch <verb>\n\nOptions:\n  --root:<dir>  root\n\"\"\"\n"
     check checkOptions(KOCH & short).len == 1  # option parsed and never printed
     check checkOptions(KOCH & short)[0].path == PATH_KOCH
+    check checkOptions(KOCH & short)[0].rule == "koch.usage-options"
     let retired = "Usage: koch <verb>\n  --root:<dir> --all --gone\n\"\"\"\n"
     check checkOptions(KOCH & retired).len == 1  # option printed and never parsed
     # Text after usage block is not usage: header prose names options too.
@@ -219,5 +224,6 @@ when isMainModule:
     let stale = checkMentions("GUIDE.md", "a\n" & run.replace("tree", "gone"), ["ci", "tree"])
     check stale.len == 1  # verb koch does not dispatch
     check stale[0].path == "GUIDE.md" and stale[0].line == 2
-    check stale[0].message.endsWith("got `gone`.")
+    check stale[0].brief.endsWith("got `gone`; help: write one `./koch` lists")
+    check stale.anyIt(it.rule == "koch.verb-mention")
     check checkMentions("GUIDE.md", run, ["ci", "tree"]).len == 0  # dispatched verb passes

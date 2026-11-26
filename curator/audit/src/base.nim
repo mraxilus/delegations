@@ -132,13 +132,17 @@ func checkBase*(drift: Drift): seq[Finding] =
     result.add finding(
       rule,
       0,
-      "Base changed sections since branch forked; read " & shown & action & "; got " &
+      Check.Drift,
+      "Base changed sections since branch forked; got " &
         changed.mapIt("`" & it & "`").join(", ") & ".",
+      help = "read " & shown & action,
     )
   if PATH_STAMP notin drift.gained: return
   result.add finding(
     "",
     0,
-    "Branch predates code of stamp on base, which can move every stamp; merge base, then " &
-      "check again, as /sync says; got `" & PATH_STAMP & "`.",
+    Check.Drift,
+    "Branch predates code of stamp on base, which can move every stamp; got `" & PATH_STAMP &
+      "`.",
+    help = "merge base, then check again, as /sync says",
   )

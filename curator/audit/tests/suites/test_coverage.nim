@@ -25,8 +25,8 @@ func ranges(file: string): seq[Slice[int]] =
 
 func codepoint(f: Finding): int =
   ## Read codepoint finding names, from its `U+` notation.
-  let at = f.message.find("`U+")
-  f.message[at + 3 ..< f.message.find('`', at + 1)].parseHexInt
+  let at = f.brief.find("`U+")
+  f.brief[at + 3 ..< f.brief.find('`', at + 1)].parseHexInt
 
 
 func codepointsReported(tree: Tree): seq[int] =
@@ -45,7 +45,8 @@ suite "Coverage":
     check found.len == 1  # `é` is Noto Sans's, `⇄` is nobody's here (Article X.8)
     check found[0].path == PAGE
     check found[0].line == 3
-    check found[0].message.endsWith("got `U+21C4` for `⇄`.")
+    check found[0].brief.endsWith("got `U+21C4` for `⇄`")
+    check found.anyIt(it.rule == "koch.font-coverage")
 
 
   test "font faces merge by codepoint range, so character any font face of project covers passes":
@@ -63,10 +64,10 @@ suite "Coverage":
         "<p>&lang;</p>\n"
       found = treeGood().with(entry(PAGE, page)).checkCoverage(DIRECTORY_ALPHA)
     check found.mapIt(it.line) == @[2, 3, 4, 5]
-    check found[0].message.endsWith("got `U+2191` for `&uarr;`.")  # named
-    check found[1].message.endsWith("got `U+21C4` for `&#8644;`.")  # decimal
-    check found[2].message.endsWith("got `U+21C4` for `&#x21c4;`.")  # hexadecimal
-    check found[3].message.endsWith("got `U+27E8` for `&lang;`.")  # WHATWG 13.5, not `2329`
+    check found[0].brief.endsWith("got `U+2191` for `&uarr;`")  # named
+    check found[1].brief.endsWith("got `U+21C4` for `&#8644;`")  # decimal
+    check found[2].brief.endsWith("got `U+21C4` for `&#x21c4;`")  # hexadecimal
+    check found[3].brief.endsWith("got `U+27E8` for `&lang;`")  # WHATWG 13.5, not `2329`
 
 
   test "reference naming ASCII, name outside table and number past Unicode read as nothing":

@@ -268,16 +268,21 @@ func findingsEnglish*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         b.line,
+        Check.LengthParagraph,
         "Paragraph must hold at most " & $SENTENCES_PARAGRAPH &
-          " sentences; split it (ASD-STE100); got `" & $found.len & "`.",
+          " sentences (ASD-STE100); got `" & $found.len & "`.",
+        expected = some("at most " & $SENTENCES_PARAGRAPH),
+        help = "split it",
       )
     for s in found:
       if s.splitWhitespace.len > WORDS_SENTENCE:
         result.add finding(
           path,
           b.line,
+          Check.LengthSentence,
           "Sentence must hold at most " & $WORDS_SENTENCE &
-            " words; split it (ASD-STE100); got `" & s.opening & "`.",
+            " words (ASD-STE100); got `" & s.opening & "`.",
+          help = "split it",
         )
     let plain = b.text.tokenised
     for (word, approved) in REPLACEMENTS:
@@ -285,8 +290,9 @@ func findingsEnglish*(path, source: string): seq[Finding] =
         result.add finding(
           path,
           b.line,
-          "Word is outside approved dictionary; write `" & approved &
-            "` (ASD-STE100); got `" & word & "`.",
+          Check.WordApproved,
+          "Word is outside approved dictionary (ASD-STE100); got `" & word & "`.",
+          expected = some(approved),
         )
 
 

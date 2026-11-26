@@ -4,7 +4,7 @@
 
 import std/[options, sequtils, strutils, unittest]
 from std/unicode import runeLen
-import ../../src/commits
+import ../../src/[commits, findings]
 
 
 
@@ -31,8 +31,10 @@ suite "Article XI":
     let at_limit = "feat(alpha): " & "a".repeat(SUBJECT_MAX - 13)
     check at_limit.runeLen == SUBJECT_MAX  # fixture sits on limit
     check checkCommits("contributor/ronri/alpha/work", [at_limit]).len == 0  # at limit
-    check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"]).mapIt(it.message) ==
-      @["Commit subject exceeds 100 characters; got `101`."]  # one over
+    check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"]).mapIt(it.brief) ==
+      @["commit subject exceeds 100 characters; got `101`; expect `at most 100`"]  # one over
+    check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"])
+      .anyIt(it.rule == "koch.commit-subject-width")
     let wide = "feat(alpha): a" & "∧".repeat(SUBJECT_MAX - 14)
     check checkCommits("contributor/ronri/alpha/work", [wide]).len == 0  # runes, not bytes
     check checkCommits("claude/setup", ["x".repeat(SUBJECT_MAX + 1)]).len ==
@@ -42,11 +44,13 @@ suite "Article XI":
   test "XI.1 scope must match project on contributor and curator project branches":
     check checkCommits("contributor/ronri/alpha/work", ["feat(alpha): add", "test(alpha): c"])
       .len == 0  # scope equals project
-    check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"]).mapIt(it.message) ==
-      @["Commit scope must be `alpha`; got `feat(beta): add`."]  # scope named
+    check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"]).mapIt(it.brief) ==
+      @["commit scope must be `alpha`; got `feat(beta): add`"]  # scope named
+    check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"])
+      .anyIt(it.rule == "koch.commit-scope")
     check checkCommits("curator/audit/work", ["feat(audit): add"]).len == 0  # curator project
-    check checkCommits("curator/audit/work", ["docs(curator): x"]).mapIt(it.message) ==
-      @["Commit scope must be `audit`; got `docs(curator): x`."]  # not curator
+    check checkCommits("curator/audit/work", ["docs(curator): x"]).mapIt(it.brief) ==
+      @["commit scope must be `audit`; got `docs(curator): x`"]  # not curator
     check checkCommits("curator/rules", ["docs(alpha): x", "ci(curator): y"]).len == 0  # any
     check checkCommits("claude/setup", ["docs(alpha): x", "feat(curator): y"]).len ==
       0  # unparsed branch checks format only
@@ -64,8 +68,9 @@ suite "Article XI":
     ).len == 0  # tests before test are free
     let found = checkCommits("curator/work", ["fix(audit): stop it"])
     check found.len == 1
-    check found[0].message.endsWith("got `fix(audit): stop it`.")
-    check "CONTRIBUTOR.md" in found[0].message  # cites rule where it lives; Article IX has none
+    check found[0].brief.endsWith("got `fix(audit): stop it`")
+    check found.anyIt(it.rule == "koch.test-before-fix")
+    check "CONTRIBUTOR.md" in found[0].brief  # cites rule where it lives; Article IX has none
     check checkCommits(
       "curator/work", ["test(audit): cover it", "fix(audit): stop it"]
     ).len == 1  # test after fix does not count
@@ -90,9 +95,10 @@ suite "Article XI":
     const trailers = "\n\nCo-Authored-By: Name <a@b.c>\nClaude-Session: https://x.y/z\n"
     let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & trailers
     check checkBody("s", listed).len == 0
-    check "sentence case" in checkBody("s", "reason sits here.")[0].message
-    check "runs on" in checkBody("s", "Reason wraps across\nlines.")[0].message
-    check "got two" in checkBody("s", "One sentence. Second one.")[0].message
+    check "sentence case" in checkBody("s", "reason sits here.")[0].brief
+    check checkBody("s", "reason sits here.").anyIt(it.rule == "koch.commit-body")
+    check "runs on" in checkBody("s", "Reason wraps across\nlines.")[0].brief
+    check "got two" in checkBody("s", "One sentence. Second one.")[0].brief
     check checkBody("s", "Call `a. B` once.").len == 0  # code span holds no boundary
     check checkBody("s", "Version 2.2.12 is pinned.").len == 0  # decimal point, no space
     check checkBody("s", "Run this:\n\n```text\nkoch check\n```\n").len == 0  # fenced code
@@ -103,7 +109,8 @@ suite "Article XI":
     check checkCommitRecord("docs(a): record", ["c/d/a/PROVENANCE.md", "c/d/a/README.md"]).len == 0
     check checkCommitRecord("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
     let mixed = checkCommitRecord("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
-    check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].message
+    check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].brief
+    check mixed.anyIt(it.rule == "koch.record-commit")
 
 
   test "history runs subject, ladder, body and paths over every commit":
@@ -111,6 +118,6 @@ suite "Article XI":
       Commit(subject: "feat(curator): add", body: "reason.", paths: @["CURATOR.md"]),
       Commit(subject: "docs(curator): record", paths: @["c/PROVENANCE.md", "koch.nim"]),
     ]
-    let found = checkHistory("curator/x", commits).mapIt(it.message)
+    let found = checkHistory("curator/x", commits).mapIt(it.brief)
     check found.len == 2
     check found.anyIt("sentence case" in it) and found.anyIt("of its own" in it)
