@@ -328,8 +328,8 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-11-15 at all four algebras**, five runs each on `linux
-amd64, 4 cores`, a Xeon of family 6 model 207. They ran at the pin `3d9696e` under Nim 2.4.0, with
+**The runtime baselines are from 2026-11-26 at all four algebras**, five runs each on `linux
+amd64, 4 cores`, a Xeon of family 6 model 207. They ran at the pin `7ef9f4d` under Nim 2.4.0, with
 nothing else on the machine. Each algebra keeps the one of three takes of that day whose median
 paired spread is smallest, as the Architect ruled on 2026-10-19 (D5).
 
@@ -345,12 +345,12 @@ to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-to ×1.21 apart at each algebra. The widest measurand spreads ×2.41, as `norm_bulk_plane` at rga4d
-does. Its library takes 2.52 to 5.63 ns across the five runs, slowest in the fourth. Its
-reference takes 0.37 to 0.60 ns, slowest in the second.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.02
+to ×1.05 apart at each algebra. The widest measurand spreads ×2.53, as `project_orthogonal_anti`
+at cga4d does. Its library takes 38.39 to 103.38 ns across the five runs, slowest in the fourth.
+Its dense form takes 38.96 to 64.83 ns, slowest in the fifth.
 
-The other two takes of each algebra are not committed, and spread ×1.17 to ×1.29 at the median
+The other two takes of each algebra are not committed, and spread ×1.06 to ×1.18 at the median
 measurand. So this figure moves between takes.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
@@ -763,14 +763,14 @@ bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
 beside the library, five alternating runs at four algebras. They ran on `linux amd64, 4 cores`, a
-Xeon of family 6 model 207, on 2026-11-15. The median general measurand runs ×1.00 to ×1.01 its
-dense form at each algebra, since most library operators are already one generated table. The
-compound operations are not. They run ×2.1 to ×6.0 their dense forms, from the antisupport at
-rga3d to the cocarrier at cga5d.
+Xeon of family 6 model 207, on 2026-11-26. The median general measurand runs ×1.00 its dense form
+at each algebra, since most library operators are already one generated table. The compound
+operations are not. They run ×2.1 to ×4.4 their dense forms, from the antisupport at rga3d to the
+center at cga4d.
 
-The grade selection runs ×1.3 to ×2.9, and the antigrade selection ×1.7 to ×4.4. The norms run
-×0.92 to ×1.11. Sum, difference and negation run ×0.82 to ×1.23, and the unitizes and
-normalizations ×0.55 to ×1.05. So a dense form is a measure, and never a lower bound on time.
+The grade selection runs ×1.1 to ×2.2, and the antigrade selection ×2.5 to ×3.4. The norms run
+×0.97 to ×1.23. Sum, difference and negation run ×0.63 to ×1.01, and the unitizes and
+normalizations ×0.53 to ×0.97. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -1619,10 +1619,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `3d9696edbaaa5dca655c3024174bd46fd156d7c6`, and `nim.cfg` names
+records the resolved commit `7ef9f4dbfaaad9c229feee3787e16f25b612ab63`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-19, as the standing instruction of the
+That commit is the head of the library on 2026-11-24, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -1658,7 +1658,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`. At the pin they are from 2026-11-15 on `linux amd64, 4 cores`, a Xeon of family 6
+under `taken`. At the pin they are from 2026-11-26 on `linux amd64, 4 cores`, a Xeon of family 6
 model 207.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
@@ -1677,7 +1677,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `3d9696e` the library works this way, and its attitude and
+unrolled at no cost. At the pin `7ef9f4d` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each coefficient, so
 they fill nothing. The cost that stays is what the hand-written norms pay.
 
