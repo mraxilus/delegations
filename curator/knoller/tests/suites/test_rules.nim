@@ -64,12 +64,12 @@ suite "Rules":
           checkBlanks("tests/test_a.nim", suites, "a.nimble") & checkDefaults("a.nim", defaults) &
           checkFenceHeld("a.nims", fenced, Dialect.Script)
     check found.mapIt(it.rule) == @[Rule.LinesBlankTest, Rule.DefaultLiteral, Rule.FenceHeld]
-    check found.mapIt(it.message) == @[
-      "Suite takes three blank lines before it; got `0`.",  # `blanks.nim:237`
+    check found.mapIt(it.brief) == @[
+      "suite takes three blank lines before it; got `0`",  # `blanks.nim:237`
       # `declarations.nim:278`
-      "Parameter states its type only where default does not fix it; got `n: int = 1`.",
-      "Fence keeps its lines as written, and inside them definition-blank-lines breaks once at " &
-      "line 3 and expression-spacing once at line 3; got lines `2` to `4`.",  # `chain.nim:292`
+      "parameter states its type only where default does not fix it; got `n: int = 1`",
+      "fence keeps its lines as written, and inside them definition-blank-lines breaks once at " &
+      "line 3 and expression-spacing once at line 3; got lines `2` to `4`",  # `chain.nim:292`
     ]
     var
       cited: seq[string]

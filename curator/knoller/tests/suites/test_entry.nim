@@ -41,9 +41,9 @@ suite "Entry block":
       (6, Rule.BlockEntry), (7, Rule.BlockEntry), (8, Rule.BlockEntry), (10, Rule.BlockEntry),
     ]  # `let`, `for`, `let` under it, `except … as`; routine inside block is local
     for (name, report) in zip(["verb", "path", "shown", "error"], found):
-      check report.message ==
-        "Entry block holds no binding; move code that binds into `proc main`; got `" & name &
-          "`."  # V.10, name echoed
+      check report.brief ==
+        "entry block holds no binding; move code that binds into `proc main`; got `" & name &
+          "`"  # V.10, name echoed
     check checkBlockEntry("a.nim", ENTRY_CALLS).len == 0  # V.10, calls bind nothing
     check checkBlockEntry("a.nim", "when isMainModule:\n  quit main()\n").len == 0  # V.10
     let refused = "when isMainModule:\n  var count {.global.} = 0\n"

@@ -24,9 +24,9 @@ const
     "type\n  Formal*[T] = object\n    when IS_RIGID:\n      round*: T\n" &
     "    else:\n      flat*, round*: T\n"
     ## `FORMAL` with its default first, as fix writes it.
-  ORDER = "Configuration build gets by default comes first; got `"
+  ORDER = "configuration build gets by default comes first; got `"
     ## Opening of message of branch putting default last.
-  JOIN = "Definitions of one configuration standing next to each other share one block; got `"
+  JOIN = "definitions of one configuration standing next to each other share one block; got `"
     ## Opening of message of blocks side by side.
 
 
@@ -37,7 +37,7 @@ func library(): Configurations =
 
 func found(source: string): seq[(int, string)] =
   ## Read line and message of each report of configuration blocks in source.
-  checkConfigurations("a.nim", source, library()).mapIt((it.line, it.message))
+  checkConfigurations("a.nim", source, library()).mapIt((it.line, it.brief))
 
 
 func fixed(source: string): string =
@@ -62,7 +62,7 @@ suite "Configurations":
 
 
   test "two-way branch putting default last reports, and fix swaps its branches":
-    check FORMAL.found == @[(3, ORDER & "when IS_CONFORMAL:` first.")]
+    check FORMAL.found == @[(3, ORDER & "when IS_CONFORMAL:` first")]
     check FORMAL.fixed == SWAPPED
     check SWAPPED.found.len == 0
     let own = readConfigurations(["const IS_FAST* {.booldefine.} = false\n"])
@@ -98,7 +98,7 @@ suite "Configurations":
   test "blocks of one configuration side by side join, with blank lines between kept":
     let source = "when IS_CONFORMAL:\n  func a*() = discard\n\n\nwhen IS_CONFORMAL:\n" &
       "  func b*() = discard\n"
-    check source.found == @[(5, JOIN & "when IS_CONFORMAL:` at lines `1` and `5`.")]
+    check source.found == @[(5, JOIN & "when IS_CONFORMAL:` at lines `1` and `5`")]
     check source.fixed == "when IS_CONFORMAL:\n  func a*() = discard\n\n\n  func b*() = discard\n"
     check source.fixed.found.len == 0
     check "when IS_CONFORMAL :\n  a()\nwhen IS_CONFORMAL:\n  b()\n".found.len == 1
@@ -125,7 +125,7 @@ suite "Configurations":
     #   last reports, as two-way branch does, and fix swaps blocks, blank lines between kept.
     let source = "when IS_CONFORMAL:\n  func a*() = discard\n\n\nwhen IS_RIGID:\n" &
       "  func b*() = discard\n"
-    check source.found == @[(1, ORDER & "when IS_CONFORMAL:` first.")]
+    check source.found == @[(1, ORDER & "when IS_CONFORMAL:` first")]
     check source.fixed == "when IS_RIGID:\n  func b*() = discard\n\n\nwhen IS_CONFORMAL:\n" &
       "  func a*() = discard\n"
     check source.fixed.found.len == 0

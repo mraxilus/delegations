@@ -16,13 +16,13 @@ const
     ## Lines 82 to 84 of `pga/multivectors.nim` of PGA library at `3d9696e`: each build prints
     ##   type section macro emits, and nothing reads it.
   NIMBLE = "pga.nimble"  ## Nimble file of package, at its root.
-  WARNING = "Code leaves no debug output, which nothing reads; got `"
+  WARNING = "code leaves no debug output, which nothing reads; got `"
     ## Opening of message of each warning.
 
 
 func warned(path, source: string): seq[(int, string)] =
   ## Read line and message of each warning of debug output in source at path.
-  warnDebug(path, source, NIMBLE).mapIt((it.line, it.message))
+  warnDebug(path, source, NIMBLE).mapIt((it.line, it.brief))
 
 
 func ran(is_check: bool): Outcome =
@@ -36,7 +36,7 @@ func ran(is_check: bool): Outcome =
 
 suite "Debug output":
   test "build-time printer of library warns, and fix leaves it":
-    check warned("pga/multivectors.nim", MULTIVECTORS) == @[(2, WARNING & "expandMacros:`.")]
+    check warned("pga/multivectors.nim", MULTIVECTORS) == @[(2, WARNING & "expandMacros:`")]
     for (source, got) in [
       ("dumpTree:\n  a\n", "dumpTree:"),
       ("dumpLisp:\n  a\n", "dumpLisp:"),
@@ -46,7 +46,7 @@ suite "Debug output":
       ("macro m(n: untyped): untyped =\n  ## Make.\n  echo n.astGenRepr\n", "echo n.astGenRepr"),
       ("proc p() =\n  ## Do.\n  debugEcho x\n", "debugEcho x"),
     ]:
-      check warned("pga/a.nim", source).mapIt(it[1]) == @[WARNING & got & "`."]
+      check warned("pga/a.nim", source).mapIt(it[1]) == @[WARNING & got & "`"]
       check warned("tests/test_a.nim", source).len == 1  # printer warns in tests too
       check warned("config.nims", source).len == 1  # and in script
       check warned(NIMBLE, source).len == 1  # and in nimble file
@@ -54,7 +54,7 @@ suite "Debug output":
 
 
   test "echo at top level of library module warns, and echo of tool, test or entry passes":
-    check warned("pga/a.nim", "echo \"loaded\"\n") == @[(1, WARNING & "echo \"loaded\"`.")]
+    check warned("pga/a.nim", "echo \"loaded\"\n") == @[(1, WARNING & "echo \"loaded\"`")]
     for (path, source) in [
       ("pga/a.nim", "proc p() =\n  ## Do.\n  echo x\n"),  # inside routine: output of tool
       ("pga/a.nim", "macro m(n: untyped): untyped =\n  ## Make.\n  echo n.repr\n"),  # by `repr`

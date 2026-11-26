@@ -54,7 +54,7 @@ const
 
 func found(source: string): seq[(int, string)] =
   ## Read line and message of each report of message echo in source.
-  checkEchoes("a.nim", source).mapIt((it.line, it.message))
+  checkEchoes("a.nim", source).mapIt((it.line, it.brief))
 
 
 func fixed(source: string): string =
@@ -71,11 +71,11 @@ func isSettled(source: string): bool =
 suite "Echoes":
   test "bare value of library message takes backticks, with no `got`":
     check FLAGS.found == @[
-      (1, "Message echoes each value in backticks, so empty value stays visible; got " &
-        "`{int(b):b}`."),
+      (1, "message echoes each value in backticks, so empty value stays visible; got " &
+        "`{int(b):b}`"),
     ]  # line 243 of `pga/algebra.nim`
     check FLAGS.fixed == FLAGS.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
-    check DIGIT.found.mapIt(it[1]).allIt(it.endsWith("got `{digits=}`."))
+    check DIGIT.found.mapIt(it[1]).allIt(it.endsWith("got `{digits=}`"))
     check DIGIT.fixed == DIGIT.replace(" in {digits=}.", " in `{digits=}`.")
     check INVALID.fixed == INVALID.replace(" in {flags=:b}", " in `{flags=:b}`")
     for source in [FLAGS, DIGIT, INVALID]:
@@ -84,8 +84,8 @@ suite "Echoes":
 
   test "value that opens its claim stays for hand, backticks and all":
     check NORM.found == @[
-      (2, "Message states its claim before its value, so hand rewords it; got `{norm=}` " &
-        "before `must be a bulk xor weight norm, not geometric norm.`."),
+      (2, "message states its claim before its value, so hand rewords it; got `{norm=}` " &
+        "before `must be a bulk xor weight norm, not geometric norm.`"),
     ]  # line 105 of `tests/suites.nim`
     check NORM.fixed == NORM
     let bare = "doAssert x, &\"{name} is empty.\"\n"
@@ -143,7 +143,7 @@ suite "Echoes":
   test "value after `got` is rule of message value, so echo reports it not again":
     let tail = "doAssert x, &\"Bad {a}; got {b}.\"\n"
     check tail.found == @[
-      (1, "Message echoes each value in backticks, so empty value stays visible; got `{a}`."),
+      (1, "message echoes each value in backticks, so empty value stays visible; got `{a}`"),
     ]  # `{b}` is `checkMessages`'s
     check checkMessages("a.nim", tail).len == 1
 

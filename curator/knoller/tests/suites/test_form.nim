@@ -15,17 +15,17 @@ func fixed(source: string): Fix =
 
 func messageGap(spaces: int): string =
   ## Render X.9 finding message for gap of given spaces.
-  "Trailing comment takes two spaces before its marker; got `" & $spaces & "`."
+  "trailing comment takes two spaces before its marker; got `" & $spaces & "`"
 
 
 func messagesGap(source: string): seq[string] =
   ## Read X.9 finding messages of Nim source.
-  checkComments("a.nim", source).mapIt(it.message)
+  checkComments("a.nim", source).mapIt(it.brief)
 
 
 func findings(source: string): seq[(Rule, string)] =
   ## Read rule and message of each form finding of text.
-  checkForm("a.txt", source).mapIt (it.rule, it.message)
+  checkForm("a.txt", source).mapIt (it.rule, it.brief)
 
 
 
@@ -33,7 +33,7 @@ suite "Article X":
   test "X.1 width counts runes, not bytes":
     check findings("é ".repeat(49) & "éé\n").len == 0  # 100 runes pass
     check findings("é ".repeat(49) & "ééé\n") ==
-      @[(Rule.LineWidth, "Line exceeds 100 characters; got `101`.")]  # 101 runes, breakable
+      @[(Rule.LineWidth, "line exceeds 100 characters; got `101`")]  # 101 runes, breakable
     check findings("é".repeat(101) & "\n").len == 0  # one 101-rune token: no whitespace to break
 
 
@@ -44,7 +44,7 @@ suite "Article X":
     check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
     check findings(link & "\n").len == 0  # URL has no whitespace
     check findings("<p>" & "word ".repeat(40) & "</p>\n") ==
-      @[(Rule.LineWidth, "Line exceeds 100 characters; got `207`.")]  # prose always breaks
+      @[(Rule.LineWidth, "line exceeds 100 characters; got `207`")]  # prose always breaks
     check findings("<svg>" & "<circle/>".repeat(200) & "</svg>\n").len == 1  # past `TOKEN_MAX`
     check not ("x".repeat(TOKEN_MAX + 1)).isUnbreakable  # machine output, not URL
     check ("x".repeat(TOKEN_MAX)).isUnbreakable  # longest token exemption covers
@@ -53,9 +53,9 @@ suite "Article X":
 
 
   test "X.1 tab is finding in any text, string and comment among it":
-    check findings("\tx\n") == @[(Rule.Tab, "Line holds tab.")]  # indent
-    check findings("hints:off\t# x\n") == @[(Rule.Tab, "Line holds tab.")]  # text of any kind
-    check findings("let s = \"a\tb\"\n") == @[(Rule.Tab, "Line holds tab.")]  # fixer's own case
+    check findings("\tx\n") == @[(Rule.Tab, "line holds tab")]  # indent
+    check findings("hints:off\t# x\n") == @[(Rule.Tab, "line holds tab")]  # text of any kind
+    check findings("let s = \"a\tb\"\n") == @[(Rule.Tab, "line holds tab")]  # fixer's own case
     check checkForm("a.txt", "x\n\ty\n")[0].line == 2  # line numbers one-based
 
 
@@ -81,12 +81,12 @@ suite "Article X":
   test "X.2 exact: three blank lines before first tier, two before second, one after either":
     let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
     check checkBanners("a.nim", exact).len == 0
-    check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.message) ==
-      @["First-tier banner takes three blank lines before it; got `2`."]
-    check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].message ==
-      "Second-tier banner takes two blank lines before it; got `3`."  # exactly two
-    check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].message ==
-      "Banner takes one blank line after it; got `0`."
+    check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.brief) ==
+      @["first-tier banner takes three blank lines before it; got `2`"]
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].brief ==
+      "second-tier banner takes two blank lines before it; got `3`"  # exactly two
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].brief ==
+      "banner takes one blank line after it; got `0`"
     check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
     check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
 
@@ -94,16 +94,16 @@ suite "Article X":
 
 suite "Article VIII":
   test "VIII.5 whitespace, line ending and file ending":
-    check findings("x = 1 \n") == @[(Rule.WhitespaceTrailing, "Line ends with whitespace.")]
+    check findings("x = 1 \n") == @[(Rule.WhitespaceTrailing, "line ends with whitespace")]
     check findings("x = 1\r\n") == @[
-      (Rule.LineEnding, "Line ends with CR; got CRLF."),
-      (Rule.WhitespaceTrailing, "Line ends with whitespace."),
+      (Rule.LineEnding, "line ends with CR; got `CRLF`"),
+      (Rule.WhitespaceTrailing, "line ends with whitespace"),
     ]  # CRLF: CR read, and CR is whitespace
     check findings("x = 1\ty\t\n") ==
-      @[(Rule.Tab, "Line holds tab."), (Rule.WhitespaceTrailing, "Line ends with whitespace.")]
-    check findings("x = 1") == @[(Rule.FileEnding, "File lacks final newline.")]
-    check findings("x = 1\n\n") == @[(Rule.FileEnding, "File ends with blank line.")]
-    check findings("") == @[(Rule.FileEnding, "File is empty.")]  # no fix reaches it
+      @[(Rule.Tab, "line holds tab"), (Rule.WhitespaceTrailing, "line ends with whitespace")]
+    check findings("x = 1") == @[(Rule.FileEnding, "file lacks final newline")]
+    check findings("x = 1\n\n") == @[(Rule.FileEnding, "file ends with blank line")]
+    check findings("") == @[(Rule.FileEnding, "file is empty")]  # no fix reaches it
     check checkForm("a.txt", "x\ny \n")[0].line == 2  # line numbers one-based
     check checkForm("a.txt", "x")[0].line == 0  # whole file
     check findings("x\n").len == 0 and findings("## Do.\n\nlet a = 1  # Two.\n").len == 0
