@@ -139,7 +139,7 @@ type
   Effort* {.pure.} = enum  ## Define how long model thinks before it answers; cost grows with it.
     Low = "low"  ## Least thinking, least cost.
     Medium = "medium"  ## Default of `claude-opus-5-5` itself.
-    High = "high"  ## More thinking than default.
+    High = "high"  ## More thinking than `medium`; default of `claude-sonnet-5-5` itself.
     Xhigh = "xhigh"  ## More thinking than `high`; default of this tool, as D1 on #1047 ruled.
     Max = "max"  ## Most thinking, most cost.
 
