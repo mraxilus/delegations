@@ -1,9 +1,9 @@
-## Replicate notice of `releases.nim`: each release pin below pin of `curator/audit`, in lines
-##   that fail nothing (GUIDE.md, Toolchain).
+## Replicate pins that lag of `releases.nim`: notice against pin of `curator/audit`, and search of
+##   later releases over what host says of each (GUIDE.md, Toolchain; CURATOR.md, duty 8).
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, sequtils, sets, strutils, unittest]
 import ../../src/releases
 import ./fixtures
 
@@ -13,6 +13,48 @@ const
   PATH_KNOLLER = "curator/knoller/knoller.nimble"  ## Curator project pinned with driver.
   PATH_RICTADNI = "contributor/bangu/rictadni/rictadni.nimble"
     ## Contributor project, pinned to `2.4.0` on 2026-11-26.
+  SERIES_SERVED = [
+    ("1.6", @[0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]),
+    ("2.0", @[0, 2, 4, 6, 8, 10, 12, 14, 16]),
+    ("2.2", @[0, 2, 4, 6, 8, 10, 12, 14]),
+    ("2.4", @[0, 2]),
+  ]
+    ## Patches of each series nim-lang.org served, read by HEAD of each `linux_x64` tarball
+    ##   from patch 0 to 24, 2026-11-26; `1.6.1` is odd patch it serves.
+  COUNT_SERVED = 31  ## Releases `SERIES_SERVED` holds, each read as pin once below.
+  COUNT_SUBSETS = 8  ## Subsets of three newer series, each read once below.
+
+
+func versionsServed(): seq[string] =
+  ## Collect each release `SERIES_SERVED` holds, as dotted version.
+  for (series, patches) in SERIES_SERVED:
+    for patch in patches: result.add series & "." & $patch
+
+
+proc hostServing(served: openArray[string]): proc(version: string): Presence =
+  ## Construct ask of host serving each version of `served`, and holding none of any other.
+  let held = served.toHashSet
+  result = proc(version: string): Presence =
+    if version in held: Presence.Published else: Presence.Missing
+
+
+proc searchLogged(
+  pin: string, served, unread: openArray[string]
+): tuple[search: Search, asked: seq[string]] =
+  ## Search after pin on host serving `served`, answering neither way for `unread`; return search
+  ##   and each version asked, in order.
+  var asked: seq[string]
+  let (held, silent) = (served.toHashSet, unread.toHashSet)
+
+  proc ask(version: string): Presence =
+    ## Answer for host, and log version asked.
+    asked.add version
+    if version in silent: Presence.Unread
+    elif version in held: Presence.Published
+    else: Presence.Missing
+
+  let search = searchReleases(pin, ask)
+  (search, asked)
 
 
 
@@ -76,3 +118,184 @@ suite "Notice":
       Pinned(path: PATH_RICTADNI, pin: "2.4.0"), Pinned(path: PATH_DRIVER, pin: "2.4.2")
     ]  # path order, as git lists them
     check noticesPin(readPins(root)).len == 2  # heading, and rictadni
+
+
+
+suite "Search":
+  test "search reads latest patch of each series nim-lang.org served, from each pin of it":
+    # Domain: each release of each series read 2026-11-26, as pin; newer series is next one
+    #   served, and none after `2.4`.
+    let served = versionsServed()
+    var count = 0
+    for (series, patches) in SERIES_SERVED:
+      for patch in patches:
+        let
+          pin = series & "." & $patch
+          (search, _) = searchLogged(pin, served, [])
+          parts = pin.split('.').mapIt(it.parseInt)
+          newer = [
+            $parts[0] & "." & $(parts[1] + 1) & ".0",
+            $parts[0] & "." & $(parts[1] + 2) & ".0",
+            $(parts[0] + 1) & ".0.0",
+          ].filterIt(it in served)
+        check search.fault == ""
+        check search.latest == series & "." & $patches[^1]
+        check search.newer == newer
+        inc count
+    check count == COUNT_SERVED
+
+
+  test "search asks pin, each patch until two in row read missing, then three newer series":
+    # Case: curators pin `2.4.2`, on host as read 2026-11-26.
+    let (search, asked) = searchLogged("2.4.2", versionsServed(), [])
+    check asked == @["2.4.2", "2.4.3", "2.4.4", "2.5.0", "2.6.0", "3.0.0"]
+    check search == Search(latest: "2.4.2")
+
+
+  test "one patch missing between two keeps series, two end it, and patches compare by number":
+    # Domain: gaps of one up to `2.4.10`, which text reads below `2.4.2`; gap of two.
+    let tens = ["2.4.0", "2.4.2", "2.4.4", "2.4.6", "2.4.8", "2.4.10"]
+    check searchLogged("2.4.2", tens, [])[0].latest == "2.4.10"
+    check searchLogged("2.4.0", ["2.4.0", "2.4.2"], [])[0].latest == "2.4.2"  # gap of one
+    let (gapped, asked) = searchLogged("2.4.0", ["2.4.0", "2.4.3"], [])
+    check gapped.latest == "2.4.0"  # gap of two ends series
+    check "2.4.3" notin asked
+
+
+  test "each newer series host serves is note, oldest first, and moves latest of none":
+    # Domain: each subset of `2.5.0`, `2.6.0` and `3.0.0`, exhaustive.
+    let newer = ["2.5.0", "2.6.0", "3.0.0"]
+    var count = 0
+    for mask in 0 ..< COUNT_SUBSETS:
+      let
+        chosen = (0 .. 2).toSeq.filterIt((mask shr it and 1) == 1).mapIt(newer[it])
+        (search, _) = searchLogged("2.4.2", @["2.4.2"] & chosen, [])
+      check search == Search(latest: "2.4.2", newer: chosen)
+      inc count
+    check count == COUNT_SUBSETS
+
+
+  test "host holding no tarball of pin itself leaves search unsound, and is asked nothing more":
+    # Domain: host that moved its tarballs, which would read each later release as missing.
+    let (search, asked) = searchLogged("2.4.2", ["2.4.4"], [])
+    check asked == @["2.4.2"]
+    check "pin itself" in search.fault and search.fault.endsWith("got `2.4.2`.")
+    check search.latest == "2.4.2"
+
+
+  test "ask answering neither way stops search at that version, wherever it falls":
+    # Domain: pin, each patch, and each newer series.
+    for (unread, asks) in [
+      ("2.4.2", 1), ("2.4.3", 2), ("2.4.4", 3), ("2.5.0", 4), ("2.6.0", 5), ("3.0.0", 6)
+    ]:
+      let (search, asked) = searchLogged("2.4.2", ["2.4.2", "2.6.0"], [unread])
+      check asked.len == asks and asked[^1] == unread  # nothing asked after it
+      check search.fault.endsWith("got `" & unread & "`.")
+      check search.newer.len == 0
+
+
+  test "host answering published for every patch is caught at bound, and never asked forever":
+    # Domain: captive page or proxy that answers 200 for each address.
+    var count = 0
+
+    proc ask(version: string): Presence =
+      ## Answer published for each version, and count asks.
+      inc count
+      Presence.Published
+
+    let search = searchReleases("2.4.2", ask)
+    check count == 1 + ASKS_SERIES_MAX  # pin, then each patch up to bound
+    check "answers for what it lacks" in search.fault
+
+
+  test "pin of other shape than `X.Y.Z` is fault, and asks nothing":
+    for pin in ["2.4", "2.4.2.1", "", "2.4.x", COMMIT]:
+      let (search, asked) = searchLogged(pin, ["2.4.2"], [])
+      check asked.len == 0
+      check search.fault.endsWith("got `" & pin & "`.")
+
+
+
+suite "Ask":
+  test "status 200 reads published, 404 missing, and every other answer unread":
+    # Domain: statuses of tarball served, absent, moved, refused by proxy, failed, none; exits
+    #   of curl that name failure before or after status.
+    check presence(0, "200") == Presence.Published
+    check presence(0, "200\n") == Presence.Published
+    check presence(0, "404") == Presence.Missing
+    for status in ["301", "302", "403", "500", "000", "", "200 404"]:
+      check presence(0, status) == Presence.Unread
+    check presence(6, "000") == Presence.Unread  # host not resolved
+    check presence(28, "200") == Presence.Unread  # time out after status
+
+
+
+suite "Verb":
+  test "verb names latest release, and each pin below it, and finds nothing where driver holds it":
+    # Case: pins of 2026-11-26, on host as read that day.
+    let (lines, found, fault) = checkReleases(
+      [
+        Pinned(path: PATH_DRIVER, pin: "2.4.2"),
+        Pinned(path: PATH_KNOLLER, pin: "2.4.2"),
+        Pinned(path: PATH_RICTADNI, pin: "2.4.0"),
+      ],
+      hostServing(versionsServed()),
+    )
+    check found.len == 0 and fault == ""
+    check lines == @[
+      "Latest release of Nim 2.4 that nim-lang.org serves: `2.4.2`.",
+      "Pins that lag it; each moves with its project, and fails nothing (GUIDE.md, Toolchain):",
+      "  " & PATH_RICTADNI & ": pins `2.4.0`.",
+    ]
+
+
+  test "driver that lags latest release of its series is one finding, naming both":
+    let (lines, found, fault) = checkReleases(
+      [Pinned(path: PATH_DRIVER, pin: "2.4.2"), Pinned(path: PATH_RICTADNI, pin: "2.4.0")],
+      hostServing(versionsServed() & "2.4.4"),
+    )
+    check found.len == 1 and fault == ""
+    check found[0].path == PATH_DRIVER
+    check "CURATOR.md, duty 8" in found[0].message
+    check found[0].message.endsWith("got `2.4.2` against `2.4.4`.")
+    check lines[0].endsWith("`2.4.4`.")
+    check lines[2 .. ^1] == @[
+      "  " & PATH_DRIVER & ": pins `2.4.2`.", "  " & PATH_RICTADNI & ": pins `2.4.0`."
+    ]
+
+
+  test "newer series alone is note, and finding of none":
+    let (lines, found, fault) = checkReleases(
+      [Pinned(path: PATH_DRIVER, pin: "2.4.2")],
+      hostServing(versionsServed() & @["2.6.0", "3.0.0"]),
+    )
+    check found.len == 0 and fault == ""  # exit stays 0
+    check lines.len == 3  # latest, then one note for each series; no pin lags
+    check lines[1].startsWith("Nim `2.6.0` opens newer series;")
+    check lines[2].startsWith("Nim `3.0.0` opens newer series;")
+    check lines[1 .. ^1].allIt("waits on Architect" in it)
+
+
+  test "search that cannot stand is fault rather than finding, so issue names lag alone":
+    # Domain: host of no tarball at all, host answering neither way.
+    let driver = [Pinned(path: PATH_DRIVER, pin: "2.4.2")]
+    for ask in [
+      hostServing([]),
+      proc(version: string): Presence = Presence.Unread,
+    ]:
+      let (lines, found, fault) = checkReleases(driver, ask)
+      check lines.len == 0 and found.len == 0
+      check fault.endsWith("got `2.4.2`.")
+
+
+  test "driver of no release pin is finding, and asks nothing":
+    var count = 0
+
+    proc ask(version: string): Presence =
+      ## Count asks, and answer published.
+      inc count
+      Presence.Published
+
+    let (lines, found, fault) = checkReleases([Pinned(path: PATH_RICTADNI, pin: "2.4.0")], ask)
+    check lines.len == 0 and count == 0 and fault == ""
+    check found.len == 1 and found[0].message.startsWith("Driver pins no release")
