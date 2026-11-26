@@ -4,6 +4,8 @@
 ##     whole `a` and `b`: binomial sum `P(Binomial(a + b − 1, x) ≥ a)`, in exact rationals, with
 ##     bisection to `2^-80` for percentile.
 ##   Each expected score is `100 × (ln p − ln 0.5) / ln 2`, computed apart in floats.
+##   Each expected score of number comes from copy by hand in Python of method of Metaculus, at
+##     its source `8e413fb`, run apart; outcome beyond range checks against mass 0.001 by hand.
 
 {.experimental: "strictFuncs".}
 
@@ -13,6 +15,11 @@ import ../../src/[claims_log, claims_scores]
 
 const
   TOLERANCE = 1e-12  ## Most difference of value from that of second method.
+  TOLERANCE_NUMBER = 1e-6  ## Most difference of score of number from that of copy in Python.
+  TEXT_TOKENS = "tokens summed over its requests: 1,000,000, 3,000,000 and 7,000,000"
+    ## Text of number of tokens, as claim of run i01 of effort study gives it.
+  TEXT_COST = "cost at list price: $0.15, $0.45 and $1.20"
+    ## Text of number of cost, as claim of run r14 of effort study gives it.
 
 
 func isNear(value, expected: float): bool =
@@ -23,6 +30,17 @@ func isNear(value, expected: float): bool =
 func initClaim(confidence: float, state: State, kind = "reviewer", effort = "high"): Claim =
   ## Claim of kind and effort at confidence, marked in state.
   Claim(kind: kind, effort: effort, confidence: confidence, state: state)
+
+
+func initNumber(text: string; low, median, high, outcome: float; state = State.Hit): Claim =
+  ## Number of text, with its percentiles and outcome, marked in state.
+  Claim(text: text, confidence: 0.8, state: state,
+    number: some(Number(low: low, median: median, high: high, outcome: some(outcome))))
+
+
+func isNearNumber(score: Option[float], expected: float): bool =
+  ## Whether score of number is some, within `TOLERANCE_NUMBER` of expected one.
+  score.isSome and abs(score.get - expected) <= TOLERANCE_NUMBER
 
 
 
@@ -42,13 +60,58 @@ suite "baseline score":
     check initClaim(1.0, State.Miss).scoreBaseline.isNone
 
 
-  test "number scores at 0.8 by its state, whatever confidence its row holds":
-    var claim = initClaim(0.0, State.Hit)
-    claim.number = some(Number(low: 1, median: 2, high: 3, outcome: some(2.5)))
-    check claim.scoreBaseline.get.isNear(67.80719051126377)
-    claim.state = State.Miss
-    claim.confidence = 0.6
-    check claim.scoreBaseline.get.isNear(-132.19280948873623)
+  test "number takes no baseline score, since it scores as continuous question (D2 a)":
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421).scoreBaseline.isNone
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, State.Miss).scoreBaseline.isNone
+
+
+
+suite "numbers as Metaculus":
+  test "unit of number is unit whose name opens its text, past its label":
+    check initNumber(TEXT_TOKENS, 1, 2, 3, 2).unitClaim.get.name == "tokens"
+    check initNumber("Work: " & TEXT_COST, 1, 2, 3, 2).unitClaim.get.name == "cost"
+    check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).unitClaim.isNone
+
+
+  test "number inside its range scores as copy in Python of method of Metaculus gives it":
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421).scoreNumber
+      .isNearNumber(77.69379682749334)  # i01: bucket 82
+    check initNumber(TEXT_TOKENS, 4e6, 1e7, 2.4e7, 31211191).scoreNumber
+      .isNearNumber(-57.54352347307533)  # b03: above 90th, bucket 140
+    check initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.10).scoreNumber
+      .isNearNumber(-37.12769173601439)  # r14: below 10th, bucket 40
+    check initNumber(TEXT_COST, 0.06, 0.13, 0.30, 0.354).scoreNumber
+      .isNearNumber(-95.63925783007546)  # m01: above 90th, bucket 62
+    check initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.45).scoreNumber
+      .isNearNumber(79.35020165475868)  # at median, bucket 67
+
+
+  test "outcome beyond either open bound keeps mass 0.001, and scores 100 × ln(0.001 / 0.05) / 2":
+    let expected = 100 * ln(0.001 / 0.05) / 2
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 2e9).scoreNumber.isNearNumber(expected)
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 5000).scoreNumber.isNearNumber(expected)
+
+
+  test "number of no outcome, unit or mark, or whose percentiles do not rise, takes no score":
+    var claim = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)
+    claim.number.get.outcome = none(float)
+    check claim.scoreNumber.isNone
+    check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).scoreNumber.isNone
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, State.Annulled).scoreNumber.isNone
+    check initNumber(TEXT_TOKENS, 3e6, 3e6, 7e6, 1101421).scoreNumber.isNone
+    check initClaim(0.7, State.Hit).scoreNumber.isNone
+
+
+  test "figures count numbers that take score, with their mean score, apart from bands":
+    let found = @[
+      initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421),
+      initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.10),
+      initClaim(0.7, State.Hit),
+    ].figures
+    check found.count == 1
+    check found.count_number == 2
+    check abs(found.score_number - (77.69379682749334 - 37.12769173601439) / 2) <= TOLERANCE_NUMBER
+    check found.bands.mapIt(it.count) == @[1]
 
 
 
@@ -148,6 +211,58 @@ suite "groups":
     check found[0].claims.len == claims.len
 
 
-  test "value of each field is that field of claim":
+  test "value of each field is that field of claim, and claim that names no marker is delegate's":
     let claim = Claim(delegate: "s1", model: "m1", effort: "e1", project: "p1", kind: "k1")
-    check Field.items.toSeq.mapIt(claim.value(it)) == @["s1", "m1", "e1", "p1", "k1"]
+    check Field.items.toSeq.mapIt(claim.value(it)) ==
+        @["s1", "m1", "e1", "p1", "k1", "delegate"]
+    check Claim(marker: Marker.Resolver).value(Field.Marker) == "resolver"
+    check Claim(marker: Marker.Delegate).value(Field.Marker) == "delegate"
+
+
+
+suite "lines of figures":
+  let claims = @[
+    initClaim(0.55, State.Hit),
+    initClaim(0.55, State.Hit),
+    initClaim(0.58, State.Hit),
+    initClaim(0.6, State.Miss),
+    initClaim(0.75, State.Hit),
+    initClaim(0.8, State.Miss),
+    initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421),
+    initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.10),
+  ]
+
+
+  test "fields named by comma read in any case, and name of no field raises":
+    check "kind,effort".fieldsNamed == {Field.Effort, Field.Kind}
+    check " Kind , MARKER ,".fieldsNamed == {Field.Kind, Field.Marker}
+    check "".fieldsNamed.card == 0
+    expect ValueError: discard "colour".fieldsNamed
+    expect ValueError: discard "kind,colour".fieldsNamed
+
+
+  test "line of group gives its hits, mean scores and each band, to one and two places":
+    check claims.groups({}).linesFigures == @[
+      "all: 4 of 6 claims held, mean baseline score -9.5; 2 numbers, mean score 20.3",
+      "  51% to 60%: 3 of 4, 90% band 0.34 to 0.92",  # Beta(4, 2), as suite of track record
+      "  71% to 80%: 1 of 2, 90% band 0.14 to 0.86",  # Beta(2, 2)
+    ]
+    check @[initClaim(0.7, State.Annulled, "critic")].groups({Field.Kind}).linesFigures ==
+        @["critic: 0 of 0 claims held"]  # no score, so no mean and no band
+
+
+  test "base rate of each kind reads marks of delegate alone, and kind of no score gives none":
+    var
+      resolver = initClaim(0.75, State.Miss)
+      number = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)
+    resolver.marker = Marker.Resolver
+    number.kind = "reviewer"
+    let found = @[initClaim(0.75, State.Hit), resolver, initClaim(0.7, State.Annulled, "critic"),
+      number]
+    check found.linesBase == @[
+      "Base rate of `reviewer`: 1 of 1 claims held, mean baseline score 58.5; 1 numbers, " &
+      "mean score 77.7",
+    ]
+    check @[resolver].linesBase.len == 0
+    check @[initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)].linesBase ==
+        @["Base rate of call of no kind: 0 of 0 claims held; 1 numbers, mean score 77.7"]

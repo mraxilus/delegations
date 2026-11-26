@@ -62,6 +62,7 @@ import ./curator/audit/src/[
   audit,
   base,
   claims_log,
+  claims_scores,
   commits,
   domains,
   findings,
@@ -93,6 +94,7 @@ Verbs:
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line, label, title and form of body, from ROLE_* env
   claims         move rows of log of claims that wait outside tree into log of branch
+  figures        figures of each log of claims, by marker, then by fields named as `kind,effort`
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
@@ -371,6 +373,10 @@ proc runHook(root, event, input: string): int =
     # Commits of lock that lag `main` read what fetch brought, or what checkout held before.
     try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
+    # Past figures of each kind come from logs of tree; log that reads no row names its fault.
+    var rates: seq[string]
+    try: rates = root.claimsTree.linesBase
+    except CatchableError as error: rates = @["Logs of claims give no base rate; " & error.msg]
     # Record branch works on is read where it exists; new project has none until it writes one.
     #   File of role is read same way, in `readPrompt`, where suite reaches it.
     let record = branch_root.pathRecord
@@ -382,6 +388,7 @@ proc runHook(root, event, input: string): int =
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
       drift,
       notices,
+      rates,
     )
     0
   of "push":
@@ -534,6 +541,26 @@ proc run(options: Options): int =
         "got `" & branch & "`."
       return 1
     echo $moved & " row(s) moved to `" & path & "`."
+    return 0
+  of "figures":
+    # Logs of each project join, as #964 asks; argument names fields of groups, as `kind,effort`.
+    if not options.isReadAll({Root}, has_project = true): return options.refused
+    var
+      claims: seq[Claim]
+      fields: set[Field]
+    try:
+      claims = options.root.claimsTree
+      fields = options.project.fieldsNamed
+    except ValueError as error:
+      stderr.writeLine error.msg
+      return 1
+    if claims.len == 0:
+      echo "No log of claims in tree holds row."
+      return 0
+    # Marks of delegate and of resolver stay apart, so that figures compare them (#964).
+    for line in claims.groups({Field.Marker}).linesFigures: echo line
+    if fields.card > 0:
+      for line in claims.groups(fields + {Field.Marker}).linesFigures: echo line
     return 0
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and

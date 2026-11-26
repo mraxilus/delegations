@@ -1384,6 +1384,20 @@ suite "Hooks":
     check notices[0] notin contextStart("curator/x", "", "", "## List", "", @[drift])  # none lags
 
 
+  test "start prints past figures of each kind under their line, after lags, and none where none":
+    # GUIDE.md, Prediction, critic and reflection: once log of claims exists, start prints past
+    #   figures of each kind, as base rate (#964); lines come from `linesBase`, each indented.
+    let
+      rates = @["Base rate of `reviewer`: 1 of 1 claims held, mean baseline score 58.5"]
+      lag = "Commit of lock lags main."
+      text = contextStart("curator/x", "", "", "## List", "", @[], [lag], rates)
+      heading = "\nPast figures of each kind, from logs of claims (GUIDE.md, Prediction, critic " &
+          "and reflection):\n"
+    check heading & "  " & rates[0] & "\n" in text
+    check text.find(heading) > text.find(lag)
+    check "Past figures" notin contextStart("curator/x", "", "", "## List", "", @[], [lag])
+
+
   test "start prints headings of record branch works on, with line each opens on (#843)":
     # Case as found: `GUIDE.md`, `How to build on a project`, asked delegate to read whole record,
     #   and record of pga_visualiser holds about 93,000 tokens over 47 sections; task reads few.

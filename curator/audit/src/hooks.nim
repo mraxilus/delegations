@@ -2489,7 +2489,8 @@ proc readEfforts*(root: string): Table[string, string] =
 func contextStart*(
   branch, prompt, contributor, heading_carried, record: string;
   drift: seq[Finding];
-  lags: openArray[string] = [],
+  lags: openArray[string] = [];
+  rates: openArray[string] = [];
 ): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, commits of
   ##   lock that lag `main`, headings of record, list.
@@ -2500,6 +2501,8 @@ func contextStart*(
   ##   that shows them, so start asks for new stamp only where finding does.
   ##   Lags are lines `noticesLag` of `lags.nim` renders, which `koch check` prints too; each
   ##     stands as given, and fails nothing (D2 of #927).
+  ##   Rates are lines `linesBase` of `claims_scores.nim` renders from logs of claims: past
+  ##     figures of each kind, as base rate (GUIDE.md, Prediction, critic and reflection).
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
   ##     reads its headings, then each section work touches, and Open questions (GUIDE.md); line
   ##     each heading opens on lets it read that section alone.
@@ -2519,6 +2522,10 @@ func contextStart*(
       "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
     for f in drift: lines.add "  " & f.render
   for line in lags: lines.add line
+  if rates.len > 0:
+    lines.add "Past figures of each kind, from logs of claims (GUIDE.md, Prediction, critic and " &
+        "reflection):"
+    for line in rates: lines.add "  " & line
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   if record.len > 0:
