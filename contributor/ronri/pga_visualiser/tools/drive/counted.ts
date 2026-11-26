@@ -36,7 +36,7 @@ const BUILD_BASELINE: BuildCounted = {
 
 /** Copies and calls of one marker and its pulse for each object of opening scene.
  *
- *  Each baseline is repair's count, and band is zero; readings, and fault's, are in
+ *  Each baseline is repair's count at current pin, and band is zero; readings, and fault's, are in
  *  `PROVENANCE.md`. Count under baseline passes, and baseline is then counted again.
  */
 const COPIES_MARKER = 15883; // Fault: outline summed sample by sample.
