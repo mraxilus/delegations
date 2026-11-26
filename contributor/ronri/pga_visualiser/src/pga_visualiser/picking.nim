@@ -180,7 +180,8 @@ type
 
   PlacementsHeld* = PlacementsWhole | PlacementsNone
     ## Define what caller holds of frame's placements, so that type selects reader's form.
-    ##   Each reader branches on it with `when`, so no test of value at runtime selects form.
+    ##   Type selects reader's form at compile time, by `when` or by overload of `placementAt`:
+    ##     no test of value at runtime selects it.
 
   AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
