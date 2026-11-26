@@ -1437,9 +1437,9 @@ suite "Camera Aim":
     )
     tween.advance(camera, duration, easeOutCubic)
     # Read frame as front-ends do: placements, nearest reach ahead, extent, transform.
-    var placed = newSeq[Placement](scene.bound)
     for handle in 0..<scene.bound:
-      placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     let (eye, frame) = camera.moveOriginView
     camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let

@@ -2833,6 +2833,48 @@ suiteInProc "Internal: Edits":
     check "definition changed" notin html  # routine beside it is unchanged
 
 
+  test "replacement written against another digest still shows, under both digests":
+    let
+      source = "func a*(): int = 1\n"
+      change = Change(edits: @[Edit(kind: KindEdit.Replace, path: "pga/r.nim",
+        replacement: "func a*(): int = 2\n", digest: "0000000000000000")])
+      html = htmlCode(change, {"pga/r.nim": source}.toTable)
+    check "1 changed" in html  # replacement stands against file at pin
+    check "0000000000000000" in html and digest(source) in html  # note names both digests
+
+
+  test "edit whose quote file at pin lacks shows as written, under its count":
+    let
+      change = Change(edits: @[Edit(kind: KindEdit.Quote, path: "pga/q.nim",
+        quote: "func gone(): int = 0\n", replacement: "func gone(): int = 1\n")])
+      html = htmlCode(change, {"pga/q.nim": "func kept(): int = 2\n"}.toTable)
+    check "finds its quote 0 times" in html  # note says why edit stands apart
+    check "<span class=\"nm\">gone</span>(): int = 1" in html  # edit reaches page as written
+
+
+  test "each kind of edit that misfits shows, under status that agrees with its note":
+    # Frozen P06 and P99 misfit at pin `7ef9f4d`, 30 edits of 32 and 16 of 21, and lost code.
+    let held = {"pga/h.nim": "func a*(): int = 1\n"}.toTable
+    for (edit, label, status) in [
+      (Edit(kind: KindEdit.Add, path: "pga/h.nim", replacement: "func a*(): int = 2\n"),
+        "file held already", "replaced"),
+      (Edit(kind: KindEdit.Replace, path: "pga/n.nim", replacement: "func n*(): int = 3\n",
+        digest: "0"), "file absent", "added"),
+      (Edit(kind: KindEdit.Replace, path: "pga/h.nim", replacement: "func a*(): int = 4\n",
+        digest: "0"), "digest moved", "replaced"),
+      (Edit(kind: KindEdit.Quote, path: "pga/m.nim", quote: "func m(): int = 0\n",
+        replacement: "func m(): int = 5\n"), "1 as written", "absent"),
+    ]:
+      let html = htmlCode(Change(edits: @[edit]), held)
+      check label in html  # tally names how edit misfits
+      check "<span class=\"status\">" & status & "</span>" in html  # status agrees with note
+    for (text, count) in [("func kept(): int = 2\n", 0), ("func b(): int = 0\n".repeat(2), 2)]:
+      let html = htmlCode(Change(edits: @[Edit(kind: KindEdit.Quote, path: "pga/q.nim",
+        quote: "func b(): int = 0\n", replacement: "func b(): int = 1\n")]),
+        {"pga/q.nim": text}.toTable)
+      check "finds its quote " & $count & " times" in html  # count of quote reaches page
+
+
   test "evidence shows one row per function that moved, gains first, and counts rest":
     let
       baselines = {"rga4d": %*{"measurands": {

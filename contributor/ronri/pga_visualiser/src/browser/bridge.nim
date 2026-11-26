@@ -324,7 +324,7 @@ var
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
-  PLACEMENTS_FRAME: array[2, array[OBJECTS_MAX, Placement]]
+  PLACEMENTS_FRAME: array[2, PlacementsWhole]
     ## Hold what algebra says about each live handle, for this frame and frame before.
     ## Page's frame arenas: two-frame lifetime desktop's frame arenas give, in two typed
     ## blocks, since JS backend cannot carve typed slices from bytes.

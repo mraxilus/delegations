@@ -201,6 +201,23 @@ suite "Mesh":
     MESHES_SCENE.clearMeshes
 
 
+  test "a ring of no segments has no angles, so its type refuses it":
+    # Fault: ring stepped zero ways round circle divided by zero, and gave NaN for each entry.
+    #   Negative count stepped it round backwards (repository issue 970).
+    # Domain: each count from -4 to 0 is refused. Each count from 1 to 4 closes its ring at its
+    #   own entry, and each entry stands on unit circle.
+    for segments in -4..0:
+      checkpoint $segments
+      expect RangeDefect:
+        discard unitRing[5](segments)
+    for segments in 1..4:
+      checkpoint $segments
+      let ring = unitRing[5](segments)
+      check ring[segments].cos_angle =~ 1.0 and ring[segments].sin_angle =~ 0.0
+      for entry in ring:
+        check entry.cos_angle * entry.cos_angle + entry.sin_angle * entry.sin_angle =~ 1.0
+
+
   test "clearing drops every vertex and every record":
     MESHES_SCENE.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
     MESHES_SCENE.addSegment(ORIGIN, PLACES[0], Ink.Jade.colour, WIDTH_LINE_OBJECT)
@@ -430,9 +447,9 @@ suite "Mesh":
       discard scene.addObject(
         (camera.eyeWorld + axes.forward - 0.2 * axes.axis_up).toMultivector, "near", Ink.Jade
       )
-    var placed = newSeq[Placement](scene.bound)
     for handle in 0..<scene.bound:
-      placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     let (eye, frame) = camera.moveOriginView
     camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let
@@ -505,10 +522,10 @@ suite "Mesh":
         "line",
         Ink.Rose,
       )
+      PLACEMENTS[0] = placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0))
       let
-        placed = [placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0))]
         (eye, frame) = camera.moveOriginView
-        reach = reachNear(placed, scene, camera.originView, eye, frame.forward)
+        reach = reachNear(PLACEMENTS, scene, camera.originView, eye, frame.forward)
         base_view = base.toView(camera.originView)
         distance_eye = norm(cross(base_view - eye, way))
       check abs(reach - distance_eye) <= 1.0e-9 * max(1.0, distance_eye)
@@ -551,10 +568,9 @@ suite "Mesh":
     )
     # Point 600,000 units out stands horizon about 567,000 out, as field of orrery does.
     discard scene.addObject(Position(x: 0.0, y: 6.0e5, z: 0.0).toMultivector, "far", Ink.Cobalt)
-    var placed = [
-      placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0)),
-      placeObject(scene.geometryAt(1), scene.anchorOverrideAt(1)),
-    ]
+    for handle in 0..1:
+      PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     for distance in distances_orbit:
       for out_to in outs_orbit:
         var camera = cameraAround(body, distance, out_to)

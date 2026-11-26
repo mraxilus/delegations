@@ -161,7 +161,7 @@ most at rga3d and least at cga5d.
 
 ### At 32 bits
 
-A run by hand on 2026-10-19 applied this change to a copy of the library at pin. There
+A run by hand on 2026-10-19 applied this change to a copy of the library at `3d9696e`. There
 `layout.nim` held at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits. It reads the width of a
 coefficient from the library. At 32 bits a multivector at rga3d aligns to 32 bytes and holds
 32.

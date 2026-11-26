@@ -71,7 +71,7 @@ type
     ##   own; each front-end keeps them one frame more, as frame before's
     ##   (`placementsPrevious`), for what reckons across two frames.
     ## Flat rather than variant object.
-    ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
+    ##   Copied per handle into `picking.PlacementsWhole`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
     kind*: Case
     at*: Position  ## Where it stands: point's place, line's support, plane's disc centre.

@@ -826,7 +826,7 @@ proc updateHover*(
   scale: DrawExtent;
   view_projection: Matrix4;
   width, height: int;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Recompute object nearest cursor, so overlay and drag-start agree on what stands under it.
   ##   Nothing is hovered while camera is moving.
@@ -892,7 +892,7 @@ proc dollyAbout*(
   scale: DrawExtent;
   view_projection: Matrix4;
   width, height: int;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Zoom camera by `factor` about pivot, as selection's wheel does.
   ##   Pivot stands on what is picked, so orbit stays on it however far wheel goes in or out.
@@ -932,7 +932,7 @@ proc dollyAt*(
   width, height: int;
   cursor: ScreenPosition;
   has_selection: bool;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
@@ -1014,7 +1014,7 @@ proc dollyAtCursor*(
   view_projection: Matrix4;
   width, height: int;
   has_selection: bool;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends zoom same way.
@@ -1473,7 +1473,7 @@ func placeShownNearest(
   camera: Camera;
   width, height: int;
   pixel: ScreenPosition;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ): Option[tuple[depth, floor: float]] =
   ## Read depth along sight, and drawn radius, of object shown nearest `pixel`, of those
   ## standing within `FACTOR_ANCHOR_DEPTH` of pivot's depth.
@@ -1521,7 +1521,7 @@ proc gripFingers*(
   width, height: int;
   fingers: array[2, ScreenPosition];
   has_selection: bool;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
   reach_selection = 0.0;
 ): GripFingers =
   ## Take what each of two fingers holds, as second lands (repository issue 592).
