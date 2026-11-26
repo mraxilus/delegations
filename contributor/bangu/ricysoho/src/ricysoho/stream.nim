@@ -743,7 +743,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##       be'o ku le'u
   ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D7 c`
   ##   .i ji'a zoi gy. 5€-5 .gy. cu se to'e curmi ki'u lo nu le jdini sinxa cu pencu re namcu to
-  ##       `D8` pe `#1003` toi
+  ##       `D8 a` pe `#1003` toi
   ##
   ## ni'o ro valsi pe le jdini klani cu vasru no stuzi
   ##   .i ro stuzi pe le sinxa cu zvati no valsi
