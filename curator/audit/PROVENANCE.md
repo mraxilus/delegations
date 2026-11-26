@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | ed0a06b0579bbc10 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 8086631753ff33ac5620286ca9d7d9d4bc2f5e7e |
+| Pruned  | 757ccb73358906076e45fc8a457acbcd10108caa |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2048,35 +2048,35 @@ the series only when the Architect asks.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
-**Nothing fails while a pin lags, and two mechanisms name the lag.** Each project keeps up with the
-patch releases of its series (GUIDE.md, Toolchain), and its bump is its own (CURATOR.md, duty 8).
+**Two mechanisms name a pin that lags, and neither blocks a branch** (CURATOR.md, duty 8).
 
 - `koch check` and the start hook name each release pin below the pin of `curator/audit`
-  (`noticesPin`), from nimble files, with no network. A commit pin takes no line. Versions
-  compare number by number, since text reads `2.4.10` below `2.4.2`. Cost: a branch that forked
-  before the curators moved learns of the lag at `koch check`, which judges the merge with `main`.
+  (`noticesPin`), from nimble files, with no network. A commit pin takes no line. Versions compare
+  number by number, since text reads `2.4.10` below `2.4.2`. Cost: a branch that forked before the
+  curators moved learns of the lag at `koch check`, which judges the merge with `main`.
 - `koch releases` sends a HEAD request for the `linux_x64` tarball that koch fetches, so a release
   counts once koch can serve it. 200 reads as published, 404 as missing, and else as unread.
-- In the series of `X.Y.Z`, it asks each patch from `Z + 1` until two in a row are missing. From
-  1.6 to 2.4, each series leaves out one patch number at most (HEAD of patches 0 to 24,
-  2026-11-26). Cost: a later gap of two would read as the end of the series, and exit 0.
-- It prints each of `X.(Y + 1).0`, `X.(Y + 2).0` and `(X + 1).0.0` that exists as a note for the
-  Architect. It exits 1 where the pin of `curator/audit` lags its series. A search that fails exits
-  2, so the issue names a lag alone, and exit 0 would close the issue for work never done. An unread
-  answer, a pin that the host lacks, or 50 patches published fails it, though 1.6 ends at 1.6.20.
-- Rejected: the tags of `nim-lang/Nim`, which name a tag and not the tarball of koch. Cost: six
-  asks where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
-- Verified by `suites/test_releases.nim` over a fake host, 2026-11-26: each of 32 mutants of
-  `releases.nim` fails it. By hand, `koch releases` names 2.4.2 and exits 0 in 2.54 s, and exits 2
-  through a proxy that answers nothing. `nim r koch hook start` names each contributor pin.
+- In the series of `X.Y.Z`, it asks each patch from `Z + 1` until two in a row are missing. From 1.6
+  to 2.4, each series leaves out one patch number at most (HEAD of patches 0 to 24, 2026-11-26).
+  Cost: a later gap of two would read as the end of the series, and exit 0.
+- It notes each of `X.(Y + 1).0`, `X.(Y + 2).0` and `(X + 1).0.0` that exists, for the Architect. It
+  exits 1 where the pin of `curator/audit` lags its series, or names no release. A failed search
+  exits 2, so the issue names a lag alone and never closes for work not done. An unread answer, a
+  pin the host lacks, or 50 patches with no two misses in a row fail it, though 1.6 ends at 1.6.20.
+- Rejected: the tags of `nim-lang/Nim`, which name a tag and not the tarball of koch. Cost: six asks
+  where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
+- Verified by `suites/test_releases.nim` over a fake host, 2026-11-26: each of 34 mutants of the
+  search and the notice fails it. `askRelease`, which no suite reaches, holds by reading. By hand,
+  `koch releases` names 2.4.2 and exits 0 in 2.54 s. It exits 1 on a copy whose driver pins 2.4.0,
+  and 2 through a proxy that answers nothing. `nim r koch hook start` names each contributor pin.
 
 **The `nim` workflow runs the verb each Monday, as the Architect asked, and keeps one issue open
-while it exits 1.** As in `head.yml`, the issue is labelled `curator`, edited to the latest run, and
-commented where the output changed. Exit 0 closes it, and any other exit turns the job red.
+while it exits 1.** The issue is labelled `curator`, edited to the latest run, and commented where
+the output changed. Exit 0 closes it, other exits turn the job red, and a branch run edits no issue.
 
-- Cost: a pin may lag a release for a week, and a project that moves its pin while the issue is
-  open adds a comment. Verified by hand against a stub `gh`, GNU bash 5.2, 2026-11-26. A lag opens
-  the issue, the same lag adds no comment and a new one does, 0 closes it, and 2 posts nothing.
+- Cost: a pin may lag a release for a week, and a project that moves its pin while the issue is open
+  adds a comment. Verified by hand against a stub `gh`, GNU bash 5.2, 2026-11-26. A lag opens the
+  issue, a repeat adds no comment, a new lag adds one, 0 closes, and 2 or a branch run posts none.
 
 **Koch runs each project on the compiler of its pin, and knoller serves that compiler.** Koch
 imports the resolution of knoller: `PATH` where that already serves, then
