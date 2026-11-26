@@ -6,6 +6,7 @@
 ##   Each expected score is `100 × (ln p − ln 0.5) / ln 2`, computed apart in floats.
 ##   Each expected score of number comes from copy by hand in Python of method of Metaculus, at
 ##     its source `8e413fb`, run apart; outcome beyond range checks against mass 0.001 by hand.
+##     Second copy, made apart in review of #1012, gives each score of number to last digit.
 
 {.experimental: "strictFuncs".}
 
@@ -144,6 +145,37 @@ suite "numbers as Metaculus":
     let expected = 100 * ln(0.001 / 0.05) / 2
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 2e9).scoreNumber.isNearNumber(expected)
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 5000).scoreNumber.isNearNumber(expected)
+
+
+  test "value at or below zero point of unit lies below its range":
+    # `place` gives -1 where logarithm of Metaculus takes no value: 0 tokens lies at zero point,
+    #   so below open bound, and count of -2 below zero point of count, so below closed bound.
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 0).scoreNumber
+      .isNearNumber(100 * ln(0.001 / 0.05) / 2)
+    check initNumber("Count: false findings: 1, 2 and 4", 1, 2, 4, -2, confidence = 0.9)
+      .scoreNumber.isNone
+
+
+  test "floor holds each inner bucket to cap of 0.2, as copy in Python gives it":
+    # Step of curve may pass 0.2 and still lie under 0.59 (`validateUserQuantileData`). Copy in
+    #   Python finds 4 buckets at cap, whose mass 0.2 scores near 100 × ln(0.2 / 0.0045) / 2.
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.45, confidence = 0.9).scoreNumber
+      .isNearNumber(189.71200628858753)  # bucket 67, at cap
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.42, confidence = 0.9).scoreNumber
+      .isNearNumber(189.7120062885875)  # bucket 65, at cap
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.30, confidence = 0.9).scoreNumber
+      .isNearNumber(-57.448749931990804)  # bucket 60, below 5th
+
+
+  test "percentile on closed bound or beyond range drops out of curve, as copy in Python gives it":
+    # `generateQuantileContinuousCdf` keeps each percentile inside range: 5th at 0 lies on closed
+    #   bound of count, and 95th at 2,000,000,000 above range of tokens.
+    check initNumber("Count: false findings: 0, 1 and 3", 0, 1, 3, 1, confidence = 0.9)
+      .scoreNumber.isNearNumber(105.35283940348799)  # bucket 13
+    check initNumber("Count: false findings: 0, 1 and 3", 0, 1, 3, 0, confidence = 0.9)
+      .scoreNumber.isNearNumber(107.92287413663888)  # outcome on closed bound: bucket 1
+    check initNumber(TEXT_TOKENS, 1e8, 4e8, 2e9, 5e8, confidence = 0.9).scoreNumber
+      .isNearNumber(97.24691480033533)  # bucket 188
 
 
   test "number of no outcome, unit, mark or confidence, or whose percentiles fall, takes none":
