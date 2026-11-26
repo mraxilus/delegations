@@ -447,20 +447,26 @@ squares back under ⟇, and it equals the float root of `|⊘` where 𝐦 ∘ �
 
 ```nim
 # TODO: Add sqrt, abs, div, exp, etc. to library when homogeneous scalars are in.
-func sqrt(m: Multivector): MultivectorScalars =
-  ## Find square root of dual number, i.e. √𝐦.
-  let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+func sqrt[B: static Bases](m: MultivectorOf[B]): MultivectorScalars {.inline.} =
+  ## Find square root of dual number via geometric product, i.e. ⟑√𝐦.
+  let
+    m_scalars = toMultivectorOf[B, {Basis.scalar, Basis.scalarAnti}](m)
+    s = m_scalars[Basis.scalar]
+    t = m_scalars[Basis.scalarAnti]
   if s != 0:
     result[Basis.scalar] = s.sqrt
     result[Basis.scalarAnti] = t / (2 * s.sqrt)
 
-func sqrtAnti(m: Multivector): MultivectorScalars =
-  ## Find square root of dual number, i.e. √𝐦.
-  let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+
+func sqrtAnti[B: static Bases](m: MultivectorOf[B]): MultivectorScalars {.inline.} =
+  ## Find square root of dual number via geometric antiproduct, i.e. ⟇√𝐦.
+  let
+    m_scalars = toMultivectorOf[B, {Basis.scalar, Basis.scalarAnti}](m)
+    s = m_scalars[Basis.scalar]
+    t = m_scalars[Basis.scalarAnti]
   if t != 0:
     result[Basis.scalar] = s / (2 * t.sqrt)
     result[Basis.scalarAnti] = t.sqrt
-
 
 
 func abs(m: Multivector): Multivector =
@@ -474,7 +480,6 @@ func abs(m: Multivector): Multivector =
 ## Edit `tests/suites.nim`
 
 ```nim
-        #echo &"{|∙𝐦=}, {sqrt(𝐦 ∙ 𝐦)=}"
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
         check |∘𝐦 =~ sqrtAnti(𝐦 ∘ 𝐦)  # 2.88
         check ^𝐦 =~ 𝐦 div |∘𝐦  # 2.89a
@@ -497,7 +502,6 @@ func abs(m: Multivector): Multivector =
 ```nim
           𝑡 = (|𝐦)[Basis.scalarAnti]
         check |𝐦 =~ |∙𝐦 + |∘𝐦  # 2.90a
-        #echo &"{𝐦=}\n{|𝐦=}, {sqrt(𝐦 ∙ 𝐦)=}, {sqrtAnti(𝐦 ∘ 𝐦)=}, {sqrt(𝐦 ∙ 𝐦) + sqrtAnti(𝐦 ∘ 𝐦)}"
         check |𝐦 =~ sqrt(𝐦 ∙ 𝐦) + sqrtAnti(𝐦 ∘ 𝐦)  # 2.90b
 ```
 
@@ -515,11 +519,13 @@ func abs(m: Multivector): Multivector =
 ```nim
   test "Equation 4.45":
     skip()
+    # TODO: Implement correct versions of dual number operators.
     # when IS_RIGID: skip()
     # when IS_CONFORMAL:
     #   for 𝐦, 𝐧, 𝐨 in sampleMultivectors():
-    #     echo &"{𝐦=}, {|⊘𝐦=}, {sqrt(𝐦 ∘ 𝐦)=}"
-    #     check |⊘𝐦 =~ sqrt(𝐦 ∘ 𝐦)
+    #     if not(|⊘𝐦 =~ sqrtAnti(𝐦 ∘ 𝐦)):
+    #       Echo &"{𝐦=}, {𝐦 ∘ 𝐦=}, {|⊘𝐦=}, {`|⊘²`(𝐦)=}, {sqrtAnti(𝐦 ∘ 𝐦)=}".
+    #     check |⊘𝐦 =~ sqrtAnti(𝐦 ∘ 𝐦)
 ```
 
 ```nim

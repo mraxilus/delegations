@@ -41,8 +41,6 @@ internal of the compiler.
   cell with `default(BasesSigned)`. `merge` finds a term with `find` of the cell, so `sequtils`
   leaves the imports. `slice` takes its cell as it is, since that cell holds one term or none.
   `constructExomorphismMetric` takes the one term of each vector cell with `toSigned`.
-- **Module doc.** The order of type bootstrapping in `pga.nim` names `BasesSigned` between
-  `BasisSigned` and the tables.
 - **Packed form.** The doc comment of the cell names a packed form, which builds faster. It holds
   each term in 16 bits of one `uint64`, as 2 × basis + sign + 1, so 0 marks an empty slot. The
   Architect ruled on 2026-11-08 that the fields stay, because they are easier to understand.
