@@ -4,7 +4,8 @@ Two open imports hide which internals the operators use. An open import also hid
 grade table from the suites.
 
 This change names each symbol. The compiler gives the list: compile, add each symbol it names,
-and compile again. The equality of `Grade` is a private borrow, so the list names `==` too.
+and compile again. A named import brings no operator that it does not list, so the list names the
+equality of `Grade` too.
 
 Four proposals change which symbols the operators read. Of this change and each of them, the
 second to land writes the merged import:
@@ -28,12 +29,12 @@ second to land writes the merged import:
 ## Edit `pga/operators.nim`
 
 ```nim
-import ./[algebra {.all.}, cayleys {.all.}, emitters, multivectors]
+import ./[algebra, cayleys {.all.}, emitters, multivectors]
 ```
 
 ```nim
 import ./[emitters, multivectors]
-from ./algebra {.all.} import
+from ./algebra import
   Basis, Coefficient, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
   grade, gradeAnti, scalar, scalarAnti, origin, high, low, `==`
 from ./cayleys {.all.} import
@@ -42,6 +43,6 @@ from ./cayleys {.all.} import
   CAYLEYS_REVERSE, CAYLEYS_WEDGE, CAYLEYS_WEDGE_DOT, CAYLEYS_NORM_SQUARED, CAYLEY_ATTITUDE,
   horizon
 when IS_CONFORMAL:
-  from ./algebra {.all.} import infinity
+  from ./algebra import infinity
   from ./cayleys {.all.} import CAYLEY_CARRIER, CAYLEYS_NORM_SQUARED_RADIUS
 ```

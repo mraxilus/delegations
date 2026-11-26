@@ -126,17 +126,19 @@ when IS_RIGID:
     const 𝐞ₙ = initElement(Basis.origin)
     m ∨ (𝐞ₙ ∧ ☆m)
 
+
   func `∪`*(m: Multivector): Multivector =
     ## Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).
     const 𝐞̄ₙ = block:
       let h = Basis.horizon
-      h.basis.initElement(if h.is_negated: -1 else: 1)
+      initElement(h.basis, if h.is_negated: -1 else: 1)
     m ∧ (𝐞̄ₙ ∨ ★m)
+
 
 when IS_CONFORMAL:
   func `⊞`*(m: Multivector): Multivector =
     ## Get cocarrier of multivector, i.e. 𝐦☆ ∧ 𝐞ₙ.
-    const 𝐞ₙ = Basis.infinity.initElement()
+    const 𝐞ₙ = initElement(Basis.infinity)
     ☆m ∧ 𝐞ₙ
 
   func `⊙`*(m: Multivector): Multivector = ⊞m ∨ m

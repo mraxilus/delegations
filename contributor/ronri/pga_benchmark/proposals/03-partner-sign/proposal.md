@@ -97,7 +97,8 @@ when IS_CONFORMAL:
 ## Evidence
 
 At cga5d the 324 multiplies of the partner are the bound of its chain: 162 for each folded table.
-Its error checks fall from 109 to 2, and its lines of C from 2 530 to 78.
+Its error checks fall from 109 to 2, and its lines of C from 2 233 to 78.
 
-P01 and P08 alone run the partner at ×0.69 of pin at cga5d, for each kind of its operand. With
-this proposal it runs at ×0.34 to ×0.37. So the fold gives the rest of the gain on the partner.
+P01 and P08 alone run the partner at ×0.68 to ×0.69 of pin at cga5d, for each kind of its operand.
+With this proposal it runs at ×0.36 to ×0.38. So the fold gives the rest of the gain on the
+partner.

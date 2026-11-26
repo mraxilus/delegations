@@ -76,7 +76,7 @@ suite "Chapter 2":
 suite "Chapter 2":
 ```
 
-## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
+## Replace `pga/cayleys.nim` from `03a2b64417638c94`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.
@@ -120,14 +120,14 @@ import ./algebra {.all.}
 
 type  ## Define type definitions dependent on `Basis` needed for macros.
   BasisSigned* = object  ## Define signed representation of basis.
-    basis*: Basis
-    is_negated*: bool = false
+    basis*: Basis  ## TODO: Document.
+    is_negated*: bool = false  ## TODO: Document.
   Cayley1D* =  ## Define data structure for constructing unary algebra operations (map).
     array[Basis, seq[BasisSigned]]
   Cayley2D* =  ## Define data structure for constructing binary algebra operations.
     array[Basis, array[Basis, seq[BasisSigned]]]  # Support conformal operators with `seq`.
-    # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
-    #   Applies especially for 1D which only uses singular slot.
+    # TODO: Avoid `seq` as heap allocated, perhaps array with count custom type.
+    #         Applies especially for 1D which only uses singular slot.
 
 type  ## Define type definitions for algebraic distinctions.
   Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
@@ -135,23 +135,27 @@ type  ## Define type definitions for algebraic distinctions.
   Spatiality {.pure.} = enum Base, Anti  ## Define distinction between PGA's spacial duality.
 
 type  ## Define type defintions for containers of algebraic distinctions.
-  Chiral*[T] = object
-    left*, right*: T
-  Formal*[T] = object
-    when IS_CONFORMAL:
-      flat*, round*: T
+  Chiral*[T] = object  ## TODO: Document.
+    left*, right*: T  ## TODO: Document.
+  Formal*[T] = object  ## TODO: Document.
+    when IS_RIGID:
+      round*: T  ## TODO: Document.
     else:
-      round*: T
-  Partial*[T] = object
-    bulk*, weight*: T
-  Spatial*[T] = object
-    base*, anti*: T
+      flat*, round*: T  ## TODO: Document.
+  Partial*[T] = object  ## TODO: Document.
+    bulk*, weight*: T  ## TODO: Document.
+  Spatial*[T] = object  ## TODO: Document.
+    base*, anti*: T  ## TODO: Document.
 
-## Define type definition for transwedge order.
-type Order = distinct range[0..DIMENSIONS]
+type Order = distinct range[0..DIMENSIONS]  ## Define type definition for transwedge order.
+
+
 #func `<=`(a, b: Order): bool {.borrow.}
-func `==`(a, b: Order): bool {.borrow.}
+func `==`(a, b: Order): bool {.borrow, compileTime.}
+
+
 iterator items(t: typedesc[Order]): Order =
+  ## TODO: Document.
   for i in 0..DIMENSIONS: yield Order(i)
 
 
@@ -162,7 +166,7 @@ const
   CAYLEYS_COMPLEMENT* = Chiral[Cayley1D](
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
-  )
+  )  ## TODO: Document.
   CAYLEYS_WEDGE* = block:
     let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
     Spatial[Cayley2D](
@@ -171,7 +175,7 @@ const
     )
 
 const
-  CAYLEY_METRIC* = constructMetric()
+  CAYLEY_METRIC* = constructMetric()  ## TODO: Document.
   CAYLEYS_EXOMORPHISM_METRIC* = block:
     let base = constructExomorphismMetric(CAYLEY_METRIC)
     Spatial[Cayley1D](
@@ -187,13 +191,13 @@ const
       left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.anti),
       right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_EXOMORPHISM_METRIC.anti),
     ),
-  )
+  )  ## TODO: Document.
 
 const
   CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
-  )
+  )  ## TODO: Document.
 
 const
   CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
@@ -211,7 +215,7 @@ const
       Chirality.Right,
       Spatiality.Anti,
     ),
-  )
+  )  ## TODO: Document.
 
 const
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
@@ -235,7 +239,7 @@ const
         right: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right),
       ),
     ),
-  )
+  )  ## TODO: Document.
   CAYLEYS_DOT* = block:
     let base = constructDot(CAYLEYS_WEDGES_TRANS.base)
     Spatial[Cayley2D](
@@ -247,13 +251,14 @@ const
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
     base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
     anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
-  )
+  )  ## TODO: Document.
 
 const
   CAYLEYS_NORM_SQUARED* = Partial[Formal[Cayley2D]](
     bulk: constructNormsSquared(CAYLEYS_PARTS, Partiality.Bulk),
     weight: constructNormsSquared(CAYLEYS_PARTS, Partiality.Weight),
-  )
+  )  ## TODO: Document.
+
 when IS_CONFORMAL:
   const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti
 
@@ -277,7 +282,7 @@ when IS_CONFORMAL:
 
 #[ Operation Construction ]#
 
-func constructComplement(chirality: Chirality): Cayley1D {.compileTime, noinit.} =
+func constructComplement(chirality: Chirality): Cayley1D {.compileTime.} =
   ## Construct Cayley table for left and right complements.
   for b in Basis:
     result[b] = @[b.complement(chirality)]
@@ -351,7 +356,7 @@ func constructMetric(): Cayley1D {.compileTime.} =
     result[𝐞ₙ₋₁] = @[BasisSigned(basis: 𝐞ₙ, is_negated: true)]
 
 
-func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =
+func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime.} =
   ## Construct metric exomorphism 𝐆 from metric 𝖌 simplified as 1D cayley table.
   ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).
   ##   Likewise with `constructAnti` applied on output:
@@ -359,6 +364,7 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
   ##     Equivalent to expanding as 𝔾 via 𝔾(𝐦 ∨ 𝐧) = (𝔾𝐦) ∨ (𝔾𝐧).
   result = metric
 
+  # TODO: Describe stage's purpose.
   for operand in Basis:
     if operand.grade <= Grade.vector: continue
     var
@@ -384,12 +390,12 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
     result[operand] = @[product.basis]
 
 
-func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noinit.} =
+func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime.} =
   ## Construct Cayley table for (round/flat) bulk/weight, by presence of projective vectors.
   ##   Origin splits bulk from weight; in CGA, infinity splits round from flat.
   ##   RGA parts equal 𝐆𝐦 and 𝔾𝐦, yet one rule serves both algebras.
 
-  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime, noinit.} =
+  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime.} =
     ## Construct sub-slice of Cayley table respresenting identity map.
     for b in Basis:
       result[b] = @[b.toSigned]
@@ -454,10 +460,10 @@ func constructProductTransitional(
   for c in Basis:  # Note: Nesting likely required due to nature of transitive product.
 
     # Skip over grades of different orders.
-    let c_order = case spatiality
+    let order_c = case spatiality
       of Spatiality.Base: Order(c.grade)
       of Spatiality.Anti: Order(c.gradeAnti)
-    if c_order != order: continue
+    if order_c != order: continue
 
     # Detect if dual degenerates.
     if dual[c].len == 0: continue
@@ -521,10 +527,10 @@ func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {
 func constructNormsSquared(
   parts: Partial[Formal[Cayley1D]],
   partiality: Partiality,
-): Formal[Cayley2D] =
+): Formal[Cayley2D] {.compileTime.} =
   ## Construct unary 2D cayley tables for squared norms from parts.
 
-  func constructNormSquared(part: Cayley1D, partiality: Partiality): Cayley2D =
+  func constructNormSquared(part: Cayley1D, partiality: Partiality): Cayley2D {.compileTime.} =
     ## Construct unary 2D cayley table for squared norm from specific part.
     let destination = case partiality:
         of Partiality.Bulk: Basis.scalar
@@ -547,7 +553,7 @@ func constructNormsSquared(
     )
 
 
-func constructReverse(): Cayley1D {.compileTime, noinit.} =
+func constructReverse(): Cayley1D {.compileTime.} =
   ## Construct Cayley table for reverse; antireverse conjugates it.
   for b in Basis:
     result[b] = @[b.reverse]
@@ -560,11 +566,11 @@ func complement(b: Basis, chirality: Chirality): BasisSigned {.compileTime.} =
   ## Get complement of basis (right by default).
   let
     mask = Basis.scalarAnti.toFlags
-    antibasis = (not b.toFlags and mask).toBasis.toSigned
+    basis_anti = toBasis(not b.toFlags and mask).toSigned
     antiscalar = case chirality
-      of Chirality.Left: multiplyExterior(antibasis, b.toSigned)
-      of Chirality.Right: multiplyExterior(b.toSigned, antibasis)
-  BasisSigned(basis: antibasis.basis, is_negated: antiscalar.basis.is_negated)
+      of Chirality.Left: multiplyExterior(basis_anti, b.toSigned)
+      of Chirality.Right: multiplyExterior(b.toSigned, basis_anti)
+  BasisSigned(basis: basis_anti.basis, is_negated: antiscalar.basis.is_negated)
 
 
 func reverse(b: Basis): BasisSigned {.compileTime.} =
@@ -604,8 +610,7 @@ func multiplyExterior(
     is_negated: parity_a xor parity_b xor parity_order xor parity_product,
   )
 
-
-func toSigned(b: Basis): BasisSigned {.compileTime, noinit.} = BasisSigned(basis: b)
+func toSigned(b: Basis): BasisSigned {.compileTime.} = BasisSigned(basis: b)
   ## Convert basis to signed basis assuming positive.
 
 
@@ -620,7 +625,7 @@ func toSigned(product: seq[BasisSigned]): BasisSigned {.compileTime.} =
 
 func applyConstant(
   cayley: var Cayley2D, basis: BasisSigned, chirality: Chirality
-): Cayley1D {.compileTime, noinit.} =
+): Cayley1D {.compileTime.} =
   ## Collapse 2D cayley into 1D by applying contstant unit basis to left or right operand.
 
   case chirality
@@ -840,9 +845,7 @@ func negate(cayley: var Cayley2D) {.compileTime, used.} =  # Not used; provided 
         cayley[m][n][term].is_negated = not cayley[m][n][term].is_negated
 
 
-func slice(
-  cayley: Cayley2D, operand: Basis, chirality: Chirality
-): Cayley1D {.compileTime, noinit.} =
+func slice(cayley: Cayley2D, operand: Basis, chirality: Chirality): Cayley1D {.compileTime.} =
   ## Extract vertical slice of 2D cayley as 1D map.
   for b in Basis:
     let terms = case chirality
