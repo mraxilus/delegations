@@ -551,7 +551,7 @@ read each count the same. A count under its baseline passes, and the baseline is
 
 **A static count stands beside each count of the machine, because it names the line.** The check of
 the marker reports the copy sites in the functions that its span reaches: 50 sites in 84 functions.
-The check of the lattice reports those that only the lattice reaches: 11 sites in 15 functions.
+The check of the lattice reports those that only the lattice reaches: 13 sites in 16 functions.
 
 | Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
 |-------|----------|--------------------|----------------------------|
@@ -1428,10 +1428,10 @@ selected, one object of each kind alone, every object, a hovered point, and a le
 Each frame must read 5,038, and the hover pick none. On `7ba32bda`, before this design, one point
 selected read 5,045 to 5,048, every object 30,196 to 39,832, and the hover pick 4.
 
-**Placing tests the horizon once for each object.** `placeInto` asks `isHorizon` once, and hands the
-answer to each read that needs it. `positionAnchor`, `direction`, `directionHorizon`,
-`directionNormalHorizon` and `directionNormal` each have a twin that takes it. A plane reads its
-support once, and spans its frame about it. The cost of one test is unmeasured here.
+**Placing tests the horizon once for each object.** `readLineInto` and `readPlaneInto` ask
+`isHorizon` once, and hand the answer to each read through twins that `boundary` keeps private. So
+no caller hands in an answer that disagrees with its value. A plane reads its support once, and
+spans its frame about it. The cost of one test is unmeasured here.
 
 **A placement is written into its slot field by field** (`tessellate.placeInto`). On the JS backend,
 a placement or an `Option` built and assigned is one `nimCopy`, and a point placed that way costs
