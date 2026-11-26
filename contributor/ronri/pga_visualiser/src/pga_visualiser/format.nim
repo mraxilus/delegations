@@ -90,10 +90,16 @@ func formatMagnitude*(value: float): string =
   let sign = if value < 0.0: "-" else: ""
   var exponent = int(floor(log10(abs(value))))
 
+  const shift_largest = 308
+    ## Bound shift one power of ten carries: `10^309` overflows to infinity.
+
   func scaledTo(value: float, exponent: int): float =
     ## Carry `value`'s leading `DIGITS_SIGNIFICANT` digits into whole-number range.
+    ##   Shift past `shift_largest`, which magnitude under 1e-305 takes, goes in two steps:
+    ##     `1e308`, then power of ten left, at most `10^20`, which is exact.
     let shift = DIGITS_SIGNIFICANT - 1 - exponent
-    if shift >= 0: abs(value) * pow(10.0, float(shift))
+    if shift > shift_largest: abs(value) * 1.0e308 * pow(10.0, float(shift - shift_largest))
+    elif shift >= 0: abs(value) * pow(10.0, float(shift))
     else: abs(value) / pow(10.0, float(-shift))
 
   var scaled = roundHalfToEven(scaledTo(value, exponent))

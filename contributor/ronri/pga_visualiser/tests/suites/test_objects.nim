@@ -176,6 +176,53 @@ suite "Objects":
       check directionHorizon(attitude).isSome
 
 
+  test "a value reads in the horizon or out of it alike at each scale":
+    # Fault: norms of point at scale 1e-300 squared each coefficient to zero, so it read as
+    #   horizon point (repository issue 970). Scale past 2^512 squared them to infinity.
+    # Domain: point, line and plane of each sample, and their attitudes in horizon, each at
+    #   each power of two from 2^-1000 to 2^1000 by 100, which keeps every coefficient normal.
+    check not isHorizon(1.0e-300 * POINTS[0])
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i]]:
+        let expected = isHorizon(m)
+        for exponent in countup(-1000, 1000, 100):
+          checkpoint &"sample {i}, scale 2^{exponent}"
+          check isHorizon(pow(2.0, float(exponent)) * m) == expected
+
+
+  test "an object on either side of the ratio of the horizon reads alike at each scale":
+    # Fault: case above held no object near ratio `TOLERANCE_ABS`, so scale by inexact factor,
+    #   bound of exact norms at 2^-540, and test of infinite weight alone each passed suite
+    #   (review of repository issue 970).
+    # Domain: point, line and plane of each sample, weight scaled to last value that reads as
+    #   horizon and to next, at each seventh power of two that keeps each coefficient normal.
+    func weighted(m: Multivector, scale: float): Multivector =
+      ## Scale each coefficient that weight norm reads, and keep each that it does not.
+      for b in Basis:
+        let is_weight = (|∘initElement(b, 1.0))[Basis.scalarAnti] != 0.0
+        result[b] = if is_weight: scale * m[b] else: m[b]
+    func isNormalAt(m: Multivector, exponent: int): bool =
+      for b in Basis:
+        if m[b] != 0.0 and (pow(2.0, float(exponent)) * m[b]).classify != fcNormal: return false
+      true
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i]]:
+        # Halve interval of weight scale until its ends are adjacent doubles.
+        var (low, high) = (0.0, 1.0)
+        check m.weighted(low).isHorizon and not m.weighted(high).isHorizon
+        while true:
+          let middle = 0.5 * (low + high)
+          if middle == low or middle == high: break
+          if m.weighted(middle).isHorizon: low = middle else: high = middle
+        for scale in [low, high]:
+          let near = m.weighted(scale)
+          check near.isHorizon == (scale == low)
+          for exponent in countup(-1100, 1100, 7):
+            if not near.isNormalAt(exponent): continue
+            checkpoint &"sample {i}, weight scale {scale}, scale 2^{exponent}"
+            check isHorizon(pow(2.0, float(exponent)) * near) == (scale == low)
+
+
   test "the incidence vocabulary answers what the classical forms answer, sign included":
     # Classical forms live HERE, in test, and algebra lives in `objects.nim`.
     #   -- holding two equal is project's purpose, and it is also what pins every
