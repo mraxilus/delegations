@@ -1344,6 +1344,8 @@ suite "Internal: Stream":
         ("€-", 0)]:
       checkpoint text
       check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u cu fendi re namcu
+    check "5€ -5".cmavoRead == some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
 
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
