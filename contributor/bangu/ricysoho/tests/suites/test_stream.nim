@@ -1077,7 +1077,7 @@ suite "Internal: Stream":
           @["li", "pa", "so", "re", "pi'e", "pa", "xa", "bi", "pi'e", "no", "pi'e", "pa"]),
         ("li 1,000.2.3", @["li", "pa", "ki'o", "no", "no", "no", "pi'e", "re", "pi'e", "ci"]),
         # slaka bu cu pagbu le porsi
-        #   .i se ki'u bo pa namcu cu vasru no re boi zo pi
+        #   .i se ki'u bo pa namcu cu vasru su'e pa boi zo pi
         ("li 1.2,000.3", @["li", "pa", "pi'e", "re", "ki'o", "no", "no", "no", "pi'e", "ci"]),
         # ro porsi pe pa selci'avla cu se tcidu ne'i vo'a
         ("li 1.2.3boi4.5",
