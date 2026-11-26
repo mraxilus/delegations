@@ -19,6 +19,8 @@
 ##   Cost: each `atlas.lock` exempt from width, as Architect ruled on D1 of #821; Atlas writes it,
 ##     copying each nimble line behind six spaces with each quote escaped, so lock line runs nine
 ##     runes past its source, and nimble file it copies holds width.
+##   Cost: each `claims.txtpb` exempt from width (X.1); stop hook writes one row of log to line,
+##     so `union` joins two logs line by line, and row runs far past width (#1011).
 ##   Cost: X.9 read in Nim syntax alone (Nim, NimScript, nimble); trailing comment of
 ##     TypeScript, C, C++, YAML, cfg and shell goes unread until each kind gets scanner.
 
@@ -27,6 +29,7 @@
 import std/[sequtils, strutils]
 import ../../knoller/src/knoller
 import ./[findings, kinds]
+from ./claims_log import FILE_LOG
 
 
 const WIDTH_EXEMPT = ["LICENSE.md"]
@@ -35,8 +38,10 @@ const WIDTH_EXEMPT = ["LICENSE.md"]
 
 
 func isWidthExempt(path: string): bool =
-  ## Decide whether width of path goes unchecked: root text kept verbatim, or lock Atlas writes.
-  path in WIDTH_EXEMPT or path == FILE_LOCK or path.endsWith("/" & FILE_LOCK)
+  ## Decide whether width of path goes unchecked: root text kept verbatim, lock Atlas writes, or
+  ##   log of claims stop hook writes.
+  path in WIDTH_EXEMPT or path == FILE_LOCK or path.endsWith("/" & FILE_LOCK) or
+    path == FILE_LOG or path.endsWith("/" & FILE_LOG)
 
 
 func checkForm*(path, source: string; rule: RuleKind): seq[Finding] =

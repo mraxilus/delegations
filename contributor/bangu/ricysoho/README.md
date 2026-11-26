@@ -22,6 +22,10 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i `CLL 3.1` na liste le lerfu
   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
   .i denpa bu poi zvati lo jbini be re lerfu cu se tcidu ta'i zo pi mu'u zoi gy. li 3.14 .gy.
+  .i ku'i ro boi denpa bu pe lo porsi poi vasru su'o re boi denpa bu cu se tcidu ta'i zo pi'e mu'u
+      zoi gy. li 192.168.0.1 .gy. to `D5 c` pe `#1003` toi
+  .i le porsi cu vasru lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini be re
+      lerfu
   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu se tcidu ta'i zo ki'o mu'u zoi gy.
       li 1,000 .gy.
   .i ro porsi be lo valsi pe `PA` cu du pa namcu to `CLL 18.6` toi
@@ -39,6 +43,22 @@ ni'o le genturfa'i cu tcidu lo jdini sinxa poi pencu pa namcu ta'i lo jdini klan
   .i zoi gy. ¢ .gy. sinxa zo fepni
   .i zoi gy. ¥ .gy. sinxa lo'u ponjo ja jungo rupnu le'u
   .i le genturfa'i cu to'e curmi lo jdini sinxa poi pencu no namcu .a re namcu mu'u zoi gy. 5 € .gy.
+  .i lo jdini sinxa poi pencu lo sinxa pe pa namcu cu pencu le namcu mu'u zoi gy. -$5 .gy. .e
+      zoi gy. $-5 .gy. noi sinxa lo'u lo rupnu be li ni'u mu be'o ku le'u to `D7 c` pe `#1003` toi
+
+ni'o le genturfa'i cu tcidu lo sinxa pe lo namcu ta'i lo cmavo pe `PA` to `D4 b` .e `D6 b` .e
+    `D7 c` pe `#1003` toi
+  .i zoi gy. + .gy. .e zoi gy. - .gy. .e zoi gy. ~ .gy. cu sinxa zo ma'u .e zo ni'u .e zo ji'i va'o
+      lo nu lo lerfu pe `0` bi'o `9` .a lo sinxa po'u zoi gy. π .gy. .a zoi gy. ∞ .gy. .a
+      zoi gy. ½ .gy. cu se lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu lidne le sinxa
+  .i ji'a pa jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le namcu mu'u zoi gy. -$5 .gy.
+  .i zoi gy. % .gy. sinxa zo ce'i va'o lo nu lo lerfu pe `0` bi'o `9` cu lidne le sinxa kei .e lo
+      nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
+  .i zoi gy. π .gy. .e zoi gy. ∞ .gy. .e zoi gy. ½ .gy. cu sinxa zo pai .e zo ci'i .e lo'u pa fi'u
+      re le'u va'o lo nu no lerfu pe `0` bi'o `9` cu pencu le sinxa kei .e lo nu ro sinxa poi pencu
+      le sinxa cu pagbu le namcu .a le jdini klani
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li ni'u mu pi mu ce'i le'u fi zoi gy. li -5.5% .gy.
+  .i le genturfa'i cu to'e curmi lo drata stuzi mu'u zoi gy. 5-3 .gy. .e zoi gy. 2π .gy.
 
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau

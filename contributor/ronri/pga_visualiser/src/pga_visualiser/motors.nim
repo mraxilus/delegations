@@ -44,6 +44,8 @@ import std/[math, options]
 
 import pga
 
+import ./objects
+
 
 
 #[ Withdrawal ]#
@@ -134,6 +136,10 @@ func exp*(b_line: Multivector): Multivector =
   ##   that dual part, which `log` reads back.
   ##   Total: pure slide falls out of same expression, since its direction is zero and both
   ##   series stay finite there. No branch, so no branch to get wrong.
+  ##   Fails where `b_line` holds part outside bivector: such value names no line, so no
+  ##     motor, and reading six coefficients alone would drop that part in silence.
+  doAssert b_line.isWithin(Multivector2.bases),
+    "Exponential must take bivector alone; got `" & $b_line & "`."
   let
     (turn, slide) = (b_line.halfTurn, b_line.halfSlide)
     angle = turn.magnitude
@@ -149,19 +155,32 @@ func exp*(b_line: Multivector): Multivector =
 
 
 func log*(motor: Multivector): Multivector =
-  ## Read bivector whose exponential is `motor`.
+  ## Read bivector whose exponential is motion `motor` names.
+  ##   Reads motor at any weight through its unit form, library's `unitize`: multiple of
+  ##     motor other than zero names same motion, so its logarithm is same bivector.
   ##   Takes short way round: motor and its negation carry every point alike, so one with
   ##   negative antiscalar is read through its negation. `exp(log(q))` is then same *motion*
-  ##   as `q`, and same coefficients only where `q` already turns by less than half turn.
+  ##   as `q`, and same coefficients only where `q` is unit and turns by less than half turn.
   ##     Without it `log` of motor near full turn divides by `sin(a)/a` at `a` of π, which
   ##     is zero, and full turn names no axis to return.
-  ##   Expects unit motor, which `exp` and `unitize` both give. Antiscalar and direction then
-  ##   square to one together, so `cos(a)` and `sin(a)` are read straight off rather than
-  ##   solved.
-  let held = if motor[Basis.E1234] < 0.0: -motor else: motor
+  ##   Unit form's antiscalar and direction square to one together, so `cos(a)` and `sin(a)`
+  ##   are read straight off rather than solved.
+  ##   Fails where `motor` holds odd-grade part, which names no motion, or where `unitize`
+  ##     leaves its weight off one. Weight zero names no motion, and `unitize` leaves it as it
+  ##     stands rather than refuse. Weight whose square leaves range of doubles fails too, as
+  ##     `unitize` squares it; no caller's motor nears that.
+  doAssert motor.isWithin(MultivectorEven.bases),
+    "Logarithm must take motor of even grade alone; got `" & $motor & "`."
   let
+    unit = unitize(motor)
+    held = if unit[Basis.E1234] < 0.0: -unit else: unit
     (turn, slide) = (held.halfTurn, held.halfSlide)
-    angle = arctan2(turn.magnitude, held[Basis.E1234])
+    magnitude_turn = turn.magnitude
+  doAssert abs(held[Basis.E1234] * held[Basis.E1234] + magnitude_turn * magnitude_turn - 1.0) <=
+      TOLERANCE_ABS,
+    "Logarithm must take motor whose weight `unitize` scales to one; got `" & $motor & "`."
+  let
+    angle = arctan2(magnitude_turn, held[Basis.E1234])
     (scale_turn, scale_slide) = scales(angle)
     # Recover pitch from scalar term `exp` wrote, which carried it alone.
     #   `scale_turn` never vanishes here: short way round holds `a` at or under π/2, where
@@ -185,16 +204,18 @@ func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =
   some(exp(wedge(0.5 * radians, unitize(axis))))
 
 
-func carried*(m, motor, motor_reversed: Multivector): Multivector =
-  ## Carry `m` through rigid motion `motor`, whose antireverse caller already holds.
-  ##   Lets caller carrying several operands through one motor take `~∘𝐐` once.
-  ##   Spelled with operators: JS backend inlines neither `wedgeDotAnti` nor `reverseAnti`,
-  ##   so each named call allocates and copies one more result (read in emitted JS).
-  (motor ⟇ m) ⟇ motor_reversed
 
+#[ Carry ]#
 
 func carried*(m, motor: Multivector): Multivector =
   ## Carry `m` through rigid motion `motor`, i.e. 𝐐 ⟇ 𝐦 ⟇ ~∘𝐐.
   ##   One form for point, line and plane alike, since sandwich reads grade from `m`.
   ##   Expects unit motor: antireverse is inverse only there.
-  carried(m, motor, ~∘motor)
+  ##   Takes antireverse itself, so no caller hands in one that disagrees with `motor`.
+  ##     Caller carrying several operands through one motor pays one antireverse each.
+  ##     Rejected: pair holding motor beside its antireverse, built once. On JS backend
+  ##     each build copies motor into pair, and still frame copied 30 to 79 times more,
+  ##     over counted bounds (`PROVENANCE.md`, Motors). Operator antireverse copies nothing.
+  ##   Spelled with operators: JS backend inlines neither `wedgeDotAnti` nor `reverseAnti`,
+  ##   so each named call allocates and copies one more result (read in emitted JS).
+  (motor ⟇ m) ⟇ ~∘motor

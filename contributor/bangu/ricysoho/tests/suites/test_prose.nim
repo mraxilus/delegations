@@ -22,7 +22,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, sequtils, strutils, unittest]
 
-import ../../src/ricysoho/[grammar, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar, prose, selmaho, stream, tanru]
 import ../../src/ricysoho/lists/cmavo
 
 
@@ -67,6 +67,11 @@ func unitsRead(text: string): Option[seq[seq[string]]] =
   let reading = text.readText
   if not reading.is_read: return none(seq[seq[string]])
   some(reading.units.mapIt(it.words.mapIt(reading.occurrences[it].text)))
+
+
+func cmavoUnits(reading: ReadingText): seq[seq[string]] =
+  ## liste lo valsi poi le genturfa'i cu tcidu ro valsi pe ro genvla ta'i ke'a
+  reading.units.mapIt(it.words.mapIt($reading.occurrences[it].reading.tanru))
 
 
 func terminalsRead(text: string): Option[seq[Terminal]] =
@@ -299,6 +304,19 @@ const
   ]
     ## lo jufra poi ro sumti po'u `_` cu jdini klani
   COUNT_AMOUNTS = 120  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  PREFIXES_PROSE = [("+", "ma'u"), ("-", "ni'u"), ("−", "ni'u"), ("~", "ji'i")]
+    ## lo sinxa poi lidne lo namcu .e le cmavo poi le sinxa cu sinxa ke'a to `D4 b` pe `#1003` toi
+  CONSTANTS_PROSE = [("π", "pai"), ("∞", "ci'i"), ("½", "pa fi'u re")]
+    ## lo sinxa poi sinxa pa namcu .e le cmavo poi le sinxa cu sinxa ke'a to `D4 b` pe `#1003` toi
+  FRAMES_NUMBER = [
+    "li _ cu barda", "mi ponse _ lo plise", "lo _moi cu klama", "mi ponse lo rupnu be li _ be'o ku",
+  ]
+    ## lo jufra poi ro namcu po'u `_` cu pagbu ke'a
+  COUNT_NUMBERS_SIGNED = 136  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  NUMBERS_COMPOUND = [("1.2.3", "1 pi'e 2 pi'e 3"), ("192.168.0.1", "192 pi'e 168 pi'e 0 pi'e 1")]
+    ## lo namcu poi vasru su'o re boi denpa bu .e le valsi poi le namcu cu sinxa ke'a to `D5 c`
+    ##     pe `#1003` toi
+  COUNT_COMPOUND = 8  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
 
 
 
@@ -319,6 +337,7 @@ suite "Internal: Prose":
             if a.is_read and b.is_read:
               check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
               check a.tree.shape == b.tree.shape
+              check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
             inc count
     check count == COUNT_AMOUNTS  # `IX.3`
     # lo jdini klani cu sumti gi'e na selbri
@@ -326,6 +345,62 @@ suite "Internal: Prose":
     # zo zo sitna zo lo noi krasi le jdini klani
     #   .i se ki'u bo le gerna cu to'e curmi le selci'a
     check not "zo €5 cu valsi".readText.is_read
+
+
+  test "Each number sign at each place of a number reads as the tree of its words written out":
+    # `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    #   .i lo sinxa pe lo namcu cu sinxa lo valsi po'o
+    #   .i se ki'u bo lo tricu pe le selci'a cu mintu lo tricu pe le valsi
+    var
+      count = 0
+      pairs: seq[(string, string, seq[string])]  # lo selci'a .e lo valsi .e lo jufra
+    for number in NUMBERS_PROSE:
+      for (sign, word) in PREFIXES_PROSE:
+        pairs.add (sign & number, word & " " & number, @FRAMES_NUMBER)
+        # lo jdini klani cu vasru le sinxa pe le namcu to `CLL 18.3` toi
+        pairs.add (sign & number & "€", "lo ronru'u be li " & word & " " & number & " be'o ku",
+          @FRAMES_PROSE)
+      pairs.add (number & "%", number & " ce'i", @FRAMES_NUMBER)  # `CLL 18.3`
+    for (sign, words) in CONSTANTS_PROSE: pairs.add (sign, words, @FRAMES_NUMBER)
+    pairs.add ("-5%", "ni'u 5 ce'i", @FRAMES_NUMBER)
+    # lo sinxa poi pencu lo drata sinxa pe le namcu cu se tcidu to `D7 c` toi
+    pairs.add ("-∞", "ni'u ci'i", @FRAMES_NUMBER)
+    pairs.add ("~½", "ji'i pa fi'u re", @FRAMES_NUMBER)
+    for (text, spelled) in [
+        ("-$5", "lo rupnu be li ni'u 5 be'o ku"), ("$-5", "lo rupnu be li ni'u 5 be'o ku"),
+        ("€½", "lo ronru'u be li pa fi'u re be'o ku"), ("5%€", "lo ronru'u be li 5 ce'i be'o ku")]:
+      pairs.add (text, spelled, @FRAMES_PROSE)
+    for (text, spelled, frames) in pairs:
+      for frame in frames:
+        let (a, b) = (frame.replace("_", text).readText, frame.replace("_", spelled).readText)
+        checkpoint frame.replace("_", text)
+        check a.is_read and b.is_read
+        if a.is_read and b.is_read:
+          check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+          check a.tree.shape == b.tree.shape
+          check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
+        inc count
+    check count == COUNT_NUMBERS_SIGNED  # `IX.3`
+    # zo zo sitna le pamoi valsi pe le sinxa
+    #   .i se ki'u bo le gerna cu to'e curmi le selci'a
+    check not "zo ½ cu valsi".readText.is_read
+
+
+  test "Run of digits with two or more periods reads as its words and tree with pi'e written out":
+    # `Architect` jdice `D5 c` bu'u `#1003`
+    #   .i ro boi denpa bu pe le namcu cu sinxa zo pi'e
+    var count = 0
+    for (text, spelled) in NUMBERS_COMPOUND:
+      for frame in FRAMES_NUMBER:
+        let (a, b) = (frame.replace("_", text).readText, frame.replace("_", spelled).readText)
+        checkpoint frame.replace("_", text)
+        check a.is_read and b.is_read
+        if a.is_read and b.is_read:
+          check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+          check a.tree.shape == b.tree.shape
+          check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
+        inc count
+    check count == COUNT_COMPOUND  # `IX.3`
 
 
   test "Words of each tree, in order, are words of text that erasure leaves":

@@ -3,6 +3,8 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+# Opened with `{.all.}`, so suite holds private `eyeCarried` to failing where it cannot read.
+import ../../src/pga_visualiser/camera {.all.}
 
 
 func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Position =
@@ -55,6 +57,14 @@ template countLiftsIn(body: untyped): int =
 
 
 suite "Camera":
+  test "a motion that carries the reference eye to no place fails, and names its motor":
+    # Fault: motion that is no unit motor fell back to reference eye in silence (repository
+    #   issue 970).
+    check eyeCarried(MOTOR_IDENTITY) =~ EYE_REFERENCE
+    expect AssertionDefect:
+      discard eyeCarried(Multivector())
+
+
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
     # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
     #   416 cases. Distance to pivot spans five decades, and eye stands off pivot along every

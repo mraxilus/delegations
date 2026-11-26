@@ -10,6 +10,8 @@
 ##   Cost: Nim generalized raw strings (`r"..."`, `fmt"..."`) detected by identifier
 ##     character before quote; `"` after operator is plain string, matching lexer.
 ##   Cost: unterminated plain string ends at newline, as lexer would reject it anyway.
+##   Cost: one scanner reads YAML and protobuf text, and only YAML reads `\'` inside single
+##     quotes as backslash and close; so `\'` there ends string of protobuf text early.
 
 {.experimental: "strictFuncs".}
 
@@ -155,14 +157,19 @@ func scanHash(source: string): seq[Comment] =
 
 
 func scanHashSpaced(source: string): seq[Comment] =
-  ## Scan YAML: `#` opens comment at line start or after whitespace, outside quotes.
+  ## Scan YAML or protobuf text: `#` opens comment at line start or after whitespace, unquoted.
+  ##   Backslash inside double quotes escapes next character, as both formats read it, so
+  ##     `\"` keeps string open; inside single quotes it escapes none, as YAML reads it.
   var scan = Scan(line: 1)
   for line in source.splitLines:
     var
       is_single = false
       is_double = false
+      is_escaped = false
     for i, c in line:
-      if c == '"' and not is_single: is_double = not is_double
+      if is_escaped: is_escaped = false
+      elif c == '\\' and is_double: is_escaped = true
+      elif c == '"' and not is_single: is_double = not is_double
       elif c == '\'' and not is_double: is_single = not is_single
       elif c == '#' and not is_single and not is_double and
           (i == 0 or line[i - 1] in {' ', '\t'}):
