@@ -51,7 +51,7 @@ suite "Spacing":
     let mended = breach.fixed
     check mended == "let x = a + b * c - d\nlet t = a and b\n"
     check mended.isSettled
-    check checkSpacing("a.nim", "m∧n")[0].message.endsWith("got `m∧n`.")  # glyph operator
+    check checkSpacing("a.nim", "m∧n")[0].brief.endsWith("got `m∧n`")  # glyph operator
 
 
   test "range operator takes no space, unless piece binds tighter or glued tokens would merge":
@@ -69,11 +69,11 @@ suite "Spacing":
       check checkSpacing("a.nim", breach).len == 1
       check breach.fixed == mended
       check mended.isSettled
-    check checkSpacing("a.nim", "let r = 2 .. 6\n")[0].message.startsWith(
-      "Range operator takes no space",
+    check checkSpacing("a.nim", "let r = 2 .. 6\n")[0].brief.startsWith(
+      "range operator takes no space",
     )
-    check checkSpacing("a.nim", "let r = i + 1..<n\n")[0].message.startsWith(
-      "Range operator takes one space on each side where",
+    check checkSpacing("a.nim", "let r = i + 1..<n\n")[0].brief.startsWith(
+      "range operator takes one space on each side where",
     )
     for kept in [
       "let r = i + 1 ..< len(d)\n",  # `+` binds tighter than range
@@ -105,11 +105,11 @@ suite "Spacing":
       check checkSpacing("a.nim", breach).len == 1
       check breach.fixed == mended
       check mended.isSettled  # second run writes nothing
-    check checkSpacing("a.nim", "let p = b ^ 2\n")[0].message.startsWith(
-      "Power operator takes no space",
+    check checkSpacing("a.nim", "let p = b ^ 2\n")[0].brief.startsWith(
+      "power operator takes no space",
     )
-    check checkSpacing("a.nim", "let p = a ^ -b\n")[0].message.startsWith(
-      "Power operator takes no space, and exponent",
+    check checkSpacing("a.nim", "let p = a ^ -b\n")[0].brief.startsWith(
+      "power operator takes no space, and exponent",
     )
     for kept in [
       "x ^= 2\n",  # assignment, no power operator
@@ -139,8 +139,8 @@ suite "Spacing":
     check checkSpacing("a.nim", ranged).len == 2  # `+` and range, math included
     check ranged.fixed == "let a = digits[i+1..<n]\n"
     check ranged.fixed.isSettled
-    check checkSpacing("a.nim", "let a = prev[i - 1]\n")[0].message.startsWith(
-      "Symbol operator inside bracket glued to operand takes no space",
+    check checkSpacing("a.nim", "let a = prev[i - 1]\n")[0].brief.startsWith(
+      "symbol operator inside bracket glued to operand takes no space",
     )
     for kept in [
       "let a = [a + b, c]\n",  # array literal stands alone
@@ -191,8 +191,8 @@ suite "Spacing":
       check kept.isSettled  # `|∙⊖`, `--`, `+-` and `$-` would each lex as one operator
     let found = checkSpacing("a.nim", "let x = -  -y\n")
     check found.len == 1
-    check found[0].message.startsWith("Prefix operator takes one space before operand it would")
-    check found[0].message.endsWith("got `-  -y`.")
+    check found[0].brief.startsWith("prefix operator takes one space before operand it would")
+    check found[0].brief.endsWith("got `-  -y`")
 
 
   test "fix reads every token as written, operator tokens among them, so splits and merges none":
@@ -205,7 +205,7 @@ suite "Spacing":
     check "f(a,b ,c,  d)\n".fixed == "f(a, b, c, d)\n"
     check "proc f(x:int, y :string) = discard\nlet t = {\"a\":1}\n".fixed ==
       "proc f(x: int, y: string) = discard\nlet t = {\"a\": 1}\n"
-    check checkSpacing("a.nim", "f(a,b)\n")[0].message.startsWith("Comma takes")
+    check checkSpacing("a.nim", "f(a,b)\n")[0].brief.startsWith("comma takes")
     check checkSpacing("a.nim", "let a: int\nlet e = {:}\n").len == 0  # empty table stays
 
 
@@ -213,14 +213,14 @@ suite "Spacing":
     check "func f(a, b: int;c: string ; d: char): int = a\n".fixed ==
       "func f(a, b: int; c: string; d: char): int = a\n"
     check "a = 1;b = 2\n".fixed == "a = 1; b = 2\n"
-    check checkSpacing("a.nim", "f(a, b: int;c: X)\n")[0].message.startsWith("Semicolon takes")
+    check checkSpacing("a.nim", "f(a, b: int;c: X)\n")[0].brief.startsWith("semicolon takes")
     check "proc f(a, b: int;\n       c: X) = discard\n".isSettled  # line break is not gap
 
 
   test "bracket holds no space inside it, and prefix operator after it glues":
     check "f( a, b )\nlet s = @[ 1 ]\nproc g() {. inline .}\nlet u = ( |∙ x)\n".fixed ==
       "f(a, b)\nlet s = @[1]\nproc g() {.inline.}\nlet u = (|∙x)\n"
-    check checkSpacing("a.nim", "f( a)\n")[0].message.startsWith("Bracket holds")
+    check checkSpacing("a.nim", "f( a)\n")[0].brief.startsWith("bracket holds")
 
 
   test "gap that would merge two tokens stays: `[:`, colon after operator":
@@ -231,7 +231,7 @@ suite "Spacing":
   test "`=` takes one space each side, wherever it stands":
     check "f(a=1, b  =  2)\nproc g(a=1)= discard\nx=1\nlet y  =2\n".fixed ==
       "f(a = 1, b = 2)\nproc g(a = 1) = discard\nx = 1\nlet y = 2\n"
-    check checkSpacing("a.nim", "x=1\n")[0].message.startsWith("`=` takes one space")
+    check checkSpacing("a.nim", "x=1\n")[0].brief.startsWith("`=` takes one space")
     for kept in ["Foo(a: 1)\n", "proc f() =\n  discard\n"]:
       check kept.fixed == kept
     check "x=-1\n".fixed == "x =- 1\n"  # `=-` is one operator, as lexer reads it

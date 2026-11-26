@@ -64,7 +64,7 @@ suite "Parentheses":
       check breach.fixed == mended
       check mended.isSettled  # second run writes nothing
     let named = "let c = ☆(m) ∧ n\n"
-    check checkParentheses("a.nim", named, named.proofsStubbed)[0].message.endsWith("got `(m)`.")
+    check checkParentheses("a.nim", named, named.proofsStubbed)[0].brief.endsWith("got `(m)`")
 
 
   test "group whose removal glues tokens, or that holds binary expression or suffix, stays":
@@ -110,8 +110,8 @@ suite "Parentheses":
       source = "let x = (a.b(c)[i]) + @(x[0])\n"
       proofs = source.proofsStubbed
     check proofs.answers[source] == @[8]  # `(x[0])` refused
-    check checkParentheses("a.nim", source, proofs).mapIt(it.message.split("got ")[1]) ==
-      @["`(a.b(c)[i])`."]
+    check checkParentheses("a.nim", source, proofs).mapIt(it.brief.split("got ")[1]) ==
+      @["`(a.b(c)[i])`"]
     check fixParentheses("a.nim", source, proofs).fixed.len == 1
     let unanswered = fixParentheses("a.nim", source, Proofs())
     check unanswered.source == source and unanswered.fixed.len == 0  # nothing proven, nothing

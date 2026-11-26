@@ -127,8 +127,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A tool reports each finding through `knoller/report`, in one of two forms. On a terminal, a
   lowercase summary follows the location and the rule. Then come the source line with a marker,
   the `actual` and `expect` values in two columns, and a `help:` line. In a pipe or a log, one
-  line reads ``path:line:column: rule: actual="…" expect="…" message="…"``, with each value
-  quoted and escaped. A check of the terminal picks the form, and a flag forces either one.
+  line reads ``path:line:column: rule: actual="…" expect="…" message="…" help="…"``, with each
+  value quoted and escaped. A check of the terminal picks the form, and a flag forces either one.
   Color shows only on a terminal, and `NO_COLOR` turns it off.
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import in
   every entry module, library umbrella and test entry alike, right after the pragmas, on two

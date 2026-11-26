@@ -19,6 +19,8 @@
 ##     `start` prints role, read order, each finding of drift, headings of record branch works
 ##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
 ##     git hooks.
+##   Each finding hook names prints in line form of renderer, help last (`toLine`), so reader of
+##     hook, model or person, gets remedy too (ruling 7197275206 of #1002).
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -622,15 +624,23 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Never commit to `main`; push to branch inside grammar (AGENTS.md); got `" & branch & "`.",
+        Check.MainCommit,
+        "Never commit to `main` (AGENTS.md); got `" & branch & "`.",
+        help = "push to branch inside grammar",
       )
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
-      result.add finding("", 0, "Never rewrite pushed history (XI.2); got `git push --force`.")
+      result.add finding(
+        "",
+        0,
+        Check.RewriteHistory,
+        "Never rewrite pushed history (XI.2); got `git push --force`.",
+      )
     if sub == "push" and "--no-verify" in arguments:
       result.add finding(
         "",
         0,
+        Check.VerifyPush,
         "Never push past pre-push hook; `koch check` holds what each project clears on its own " &
           "branch (CURATOR.md, duty 3); got `git push --no-verify`.",
       )
@@ -638,6 +648,7 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.RewriteHistory,
         "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`.",
       )
 
@@ -905,9 +916,11 @@ func checkClosing(body: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.KeywordClosing,
       "Body holds closing keyword before issue only on line of its own, as `Closes " & issue &
-        "`, since GitHub closes issue whatever sentence says; drop keyword, or put issue " &
-        "first, as `" & issue & " stays open`; got `" & phrase.splitWhitespace.join(" ") & "`.",
+        "`, since GitHub closes issue whatever sentence says; got `" &
+        phrase.splitWhitespace.join(" ") & "`.",
+      help = "drop keyword, or put issue first, as `" & issue & " stays open`",
     )
 
 
@@ -922,7 +935,9 @@ func checkBody*(
       result.add finding(
         "",
         0,
+        Check.RolePost,
         "Post must open with `" & expected & "`; got " & body.openingQuoted & ".",
+        expected = some(expected),
       )
   if tool in TOOLS_PULL or tool == "mcp__github__issue_write": result.add checkClosing(body)
   result.add findingsEnglish("post", body)
@@ -931,12 +946,14 @@ func checkBody*(
       result.add finding(
         "",
         0,
+        Check.TitleIssue,
         "Issue title is claim, never `type(scope):` subject; got `" & title & "`.",
       )
     if COORDINATOR in labels or not labels.anyIt(it.isStringRole):
       result.add finding(
         "",
         0,
+        Check.LabelIssue,
         "Issue must carry role label of its work, copied from grammar, and never `" &
           COORDINATOR & "`; got `" & labels.join(", ") & "`.",
       )
@@ -953,9 +970,11 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Hook reads `gh api` post before shell expands it; write body to file in earlier call, " &
-          "name it as `-F body=@<path>`, and write title and labels literally; got `" &
-          request.expansion.shortened & "`.",
+        Check.BodyPost,
+        "Hook reads `gh api` post before shell expands it; got `" & request.expansion.shortened &
+          "`.",
+        help = "write body to file in earlier call, name it as `-F body=@<path>`, and write " &
+          "title and labels literally",
       )
       continue
     var (title, body, labels) = (request.title, request.body, request.labels)
@@ -964,16 +983,20 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.BodyPost,
           "Hook reads `gh api` post before command runs, so body from shell variable or stdin " &
-            "is unread; name file by literal path; got `" & request.path & "`.",
+            "is unread; got `" & request.path & "`.",
+          help = "name file by literal path",
         )
         continue
       if not request.path.fileExists:
         result.add finding(
           "",
           0,
+          Check.BodyPost,
           "Hook reads `gh api` post before command runs, so it cannot read file command itself " &
-            "writes; write file in earlier call; got missing `" & request.path & "`.",
+            "writes; got missing `" & request.path & "`.",
+          help = "write file in earlier call",
         )
         continue
       body = readFile(request.path)
@@ -985,6 +1008,7 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
           result.add finding(
             "",
             0,
+            Check.BodyPost,
             "`--input` file of `gh api` post must hold JSON object; got `" & request.path & "`.",
           )
           continue
@@ -1081,9 +1105,17 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
   ##     asks question with two to four options, and names pick among them.
   let name = "`D" & $d.number & "`"
   if d.number != at + 1:
-    result.add finding("", 0, "Decisions are numbered from D1 in order; got `" & name & "`.")
-  if d.class.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Class:`; got none.")
-  if d.where.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Where:`; got none.")
+    result.add finding(
+      "",
+      0,
+      Check.Decision,
+      "Decisions are numbered from D1 in order; got `D" & $d.number & "`.",
+      expected = some("D" & $(at + 1)),
+    )
+  if d.class.len == 0:
+    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Class:`.")
+  if d.where.len == 0:
+    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Where:`.")
   if d.class.startsWith(CLASS_BLOCKS_OTHERS):
     let roles = d.class[CLASS_BLOCKS_OTHERS.len .. ^1].replace(" and ", ",").split(',')
     for r in roles:
@@ -1091,6 +1123,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.Decision,
           "Class names each role that waits too as role string; got `" & r.strip & "`.",
         )
   elif d.class.len > 0 and d.class notin [CLASS_BLOCKS, CLASS_FACT] and
@@ -1098,6 +1131,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.Decision,
       "Class is `" & CLASS_BLOCKS & "`, `" & CLASS_BLOCKS_OTHERS & "<role>`, `" &
         CLASS_WORKAROUND & " <workaround>` or `" & CLASS_FACT & "`; got `" & d.class & "`.",
     )
@@ -1106,6 +1140,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Decision,
         "Decision of class `fact` offers no option; got `" & $d.options.len & "` in `" & name &
           "`.",
       )
@@ -1113,6 +1148,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Decision,
         "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`.",
       )
     return
@@ -1120,6 +1156,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.Decision,
       "Decision " & name & " offers " & $OPTIONS_MIN & " to " & $OPTIONS_MAX & " options; got `" &
         $d.options.len & "`.",
     )
@@ -1128,6 +1165,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Decision,
         "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in `" & name &
           "`.",
       )
@@ -1135,21 +1173,29 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Decision,
         "Option label holds at most " & $WORDS_OPTION & " words; got `" & o.label & "`.",
       )
   let pick = d.recommends.split({',', ' ', '.', ':'})[0]
   if d.recommends.len == 0:
-    result.add finding("", 0, "Decision " & name & " lacks `Recommends:`; got none.")
+    result.add finding(
+      "",
+      0,
+      Check.Decision,
+      "Decision " & name & " lacks `Recommends:`.",
+    )
   elif pick.len != 1 or pick[0] notin d.options.mapIt(it.letter):
     result.add finding(
       "",
       0,
+      Check.Decision,
       "Recommends names letter of one option of " & name & "; got `" & pick & "`.",
     )
   if not d.question.endsWith("?"):
     result.add finding(
       "",
       0,
+      Check.Decision,
       "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`.",
     )
 
@@ -1256,6 +1302,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.RowsSignoff,
       "Sign-off table opens with header `" & TABLE_SIGNOFF & "`; got `" &
         (if g.header.len == 0: "none" else: g.header.shortened) & "`.",
     )
@@ -1270,6 +1317,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off row holds two cells, `Item` and `Evidence, or who acts`; got `" &
             $row.cells.len & "`.",
         )
@@ -1279,6 +1327,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off row opens first cell with state, one of ☑️ ✅ ⚠️ ⏸️ ⬜ ➖; got `" & word & "`.",
         )
         continue
@@ -1286,6 +1335,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off row opens first cell with state, number and claim, as `✅ 3. A test covers " &
             "each rafsi form`; got `" & row.cells[0].shortened & "`.",
         )
@@ -1298,13 +1348,16 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off rows are numbered from 1 in order across its tables; got `" & name & "`.",
+          expected = some($expected),
         )
       expected = max(row.first, row.last) + 1
       if row.state < last:
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off states sort ☑️ ✅ ⚠️ ⏸️ ⬜ ➖ inside each table; got `" &
             row.cells[0].splitWhitespace[0] & "` after later state.",
         )
@@ -1313,6 +1366,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off folds done rows alone, as `☑️ 1–5.`; got `" & row.cells[0].splitWhitespace[0] &
             "` in row `" & name & "`.",
         )
@@ -1320,6 +1374,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off row holds evidence, or who acts, in its second cell; got empty cell in row `" &
             name & "`.",
         )
@@ -1328,6 +1383,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off ⚠️ row opens second cell with role string or `" & OUTSIDE & "`, after any " &
             "carried tag; got `" & actor & "` in row `" & name & "`.",
         )
@@ -1336,6 +1392,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.RowsSignoff,
           "Sign-off ⏸️ row names decision it waits on as `D<n>`; got `" & evidence & "` in row `" &
             name & "`.",
         )
@@ -1345,12 +1402,14 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
           result.add finding(
             "",
             0,
+            Check.RowsSignoff,
             "Sign-off ➖ row stands in table `" & LABEL_OUTSIDE & "`; got it in row `" & name & "`.",
           )
         if evidence.tagsCarried.len == 0:
           result.add finding(
             "",
             0,
+            Check.RowsSignoff,
             "Sign-off ➖ row names each carried rule that concerns no item by its tag, as " &
               "`carried 3 and 4`; got `" & evidence.shortened & "` in row `" & name & "`.",
           )
@@ -1359,10 +1418,16 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
           result.add finding(
             "",
             0,
+            Check.RulesCarried,
             "Carried tag names rule 1 to " & $CARRIED_MAX & "; got `" & $n & "`.",
           )
   if unneeded > 1:
-    result.add finding("", 0, "Sign-off holds one ➖ row; got `" & $unneeded & "`.")
+    result.add finding(
+      "",
+      0,
+      Check.RowsSignoff,
+      "Sign-off holds one ➖ row; got `" & $unneeded & "`.",
+    )
 
 
 func findingsCarried(groups: seq[Group]): seq[Finding] =
@@ -1382,6 +1447,7 @@ func findingsCarried(groups: seq[Group]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.RulesCarried,
         "Carried rule stands beside item it concerns, or in ➖ row, and never in both; got `" &
           $n & "`.",
       )
@@ -1390,6 +1456,7 @@ func findingsCarried(groups: seq[Group]): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.RulesCarried,
       "Sign-off names each carried rule beside item it concerns, or in ➖ row (CONTRIBUTOR.md, " &
         "Carry the unchecked list in the open); got none for `" & missing.mapIt($it).join(", ") &
         "`.",
@@ -1408,6 +1475,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.GroupsSignoff,
         "Sign-off table follows bold line of its group (GUIDE.md, The table); got `" &
           g.header.shortened & "`.",
       )
@@ -1415,6 +1483,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.GroupsSignoff,
         "Sign-off group opens with bold line that links its pull request and gives its state, " &
           "as `**[Lujvo search (#912)](url), draft.**`, or with `" & LABEL_OUTSIDE & "`; got `" &
           g.line.shortened & "`.",
@@ -1423,6 +1492,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.GroupsSignoff,
         "Pull request state on bold line is one of " & STATES_PULL.join(", ") & "; got `" &
           g.state & "`.",
       )
@@ -1431,6 +1501,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.GroupsSignoff,
         "Sign-off puts table `" & LABEL_OUTSIDE & "` after each group of pull request; got `" &
           g.line.shortened & "` after it.",
       )
@@ -1439,6 +1510,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.GroupsSignoff,
           "Sign-off holds one group for each pull request; got `#" & $g.number & "` twice.",
         )
       else: seen.add g.number
@@ -1446,6 +1518,7 @@ func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.GroupsSignoff,
       "Sign-off holds table `" & LABEL_OUTSIDE & "` once, even where ➖ row is its only row; " &
         "got `" & $outside & "`.",
     )
@@ -1485,17 +1558,30 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     at = message.atSignoff
   if at < 0:
     return @[finding(
-      "", 0, "Message holds no `" & HEADING_SIGNOFF & "` block (GUIDE.md, Output contract)."
+      "",
+      0,
+      Check.Signoff,
+      "Message holds no `" & HEADING_SIGNOFF & "` block (GUIDE.md, Output contract)."
     )]
   let
     after = lines[at + 1 .. ^1]
     starts = after.partsAt
   for line in after:
     if line.startsWith("#"):
-      result.add finding("", 0, "Nothing follows sign-off; got heading `" & line & "`.")
+      result.add finding(
+        "",
+        0,
+        Check.Signoff,
+        "Nothing follows sign-off; got heading `" & line & "`.",
+      )
   for part, label in LABELS_SIGNOFF:
     if starts[part] < 0:
-      result.add finding("", 0, "Sign-off lacks `" & label & "` in its order; got none.")
+      result.add finding(
+        "",
+        0,
+        Check.Signoff,
+        "Sign-off lacks `" & label & "` in its order.",
+      )
   var readable = starts
   readable[Part.Work] = 0  # Work reads after context where its rule line is missing.
   if readable.anyIt(it < 0): return
@@ -1516,19 +1602,24 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Signoff,
         "Sign-off role must be `" & parsed.get.nameRole & "`; got `" & text_role & "`.",
+        expected = some(parsed.get.nameRole),
       )
     elif rest_role[text_role.len .. ^1] != tail:
       result.add finding(
         "",
         0,
+        Check.Signoff,
         "Sign-off role line closes with word `" & WORD_BRANCH & "` and last part of branch, as `" &
           tail & "`; got `" & rest_role[text_role.len .. ^1] & "`.",
+        expected = some(tail),
       )
   if word_state notin STATES_SIGNOFF:
     result.add finding(
       "",
       0,
+      Check.Signoff,
       "Sign-off state is one of " & STATES_SIGNOFF.join(", ") &
         (if word_state == "working": ", and turn while work runs closes with line `" &
            LABEL_WORKING & "`"
@@ -1538,12 +1629,14 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.Signoff,
       "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & word_state & "`.",
     )
   if word_state in STATES_SIGNOFF and not rest_state[word_state.len .. ^1].isStateRest:
     result.add finding(
       "",
       0,
+      Check.Signoff,
       "Sign-off state line gives state word, short head and `pushed` or `not pushed` alone, as " &
         "`blocked, at `3f2a9c1`, pushed`, and leaves pull request and run to its bold line; " &
         "got `" & rest_state.shortened & "`.",
@@ -1552,6 +1645,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.Signoff,
       "Sign-off with no decision writes `" & LABELS_SIGNOFF[Part.Decisions] & " " &
         DECISION_NONE & "`; got `" & Part.Decisions.rest.shortened & "`.",
     )
@@ -1559,6 +1653,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.Signoff,
       "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened & "`.",
     )
   for i, d in decisions: result.add findingsDecision(d, i)
@@ -1570,6 +1665,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.Signoff,
         "Nothing follows Next step of sign-off; got `" & line.shortened & "`.",
       )
   var prose: seq[string]
@@ -1646,6 +1742,7 @@ func findingsGroups(
       result.add finding(
         "",
         0,
+        Check.GroupsKept,
         "Sign-off keeps group of each pull request until `origin/main` holds its merge or one " &
           "sign-off shows it `" & CLOSED & "` (GUIDE.md, The table); got none for `#" &
           $b.number & "`, which held " & held & ".",
@@ -1655,6 +1752,7 @@ func findingsGroups(
       result.add finding(
         "",
         0,
+        Check.GroupsKept,
         "Sign-off keeps each item of group that sign-off before it held, folded past twelve " &
           "rows (GUIDE.md, The table); got `" & $now[at].count & "` items in `" & name &
           "`, which held `" & $b.count & "`: " & held & ".",
@@ -1751,9 +1849,10 @@ func checkNumbersBare*(message: string): seq[Finding] =
         result.add finding(
           "",
           0,
-          "Message names `" & number & "` bare before any link to it; give first mention as " &
-            "one link of short description and number, as `[the ledger fix (#456)](address)`, " &
-            "then number alone (GUIDE.md, Output contract).",
+          Check.NumberBare,
+          "Message names `" & number & "` bare before any link to it (GUIDE.md, Output contract).",
+          help = "give first mention as one link of short description and number, as " &
+            "`[the ledger fix (#456)](address)`, then number alone",
         )
     for (_, number) in linked: named.add number
 
@@ -1768,9 +1867,10 @@ func checkLinksReference*(message: string): seq[Finding] =
       return @[finding(
         "",
         0,
-        "Message gives link `[" & label & "]` by reference; write each link inline, as " &
-          "`[the ledger fix (#456)](address)`, since Claude Code shows reference link as raw " &
-          "text where its address stands below it (GUIDE.md, Output contract).",
+        Check.LinkReference,
+        "Message gives link `[" & label & "]` by reference, and Claude Code shows reference " &
+          "link as raw text where its address stands below it (GUIDE.md, Output contract).",
+        help = "write each link inline, as `[the ledger fix (#456)](address)`",
       )]
 
 
@@ -1850,9 +1950,10 @@ func checkReferencesBare*(message: string): seq[Finding] =
         result.add finding(
           "",
           0,
-          "Message cites `" & reference & "` with no description; cite each article and duty " &
-            "first by short description and its reference, as `expression spacing (X.9)`, " &
-            "then reference alone (GUIDE.md, Output contract).",
+          Check.ReferenceBare,
+          "Message cites `" & reference & "` with no description (GUIDE.md, Output contract).",
+          help = "cite each article and duty first by short description and its reference, as " &
+            "`expression spacing (X.9)`, then reference alone",
         )
       i = after
 
@@ -1868,9 +1969,12 @@ func checkEndTurn*(message, branch: string; is_writing: bool): seq[Finding] =
   let last = message.strip.splitLines[^1].strip
   if last.startsWith(LABEL_WORKING) and last[LABEL_WORKING.len .. ^1].strip.len > 0: return
   @[finding(
-    "", 0, "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` block once done, " &
+    "",
+    0,
+    Check.EndTurn,
+    "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` block once done, " &
       "blocked or waiting, or with line `" & LABEL_WORKING & "` while work runs (GUIDE.md, " &
-      "Output contract); got neither."
+      "Output contract)."
   )]
 
 
@@ -1952,9 +2056,12 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   let label = if role == COORDINATOR: LABEL_QUEUE_COORDINATOR else: role
   if calls.anyIt(it.isQueueRead(label)): return
   @[finding(
-    "", 0, "Sign-off follows read of open issues labelled `" & label & "` in its turn, " &
+    "",
+    0,
+    Check.ReadIssues,
+    "Sign-off follows read of open issues labelled `" & label & "` in its turn, " &
       "through `mcp__github__list_issues` or `gh issue list`, since request can arrive while " &
-      "delegate works (GUIDE.md, Output contract); got none."
+      "delegate works (GUIDE.md, Output contract)."
   )]
 
 
@@ -2064,6 +2171,7 @@ func checkPredictions(subagents: Subagents, kinds: openArray[string]): seq[Findi
     result.add finding(
       "",
       0,
+      Check.Prediction,
       "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn before " &
         "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
         "critic and reflection); got none for `" & call.kind & "` call `" & call.description &
@@ -2276,19 +2384,30 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
     let rows = lines[i + 1 ..< stop].mapIt(it.cellsRow).filterIt(not it.isRowSeparator)
     if rows.len == 0:
       return @[finding(
-        "", 0, "Table of reflection holds row under its header; got none under `" &
+        "",
+        0,
+        Check.TableReflection,
+        "Table of reflection holds row under its header; got none under `" &
           lines[i].strip & "`."
       )]
     for n, row in rows:
       let cell = (if column < row.len: row[column].collapsed else: "")
       if cell.len == 0:
-        result.add finding("", 0, RULE_CELL & "; got empty cell in row `" & $(n + 1) & "`.")
+        result.add finding(
+          "",
+          0,
+          Check.TableReflection,
+          RULE_CELL & "; got empty cell in row `" & $(n + 1) & "`.",
+        )
       elif cell != NO_PREDICTION and cell notin quoted:
-        result.add finding("", 0, RULE_CELL & "; got `" & cell & "`.")
+        result.add finding("", 0, Check.TableReflection, RULE_CELL & "; got `" & cell & "`.")
     return
   @[finding(
-    "", 0, "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
-      "(GUIDE.md, Prediction, critic and reflection); got none."
+    "",
+    0,
+    Check.TableReflection,
+    "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
+      "(GUIDE.md, Prediction, critic and reflection)."
   )]
 
 
@@ -2316,6 +2435,7 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
     result.add finding(
       "",
       0,
+      Check.Reflection,
       "Report of critic takes `" & HEADING_REFLECTION & "` block of its own after it, above " &
         "any sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
         "for report `" & $(n + 1) & "` of `" & $reports.len & "` in this turn.",
@@ -2350,12 +2470,12 @@ func reasonStop*(
     parts.add "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a " &
       "diff of each error alone: one `diff` block, each wrong phrase after `-`, that phrase " &
       "mended after `+`. Message stands above it, so never send it, a line of it, or its " &
-      "sign-off again:\n" & found.mapIt(it.message).join("\n")
+      "sign-off again:\n" & found.mapIt(it.toLine).join("\n")
   if unread.len > 0:
     parts.add "Read queue before this sign-off stands (GUIDE.md, Output contract): list open " &
       "issues that line below names, take first what waits there, and reply with one line " &
-      "naming it, and no diff:\n" & unread.mapIt(it.message).join("\n")
-  if blocks.len > 0: parts.add LINE_BLOCKS & "\n" & blocks.mapIt(it.message).join("\n")
+      "naming it, and no diff:\n" & unread.mapIt(it.toLine).join("\n")
+  if blocks.len > 0: parts.add LINE_BLOCKS & "\n" & blocks.mapIt(it.toLine).join("\n")
   if has_signoff: parts.add LINE_SIGNOFF
   parts.join("\n")
 
@@ -2374,8 +2494,10 @@ func checkPush*(recorded, tree_pushed: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); last green tree `" &
-        recorded.strip & "`; got `" & tree_pushed.strip & "`.",
+      Check.CheckPush,
+      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); got `" & tree_pushed.strip &
+        "`.",
+      expected = some(recorded.strip),
     )
 
 
@@ -2523,7 +2645,7 @@ func contextStart*(
   if drift.len > 0:
     lines.add "Base changed charter or code of stamp since this branch forked; read each " &
       "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
-    for f in drift: lines.add "  " & f.render
+    for f in drift: lines.add "  " & f.toLine
   for line in lags: lines.add line
   if rates.len > 0:
     lines.add "Past figures of each kind, from logs of claims (GUIDE.md, Prediction, critic and " &
@@ -2596,11 +2718,11 @@ func contextFindings*(path: string, held, own: openArray[Finding]): string =
   if own.len > 0:
     parts.add "koch check-files reports " & $own.len & " finding(s) in `" & path &
       "`; fix before push:"
-    parts.add own.mapIt(it.path & ":" & $it.line & ": " & it.message)
+    parts.add own.mapIt(it.toLine)
   if held.len > 0:
     parts.add "koch check-files holds " & $held.len & " finding(s) in `" & path &
       "` for its project, which clears them in its next pull request (CURATOR.md, duty 3):"
-    parts.add held.mapIt(it.path & ":" & $it.line & ": " & it.message)
+    parts.add held.mapIt(it.toLine)
   parts.join("\n")
 
 

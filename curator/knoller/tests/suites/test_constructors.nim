@@ -7,7 +7,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[constructors, rules]
+import ../../src/knoller/[constructors, reports, rules]
 
 
 const
@@ -31,7 +31,7 @@ func reported(sources: openArray[string]): seq[(int, int, string)] =
   let calls = callsConstructor(sources)
   for k, source in sources:
     for report in checkConstructors("a.nim", source, calls):
-      let message = if report.rule == Rule.PrefixConversion: report.message else: $report.rule
+      let message = if report.rule == Rule.PrefixConversion: report.brief else: $report.rule
       result.add (k, report.line, message)
 
 
@@ -42,13 +42,13 @@ suite "Style §5":
     check calls.mapIt((it.name, it.dotted, it.prefixed)) == @[("initElement", 4, 2)]
     let found = reported([DECLARING, OPERATORS, SUITES])
     check found.mapIt((it[0], it[1])) == @[(1, 1), (2, 3)]  # each prefix call
-    check found[0][2] == "Routine takes one call form on plain first argument across package, " &
-      "where `4` calls take dot; got `initElement(Basis.origin)`."
-    check found[1][2].endsWith("got `initElement(Basis.scalar, s / t)`.")
+    check found[0][2] == "routine takes one call form on plain first argument across package, " &
+      "where `4` calls take dot; got `initElement(Basis.origin)`"
+    check found[1][2].endsWith("got `initElement(Basis.scalar, s / t)`")
     let fewer = reported([DECLARING, "let a = initElement(x)\nlet b = initElement(y, 2)\n" &
       "let c = z.initElement\n"])
     check fewer.mapIt(it[1]) == @[3]  # dotted call is one fewer
-    check fewer[0][2].endsWith("`2` calls take prefix call; got `z.initElement`.")
+    check fewer[0][2].endsWith("`2` calls take prefix call; got `z.initElement`")
     let tie = reported([DECLARING, "let a = initElement(x)\nlet c = z.initElement(1)\n"])
     check tie.mapIt(it[1]) == @[1, 2]  # both forms where they tie
     check tie.allIt("`1` calls take each form" in it[2])

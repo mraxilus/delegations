@@ -189,8 +189,10 @@ func checkImportsProject*(tree: Tree): seq[Finding] =
       result.add finding(
         e.path,
         one.line,
-        "Import by path reaches into other project; require it as package that `atlas.lock` " &
-          "pins (CONTRIBUTOR.md, Dependencies); got `" & imported & "`.",
+        Check.ImportProject,
+        "Import by path reaches into other project (CONTRIBUTOR.md, Dependencies); got `" &
+          imported & "`.",
+        help = "require it as package that `atlas.lock` pins",
       )
 
 
@@ -228,6 +230,7 @@ func checkImportsDriver*(tree: Tree): seq[Finding] =
       result.add finding(
         driver,
         one.line,
+        Check.ImportDriver,
         "Driver imports no package, itself or through module of its project, since `koch " &
           "list-packages` runs it before any restore (CONTRIBUTOR.md, Dependencies); got `" &
           found.get[0] & "` in `" & found.get[1] & "`.",

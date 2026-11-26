@@ -83,8 +83,8 @@ suite "Declarations":
     #   stands on line above it, below code (ruling on rule 5 of #443).
     let order = "import std/math\n\n## Define type definition for transwedge order.\n" &
       "type Order = distinct range[0..DIMENSIONS]\n#func `<=`(a, b: Order): bool {.borrow.}\n"
-    check checkDocs("a.nim", order).mapIt((it.line, it.message)) == @[
-      (4, "Doc stands after its declaration, never above it; got it above `type Order`."),
+    check checkDocs("a.nim", order).mapIt((it.line, it.brief)) == @[
+      (4, "doc stands after its declaration, never above it; got it above `type Order`"),
     ]
     check order.fixed == "import std/math\n\ntype Order = distinct range[0..DIMENSIONS]  ## " &
       "Define type definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
@@ -174,11 +174,11 @@ suite "Declarations":
     let breach = "const\n  Cayley1D* =\n    ## Define map.\n    array[Basis, seq[BasisSigned]]\n" &
       "  TABLE = [\n    ## Table.\n    1,\n  ]\n" &
       "proc f() =\n  ## Do.\n  let pairs = @[\n    ## Pairs.\n    (1, 2),\n  ]\n  echo pairs\n"
-    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
-      (2, "Doc of value over lines stands after `=` ending its first line; got it below " &
-        "`const Cayley1D`."),
-      (5, "Doc of value over brackets stands after its close; got it below `const TABLE`."),
-      (11, "Doc of value over brackets stands after its close; got it below `let pairs`."),
+    check checkDocs("a.nim", breach).mapIt((it.line, it.brief)) == @[
+      (2, "doc of value over lines stands after `=` ending its first line; got it below " &
+        "`const Cayley1D`"),
+      (5, "doc of value over brackets stands after its close; got it below `const TABLE`"),
+      (11, "doc of value over brackets stands after its close; got it below `let pairs`"),
     ]
     check breach.fixed == "const\n  Cayley1D* =  ## Define map.\n" &
       "    array[Basis, seq[BasisSigned]]\n  TABLE = [\n    1,\n  ]  ## Table.\n" &
@@ -198,9 +198,9 @@ suite "Declarations":
       "    var lut: array[Basis, Grade]\n" &
       "    for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)\n    lut\n\n" &
       "  lut_grade_by_basis[b]\n"
-    check checkDocs("a.nim", grade).mapIt((it.line, it.message)) == @[
-      (4, "Doc of value opening `block` stands after `=`, with `block` on next line; got it " &
-        "below `const lut_grade_by_basis`."),
+    check checkDocs("a.nim", grade).mapIt((it.line, it.brief)) == @[
+      (4, "doc of value opening `block` stands after `=`, with `block` on next line; got it " &
+        "below `const lut_grade_by_basis`"),
     ]
     check grade.fixed == grade  # no comment alone gives value opening `block` doc `nim doc` reads
 
@@ -208,9 +208,9 @@ suite "Declarations":
   test "next-line doc of several lines, or under line holding comment, stands one level in":
     let breach = "const\n  N = 3\n      ## Size,\n      ##   in units.\n" &
       "  WHY = 1  # Reason.\n      ## Why.\n"
-    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
-      (2, "Doc on next line stands one level in; got indent `6`."),
-      (5, "Doc on next line stands one level in; got indent `6`."),
+    check checkDocs("a.nim", breach).mapIt((it.line, it.brief)) == @[
+      (2, "doc on next line stands one level in; got indent `6`"),
+      (5, "doc on next line stands one level in; got indent `6`"),
     ]
     check breach.fixed == "const\n  N = 3\n    ## Size,\n    ##   in units.\n" &
       "  WHY = 1  # Reason.\n    ## Why.\n"
@@ -221,15 +221,15 @@ suite "Declarations":
     let breach = "proc f() =  ## Do.\n  discard\nfunc g(): int = 1  ## One.\n" &
       "proc h() =\n\n  ## Do.\n  discard\nproc k() =\n      ## Do.\n  discard\n" &
       "func m(): int = 2\n    ## Two.\n"
-    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
-      (1, "Doc of routine stands on line after its signature; got it on signature line of " &
-        "`proc f`."),
-      (3, "Doc of routine stands on line after its signature; got it on signature line of " &
-        "`func g`."),
-      (4, "Doc of routine stands on line right after its signature; got blank line above it " &
-        "in `proc h`."),
-      (8, "Doc of routine stands at indent of its body; got indent `6` in `proc k`."),
-      (11, "Doc of routine stands at indent of its body; got indent `4` in `func m`."),
+    check checkDocs("a.nim", breach).mapIt((it.line, it.brief)) == @[
+      (1, "doc of routine stands on line after its signature; got it on signature line of " &
+        "`proc f`"),
+      (3, "doc of routine stands on line after its signature; got it on signature line of " &
+        "`func g`"),
+      (4, "doc of routine stands on line right after its signature; got blank line above it " &
+        "in `proc h`"),
+      (8, "doc of routine stands at indent of its body; got indent `6` in `proc k`"),
+      (11, "doc of routine stands at indent of its body; got indent `4` in `func m`"),
     ]
     check breach.fixed == "proc f() =\n  ## Do.\n  discard\nfunc g(): int = 1\n  ## One.\n" &
       "proc h() =\n  ## Do.\n  discard\nproc k() =\n  ## Do.\n  discard\n" &
@@ -239,8 +239,8 @@ suite "Declarations":
 
   test "one-line doc under bare `type` joins keyword line, as group doc of block":
     let breach = "type\n  ## Group.\n  A = int  ## One.\n"
-    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
-      (1, "Group doc of `type` section stands on keyword line; got it on next line."),
+    check checkDocs("a.nim", breach).mapIt((it.line, it.brief)) == @[
+      (1, "group doc of `type` section stands on keyword line; got `it on next line`"),
     ]
     check breach.fixed == "type  ## Group.\n  A = int  ## One.\n"
     check breach.fixed.isSettled
@@ -275,13 +275,13 @@ suite "Declarations":
       "  WHY = 1  # Reason.\n"
     let found = checkDocsMissing("a.nim", breach)
     check found.mapIt(it.line) == @[1, 3, 4, 5, 6, 7, 9, 14, 15]
-    check found.mapIt(it.message)[0 .. 1] == @[
-      "Declaration takes doc comment; got `const N`.",
-      "Declaration takes doc comment; got `type Shape`.",
+    check found.mapIt(it.brief)[0 .. 1] == @[
+      "declaration takes doc comment; got `const N`",
+      "declaration takes doc comment; got `type Shape`",
     ]
-    check found.mapIt(it.message)[5 .. 6] == @[
-      "Declaration takes doc comment; got `proc area`.",
-      "Declaration takes doc comment; got `func scale`.",
+    check found.mapIt(it.brief)[5 .. 6] == @[
+      "declaration takes doc comment; got `proc area`",
+      "declaration takes doc comment; got `func scale`",
     ]
     check breach.documented == "const N* = 3  ## TODO: Document.\ntype\n" &
       "  Shape {.pure.} = enum  ## TODO: Document.\n    Round  ## TODO: Document.\n" &
@@ -313,11 +313,11 @@ suite "Declarations":
   test "names one line declares share one doc, enum members among them, so line reports once":
     let breach = "type P = object\n  ## Pair.\n  left*, right*: int\nlet (a, b) = (1, 2)\n" &
         "type K = enum\n  ## Kind.\n  A, B, C\n  D,\n  E  ## Last.\n"
-    check checkDocsMissing("a.nim", breach).mapIt((it.line, it.message)) == @[
-      (3, "Declaration takes doc comment; got `field left`."),
-      (4, "Declaration takes doc comment; got `let a`."),
-      (7, "Declaration takes doc comment; got `member A`."),  # doc above is its type's own
-      (8, "Declaration takes doc comment; got `member D`."),  # `,` opens next member, not value
+    check checkDocsMissing("a.nim", breach).mapIt((it.line, it.brief)) == @[
+      (3, "declaration takes doc comment; got `field left`"),
+      (4, "declaration takes doc comment; got `let a`"),
+      (7, "declaration takes doc comment; got `member A`"),  # doc above is its type's own
+      (8, "declaration takes doc comment; got `member D`"),  # `,` opens next member, not value
     ]
     check breach.documented == "type P = object\n  ## Pair.\n" &
         "  left*, right*: int  ## TODO: Document.\nlet (a, b) = (1, 2)  ## TODO: Document.\n" &
@@ -331,9 +331,9 @@ suite "Declarations":
     #   `3d9696e`, whose docs hold notes `TODO: Make distinct.` and `TODO: Define via macro.`.
     let breach = "type\n  Bases* = set[int]  ## TODO: Make distinct.\n" &
       "func f*(): int =\n  ## TODO: Define via macro.\n  1\n"
-    check checkDocsMissing("a.nim", breach).mapIt(it.message) == @[
-      "Doc holds `TODO: Document.` and nothing else; got `## TODO: Make distinct.`.",
-      "Doc holds `TODO: Document.` and nothing else; got `## TODO: Define via macro.`.",
+    check checkDocsMissing("a.nim", breach).mapIt(it.brief) == @[
+      "doc holds `TODO: Document.` and nothing else; got `## TODO: Make distinct.`",
+      "doc holds `TODO: Document.` and nothing else; got `## TODO: Define via macro.`",
     ]
     check breach.documented == "type\n  # TODO: Make distinct.\n" &
       "  Bases* = set[int]  ## TODO: Document.\n# TODO: Define via macro.\n" &
@@ -347,9 +347,9 @@ suite "Declarations":
   test "forward declaration takes doc of its routine, and fix leaves move of that doc for hand":
     # Case held: `proc dance` of `app/app.nim` of `dance_ontology`, whose definition holds doc.
     let forward = "proc dance(key: string)\n\nproc dance(key: string) =\n  ## Dance.\n  echo key\n"
-    check checkDocsMissing("a.nim", forward).mapIt((it.line, it.message)) == @[
-      (1, "Forward declaration takes doc of its routine, which `nim doc` reads there; got " &
-        "`proc dance`."),
+    check checkDocsMissing("a.nim", forward).mapIt((it.line, it.brief)) == @[
+      (1, "forward declaration takes doc of its routine, which `nim doc` reads there; got " &
+        "`proc dance`"),
     ]
     check forward.documented == forward and fixDocsMissing("a.nim", forward).fixed.len == 0
     let planned = "func planned*(m: int): int {.error:\n  \"Planned.\"\n.}\n"
@@ -441,9 +441,9 @@ suite "Declarations":
     # `nim jsondoc` of Nim 2.2.12 and 2.4.0 reads none after `block:`, first in body or after its
     #   last line; doc below body at its indent leaves last value unused.
     let blocked = "const V = block:\n  1\nconst W = block outer:\n  2\n"
-    check checkDocsMissing("a.nim", blocked).mapIt((it.line, it.message)) == @[
-      (1, "Value opening `block` takes doc after `=`, with `block` on next line; got `const V`."),
-      (3, "Value opening `block` takes doc after `=`, with `block` on next line; got `const W`."),
+    check checkDocsMissing("a.nim", blocked).mapIt((it.line, it.brief)) == @[
+      (1, "value opening `block` takes doc after `=`, with `block` on next line; got `const V`"),
+      (3, "value opening `block` takes doc after `=`, with `block` on next line; got `const W`"),
     ]
     check blocked.documented == blocked
     check "const V =  ## Value.\n  block:\n    1\n".isDocumented  # as message asks

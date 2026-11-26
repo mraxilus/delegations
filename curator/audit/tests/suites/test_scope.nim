@@ -28,7 +28,8 @@ suite "Scope":
       check checkScope("contributor/" & d.folder & "/alpha/work", inside).len == 0  # inside
       let found = checkScope("contributor/" & d.folder & "/alpha/work", inside & OUTSIDE)
       check found.mapIt(it.path) == OUTSIDE  # each outside path named
-      check found.allIt(it.message == "Path outside branch scope `" & prefix & "`.")  # prefix
+      check found.allIt(it.rule == "koch.branch-scope")
+      check found.allIt(it.brief == "path outside branch scope `" & prefix & "`")  # prefix
     check checkScope("contributor/ronri/alpha/work", ["contributor/ronri/alpha_2/x.nim"]).len ==
       1  # prefix is whole folder
 
@@ -40,14 +41,15 @@ suite "Scope":
     ]
     let found = checkScope("curator/audit/work", paths)
     check found.mapIt(it.path) == paths[1 .. ^1].toSeq  # everything but its own folder
-    check found.allIt(it.message == "Path outside branch scope `curator/audit/`.")  # prefix
+    check found.allIt(it.brief == "path outside branch scope `curator/audit/`")  # prefix
 
 
   test "branch outside grammar is one finding naming branch":
     for branch in ["claude/setup", "ronri/alpha/work"]:  # harness name, old form
       let found = checkScope(branch, ["README.md"])
       check found.len == 1 and found[0].path.len == 0  # branch-level
-      check found[0].message.endsWith("got `" & branch & "`.")  # IV.4 echo value
+      check found[0].brief.endsWith("got `" & branch & "`")  # IV.4 echo value
+      check found.anyIt(it.rule == "koch.branch-name")
 
 
   test "curator writes only records inside contributor project":

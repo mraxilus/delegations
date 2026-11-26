@@ -80,8 +80,10 @@ func checkProjectsProseOwn*(tree: Tree, projects: openArray[ProjectProseOwn]): s
       result.add finding(
         PATH_PROSE_OWN,
         0,
-        "Project keeping its own prose (VI.5, VI.8) is one tree holds; remove its entry, or " &
-        "name project where it moved; got `" & p.directory & "`.",
+        Check.ProseOwn,
+        "Project keeping its own prose (VI.5, VI.8) is one tree holds; got `" & p.directory &
+          "`.",
+        help = "remove its entry, or name project where it moved",
       )
       continue
     let suite = p.directory & "/" & p.suite
@@ -89,6 +91,8 @@ func checkProjectsProseOwn*(tree: Tree, projects: openArray[ProjectProseOwn]): s
       result.add finding(
         suite,
         0,
-        "Suite holding prose of project in its own language (VI.5, VI.8) is missing; restore " &
-        "it, or demand it no longer in `" & PATH_PROSE_OWN & "`; got `" & suite & "`.",
+        Check.ProseOwn,
+        "Suite holding prose of project in its own language (VI.5, VI.8) is missing; got `" &
+          suite & "`.",
+        help = "restore it, or demand it no longer in `" & PATH_PROSE_OWN & "`",
       )

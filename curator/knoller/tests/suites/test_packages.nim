@@ -43,8 +43,8 @@ suite "Names of package":
     check "Grade.vector" in written["p/src/uses.nim"]  # alias of package
     check "q/src/uses.nim" notin written  # other package declares no alias
     check "p/src/uses.nim:3: landmark-alias fixed" in outcome.lines
-    check "p/src/uses.nim:3: name-cut left: Name opens with head, axis value `left` last; got " &
-      "`LEFT_NAME`." in outcome.lines  # rename needs semantic pass, which no plan gave
+    check "p/src/uses.nim:3: name-cut: actual=\"LEFT_NAME\" message=\"name opens with head, " &
+      "axis value `left` last\"" in outcome.lines  # rename needs semantic pass, which no plan gave
     check not outcome.lines.anyIt(it.startsWith("q/src/uses.nim:3: name-cut"))  # no wrapper
     let names = namesPackage([ALGEBRA, USES])
     check names.axes == @["left", "right"]
@@ -66,10 +66,10 @@ suite "Names of package":
       files = [("p/src/algebra.nim", ALGEBRA), ("p/src/kept.nim", kept)]
       nimbles = {"p/src/algebra.nim": "p/p.nimble", "p/src/kept.nim": "p/p.nimble"}.toTable
       lines = outcome(files, [], is_check = true, nimbles = nimbles).lines
-    check "p/src/kept.nim:3: landmark-alias left: Landmark index stands as its alias, " &
-      "`Grade.vector`; got `Grade(1)`." in lines
-    check "p/src/kept.nim:4: conversion-prefix left: Conversion of compound argument is prefix " &
-      "call, as `toMultivector(a + b)`; got `(a + b).toX`." in lines
+    check "p/src/kept.nim:3: landmark-alias: actual=\"Grade(1)\" message=\"landmark index " &
+      "stands as its alias, `Grade.vector`\"" in lines
+    check "p/src/kept.nim:4: conversion-prefix: actual=\"(a + b).toX\" message=\"conversion " &
+      "of compound argument is prefix call, as `toMultivector(a + b)`\"" in lines
     check lines.anyIt(it.startsWith("p/src/kept.nim:5: fence-held warning:") and
       "landmark-alias" in it)
 
@@ -97,8 +97,8 @@ suite "Names of package":
       [("p/src/uses.nim", USES)], [], false, root, nimbles = nimbles, libraries = libraries
     )
     check outcome.written.len == 1 and "Grade.vector" in outcome.written[0][1]
-    check "p/src/uses.nim:3: name-cut left: Name opens with head, axis value `left` last; got " &
-      "`LEFT_NAME`." notin outcome.lines  # wrapper of library is no axis value
+    check "p/src/uses.nim:3: name-cut: actual=\"LEFT_NAME\" message=\"name opens with head, " &
+      "axis value `left` last\"" notin outcome.lines  # wrapper of library is no axis value
 
 
   test "cut rename goes through semantic pass, joins case rename, and refused rename warns":
@@ -138,10 +138,11 @@ suite "Names of package":
     for name in ["left_name", "rightName", "𝐦_grade", "scalar_anti"]: check name notin written
     check "p/src/a.nim:11: name-cut fixed" in outcome.lines  # each use of `𝐦_grade`
     check "p/src/a.nim:9: name-case fixed" in outcome.lines
-    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:12: name-cut warning: Rename to " &
-      "`scalar_anti` stays for hand, since it is refused:"))
-    check "p/src/a.nim:12: name-cut left: Name puts `anti` after word it qualifies, as " &
-      "`scalarAnti`; got `antiscalar`." in outcome.lines
+    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:12: name-cut warning: " &
+      "actual=\"antiscalar\" message=\"rename to `scalar_anti` stays for hand, since it is " &
+      "refused:"))
+    check "p/src/a.nim:12: name-cut: actual=\"antiscalar\" message=\"name puts `anti` after " &
+      "word it qualifies, as `scalarAnti`\"" in outcome.lines
 
 
   test "planner that refuses composed rename writes neither its case part nor its cut":
@@ -171,12 +172,13 @@ suite "Names of package":
     let outcome = outcome(files, [], false, root, plans = plans, nimbles = nimbles)
     for written in outcome.written:
       for name in ["right_name", "name_right"]: check name notin written[1]
-    check "p/src/a.nim:10: name-case left: Parameter is `snake_case`; got `rightName`." in
-      outcome.lines
-    check "p/src/a.nim:10: name-cut left: Name opens with head, axis value `right` last; got " &
-      "`rightName`." in outcome.lines
-    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:10: name-case warning: Rename to " &
-      "`name_right` stays for hand, since it is refused:"))
+    check "p/src/a.nim:10: name-case: actual=\"rightName\" message=\"parameter is " &
+      "`snake_case`\"" in outcome.lines
+    check "p/src/a.nim:10: name-cut: actual=\"rightName\" message=\"name opens with head, " &
+      "axis value `right` last\"" in outcome.lines
+    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:10: name-case warning: " &
+      "actual=\"rightName\" message=\"rename to `name_right` stays for hand, since it is " &
+      "refused:"))
 
 
   test "rename refused before semantic pass warns at path run names, from root or inside":
@@ -205,7 +207,9 @@ suite "Names of package":
       check plans.mapIt((it.rename.path, it.rename.renamed, it.refusal.len > 0)) ==
         @[(path, "ClockwiseAnti", true), (path, "NAME_LEFT", true)]
       let outcome = outcome(files, [], false, directory, plans = plans, nimbles = nimbles)
-      check outcome.lines.anyIt(it.startsWith(path & ":3: name-cut warning: Rename to " &
-        "`ClockwiseAnti` stays for hand, since it is refused: `$` of member reads its name"))
-      check outcome.lines.anyIt(it.startsWith(path & ":8: name-cut warning: Rename to " &
-        "`NAME_LEFT` stays for hand, since it is refused: `strdefine` gives `LEFT_NAME`"))
+      check outcome.lines.anyIt(it.startsWith(path & ":3: name-cut warning: " &
+        "actual=\"Anticlockwise\" message=\"rename to `ClockwiseAnti` stays for hand, since " &
+        "it is refused: `$` of member reads its name"))
+      check outcome.lines.anyIt(it.startsWith(path & ":8: name-cut warning: " &
+        "actual=\"LEFT_NAME\" message=\"rename to `NAME_LEFT` stays for hand, since it is " &
+        "refused: `strdefine` gives `LEFT_NAME`"))

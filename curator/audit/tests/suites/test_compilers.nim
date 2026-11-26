@@ -3,8 +3,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, unittest]
-import ../../src/compilers
+import std/[sequtils, strutils, unittest]
+import ../../src/[compilers, findings]
 
 
 
@@ -13,5 +13,9 @@ suite "Compilers":
     let found = missing("curator/probe", "2.2.6", "/c/2.2.6/bin")
     check found.len == 1
     check found[0].path == "curator/probe"
-    check found[0].message.endsWith("got `2.2.6`.")
-    check "/c/2.2.6/bin" in found[0].message  # names cache it tried
+    check found[0].brief.endsWith(
+      "got `2.2.6`; help: install it under `/c/2.2.6/bin`, or make network reachable, then run " &
+        "again",
+    )
+    check found.anyIt(it.rule == "koch.missing-compiler")
+    check "/c/2.2.6/bin" in found[0].brief  # names cache it tried

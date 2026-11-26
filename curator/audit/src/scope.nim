@@ -60,8 +60,10 @@ func checkPropagation(path: string): seq[Finding] =
   result.add finding(
     path,
     0,
-    "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
-      "rule or check and let contributor apply it; got `" & path & "`.",
+    Check.FilesContributor,
+    "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; got `" & path &
+      "`.",
+    help = "change rule or check and let contributor apply it",
     is_scope = true,
   )
 
@@ -99,6 +101,7 @@ func checkScope*(
   if parsed.isNone:
     return @[finding(
       "", 0,
+      Check.NameBranch,
       "Branch must match `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` " &
         "or `curator/<name>`; got `" & branch & "`.",
     )]
@@ -108,7 +111,13 @@ func checkScope*(
     moved_set = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
-      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.", is_scope = true)
+      result.add finding(
+        p,
+        0,
+        Check.ScopeBranch,
+        "Path outside branch scope `" & prefix & "`.",
+        is_scope = true,
+      )
     elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin moved_set:
       result.add checkPropagation(p)
 

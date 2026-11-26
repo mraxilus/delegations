@@ -7,7 +7,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[edits, purity, rules]
+import ../../src/knoller/[edits, purity, reports, rules]
 
 
 const
@@ -355,8 +355,8 @@ suite "Style §1":
       ["func size", "func held", "func ahead(c: Cell): int =\n"].mapIt(source.site(it))
     let found = checkPure("a.nim", source, pures)
     check found.mapIt(it.line) == pures.pointing.mapIt(it[0])
-    check found[0].message ==
-      "Routine with parameter of `ref` or `ptr` type is `proc`; got `func size`."
+    check found[0].brief ==
+      "routine with parameter of `ref` or `ptr` type is `proc`; got `func size`"
     let (edits, reports) = editsPure("a.nim", source, pures, [])
     check source.applied(edits).count("proc ") == 2
     check reports.mapIt(it.line) == pures.pointing[0 .. 1].mapIt(it[0])
@@ -399,8 +399,8 @@ suite "Style §1":
       found = checkPure("a.nim", source, pures)
     check found.mapIt(it.line) == @[1, 2]
     check found.allIt(it.rule == Rule.PureFunc)
-    check found[0].message ==
-      "Routine with no effect beyond its parameters is `func`; got `proc f`."
+    check found[0].brief ==
+      "routine with no effect beyond its parameters is `func`; got `proc f`"
     let (edits, reports) = editsPure("a.nim", source, pures, [])
     check source.applied(edits) == "func f(x: int): int = x\nfunc g(x: int): int = x\nlet h = 1\n"
     check reports.mapIt(it.line) == @[1, 2]

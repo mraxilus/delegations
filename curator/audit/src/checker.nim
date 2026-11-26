@@ -36,7 +36,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, tables]
+import std/[algorithm, options, sequtils, strutils, tables]
 import ../../knoller/src/knoller
 import ./[findings, markdown, toolchain]
 
@@ -154,8 +154,9 @@ func checkExportsDead*(paths, sources, suites: openArray[string]): seq[Finding] 
     result.add finding(
       path,
       0,
-      "Routine is exported and named by no other module and no suite; drop its `*`, or " &
-        "delete it; got `" & name & "`.",
+      Check.ExportDead,
+      "Routine is exported and named by no other module and no suite; got `" & name & "`.",
+      help = "drop its `*`, or delete it",
     )
 
 
@@ -180,7 +181,12 @@ func fixExportsDead*(
     for i in declared:
       let at = lines[i].find(name & "*")
       lines[i] = lines[i][0 ..< at + name.len] & lines[i][at + name.len + 1 .. ^1]
-      result.fixed.add finding(path, i + 1, "dead export (CURATOR.md, Checks reference)")
+      result.fixed.add finding(
+        path,
+        i + 1,
+        Check.ExportDead,
+        "dead export (CURATOR.md, Checks reference)",
+      )
   result.source = lines.join("\n")
 
 
@@ -198,7 +204,13 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
     if module.len == 0: continue
     let suite = DIRECTORY_SUITE & "test_" & module & EXT_NIM
     if suite notin present:
-      result.add finding(path, 0, "Check module needs suite; write `" & suite & "`; got nothing.")
+      result.add finding(
+        path,
+        0,
+        Check.SuiteCheck,
+        "Check module needs suite.",
+        help = "write `" & suite & "`",
+      )
 
 
 func between(line, opening, closing: string): string =
@@ -288,8 +300,10 @@ func checkOptions*(koch: string): seq[Finding] =
     result.add finding(
       PATH_KOCH,
       0,
-      "Usage text must print every option parser takes, and no other; expected `" &
-        parsed.join(", ") & "`; got `" & printed.join(", ") & "`.",
+      Check.OptionsUsage,
+      "Usage text must print every option parser takes, and no other; got `" &
+        printed.join(", ") & "`.",
+      expected = some(parsed.join(", ")),
     )
 
 
@@ -319,14 +333,17 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
     result.add finding(
       PATH_KOCH,
       0,
+      Check.VerbsUsage,
       "Usage text must print every verb dispatch names; got `" & koch.verbsUsage.join(", ") & "`.",
     )
   if curator.verbsTable != dispatched:
     result.add finding(
       PATH_CURATOR,
       0,
-      "Checks table must row every verb koch dispatches, and no other; expected `" &
-        dispatched.join(", ") & "`; got `" & curator.verbsTable.join(", ") & "`.",
+      Check.TableVerbs,
+      "Checks table must row every verb koch dispatches, and no other; got `" &
+        curator.verbsTable.join(", ") & "`.",
+      expected = some(dispatched.join(", ")),
     )
 
 
@@ -362,5 +379,7 @@ func checkMentions*(path, source: string; verbs: openArray[string]): seq[Finding
     result.add finding(
       path,
       line,
-      "Mention names verb koch does not dispatch; write one `./koch` lists; got `" & verb & "`.",
+      Check.MentionVerb,
+      "Mention names verb koch does not dispatch; got `" & verb & "`.",
+      help = "write one `./koch` lists",
     )

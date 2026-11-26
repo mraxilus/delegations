@@ -14,7 +14,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/strutils
+import std/[options, strutils]
 import ./[findings, markdown, provenance, record]
 
 
@@ -75,8 +75,9 @@ func checkDiary(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
-        "Prompt names incident; state rule and its cost here, and leave incident to record " &
-          "or log (duty 10); got `" & found & "`.",
+        Check.IncidentPrompt,
+        "Prompt names incident (duty 10); got `" & found & "`.",
+        help = "state rule and its cost here, and leave incident to record or log",
       )
 
 
@@ -85,8 +86,10 @@ func checkSizePrompt(path, source: string): seq[Finding] =
   if source.len > BYTES_PROMPT:
     result.add finding(
       path, 0,
-      "Prompt over " & $BYTES_PROMPT & " bytes; prune before adding (duty 10); got `" &
-        $source.len & "`.",
+      Check.SizePrompt,
+      "Prompt over " & $BYTES_PROMPT & " bytes (duty 10); got `" & $source.len & "`.",
+      expected = some("at most " & $BYTES_PROMPT),
+      help = "prune before adding",
     )
 
 
@@ -99,8 +102,9 @@ func checkHeadingRead(path, source: string): seq[Finding] =
   result.add finding(
     path,
     0,
-    "Reading order of role that `start` prints is absent; restore its heading, or rename " &
-      "`HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`.",
+    Check.HeadingRead,
+    "Reading order of role that `start` prints is absent; got `" & HEADING_READ & "`.",
+    help = "restore its heading, or rename `HEADING_READ` in `prompts.nim`",
   )
 
 
