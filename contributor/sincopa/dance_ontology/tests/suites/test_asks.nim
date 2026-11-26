@@ -70,11 +70,11 @@ const
     ##     Chain, cross name, low: style 11, from 1.105 m.
     ##     Chain, same name, low: style 3, from 0.389 m.
     ##   Each chain above stops soon past swan, since no plan that winds swan as card draws it
-    ##     carries chain further.  Plan that draws hoop only up to swan carries same-name chain to
-    ##     1.6675 and cross-name chain to 1.6988, measured 2026-11-19 by probe outside tree.
-    ##     Cost: same-name chain's floor falls from 2.5 to 1.6625, which waits on Architect
-    ##       (`PROVENANCE.md`, Open questions).  Plan that names no swan carries that chain to 2.5,
-    ##       winding swan otherwise than drawn.
+    ##     carries chain further.  Plan that draws hoop only up to swan carries same-name chain
+    ##     to 1.6675 and cross-name chain to 1.6988, measured 2026-11-19 by probe outside tree.
+    ##     Cost: same-name chain's floor falls from 2.5 to 1.6625, which waits on Architect in
+    ##       open questions of `PROVENANCE.md`.  Plan that names no swan carries that chain on
+    ##       to 2.5, winding swan otherwise than drawn.
     ##     Rejected: plan that names no swan, which edge stops near 1.53 of turn on cross-name
     ##       chain, and which crosses twice at its swan.
   REASON_WHOLE = "lead's turn of same-name chain held above, from Face-to-back, to whole " &
@@ -187,7 +187,7 @@ func toArms(still: JsonNode, links: seq[Link]): Arms =
     result.add [toArmPose(still, link.ends[0].body, link.ends[0].arm, join),
                 toArmPose(still, link.ends[1].body, link.ends[1].arm, join)]
 
-func momentRig(recording: JsonNode, m: int): JsonNode =
+proc momentRig(recording: JsonNode, m: int): JsonNode =
   ## Moment `m` of rig sweep, kept as still keeps its one moment, so still's readers read it
   ## (`toArms`).
   %*{"tag": recording["tag"], "radii": recording["radii"], "points": [recording["points"][m]],
@@ -627,9 +627,9 @@ suite "Internal: Simulation against Reference":
     ##   as card's still does (law above): three crossings round pair card draws straight, which
     ##   winds on itself less than hoop (`read.writhe`) and runs no further in plan
     ##   (`read.runInPlan`).
-    ##   Domain: rig's two chains swept over crown.  Rig keeps moment every stride
-    ##     (`plan.STRIDE`), so sweep that passes swan keeps one within stride of it, and plan that
-    ##     poses arms again keeps several moments at one wind (`walk.atSwan`).
+    ##   Domain: rig's two chains swept over crown.  Rig keeps moment every stride of plan
+    ##     as `plan.STRIDE` sets it, so sweep that passes swan keeps one within stride of it, and
+    ##     plan that poses arms again keeps several moments at one wind (`walk.atSwan`).
     ##     Cost: rig keeps no way that turns negative, so no law reads swept swan of C07 or D07.
     ##   Red as swept before, measured 2026-11-19: cross-name chain crossed twice at +1.49;
     ##     same-name chain crossed once at +1.49, and at +1.45 three times round lead's right
