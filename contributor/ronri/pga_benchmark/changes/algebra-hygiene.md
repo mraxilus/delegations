@@ -26,24 +26,24 @@ moves to a library with this change.
 ## Edit `pga/algebra.nim`
 
 ```nim
-const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+const TOLERANCE_ABS* = Coefficient(10.pow(-float(FLOAT_TOLERANCE)))  ## TODO: Document.
 ```
 
 ```nim
-const TOLERANCE_REL* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
-  ## Bound is relative above 1 and absolute below; see `=~` in multivectors.nim.
+const TOLERANCE_REL* = Coefficient(10.pow(-float(FLOAT_TOLERANCE)))
+  ## Bound is relative above 1 and absolute below; see `=~` in `multivectors.nim`.
 ```
 
 ## Edit `pga/algebra.nim`
 
 ```nim
-template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in cayleys.nim.
+template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in `cayleys.nim`.
 template `in`(c: char, b: BasisDigits): bool = c in string(b)
 
 ```
 
 ```nim
-template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in cayleys.nim.
+template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in `cayleys.nim`.
 template `in`(c: char, b: BasisDigits): bool = c in string(b)
 func `$`*(g: Grade): string {.borrow.}
   ## Print grade as its integer, so failing checks read as numbers.

@@ -101,12 +101,12 @@ when IS_RIGID:
 ## Edit `pga/algebra.nim`
 
 ```nim
-  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+  func generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
     ## Populate missing algebras up to `dimensions`-dimensional PGA.
 ```
 
 ```nim
-  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+  func generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
     ## Populate missing algebras up to `dimensions`-dimensional PGA.
     ##   Nested and mutating by design: builds each dimension from one below it.
 ```
@@ -246,12 +246,12 @@ import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ## Edit `tests/suites.nim`
 
 ```nim
-func sqrt(m: Multivector): MultivectorScalars =
-  ## Find square root of dual number, i.e. √𝐦.
+func sqrt[B: static Bases](m: MultivectorOf[B]): MultivectorScalars {.inline.} =
+  ## Find square root of dual number via geometric product, i.e. ⟑√𝐦.
 ```
 
 ```nim
-func sqrt(m: Multivector): MultivectorScalars =
-  ## Find square root of dual number, i.e. √𝐦.
+func sqrt[B: static Bases](m: MultivectorOf[B]): MultivectorScalars {.inline.} =
+  ## Find square root of dual number via geometric product, i.e. ⟑√𝐦.
   ##   Test stand-in until library carries homogeneous scalars, per TODO above.
 ```

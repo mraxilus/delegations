@@ -5,8 +5,8 @@ corrects the header of `pga.nim`: most operators derive from the metric and the 
 product, but not all.
 
 It removes table rows for operators that the library does not define. It replaces each
-`TODO: Document.` header, and documents the projections and the squared norms. No count
-changes.
+`TODO: Document.` header, and documents the squared norms. The library at pin documents the
+projections, so this change leaves them. No count changes.
 
 Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
 change edits that file too. If P01 lands second, its Replace carries the text of this change under
@@ -45,7 +45,7 @@ Three proposals edit lines that this change quotes:
 ## Edit `pga.nim`
 
 ```nim
-## Up to 9D PGAs supported, however recommendation is <= 6D.
+## Up to 6D PGAs supported; however, potential for up to 9D (untested).
 ```
 
 ```nim
@@ -58,14 +58,12 @@ Three proposals edit lines that this change quotes:
 
 ```nim
 ##
-## All operators are derived from (anti)metric and exterior product definitions.
+## All operators derived from (anti)metric and exterior product definitions.
 ```
 
 ```nim
-##   [Cayley1D, Cayley2D] -> defineOperator -> one function per call
-##   emitters.nim emits function AST; this file aliases operators.nim and multivectors.nim.
 ##
-## Most operators are derived from (anti)metric and exterior product definitions.
+## Most operators derived from (anti)metric and exterior product definitions.
 ##   Not so for parts, reverses and squared norms of parts, which `cayleys.nim` constructs.
 ##   Dot comes from transwedges; TODO at `CAYLEYS_DOT` would take it from bulk contraction.
 ```
@@ -159,34 +157,6 @@ import ./pga/[algebra, cayleys, multivectors, operators]
     ##   Requires single-grade multivector: grade is read at runtime and must be definite.
 ```
 
-## Edit `pga.nim`
-
-```nim
-  ## TODO: Document.
-
-func projectCentralAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨★ n)
-  ## TODO: Document.
-
-func projectOrthogonal*(m, n: Multivector): Multivector {.inline.} = n ∨ (m ∧☆ n)
-  ## TODO: Document.
-
-func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨☆ n)
-  ## TODO: Document.
-```
-
-```nim
-  ## Project 𝐦 centrally onto 𝐧 through origin, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧★).
-
-func projectCentralAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨★ n)
-  ## Project 𝐦 centrally onto 𝐧 in antispace, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧★).
-
-func projectOrthogonal*(m, n: Multivector): Multivector {.inline.} = n ∨ (m ∧☆ n)
-  ## Project 𝐦 orthogonally onto 𝐧, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧☆); for point 𝐦, nearest point of 𝐧.
-
-func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨☆ n)
-  ## Project 𝐦 orthogonally onto 𝐧 in antispace, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
-```
-
 ## Edit `pga/algebra.nim`
 
 ```nim
@@ -252,12 +222,12 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ## Edit `pga/cayleys.nim`
 
 ```nim
-    # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
+    # TODO: Avoid `seq` as heap allocated, perhaps array with count custom type.
 ```
 
 ```nim
-    # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
-    #   Heap here is compiler's VM only: const blocks and macros alone read these tables.
+    # TODO: Avoid `seq` as heap allocated, perhaps array with count custom type.
+    #         Heap here is compiler's VM only: const blocks and macros alone read these tables.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -400,9 +370,9 @@ type  ## Define type definitions for algebraic distinctions.
 ## Edit `tests/suites.nim`
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # 1'e1
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # `1'e1`
 ```
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # e1, i.e. Basis.E1.initElement(1)
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # `e1`, i.e. `Basis.E1.initElement(1)`
 ```
