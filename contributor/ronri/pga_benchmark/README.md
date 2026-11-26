@@ -90,7 +90,9 @@ one issue open until the pin follows. To follow head:
    change, proposal and note that `drive` names. Redraw each box of the library map that `drive`
    names, and add a box for each new table.
 3. Run `restamp`. It moves each timed record whose builds emit the same C to the pin, and names
-   each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`.
+   each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`. Then refresh each
+   figure that a text cites from them, and name the commit of each figure of a run by hand at the
+   earlier pin, since "pin" in a text means the new one.
 4. Run `gaps` and `pages`, publish each page that `drive` names, and record each one with
    `published <name> <url>`.
 
