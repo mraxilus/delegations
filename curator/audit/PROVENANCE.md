@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 4a5aebde498e58b70fac5e23281104f520881d0f |
+| Pruned  | d4f7e2b1ae89bcfbaa3039567daf24801d0c8507 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2023,12 +2023,23 @@ workflows state a version. Verified by `suites/test_toolchain.nim` over both pat
 no CVE, so no release carries one. So the reason to move is what the release notes carry, or a
 ruling. The curator projects pin 2.4.2, the first patch release of the 2.4 series. On
 2026-11-26 the Architect asked each project to keep up with the patch releases of that series,
-for their fixes. A project leaves the series only when the Architect asks for a newer one.
+for their fixes. Security fixes come first, nothing fails while a pin lags, and a project leaves
+the series only when the Architect asks.
 
 - The notes of 2.4.2 fix 23 bugs of 2.4.0. Among them are a segfault of destructors under
-  `-d:release`, and parsers that raise on bad input.
-- Verified by `nim r koch test` over `curator/knoller`, `curator/assayer` and `curator/probe`, and
-  by `nim r koch check` with 2.4.2 building koch, on 2.4.2, 2026-11-26: every suite passes.
+  `-d:release`, and parsers that raise on bad input. No suite sets `-d:release`, but the build of
+  assayer that its README gives does, so that fix reaches it. No curator project reads XML.
+- The sources of 2.4.2 also harden two places that the notes do not list. The lexer stops an
+  unterminated `\u{` escape at the end of the buffer, and each compile and each proof of knoller
+  reaches it. On Windows, `osproc` refuses an unsafe argument to a batch file (CVE-2024-24576).
+  The one batch file that a curator project starts, `npm`, takes the constant `ci --no-audit
+  --no-fund`.
+- Verified by CI run 45858921855, 2026-11-26: the suites of `curator/audit`, `curator/knoller`,
+  `curator/assayer` and `curator/probe` pass on 2.4.2. `nim r koch check` with 2.4.2 building
+  koch gives 0 findings, and knoller prints the same 4,434 lines over the tree on both releases.
+- Atlas moved with the toolchain, from 0.14.7 to 0.16.3. Its claims below were verified on 0.14.7.
+  On 0.16.3 a restore of assayer joins `srcDir` to the root of the clone, warns that the remote
+  differs, and `atlas changed` exits 0, 2026-11-26.
 - Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
   assigned gets an int register for it. To write `result = 0.0` first avoids it.
   `dance_ontology` diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by
@@ -2468,11 +2479,10 @@ driver, where the compiler says why. It goes to stderr, since the runner pipes s
   closes stdout waits on that pipe.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
-`SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
-for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
-`libbrotli1`, because `koch drive` and the suite of the store read `woff2` font faces through
-`font_files.nim`. The runner holds it: verified by run 906 of `check`, whose `test` job
-ran that suite and passed.
+`SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar` for the
+tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds `libbrotli1`,
+because `koch drive` and the suite of the store read `woff2` font faces through `font_files.nim`.
+The runner holds it: verified by run 906 of `check`, whose `test` job ran that suite and passed.
 
 `koch list-packages` with no project prints those and every project's, unscoped, so one
 command answers what a machine needs before any of this runs. To name a project keeps the
@@ -3338,11 +3348,10 @@ less those that its comments hold, go to the same check. So each kind reports in
 - Verified by `suites/test_fixes.nim`: a fenced `sleep` counts under `tests/` and `tools/` of a
   project, and not under its `src/` or at the root.
 
-**A timer is unread, because one name is both clocks.** Inside a page under the clock of
-Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
-report each drive that runs `setTimeout` inside a page, as every correctness drive of
-`pga_visualiser` did on 2026-10-01. So the check holds the narrow half, and the rule holds the
-rest by reading.
+**A timer is unread, because one name is both clocks.** Inside a page under the clock of Playwright,
+`setTimeout` and `performance.now` are simulated reads. A check over them would report each drive
+that runs `setTimeout` inside a page, as every correctness drive of `pga_visualiser` did on
+2026-10-01. So the check holds the narrow half, and the rule holds the rest by reading.
 
 - Nim names compare as the compiler compares them, so `sleep_async` is `sleepAsync`. Nim
   source is read with comments and strings blanked, so the suite of the check holds its
@@ -3439,20 +3448,18 @@ The finding names the phrase and gives the mend: drop the keyword, or put the is
   break, because a body wraps its lines and GitHub reads across the break.
 - Code spans and fenced code are exempt, because GitHub links no reference there.
 - A comment and a review close nothing, so `body` reads their keywords as text.
-- Rejected: the same rule in `check-role`, which reads the body of each open pull request. It
-  could redden each pull request that is open now, and the hook already reads each body before
-  it lands.
+- Rejected: the same rule in `check-role`, which reads the body of each open pull request. It could
+  redden each pull request that is open now, and the hook already reads each body before it lands.
 - Verified by `suites/test_hooks.nim`, for the body of #860 as found. The suite also holds its
   domain. That is each kind of reference, a colon, a line break, two references on a line, a
   keyword inside a word, and code. It holds the line of its own that passes too.
 - Cost: a list item `- Closes #859` is refused, since its text is more than the keyword and the
   reference. Cost: a commit message closes on a keyword too, and no hook reads it for this rule.
 
-**`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
-checkout alone.** A subagent works in a worktree of its own, on a branch of its own
-(`GUIDE.md`, Work for subagents). The checkout of a write is the one that
-holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
-names, else the working directory of the call.
+**`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary checkout
+alone.** A subagent works in a worktree of its own, on a branch of its own (`GUIDE.md`, Work for
+subagents). The checkout of a write is the one that holds the file. The checkout of a git command is
+the one that its `-C` or a `cd` before it names, else the working directory of the call.
 
 - A detached head in the primary checkout never decides the branch of a worktree. So it never
   refuses a subagent.
@@ -3475,11 +3482,10 @@ names, else the working directory of the call.
 **`path` passes the name line of a moved lock as `check-scope` does, as the Architect ruled on
 #950.** A move of a project changes one line of its lock, the line that names its nimble copy
 (section Branch scope). Where scope refuses a write of `contributor/<domain>/<project>/atlas.lock`
-on a root curator branch, `checkPathEditMoved` reads git in the checkout of the write. It reads
-the merge base with the base of koch, which is `BASE`, else `origin/main`. Then it reads each
-rename from that merge base to the working tree, so a staged move counts as a committed one.
-Where a rename names the lock as its new side, the hook passes the write only where `isLockMoved`
-holds.
+on a root curator branch, `checkPathEditMoved` reads git in the checkout of the write. It reads the
+merge base with the base of koch, which is `BASE`, else `origin/main`. Then it reads each rename
+from that merge base to the working tree, so a staged move counts as a committed one. Where a rename
+names the lock as its new side, the hook passes the write only where `isLockMoved` holds.
 
 The hook runs before the write, so `textWritten` gives the text after it, as each write tool
 applies its input. Each other refusal stays as scope gives it, and so does each refusal where git
@@ -3615,12 +3621,11 @@ fails no verb, and that covers a lock that another run holds.
 
 ## Paths of write hooks
 
-**`path` and `edit` judge only a file inside the repository.** A directory in no repository
-reads as the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the
-file on whole, and `fileWritten` gives none for it. So `path` passes it, and `edit` returns
-before it reads the tree. A file outside the repository cannot reach a commit. `koch check`
-holds each path that the branch changed before the push, and `check-scope` holds them on the
-pull request.
+**`path` and `edit` judge only a file inside the repository.** A directory in no repository reads as
+the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the file on
+whole, and `fileWritten` gives none for it. So `path` passes it, and `edit` returns before it reads
+the tree. A file outside the repository cannot reach a commit. `koch check` holds each path that the
+branch changed before the push, and `check-scope` holds them on the pull request.
 
 So a scratch file takes the write tools, which these hooks read, and needs no shell. `bash`
 reads each command, but it judges no path that the command writes.
@@ -3629,9 +3634,8 @@ reads each command, but it judges no path that the command writes.
   refuses each write outside its folder.
 - Rejected: a `checkoutAt` that reads a directory in no repository as no checkout. Git fails
   there as it fails for any other reason, so a failure of git would pass a commit on `main`.
-- Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also
-  holds its domain: each form of branch passes the file, and judges a file inside the
-  repository.
+- Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also holds
+  its domain: each form of branch passes the file, and judges a file inside the repository.
 - Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch and
   on a detached head. Each branch passes a scratch file, which `ba1986f98` refused.
 - Measured by hand on 2026-11-12, in a delegate container, with fake inputs to the built koch
@@ -3660,8 +3664,7 @@ each symbolic link through the nearest part of the path that exists.
   `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
   request.
 - Cost: on each write, up to two `stat` calls for each part that `pathReal` tries, then one
-  `realpath`. A file in no repository takes a second `realpath`, in the fallback of
-  `checkoutAt`.
+  `realpath`. A file in no repository takes a second `realpath`, in the fallback of `checkoutAt`.
 - Measured by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon
   Processor at 2.10GHz. Each figure is the mean of 50 runs of the built
   `koch hook path`, in two rounds. A scratch file outside the repository takes 9.0 ms and
@@ -3683,12 +3686,11 @@ each symbolic link through the nearest part of the path that exists.
 
 ## Hooks on messages
 
-**`body` and `stop` hold what a delegate writes for a person: each post, and the message that
-ends a turn.** Section Hooks on tool calls gives the mechanism that both share, and section
-Sign-off gives the block that closes a turn. The `stop` hook passes once `stop_hook_active` is
-set, so a blocked turn cannot loop. It counts a GitHub write as a post only where the call
-carried a body, as the `body` hook does. So a label or a draft update ends no turn with a
-sign-off.
+**`body` and `stop` hold what a delegate writes for a person: each post, and the message that ends a
+turn.** Section Hooks on tool calls gives the mechanism that both share, and section Sign-off gives
+the block that closes a turn. The `stop` hook passes once `stop_hook_active` is set, so a blocked
+turn cannot loop. It counts a GitHub write as a post only where the call carried a body, as the
+`body` hook does. So a label or a draft update ends no turn with a sign-off.
 
 - **A refused message is mended by a diff of each error alone.** The message stands on screen
   once the hook reads it, so each line sent again reads twice. The reply passes unread, since
@@ -3732,12 +3734,11 @@ through `gh api` as it counts the call of a tool.
 - Verified by hand through koch built from the branch, 2026-10-04. A body file with a sentence
   of 27 words is refused, and the mended file passes.
 
-**`coordinator` is a role string that no branch names.** `isStringRole` accepts it, so a
-sign-off row or a decision class may name the coordinator as the role that acts. A hook
-compares a role line with the branch only where the branch is in the grammar, and the
-coordinator holds no branch. An issue that carries the label `coordinator` is refused. A brief
-carries the label of the role that it starts, and no item is the work of the coordinator.
-Verified by `suites/test_hooks.nim`.
+**`coordinator` is a role string that no branch names.** `isStringRole` accepts it, so a sign-off
+row or a decision class may name the coordinator as the role that acts. A hook compares a role line
+with the branch only where the branch is in the grammar, and the coordinator holds no branch. An
+issue that carries the label `coordinator` is refused. A brief carries the label of the role that it
+starts, and no item is the work of the coordinator. Verified by `suites/test_hooks.nim`.
 
 **`stop` names each `#N` of the closing message that stands outside a link and outside code.**
 Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
@@ -3850,9 +3851,8 @@ heading is present, and else the last line.
 
 - Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
   that is not last, and the state `working`. Its refusal of `working` points at the line.
-- Rejected, by the choice of the Architect: the hook skips the demand while a background task
-  has not reported. That ties the hook to the form of a task notification, which the harness
-  can change.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task has
+  not reported. That ties the hook to the form of a task notification, which the harness can change.
 - Rejected, by the same choice: no demand, with the shape read only where a sign-off is
   present. Then a delegate can stop with no word to the Architect.
 - Cost: the hook reads that the working line holds text, and never whether anything runs. A
