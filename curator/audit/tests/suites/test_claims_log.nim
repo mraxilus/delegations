@@ -17,7 +17,7 @@ const
   DELEGATE = "s1"  ## `sessionId` of each entry of reflection.
   UUID = "u9"  ## `uuid` of entry of reflection.
   STAMP = "2026-11-20T11:57:03.512Z"  ## `timestamp` of entry of reflection.
-  MODEL = "claude-opus-5-5"  ## Model result of each call names, unless test names other.
+  MODEL = "model-a"  ## Model result of each call names, unless test names other.
   PROJECT = "contributor/bangu/rictadni"  ## Project rows of `BRANCH` belong to.
   BRANCH = "contributor/bangu/rictadni/outside-names"  ## Branch whose log suite writes.
   PREDICTION_REVIEWER = """## Prediction
@@ -305,7 +305,7 @@ suite "Log of claims":
     let claim = transcript().claimsRead[0]
     check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
       "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" model: " &
-      "\"claude-opus-5-5\" effort: \"medium\" text: \"the race leads the findings\" " &
+      "\"model-a\" effort: \"medium\" text: \"the race leads the findings\" " &
       "confidence: 0.7 state: STATE_HIT marker: MARKER_DELEGATE tokens: 170000 cost: 1.1 " &
       "address: \"s1/u9/1\" key: \"s1/toolu_reviewer/1/STATE_HIT\" result: " &
       "\"it leads, as \\\"high\\\" | first\" }"
@@ -331,7 +331,7 @@ suite "Log of claims":
     check decoded.count("claims {") == claims.len
     for field in [  # as `protoc` prints each field it read, by name, from first row and others
       "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
-      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"claude-opus-5-5\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"model-a\"",
       "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
       "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
       "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",
