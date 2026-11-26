@@ -453,7 +453,7 @@ suite "Scene":
         check formatMagnitude(value) == storage.toText
 
 
-  test "a magnitude under 1e-305 reads as C writes it, down to least subnormal":
+  test "each power of two and of ten under 1e-300 reads as C writes it, down to least subnormal":
     # Fault: scale to four digits took power of ten past 1e308, which is infinite, so
     #   `5e-324` wrote `-.9223372036854775808e-323` under C and threw `RangeError` on page
     #   (repository issue 970).
