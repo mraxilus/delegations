@@ -453,6 +453,30 @@ suite "Scene":
         check formatMagnitude(value) == storage.toText
 
 
+  test "a magnitude under 1e-305 reads as C writes it, down to least subnormal":
+    # Fault: scale to four digits took power of ten past 1e308, which is infinite, so
+    #   `5e-324` wrote `-.9223372036854775808e-323` under C and threw `RangeError` on page
+    #   (repository issue 970).
+    # Domain: each power of two from 2^-1074 to 2^-1000, and of ten from 1e-323 to 1e-300,
+    #   of each sign, against C's `%.4g`; text pinned for four, which page runs too.
+    check formatMagnitude(5.0e-324) == "4.941e-324"
+    check formatMagnitude(-5.0e-324) == "-4.941e-324"
+    check formatMagnitude(2.2250738585072014e-308) == "2.225e-308"
+    check formatMagnitude(1.0e-310) == "1e-310"
+    when not defined(js):
+      var tiny: seq[float]
+      for k in 1000..1074: tiny.add pow(2.0, -float(k))
+      for k in 300..323: tiny.add pow(10.0, -float(k))
+      for value in tiny:
+        for signed in [value, -value]:
+          var
+            storage: array[64, char]
+            cursor = 0
+          appendMagnitude(storage, cursor, signed)
+          checkpoint &"{signed}"
+          check formatMagnitude(signed) == storage.toText
+
+
   test "multivectors print every term they carry, and nothing else":
     # Significant digits, not fixed decimal places: whole number reads as one, and.
     #   coefficient keeps only digits it actually carries. Basis elements are named
