@@ -8,6 +8,9 @@
 ##     `help:` line. Blank line stands between two blocks, and between two findings.
 ##   Line form: `path:line:column: rule: actual="…" expect="…" message="…"`, each value quoted
 ##     and escaped, so finding takes one line and each value parses back by its key.
+##   Warning prints in both forms, with `warning` after its rule, as knoller marks it on its
+##     command line (ruling D2 of #1002, option `a`); rewrite is no finding, so its caller keeps
+##     its one line.
 ##   Renderer stays pure: caller reads terminal, flag and `NO_COLOR`, and passes what they say
 ##     (`formOutput`, `isColored`), as color shows in terminal form on terminal alone.
 ##   Column and span count runes, as width of line counts them (`form.nim`); control character
@@ -43,6 +46,7 @@ type
     expected*: Option[string]  ## Value rule asks for; none where finding names none.
     help*: string  ## What reader does about finding; empty where it gives none.
     source*: Option[string]  ## Text of line finding names; none where caller read none.
+    is_warning*: bool  ## Finding warns rather than breaks rule, so `warning` follows its rule.
 
 
 const
@@ -55,11 +59,13 @@ const
   COLOR_EXPECTED = "\e[32m"  ## Green, of value rule asks for.
   COLOR_LABEL_EXPECTED = "\e[1;32m"  ## Bold green, of label `expect`.
   COLOR_HELP = "\e[1;36m"  ## Bold cyan, of label `help`.
+  COLOR_WARNING = "\e[1;33m"  ## Bold yellow, of mark of warning.
   COLOR_RESET = "\e[0m"  ## Reset of each color.
   WIDTH_GUTTER = 4  ## Runes gutter gives number of source line at least, right-aligned.
   WIDTH_SOURCE = 80  ## Runes of source line terminal form shows at most.
   WIDTH_BEFORE = 20  ## Runes window shows before span, where line runs on past window.
   MARK_CUT = "…"  ## Mark of edge where window cuts source line.
+  MARK_WARNING = "warning"  ## Mark after rule of finding that warns.
   PICTURE_DELETE = "␡"  ## Control picture of delete, `\x7F`.
 
 
@@ -168,6 +174,12 @@ func blockSource(notice: Notice, is_colored: bool): seq[string] =
   ]
 
 
+func ruled(notice: Notice, is_colored: bool): string =
+  ## Render rule of finding, with `warning` after it where finding warns.
+  let mark = if notice.is_warning: MARK_WARNING.painted(COLOR_WARNING, is_colored) else: ""
+  [notice.rule.painted(COLOR_RULE, is_colored), mark].filterIt(it.len > 0).join(" ")
+
+
 func blockValues(notice: Notice, is_colored: bool): seq[string] =
   ## Render `actual` and `expect` finding holds, in two columns; none where it holds neither.
   if notice.actual.isSome:
@@ -181,10 +193,7 @@ func blockValues(notice: Notice, is_colored: bool): seq[string] =
 func renderTerminal(notice: Notice, is_colored: bool): string =
   ## Render finding in terminal form: each block it holds, blank line between two.
   var blocks: seq[seq[string]]
-  let head = [
-    notice.location.painted(COLOR_LOCATION, is_colored),
-    notice.rule.painted(COLOR_RULE, is_colored),
-  ]
+  let head = [notice.location.painted(COLOR_LOCATION, is_colored), notice.ruled(is_colored)]
   blocks.add @[head.filterIt(it.len > 0).join("  ")]
   blocks.add @["  " & notice.summary.painted(COLOR_SUMMARY, is_colored)]
   for lines in [notice.blockSource(is_colored), notice.blockValues(is_colored)]:
@@ -199,7 +208,7 @@ func renderLine(notice: Notice): string =
   var
     parts: seq[string]
     values: seq[string]
-  for part in [notice.location, notice.rule]:
+  for part in [notice.location, notice.ruled(is_colored = false)]:
     if part.len > 0: parts.add part
   if notice.actual.isSome: values.add "actual=" & notice.actual.get.quoted
   if notice.expected.isSome: values.add "expect=" & notice.expected.get.quoted
