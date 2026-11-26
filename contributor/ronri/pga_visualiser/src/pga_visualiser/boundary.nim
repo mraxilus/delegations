@@ -275,17 +275,17 @@ func positionAnchor*(m: Multivector): Option[Position] =
   ## Choose point of object to build its drawing around.
   ##   Support point where object misses origin, origin itself where it does not.
   ##   None where object lies in horizon, as it then has no finite point at all.
-  ##   Tests horizon only where support is none; twin below takes answer caller holds.
+  ##   Tests horizon only where support is none; private twin below takes answer held.
   let support = positionSupport(m)
   if support.isSome: return support
   if m.isHorizon: return
   some(Position(x: 0, y: 0, z: 0))
 
 
-func positionAnchor*(m: Multivector, is_horizon: bool): Option[Position] =
+func positionAnchor(m: Multivector, is_horizon: bool): Option[Position] =
   ## Choose point of object to build its drawing around, given whether it lies in horizon.
-  ##   For caller holding `isHorizon(m)` already, as placing does: one test serves each read.
-  ##   Same rule as twin above, which tests horizon itself.
+  ##   For read here holding `isHorizon(m)` already, as `readLineInto` does: one test serves
+  ##   each read. Same rule as twin above, which tests horizon itself.
   let support = positionSupport(m)
   if support.isSome: return support
   if is_horizon: return
@@ -296,9 +296,10 @@ func positionAnchor*(m: Multivector, is_horizon: bool): Option[Position] =
 #   Default zero refuses only no direction at all: object read as it stands, at own scale.
 #   Caller that built `m` on spot passes its factors' scales multiplied, and direction no
 #   more than `TOLERANCE_ABS` of that reads none: pair that runs parallel names none.
-# Each has twin taking `is_horizon`, `isHorizon(m)` caller holds already; plain reader tests
-#   it and forwards. Placing tests once and hands answer to every read (repository issue 556).
-func direction*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
+# Each has twin taking `is_horizon`, `isHorizon(m)` read here holds already; plain reader tests
+#   it and forwards. Twins are private: `readLineInto` and `readPlaneInto` test once and hand
+#   answer to each read, so no caller hands in answer that disagrees with its value.
+func direction(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction line extends along.
   ##   None where line lies in horizon (`isHorizon`), as its attitude then vanishes.
   if is_horizon: return
@@ -313,7 +314,7 @@ func direction*(m: Multivector, scale = 0.0): Option[Direction] =
   direction(m, m.isHorizon, scale)
 
 
-func directionHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
+func directionHorizon(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction horizon point stands for.
   ##   None where point has weight, as it then names place rather than direction.
   if not is_horizon: return
@@ -326,7 +327,7 @@ func directionHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
   directionHorizon(m, m.isHorizon, scale)
 
 
-func directionNormalHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
+func directionNormalHorizon(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction normal to pencil of directions horizon line stands for.
   ##   Line's weight lives in `E41`/`E42`/`E43`; `E23`/`E31`/`E12` survive in horizon and
   ##   carry same normal finite plane's attitude would leave there, unnormalized.
@@ -343,7 +344,7 @@ func directionNormalHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
   directionNormalHorizon(m, m.isHorizon, scale)
 
 
-func directionNormal*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
+func directionNormal(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction perpendicular to plane.
   ##   Antidual is negated so normal runs along plane's own weight gˣ, gʸ, gᶻ.
   ##   None where plane lies in horizon (`isHorizon`), as horizon has no normal in
@@ -358,6 +359,47 @@ func directionNormal*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Dir
 func directionNormal*(m: Multivector, scale = 0.0): Option[Direction] =
   ## Read unit direction perpendicular to plane, testing horizon itself.
   directionNormal(m, m.isHorizon, scale)
+
+
+type ReadingLine* {.pure.} = enum  ## Name which reads of line hold, after one horizon test.
+  Through  ## Line has weight: its anchor and unit direction were written.
+  Across  ## Horizon line: unit normal of its pencil was written.
+  Nothing  ## Neither read holds.
+
+
+func readLineInto*(m: Multivector; at: var Position; toward, normal: var Direction): ReadingLine =
+  ## Read line `m` as placing needs it, testing horizon once, into `at`, `toward` and `normal`.
+  ##   Line with weight writes its anchor and unit direction, and horizon line writes unit
+  ##     normal of its pencil. Fields of read that does not hold keep what they held.
+  ##   Takes value alone, so no caller hands in horizon answer that disagrees with it.
+  ##   Writes field by field, as `positionInto` does: placing reads every line of frame.
+  let
+    is_horizon = m.isHorizon
+    anchor = positionAnchor(m, is_horizon)
+    axis = direction(m, is_horizon)
+  if anchor.isSome and axis.isSome:
+    at.setTo(anchor.get)
+    toward.setTo(axis.get)
+    return ReadingLine.Through
+  let pencil = directionNormalHorizon(m, is_horizon)
+  if pencil.isNone: return ReadingLine.Nothing
+  normal.setTo(pencil.get)
+  ReadingLine.Across
+
+
+func readPlaneInto*(m: Multivector; support: var Position; normal: var Direction): bool =
+  ## Read support and unit normal of plane `m`, testing horizon once, and report whether both
+  ##   hold. False for horizon plane, which has neither; fields keep what they held then.
+  ##   Support is origin where plane passes through it, as `positionAnchor` reads it.
+  ##   Takes value alone, so no caller hands in horizon answer that disagrees with it.
+  let
+    is_horizon = m.isHorizon
+    anchor = positionAnchor(m, is_horizon)
+    perpendicular = directionNormal(m, is_horizon)
+  if anchor.isNone or perpendicular.isNone: return false
+  support.setTo(anchor.get)
+  normal.setTo(perpendicular.get)
+  true
 
 
 

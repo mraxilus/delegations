@@ -223,8 +223,10 @@ Each claim follows these rules for forecasting:
 - **A number names its unit at the start of its text, after its label: `tokens`, `cost` or
   `time`.** A count takes the label `Count:` instead. The range of `tokens` is 10,000 to
   1,000,000,000, that of `cost` $0.01 to $1,000, and that of `time` 0.1 to 10,000 minutes. Each
-  is on the logarithm, with open bounds. A count runs from 0, a closed bound, to 100,000, on the
-  logarithm of the count plus one. A number of another unit takes no score.
+  is on the logarithm, with open bounds. A count runs from 0, a closed bound, to 100,000, an open
+  bound, on the logarithm of the count plus one. A number of another unit takes no score.
+- **A label names no unit, except `Count:`.** So `Cost: cost at list price: $0.80, …` takes a
+  score, and `Cost: $0.80, …` takes none.
 - **The table has no column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
