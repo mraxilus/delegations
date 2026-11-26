@@ -88,11 +88,11 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 | Table for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator (D1 b) |
 | Chain as one function | Closes D08, but spends what the chain spends |
 | A pair counted twice | 72 adds more at rga4d, one for each of 76 reads of a cross pair, less 4 |
-| First basis of each cross pair doubled | Seven doubled bases at rga4d, so 3 adds more for each typed object |
-| Each entry at each coefficient that reads it | 15 adds more for a typed line at rga4d, and 54 for a full 𝐦 |
-| Each entry summed as a balanced tree | Point and plane at ×0.98 of Lengyel, but line at ×1.22 against ×1.18 (D2) |
-| Shared sums of two terms across entries | Typed line and point spend 57 and 36 adds, but run at ×1.20 and ×1.09 of Lengyel |
-| Line through quaternion 𝐤, as Lengyel's form | Form for one object by hand, which [the ruling on the gap (#1015)](https://github.com/mraxilus/delegations/issues/1015#issuecomment-7200316312) keeps out |
+| First basis of each pair doubled | Seven doubled bases at rga4d: 3 adds more per typed object |
+| Each entry where it is read | 15 adds more for a typed line at rga4d, and 54 for a full 𝐦 |
+| Balanced sum of each entry | Point and plane at ×0.98 of Lengyel, but line at ×1.22 (D2) |
+| Shared sums of two terms | Line and point: 57 and 36 adds, at ×1.20 and ×1.09 of Lengyel |
+| Line through quaternion 𝐤 | Lengyel's form for one object, which no rule of the table gives (D3) |
 
 ## Costs
 
@@ -111,7 +111,8 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 
 ## Open decisions
 
-Three decisions wait on [the gap of the table to Lengyel (#1015)](https://github.com/mraxilus/delegations/issues/1015):
+Three decisions wait on [the gap of the table to Lengyel
+(#1015)](https://github.com/mraxilus/delegations/issues/1015):
 
 - **D1.** The rule that doubles the basis of most cross pairs moves how gcc packs products into
   vectors. So two pairs run at ×1.04 of the old rule: a circle by a motor at cga4d, and a grade-4
@@ -122,9 +123,10 @@ Three decisions wait on [the gap of the table to Lengyel (#1015)](https://github
   time. It moves the line to ×1.22 from ×1.18. So the choice is sums in order (a), as now, or
   balanced sums (b).
 - **D3.** The line at rga4d spends 13 adds more than Lengyel's, and runs at ×1.18 of his time.
-  His form computes the moment through quaternion 𝐤, which the table cannot read off. So the
-  choice is to close #1015 with the gap recorded here (a), or to keep it open for a rule that
-  reads part of the table as the chain (b).
+  His form computes the moment through quaternion 𝐤, which the table cannot read off. A form
+  by hand for one object is what the ruling on #1015 keeps out. So the choice is to close #1015
+  with the gap recorded here (a), or to keep it open for a rule that reads part of the table as
+  the chain (b).
 
 The Architect ruled D48 a, D49 f and D50 a on
 [the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
@@ -176,7 +178,7 @@ run moved it. The suites pass at the four algebras, with the two tests of this p
 A typed object by a typed motor reads the table of its own two types. Lengyel's reference holds
 five such transforms:
 
-| Algebra | Object by motor | Table: multiplies, adds | Lengyel: multiplies, adds | Time against Lengyel |
+| Algebra | Object | Table: multiplies, adds | Lengyel: multiplies, adds | Time against Lengyel |
 |---|---|---|---|---|
 | rga4d | point | 35, 40 | 35, 40 | ×1.08, ×1.09 |
 | rga4d | line | 53, 67 | 52, 54 | ×1.18, ×1.19 |
