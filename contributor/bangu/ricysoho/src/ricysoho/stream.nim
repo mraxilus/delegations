@@ -705,20 +705,6 @@ func occurrenceSigned(sign, word: string, at: int): Occurrence =
   )
 
 
-func runDigits(text: string, at, finish: int): tuple[finish: int, is_compound: bool] =
-  ## jarco le fanmo be le porsi poi krasi bu'u `at` ku'o .e lo du'u le porsi cu vasru su'o re boi
-  ##     denpa bu
-  ##   .i le porsi cu vasru lo lerfu pe `DIGITS_STREAM` .e denpa bu .e slaka bu poi zvati lo jbini
-  ##       be re lerfu pe `DIGITS_STREAM`
-  ##   .i le porsi cu fanmo pu `finish`
-  var (k, count) = (at, 0)
-  while k < finish and (text[k] in DIGITS_STREAM or (text[k] in {'.', ','} and
-      text[k - 1] in DIGITS_STREAM and k + 1 < finish and text[k + 1] in DIGITS_STREAM)):
-    if text[k] == '.': inc count
-    inc k
-  (k, count >= 2)
-
-
 func isCoreAt(text: string, at, finish: int): bool =
   ## jdice lo du'u le ralju pagbu be pa namcu cu cfari bu'u `at`
   ##   .i le ralju pagbu cu cfari ta'i lo lerfu pe `DIGITS_STREAM` .a lo sinxa pe
@@ -804,6 +790,19 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ## ni'o le pamoi valsi pe pa sinxa pe lo namcu cu vasru ro stuzi pe le sinxa
   ##   .i ro drata valsi pe le sinxa cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le
   ##       sinxa
+  func runDigits(at: int): tuple[finish: int, is_compound: bool] =
+    ## jarco le fanmo be le porsi poi krasi bu'u `at` ku'o .e lo du'u le porsi cu vasru su'o re boi
+    ##     denpa bu
+    ##   .i le porsi cu vasru lo lerfu pe `DIGITS_STREAM` .e denpa bu .e slaka bu poi zvati lo jbini
+    ##       be re lerfu pe `DIGITS_STREAM`
+    ##   .i le porsi cu fanmo pu `finish`
+    var (k, count) = (at, 0)
+    while k < finish and (text[k] in DIGITS_STREAM or (text[k] in {'.', ','} and
+        text[k - 1] in DIGITS_STREAM and k + 1 < finish and text[k + 1] in DIGITS_STREAM)):
+      if text[k] == '.': inc count
+      inc k
+    (k, count >= 2)
+
   var
     occurrences: seq[Occurrence]
     at = start
@@ -820,7 +819,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   while at < finish:
     if text[at] in DIGITS_STREAM:
       if opened.isNone: (opened, opening) = (some(occurrences.len), at)
-      if at >= ending_digits: (ending_digits, is_compound) = text.runDigits(at, finish)
+      if at >= ending_digits: (ending_digits, is_compound) = runDigits(at)
       occurrences.add Occurrence(
         start: at, finish: at + 1, text: $text[at], stress: none(int),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
