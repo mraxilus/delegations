@@ -9,5 +9,5 @@ description = "Runner of each test file under each configuration of its header, 
 license = "Prosperity-3.0.0"
 srcDir = "src"
 
-requires "nim == 2.4.0"
+requires "nim == 2.4.2"
 requires "knoller#11403468a97c0d3ae922182d894606e2688504e9"

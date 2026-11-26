@@ -9,4 +9,4 @@ srcDir = "src"
 installExt = @["nim"]
 bin = @["knoller"]
 
-requires "nim == 2.4.0"
+requires "nim == 2.4.2"

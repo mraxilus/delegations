@@ -37,14 +37,14 @@
       "license = \"Prosperity-3.0.0\"",
       "srcDir = \"src\"",
       "",
-      "requires \"nim == 2.4.0\"",
+      "requires \"nim == 2.4.2\"",
       "requires \"knoller#11403468a97c0d3ae922182d894606e2688504e9\"",
       ""
     ]
   },
   "hostOS": "linux",
   "hostCPU": "amd64",
-  "nimVersion": "2.4.0",
+  "nimVersion": "2.4.2",
   "gccVersion": "13.3.0",
   "clangVersion": ""
 }
