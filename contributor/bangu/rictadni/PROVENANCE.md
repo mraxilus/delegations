@@ -596,12 +596,14 @@ is `app/exchanges.proto`, beside `app/exchanges.nim`, which owns the format. Nim
 the message only through the types that `import_proto3` of `protobuf_serialization` generates.
 Verified by `suites/test_exchanges.nim`.
 
-**The package of the schema is `rictadni`, the name of the project.** The Architect ruled so
-on #946. No byte of a message names its package, so a file written under the old package
+**The package of the schema is `rictadni`, the name of the project, as the Architect ruled
+on #946.** No byte of a message names its package, so a file written under the old package
 `lojban_tagger` decodes the same. `check-schemas` holds the shipped schema under the new package,
-so each field stays held. Verified by `suites/test_exchanges.nim`, which encodes the text format
-file as `rictadni.Exchange`. Verified by hand with `protoc` 3.21.12 on 2026-11-26: that file
-encodes to the same bytes under either package.
+so each field stays held (#981, #996). Cost: the shipped schema defines no type
+`lojban_tagger.Exchange`, so `protoc` refuses a command that names it.
+Verified by `suites/test_exchanges.nim`, which encodes the text format file as `rictadni.Exchange`.
+Verified by hand on 2026-11-26 with `protoc` 3.21.12, which encodes that file to the same bytes
+under either package and refuses the old type.
 
 The generator names each type after its message, and leaves out the package. So its `Exchange`
 and `Reply` would clash with `Exchange` of `exchanges.nim` and `Reply` of `suggestions.nim`. The
@@ -699,7 +701,7 @@ tail -c +29 build/examples/390a130dbd59a40f.exchange |
   protoc --decode=rictadni.Exchange app/exchanges.proto
 ```
 
-Verified by hand with `protoc` 3.21.12 on 2026-11-19, for each file that `examples` writes.
+Verified by hand with `protoc` 3.21.12 on 2026-11-26, for each file that `examples` writes.
 
 **Each refusal names the part that fails, and ends in the value that it refuses.** That value is
 the first line of the file, a count of bytes, a checksum, an error of the decoder, a label or a
