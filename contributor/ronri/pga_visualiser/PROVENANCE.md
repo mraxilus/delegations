@@ -68,7 +68,7 @@ a compile-time define named in the `matrix` of the small suite. A compile agains
 constant and the define still meet.
 
 **Nim compares names without case after the first letter, and without underscores**, so a variable
-`PREVIEW` would shadow the type `Preview`. The variables are `PREVIEW_EDIT` and `PREVIEW_APPLY`.
+`PREVIEW` shadows the type `Preview`. The variables are `PREVIEW_EDIT` and `PREVIEW_APPLY`.
 
 **`horizon` stays the word of `pga`**, and has no entry here, because the vocabulary of the algebra
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
@@ -1490,10 +1490,10 @@ Verified by driven check:
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
 `placeInto` writes give what `placeObject` gave. Each reader answers alike from the placements of a
-frame and from placing each object, `anchorFor` among them. Each shared reader refuses a sequence of
-any length, and a short array. Verified by `suites.nim`: each exit of placing tests the horizon of
-its object once at most. A line and a plane through the origin are among them, and each lands where
-the reads alone land. Assumed: that no edit of the desktop lands between `placeEdited` and the
+frame and from placing each object, `anchorFor` among them. Verified by `suites.nim`: each shared
+reader refuses a sequence of any length, and a short array. Each exit of placing tests the horizon
+of its object once at most. A line and a plane through the origin are among them, and each lands
+where the reads alone land. Assumed: that no edit of the desktop lands between `placeEdited` and the
 emission of its frame, which no check drives.
 
 ## Scene storage
