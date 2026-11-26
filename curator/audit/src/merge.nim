@@ -118,9 +118,10 @@ proc writeMerge*(root, base: string): Merge =
     result.findings.add finding(
       "",
       0,
-      "Branch conflicts with base, so no merge of them can be judged; merge base, resolve " &
-        "each conflict, then check again, as /sync says; got `" & fields[1 .. ^1].join(", ") &
-        "`.",
+      Check.ConflictMerge,
+      "Branch conflicts with base, so no merge of them can be judged; got `" &
+        fields[1 .. ^1].join(", ") & "`.",
+      help = "merge base, resolve each conflict, then check again, as /sync says",
     )
     return
   if code != 0: raise newException(IOError, "git failed; got `" & failure.strip & "`.")
@@ -143,8 +144,9 @@ proc writeMerge*(root, base: string): Merge =
     result.findings.add finding(
       result.directory,
       0,
-      "Second tree is no worktree of its own; remove it, then check again; got `" &
-        result.directory & "`.",
+      Check.TreeSecond,
+      "Second tree is no worktree of its own; got `" & result.directory & "`.",
+      help = "remove it, then check again",
     )
 
 
@@ -159,11 +161,12 @@ proc keyKoch(directory: string): string =
 
 
 proc runMerge*(
-  merge: Merge, branch: string, toolchains: var Toolchains
+  merge: Merge, branch: string, toolchains: var Toolchains, form = ""
 ): tuple[code: int, found: seq[Finding]] =
   ## Run `check` of koch of merge in second tree for branch, against base merge holds, building
   ##   that koch first where its sources moved, on compiler pin of merge names. Exit code of that
-  ##   run, else finding where no compiler serves pin or build fails.
+  ##   run, else finding where no compiler serves pin or build fails. Form `--form` named passes
+  ##   on, so both kochs print alike; none named leaves that koch to read its own terminal.
   let
     nimble = merge.directory / DIRECTORY_DRIVER.pathNimble
     pin = if fileExists(nimble): readFile(nimble).pinNim else: none(string)
@@ -195,18 +198,23 @@ proc runMerge*(
       return (1, @[finding(
         PATH_KOCH,
         0,
-        "Koch of merge with base failed to build, as compiler says above; merge base, then " &
-          "fix what breaks it; got exit `" & $code & "`.",
+        Check.BuildMerge,
+        "Koch of merge with base failed to build, as compiler says above; got exit `" & $code &
+          "`.",
+        help = "merge base, then fix what breaks it",
       )])
     moveFile(building, binary)
     writeFile(binary & ".key", key)
-  let arguments = [
+  var arguments = @[
     "check", "--root:" & merge.directory, "--branch:" & branch, "--base:" & merge.base,
   ]
+  if form.len > 0: arguments.add "--form:" & form
   (runIn(merge.directory, binary, arguments, bin.get), @[])
 
 
-proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdict =
+proc judgeMerged*(
+  root, base, branch: string, toolchains: var Toolchains, form = ""
+): Verdict =
   ## Judge clean checkout lacking base as merged with it, as `koch check` does: drift of checkout
   ##   first, then merge in second tree, then `check` of koch of that merge for branch. Mark of
   ##   `pre-push` hook records tree of branch where that run exits 0 on branch checked out, and
@@ -219,7 +227,7 @@ proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdi
   result.findings = merged.findings
   if result.findings.len > 0: return
   echo "Koch of merge with base judges branch, in `" & merged.directory & "`."
-  let (code, found) = runMerge(merged, branch, toolchains)
+  let (code, found) = runMerge(merged, branch, toolchains, form)
   (result.code, result.findings) = (code, found)
   if code != 0 or found.len > 0: return
   if root.isDetached:
@@ -230,15 +238,21 @@ proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdi
 
 
 proc judgeCheckout*(
-  root, base, branch: string, toolchains: var Toolchains, judge_in_place: proc(): int
+  root, base, branch: string,
+  toolchains: var Toolchains,
+  judge_in_place: proc(): int,
+  form_named = "",
+  form = Form.Line,
+  is_colored = false,
 ): int =
   ## Judge checkout as `koch check` does, and give its exit code: as merged with base where clean
   ##   HEAD lacks base (`judgeMerged`), else in place through `judge_in_place`, which koch holds.
-  ##   Finding that stops merge is reported here, at exit 1.
-  let verdict = judgeMerged(root, base, branch, toolchains)
+  ##   Finding that stops merge is reported here, at exit 1, in form koch reads; form `--form`
+  ##   named passes on to koch of merge.
+  let verdict = judgeMerged(root, base, branch, toolchains, form_named)
   if not verdict.is_merged: return judge_in_place()
   if verdict.findings.len > 0:
-    verdict.findings.report
+    verdict.findings.report(form, is_colored)
     echo "Merge with base not judged; fix findings above, then run again."
   verdict.code
 

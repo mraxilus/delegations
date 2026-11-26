@@ -90,7 +90,9 @@ one issue open until the pin follows. To follow head:
    change, proposal and note that `drive` names. Redraw each box of the library map that `drive`
    names, and add a box for each new table.
 3. Run `restamp`. It moves each timed record whose builds emit the same C to the pin, and names
-   each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`.
+   each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`. Then refresh each
+   figure that a text cites from them. Name the commit of each figure of a run by hand at the
+   earlier pin, since "pin" in a text means the new one.
 4. Run `gaps` and `pages`, publish each page that `drive` names, and record each one with
    `published <name> <url>`.
 
@@ -161,7 +163,7 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `3d9696e`, which is the pin. The runtime
+Measured on the pinned compiler and on library head `7ef9f4d`, which is the pin. The runtime
 baselines were timed at the pin, or at a commit that emits the same C. Each evaluation names the
 pin it was timed at. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.

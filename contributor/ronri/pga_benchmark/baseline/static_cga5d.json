@@ -8,10 +8,10 @@
     "sizeof_multivector": 256
   },
   "taken": {
-    "date": "2026-11-15",
+    "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
     "nim": "14991af742d0833503741fd9a0918133d1bcf8a4",
-    "pga": "3d9696edbaaa5dca655c3024174bd46fd156d7c6",
+    "pga": "7ef9f4dbfaaad9c229feee3787e16f25b612ab63",
     "flags": "-d:release"
   },
   "functions": {
@@ -57,92 +57,6 @@
         "bytes_copied": 0,
         "bytes_intermediates": 0,
         "bytes_moved": 768
-      }
-    },
-    "index(Basis)": {
-      "symbol": "index",
-      "module": "pga/multivectors",
-      "params": [
-        "Basis"
-      ],
-      "returns": "int",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subtractions": 0,
-        "divides": 0,
-        "fills_zero": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subtractions": 0,
-        "divides": 0,
-        "fills_zero": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 0,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 8
-      }
-    },
-    "index(Basis)#u33567": {
-      "symbol": "index",
-      "module": "pga/operators",
-      "params": [
-        "Basis"
-      ],
-      "returns": "int",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subtractions": 0,
-        "divides": 0,
-        "fills_zero": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 3,
-        "calls": 3,
-        "allocations": 2,
-        "lines": 58
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subtractions": 8,
-        "divides": 2,
-        "fills_zero": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 25,
-        "calls": 88,
-        "allocations": 8,
-        "lines": 7000
-      },
-      "movement": {
-        "bytes_read": 0,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 8
       }
     },
     "denseWedge(Multivector,Multivector)": {
@@ -999,9 +913,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 96,
+        "calls": 0,
         "allocations": 0,
-        "lines": 35
+        "lines": 26
       },
       "total": {
         "multiplies": 0,
@@ -1012,9 +926,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 96,
+        "calls": 0,
         "allocations": 0,
-        "lines": 323
+        "lines": 26
       },
       "movement": {
         "bytes_read": 512,
@@ -1087,9 +1001,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 96,
+        "calls": 0,
         "allocations": 0,
-        "lines": 39
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -1100,9 +1014,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 96,
+        "calls": 0,
         "allocations": 0,
-        "lines": 327
+        "lines": 30
       },
       "movement": {
         "bytes_read": 512,
@@ -1527,9 +1441,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 64,
+        "calls": 0,
         "allocations": 0,
-        "lines": 36
+        "lines": 30
       },
       "total": {
         "multiplies": 32,
@@ -1540,9 +1454,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 64,
+        "calls": 0,
         "allocations": 0,
-        "lines": 228
+        "lines": 30
       },
       "movement": {
         "bytes_read": 264,
@@ -2302,9 +2216,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 64,
+        "calls": 0,
         "allocations": 0,
-        "lines": 36
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -2315,9 +2229,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 64,
+        "calls": 0,
         "allocations": 0,
-        "lines": 228
+        "lines": 30
       },
       "movement": {
         "bytes_read": 256,
@@ -2455,6 +2369,49 @@
         "bytes_copied": 0,
         "bytes_intermediates": 256,
         "bytes_moved": 560
+      }
+    },
+    "index(Basis)": {
+      "symbol": "index",
+      "module": "pga/operators",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 2,
+        "lines": 58
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subtractions": 8,
+        "divides": 2,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 25,
+        "calls": 88,
+        "allocations": 8,
+        "lines": 7000
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
       }
     },
     "denseNormBulk(Multivector)": {
@@ -2990,9 +2947,9 @@
         "intermediates": 1,
         "copies": 0,
         "checks": 1,
-        "calls": 65,
+        "calls": 1,
         "allocations": 0,
-        "lines": 60
+        "lines": 54
       },
       "total": {
         "multiplies": 40,
@@ -3003,9 +2960,9 @@
         "intermediates": 1,
         "copies": 0,
         "checks": 1,
-        "calls": 65,
+        "calls": 1,
         "allocations": 0,
-        "lines": 284
+        "lines": 86
       },
       "movement": {
         "bytes_read": 256,
@@ -3076,9 +3033,9 @@
         "intermediates": 1,
         "copies": 0,
         "checks": 1,
-        "calls": 65,
+        "calls": 1,
         "allocations": 0,
-        "lines": 60
+        "lines": 54
       },
       "total": {
         "multiplies": 40,
@@ -3089,9 +3046,9 @@
         "intermediates": 1,
         "copies": 0,
         "checks": 1,
-        "calls": 65,
+        "calls": 1,
         "allocations": 0,
-        "lines": 284
+        "lines": 86
       },
       "movement": {
         "bytes_read": 256,
@@ -7913,9 +7870,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 2,
+        "calls": 0,
         "allocations": 0,
-        "lines": 46
+        "lines": 40
       },
       "total": {
         "multiplies": 0,
@@ -7926,9 +7883,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
-        "calls": 2,
+        "calls": 0,
         "allocations": 0,
-        "lines": 52
+        "lines": 40
       },
       "movement": {
         "bytes_read": 264,
@@ -7957,9 +7914,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 1,
-        "calls": 3,
+        "calls": 1,
         "allocations": 0,
-        "lines": 51
+        "lines": 45
       },
       "total": {
         "multiplies": 0,
@@ -7970,9 +7927,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 1,
-        "calls": 3,
+        "calls": 1,
         "allocations": 0,
-        "lines": 68
+        "lines": 56
       },
       "movement": {
         "bytes_read": 264,
@@ -8301,9 +8258,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 96,
-        "calls": 257,
+        "calls": 225,
         "allocations": 0,
-        "lines": 99
+        "lines": 96
       },
       "total": {
         "multiplies": 0,
@@ -8314,9 +8271,9 @@
         "intermediates": 0,
         "copies": 0,
         "checks": 96,
-        "calls": 321,
+        "calls": 289,
         "allocations": 0,
-        "lines": 1896
+        "lines": 1797
       },
       "movement": {
         "bytes_read": 256,
@@ -8486,9 +8443,9 @@
         "intermediates": 6,
         "copies": 0,
         "checks": 109,
-        "calls": 399,
+        "calls": 303,
         "allocations": 0,
-        "lines": 2530
+        "lines": 2233
       },
       "movement": {
         "bytes_read": 256,

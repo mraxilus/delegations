@@ -82,7 +82,12 @@ proc findingsBreaking*(output, folder: string): seq[Finding] =
     try:
       annotation = parseJson(line)
     except JsonParsingError, ValueError:
-      result.add finding(folder, 0, "Buf printed what is no finding; got `" & line & "`.")
+      result.add finding(
+        folder,
+        0,
+        Check.ToolSchema,
+        "Buf printed what is no finding; got `" & line & "`.",
+      )
       continue
     let
       (side, name) = annotation{"path"}.getStr.splitPath
@@ -93,14 +98,18 @@ proc findingsBreaking*(output, folder: string): seq[Finding] =
       let shipped = if side == SIDES[0]: " as base shipped it" else: ""
       result.add finding(
         path, at,
-        "Schema does not compile" & shipped & ", so no version of it is held; import only " &
-          "schemas of its own folder; got `" & message & "`.",
+        Check.CompileSchema,
+        "Schema does not compile" & shipped & ", so no version of it is held; got `" & message &
+          "`.",
+        help = "import only schemas of its own folder",
       )
     else:
       result.add finding(
         path, at,
-        "Schema change breaks version base shipped; add field or value under new number, and " &
-          "delete one only by reserving its number and name; got `" & message & "`.",
+        Check.SchemaBreaking,
+        "Schema change breaks version base shipped; got `" & message & "`.",
+        help = "add field or value under new number, and delete one only by reserving its " &
+          "number and name",
       )
 
 
@@ -212,13 +221,23 @@ proc breakingFindings*(
       moved = "`" & gone.join("`, `") & "` to `" & added.join("`, `") & "`"
     if gone.len > 0 and added.len > 0:
       if images.anyIt(it.get.isFullNameExposed):
-        return @[finding(folder, 0, "Schema folder takes new package beside `Any`, `service` " &
-          "or `extend`, where full name of message reaches data or path; keep package; got " &
-          moved & ".")]
+        return @[finding(
+          folder,
+          0,
+          Check.PackageSchema,
+          "Schema folder takes new package beside `Any`, `service` or `extend`, where full name " &
+            "of message reaches data or path; got " & moved & ".",
+          help = "keep package",
+        )]
       if gone.len != 1 or added.len != 1:
-        return @[finding(folder, 0, "Schema folder changes package, and no one package of " &
-          "base maps to one of branch, so no field is held; move one package whole; got " &
-          moved & ".")]
+        return @[finding(
+          folder,
+          0,
+          Check.PackageSchema,
+          "Schema folder changes package, and no one package of base maps to one of branch, so " &
+            "no field is held; got " & moved & ".",
+          help = "move one package whole",
+        )]
       images[0].get.underPackage(gone[0], added[0])
       against = SIDES[0] & EXT_IMAGE
       writeFile(work / against, $images[0].get)
@@ -229,7 +248,7 @@ proc breakingFindings*(
   )
   if code == 0: return
   if code != CODE_BREAKING:
-    return @[finding(folder, 0, "Buf could not compare schemas of folder; got `" &
+    return @[finding(folder, 0, Check.ToolSchema, "Buf could not compare schemas of folder; got `" &
       output.strip & "`.")]
   findingsBreaking(output, folder)
 
@@ -263,6 +282,7 @@ proc checkSchemas*(root, base: string): seq[Finding] =
   if binary.isNone:
     return @[finding(
       "curator/audit/src/bufbuild.nim", 0,
+      Check.ToolSchema,
       "Buf could not be fetched or checked at its pin, so no schema change is held; reason is " &
         "above; got `" & VERSION_BUFBUILD & "`.",
     )]

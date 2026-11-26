@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -92,6 +92,60 @@ so a new rule without a citation does not compile there.
 - Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
   `curator/audit` holds it, article included, through the real check of each message that `koch`
   prints.
+
+## Renderer
+
+**Each finding prints in one of two forms, through `knoller/report`.** The terminal form serves a
+reader at a terminal, and the line form serves a pipe or a log (STYLE.md §3). A finding is a
+`Notice` that holds only the parts that its check knows (D3 a of #1002). So its location shows the
+path, the line and the column, each only behind the part before it. The renderer is pure. The
+caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
+
+- The terminal form prints the location and the rule, the summary, the source line with a marker,
+  `actual` and `expect`, and `help`. A blank line stands between two blocks, and a block shows
+  only where the finding holds its parts.
+- The source line shows only where the finding holds its line and the text of that line. The
+  marker shows only where it holds a column too.
+- A source line over 80 runes shows a window of 80 runes around the span, and `…` marks each
+  edge that the window cuts. A finding of width names a line of hundreds of runes, which a
+  terminal would wrap.
+- Column and span count runes, as the width of a line counts them. A control character of the
+  source line prints as its control picture, as `␉`, so the marker stays under its rune.
+- The terminal form quotes a value that is empty, or whose edge or control character would hide
+  it. So each value stays visible, as Article IV.4 asks.
+- A message cuts at its first `; got ` outside a code span, and a code span runs to the next run
+  of as many backticks (`sentenceEnd`). So a sentence that quotes ``…; got `{value}`.`` ends after
+  the quote. The sentence is the summary, with its first letter lowercase (`initNotice`). The
+  value after `; got ` is the actual, out of the code span that it stands in whole.
+- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
+  the value. The sentence then runs to its closing period. No message of knoller holds such a
+  backtick, and reading holds that.
+- Each suite compares the short text of a finding (`brief`), as D3 c of #1002 rules. It holds the
+  summary, then the actual after `; got`, the expected value after `; expect` and the help after
+  `; help:`, each where held. The rule stands apart, so the text reads as the message.
+- A sentence that names an absence ends without `; got `, so the notice holds no actual. Article
+  IV.4 never takes an in-range value for an absence, and `none` would read as one.
+- The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
+  value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+  Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
+- A warning prints in both forms, with `warning` after its rule, as the command line of knoller
+  marks it (D2 a of #1002). A rewrite is no finding, so its caller keeps its one line.
+- Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
+  as no-color.org reads it, and `formOutput` takes the form that a flag forces.
+- Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
+  draws them, and each case above.
+- The command line of knoller prints each finding that stays for the hand through the renderer,
+  and each warning too. Each shows the text of its line as given. A rewrite and an unsettled file
+  keep their one line, since a tool reads them. `--form` forces a form, and else `main` takes the
+  terminal form where stdout is a terminal. In the terminal form, a blank line stands before
+  each finding and before the count.
+- Verified by `suites/test_command.nim`: both forms of one run, the flag, and the line form of
+  each warning. The suites that read what a run prints hold the line form.
+- Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
+  emoji, shifts the marker to the right of its span.
+- Each verb of koch that reports prints each finding and warning through the renderer too, and
+  each hook prints each finding in the line form. A finding of a report of knoller keeps the id
+  of its rule there. Each check of koch takes an id `koch.<name>` (D4 a of #1002).
 
 ## Chain
 
@@ -949,9 +1003,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   2026-11-20: each fails with knoller at `d6bc8979`, before those rules.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
-  A case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such
-  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29.
+- Each case asks the parser of the compiler that builds the suite, 2.4.2 in the job of knoller. A
+  case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such case,
+  verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29. 2.4.2 gives it
+  too, verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
@@ -969,9 +1024,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
 operator. A `-` before a digit opens a number after a space or an opening bracket.
 
-- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0. It adds
+- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0 and 2.4.2. It adds
   `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the glyphs of 2.2.12, and commit `27763495` reads the same set as 2.4.0.
-  Verified by hand, 2026-10-29, in the source of each lexer.
+  Verified by hand, 2026-10-29, in the source of each lexer. `unicodeOprLen` of the lexer is the
+  same bytes in 2.4.2, verified by hand, 2026-11-26.
 - Cost: where code on a pin that reads fewer glyphs spells one of them in a name, the scan reads
   it otherwise than that compiler. No code on 2.2.12 did, verified by hand, 2026-10-29.
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of

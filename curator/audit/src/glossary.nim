@@ -68,15 +68,20 @@ func standardsIn*(source: string): seq[(int, string)] =
 func checkGlossary*(path, source: string): seq[Finding] =
   ## Report missing or misplaced headings, malformed standards, and terms lacking definition.
   if not source.firstNonBlank.startsWith("# "):
-    result.add finding(path, 1, "Glossary must open with `# <Name>` heading.")
+    result.add finding(path, 1, Check.FormGlossary, "Glossary must open with `# <Name>` heading.")
   let headings = source.linesHeading
   if HEADING_STANDARDS notin headings:
-    result.add finding(path, 0, "Glossary lacks `## Standards` heading.")
+    result.add finding(path, 0, Check.FormGlossary, "Glossary lacks `## Standards` heading.")
   if HEADING_LANGUAGE notin headings:
-    result.add finding(path, 0, "Glossary lacks `## Language` heading.")
+    result.add finding(path, 0, Check.FormGlossary, "Glossary lacks `## Language` heading.")
   if headings.find(HEADING_STANDARDS) > headings.find(HEADING_LANGUAGE) and
       HEADING_LANGUAGE in headings:
-    result.add finding(path, 0, "Glossary must put `## Standards` before `## Language`.")
+    result.add finding(
+      path,
+      0,
+      Check.FormGlossary,
+      "Glossary must put `## Standards` before `## Language`.",
+    )
   let lines = source.splitLines
   var is_standards = false
   for i, line in lines:
@@ -85,6 +90,7 @@ func checkGlossary*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
+        Check.FormGlossary,
         "Standard must read `- **Name**, owner and edition: symbols`; got `" & line & "`.",
       )
     if not line.isLineTerm: continue
@@ -96,6 +102,7 @@ func checkGlossary*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
+        Check.FormGlossary,
         "Term lacks definition on next line; got `" & line[2 ..< line.len - 3] & "`.",
       )
 
@@ -115,6 +122,7 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
         result.add finding(
           path,
           line,
+          Check.StandardRoot,
           "Standard is in root glossary already, so project must not repeat it; got `" &
             name & "`.",
           is_propagation = true,
@@ -123,6 +131,7 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
         result.add finding(
           path,
           line,
+          Check.StandardRoot,
           "Standard two projects list belongs in root glossary; got `" & name &
             "`, also in `" & lut_path_by_name[name] & "`.",
           is_propagation = true,
@@ -182,6 +191,7 @@ func checkWordsPeople*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
-        "Glossary avoids this word for people; write agreed term (GLOSSARY.md); got `" &
-          word & "`.",
+        Check.WordPeople,
+        "Glossary avoids this word for people (GLOSSARY.md); got `" & word & "`.",
+        help = "write agreed term",
       )

@@ -31,9 +31,9 @@ suite "Blanks":
   test "suite takes three blank lines before it, test two, first child none":
     let breach = "import std/unittest\n\nsuite \"A\":\n  test \"a\":\n    check true\n\n" &
       "  test \"b\":\n    check true\n\nsuite \"B\":\n\n  test \"c\":\n    check true\n"
-    check checkBlanks(PATH_TEST, breach, NIMBLE_TEST).mapIt(it.message.split(";")[0]) == @[
-      "Suite takes three blank lines before it", "Test takes two blank lines before it",
-      "Suite takes three blank lines before it", "First child follows its opener at once",
+    check checkBlanks(PATH_TEST, breach, NIMBLE_TEST).mapIt(it.brief.split(";")[0]) == @[
+      "suite takes three blank lines before it", "test takes two blank lines before it",
+      "suite takes three blank lines before it", "first child follows its opener at once",
     ]
     check breach.fixed == "import std/unittest\n\n\n\nsuite \"A\":\n  test \"a\":\n" &
       "    check true\n\n\n  test \"b\":\n    check true\n\n\n\nsuite \"B\":\n  test \"c\":\n" &
@@ -138,7 +138,7 @@ suite "Blanks":
       "proc f(): int =\n  ## Doc.\n  func g(x: int): int = x + 1\n\n  g(1)\n"
     let spread = "proc f() =\n\n  func a(): int = 1\n\n  # Why.\n  func b(): int = 2\n" &
       "  discard a() + b()\n"
-    check checkBlanks("a.nim", spread)[0].message.startsWith("One-line routine")
+    check checkBlanks("a.nim", spread)[0].brief.startsWith("one-line routine")
     check spread.fixed("a.nim") == "proc f() =\n  func a(): int = 1\n  # Why.\n" &
       "  func b(): int = 2\n\n  discard a() + b()\n"
     for settled in [

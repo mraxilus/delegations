@@ -4,7 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/targets
+import ../../src/knoller/[reports, targets]
 
 
 func fixed(source: string): string =
@@ -31,7 +31,7 @@ suite "Style §5":
     check "let m = toMultivector(eye)\n".fixed.isSettled
     let found = checkTargets("a.nim", "let a = 1\nlet m = toMultivector(eye)\n")
     check found.mapIt(it.line) == @[2]
-    check found[0].message.endsWith("got `toMultivector(eye)`.")
+    check found[0].brief.endsWith("got `toMultivector(eye)`")
 
 
   test "`to<Target>` of compound argument, generic, several arguments or spanning lines stays":

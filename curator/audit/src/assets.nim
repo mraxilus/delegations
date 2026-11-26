@@ -289,8 +289,18 @@ func unknown*(file: string): seq[Finding] =
   ## Report asset no row declares, naming file asked for.
   @[finding(
     "curator/audit/src/assets.nim", 0,
-    "Store declares no such asset; add row naming its address and digest, or ask for one " &
-      "it declares; got `" & file & "`.",
+    Check.AssetUnknown,
+    "Store declares no such asset; got `" & file & "`.",
+    help = "add row naming its address and digest, or ask for one it declares",
+  )]
+
+
+func unfetched*(file: string): seq[Finding] =
+  ## Report asset row declares that store could not fetch or check, naming file asked for.
+  @[finding(
+    "curator/audit/src/assets.nim", 0,
+    Check.FetchAsset,
+    "Asset is declared but could not be fetched or checked; got `" & file & "`.",
   )]
 
 

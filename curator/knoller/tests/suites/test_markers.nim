@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[edits, markers, rules, symbols]
+import ../../src/knoller/[edits, markers, reports, rules, symbols]
 
 
 const
@@ -98,8 +98,8 @@ suite "Style §5":
       found = checkMarkers("pga/algebra.nim", ALGEBRA, uses)
     check found.len == 1
     check found[0].rule == Rule.UsedMarker and found[0].line == 8
-    check found[0].message == "Private symbol sibling `cayleys.nim` reaches carries " &
-      "`{.used.}` and comment naming sibling; got `func countSetBits`."
+    check found[0].brief == "private symbol sibling `cayleys.nim` reaches carries " &
+      "`{.used.}` and comment naming sibling; got `func countSetBits`"
     let (edits, reports) = editsMarkers("pga/algebra.nim", ALGEBRA, uses, [])
     check ALGEBRA.applied(edits).splitLines[7] == "func countSetBits(b: BasisFlags): int " &
       "{.borrow, compileTime, used.}  # Used in `cayleys.nim`."
@@ -184,8 +184,8 @@ suite "Style §5":
     suites.imports[(2, 32)] = false
     let found = checkMarkers("pga/operators.nim", OPERATORS, operators)
     check found.mapIt(it.line) == @[3]
-    check found[0].message ==
-      "Import takes `{.all.}` only where it reaches private symbol; got `algebra {.all.}`."
+    check found[0].brief ==
+      "import takes `{.all.}` only where it reaches private symbol; got `algebra {.all.}`"
     check OPERATORS.applied(editsMarkers("pga/operators.nim", OPERATORS, operators, [])[0])
       .splitLines[2] == "import ./[algebra, cayleys {.all.}, emitters, multivectors]"
     check SUITES.applied(editsMarkers("tests/suites.nim", SUITES, suites, [])[0])

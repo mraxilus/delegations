@@ -3,13 +3,13 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/glossary
+import ../../src/[findings, glossary]
 import ./fixtures
 
 
 func messages(source: string): seq[string] =
   ## Read finding messages of glossary text.
-  checkGlossary("g", source).mapIt(it.message)
+  checkGlossary("g", source).mapIt(it.brief)
 
 
 
@@ -21,12 +21,12 @@ suite "Glossary":
 
   test "heading and both sections required, in order":
     check messages("Intro\n\n## Standards\n\n## Language\n") ==
-      @["Glossary must open with `# <Name>` heading."]  # heading
+      @["glossary must open with `# <Name>` heading"]  # heading
     check messages("# Name\n\n## Terms\n") ==
-      @["Glossary lacks `## Standards` heading.", "Glossary lacks `## Language` heading."]
-    check messages("# Name\n\n## Language\n") == @["Glossary lacks `## Standards` heading."]
+      @["glossary lacks `## Standards` heading", "glossary lacks `## Language` heading"]
+    check messages("# Name\n\n## Language\n") == @["glossary lacks `## Standards` heading"]
     check messages("# Name\n\n## Language\n\n## Standards\n") ==
-      @["Glossary must put `## Standards` before `## Language`."]  # order
+      @["glossary must put `## Standards` before `## Language`"]  # order
 
 
   test "standards entry names standard, owner and edition before its symbols":
@@ -36,7 +36,7 @@ suite "Glossary":
       good = head & "- **SI**, BIPM, 9th edition: `s` (Table 2)." & tail
     check messages(good).len == 0
     check messages(head & "- **SI**: `s`." & tail) ==
-      @["Standard must read `- **Name**, owner and edition: symbols`; got `- **SI**: `s`.`."]
+      @["standard must read `- **Name**, owner and edition: symbols`; got `- **SI**: `s`.`"]
     check messages(head & "- SI, BIPM: `s`." & tail).len == 1  # no bold name
     check messages(head & "None yet." & tail & "\n- a list\n").len == 0  # prose and list outside
     check good.standardsIn == @[(5, "SI")]  # line and name
@@ -56,8 +56,9 @@ suite "Glossary":
       [("GLOSSARY.md", root), ("x/a/GLOSSARY.md", glossary_a), ("x/b/GLOSSARY.md", glossary_b)],
     )
     check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
-    check found[0].message.endsWith("got `SI`.")  # repeated from root
-    check found[1].message.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`.")  # shared
+    check found[0].brief.endsWith("got `SI`")  # repeated from root
+    check found.anyIt(it.rule == "koch.root-standard")
+    check found[1].brief.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`")  # shared
     check found.allIt(it.is_propagation)  # moving standard is curator's, never held
     check checkStandardsAcross([("GLOSSARY.md", root), ("x/b/GLOSSARY.md", glossary_b)]).len == 0
 
@@ -65,9 +66,9 @@ suite "Glossary":
   test "every term carries definition on next line":
     const head = "# N\n\n## Standards\n\n## Language\n\n"
     check messages(head & "**Order**:\n\n**Invoice**:\nA request.\n") ==
-      @["Term lacks definition on next line; got `Order`."]  # blank after term
+      @["term lacks definition on next line; got `Order`"]  # blank after term
     check messages(head & "**Order**:\n_Avoid_: Purchase\n") ==
-      @["Term lacks definition on next line; got `Order`."]  # avoid before definition
+      @["term lacks definition on next line; got `Order`"]  # avoid before definition
     check messages(head & "**Order**:\nA placed request.\n_Avoid_: Purchase\n")
       .len == 0  # full entry
     check checkGlossary("g", head & "**Order**:\n")[0].line == 7  # line named
@@ -87,7 +88,8 @@ suite "Glossary":
     check wordsPeopleIn("assets, agents").len == 1  # plural read as its word
     let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
-    check found[0].message.endsWith("got `owner`.")
+    check found[0].brief.endsWith("got `owner`; help: write agreed term")
+    check found.anyIt(it.rule == "koch.word-for-people")
 
 
   test "import line of Claude Code names file, so people check reads no word of it":

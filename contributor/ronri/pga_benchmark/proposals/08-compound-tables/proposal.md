@@ -121,12 +121,12 @@ when IS_CONFORMAL:
 
 ## Evidence
 
-Each of the five operators takes ×0.16 to ×0.48 of its time at pin, for one operand of kind
-General. The two supports gain least at rga3d, at ×0.48 each. The partner takes ×0.69 of pin at
-cga5d, for each kind of its operand.
+Each of the five operators takes ×0.23 to ×0.47 of its time at pin, for one operand of kind
+General. The two supports gain least at rga3d, at ×0.46 and ×0.47. The partner takes ×0.68 to
+×0.69 of pin at cga5d, for each kind of its operand.
 
 P01 alone changes no library function, so the gain belongs to this proposal. Its evaluation of
-2026-11-15 times each of these operators at ×0.99 to ×1.03 of pin.
+2026-11-26 times each of these operators at ×0.99 to ×1.01 of pin.
 
 Five count claims hold the multiplies of each operator. `∩` and `∪` take 54 each at rga4d,
 against 162 at pin. At cga5d, `⊞` takes none against 243, and `⊙` and `⊡` take 162 each against

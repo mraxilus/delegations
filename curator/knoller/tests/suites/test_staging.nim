@@ -14,9 +14,9 @@ const
     ## Member carrying its own `compileTime`, which stages family of its module.
   PRAGMAS_RUNTIME = ["inline", "noinit", "noinline", "codegenDecl: \"$# $#$#\""]
     ## Each pragma that acts only on generated code, which compile-time routine has none of.
-  MESSAGE_MEMBER = "Routine compile time alone runs carries `compileTime`, as its family does; got "
+  MESSAGE_MEMBER = "routine compile time alone runs carries `compileTime`, as its family does; got "
     ## Opening of message of member lacking `compileTime`.
-  MESSAGE_BRANCH = "Branch on static distinction is `when`; got "
+  MESSAGE_BRANCH = "branch on static distinction is `when`; got "
     ## Opening of message of `if` on what build fixes.
   CONSTANTS = @["DIMENSIONS", "IS_RIGID", "X", "Y"]
     ## Constants other modules of package export, as caller reads them.
@@ -29,7 +29,7 @@ func module(body: string): string =
 
 func families(source: string): seq[(int, string)] =
   ## Read line and message of each report of compile-time family over source.
-  checkFamilies("a.nim", source).mapIt (it.line, it.message)
+  checkFamilies("a.nim", source).mapIt (it.line, it.brief)
 
 
 func fixedFamilies(source: string): string =
@@ -40,7 +40,7 @@ func fixedFamilies(source: string): string =
 func branches(source: string): seq[(int, string)] =
   ## Read line and message of each report of branch on what build fixes, constants of package
   ##   read.
-  checkBranches("a.nim", source, CONSTANTS).mapIt (it.line, it.message)
+  checkBranches("a.nim", source, CONSTANTS).mapIt (it.line, it.brief)
 
 
 func fixedBranches(source: string): string =
@@ -57,7 +57,7 @@ suite "Compile-time family":
     check given.families == @[
       (
         LINES_HEAD + 1,
-        "Compile-time routine carries no runtime pragma; got `{.compileTime, inline, noinit.}`.",
+        "compile-time routine carries no runtime pragma; got `{.compileTime, inline, noinit.}`",
       ),
     ]
     check given.fixedFamilies == module("func f(s: string): int {.compileTime.} =\n  s.len\n")
@@ -80,7 +80,7 @@ suite "Compile-time family":
     check nested.families == @[
       (
         LINES_HEAD + 2,
-        "Compile-time routine carries no runtime pragma; got `{.compileTime, noinit.}`.",
+        "compile-time routine carries no runtime pragma; got `{.compileTime, noinit.}`",
       ),
     ]
     check nested.fixedFamilies ==
@@ -114,7 +114,7 @@ suite "Compile-time family":
       "    1\n" &
       "  b()\n"
     )
-    check given.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func b`.")]
+    check given.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func b`")]
     check given.fixedFamilies == module(
       "func a(): int {.compileTime.} =\n" &
       "  func b(): int {.compileTime.} =\n" &
@@ -122,7 +122,7 @@ suite "Compile-time family":
       "  b()\n"
     )
     let in_macro = module(STAGED & "macro m(): untyped =\n  func g(): int = 1\n  newLit(g())\n")
-    check in_macro.families == @[(LINES_HEAD + 3, MESSAGE_MEMBER & "`func g`.")]
+    check in_macro.families == @[(LINES_HEAD + 3, MESSAGE_MEMBER & "`func g`")]
     check in_macro.fixedFamilies ==
       module(STAGED & "macro m(): untyped =\n  func g(): int {.compileTime.} = 1\n  newLit(g())\n")
 
@@ -144,19 +144,19 @@ suite "Compile-time family":
     for (uses, is_member) in cases:
       let
         source = module(STAGED & "func c(): int =\n  1\n" & uses)
-        expected = if is_member: @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`.")] else: @[]
+        expected = if is_member: @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`")] else: @[]
       check source.families == expected
       if is_member:
         check source.fixedFamilies.contains("func c(): int {.compileTime.} =\n")
     let exported = module(STAGED & "func c*(): int =\n  1\nconst C = c()\n")
     check exported.families.len == 0  # other module may call it at runtime
     let chained = module(STAGED & "func c(): int =\n  1\nfunc d(): int =\n  c()\nconst C = d()\n")
-    check chained.families.mapIt(it[1]) == @["c", "d"].mapIt(MESSAGE_MEMBER & "`func " & it & "`.")
+    check chained.families.mapIt(it[1]) == @["c", "d"].mapIt(MESSAGE_MEMBER & "`func " & it & "`")
       # use inside other private member counts as use there
     let pair = module(STAGED & "func b(n: int): int\nfunc a(n: int): int =\n  b(n)\n" &
       "func b(n: int): int =\n  a(n)\nconst C = a(3)\n")
     check pair.families.mapIt(it[1]) ==
-      @["b", "a", "b"].mapIt(MESSAGE_MEMBER & "`func " & it & "`.")
+      @["b", "a", "b"].mapIt(MESSAGE_MEMBER & "`func " & it & "`")
       # greatest set: pair calling each other stays in family, forward declaration among them
     check module(STAGED & "func b(n: int): int\nfunc a(n: int): int =\n  b(n)\n" &
       "func b(n: int): int =\n  a(n)\n").families.len == 3
@@ -176,7 +176,7 @@ suite "Compile-time family":
         "  for o in O:\n" &
         "    if o == O(0): inc result\n"
       given = module(body)
-    check given.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func ==`.")]
+    check given.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func ==`")]
     check given.fixedFamilies ==
       module(body.replace("{.borrow.}", "{.borrow, compileTime.}"))
     check module(body & "proc p() =\n  for o in O: echo o == O(1)\n").families.len == 0
@@ -215,7 +215,7 @@ suite "Compile-time family":
       STAGED & "func c(): int =\n  1\nmacro m(): untyped =\n  let x = c()\n" &
         "  result = quote do:\n    echo `x`\n"
     )
-    check outside.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`.")]
+    check outside.families == @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`")]
 
 
   test "STYLE.md §2 iterator and template pass, since Nim refuses compileTime on both":
@@ -293,10 +293,10 @@ suite "Branch on what build fixes":
     #   fixes.
     let given =
       module("proc p() =\n  let antiscalar = if DIMENSIONS != 3: 1 else: -1\n  echo antiscalar\n")
-    check given.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if DIMENSIONS != 3`.")]
+    check given.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if DIMENSIONS != 3`")]
     check given.fixedBranches == given.replace("= if DIMENSIONS", "= when DIMENSIONS")
     let rigid = module("proc p() =\n  let horizon = if IS_RIGID: 1 else: 2\n  echo horizon\n")
-    check rigid.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if IS_RIGID`.")]
+    check rigid.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if IS_RIGID`")]
     check rigid.fixedBranches == rigid.replace("if IS_RIGID", "when IS_RIGID")
 
 
@@ -310,7 +310,7 @@ suite "Branch on what build fixes":
       "  else:\n" &
       "    echo 3\n"
     )
-    check given.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X == 1`.")]
+    check given.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X == 1`")]
     check given.fixedBranches == given.replace("  if X == 1:", "  when X == 1:")
     let one_line = module("proc p() =\n  if X: echo 1\n")
     check one_line.fixedBranches == one_line.replace("if X:", "when X:")
@@ -344,7 +344,7 @@ suite "Branch on what build fixes":
         source = module(
           "proc p(x: int) =\n  const L = 2\n  if " & condition & ":\n    echo 1\n"
         )
-        report = (LINES_HEAD + 3, MESSAGE_BRANCH & "`if " & condition & "`.")
+        report = (LINES_HEAD + 3, MESSAGE_BRANCH & "`if " & condition & "`")
       check source.branches == (if is_static: @[report] else: @[])
 
 
@@ -402,7 +402,7 @@ suite "Branch on what build fixes":
       )
     check runtime.branches.len == 0
     check runtime.fixedBranches == runtime
-    check fixed.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X`.")]
+    check fixed.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X`")]
     check fixed.fixedBranches == fixed.replace("= if X", "= when X")
 
 
@@ -410,7 +410,7 @@ suite "Branch on what build fixes":
     let
       given = module("proc p() =\n  if X:\n    let y = 1\n    echo y\n  else:\n    echo 2\n")
       reports = checkBranches("a.nim", given, CONSTANTS)
-    check reports.mapIt((it.line, it.message)) == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X`.")]
+    check reports.mapIt((it.line, it.brief)) == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X`")]
     check fixBranches("a.nim", given, CONSTANTS).source == given
     check fixBranches("a.nim", given, CONSTANTS).fixed.len == 0
 

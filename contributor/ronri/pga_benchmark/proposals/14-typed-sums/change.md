@@ -24,7 +24,6 @@ func `+`*(s: Coefficient, m: Multivector): Multivector {.inline, noinit.} =
     result[b] = m[b]
 
 
-
 template `+`*(m: Multivector, s: Coefficient): Multivector =
   ## Add multivector and scalar, i.e. 𝐦 + 𝐬.
   s + m

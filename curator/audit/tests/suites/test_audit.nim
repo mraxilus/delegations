@@ -4,7 +4,7 @@
 
 import std/[algorithm, os, sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[audit, domains, prose_own, provenance]
+import ../../src/[audit, domains, findings, prose_own, provenance]
 import ./fixtures
 
 
@@ -28,7 +28,7 @@ suite "Audit":
   test "one change to stamped text goes stale in every project":
     let
       changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n" & TEXT_PROCESS[2])
-      stale = changed.auditTree.filterIt("stale" in it.message)
+      stale = changed.auditTree.filterIt("stale" in it.brief)
     check stale.mapIt(it.path).sorted == @[
       DIRECTORY_PARSER & "/PROVENANCE.md",
       DIRECTORY_ALPHA & "/PROVENANCE.md",
@@ -65,7 +65,7 @@ suite "Audit":
       good.stampRules  # text past fence is still Output contract
     let crlf = good.replaced("GUIDE.md", guide.replace("\n", "\r\n"))
     check crlf.stampRules == good.stampRules  # CRLF checkout stamps same
-    check crlf.auditTree.allIt("Section of process" notin it.message)  # and finds each heading
+    check crlf.auditTree.allIt("Section of process" notin it.brief)  # and finds each heading
 
 
   test "opening, section of content and heading list does not name stay stamped":
@@ -89,10 +89,16 @@ suite "Audit":
       good = treeGood()
       renamed = TEXT_RULES[4] & TEXT_PROCESS[4].replace("## Output contract", "## Output contracts")
       found = good.replaced("GUIDE.md", renamed).auditTree.filterIt(it.path == "GUIDE.md")
-    check found.len == 1 and found[0].message.endsWith("got `## Output contract`.")
+    check found.len == 1 and found[0].brief.endsWith(
+      "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
+        "`SECTIONS_PROCESS` in `provenance.nim`",
+    )
+    check found.anyIt(it.rule == "koch.process-section")
     check found.len == 1 and found[0].line == 0  # whole document
-    check good.without("GUIDE.md").auditTree
-      .anyIt(it.path == "GUIDE.md" and it.message.endsWith("got `## Output contract`."))
+    check good.without("GUIDE.md").auditTree.anyIt(it.path == "GUIDE.md" and it.brief.endsWith(
+      "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
+        "`SECTIONS_PROCESS` in `provenance.nim`",
+    ))
 
 
   test "citation of section its document lacks reaches umbrella, at its line (duty 1)":
@@ -104,7 +110,10 @@ suite "Audit":
     check good.replaced("koch.nim", cited).auditTree.len == 0  # guide of fixture holds it
     let found = good.replaced("koch.nim", stale).auditTree
     check found.len == 1 and found[0].path == "koch.nim" and found[0].line == 1  # duty 1
-    check found.len == 1 and found[0].message.endsWith("got `Independent changes`.")
+    check found.len == 1 and found[0].brief.endsWith(
+      "got `Independent changes`; help: cite heading or bold rule it holds, or quote its text",
+    )
+    check found.anyIt(it.rule == "koch.cited-section")
 
 
   test "import by path into other project, and package of driver, reach umbrella (D1 of #927)":
@@ -118,9 +127,9 @@ suite "Audit":
         entry(DIRECTORY_ALPHA & "/tools/build.nim", head & "import knoller\n"),
       )
       found = tree.auditTree
-    check found.filterIt("reaches into other project" in it.message).mapIt((it.path, it.line)) ==
+    check found.filterIt("reaches into other project" in it.brief).mapIt((it.path, it.line)) ==
       @[(DIRECTORY_ALPHA & "/src/alpha.nim", 5)]
-    check found.filterIt("Driver imports no package" in it.message).mapIt((it.path, it.line)) ==
+    check found.filterIt("driver imports no package" in it.brief).mapIt((it.path, it.line)) ==
       @[(DIRECTORY_ALPHA & "/tools/build.nim", 5)]
 
 
@@ -133,7 +142,8 @@ suite "Audit":
       "# delegations\n\nWords.\n\n## Standards\n\n## Language\n\n**Stamp**:\n",
     )
     check undefined.auditTree.mapIt(it.path) == @["GLOSSARY.md"]  # shape checked at root
-    check "lacks definition" in undefined.auditTree[0].message  # same check projects get
+    check "lacks definition" in undefined.auditTree[0].brief  # same check projects get
+    check undefined.auditTree.anyIt(it.rule == "koch.glossary-form")
 
 
   test "idioms of any Nim code reach scripts and packages, and module's rules stay on modules":
@@ -145,9 +155,9 @@ suite "Audit":
       breach = "{.push inline.}\nproc f() = discard\n{.pop.}\nproc g(): int =\n  return result\n"
       found = @[
         "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes (STYLE.md §2); " &
-          "got `{.push inline.}`.",
-        "Bare `return` exits early with `result`, and routine ends on value itself (STYLE.md " &
-          "§5); got `return result`.",
+          "got `{.push inline.}`",
+        "bare `return` exits early with `result`, and routine ends on value itself (STYLE.md " &
+          "§5); got `return result`",
       ]
       nimble = DIRECTORY_ALPHA & "/alpha.nimble"
     for (tree, path) in [
@@ -157,11 +167,11 @@ suite "Audit":
         DIRECTORY_ALPHA & "/config.nims"),
       (treeGood().replaced(nimble, TEXT_NIMBLE & breach), nimble),
     ]:
-      check tree.auditTree.filterIt(it.path == path).mapIt(it.message).sorted == found.sorted
+      check tree.auditTree.filterIt(it.path == path).mapIt(it.brief).sorted == found.sorted
     let script = treeGood().with(entry(DIRECTORY_ALPHA & "/tests/helpers.nims", "echo x\n"))
-    check script.auditTree.mapIt(it.message) == @[
-      "Test leaves no debug output; label report, or print under failing condition (VIII.5); " &
-        "got `echo x`.",
+    check script.auditTree.mapIt(it.brief) == @[
+      "test leaves no debug output (VIII.5); got `echo x`; help: label report, or print under " &
+        "failing condition",
     ]  # test rules of any Nim code read script under `tests/` too
 
 
@@ -185,21 +195,22 @@ suite "Audit":
       (listed.with(entry(script, source)), script),
       (listed.replaced(nimble, TEXT_NIMBLE & source), nimble),
     ]:
-      check tree.auditTree.mapIt((it.path, it.message)) == @[(
+      check tree.auditTree.mapIt((it.path, it.brief)) == @[(
         path,
-        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
-          "spell it out; got `XML` in `toXML`.",
+        "acronym stays only where glossary lists it (V.9); got `XML` in `toXML`; help: propose " &
+          "it with /propose-term, or spell it out",
       )]
     let unlisted = treeGood().with(entry(module, STRICT_FUNCS & "\n\n" & source))
-    check unlisted.auditTree.mapIt(it.message).filterIt("Acronym" in it).len == 3  # none listed
+    check unlisted.auditTree.mapIt(it.brief).filterIt("acronym" in it).len == 3  # none listed
+    check unlisted.auditTree.anyIt(it.rule == "koch.acronym")
 
 
   test "form and prose findings reach umbrella":
     let messy =
       treeGood() & @[entry(DIRECTORY_ALPHA & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]
-    check messy.auditTree.mapIt(it.message) == @[
-      "Line ends with whitespace (VIII.5).",
-      "Comment holds article (VI.5); got `the`.",
+    check messy.auditTree.mapIt(it.brief) == @[
+      "line ends with whitespace (VIII.5)",
+      "comment holds article (VI.5); got `the`",
     ]  # both checks ran
 
 
@@ -210,21 +221,21 @@ suite "Audit":
     let readme = "# Project\n\n" & PROSE_LOJBAN
     check treeGood().replaced(DIRECTORY_PARSER & "/README.md", readme).auditTree.len == 0
     check treeGood().replaced(DIRECTORY_ALPHA & "/README.md", readme).auditTree.mapIt(
-      it.message,
+      it.brief,
     ) == @[
-      "Sentence must hold at most 25 words; split it (ASD-STE100); got " &
-        "`mi klama le zarci .i do klama le ...`.",
+      "sentence must hold at most 25 words (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`; help: split it",
     ]  # project list leaves out
     let unreviewed = textProvenance(stamp(TEXT_RULES)).replace("| Review | **Unreviewed.** |\n", "")
     for (file, content, message) in [
       ("PROVENANCE.md", "# Provenance\n\n" & PROSE_LOJBAN,
-        "Header table `| Field | Value |` missing or empty."),
-      ("PROVENANCE.md", unreviewed & "\n" & PROSE_LOJBAN, "Header lacks field; got `Review`."),
+        "header table `| Field | Value |` missing or empty"),
+      ("PROVENANCE.md", unreviewed & "\n" & PROSE_LOJBAN, "header lacks field; got `Review`"),
       ("GLOSSARY.md", "# Project\n\n" & PROSE_LOJBAN & "\n## Standards\n",
-        "Glossary lacks `## Language` heading."),
+        "glossary lacks `## Language` heading"),
     ]:
       let tree = treeGood().replaced(DIRECTORY_PARSER & "/" & file, content)
-      check tree.auditTree.mapIt(it.message) == @[message]  # read by name, whatever language
+      check tree.auditTree.mapIt(it.brief) == @[message]  # read by name, whatever language
 
 
   test "comments of project keeping its own prose take no rule of articles, and every other check":
@@ -232,11 +243,11 @@ suite "Audit":
     #   holding article. Domain: its source, and same source in project list leaves out.
     let source = "# la .alis. a la .bob. cu klama \n\n" & STRICT_FUNCS & "\n"
     check (treeGood() & @[entry(DIRECTORY_PARSER & "/src/a.nim", source)]).auditTree.mapIt(
-      it.message,
-    ) == @["Line ends with whitespace (VIII.5)."]  # form still reads it
+      it.brief,
+    ) == @["line ends with whitespace (VIII.5)"]  # form still reads it
     check (treeGood() & @[entry(DIRECTORY_ALPHA & "/src/a.nim", source)]).auditTree.mapIt(
-      it.message,
-    ) == @["Line ends with whitespace (VIII.5).", "Comment holds article (VI.5); got `a`."]
+      it.brief,
+    ) == @["line ends with whitespace (VIII.5)", "comment holds article (VI.5); got `a`"]
 
 
   test "entry of list of own prose whose project tree lacks is finding of umbrella, at list":
@@ -244,10 +255,10 @@ suite "Audit":
     #   nothing says so. Domain: listed project gone whole, and present; gone project names no
     #   suite besides, and entry demanding suite tree lacks is `checkProjectsProseOwn`'s case.
     let gone = treeGood().filterIt(not it.path.startsWith(DIRECTORY_PARSER & "/"))
-    check gone.auditTree.mapIt((it.path, it.message)) == @[(
+    check gone.auditTree.mapIt((it.path, it.brief)) == @[(
       PATH_PROSE_OWN,
-      "Project keeping its own prose (VI.5, VI.8) is one tree holds; remove its entry, or name " &
-        "project where it moved; got `" & DIRECTORY_PARSER & "`.",
+      "project keeping its own prose (VI.5, VI.8) is one tree holds; got `" & DIRECTORY_PARSER &
+        "`; help: remove its entry, or name project where it moved",
     )]
     check treeGood().auditTree.len == 0  # present
 
@@ -277,9 +288,11 @@ suite "Audit":
     let edited = root.git("rev-parse HEAD").strip
     for named in [opened, moved, edited]:
       check findingsPruned(root, @[entry(after, pruned(named))]).len == 0  # record touched
-    check findingsPruned(root, @[entry(after, pruned(elsewhere))]).mapIt(it.message) == @[
-      "`Pruned` must name commit that touched this record; got `" & elsewhere[0..7] & "`.",
+    check findingsPruned(root, @[entry(after, pruned(elsewhere))]).mapIt(it.brief) == @[
+      "`Pruned` must name commit that touched this record; got `" & elsewhere[0..7] & "`",
     ]  # commit beside record still finding
+    check findingsPruned(root, @[entry(after, pruned(elsewhere))])
+      .anyIt(it.rule == "koch.pruned-row")
 
 
   test "Pruned row names merge commit that log of renames drops":

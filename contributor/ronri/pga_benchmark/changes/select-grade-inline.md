@@ -9,10 +9,12 @@ The body keeps its form, and the result is still filled with zeros before the lo
 Its C then defines `{}` as `static N_INLINE`, so no operator that a measurand times stays an
 instance of D06.
 
-Its evaluation of 2026-11-15 times `select_grade` at ×0.85 to ×0.93 of pin, and `select_grade_anti`
-at ×0.67 to ×0.87, over the four algebras. The other 443 measurands read ×0.95 to ×1.05, at a median
-of ×1.00. At pin the runtime baselines time `select_grade` at ×1.3 to ×2.9 of its dense form. So
-most of that gap probably stays, and its cause is not isolated.
+Its evaluation of 2026-11-26 times `select_grade` at ×0.88 to ×0.99 of pin, and `select_grade_anti`
+at ×0.83 to ×0.91, over the four algebras. The other 443 measurands read ×0.96 to ×1.03, at a median
+of ×1.00, except `select_part` at rga3d. It reads ×1.16, 0.72 ns against 0.62 ns, and its C does not
+move, so that ratio is probably the noise of the timer. At pin the runtime baselines time
+`select_grade` at ×1.08 to ×2.25 of its dense form. So most of that gap probably stays, and its
+cause is not isolated.
 
 ## Edit `pga/multivectors.nim`
 

@@ -9,7 +9,7 @@
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[
-  command, compilers, edits, markers, proofs, purity, reports, rewrites, rules, symbols,
+  command, compilers, edits, markers, proofs, purity, report, reports, rewrites, rules, symbols,
 ]
 from ../../src/knoller/command {.all.} import
   joined, nimblesNearest, Part, resolveMarkers, resolvePures
@@ -32,7 +32,7 @@ const
     ## Library umbrella lacking profiler import.
   GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])  ## Sequences.\n"
     ## Nim source holding group parser proves needless, and group it refuses.
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, at pin, whose parser answers.
   COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Full commit of Nim, as pin names it.
   UNSERVED = "Parser proved no removal, since no compiler serves pin; got `"
     ## Opening of warning of pin no compiler serves, as `proversPin` writes it.
@@ -89,6 +89,10 @@ suite "Command line":
     check parseOptions(["--check=no", "a.nim"]).isNone  # check takes no value
     check parseOptions(["a.nim"]).get.nim.len == 0  # none named: pin above each file decides
     check parseOptions(["--nim:/p/bin/nim", "a.nim"]).get.nim == "/p/bin/nim"
+    check parseOptions(["a.nim"]).get.form.isNone  # terminal picks form
+    check parseOptions(["--form:line", "a.nim"]).get.form == some(Form.Line)
+    check parseOptions(["--form:terminal", "a.nim"]).get.form == some(Form.Terminal)
+    check parseOptions(["--form:json", "a.nim"]).isNone  # two forms alone (STYLE.md §3)
     check parseOptions(["--nim", "a.nim"]).isNone  # compiler option names compiler
 
 
@@ -129,7 +133,8 @@ suite "Command line":
       crossing = "let A = 1+2\nvar M = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
       outcome = outcome([("a.nims", crossing)], [], is_check = false)
     check outcome.written.len == 0  # fence it cannot read leaves file as written
-    check outcome.lines[0].startsWith("a.nims:2: fence left: Fence closes outside bracket")
+    check outcome.lines[0].startsWith("a.nims:2: fence: ")
+    check "message=\"fence closes outside bracket" in outcome.lines[0]
     check outcome.lines[^1] == "0 fixed."
     check outcome.code == 1
 
@@ -153,10 +158,40 @@ suite "Command line":
       check beside.joined(is_check, []).lines == @[
         "a.nim:1: expression-spacing" & outcome,
         "b.nim: unsettled: " & UNSETTLED,
-        "b.nim:2: tab left: Line holds tab.",
+        "b.nim:2: tab: message=\"line holds tab\"",
         "1" & outcome & ".",
       ]  # after rewrites, before findings left
       check beside.joined(is_check, []).code == 1
+
+
+  test "finding and warning print through renderer: line form, unless caller picks terminal":
+    # Domain: finding left and warning of one file, in each form, colored and not (STYLE.md §3).
+    privateAccess(Part)
+    let
+      tab = initReport("b.nim", 2, Rule.Tab, "Line holds tab.")
+      held = initReport(
+        "b.nim", 1, Rule.FenceHeld, "Fence keeps its lines as written; got lines `1` to `2`."
+      )
+      parts = [Part(path: "b.nim", source: "#!fix off\nlet\tb = 2\n", left: @[tab], held: @[held])]
+    check parts.joined(true, []).lines == @[
+      "b.nim:2: tab: message=\"line holds tab\"",
+      "b.nim:1: fence-held warning: actual=\"lines `1` to `2`\" message=\"fence keeps its lines " &
+        "as written\"",
+      "0 to fix.",
+    ]  # pipe or log: one line each
+    check parts.joined(true, [], Form.Terminal).lines == @[
+      "",
+      "b.nim:2  tab\n\n  line holds tab\n\n     2 │ let␉b = 2",
+      "",
+      "b.nim:1  fence-held warning\n\n  fence keeps its lines as written\n\n" &
+        "     1 │ #!fix off\n\n  actual  lines `1` to `2`",
+      "",
+      "0 to fix.",
+    ]  # terminal: blank line before each finding, and before count
+    check not parts.joined(true, [], Form.Terminal).lines.anyIt("\e[" in it)  # no color unasked
+    check parts.joined(true, [], Form.Terminal, is_colored = true).lines.anyIt(
+      "\e[36mb.nim:2\e[0m" in it
+    )
 
 
   test "finding left prints at its line in file as given, as each rewrite does":
@@ -165,7 +200,7 @@ suite "Command line":
       outcome = outcome([("a.nim", source)], [], is_check = true)
     check outcome.lines.len == 4
     check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
-    check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
+    check outcome.lines[2].startsWith("a.nim:2: not-over-binary: ")  # fix moves it to 5
 
 
   test "check exits 1 on each finding fixers leave, fence or none, and fence counts it":
@@ -206,7 +241,7 @@ suite "Command line":
       let outcome =
         outcome([(path, source)], [], is_check = true, nimbles = {path: "a.nimble"}.toTable)
       check outcome.code == 1  # violation fails run
-      check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & " left: ") in it)
+      check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & ": ") in it)
     let fenced = outcome([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
     check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
     check fenced.code == 1  # fence keeps line from fixer, never from finding
@@ -227,7 +262,7 @@ suite "Command line":
     ]:
       let outcome = outcome(files, [], is_check = true, nimbles = nimbles.toTable)
       check outcome.lines.anyIt(it.startsWith(due)) == is_due
-      check outcome.lines.anyIt(it.startsWith("a/a.nim:3: interpolation-braces left: ")) ==
+      check outcome.lines.anyIt(it.startsWith("a/a.nim:3: interpolation-braces: ")) ==
         not is_due
 
 
@@ -273,9 +308,9 @@ suite "Command line":
       fenced = "let A = 1  ## One.\n#!fix off\nlet B = 1+2  ## Sum.\n#!fix on\n"
       outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
-      "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
-        "definition-blank-lines breaks once at line 3 and expression-spacing once at line 3; " &
-        "got lines `2` to `4`.",
+      "a.nims:2: fence-held warning: actual=\"lines `2` to `4`\" message=\"fence keeps its " &
+        "lines as written, and inside them definition-blank-lines breaks once at line 3 and " &
+        "expression-spacing once at line 3\"",
       "0 to fix.",
     ]
     check outcome.code == 0  # break inside fence alone fails nothing
@@ -487,8 +522,8 @@ suite "Command line":
       answers = {"a.nim": Answer(path: "a.nim", reason: "no compiler serves pin 0.0.1")}.toTable,
     )
     check unread.lines == @[
-      "a.nim: type-conversion warning: Semantic pass resolved no name, so each type " &
-        "conversion stays as written; got `no compiler serves pin 0.0.1`.",
+      "a.nim: type-conversion warning: actual=\"no compiler serves pin 0.0.1\" " &
+        "message=\"semantic pass resolved no name, so each type conversion stays as written\"",
       "0 to fix.",
     ]
     check unread.code == 0  # warning changes no exit code
@@ -505,10 +540,12 @@ suite "Command line":
       uses = {"a.nim": Uses(reason: "no nimsuggest serves pin")}.toTable,
       pures = {"a.nim": Pures(reason: "source checks clean in no configuration")}.toTable,
     )
-    check "a.nim: marker-used warning: Semantic pass resolved no use, so each private symbol " &
-      "and `{.all.}` stays as written; got `no nimsuggest serves pin`." in failed.lines
-    check "a.nim: func-pure warning: Compiler proved no routine pure, so each `proc` stays as " &
-      "written; got `source checks clean in no configuration`." in failed.lines
+    check "a.nim: marker-used warning: actual=\"no nimsuggest serves pin\" message=\"semantic " &
+      "pass resolved no use, so each private symbol and `{.all.}` stays as written\"" in
+      failed.lines
+    check "a.nim: func-pure warning: actual=\"source checks clean in no configuration\" " &
+      "message=\"compiler proved no routine pure, so each `proc` stays as written\"" in
+      failed.lines
     check failed.code == 0
 
 
@@ -656,9 +693,10 @@ suite "Command line":
       )
     check fixed.written == @[("a.nim", source.replace("Count", "count"))]
     check fixed.lines == @["a.nim:3: name-case fixed", "a.nim:3: name-case fixed", "2 fixed."]
-    check refused.lines[^2] == "a.nim:3: name-case warning: Rename to `count` stays for hand, " &
-      "since it is refused: declaring file does not compile on its pin; got `Count`."
-    check refused.lines.anyIt(it.startsWith("a.nim:3: name-case left:"))  # check still reports
+    check refused.lines[^2] == "a.nim:3: name-case warning: actual=\"Count\" message=\"rename " &
+      "to `count` stays for hand, since it is refused: declaring file does not compile on its " &
+      "pin\""
+    check refused.lines.anyIt(it.startsWith("a.nim:3: name-case: "))  # check still reports
     check refused.code == 1
 
 
@@ -707,7 +745,8 @@ suite "Command line":
       [("a.nim", DIRTY & "let S = @(x) + 1  ## One.\n")], [], true, "/", proverFailing
     )
     check dirty.code == 1 and dirty.lines[^1] == "6 to fix."  # other rules still due
-    check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
+    check dirty.lines[^2] ==
+      "needless-parentheses warning: actual=\"x\" message=\"compiler ran no probe\""
 
 
   test "compiler `--nim` names proves every file, whatever pin nimble file above names":
@@ -770,7 +809,11 @@ suite "Command line":
       batches = groupByCompiler(paths, "", root, provers)
       outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
     check outcome.written.len == 0 and outcome.code == 0  # exit code holds
-    check outcome.lines == @["needless-parentheses warning: " & UNSERVED & "0.0.1`.", "0 to fix."]
+    check outcome.lines == @[
+      "needless-parentheses warning: actual=\"0.0.1\" message=\"parser proved no removal, " &
+        "since no compiler serves pin\"",
+      "0 to fix.",
+    ]
 
 
   test "directory holding two nimble files trusts no pin: one warning, and nothing goes":
@@ -793,10 +836,10 @@ suite "Command line":
     check pins.len == 0  # neither pin is trusted, as nimble refuses such directory
     check outcome.written.len == 0 and outcome.code == 0
     check outcome.lines == @[
-      "needless-parentheses warning: Parser proved no removal, since directory holds several " &
-      "nimble files, so no pin is trusted; got `" & root / "p" & "`.",
+      "needless-parentheses warning: actual=" & quoted(root / "p") & " message=\"parser proved " &
+        "no removal, since directory holds several nimble files, so no pin is trusted\"",
       "0 to fix.",
-    ]
+    ]  # path quoted as line form quotes it, so each `\` of path on Windows reads escaped
 
 
   test "nimble file of no exact pin, and file with no nimble file above, take `nim` on PATH":

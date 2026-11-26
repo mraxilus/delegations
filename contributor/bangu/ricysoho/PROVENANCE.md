@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-11-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be `Architect` be'o .e
@@ -1036,15 +1036,13 @@ ni'o **lo jdini klani cu vasru ro sinxa pe le namcu**
   .i `Architect` jdice di'u bu'u `#1003` ta'i `D3 a` .e `D7 c`
   .i se ki'u bo le genturfa'i cu tcidu lo'u lo rupnu be li ni'u mu be'o ku le'u fi zoi gy. $-5 .gy.
       .e zoi gy. -$5 .gy. Verified by `suites/test_stream.nim`.
-  .i ji'a zoi gy. 5%€ .gy. .e zoi gy. €½ .gy. cu sinxa lo jdini klani
-      Verified by `suites/test_stream.nim`.
+  .i ji'a zoi gy. €½ .gy. cu sinxa lo jdini klani Verified by `suites/test_stream.nim`.
   .i ne'i zoi gy. -€5 .gy. le jdini klani cu cfari pu zo ni'u
   .i ro stuzi pe le jdini sinxa cu zvati no valsi Verified by `suites/test_stream.nim`.
   .i lo jdini sinxa poi pencu re namcu ta'i lo lerfu .a lo sinxa cu se to'e curmi
   .i `Architect` jdice di'u bu'u `#1003` ta'i `D3 a` .e `D8 a`
   .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. 5€6 .gy. .e zoi gy. 5€-5 .gy. .e
-      zoi gy. 5%€5 .gy. .e zoi gy. €5%€5 .gy. .e zoi gy. π€5 .gy.
-      Verified by `suites/test_stream.nim`.
+      zoi gy. 5%€5 .gy. .e zoi gy. π€5 .gy. Verified by `suites/test_stream.nim`.
   .i de'i `2026-11-26` `grep -P` cu facki no sinxa poi pencu lo drata sinxa pe pa namcu ne'i le
       vreji pe `Tatoeba` .e `tests/cll` .e `tests/articles_wikipedia` .e `tests/sample_tatoeba`
 
@@ -1057,15 +1055,26 @@ ni'o se to'e cuxna fa lo nu lo sinxa poi pencu lo drata sinxa cu se to'e curmi k
       zoi gy. 5€-10€ .gy. to `D8 b` toi
 
 ni'o jdima fa lo nu le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e
-    zoi gy. €5%€5 .gy. .e zoi gy. π€5 .gy.
+    zoi gy. π€5 .gy.
   .i ku'i lo kutle'u cu fendi re namcu
-  .i se ki'u bo le genturfa'i cu tcidu ro pagbu pe zoi gy. 5€ -5 .gy. .e zoi gy. 5% €5 .gy. .e
-      zoi gy. €5% €5 .gy. ta'i lo namcu .a lo jdini klani Verified by `suites/test_stream.nim`.
+  .i se ki'u bo le genturfa'i cu tcidu ro pagbu pe zoi gy. 5€ -5 .gy. .e zoi gy. 5% €5 .gy. ta'i
+      lo namcu .a lo jdini klani Verified by `suites/test_stream.nim`.
   .i ku'i lo jufra cu nitcu lo valsi poi dunda lo stuzi le drata namcu pe zoi gy. 5€ -5 .gy.
   .i se ki'u bo le gerna cu to'e curmi zoi gy. mi ponse 5€ -5 .gy. gi'e tcidu
       zoi gy. mi ponse 5€ .e li -5 .gy. Verified by `suites/test_prose.nim`.
   .i ji'a le namcu pe zoi gy. 5% €5 .gy. cu klani le jdini klani ne'i lo jufra
       Verified by `suites/test_prose.nim`.
+
+ni'o **lo jdini sinxa poi le namcu pe ke'a cu vasru zoi gy. % .gy. cu se to'e curmi ta'i `Sign`**
+  .i `Architect` jdice di'u bu'u `#1003` ta'i `D9 b`
+  .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. $5% .gy. .e zoi gy. 5%€ .gy. .e
+      zoi gy. -€5% .gy. bu'u le stuzi pe le jdini sinxa Verified by `suites/test_stream.nim`.
+  .i ku'i le genturfa'i cu tcidu lo jdini klani be li 0.05 fi zoi gy. $0.05 .gy.
+      Verified by `suites/test_stream.nim`.
+  .i ji'a zoi gy. 5% €5 .gy. cu se tcidu ki'u lo nu le jdini klani cu vasru zoi gy. 5 .gy. po'o
+      Verified by `suites/test_stream.nim`.
+  .i se to'e cuxna fa lo nu le jdini klani cu vasru zoi gy. % .gy. ki'u lo nu da'i le genturfa'i
+      cu tcidu lo jdini klani be li 0.05 fi zoi gy. $5% .gy. to `D9 a` toi
 
 ni'o **le cipra cu tcidu ro selci'a poi vasru su'e mu pagbu po'u `1` .a `a` .a lo kutle'u .a
     zoi gy. - .gy. .a zoi gy. − .gy. .a zoi gy. % .gy. .a zoi gy. π .gy. .a zoi gy. ½ .gy. .a

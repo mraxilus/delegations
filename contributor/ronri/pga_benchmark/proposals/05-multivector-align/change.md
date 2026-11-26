@@ -19,15 +19,15 @@ dependency.
 ## Edit `pga/multivectors.nim`
 
 ```nim
-  MultivectorOf*[B: static Bases] = object
-    elements: array[B.card, Coefficient]
+  MultivectorOf*[B: static Bases] = object  ## TODO: Document.
+    elements: array[B.card, Coefficient]  ## TODO: Document.
 ```
 
 ```nim
-  MultivectorOf*[B: static Bases] = object
+  MultivectorOf*[B: static Bases] = object  ## TODO: Document.
     when {Basis.scalar..Basis.scalarAnti} <= B:
       elements {.align(min(64, sizeof(array[Basis, Coefficient]))).}: array[B.card, Coefficient]
         # Align whole set to cache line, or to own size where smaller, so it touches fewest lines.
     else:
-      elements: array[B.card, Coefficient]
+      elements: array[B.card, Coefficient]  ## TODO: Document.
 ```

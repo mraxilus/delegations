@@ -173,14 +173,14 @@ func `⟇⟇~∘`*[A: static Bases](m: MultivectorOf[A], n: Multivector): Multiv
 func projectOrthogonalAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∧ (m ∨☆ n)
-  ## TODO: Document.
+  ## Project multivector antiorthogonally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
 ```
 
 ```nim
 func projectOrthogonalAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∧ (m ∨☆ n)
-  ## TODO: Document.
+  ## Project multivector antiorthogonally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
 
 func transform*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],

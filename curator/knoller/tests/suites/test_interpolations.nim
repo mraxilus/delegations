@@ -36,7 +36,7 @@ const
 
 func found(source: string): seq[(int, string)] =
   ## Read line and message of each report of interpolation braces in source.
-  checkInterpolations("a.nim", source).mapIt((it.line, it.message))
+  checkInterpolations("a.nim", source).mapIt((it.line, it.brief))
 
 
 func fixed(source: string): string =
@@ -59,7 +59,7 @@ suite "Interpolations":
   test "value or literal joined to interpolated literal joins it, each value in braces":
     let ruled = "let m = &\"y is {y}, from \" & $x\n"
     check ruled.found == @[
-      (1, "Interpolated string takes each value in braces, never by `&`; got `$x`."),
+      (1, "interpolated string takes each value in braces, never by `&`; got `$x`"),
     ]  # ruling D3
     check ruled.fixed == "let m = &\"y is {y}, from {x}\"\n"
     check ruled.fixed.isSettled
