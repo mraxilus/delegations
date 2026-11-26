@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | d4f7e2b1ae89bcfbaa3039567daf24801d0c8507 |
+| Pruned  | 930b8b8807c3486adedf0aceb6a131244d8f8022 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2034,9 +2034,10 @@ the series only when the Architect asks.
   reaches it. On Windows, `osproc` refuses an unsafe argument to a batch file (CVE-2024-24576).
   The one batch file that a curator project starts, `npm`, takes the constant `ci --no-audit
   --no-fund`.
-- Verified by CI run 45858921855, 2026-11-26: the suites of `curator/audit`, `curator/knoller`,
-  `curator/assayer` and `curator/probe` pass on 2.4.2. `nim r koch check` with 2.4.2 building
-  koch gives 0 findings, and knoller prints the same 4,434 lines over the tree on both releases.
+- Verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites of
+  `curator/audit`, `curator/knoller`, `curator/assayer` and `curator/probe` pass on 2.4.2.
+  `nim r koch check` with 2.4.2 building koch gives 0 findings, and knoller prints the same 4,434
+  lines over the tree on both releases.
 - Atlas moved with the toolchain, from 0.14.7 to 0.16.3. Its claims below were verified on 0.14.7.
   On 0.16.3 a restore of assayer joins `srcDir` to the root of the clone, warns that the remote
   differs, and `atlas changed` exits 0, 2026-11-26.
@@ -3869,10 +3870,9 @@ nothing, and a sign-off quoted in a fence.
 
 **A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
 Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
-works, and the reads at the start see none of it. `stop` takes the
-role from the role line of the sign-off. The coordinator reads `architect` instead, since no
-item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
-can close a turn that posted nothing.
+works, and the reads at the start see none of it. `stop` takes the role from the role line of the
+sign-off. The coordinator reads `architect` instead, since no item carries its role. The check reads
+every turn, as the check of `#N` does, because a sign-off can close a turn that posted nothing.
 
 - A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
   whose `state` is not closed. That tool returns both states where none is given. A shell read

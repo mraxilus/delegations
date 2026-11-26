@@ -58,7 +58,8 @@ No single compiler serves every project here, and a range cannot say which one a
 on. The pin moves with `curator/audit`, which holds the version that builds koch. CI installs
 it for this project alone, in its own job.
 
-- Verified by CI run 45858921855, 2026-11-26: the suites pass on 2.4.2.
+- Verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites pass on
+  2.4.2.
 
 ## Figures
 
