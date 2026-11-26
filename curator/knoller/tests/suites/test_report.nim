@@ -177,6 +177,20 @@ suite "Report":
     check NAME_CUT.render(Form.Line, is_colored = true) == NAME_CUT.render(Form.Line)  # never
 
 
+  test "warning prints in both forms, marked after its rule (ruling `D2 a` of #1002)":
+    let held = Notice(
+      path: "a.nim", line: 2, rule: "fence-held", summary: "fence keeps its lines as written",
+      is_warning: true,
+    )
+    check held.render(Form.Terminal) ==
+      "a.nim:2  fence-held warning\n\n  fence keeps its lines as written"
+    check held.render(Form.Line) ==
+      "a.nim:2: fence-held warning: message=\"fence keeps its lines as written\""
+    let colored = held.render(Form.Terminal, is_colored = true)
+    check "\e[2mfence-held\e[0m \e[1;33mwarning\e[0m" in colored  # dim rule, bold yellow mark
+    check "warning" notin NAME_CUT.render(Form.Terminal)  # finding left for hand takes no mark
+
+
   test "findings print in order given: blank line between two in terminal form, none in line form":
     let pair = [Notice(rule: "a", summary: "one"), Notice(rule: "b", summary: "two")]
     check pair.render(Form.Terminal) == "a\n\n  one\n\nb\n\n  two"
