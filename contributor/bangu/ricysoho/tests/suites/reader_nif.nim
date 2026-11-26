@@ -51,6 +51,9 @@ const
   SIGNS_CURRENCY = ["€", "$", "£", "¢", "¥"]
     ## lo jdini sinxa poi le genturfa'i cu tcidu ke'a to `D1 a` pe `#1003` toi
     ##   .i ro stuzi pe le sinxa cu zvati no valsi
+  SIGNS_NUMBER = ["+", "-", "−", "~", "%", "π", "∞", "½"]
+    ## lo sinxa pe lo namcu poi le genturfa'i cu tcidu ke'a to `D4 b` pe `#1003` toi
+    ##   .i lo jdini sinxa cu ka'e pencu le sinxa pe le namcu to `D7 c` toi
   TAG_ERROR = "srera"
     ## lo tcita be lo srejge
     ##   .i le tcita cu gismu ja'i lo seljdi pe `#859`
@@ -279,12 +282,15 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
   while b < text.len:
     if counts[b] > 1: return false
     if counts[b] == 0 and text[b] notin MARKS_BOUNDARY and text[b] != ',':
-      # lo jdini sinxa poi pencu lo namcu cu zvati no pezli
+      # lo jdini sinxa poi pencu lo lerfu .a lo sinxa pe lo namcu cu zvati no pezli
       let signs = SIGNS_CURRENCY.filterIt(text.continuesWith(it, b))
       if signs.len == 0: return false
       let
-        is_after = b > 0 and text[b - 1] in Digits
-        is_before = b + signs[0].len < text.len and text[b + signs[0].len] in Digits
+        after = b + signs[0].len  # le stuzi poi se lidne le jdini sinxa
+        is_after = b > 0 and (text[b - 1] in Digits or
+          SIGNS_NUMBER.anyIt(b >= it.len and text.continuesWith(it, b - it.len)))
+        is_before = after < text.len and (text[after] in Digits or
+          SIGNS_NUMBER.anyIt(text.continuesWith(it, after)))
       if not is_after and not is_before: return false
       for s in b ..< b + signs[0].len:
         if counts[s] != 0: return false
