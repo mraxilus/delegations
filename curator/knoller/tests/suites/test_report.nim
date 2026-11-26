@@ -66,12 +66,16 @@ suite "Report":
     ].join("\n")  # no location, so no source line (ruling `D3 a` of #1002)
 
 
-  test "line form prints finding on one line, each value quoted, as example of #1002 draws it":
+  test "line form prints finding on one line, each value quoted, help last (ruling 7197275206)":
     check NAME_CUT.render(Form.Line) == "pga/algebra.nim:186:11: name-cut: actual=\"antiscalar\" " &
-      "expect=\"scalar_anti\" message=\"name puts `anti` after the word it qualifies\""
+      "expect=\"scalar_anti\" message=\"name puts `anti` after the word it qualifies\" " &
+      "help=\"rename it by hand, since `scalar_anti` would hide `scalarAnti` of line 313\""
     check WIDTH_SUBJECT.render(Form.Line) == "koch.commit-subject-width: actual=\"106\" " &
-      "expect=\"at most 100\" message=\"commit subject exceeds 100 characters\""
-    check "help" notin NAME_CUT.render(Form.Line)  # STYLE.md §3 gives line form no help
+      "expect=\"at most 100\" message=\"commit subject exceeds 100 characters\" " &
+      "help=\"move the detail of the subject into the body of the commit\""
+    check "help=" notin Notice(rule: "r", summary: "s").render(Form.Line)  # none held, none printed
+    check Notice(rule: "r", summary: "s", help: "say \"hi\"").render(Form.Line) ==
+      "r: message=\"s\" help=\"say \\\"hi\\\"\""  # help quoted as each value is
 
 
   test "location holds only parts finding holds, each behind part before it (D3 of #1002)":
