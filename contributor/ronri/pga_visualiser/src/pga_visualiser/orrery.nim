@@ -326,11 +326,13 @@ func turnedAbout(d, axis: Direction; radians: float): Direction =
   ## Turn direction `d` about unit `axis` by `radians`, as right hand turns, through motor.
   ##   Direction lifts to horizon point, which has no place, so line through origin carries
   ##     it as line through any point along `axis` would.
-  ##   Keeps `d` where turn or read refuses; neither can for unit `axis`, as `turnAbout`
+  ##   Fails where turn or read refuses, which neither can for unit `axis`: `turnAbout`
   ##     refuses only line with no direction, and rigid motion keeps horizon in horizon.
   let turn = turnAbout(1.0.e4 ∧ axis.toMultivector, radians)
-  if turn.isNone: return d
-  directionHorizon(d.toMultivector.carried(turn.get)).get(d)
+  doAssert turn.isSome, &"Turn must take axis with direction; got `{axis}`."
+  let turned = directionHorizon(d.toMultivector.carried(turn.get))
+  doAssert turned.isSome, &"Rigid turn must keep direction in horizon; got none for `{d}`."
+  turned.get
 
 
 const
@@ -338,22 +340,23 @@ const
     ## Hold motor turning equatorial frame into ecliptic, about equinox, which is x axis.
     ##   Built at compile time: every star and every moon turns by this one motor, and
     ##     building it is most of what turn costs on JS backend (`PROVENANCE.md`, Demo).
-  TURN_ECLIPTIC_REVERSED = ~∘TURN_ECLIPTIC
-    ## Hold its antireverse, so each turn pays sandwich alone.
+    ##   So each turn pays sandwich and its antireverse alone.
   TURN_QUARTER_UP = turnAbout(1.0.e4 ∧ 1.0.e3, 0.5 * PI).get
     ## Hold motor turning quarter turn about world up.
     ##   Carries flat ring's bearing to its second direction.
-  TURN_QUARTER_UP_REVERSED = ~∘TURN_QUARTER_UP  ## Hold its antireverse.
   AXIS_UP = 1.0.e4 ∧ 1.0.e3
     ## Hold world's vertical axis through origin; joined with direction, it spans that
     ##   direction's vertical plane.
   PLANE_GROUND = groundPlane()  ## Hold plane `z = 0`, which every bearing lies in.
 
 
-func turnedBy(d: Direction; motor, motor_reversed: Multivector): Direction =
-  ## Turn direction `d` through motor caller already holds, with its antireverse.
-  ##   Keeps `d` where read refuses, which rigid motion of horizon point never causes.
-  directionHorizon(d.toMultivector.carried(motor, motor_reversed)).get(d)
+func turnedBy(d: Direction; motor: Multivector): Direction =
+  ## Turn direction `d` through motor caller already holds.
+  ##   Fails where read refuses, which rigid motion of horizon point never causes.
+  let turned = directionHorizon(d.toMultivector.carried(motor))
+  doAssert turned.isSome,
+    &"Motor must keep direction in horizon; got none for `{d}` through `{motor}`."
+  turned.get
 
 
 func toEcliptic(d: Direction): Direction =
@@ -361,7 +364,7 @@ func toEcliptic(d: Direction): Direction =
   ##   Turn about shared x axis, vernal equinox, by `OBLIQUITY_ECLIPTIC` against right hand:
   ##   ecliptic's pole lands on +z, world axis z.
   ##   Change of frame is still rigid turn, which algebra owns.
-  turnedBy(d, TURN_ECLIPTIC, TURN_ECLIPTIC_REVERSED)
+  turnedBy(d, TURN_ECLIPTIC)
 
 
 func bearing*(toward: Direction): Option[Direction] =
@@ -421,7 +424,7 @@ func span(system: System): (Direction, Direction) =
   ##   is claimed.
   ##   Sol leans nowhere, standing at origin, and takes x axis.
   let along = bearing(system.toward).get(Direction(x: 1, y: 0, z: 0))
-  (along, turnedBy(along, TURN_QUARTER_UP, TURN_QUARTER_UP_REVERSED))
+  (along, turnedBy(along, TURN_QUARTER_UP))
 
 
 func ringed(centre: Position; node, normal: Direction; radius, angle: float): Position =

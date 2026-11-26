@@ -34,6 +34,17 @@ suite "Article X":
     check messages("contributor/ronri/alpha/alpha.json", line, Kind.Json).len == 1
 
 
+  test "X.1 width passes by each log of claims, which keeps one row to line (#1011)":
+    # Row of log runs far past width, and `union` joins two logs line by line, so no row breaks;
+    #   check reads text alone, so any breakable row proves exemption.
+    const row = "rows { " & "claim: \"word\" ".repeat(50) & "}\n"
+    check messages("contributor/bangu/ricysoho/claims.txtpb", row, Kind.ProtobufText).len == 0
+    check messages("curator/audit/claims.txtpb", row, Kind.ProtobufText).len == 0
+    check messages("claims.txtpb", row, Kind.ProtobufText).len == 0  # at root too, as `atlas.lock`
+    check messages("curator/audit/notclaims.txtpb", row, Kind.ProtobufText).len == 1  # name whole
+    check messages("curator/audit/scores.txtpb", row, Kind.ProtobufText).len == 1
+
+
   test "X.1 line over limit passes only when breaking cannot fix it, in every kind":
     let
       url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)

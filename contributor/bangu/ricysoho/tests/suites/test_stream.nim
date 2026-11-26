@@ -57,6 +57,19 @@ const
   COUNT_SIGNED = 55987
     ## lo te kancu be ro selci'a poi le flalu cu tcidu ke'a
     ##   .i ro le selci'a cu vasru su'e xa pagbu pe `MARKS_SIGNED`
+  PREFIXES_RULED = [("+", "ma'u"), ("-", "ni'u"), ("−", "ni'u"), ("~", "ji'i")]
+    ## lo sinxa poi lidne lo namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+  CONSTANTS_RULED = [("π", @["pai"]), ("∞", @["ci'i"]), ("½", @["pa", "fi'u", "re"])]
+    ## lo sinxa poi sinxa pa namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+  MARKS_PREFIXED = ["1", "a", " ", "-", "−", "%", "π", "½", "€"]
+    ## lo pagbu poi le flalu pe `D4 b` cu zbasu lo selci'a sepi'o ke'a
+    ##   .i lo lerfu po'u `1` .e lo lerfu po'u `a` .e pa kutle'u .e xa sinxa
+  LENGTH_PREFIXED_MOST = 5  ## lo selci'a poi le flalu cu zbasu ke'a cu vasru su'e mu pagbu
+  COUNT_PREFIXED = 66430
+    ## lo te kancu be ro selci'a poi le flalu cu tcidu ke'a
+    ##   .i ro le selci'a cu vasru su'e mu pagbu pe `MARKS_PREFIXED`
   SAMPLES = 1000
     ## lo cunpoi poi lo flalu cu cuxna ke'a sepi'o lo tsiju ku'o .e lo cunjvo poi le girzu cu cuxna
     ##     ke'a
@@ -209,22 +222,49 @@ func startsRead(text: string): Option[seq[int]] =
 
 func isSigned(text: string, at: int): bool =
   ## jdice lo du'u le stuzi po'u `at` cu korbi lo namcu poi lo jdini sinxa pe `SIGNS_RULED` cu
-  ##     pencu ke'a
-  ##   .i le namcu cu porsi lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini
-  ##       be re lerfu
+  ##     ponse ke'a
+  ##   .i le ralju pagbu be pa namcu cu porsi lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi
+  ##       zvati lo jbini be re lerfu gi'e ka'e se lidne zoi gy. % .gy.
+  ##   .ija le ralju pagbu cu du pa sinxa pe `CONSTANTS_RULED`
+  ##   .i pa sinxa pe `PREFIXES_RULED` cu ka'e lidne le ralju pagbu
+  ##   .i ji'a lo jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le ralju pagbu
+  ##   .i lo jdini sinxa cu ponse le namcu va'o lo nu le jdini sinxa cu zvati le namcu gi'a lidne le
+  ##       namcu gi'a se lidne le namcu
+  ##   .i le fancu cu jdice fi lo selci'a poi se tcidu po'o
   func isInner(i: int): bool =
     ## jdice lo du'u le lerfu po'u `i` cu pagbu le namcu
     i >= 0 and i < text.len and (text[i] in Digits or
       (text[i] in {'.', ','} and i > 0 and text[i - 1] in Digits and
         i + 1 < text.len and text[i + 1] in Digits))
-  var (first, last) = (at, at)  # le stuzi pe le namcu
-  if isInner(at) and not isInner(at - 1):
-    while isInner(last): inc last
-  elif isInner(at - 1) and not isInner(at):
-    while isInner(first - 1): dec first
-  else: return false
-  SIGNS_RULED.anyIt(text.continuesWith(it[0], last) or
-    (first >= it[0].len and text.continuesWith(it[0], first - it[0].len)))
+  func sizeAt(signs: openArray[string], i: int): int =
+    ## dunda lo klani be lo stuzi pe le sinxa pe `signs` poi cfari bu'u `i` ku'o .a li 0
+    for sign in signs:
+      if i >= 0 and text.continuesWith(sign, i): return sign.len
+  func finishCore(i: int): int =
+    ## dunda le fanmo be le ralju pagbu poi cfari bu'u `i` ku'o .a li -1
+    let constant = CONSTANTS_RULED.mapIt(it[0]).sizeAt(i)
+    if constant > 0: return i + constant
+    if not isInner(i) or isInner(i - 1): return -1
+    result = i
+    while isInner(result): inc result
+    if text.continuesWith("%", result): inc result
+  let
+    prefixes = PREFIXES_RULED.mapIt(it[0])
+    currencies = SIGNS_RULED.mapIt(it[0])
+  var first = 0  # le pamoi stuzi pe le namcu
+  while first < text.len:
+    let
+      prefix = prefixes.sizeAt(first)
+      inner = (if prefix > 0: currencies.sizeAt(first + prefix) else: 0)  # le jdini sinxa ne'i
+      last = finishCore(first + prefix + inner)  # le fanmo be le namcu
+    if last < 0:
+      inc first
+      continue
+    let is_signed = inner > 0 or currencies.sizeAt(last) > 0 or
+      currencies.anyIt(first >= it.len and text.continuesWith(it, first - it.len))
+    if is_signed and at in [first, last]: return true
+    first = last
+  false
 
 
 func isSpanned(text: string): bool =
@@ -240,6 +280,11 @@ func isSpanned(text: string): bool =
   ##   .i ji'a le valsi cu zvati lo korbi be lo namcu poi lo jdini sinxa cu pencu ke'a to
   ##       `isSigned` toi
   ##   .i ji'a slaka bu poi sinxa zo ki'o cu du pa valsi to `D1 a` pe `#991` toi
+  ##
+  ## ni'o lo pamoi valsi poi pa sinxa pe `CONSTANTS_RULED` cu sinxa ke'a cu vasru ro stuzi pe le
+  ##     sinxa
+  ##   .i ro drata valsi pe le sinxa cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le
+  ##       sinxa
   let reading = text.readStream
   if not reading.is_read: return false
   for k, occurrence in reading.occurrences:
@@ -251,8 +296,13 @@ func isSpanned(text: string): bool =
         else: written
       is_before = k == reading.occurrences.high or
         occurrence.finish <= reading.occurrences[k + 1].start
+      # lo drata valsi pe pa sinxa pe `CONSTANTS_RULED`
+      is_constant = CONSTANTS_RULED.anyIt(occurrence.start >= it[0].len and
+        text.continuesWith(it[0], occurrence.start - it[0].len) and
+        occurrence.text in it[1][1 .. ^1])
     if not is_before: return false
     if occurrence.start == occurrence.finish:
+      if is_constant: continue
       if occurrence.text notin WORDS_SIGNED or not text.isSigned(occurrence.start): return false
       continue
     if spelled != occurrence.text: return false
@@ -269,6 +319,14 @@ func refusalNamed(text: string): Option[(string, int)] =
   ##       zbasu ke'a
   let reading = text.readStream
   if reading.is_read: none((string, int)) else: some(($reading.refusal, reading.start))
+
+
+func refusalSigned(text: string): Option[(int, string)] =
+  ## tcidu le porsi gi'e dunda le stuzi .e le tcila pe le nu to'e curmi ta'i `Sign`
+  ##   .i dunda no da va'o lo nu le porsi cu se tcidu gi'a se to'e curmi ta'i lo drata javni
+  let reading = text.readStream
+  if reading.is_read or reading.refusal != Refusal.Sign: none((int, string))
+  else: some((reading.start, reading.detail))
 
 
 func widthsRead(text: string): Option[seq[int]] =
@@ -502,7 +560,10 @@ suite "Chapter 3":
       # ro lerfu pe `0` bi'o `9` cu sinxa pa cmavo pe `PA`
       #   .i ki'u bo le flalu cu bavykla le lerfu
       #   .i ji'a zoi gy. $ .gy. cu jdini sinxa to `D1 a` pe `#1003` toi
-      if c in tanru.LETTERS or c in MARKS_STREAM or c in {'0' .. '9', '$'}: continue
+      #   .i ji'a zoi gy. + .gy. .e zoi gy. - .gy. .e zoi gy. ~ .gy. .e zoi gy. % .gy. cu sinxa lo
+      #       namcu to `D4 b` pe `#1003` toi
+      if c in tanru.LETTERS or c in MARKS_STREAM or c in {'0' .. '9', '$', '+', '-', '~', '%'}:
+        continue
       # ja'i lo lerste pe `CLL 3.1`
       check ("mi " & c & "a").refusalRead == some((Refusal.Letter, 3))  # `CLL 3.1`
     # ja'i `CLL 3.1` lo brale'u cu sinxa lo nu basna po'o
@@ -786,35 +847,44 @@ suite "Chapter 4":
 
 
 
-func numberedRead(written: string): tuple[words: seq[string], refused: Option[int]] =
-  ## tcidu `written` ja'i `D1 a` gi'e dunda lo valsi .a le stuzi pe slaka bu poi se to'e curmi
+func numberedRead(written: string): tuple[words, cmavo: seq[string], refused: Option[int]] =
+  ## tcidu `written` ja'i `D1 a` pe `#991` .e `D5 c` pe `#1003` gi'e dunda lo valsi .e lo cmavo
+  ##     .a le stuzi pe slaka bu poi se to'e curmi
   ##   .i ro lerfu pe `0` bi'o `9` cu du pa valsi
   ##   .i denpa bu poi zvati lo jbini be re lerfu cu du pa valsi
+  ##   .i le cmavo pe le valsi cu du zo pi'e va'o lo nu le porsi be lo lerfu be'o poi vasru le valsi
+  ##       cu vasru su'o re boi denpa bu
+  ##   .i le porsi cu vasru lo lerfu .e denpa bu .e slaka bu poi zvati lo jbini be re lerfu
+  ##   .i va'o lo drata le cmavo cu du zo pi
   ##   .i denpa bu poi na zvati lo jbini be re lerfu cu fendi
   ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi
   ##   .i slaka bu poi na mapti di'u cu se to'e curmi
   ##   .i le fancu cu ciska le javni ji'a gi'e pilno no fancu pe `stream.nim`
+  func isInner(at: int): bool =
+    ## jdice lo du'u le lerfu po'u `at` cu pagbu lo namcu
+    at >= 0 and at < written.len and (written[at] in Digits or
+      (written[at] in {'.', ','} and at > 0 and written[at - 1] in Digits and
+        at + 1 < written.len and written[at + 1] in Digits))
   for at, c in written:
     case c
-    of '0' .. '9': result.words.add $c
+    of '0' .. '9':
+      result.words.add $c
+      result.cmavo.add LUT_CMAVO_BY_DIGIT[ord(c) - ord('0')]
     of '.':
-      if at > 0 and written[at - 1] in Digits and at + 1 < written.len and
-          written[at + 1] in Digits:
-        result.words.add "."
+      if not isInner(at): continue  # le denpa cu fendi
+      var (first, last) = (at, at)  # le stuzi pe le namcu
+      while isInner(first - 1): dec first
+      while isInner(last + 1): inc last
+      result.words.add "."
+      result.cmavo.add(if written[first .. last].count('.') >= 2: "pi'e" else: "pi")
     of ',':
       var count = 0
       while at + 1 + count < written.len and written[at + 1 + count] in Digits: inc count
-      if at == 0 or written[at - 1] notin Digits or count != 3: return (result.words, some(at))
+      if at == 0 or written[at - 1] notin Digits or count != 3:
+        return (result.words, result.cmavo, some(at))
       result.words.add ","
+      result.cmavo.add "ki'o"
     else: discard  # lo kutle'u cu fendi
-
-
-func cmavoNumbered(word: string): string =
-  ## dunda le cmavo poi le valsi pe `numberedRead` cu sinxa ke'a
-  case word
-  of ".": "pi"
-  of ",": "ki'o"
-  else: LUT_CMAVO_BY_DIGIT[ord(word[0]) - ord('0')]
 
 
 func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
@@ -865,6 +935,104 @@ func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: O
     if owners[k] >= 0 and is_last: result.words.add @["be'o", "ku"]
 
 
+func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
+  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D2 a` .e `D3 a` .e `D4 b` .e `D6 b` .e `D7 c` pe
+  ##     `#1003` gi'e dunda lo cmavo .a le stuzi pe le sinxa poi se to'e curmi
+  ##   .i ro pagbu cu cmima `MARKS_PREFIXED`
+  ##   .i le ralju pagbu be pa namcu cu porsi lo lerfu po'u `1` gi'e ka'e se lidne zoi gy. % .gy.
+  ##   .ija le ralju pagbu cu du zoi gy. π .gy. .a zoi gy. ½ .gy.
+  ##   .i zoi gy. - .gy. .a zoi gy. − .gy. cu ka'e lidne le ralju pagbu
+  ##   .i ji'a lo jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le ralju pagbu
+  ##   .i zoi gy. - .gy. .e zoi gy. − .gy. cu se tcidu va'o lo nu no lerfu po'u `1` cu lidne le
+  ##       sinxa kei .e lo nu le sinxa cu lidne le ralju pagbu .a lo jdini sinxa poi lidne le ralju
+  ##       pagbu
+  ##   .i zoi gy. % .gy. cu se tcidu va'o lo nu lo lerfu po'u `1` cu lidne le sinxa kei .e lo nu no
+  ##       lerfu po'u `1` cu se lidne le sinxa
+  ##   .i zoi gy. π .gy. .e zoi gy. ½ .gy. cu se tcidu va'o lo nu no lerfu po'u `1` cu pencu le
+  ##       sinxa kei .e lo nu ro sinxa poi pencu le sinxa cu pagbu le namcu
+  ##   .i lo jdini sinxa cu se tcidu va'o lo nu le sinxa cu pencu pa namcu po'o poi ponse no drata
+  ##       jdini sinxa
+  ##   .i lo jdini klani cu vasru ro sinxa pe le namcu
+  ##   .i ro lerfu po'u `a` cu du pa valsi
+  ##   .i lo drata sinxa cu se to'e curmi
+  ##   .i le fancu cu ciska le javni ji'a gi'e pilno no fancu pe `stream.nim`
+  template isPiece(k: int, marks: openArray[string]): bool =
+    ## jdice lo du'u le pagbu po'u `k` cu cmima `marks`
+    k >= 0 and k < pieces.len and pieces[k] in marks
+  template isDigit(k: int): bool = isPiece(k, ["1"])  ## lo lerfu po'u `1`
+  template isPrefix(k: int): bool = isPiece(k, ["-", "−"])  ## lo sinxa poi lidne lo namcu
+  template isConstant(k: int): bool = isPiece(k, ["π", "½"])  ## lo sinxa poi sinxa pa namcu
+  template isCore(k: int): bool = isDigit(k) or isConstant(k)
+    ## jdice lo du'u le pagbu po'u `k` cu krasi le ralju pagbu be lo namcu
+  template isSign(k: int): bool = isPiece(k, ["-", "−", "%", "π", "½", "€"])  ## lo sinxa
+  var
+    starts: seq[int]  # le stuzi pe ro pagbu
+    at = 0
+    numbers: seq[Slice[int]]  # le pagbu pe ro namcu
+    owned: seq[int]  # lo namcu poi lo jdini sinxa cu ponse ke'a
+  for piece in pieces:
+    starts.add at
+    at += piece.len
+
+  # facki ro namcu
+  var first = 0  # le pamoi pagbu pe le namcu
+  while first < pieces.len:
+    let core =  # le pamoi pagbu pe le ralju pagbu
+      if isCore(first): first
+      elif isPrefix(first) and isCore(first + 1): first + 1
+      elif isPrefix(first) and isPiece(first + 1, ["€"]) and isCore(first + 2): first + 2
+      else: -1
+    if core < 0:
+      inc first
+      continue
+    var last = core
+    if isDigit(core):
+      while isDigit(last + 1): inc last
+      if isPiece(last + 1, ["%"]) and not isDigit(last + 2): inc last
+    numbers.add first .. last
+    first = last + 1
+
+  # to'e curmi le pamoi sinxa poi na mapti le javni
+  for k, piece in pieces:
+    var is_read = true
+    case piece
+    of "-", "−":
+      is_read = not isDigit(k - 1) and
+        (isCore(k + 1) or (isPiece(k + 1, ["€"]) and isCore(k + 2)))
+    of "%": is_read = isDigit(k - 1) and not isDigit(k + 1)
+    of "π", "½":
+      is_read = not isDigit(k - 1) and not isDigit(k + 1) and
+        (not isSign(k - 1) or isPiece(k - 1, ["-", "−", "€"])) and
+        (not isSign(k + 1) or isPiece(k + 1, ["€"]))
+    of "€":
+      # lo namcu poi le sinxa cu pencu ke'a gi'a zvati ke'a
+      var touched: seq[int]
+      for n, span in numbers:
+        if span.b == k - 1 or span.a == k + 1 or k in span: touched.add n
+      is_read = touched.len == 1 and touched[0] notin owned
+      owned.add touched
+    else: discard
+    if not is_read: return (result.words, some(starts[k]))
+
+  # ciska le cmavo
+  for k, piece in pieces:
+    var number = none(int)  # le namcu poi vasru le pagbu
+    for n, span in numbers:
+      if k in span: number = some(n)
+    let is_amount = number.isSome and number.get in owned
+    if is_amount and k == numbers[number.get].a:
+      result.words.add @["lo", "ronru'u", "be", "li"]
+    case piece
+    of "a": result.words.add "a"
+    of "1": result.words.add "pa"
+    of "-", "−": result.words.add "ni'u"
+    of "%": result.words.add "ce'i"
+    of "π": result.words.add "pai"
+    of "½": result.words.add @["pa", "fi'u", "re"]
+    else: discard  # lo kutle'u .e lo jdini sinxa
+    if is_amount and k == numbers[number.get].b: result.words.add @["be'o", "ku"]
+
+
 
 suite "Internal: Stream":
   test "Each digit reads as word of PA that names it in 18.2, one word for each digit":
@@ -888,7 +1056,7 @@ suite "Internal: Stream":
     #     lerfu
 
 
-  test "Period between two digits reads as pi, and comma before three digits as ki'o":
+  test "Period between two digits reads as pi in run with one period, comma before three as ki'o":
     # `Architect` jdice `D1 a` bu'u `#991`
     #   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` cu pilno zo pi .e zo ki'o ne'i lo namcu
     for (text, words, cmavo) in [
@@ -919,8 +1087,41 @@ suite "Internal: Stream":
     check "1.ai".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
 
 
-  test "Each text of digits, periods, commas and spaces after li reads as ruling D1 a reads it":
-    # `Architect` jdice `D1 a` bu'u `#991`
+  test "Run of digits with two or more periods reads each period as pi'e":
+    # `Architect` jdice `D5 c` bu'u `#1003`
+    #   .i zo pi'e cu fendi lo pagbu be lo namcu to `CLL 18.10` toi
+    #   .i lo mupli po'u `CLL 18.74` .e `CLL 18.76` cu pilno zo pi'e ne'i lo namcu poi vasru ci
+    #       pagbu
+    for (text, cmavo) in [
+        ("li 1.2.3", @["li", "pa", "pi'e", "re", "pi'e", "ci"]),
+        ("li 192.168.0.1",
+          @["li", "pa", "so", "re", "pi'e", "pa", "xa", "bi", "pi'e", "no", "pi'e", "pa"]),
+        ("li 1,000.2.3", @["li", "pa", "ki'o", "no", "no", "no", "pi'e", "re", "pi'e", "ci"]),
+        # slaka bu cu pagbu le porsi
+        #   .i se ki'u bo pa porsi cu vasru su'e pa boi zo pi
+        ("li 1.2,000.3", @["li", "pa", "pi'e", "re", "ki'o", "no", "no", "no", "pi'e", "ci"]),
+        # ro porsi pe pa selci'avla cu se tcidu ne'i vo'a
+        ("li 1.2.3boi4.5",
+          @["li", "pa", "pi'e", "re", "pi'e", "ci", "boi", "vo", "pi", "mu"]),
+        ("li 1.2.3 .e li 4.5",
+          @["li", "pa", "pi'e", "re", "pi'e", "ci", "e", "li", "vo", "pi", "mu"]),
+        ("li -1.2.3%", @["li", "ni'u", "pa", "pi'e", "re", "pi'e", "ci", "ce'i"]),
+        ("mi ponse €1.2.3", @["mi", "ponse", "lo", "ronru'u", "be", "li", "pa", "pi'e", "re",
+          "pi'e", "ci", "be'o", "ku"]),
+        # le namcu pe la .europas. cu se tcidu ta'i lo namcu poi vasru ci pagbu
+        ("li 86.000.704", @["li", "bi", "xa", "pi'e", "no", "no", "no", "pi'e", "ze", "no", "vo"])]:
+      checkpoint text
+      check text.cmavoRead == some(cmavo)
+      check text.isSpanned  # le flalu pe lo stuzi
+    # le valsi cu vasru le stuzi pe denpa bu
+    check "li 1.2.3".widthsRead == some(@[2, 1, 1, 1, 1, 1])
+    # pa boi denpa bu po'o cu sinxa zo pi to `D1 a` pe `#991` toi
+    check "li 1.5".cmavoRead == some(@["li", "pa", "pi", "mu"])
+    check "li 18.10".cmavoRead == some(@["li", "pa", "bi", "pi", "pa", "no"])
+
+
+  test "Each text of digits, periods, commas and spaces after li reads as D1 a and D5 c read it":
+    # `Architect` jdice `D1 a` bu'u `#991` gi'e jdice `D5 c` bu'u `#1003`
     #   .i le flalu cu tcidu ro selci'a poi `MARKS_NUMBERED` cu zbasu ke'a
     #   .i `numberedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
     var
@@ -929,7 +1130,7 @@ suite "Internal: Stream":
     while written.len > 0:
       var longer: seq[string]
       for text in written:
-        let (words, refused) = text.numberedRead
+        let (words, cmavo, refused) = text.numberedRead
         checkpoint "li " & text
         if refused.isSome:
           # slaka bu poi na mapti `D1 a` cu se to'e curmi bu'u le stuzi pe vo'a
@@ -937,7 +1138,7 @@ suite "Internal: Stream":
           check refusal.isSome and refusal.get[1] == 3 + refused.get
         else:
           check ("li " & text).wordsRead == some(@["li"] & words)  # `CLL 18.2`
-          check ("li " & text).cmavoRead == some(@["li"] & words.mapIt(it.cmavoNumbered))
+          check ("li " & text).cmavoRead == some(@["li"] & cmavo)
         inc count
         if text.len < LENGTH_NUMBERED_MOST:
           for mark in MARKS_NUMBERED: longer.add text & mark
@@ -1020,6 +1221,176 @@ suite "Internal: Stream":
           for mark in MARKS_SIGNED: longer.add pieces & mark
       written = longer
     check count == COUNT_SIGNED  # `IX.3`
+
+
+  test "Sign before a number reads as ma'u, ni'u or ji'i where its number follows, no digit before":
+    # `Architect` jdice `D4 b` bu'u `#1003`
+    #   .i `Architect` jdice `D7 c` bu'u `#1003` to le sinxa cu ka'e lidne lo sinxa pe le namcu .a
+    #       lo jdini sinxa toi
+    #   .i lo sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` .e `CLL 18.9` toi
+    #   .i lo mupli po'u `CLL 18.15` du lo'u ma'u ci'i le'u
+    for (sign, word) in PREFIXES_RULED:
+      for (text, cmavo) in [
+          ("li " & sign & "5", @["li", word, "mu"]),
+          ("li " & sign & "1,000.5", @["li", word, "pa", "ki'o", "no", "no", "no", "pi", "mu"]),
+          ("mi" & sign & "5", @["mi", word, "mu"]), ("5 " & sign & "5", @["mu", word, "mu"]),
+          ("li " & sign & "π", @["li", word, "pai"]), ("li " & sign & "∞", @["li", word, "ci'i"]),
+          ("li " & sign & "½", @["li", word, "pa", "fi'u", "re"]),
+          (sign & "$5", @["lo", "rupnu", "be", "li", word, "mu", "be'o", "ku"]),
+          ("€" & sign & "5", @["lo", "ronru'u", "be", "li", word, "mu", "be'o", "ku"]),
+          (sign & "€∞", @["lo", "ronru'u", "be", "li", word, "ci'i", "be'o", "ku"])]:
+        checkpoint text
+        check text.cmavoRead == some(cmavo)
+        check text.isSpanned  # le flalu pe lo stuzi
+      # le valsi cu vasru ro stuzi pe le sinxa
+      check ("li " & sign & "5").widthsRead == some(@[2, sign.len, 1])
+      # le sinxa poi na lidne lo namcu ku'o .a le sinxa poi se lidne lo lerfu pe `0` bi'o `9` cu se
+      #     to'e curmi
+      #   .i le tcila cu du le sinxa poi cfari bu'u le stuzi
+      for (text, at) in [
+          (sign, 0), ("li " & sign, 3), (sign & " 5", 0), ("5" & sign & "5", 1), ("5" & sign, 1),
+          (sign & sign & "5", 0), (sign & "a5", 0), (sign & ".5", 0), (sign & "€", 0),
+          (sign & "€-5", 0), (sign & "€€5", 0), ("5" & sign & "π", 1)]:
+        checkpoint text
+        check text.refusalSigned == some((at, text.character(at)))
+      # lo kutle'u .e denpa bu poi na zvati lo jbini be re lerfu cu na fendi lo namcu
+      #   .i se ki'u bo le valsi cu jorne le namcu poi lidne ke'a to `CLL 18.6` toi
+      for (text, cmavo) in [
+          ("li 5 " & sign & "3", @["li", "mu", word, "ci"]),
+          ("li 5." & sign & "3", @["li", "mu", word, "ci"]),
+          ("li 5%" & sign & "3", @["li", "mu", "ce'i", word, "ci"])]:
+        checkpoint text
+        check text.cmavoRead == some(cmavo)
+
+
+  test "Percent sign reads as ce'i right after a digit, where no digit follows":
+    # `Architect` jdice zo ce'i bu'u `#1003` ta'i `D4 b`
+    #   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
+    #   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
+    for (text, cmavo) in [
+        ("li 35%", @["li", "ci", "mu", "ce'i"]),
+        ("li -2.5%", @["li", "ni'u", "re", "pi", "mu", "ce'i"]),
+        ("le 35%moi", @["le", "ci", "mu", "ce'i", "moi"])]:
+      checkpoint text
+      check text.cmavoRead == some(cmavo)
+      check text.isSpanned  # le flalu pe lo stuzi
+    check "li 35%".widthsRead == some(@[2, 1, 1, 1])
+    for (text, at) in [
+        ("%", 0), ("li %", 3), ("5 %", 2), ("5%5", 1), ("%5", 0), ("5%%", 2), ("a%", 1),
+        ("5.%", 2)]:
+      checkpoint text
+      check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u na fendi lo namcu to `CLL 18.6` toi
+    check "li 5% 5".cmavoRead == some(@["li", "mu", "ce'i", "mu"])
+
+
+  test "Constant sign reads as its words where no digit touches it, and only signs of its number":
+    # `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    #   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b` .e `D7 c`
+    #   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
+    for (sign, words) in CONSTANTS_RULED:
+      for (text, cmavo) in [
+          ("li " & sign, @["li"] & words), ("mi" & sign, @["mi"] & words),
+          (sign & "moi", words & @["moi"])]:
+        checkpoint text
+        check text.cmavoRead == some(cmavo)
+        check text.isSpanned  # le flalu pe lo stuzi
+      # ro jdini sinxa cu ka'e pencu le sinxa to `D7 c` toi
+      for (currency, names) in SIGNS_RULED:
+        let (opening, closing) = (@["lo"] & names & @["be", "li"], @["be'o", "ku"])
+        for (text, cmavo) in [
+            (currency & sign, opening & words & closing),
+            (sign & currency, opening & words & closing),
+            ("-" & sign & currency, opening & @["ni'u"] & words & closing),
+            (currency & "-" & sign, opening & @["ni'u"] & words & closing)]:
+          checkpoint text
+          check text.cmavoRead == some(cmavo)
+          check text.isSpanned  # le flalu pe lo stuzi
+      # le pamoi valsi cu vasru ro stuzi pe le sinxa
+      #   .i ro drata valsi cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le sinxa
+      check ("li " & sign).startsRead == some(@[0, 3] & (3 + sign.len).repeat(words.len - 1))
+      check ("li " & sign).widthsRead == some(@[2, sign.len] & 0.repeat(words.len - 1))
+      for (text, at) in [
+          ("2" & sign, 1), (sign & "2", 0), (sign & sign, 0), ("5%" & sign, 2),
+          (sign & "-5", 0), (sign & "%", 0), ("5€" & sign, 1), (sign & "€5", sign.len),
+          ("€" & sign & "€", 3 + sign.len)]:
+        checkpoint text
+        check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u .e denpa bu poi na zvati lo jbini be re lerfu cu na fendi lo namcu to
+    #     `CLL 18.6` toi
+    #   .i se ki'u bo lo'u ci pa fi'u re le'u cu sinxa li 31 fi'u re lo'o to `CLL 18.3` toi
+    check "li 3 ½".cmavoRead == some(@["li", "ci", "pa", "fi'u", "re"])
+    check "li 5.π".cmavoRead == some(@["li", "mu", "pai"])
+
+
+  test "Amount opens before the sign of its number":
+    # `Architect` jdice `D2 a` bu'u `#1003` to le jdini klani cu vasru le namcu toi
+    #   .i lo sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` toi
+    let
+      amount = @["lo", "ronru'u", "be", "li", "ni'u", "mu", "be'o", "ku"]
+      percent = @["lo", "ronru'u", "be", "li", "mu", "ce'i", "be'o", "ku"]
+    for (text, cmavo) in [
+        ("-5€", amount), ("−5€", amount),
+        ("mi ponse ~5¥", @["mi", "ponse", "lo", "ponjo", "ja", "jungo", "rupnu", "be", "li", "ji'i",
+          "mu", "be'o", "ku"]),
+        ("€5%", percent),
+        # le jdini sinxa cu pencu lo sinxa pe le namcu to `D7 c` toi
+        ("€-5", amount), ("-€5", amount), ("5%€", percent),
+        ("$-5", @["lo", "rupnu", "be", "li", "ni'u", "mu", "be'o", "ku"])]:
+      checkpoint text
+      check text.cmavoRead == some(cmavo)
+      check text.isSpanned  # le flalu pe lo stuzi
+    check "-5€".startsRead == some(@[0, 0, 0, 0, 0, 1, 2, 2])
+    check "-5€".widthsRead == some(@[0, 0, 0, 0, 1, 1, 0, 0])
+    # le stuzi pe le jdini sinxa poi zvati le namcu cu zvati no valsi
+    check "-€5".startsRead == some(@[0, 0, 0, 0, 0, 4, 5, 5])
+    check "-€5".widthsRead == some(@[0, 0, 0, 0, 1, 1, 0, 0])
+    check "€-5".startsRead == some(@[3, 3, 3, 3, 3, 4, 5, 5])
+    # le jdini sinxa cu pencu pa namcu po'o to `D3 a` toi
+    #   .i ro namcu cu ponse su'e pa jdini sinxa to `D2 a` toi
+    #   .i ji'a le jdini sinxa poi pencu lo sinxa pe lo namcu cu pencu le namcu to `D7 c` toi
+    for (text, at) in [
+        ("5€-5", 1), ("5%€5", 2), ("€5%€5", 5), ("-€-5", 0), ("€-€5", 4), ("-5€€", 5),
+        ("€-", 0)]:
+      checkpoint text
+      check text.refusalSigned == some((at, text.character(at)))
+    # lo kutle'u cu fendi re namcu
+    check "5€ -5".cmavoRead ==
+        some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
+    check "5% €5".cmavoRead ==
+        some(@["mu", "ce'i", "lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
+    check "€5% €5".cmavoRead == some(percent & @["lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
+
+
+  test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
+    # `Architect` jdice `D4 b` .e `D2 a` .e `D3 a` bu'u `#1003`
+    #   .i `Architect` jdice le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ½ .gy. ta'i
+    #       `D6 b`
+    #   .i `Architect` jdice `D7 c` bu'u `#1003` to lo sinxa cu ka'e pencu lo drata sinxa pe le
+    #       namcu toi
+    #   .i le flalu cu tcidu ro selci'a poi `MARKS_PREFIXED` cu zbasu ke'a
+    #   .i `prefixedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
+    var
+      count = 0
+      # ro selci'a poi le flalu cu tcidu ke'a ja'i le ni ke'a cu clani
+      written = @[newSeq[string]()]
+    while written.len > 0:
+      var longer: seq[seq[string]]
+      for pieces in written:
+        let
+          text = pieces.join
+          (words, refused) = pieces.prefixedRead
+        checkpoint text
+        if refused.isSome:
+          check text.refusalSigned == some((refused.get, text.character(refused.get)))
+        else:
+          check text.cmavoRead == some(words)
+          check text.isSpanned  # le flalu pe lo stuzi
+        inc count
+        if pieces.len < LENGTH_PREFIXED_MOST:
+          for mark in MARKS_PREFIXED: longer.add pieces & mark
+      written = longer
+    check count == COUNT_PREFIXED  # `IX.3`
 
 
   test "Words joined by spaces read as readWord reads each, at byte where each opens":
