@@ -138,9 +138,9 @@ type
 
   Effort* {.pure.} = enum  ## Define how long model thinks before it answers; cost grows with it.
     Low = "low"  ## Least thinking, least cost.
-    Medium = "medium"  ## Default of `claude-opus-5-5`.
+    Medium = "medium"  ## Default of `claude-opus-5-5` itself.
     High = "high"  ## More thinking than default.
-    Xhigh = "xhigh"  ## More thinking than `high`.
+    Xhigh = "xhigh"  ## More thinking than `high`; default of this tool, as D1 on #1047 ruled.
     Max = "max"  ## Most thinking, most cost.
 
   Settings* = object  ## Define what one run asks of service.
@@ -249,13 +249,13 @@ const
   BYTES_PASSAGE_MAX* = 65_536  ## Most bytes of text model reads, i.e. 64 KiB; cut is reported.
   BYTES_PAGE_MAX* = 4_194_304  ## Most bytes of page read, i.e. 4 MiB; rest unread, and reported.
   BYTES_REPLY_MAX* = 1_048_576  ## Most bytes of service reply read, i.e. 1 MiB; more is malformed.
-  EFFORT_DEFAULT* = Effort.Medium  ## Effort of `claude` and `openrouter` where none is named.
+  EFFORT_DEFAULT* = Effort.Xhigh  ## Effort of `claude` and `openrouter` where none is named.
   LUT_ENDPOINT_BY_SERVICE*: array[Service, string] = [
     "https://api.anthropic.com/v1/messages", "https://openrouter.ai/api/v1/chat/completions", "",
   ]
     ## Endpoint of each service; `chat` has none, so environment names it.
   LUT_MODEL_BY_SERVICE*: array[Service, string] =
-    ["claude-opus-5-5", "anthropic/claude-opus-5.5", ""]
+    ["claude-sonnet-5-5", "anthropic/claude-sonnet-5.5", ""]
     ## Model of each service; `chat` has none, so environment names it.
   MODELS_FALLBACK_NONE = ["claude-haiku-5-5"]
     ## Models of Claude with no server-side fallback, so body asks fallback of every other one.
