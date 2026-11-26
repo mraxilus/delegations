@@ -781,7 +781,7 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
           " lines</p>" &
           htmlDiff(rest, "nim") & "</div>"
 
-    # Each quote edit that misfits shows as written, with no line numbers, after the rest.
+    # Each quote edit that misfits shows as written, with no line numbers, after all else.
     for (edit, count) in unfit.getOrDefault(path):
       sections.add "<div class=\"definition other\"><p class=\"where\">" &
           "<span class=\"badge\">as written</span> This edit finds its quote " & $count &
