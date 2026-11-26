@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It is domain-neutral, so that
@@ -53,10 +53,13 @@ alone. Verified by `test_modulus_4.nim` and `test_modulus_5.nim`, and
 ## Toolchain
 
 **The compiler is pinned exactly, at the version this project was verified on**:
-`requires "nim == 2.4.0"` in `probe.nimble`. It is an exact pin rather than a lower bound.
+`requires "nim == 2.4.2"` in `probe.nimble`. It is an exact pin rather than a lower bound.
 No single compiler serves every project here, and a range cannot say which one a suite passed
 on. The pin moves with `curator/audit`, which holds the version that builds koch. CI installs
 it for this project alone, in its own job.
+
+- Verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites pass on
+  2.4.2.
 
 ## Figures
 

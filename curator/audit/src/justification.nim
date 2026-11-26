@@ -46,5 +46,6 @@ func checkJustification*(path, source: string; rule: RuleKind): seq[Finding] =
   result.add finding(
     path,
     1,
+    Check.JustificationLanguage,
     "Gated language needs justification in header, as `" & MARKER & " <reason>`; got " & "nothing.",
   )

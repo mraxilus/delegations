@@ -313,6 +313,7 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
     for refused in entry{"refused"}.getElems:
       result.add finding(
         path, 0,
+        Check.LoadFace,
         "Font face page ships loads, or font face of system draws in its place (Article X.8); " &
           "got `" & page & "`: `" & refused{"family"}.toText & "` at weight `" &
           refused{"weight"}.toText & "`, status `" & refused{"status"}.toText & "`.",
@@ -321,6 +322,7 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
     for character in entry{"characters"}.getElems:
       result.add finding(
         path, 0,
+        Check.FaceSystem,
         "Character falls to font face of system, which viewer may lack (Article X.8); got `" &
           page & "`: `" & character{"element"}.toText & "` draws `" &
           character{"codepoint"}.getInt.toNotation & "`.",
@@ -328,6 +330,7 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
     for bold in entry{"synthesised"}.getElems:
       result.add finding(
         path, 0,
+        Check.SynthesisBold,
         "Page ships font face of each weight it draws, never bold browser synthesises (Article " &
           "X.8); got `" & page & "`: `" & bold{"element"}.toText & "` asks `" &
           bold{"family"}.toText & "` for weight `" & bold{"weight"}.toText &
@@ -336,7 +339,8 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
   if found{PAGE_CONTROL}.isNil:
     result.add finding(
       path, 0,
-      "Collector reads control page `koch drive` writes, as page `" & PAGE_CONTROL & "`; got none.",
+      Check.CollectorFont,
+      "Collector reads control page `koch drive` writes, as page `" & PAGE_CONTROL & "`.",
     )
     return
   let collected = found[PAGE_CONTROL]{"characters"}.getElems.mapIt(it{"codepoint"}.getInt)
@@ -344,6 +348,7 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
     if codepoint notin collected:
       result.add finding(
         path, 0,
+        Check.CollectorFont,
         "Collector reads text in every kind of place control page holds; got `" &
           codepoint.toNotation & "` in " & place & " uncollected.",
       )
@@ -361,6 +366,7 @@ func toVerdictDigits(written: JsonNode, path: string): seq[Finding] =
     if not runs.anyIt(numeral in it) or runs.anyIt(numeral in it and digit in it): continue
     result.add finding(
       path, 0,
+      Check.CollectorFont,
       "Collector writes each string page draws whole, ASCII included (CONTRIBUTOR.md, Pages " &
         "and assets); got `" & digit.toNotation & "` in " & place & " unwritten.",
     )
@@ -382,6 +388,7 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
   if not fileExists(folder / FILE_WRITTEN):
     return @[finding(
       path, 0,
+      Check.FacesWritten,
       "Drive of project with pages writes what its collector read, control page included " &
         "(CONTRIBUTOR.md, Pages and assets); got no file.",
     )]
@@ -393,6 +400,7 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
   except IOError, OSError, ValueError, KeyError:
     return @[finding(
       path, 0,
+      Check.FacesWritten,
       "Written file resolves where each page holds runs, rules and refused font faces, and " &
         "each file of rule reads; got `" & getCurrentExceptionMsg() & "`.",
     )]

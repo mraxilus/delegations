@@ -36,14 +36,14 @@ const BUILD_BASELINE: BuildCounted = {
 
 /** Copies and calls of one marker and its pulse for each object of opening scene.
  *
- *  Each baseline is repair's count, and band is zero; readings, and fault's, are in
+ *  Each baseline is repair's count at current pin, and band is zero; readings, and fault's, are in
  *  `PROVENANCE.md`. Count under baseline passes, and baseline is then counted again.
  */
-const COPIES_MARKER = 15887; // Fault: outline summed sample by sample.
-const CALLS_MARKER = 48653;
+const COPIES_MARKER = 15883; // Fault: outline summed sample by sample.
+const CALLS_MARKER = 48644;
 
 /** Calls, copies and bytes lattice adds to `FRAMES_LATTICE` frames of moving camera. */
-const CALLS_LATTICE = 4817497; // Fault: fade sampled at each boundary.
+const CALLS_LATTICE = 3531425; // Fault: fade sampled at each boundary.
 const COPIES_LATTICE = 356725; // Pins copy any change adds, as library's `+` added one per sum.
 const BYTES_LATTICE = 219136;
 
@@ -53,8 +53,8 @@ const BYTES_LATTICE = 219136;
  *  span above reads it, as move of library pin can. Opening scene holds points and plane.
  */
 const FRAMES_PICKED = [
-  { kind: 'point', calls: 31511, copies: 4876 },
-  { kind: 'plane', calls: 101952, copies: 10038 },
+  { kind: 'point', calls: 30894, copies: 4858 },
+  { kind: 'plane', calls: 93924, copies: 10016 },
 ];
 
 /** Frames page draws after pick before one is counted, so pick's own first frames pass. */

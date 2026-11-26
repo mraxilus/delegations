@@ -10,8 +10,8 @@ category folders, under `testament all`. So a project here keeps one stub for ea
 same time.
 
 Authority replicated: none. Assayer reads a header, builds a command and judges a run as
-testament does at the pin of this project. The reference is the source of testament 2.4.0, in
-`testament/specs.nim` and `testament/testament.nim`.
+testament does at the pin of this project. The reference is the source of testament 2.4.2, in
+`testament/specs.nim` and `testament/testament.nim`, the same bytes as in 2.4.0.
 
 ## Use
 

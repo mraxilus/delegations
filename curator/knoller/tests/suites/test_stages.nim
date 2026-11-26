@@ -62,10 +62,10 @@ func isSettled(source: string): bool =
 
 suite "Stages":
   test "paragraph blank line opens takes stage comment where its routine comments another":
-    check checkStages("a.nim", OPERATOR).mapIt((it.line, it.message)) == @[
-      (23, "Paragraph opened by blank line takes stage comment; got `var expression = terms[0]`."),
-      (27, "Paragraph opened by blank line takes stage comment; got " &
-        "`assignments.add newAssignment(`."),
+    check checkStages("a.nim", OPERATOR).mapIt((it.line, it.brief)) == @[
+      (23, "paragraph opened by blank line takes stage comment; got `var expression = terms[0]`"),
+      (27, "paragraph opened by blank line takes stage comment; got " &
+        "`assignments.add newAssignment(`"),
     ]  # lines 41 and 45 of `pga/operators.nim`
     let lines = OPERATOR.fixed.split('\n')
     check lines[22] == "    " & PLACEHOLDER  # above paragraph, at its indent (VI.4)
@@ -107,8 +107,8 @@ suite "Stages":
   test "paragraph at any depth counts, and trailing comment on its first line is none":
     let source = "proc p() =\n  ## Do.\n  # Walk.\n  for i in 0..2:\n    let a = i\n\n" &
       "    let b = a  # Why.\n    let c = b\n    echo c\n"
-    check checkStages("a.nim", source).mapIt(it.message) == @[
-      "Paragraph opened by blank line takes stage comment; got `let b = a`.",
+    check checkStages("a.nim", source).mapIt(it.brief) == @[
+      "paragraph opened by blank line takes stage comment; got `let b = a`",
     ]
     check source.fixed.split('\n')[6] == "    " & PLACEHOLDER
 

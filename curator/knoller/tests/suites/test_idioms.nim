@@ -25,14 +25,14 @@ func fixed(source: string): Fix =
 
 func reported(path, source: string): seq[(Rule, string)] =
   ## Read rule and message of each idiom check reports over source.
-  checkIdioms(path, source, nimble = NIMBLE).mapIt (it.rule, it.message)
+  checkIdioms(path, source, nimble = NIMBLE).mapIt (it.rule, it.brief)
 
 
 
 suite "Idioms":
   test "STYLE.md §2 used pragma carries comment naming its consumer":
     check reported("a.nim", module("func f() {.used.} = discard\n")) == @[
-      (Rule.ConsumerUsed, "`{.used.}` carries comment naming its consumer; got none."),
+      (Rule.ConsumerUsed, "`{.used.}` carries comment naming its consumer"),
     ]
     check checkIdioms("a.nim", module("func f() {.used.} = discard\n"))[0].line == LINES_HEAD + 1
     check reported("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
@@ -46,7 +46,7 @@ suite "Idioms":
       (
         Rule.PushForeign,
         "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes; got " &
-          "`{.push inline.}`.",
+          "`{.push inline.}`",
       ),
     ]
     let foreign = module("{.push importc, header: \"<x.h>\".}\nproc f()\n{.pop.}\n")
@@ -70,7 +70,7 @@ suite "Idioms":
   test "STYLE.md §6 suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
     check reported("tests/suites/test_x.nim", unseeded) == @[
-      (Rule.SeedRandom, "Suite seeds `std/random`, as `randomize(0)` does; got no seed."),
+      (Rule.SeedRandom, "suite seeds `std/random`, as `randomize(0)` does; got `no seed`"),
     ]
     check checkIdioms("tests/suites/test_x.nim", unseeded, nimble = NIMBLE)[0].line == 0  # file
     check reported("tests/suites/test_x.nim", unseeded.replace("let x", "randomize(0)\nlet x"))
@@ -84,7 +84,7 @@ suite "Idioms":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check reported("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
     check reported("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
-      @[(Rule.HeaderStub, "Test stub carries testament header; got none.")]
+      @[(Rule.HeaderStub, "test stub carries testament header")]
     check reported("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
     check reported("src/test_x.nim", module("")).len == 0  # outside `tests/`, no stub
 
@@ -130,8 +130,8 @@ suite "Idioms":
     check reported("tests/suites/test_x.nim", debug) == @[
       (
         Rule.OutputDebug,
-        "Test leaves no debug output; label report, or print under failing condition; got " &
-          "`echo x`.",
+        "test leaves no debug output; got `echo x`; help: label report, or print under " &
+          "failing condition",
       ),
     ]
     check checkIdioms("tests/suites/test_x.nim", debug, nimble = NIMBLE)[0].line == LINES_HEAD + 2

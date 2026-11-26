@@ -258,6 +258,7 @@ func checkFontFamilies*(path, content: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
+          Check.HostFont,
           "Page links font host rather than shipping font face (Article X.8); got `" & host & "`.",
         )
 
@@ -283,6 +284,7 @@ func checkFontFamilies*(path, content: string): seq[Finding] =
       result.add finding(
         path,
         line,
+        Check.StackFont,
         "Stack leads with family X.8 does not name, so viewer may lack it; got `" & first & "`.",
       )
 
@@ -299,6 +301,7 @@ func checkFontFamilies*(path, content: string): seq[Finding] =
       result.add finding(
         path,
         line,
+        Check.FamilyHeading,
         "Heading takes family other than `" & SERIF & "` (Article X.8); got `" & first & "`.",
       )
 
@@ -315,6 +318,7 @@ func checkFontFamilies*(path, content: string): seq[Finding] =
       result.add finding(
         path,
         0,
+        Check.LigaturesFont,
         "Source sets `" & MONO & "` without enabling its ligatures (Article X.8); got `" &
           LIGATURES[0] & "` absent.",
       )

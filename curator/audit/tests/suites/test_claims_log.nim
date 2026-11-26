@@ -222,7 +222,7 @@ suite "Log of claims":
     check first.delegate == DELEGATE
     check first.project == PROJECT
     check (first.kind, first.call) == ("reviewer", "toolu_reviewer")
-    check first.model == MODEL
+    check first.model == ""  # `D1 b` of #1025: row names no model
     check first.effort == "medium"  # input of call, ahead of template
     check first.confidence == 0.7
     check first.state == State.Hit
@@ -286,7 +286,7 @@ suite "Log of claims":
     check (claims[0].call, claims[0].effort) == ("toolu_r2", "high")
 
 
-  test "model is result's, else input's, of call":
+  test "row names no model, whatever result or input of call names (`D1 b` of #1025)":
     let
       text = lineUser("Review the diff.", "human") &
         lineSaid(PREDICTION_REVIEWER) & lineUser("timer", "task-notification") &
@@ -294,8 +294,9 @@ suite "Log of claims":
         lineHandback("reviewer") & lineSaid(REFLECTION_RACE, UUID)
       claims = text.claimsRead
     check claims.len == 1
-    check claims[0].model == "opus"
+    check claims[0].model == ""  # input names `opus`, and result names none
     check claims[0].effort == ""  # neither call nor template of reviewer names one
+    check transcript().claimsRead.allIt(it.model == "")  # each result names `MODEL`
 
 
   test "missed prediction, cell quoting no claim, row with no marker, and earlier turn give none":
@@ -308,8 +309,8 @@ suite "Log of claims":
   test "line writes each field in order of schema, escaped, and leaves out each default":
     let claim = transcript().claimsRead[0]
     check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
-      "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" model: " &
-      "\"model-a\" effort: \"medium\" text: \"the race leads the findings\" " &
+      "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" " &
+      "effort: \"medium\" text: \"the race leads the findings\" " &
       "confidence: 0.7 state: STATE_HIT marker: MARKER_DELEGATE tokens: 170000 cost: 1.1 " &
       "address: \"s1/u9/1\" key: \"s1/toolu_reviewer/1/STATE_HIT\" result: " &
       "\"it leads, as \\\"high\\\" | first\" }"
@@ -317,6 +318,9 @@ suite "Log of claims":
         "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
     check Claim(text: "a", marker: Marker.Resolver).lineClaim ==
         "claims { text: \"a\" marker: MARKER_RESOLVER }"
+    # `stop` writes no model (`D1 b` of #1025), and schema keeps field, so writer still writes it.
+    check Claim(kind: "reviewer", model: "model-a", text: "a").lineClaim ==
+        "claims { kind: \"reviewer\" model: \"model-a\" text: \"a\" marker: MARKER_DELEGATE }"
 
 
   test "protoc and reader read each line back, field by field, and protoc refuses misspelt field":
@@ -326,6 +330,7 @@ suite "Log of claims":
       marker: Marker.Delegate)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Delegate)
     claims.add Claim(text: "b", state: State.Miss, marker: Marker.Resolver)
+    claims.add Claim(model: "model-a", text: "m", state: State.Hit, marker: Marker.Delegate)
     let
       lines = claims.mapIt(it.lineClaim)
       (encoded, code) = protoc("--encode", HEADER_LOG & lines.mapIt(it & "\n").join)
@@ -335,14 +340,14 @@ suite "Log of claims":
     check decoded.count("claims {") == claims.len
     for field in [  # as `protoc` prints each field it read, by name, from first row and others
       "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
-      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"model-a\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"",
       "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
       "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
       "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",
       "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
       "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
       "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
-      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER",
+      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER", "model: \"model-a\"",
     ]:
       check decoded.splitLines.anyIt(it.strip == field)
     check lines.mapIt(it.claimLine) == claims  # each field `protoc` printed, as claim holds it

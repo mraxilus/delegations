@@ -163,7 +163,7 @@ const
 
 func found(source: string): seq[(int, string)] =
   ## Read line and message of each report of comment form in source.
-  checkClaims("a.nim", source).mapIt((it.line, it.message))
+  checkClaims("a.nim", source).mapIt((it.line, it.brief))
 
 
 func fixed(source: string): string =
@@ -186,27 +186,27 @@ func spellingsCode(source: string): seq[string] =
 suite "Claims":
   test "path, literal and name of library take backticks, and quoted path trades quotes":
     check BORROWS.found == [4, 5, 6, 10].mapIt(
-      (it, "Path in comment stands in backticks; got `cayleys.nim`.")
+      (it, "path in comment stands in backticks; got `cayleys.nim`")
     )  # lines 121, 122, 123 and 127 of `pga/algebra.nim`
     check BORROWS.fixed == BORROWS.replace("# Used in cayleys.nim.", "# Used in `cayleys.nim`.")
     check TO_BASIS.found == @[
-      (1, "Path in comment stands in backticks; got `\"cayleys.nim\"`."),
+      (1, "path in comment stands in backticks; got `\"cayleys.nim\"`"),
     ]  # line 230 of `pga/algebra.nim`
     check TO_BASIS.fixed == TO_BASIS.replace("\"cayleys.nim\"", "`cayleys.nim`")
-    check CAYLEY.found == @[(3, "Name in comment stands in backticks; got `seq`.")]
+    check CAYLEY.found == @[(3, "name in comment stands in backticks; got `seq`")]
     check CAYLEY.fixed == CAYLEY.replace("Avoid seq as", "Avoid `seq` as")
     check SUBTYPES.found == @[
-      (4, "Literal in comment stands in backticks; got `E1..E4`."),
-      (4, "Literal in comment stands in backticks; got `E41..E12`."),
+      (4, "literal in comment stands in backticks; got `E1..E4`"),
+      (4, "literal in comment stands in backticks; got `E41..E12`"),
     ]  # line 37 of `pga/multivectors.nim`
     check SUBTYPES.fixed == SUBTYPES.replace(
       "(e.g. E1..E4 for grade 1, E41..E12 for", "(e.g. `E1..E4` for grade 1, `E41..E12` for"
     )
-    check INDEX.found == @[(3, "Name in comment stands in backticks; got `int`.")]
+    check INDEX.found == @[(3, "name in comment stands in backticks; got `int`")]
     check INDEX.fixed == INDEX.replace("instead of int,", "instead of `int`,")  # range is word
     check EQUATIONS.found == @[
-      (2, "Literal in comment stands in backticks; got `1'e1`."),
-      (5, "Literal in comment stands in backticks; got `1'e1 ∧ 1'e2 ∧ ... ∧ 1'en`."),
+      (2, "literal in comment stands in backticks; got `1'e1`"),
+      (5, "literal in comment stands in backticks; got `1'e1 ∧ 1'e2 ∧ ... ∧ 1'en`"),
     ]  # lines 167 and 170 of `tests/suites.nim`: literals operators part take one pair
     check EQUATIONS.fixed ==
       "  test \"Equation 2.13\":\n" &
@@ -237,7 +237,7 @@ suite "Claims":
       check kept.isSettled
     let folder = "## Read once, as curator/audit/PROVENANCE.md says.\n"
     check folder.found == @[
-      (1, "Path in comment stands in backticks; got `curator/audit/PROVENANCE.md`."),
+      (1, "path in comment stands in backticks; got `curator/audit/PROVENANCE.md`"),
     ]
     check folder.fixed == "## Read once, as `curator/audit/PROVENANCE.md` says.\n"
     check "## Read cayleys.nim, then lexer.nim.\n".fixed ==
@@ -255,12 +255,12 @@ suite "Claims":
   test "claim opens with capital and closes with period, past tag and bullet":
     let doc = "proc f() =\n  ## convert basis to index\n  discard\n"
     check doc.found == @[
-      (2, "Claim of comment opens with capital; got `convert`."),
-      (2, "Claim of comment closes with period; got `index`."),
+      (2, "claim of comment opens with capital; got `convert`"),
+      (2, "claim of comment closes with period; got `index`"),
     ]
     check doc.fixed == "proc f() =\n  ## Convert basis to index.\n  discard\n"
     let bullets = "# Steps:\n#   - read file,\n#   - write file\n"
-    check bullets.found == @[(3, "Claim of comment closes with period; got `file`.")]
+    check bullets.found == @[(3, "claim of comment closes with period; got `file`")]
     check bullets.fixed == "# Steps:\n#   - read file,\n#   - write file.\n"
       # bullet may open in lowercase, as one that ends sentence of line above
     check "# Steps:\n#   - Read file.\n#   - Write file.\n".isSettled  # as VIII writes them
@@ -280,21 +280,21 @@ suite "Claims":
 
   test "claim cut short stays for hand, as fix would hide cut":
     check "## Read file of\n".found == @[
-      (1, "Claim of comment ends cut short, so hand closes it; got `of`."),
+      (1, "claim of comment ends cut short, so hand closes it; got `of`"),
     ]
     check "## Read file,\n".found == @[
-      (1, "Claim of comment ends cut short, so hand closes it; got `file,`."),
+      (1, "claim of comment ends cut short, so hand closes it; got `file,`"),
     ]
     check "## Read all, e.g.\n".found == @[
-      (1, "Claim of comment ends cut short, so hand closes it; got `e.g.`."),
+      (1, "claim of comment ends cut short, so hand closes it; got `e.g.`"),
     ]
     check "## Read all, i.e.\n".found == @[
-      (1, "Claim of comment ends cut short, so hand closes it; got `i.e.`."),
+      (1, "claim of comment ends cut short, so hand closes it; got `i.e.`"),
     ]
     let lowered = "## Read file.\n## then write it.\n"
     check lowered.found == @[
-      (2, "Line of comment opens in lowercase after sentence end, so hand mends it; got " &
-        "`then`."),
+      (2, "line of comment opens in lowercase after sentence end, so hand mends it; got " &
+        "`then`"),
     ]
     for cut in [
       "## Read file of\n", "## Read file,\n", "## Read all, e.g.\n", "## Read all, i.e.\n", lowered,
@@ -321,13 +321,13 @@ suite "Claims":
     let declared = "let count_items = 1  ## Count of items.\n" &
       "# Read count_items once, as WebGL and RGB do, and sqrt, Basis and to stay words.\n"
     check declared.found == @[
-      (2, "Name in comment stands in backticks; got `count_items`."),
+      (2, "name in comment stands in backticks; got `count_items`"),
     ]  # WebGL is undeclared, RGB is capitals alone, and one word is word
     check declared.fixed == declared.replace("Read count_items", "Read `count_items`")
     let dotted = "type Syntax = enum  ## Define syntax.\n  TypeScript  ## Define TypeScript.\n\n" &
       "# Read Syntax.TypeScript, as TypeScript alone names language.\n"
     check dotted.found == @[
-      (4, "Name in comment stands in backticks; got `Syntax.TypeScript`."),
+      (4, "name in comment stands in backticks; got `Syntax.TypeScript`"),
     ]  # enum member alone stays word
     for kept in [
       "# Read eₙ and grade(𝐦) once.\n",  # formal notation
@@ -379,8 +379,8 @@ suite "Claims":
 
   test "comment in its own language reads names alone":
     let own = "## convert seq once\n"
-    check checkBackticks("a.nim", own).mapIt((it.line, it.message)) == @[
-      (1, "Name in comment stands in backticks; got `seq`."),
+    check checkBackticks("a.nim", own).mapIt((it.line, it.brief)) == @[
+      (1, "name in comment stands in backticks; got `seq`"),
     ]
     check fixBackticks("a.nim", own).source == "## convert `seq` once\n"
     let formatted = checkFormatting("a.nim", own, Dialect.Module).filterIt(
@@ -394,7 +394,7 @@ suite "Claims":
 
   test "fix that would widen line past `LINE_MAX` stays for hand, report and all":
     let wide = "# Read " & "w".repeat(84) & " as seq.\n"  # 99 runes
-    check wide.found == @[(1, "Name in comment stands in backticks; got `seq`.")]
+    check wide.found == @[(1, "name in comment stands in backticks; got `seq`")]
     check wide.fixed == wide
     let full = "# Read " & "w".repeat(93) & "\n"  # 100 runes
     check full.found.len == 1

@@ -13,9 +13,6 @@ imports. `slice` takes its cell as it is, since that cell holds one term or none
 `constructExomorphismMetric` takes the one term of each vector cell with `toSigned`, as the other
 constructors do. Every exported table keeps its name, its dimensions and its terms.
 
-The module doc of `pga.nim` gives the order of compile-time type bootstrapping, so it names
-`BasesSigned` between `BasisSigned` and the tables.
-
 ## Edit `pga/cayleys.nim`
 
 ```nim
@@ -31,14 +28,14 @@ import std/[bitops, strformat]
 ```nim
 type  ## Define type definitions dependent on `Basis` needed for macros.
   BasisSigned* = object  ## Define signed representation of basis.
-    basis*: Basis
-    is_negated*: bool = false
+    basis*: Basis  ## TODO: Document.
+    is_negated*: bool = false  ## TODO: Document.
   Cayley1D* =  ## Define data structure for constructing unary algebra operations (map).
     array[Basis, seq[BasisSigned]]
   Cayley2D* =  ## Define data structure for constructing binary algebra operations.
     array[Basis, array[Basis, seq[BasisSigned]]]  # Support conformal operators with `seq`.
-    # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
-    #   Applies especially for 1D which only uses singular slot.
+    # TODO: Avoid `seq` as heap allocated, perhaps array with count custom type.
+    #         Applies especially for 1D which only uses singular slot.
 ```
 
 ```nim
@@ -49,8 +46,8 @@ const TERMS_CELL = when IS_CONFORMAL: 2 else: 1
 
 type  ## Define type definitions dependent on `Basis` needed for macros.
   BasisSigned* = object  ## Define signed representation of basis.
-    basis*: Basis
-    is_negated*: bool = false
+    basis*: Basis  ## TODO: Document.
+    is_negated*: bool = false  ## TODO: Document.
   BasesSigned* = object  ## Define cell of Cayley table, held in place with count of its terms.
     ##   Fields keep cell plain to read.
     ##   Packed form takes about half compile time and memory of this one at cga6d.
@@ -406,14 +403,4 @@ func toSigned(product: BasesSigned): BasisSigned {.compileTime.} =
 
 ```nim
     result[b] = terms
-```
-
-## Edit `pga.nim`
-
-```nim
-##   BasisSigned -> [Cayley1D, Cayley2D]
-```
-
-```nim
-##   BasisSigned -> BasesSigned -> [Cayley1D, Cayley2D]
 ```

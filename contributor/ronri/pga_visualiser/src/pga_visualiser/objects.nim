@@ -194,16 +194,55 @@ func classify*(m: Multivector): Option[Kind] =
   if m.kindInto(kind): some(kind) else: none(Kind)
 
 
+func powerOfTwo*(exponent: int): float =
+  ## Build `2^exponent` by doubling or halving, exact on either backend and folded at compile
+  ##   time.
+  result = 1.0
+  for _ in 1..exponent: result *= 2.0
+  for _ in 1..(-exponent): result *= 0.5
+
+
+const
+  NORM_LEAST_EXACT = powerOfTwo(-450)
+    ## Bound norm under which `isHorizon` reads object again at `SCALE_HORIZON_UP`.
+    ##   Norm at or above it is exact, and so is any other at least `2^-30` of it: each
+    ##     square stands at or above `2^-960`, which is normal.
+  SCALE_HORIZON_UP = powerOfTwo(600)
+    ## Lift object whose norms both stand under `NORM_LEAST_EXACT` into normal range.
+    ##   Least coefficient `2^-1074` goes to `2^-474`, whose square stays normal, and norm
+    ##     under `2^-450` goes under `2^150`, whose square does not overflow.
+  SCALE_HORIZON_DOWN = powerOfTwo(-600)
+    ## Drop object whose norm squared overflows into normal range.
+    ##   Largest coefficient under `2^1024` goes under `2^424`, whose square stays finite.
+
+
+func isWeightNegligible(m: Multivector): bool =
+  ## Report whether weight norm of `m` stands at or under `TOLERANCE_ABS` of its bulk norm.
+  ##   For copy that `isHorizon` scales alone: page never reaches it, so its call costs page
+  ##     nothing, where object in normal range reads both norms inline.
+  abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
+
+
 func isHorizon*(m: Multivector): bool =
   ## Report whether object lies wholly in horizon, i.e. whether its weight vanishes.
   ##   Weight is judged against bulk, so object reads as horizon where it stands more
   ##   than billion units out, i.e. `‖𝐦‖∘ ≤ 1e-9 ‖𝐦‖∙`, whatever its own scale.
   ##     Zero reads as horizon: it has no weight.
+  ##   Norms are read again off copy scaled by power of two where both stand under
+  ##     `NORM_LEAST_EXACT`, or either is infinite: each square underflows or overflows
+  ##     there, and same object would read otherwise at another scale.
+  ##     Power of two keeps every bit, and object in normal range pays two tests alone.
   ##   Tallied while suite counts tests of `m`; see `countHorizonTests`.
   # Cast covers tally alone: instrument's own state, which no caller reads as result.
   {.cast(noSideEffect).}:
     if IS_COUNTING_HORIZONS and m.isSameCoefficients(MULTIVECTOR_WATCHED): inc COUNT_HORIZONS
-  abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
+  let
+    weight = abs((|∘m)[Basis.scalarAnti])
+    bulk = abs((|∙m)[Basis.scalar])
+  if weight == Inf or bulk == Inf: return isWeightNegligible(SCALE_HORIZON_DOWN * m)
+  if weight < NORM_LEAST_EXACT and bulk < NORM_LEAST_EXACT:
+    return isWeightNegligible(SCALE_HORIZON_UP * m)
+  weight <= TOLERANCE_ABS * bulk
 
 
 func isHorizonPlane*(m: Multivector): bool = classify(m) == some(Kind.Plane) and isHorizon(m)

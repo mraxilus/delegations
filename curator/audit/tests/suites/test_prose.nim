@@ -4,7 +4,7 @@
 
 import std/[sequtils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[kinds, prose]
+import ../../src/[findings, kinds, prose]
 import ./fixtures
 
 
@@ -13,14 +13,14 @@ suite "Article VI":
   test "VI.5 lines reported with articles named, as koch prints them in every kind":
     let found = checkProse("x.nim", "# fine\n# the trap\nlet a = 1  # an alias\n", Syntax.Nim)
     check found.mapIt(it.line) == @[2, 3]  # one finding per offending line
-    check found.mapIt(it.message) == @[
-      "Comment holds article (VI.5); got `the`.",
-      "Comment holds article (VI.5); got `an`.",
+    check found.mapIt(it.brief) == @[
+      "comment holds article (VI.5); got `the`",
+      "comment holds article (VI.5); got `an`",
     ]  # IV.4 echo value, article where sentence ends
-    check checkProse("nim.cfg", "hints:off  # the trap\n", Syntax.Hash).mapIt(it.message) ==
-      @["Comment holds article (VI.5); got `the`."]  # other syntax, same words
-    check checkProse("a.ts", "// A row.\nlet a = 1\n", Syntax.Slash).mapIt((it.line, it.message)) ==
-      @[(1, "Comment holds article (VI.5); got `a`.")]  # TypeScript, same words
+    check checkProse("nim.cfg", "hints:off  # the trap\n", Syntax.Hash).mapIt(it.brief) ==
+      @["comment holds article (VI.5); got `the`"]  # other syntax, same words
+    check checkProse("a.ts", "// A row.\nlet a = 1\n", Syntax.Slash).mapIt((it.line, it.brief)) ==
+      @[(1, "comment holds article (VI.5); got `a`")]  # TypeScript, same words
     check checkProse("README.md", "The row.\n", Syntax.None).len == 0  # prose keeps articles
 
 
@@ -34,8 +34,8 @@ suite "Article VI":
       ("src/a.ts", "// la .alis. a la .bob. cu klama\n", Syntax.Slash),
     ]:
       check checkProse(DIRECTORY_PARSER & "/" & file, source, syntax).len == 0  # own language
-      check checkProse(DIRECTORY_TAGGER & "/" & file, source, syntax).mapIt(it.message) ==
-        @["Comment holds article (VI.5); got `a`."]  # left out
+      check checkProse(DIRECTORY_TAGGER & "/" & file, source, syntax).mapIt(it.brief) ==
+        @["comment holds article (VI.5); got `a`"]  # left out
 
 
 

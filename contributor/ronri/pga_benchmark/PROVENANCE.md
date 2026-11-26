@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
@@ -70,7 +70,7 @@ expression compiles against the library. The set of symbols equals the set of ex
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
-Verified by the evaluation of P13 on 2026-11-20. Each transform counts `⟇⟇~∘` at a motor type: 82
+Verified by the evaluation of P13 on 2026-11-26. Each transform counts `⟇⟇~∘` at a motor type: 82
 multiplies at rga4d, and 23 at rga3d.
 
 ## Reference
@@ -89,7 +89,7 @@ e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ 
 reproduces the library on every pair of basis elements: 400 cases at rga3d, 1 245 at cga4d.
 They cover every product, complement, dual, part, attitude, carrier and cocarrier.
 
-The expansion also reproduces the support, center, container and partner on one integer operand of
+The expansion also reproduces the support, centre, container and partner on one integer operand of
 each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
 motor transforms factor the expansion to 14 multiplies, where it spends 30. The partners are
 factored by hand, 15 multiplies for a dipole where the expansion spends 36. The script stays out of
@@ -328,8 +328,8 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-11-15 at all four algebras**, five runs each on `linux
-amd64, 4 cores`, a Xeon of family 6 model 207. They ran at the pin `3d9696e` under Nim 2.4.0, with
+**The runtime baselines are from 2026-11-26 at all four algebras**, five runs each on `linux
+amd64, 4 cores`, a Xeon of family 6 model 207. They ran at the pin `7ef9f4d` under Nim 2.4.0, with
 nothing else on the machine. Each algebra keeps the one of three takes of that day whose median
 paired spread is smallest, as the Architect ruled on 2026-10-19 (D5).
 
@@ -345,12 +345,12 @@ to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-to ×1.21 apart at each algebra. The widest measurand spreads ×2.41, as `norm_bulk_plane` at rga4d
-does. Its library takes 2.52 to 5.63 ns across the five runs, slowest in the fourth. Its
-reference takes 0.37 to 0.60 ns, slowest in the second.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.02
+to ×1.05 apart at each algebra. The widest measurand spreads ×2.53, as `project_orthogonal_anti`
+at cga4d does. Its library takes 38.39 to 103.38 ns across the five runs, slowest in the fourth.
+Its dense form takes 38.96 to 64.83 ns, slowest in the fifth.
 
-The other two takes of each algebra are not committed, and spread ×1.17 to ×1.29 at the median
+The other two takes of each algebra are not committed, and spread ×1.06 to ×1.18 at the median
 measurand. So this figure moves between takes.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
@@ -763,14 +763,14 @@ bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
 beside the library, five alternating runs at four algebras. They ran on `linux amd64, 4 cores`, a
-Xeon of family 6 model 207, on 2026-11-15. The median general measurand runs ×1.00 to ×1.01 its
-dense form at each algebra, since most library operators are already one generated table. The
-compound operations are not. They run ×2.1 to ×6.0 their dense forms, from the antisupport at
-rga3d to the cocarrier at cga5d.
+Xeon of family 6 model 207, on 2026-11-26. The median general measurand runs ×1.00 its dense form
+at each algebra, since most library operators are already one generated table. The compound
+operations are not. They run ×2.1 to ×4.4 their dense forms, from the antisupport at rga3d to the
+centre at cga4d.
 
-The grade selection runs ×1.3 to ×2.9, and the antigrade selection ×1.7 to ×4.4. The norms run
-×0.92 to ×1.11. Sum, difference and negation run ×0.82 to ×1.23, and the unitizes and
-normalizations ×0.55 to ×1.05. So a dense form is a measure, and never a lower bound on time.
+The grade selection runs ×1.1 to ×2.2, and the antigrade selection ×2.5 to ×3.4. The norms run
+×0.97 to ×1.23. Sum, difference and negation run ×0.63 to ×1.01, and the unitizes and
+normalizations ×0.53 to ×0.97. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -1525,6 +1525,18 @@ comment, and folds its body. A definition is a routine, a member of a section, a
 or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
 context, kind and name, same head first. Lines in no definition follow as other lines.
 
+**An edit that no longer fits the library at pin still shows its code.** A whole-file replacement
+whose digest the file that the change finds lacks stands against that file. Its tally reads "digest
+moved", and a note names both digests. So its diff also holds each change to that file since. A
+quote that the file does not hold once shows as written, with no line numbers, under its count.
+
+`drive` names each misfit of an active proposal, and none of a frozen one, which applies at no pin.
+So a deferred or an implemented proposal keeps its code on its page as the pin moves. Rejected: a
+diff against the file that the digest names. Each build that `koch check` runs would then need the
+history of the library, and not the pinned checkout alone.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Edits`.
+
 **The marginalia tab shows each edit as a diff of lines, open, under a list of the files it
 touches.** Each line carries its number in the file as the edit finds it. The earlier edits apply
 first.
@@ -1619,10 +1631,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `3d9696edbaaa5dca655c3024174bd46fd156d7c6`, and `nim.cfg` names
+records the resolved commit `7ef9f4dbfaaad9c229feee3787e16f25b612ab63`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-19, as the standing instruction of the
+That commit is the head of the library on 2026-11-24, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -1658,7 +1670,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`. At the pin they are from 2026-11-15 on `linux amd64, 4 cores`, a Xeon of family 6
+under `taken`. At the pin they are from 2026-11-26 on `linux amd64, 4 cores`, a Xeon of family 6
 model 207.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
@@ -1677,9 +1689,15 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `3d9696e` the library works this way, and its attitude and
-carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each coefficient, so
-they fill nothing. The cost that stays is what the hand-written norms pay.
+unrolled at no cost. At the pin `7ef9f4d` the library works this way, and its attitude and
+carrier are generated. Its hand-written `-` carries `noinit` and writes each coefficient, so it
+fills nothing. Its `+` of two multivectors carries `noinit` too, yet its C fills the result with
+zeros before the loop writes it. That fill is 128 bytes at rga4d, and P14 writes a `+` with no
+fill.
+
+The cost that stays is the fill of the other hand-written functions, as `fills_zero` in the static
+baselines reads. At rga4d the norms, the normalizations, the four projections, the grade
+selections and the supports fill. At cga4d the compound operations fill too.
 
 The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
@@ -1722,12 +1740,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- One machine name can hold more than one processor. Under `linux amd64, 4 cores`, pin ran
-  `wedge` at cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in the
-  history of `evaluations/cayley-derivation.json`, at `c2e80da3` and `78d5c3d5`. The stamps at
-  `08a1c416` name a Xeon of family 6 model 173, where pin ran it in 48.49 ns. The stamps now name
-  model 207, where it runs in 65.19 ns. Nothing records the processor of 2026-11-05 or 2026-11-14.
-- The baselines and each evaluation but those of P02 and P06 ran on 2026-11-15 on one processor,
+- One machine name can hold more than one processor. Under `linux amd64, 4 cores`, pin `3d9696e`
+  ran `wedge` at cga5d in 48.49 ns on a Xeon of family 6 model 173, as the stamps at `08a1c416`
+  name. It ran it in 65.19 ns on model 207, as the stamps at `748033ef` name. Pin `7ef9f4d` runs
+  it in 66.13 ns on model 207. A stamp from before the ruling of 2026-11-15 names no processor.
+- The baselines and each evaluation but those of P02 and P06 ran on 2026-11-26 on one processor,
   a Xeon of family 6 model 207. The stamps of P02 and P06 name no processor, which leaves their
   machine unknown. So a time of P02 or P06 compares with another time only where the times of pin
   agree.
@@ -1763,6 +1780,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 - When Nimony has a release, whether to port the library again at that release, or to update P99,
   `nimony-port`. Its open decisions also name 20 optional changes of its review, and 15 defects of
   Nimony that wait to be reported.
+- Why the C of `+` of two multivectors at `7ef9f4d` fills its result with zeros, although its
+  source carries `noinit`.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library

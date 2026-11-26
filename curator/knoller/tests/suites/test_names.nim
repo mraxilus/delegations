@@ -185,9 +185,9 @@ type
     ## Types closing with `Of` beside alias of their instance, before and after it, and beside none
     ##   (V.13): proc type, generic alone, alias of other name, alias of no instance, bare name of
     ##   other type; `Of` inside name.
-  MESSAGE_SUFFIX = "Type closes with `Of` only where alias of its instance takes its bare name"
+  MESSAGE_SUFFIX = "type closes with `Of` only where alias of its instance takes its bare name"
     ## Sentence of finding of type closing with `Of` (V.13).
-  MESSAGE_ROUTINE = "Routine closes with `Of` only where it spells generic type"
+  MESSAGE_ROUTINE = "routine closes with `Of` only where it spells generic type"
     ## Sentence of finding of routine closing with `Of` (V.3).
 
 
@@ -198,18 +198,18 @@ func names(source: string): seq[string] =
 
 func breaches(source: string): seq[(Rule, string)] =
   ## Read rule and message of each finding names check reports on source, with no exemption.
-  checkNames("x.nim", source, []).mapIt (it.rule, it.message)
+  checkNames("x.nim", source, []).mapIt (it.rule, it.brief)
 
 
 func messages(source: string): seq[string] =
   ## Read message of each finding names check reports on source, with no exemption.
-  checkNames("x.nim", source, []).mapIt(it.message)
+  checkNames("x.nim", source, []).mapIt(it.brief)
 
 
 func breachesId(source: string): seq[(string, string)] =
   ## Read id of rule and message of each finding names check reports on source, as output
   ##   prints them, with no exemption.
-  checkNames("x.nim", source, []).mapIt (it.rule.id, it.message)
+  checkNames("x.nim", source, []).mapIt (it.rule.id, it.brief)
 
 
 func reachIn(source, name: string): Reach =
@@ -229,27 +229,27 @@ suite "Names":
 
 
   test "V.6 V.3 V.5 V.10 abbreviation, verb, lookup and global findings, and no acronym":
-    let found = checkNames("x.nim", SOURCE, []).mapIt((it.rule, it.message))
-    check (Rule.Abbreviation, "Name coins abbreviation; write `directory`; got `dir_hint`.") in
+    let found = checkNames("x.nim", SOURCE, []).mapIt((it.rule, it.brief))
+    check (Rule.Abbreviation, "name coins abbreviation; got `dir_hint`; expect `directory`") in
         found  # V.6
-    check (Rule.Abbreviation, "Name coins abbreviation; write `temporary`; got `tmp_count`.") in
+    check (Rule.Abbreviation, "name coins abbreviation; got `tmp_count`; expect `temporary`") in
         found  # V.6
     for (full, name) in [("buffer", "buf"), ("error", "err"), ("destination", "dest"),
                          ("arguments", "args")]:
-      check (Rule.Abbreviation, "Name coins abbreviation; write `" & full & "`; got `" & name &
-        "`.") in found  # V.6
-    check (Rule.VerbAction, "Action is imperative verb and property is bare noun; got " &
-      "`getGrade`.") in found  # V.3
-    check (Rule.WordGlobal, "Global never shares its word with type; got `ALGEBRA`.") in
+      check (Rule.Abbreviation, "name coins abbreviation; got `" & name & "`; expect `" &
+        full & "`") in found  # V.6
+    check (Rule.VerbAction, "action is imperative verb and property is bare noun; got " &
+      "`getGrade`") in found  # V.3
+    check (Rule.WordGlobal, "global never shares its word with type; got `ALGEBRA`") in
         found  # V.10, shares word with type `Algebra`
     check not found.anyIt("JSON" in it[1])  # V.9 needs glossary, so it is caller's
     check not found.anyIt("`lut`" in it[1])  # jargon
     check not found.anyIt("constructTable" in it[1])
-    check (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `tmp_count`.") in found  # V.1
+    check (Rule.CaseName, "global is `SCREAMING_SNAKE_CASE`; got `tmp_count`") in found  # V.1
     check found.len == 9  # V.1, V.3, V.6, V.10: each break once
     check "func toJSON() = discard\nfunc parseJson() = discard\n".breaches.len == 0  # V.9 caller's
     check "const LUT_GRADE = 1\n".breaches ==
-        @[(Rule.TableLookup, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
+        @[(Rule.TableLookup, "lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`")]
     check "const LUT_GRADE_BY_BASIS = 1\n".breaches.len == 0  # V.5
     check "proc get*(x: int) = x\n".breaches.len == 0  # one word is noun
     check "proc f(ctx: int) = discard\n".breaches.len == 1  # V.6, exempt word aside
@@ -283,12 +283,12 @@ suite "Names":
     check count == keywords.len * 2 * types_return.len * verbs.len  # domain enumerated whole
     check "proc constructSeeds(scene: var Scene) = discard\n".breaches == @[(Rule.VerbAction,
       "`construct…` names compile-time routine returning data structure; got " &
-      "`proc constructSeeds`.")]  # rga_visualiser
+      "`proc constructSeeds`")]  # rga_visualiser
     check "template defineKind(name: untyped) = discard\n".breaches == @[(Rule.VerbAction,
-      "`define…` names macro; got `template defineKind`.")]  # pga_benchmark
+      "`define…` names macro; got `template defineKind`")]  # pga_benchmark
     check "macro emitCatalogue(): untyped = discard\n".breaches == @[(Rule.VerbAction,
       "`emit…` names compile-time routine returning syntax tree, never macro; got " &
-      "`macro emitCatalogue`.")]  # pga_benchmark
+      "`macro emitCatalogue`")]  # pga_benchmark
     check "macro importSuites(): untyped = discard\n".breaches.len == 0  # kind fixes no verb
     check "func nodeSum(terms: seq[Term]): NimNode = discard\n".breaches.len == 0
     check "proc emit() = discard\n".breaches.len == 0  # one word, no verb of generation
@@ -333,18 +333,18 @@ suite "Names":
         for middle in middles:
           let
             name = first & middle & "Of"
-            found = ("routine-suffix", MESSAGE_ROUTINE & "; got `" & name & "`.")
+            found = ("routine-suffix", MESSAGE_ROUTINE & "; got `" & name & "`")
             is_spelled = first in verbs_type and middle.len > 0
           check (keyword & " " & name & "() = discard\n").breachesId.count(found) ==
               ord(not is_spelled)  # V.3, V.13
           inc count
     check count == keywords.len * firsts.len * middles.len  # domain enumerated whole
     check "func gradeOf(m: Multivector): Grade = m.grade\n".breachesId ==
-        @[("routine-suffix", MESSAGE_ROUTINE & "; got `gradeOf`.")]  # V.3
+        @[("routine-suffix", MESSAGE_ROUTINE & "; got `gradeOf`")]  # V.3
     const nested = "func resolve(definition: Definition): string =\n" &
         "  func headOf(definition: Definition): string = definition.name\n" &
         "  definition.headOf\n"
-    check nested.breachesId == @[("routine-suffix", MESSAGE_ROUTINE & "; got `headOf`.")]  # V.3
+    check nested.breachesId == @[("routine-suffix", MESSAGE_ROUTINE & "; got `headOf`")]  # V.3
     check ("func toMultivectorOf*[B: static Bases](m: Multivector): MultivectorOf[B] =\n" &
         "  discard\n").breachesId.len == 0  # V.3, V.13
     check "func basesOfGrade(grade: Grade): Bases {.compileTime.} = discard\n".breachesId.len ==
@@ -361,10 +361,10 @@ suite "Names":
     #   Domain: generic with alias of instance after and before it; proc type, generic, alias of
     #   other name, alias of no instance and bare name of other type; `Of` inside name.
     check SUFFIXES.breachesId == ["ProverOf", "KvectorOf", "VersorOf", "RotorOf", "FrameOf"].mapIt(
-      ("generic-suffix", MESSAGE_SUFFIX & "; got `" & it & "`."),
+      ("generic-suffix", MESSAGE_SUFFIX & "; got `" & it & "`"),
     )  # V.13
     check "type ProverOf* = proc (pin: string): Prover {.closure.}\n".breachesId ==
-        @[("generic-suffix", MESSAGE_SUFFIX & "; got `ProverOf`.")]  # V.13
+        @[("generic-suffix", MESSAGE_SUFFIX & "; got `ProverOf`")]  # V.13
     check "type\n  Pair_of[T] = object\n".breachesId.mapIt(it[0]) ==
         @["generic-suffix", "name-case"]  # V.1, V.13, word read without case
     check "type Of = object\n".breachesId.len == 0  # one word closes nothing
@@ -383,19 +383,19 @@ suite "Names":
           "* = object\n  Bases" & form & " = object\n  Ribbon" & form & " = object\n"
       check source.breachesId == @[(
         "collection-name",
-        "Collection type takes plural of its member `Mesh`; got `Mesh" & form & "`.",
+        "collection type takes plural of its member `Mesh`; got `Mesh" & form & "`",
       )]  # V.6; `Bases…` is plural, `Ribbon…` member file declares none
     check "type\n  Mesh = object\n  MeshList = seq[Mesh]\n  Meshes = seq[Mesh]\n".breachesId.len ==
         0  # V.6, `List` names no form of V.6
     check "type\n  Basis = enum\n    E0\n  BasisSet = set[Basis]\n".breachesId == @[(
-      "collection-name", "Collection type takes plural of its member `Basis`; got `BasisSet`."
+      "collection-name", "collection type takes plural of its member `Basis`; got `BasisSet`"
     )]  # V.6, `Bases`
     for opening in ["set[", "seq[", "array[4, ", "Table[string, ", "OrderedTable[string, ",
                     "HashSet[", "CountTable["]:
       check ("type\n  Basis = enum\n    E0\n  Bases = " & opening & "Basis]\n" &
           "  BasesSet = HashSet[Bases]\n").breachesId.len == 0  # V.6, member is collection
     check "type\n  Bases = Grades\n  BasesSet = HashSet[Bases]\n".breachesId == @[(
-      "collection-name", "Collection type takes plural of its member `Bases`; got `BasesSet`."
+      "collection-name", "collection type takes plural of its member `Bases`; got `BasesSet`"
     )]  # V.6, alias of other alias reads as no collection
 
 
@@ -451,25 +451,25 @@ suite "Names":
     let found = CASES_BROKEN.breaches
     check found.len == 8  # V.1, V.11
     for finding in [
-      (Rule.CaseName, "Type is `PascalCase`; got `basis_digits`."),
-      (Rule.CaseName, "Field is `snake_case`; got `Width`."),
-      (Rule.CaseMember, "Member is `PascalCase`; got `base`."),
-      (Rule.CaseMember, "Member is `PascalCase`; got `Anti_Side`."),
-      (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `lowerGlobal`."),
-      (Rule.CaseName, "Routine is `lowerCamelCase`; got `Construct_table`."),
-      (Rule.CaseName, "Parameter is `snake_case`; got `Count`."),
-      (Rule.CaseName, "Local is `snake_case`; got `Local_value`."),
+      (Rule.CaseName, "type is `PascalCase`; got `basis_digits`"),
+      (Rule.CaseName, "field is `snake_case`; got `Width`"),
+      (Rule.CaseMember, "member is `PascalCase`; got `base`"),
+      (Rule.CaseMember, "member is `PascalCase`; got `Anti_Side`"),
+      (Rule.CaseName, "global is `SCREAMING_SNAKE_CASE`; got `lowerGlobal`"),
+      (Rule.CaseName, "routine is `lowerCamelCase`; got `Construct_table`"),
+      (Rule.CaseName, "parameter is `snake_case`; got `Count`"),
+      (Rule.CaseName, "local is `snake_case`; got `Local_value`"),
     ]:
       check finding in found
-    check (Rule.CaseMember, "Member is `PascalCase`; got `Str_Raw`.") in OPERATORS.breaches
+    check (Rule.CaseMember, "member is `PascalCase`; got `Str_Raw`") in OPERATORS.breaches
 
 
   test "V.1 one letter fits by its own case, and capital local is finding":
     # Architect's ruling: plain ASCII is no notation, so `N` and `M` take local case.
     check LETTERS.breaches == @[
-      (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `g`."),
-      (Rule.CaseName, "Parameter is `snake_case`; got `N`."),
-      (Rule.CaseName, "Local is `snake_case`; got `M`."),
+      (Rule.CaseName, "global is `SCREAMING_SNAKE_CASE`; got `g`"),
+      (Rule.CaseName, "parameter is `snake_case`; got `N`"),
+      (Rule.CaseName, "local is `snake_case`; got `M`"),
     ]  # V.1, V.6
 
 
@@ -477,9 +477,9 @@ suite "Names":
     # Architect's ruling (#443): `typedesc[I]` keeps rule of parameter (V.1), since `I` is its
     #   placeholder.
     check PLACEHOLDERS.breaches == @[
-      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `Key`."),
-      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `a`."),
-      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `Element`."),
+      (Rule.LetterPlaceholder, "placeholder is one capital letter; got `Key`"),
+      (Rule.LetterPlaceholder, "placeholder is one capital letter; got `a`"),
+      (Rule.LetterPlaceholder, "placeholder is one capital letter; got `Element`"),
     ]  # V.1, V.12; `T: typedesc` passes, since ruling of #443 moved it to placeholder's letter
     check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == KindName.Parameter
 
@@ -500,11 +500,11 @@ suite "Names":
     for name in ["kind", "kind_basis", "t", "Kind", "kindBasis", "KIND"]:
       let
         source = "template timeKind(" & name & ": typedesc) = discard\n"
-        stated = "Parameter of type `typedesc` alone is one capital letter; got `" & name & "`."
+        stated = "parameter of type `typedesc` alone is one capital letter; got `" & name & "`"
       check source.breaches == @[(Rule.LetterPlaceholder, stated)]  # V.12, snake as well
       check renamesCase(source, []).len == 0  # V.12, letter is choice, so hand renames it
     const pick = "func pick[I: Grade](T: typedesc[I]): I = I.low\n"
-    check pick.breaches == @[(Rule.CaseName, "Parameter is `snake_case`; got `T`.")]  # V.1
+    check pick.breaches == @[(Rule.CaseName, "parameter is `snake_case`; got `T`")]  # V.1
     check renamesCase(pick, []).mapIt((it.name, it.renamed)) == @[("T", "t")]  # V.1
     check pick.replace("(T:", "(t:").breaches.len == 0  # V.1, `I` is placeholder (V.12)
     check Declared(kind: KindName.Parameter, is_generic: true).casing == Casing.Letter  # V.12
@@ -515,9 +515,9 @@ suite "Names":
   test "V.4 boolean is proposition or mode, and predicate func is `is…`":
     let found = BOOLEANS.breaches
     for name in ["gated", "done", "ready", "quiet"]:
-      check (Rule.NameBoolean, "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" &
-        name & "`.") in found  # V.4
-    check (Rule.NameBoolean, "Predicate `func` is `is…` in camel case; got `mixed`.") in found
+      check (Rule.NameBoolean, "boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" &
+        name & "`") in found  # V.4
+    check (Rule.NameBoolean, "predicate `func` is `is…` in camel case; got `mixed`") in found
     check found.len == 5  # V.4: `proc`, `func` writing `var`, and `contains` are unread
     check "inferred" in BOOLEANS.names and not found.anyIt("inferred" in it[1])  # value unread
     check PREFIXES_BOOLEAN.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
@@ -526,8 +526,8 @@ suite "Names":
   test "III.5 notation holds over case at any scope, but at module scope only for immutable global":
     # Variable takes source's notation (`𝐀`, `𝐮`, `𝐌` pass); mutable global never does.
     check NOTATION.breaches == @[
-      (Rule.Notation, "Notation holds over case only for immutable global; got `𝐧`."),
-      (Rule.Notation, "Notation holds over case only for immutable global; got `𝐍`."),
+      (Rule.Notation, "notation holds over case only for immutable global; got `𝐧`"),
+      (Rule.Notation, "notation holds over case only for immutable global; got `𝐍`"),
     ]  # III.5
     check "𝐦".isNotation and not "m".isNotation  # III.5
     check "𝐌".isCased(Casing.Screaming) and not "𝐌".isCased(Casing.Snake)  # III.5
@@ -614,18 +614,18 @@ suite "Names":
 
   test "V.2 name holding value in another representation leads with that value":
     check HEADS.messages == @[
-      "Name holding value in another representation leads with a name of its chain, `a` or " &
-        "`basis`; got `flags_a`.",
-      "Name holding value in another representation leads with a name of its chain, `b` or " &
-        "`basis`; got `flags_b`.",
-      "Name holding `b` in another representation leads with `b`; got `string_b`.",
-      "Name holding `a` in another representation leads with `a`; got `count_a`.",
-      "Name holding `operand` in another representation leads with `operand`; got " &
-        "`grade_operand`.",
-      "Name holding value in another representation leads with a name of its chain, `a` or " &
-        "`basis`; got `flags_basis`.",
-      "Name holding `scalarAnti` in another representation leads with `scalarAnti`; got " &
-        "`flags_scalar_anti`.",
+      "name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_a`",
+      "name holding value in another representation leads with a name of its chain, `b` or " &
+        "`basis`; got `flags_b`",
+      "name holding `b` in another representation leads with `b`; got `string_b`",
+      "name holding `a` in another representation leads with `a`; got `count_a`",
+      "name holding `operand` in another representation leads with `operand`; got " &
+        "`grade_operand`",
+      "name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_basis`",
+      "name holding `scalarAnti` in another representation leads with `scalarAnti`; got " &
+        "`flags_scalar_anti`",
     ]
     check HEADS.breaches.allIt(it[0] == Rule.HeadRepresentation)
     check HEADS.declarations.filterIt(it.namesLater.len > 0).mapIt(it.line) ==
@@ -655,18 +655,18 @@ suite "Names":
 
   test "V.2 name of chain leads, through dot, prefix call, empty call and split line":
     check CHAINS.messages == @[
-      "Name holding value in another representation leads with a name of its chain, `c` or " &
-        "`dual`; got `flags_c`.",
-      "Name holding value in another representation leads with a name of its chain, `c` or " &
-        "`dual`; got `flags_c`.",
-      "Name holding value in another representation leads with a name of its chain, `c` or " &
-        "`dual`; got `flags_c`.",
-      "Name holding value in another representation leads with a name of its chain, `a` or " &
-        "`basis`; got `flags_a`.",
-      "Name holding value in another representation leads with a name of its chain, `m`, " &
-        "`grade` or `get`; got `int_m`.",
-      "Name holding value in another representation leads with a name of its chain, `camera`, " &
-        "`rig` or `target`; got `point_camera`.",
+      "name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`",
+      "name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`",
+      "name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`",
+      "name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_a`",
+      "name holding value in another representation leads with a name of its chain, `m`, " &
+        "`grade` or `get`; got `int_m`",
+      "name holding value in another representation leads with a name of its chain, `camera`, " &
+        "`rig` or `target`; got `point_camera`",
     ]  # behind, prefix, split, empty, property, part; keep and grade first pass, unread silent
     check CHAINS.declarations.filterIt(it.namesLater.len > 0).mapIt(it.line) ==
       @[4, 6, 8, 12, 16, 18]

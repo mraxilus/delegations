@@ -120,7 +120,8 @@ func checkBlockEntry*(path, source: string): seq[Report] =
       path,
       line,
       Rule.BlockEntry,
-      "Entry block holds no binding; move code that binds into `proc main`; got `" & name & "`.",
+      "Entry block holds no binding; got `" & name & "`.",
+      help = "move code that binds into `proc main`",
     )
 
 

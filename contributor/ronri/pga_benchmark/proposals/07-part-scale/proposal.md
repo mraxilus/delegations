@@ -7,9 +7,10 @@ algebra, `grade` also counts a coefficient as zero within rounding of the larges
 **What it is for.** At pin the places of precision fall with the distance from the origin. Here
 they stay level at every distance measured, and `grade` misreads far fewer elements.
 
-**What it costs.** A pair that differs takes 6 to 12 ns to compare, against 2 to 3 ns at pin. A
-conformal `grade` takes 1.5 to 3.5 times as long as at pin. A multivector with a coefficient that
-is not finite equals nothing, itself included.
+**What it costs.** In runs at library commit `3d9696e`, a pair that differs takes 6 to 12 ns to
+compare, against 2 to 3 ns under the rule of pin. A conformal `grade` takes 1.5 to 3.5 times as
+long as under the rule of pin. A multivector with a coefficient that is not finite equals nothing,
+itself included.
 
 ## Problem
 
@@ -92,14 +93,16 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 
 ## Costs
 
-- **Time.** A pair that differs reads the scale of its first part in both objects before it
-  stops. So it takes 6 to 12 ns, against 2 to 3 ns at pin. `grade` reads the scale of each part,
-  and in a conformal algebra it also scans for the largest coefficient. So it takes up to 1.3
-  times as long at rga4d, and 1.5 to 3.5 times as long at cga4d and cga5d. `m =~ s` builds the
-  scalar multivector of s and compares it part by part. At pin it compares each coefficient with
-  s or with zero, with no scale of a part. At rga4d at 64 bits `m =~ 0` takes 1.7 times as long,
-  and in each other build it takes ×0.88 to ×1.05 of the time of pin. An equal pair takes about a
-  quarter of the time of pin.
+- **Time.** The runs under Time took library commit `3d9696e`. Pin `7ef9f4d` reads a coefficient of
+  a whole multivector by a basis known only at run time with no call. So both rules probably run
+  faster there, and their ratios can move, but no run measures that. A pair that differs reads the
+  scale of its first part in both objects before it stops. So it takes 6 to 12 ns, against
+  2 to 3 ns under the rule of pin. `grade` reads the scale of each part, and in a conformal algebra
+  it also scans for the largest coefficient. So it takes up to 1.3 times as long at rga4d, and 1.5
+  to 3.5 times as long at cga4d and cga5d. `m =~ s` builds the scalar multivector of s and
+  compares it part by part. At pin it compares each coefficient with s or with zero, with no scale
+  of a part. At rga4d at 64 bits `m =~ 0` takes 1.7 times as long, and in each other build it takes
+  ×0.88 to ×1.05 of the time of pin. An equal pair takes about a quarter of the time of pin.
 - **Typed objects.** These costs fall on the types of the library at pin. A typed object knows its
   grade from its type when it compiles, so `grade` would cost nothing there under either rule. It
   knows its parts too. So the scale of a part is the largest of its own few coefficients, as three
@@ -165,8 +168,8 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 - **P03, `partner-sign`, and P11, `unitize-general`.** Neither edits a line here. A test that P11
   adds to suite Internal compares two multivectors through the public `=~`, as
   `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. So that test reads this rule once both land. A run
-  by hand on 2026-11-15 applied this proposal and P11 to a copy of the library at pin. The suites
-  passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
+  by hand on 2026-11-15 applied this proposal and P11 to a copy of the library at `3d9696e`. The
+  suites passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 - **Two zero tests.** P11 keeps its own grade scan in `^∘`, at the comparison tolerance times the
   largest coefficient. So once both land, `grade` and `^∘` can read one element differently. That
   scan is the test of the largest coefficient alone, under Evidence.

@@ -208,9 +208,12 @@ withdrawn.
 - **Memory manager.** No record tests a `seq` of basis-set types under `--mm:refc` or
   `--mm:markAndSweep`. The library at pin names no memory manager.
 - **Time.** The whole set aligns to 16 bytes from rga3d up at 64 bits, where pin aligns it to
-  8. In the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.99 to ×1.02 of
-  pin. The highest are `+` at rga4d, which P14 gives, and the selection of an antigrade at cga5d.
-  Four takes of the same C on 2026-11-19 read ×0.98 to ×1.03 in all.
+  8. In the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.98 to ×1.02 of
+  pin, and the 88 at rga3d ×0.99 to ×1.01. The highest are `+` at rga4d, which P14 gives, the
+  transform of a line there, whose C does not move, and the selection of an antigrade at cga5d.
+  The 117 at cga4d read ×0.97 to ×1.03, and `+` reads ×1.03 there. The antireverses, at 3.5 ns,
+  whose C does not move, read at both ends. Four takes of the same C on 2026-11-19 read ×0.98 to
+  ×1.03 in all.
 - **Aliases.** Each alias returns `auto`, which has no use at pin. So its signature no longer
   states its type, and a caller reads the type from its operator.
 - **Callers.** A caller that lets the compiler place its basis-set types does not migrate, since
@@ -291,9 +294,9 @@ type, and each complement takes grade k to grade N - k. A copy whose maps drop t
 table fails at rga4d. A copy whose `⟑` takes one basis more, written as zero, fails there too,
 where a law on values alone holds. Each copy ran by hand with Nim 2.4.0 on 2026-11-19.
 
-The laws held at each of the nine algebras in the evaluation of 2026-11-19, and at 32 bits at
-seven. Builds by hand on the same day, three at once, on the machine of the evaluation, gave these
-figures:
+The laws hold at each of the nine algebras in the evaluation of 2026-11-26, and at 32 bits at
+seven. Builds by hand on 2026-11-19, at library commit `3d9696e`, three at once, on the machine of
+the evaluation, gave these figures:
 
 | Algebra | Pairs of each product | Forms that hold | Of them with no basis | Peak of build |
 |---------|-----------------------|----------------:|----------------------:|--------------:|
@@ -356,13 +359,13 @@ against ×0.80 to ×0.85 at 16 bytes.
 
 ### Evaluation
 
-Its evaluation of 2026-11-19 passes each claim at pin, with P14 applied first. The suites of the
-library pass 44 tests at rga4d and 39 at cga5d, with the 5 tests of the suite `Typed operators`.
-`laws.nim` holds at the nine algebras, and at 32 bits at seven. The 111 measurands at rga4d and the
-135 at cga5d read ×0.99 to ×1.02 of pin, as Costs gives.
+Its evaluation of 2026-11-26 passes each claim at pin, with P14 applied first. The suites of the
+library pass 44 tests at rga3d and rga4d, and 39 at cga4d and cga5d, with the 5 tests of the suite
+`Typed operators`. `laws.nim` holds at the nine algebras, and at 32 bits at seven. The 451
+measurands at the four algebras read ×0.97 to ×1.03 of pin, as Costs gives.
 
-The static reading names three functions that move at both algebras: `+`, `-` and negation of
-whole multivectors. Each moves as under P14 alone, which gives their forms. `+` writes its result
-with no zero fill, so at rga4d it moves 384 bytes against 512 at pin. The difference and the
-negation each spend five lines of C less. The four projections read as at pin, and the times of
-all seven read ×0.99 to ×1.02 of pin.
+The static reading names three functions that move at each of the four algebras: `+`, `-` and
+negation of whole multivectors. Each moves as under P14 alone, which gives their forms. `+` writes
+its result with no zero fill, so at rga4d it moves 384 bytes against 512 at pin. The difference
+and the negation each spend five lines of C less. The four projections read as at pin, and the
+times of all seven read ×1.00 to ×1.03 of pin.

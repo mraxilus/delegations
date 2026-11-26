@@ -6,14 +6,15 @@
 | Author  | Claude |
 | Date    | 2026-10-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It runs each test file under each
 configuration of its testament header, and all the runs go in parallel. There is no vendored
 source.
 
-The reference for each rule of testament is its source at the pin of this project, Nim 2.4.0.
+The reference for each rule of testament is its source at the pin of this project, Nim 2.4.2.
+Its `testament/specs.nim` and `testament/testament.nim` are the same bytes as in 2.4.0.
 The header comes from `testament/specs.nim`, and the command and the verdict come from
 `testament/testament.nim`. Testament takes `--ic`, which is off by default, and which adds
 `--ic:on` to the command of each C and C++ run. Assayer takes no such option, so it builds the
@@ -68,6 +69,10 @@ first commit that carries the version of knoller.
   repository. `atlas rep` restored the lock into a fresh clone, `atlas changed` exited 0, and a
   program that imports `compilers` and `pins` built and ran. Each rejected form failed as this
   section says.
+- Atlas 0.16.3, of Nim 2.4.2, writes the git hash of the compiler beside its version in
+  `nimVersion`, where 0.14.7 wrote the version alone. A lock in the old form warns of a mismatch
+  at each restore. Verified by `atlas install` and `atlas pin`, 2026-11-26: the restore warns no
+  more, `atlas changed` exits 0, and `nim.cfg` keeps each byte.
 - Verified by `nim r koch test curator/assayer`, 2026-11-15, after a delete of `dependencies/`. The
   restore checked out the commit of the lock, and every suite passed. A `nim check` that names each
   file it reads named each module of knoller under `dependencies/knoller/curator/knoller/src`.
@@ -307,9 +312,10 @@ Both start from an empty cache, on one file that lists the 8 configurations. Ass
 
 ## Toolchain
 
-**The compiler is pinned exactly at 2.4.0**: `requires "nim == 2.4.0"` in `assayer.nimble`. The
-pin is the pin of this project, and it moves apart from the pin of knoller. Assayer compiles the
-knoller of its lock with its own compiler, so its suites verify that pair.
+**The compiler is pinned exactly at 2.4.2**: `requires "nim == 2.4.2"` in `assayer.nimble`. The pin
+is the pin of this project, and it moves apart from the pin of knoller. Assayer compiles the knoller
+of its lock with its own compiler, so its suites verify that pair. Verified by the jobs of
+`check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites pass on 2.4.2.
 
 ## Rules audits
 

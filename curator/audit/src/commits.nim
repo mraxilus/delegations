@@ -108,6 +108,7 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.FixTested,
         "Fix needs `test(" & parsed.get.scope & ")` as commit immediately before it; mistake " &
           "earns test that fails before fix (CONTRIBUTOR.md, Tests are paramount); got `" &
           subjects[i] & "`.",
@@ -119,16 +120,24 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.SubjectCommit,
         "Commit subject must match `type(scope): lowercase summary` without final period; got `" &
           s & "`.",
       )
     elif expected.isSome and parsed.get.scope != expected.get:
-      result.add finding("", 0, "Commit scope must be `" & expected.get & "`; got `" & s & "`.")
+      result.add finding(
+        "",
+        0,
+        Check.ScopeCommit,
+        "Commit scope must be `" & expected.get & "`; got `" & s & "`.",
+      )
     if s.runeLen > SUBJECT_MAX:
       result.add finding(
         "",
         0,
+        Check.WidthSubject,
         "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
+        expected = some("at most " & $SUBJECT_MAX),
       )
 
 
@@ -176,12 +185,14 @@ func checkBody*(subject, body: string): seq[Finding] =
       result.add finding(
         "",
         0,
+        Check.BodyCommit,
         "Commit body is in sentence case (XI.4); got `" & excerpt & "` in `" & subject & "`.",
       )
     if text.len > 0 and text[^1] notin TERMINALS:
       result.add finding(
         "",
         0,
+        Check.BodyCommit,
         "Commit body holds one sentence to line, and this one runs on (XI.4); got `" & excerpt &
           "` in `" & subject & "`.",
       )
@@ -190,6 +201,7 @@ func checkBody*(subject, body: string): seq[Finding] =
         result.add finding(
           "",
           0,
+          Check.BodyCommit,
           "Commit body holds one sentence to line (XI.4); got two in `" & excerpt & "` in `" &
             subject & "`.",
         )
@@ -205,6 +217,7 @@ func checkCommitRecord*(subject: string, paths: openArray[string]): seq[Finding]
     result.add finding(
       "",
       0,
+      Check.CommitRecord,
       "Record travels in `docs` commit of its own (CONTRIBUTOR.md, Branch); got `" & code[0] &
         "` beside it in `" & subject & "`.",
     )

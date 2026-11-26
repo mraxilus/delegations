@@ -24,16 +24,16 @@ import ./knoller/[
   articles, blanks, chain, claims, command, commands, compilers, configurations, constructors,
   conversions, cuts, declarations, declared, edits, entry, fences, form, generations, idioms,
   landmarks, markers, messages, names, outlines, packages, parentheses, pins, precedence, prefixes,
-  proofs, purity, reports, rewrites, rules, skips, spacing, stages, staging, symbols, targets,
-  tokens, views, waits, wrapping,
+  proofs, purity, report, reports, rewrites, rules, skips, spacing, stages, staging, symbols,
+  targets, tokens, views, waits, wrapping,
 ]
 
 export
   articles, blanks, chain, claims, commands, compilers, configurations, constructors, conversions,
   cuts, declarations, declared, edits, entry, fences, form, generations, idioms, landmarks, markers,
   messages, names, outlines, packages, parentheses, pins, precedence, prefixes, proofs, purity,
-  reports, rewrites, rules, skips, spacing, stages, staging, symbols, targets, tokens, views, waits,
-  wrapping
+  report, reports, rewrites, rules, skips, spacing, stages, staging, symbols, targets, tokens,
+  views, waits, wrapping
 
 
 when isMainModule:

@@ -622,8 +622,31 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
   ##   definition change adds, removes or changes shows signature and doc, and folds body.
   ##   Lines in no definition follow, diffed, as other lines.
   ##   `files` is library as change finds it: pin, with bases of proposal applied.
-  var after = files
-  discard applyChange(after, change, "")  # Misfit is `drive`'s finding.
+  ##   Edit that misfits still shows, under note; `drive` names misfit of active proposal, never
+  ##     of frozen one, which applies at no pin.
+  var
+    after = files
+    notes: Table[string, seq[(string, string)]]  # Label and note of each whole file, by path.
+    unfit: Table[string, seq[(Edit, int)]]  # Quote edit that misfits, and its count of quote.
+  for edit in change.edits:
+    let held = after.getOrDefault(edit.path)
+    if applyChange(after, Change(edits: @[edit]), "").len == 0: continue
+    if edit.kind == KindEdit.Quote:
+      unfit.mgetOrPut(edit.path, @[]).add (edit, held.count(edit.quote))
+      continue
+    # Whole file stands against file that change finds: its diff then holds what changed since.
+    let note =
+      if edit.kind == KindEdit.Add:
+        ("file held already",
+          "Adds a file that the change finds already, so it shows replacing it.")
+      elif edit.path notin after:
+        ("file absent", "Replaces a file that the change does not find, so it shows as added.")
+      else:
+        ("digest moved", "Written against digest " & code(edit.digest) &
+          ", where the file that the change finds has " & code(held.digest) &
+          ". So this diff also holds each change to that file since.")
+    notes.mgetOrPut(edit.path, @[]).add note
+    after[edit.path] = edit.replacement
   var paths: seq[string]
   for edit in change.edits:
     if edit.path notin paths: paths.add edit.path
@@ -634,9 +657,11 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
       lines_after = toLines(after.getOrDefault(path))
       before = splitDefinitions(lines_before)
       later = splitDefinitions(lines_after)
-      status =
-        if path notin files: "added"
-        elif change.edits.anyIt(it.path == path and it.kind == KindEdit.Replace): "replaced"
+      status =  # Follows notes: addition over held file replaces it; quote alone finds none.
+        if path notin files:
+          if change.edits.anyIt(it.path == path and it.kind != KindEdit.Quote): "added"
+          else: "absent"
+        elif change.edits.anyIt(it.path == path and it.kind != KindEdit.Quote): "replaced"
         else: "edited"
     var
       sections: seq[string]
@@ -759,16 +784,27 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
           " lines</p>" &
           htmlDiff(rest, "nim") & "</div>"
 
+    # Each quote edit that misfits shows as written, with no line numbers, after all else.
+    for (edit, count) in unfit.getOrDefault(path):
+      sections.add "<div class=\"definition other\"><p class=\"where\">" &
+          "<span class=\"badge\">as written</span> This edit finds its quote " & $count &
+          " times in the file that the change finds.</p>" &
+          htmlDiff(diffLines(toLines(edit.quote), toLines(edit.replacement), 0, 0), "nim") &
+          "</div>"
+
     var parts: seq[string]
     if status == "added":
       parts.add $tally[0] & (if tally[0] == 1: " definition" else: " definitions")
     else:
       for (count, word) in [(tally[1], "changed"), (tally[0], "added"), (tally[2], "removed")]:
         if count > 0: parts.add $count & " " & word
+    for (label, _) in notes.getOrDefault(path): parts.add label
+    if path in unfit: parts.add $unfit[path].len & " as written"
+    let noted = notes.getOrDefault(path).mapIt("<p class=\"note\">" & it[1] & "</p>").join
     result.add "<details class=\"file\"><summary>" & code(path) & " <span class=\"status\">" &
         status & "</span> <span class=\"tally\">" & parts.join(" · ") & "</span> " &
         textCounts(diffLines(lines_before, lines_after, 1, 1)) & "</summary>" &
-        "<div class=\"definitions\">" & sections.join & "</div></details>"
+        "<div class=\"definitions\">" & noted & sections.join & "</div></details>"
 
 
 func textSpread*(spread: Spread): string =

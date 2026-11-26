@@ -46,6 +46,8 @@ ni'o le genturfa'i cu tcidu lo jdini sinxa poi pencu pa namcu ta'i lo jdini klan
       .e zoi gy. 5€-5 .gy. to `D3 a` .e `D8 a` pe `#1003` toi
   .i lo jdini sinxa poi pencu lo sinxa pe pa namcu cu pencu le namcu mu'u zoi gy. -$5 .gy. .e
       zoi gy. $-5 .gy. noi sinxa lo'u lo rupnu be li ni'u mu be'o ku le'u to `D7 c` pe `#1003` toi
+  .i ku'i le genturfa'i cu to'e curmi lo jdini sinxa poi le namcu pe ke'a cu vasru zoi gy. % .gy.
+      mu'u zoi gy. $5% .gy. to `D9 b` pe `#1003` toi
 
 ni'o le genturfa'i cu tcidu lo sinxa pe lo namcu ta'i lo cmavo pe `PA` to `D4 b` .e `D6 b` .e
     `D7 c` pe `#1003` toi

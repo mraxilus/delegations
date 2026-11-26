@@ -156,6 +156,7 @@ proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): se
       result.add finding(
         target.directory & "/" & FILE_DRIVER,
         0,
+        Check.VerbProject,
         failed & "; got exit `" & $code & "`.",
       )
 
@@ -212,6 +213,7 @@ proc packagesSystem*(
       result.failed.add finding(
         target.directory & "/" & FILE_DRIVER,
         0,
+        Check.PackagesSystem,
         "System packages unread, since driver failed; got exit `" & $code & "`" & said & ".",
       )
     for package in lines:
@@ -234,5 +236,6 @@ proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
       result.add finding(
         target.directory & "/tests",
         0,
+        Check.Testament,
         "Testament failed; got exit `" & $code & "`.",
       )

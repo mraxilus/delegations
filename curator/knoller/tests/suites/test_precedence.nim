@@ -54,7 +54,7 @@ suite "Article X":
   test "X.4 finding names line and expression; fix never writes wide line":
     let found = checkMixtures("a.nim", "let a = 1\nif a and b or c: discard\n")
     check found.mapIt(it.line) == @[2]
-    check found[0].message.endsWith("got `a and b or c`.")
+    check found[0].brief.endsWith("got `a and b or c`")
     let near = "if " & "x".repeat(77) & " and b or c: discard\n"  # 100 runes; parentheses 102
     check near.fixed == near
     check checkMixtures("a.nim", near).len == 1  # finding stays for hand
@@ -70,7 +70,7 @@ suite "Article X":
   test "X.4 `not` over binary expression is reported, since Nim reads `(not a) == b`":
     let found = checkNegations("a.nim", "let x = not a == b\nlet y = not a.b(c) in s\n")
     check found.mapIt(it.line) == @[1, 2]
-    check found[0].message.endsWith("got `not a == b`.")
+    check found[0].brief.endsWith("got `not a == b`")
     for kept in [
       "let x = not (a == b)\n",  # parenthesised
       "let x = not a and b\n",  # `and` reads as expected

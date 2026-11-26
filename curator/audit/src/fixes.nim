@@ -154,7 +154,12 @@ func entriesNamed*(
       if seen.containsOrIncl(e.path): continue
       result.entries.add e
     if not found_file:
-      result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
+      result.unknown.add finding(
+        path,
+        0,
+        Check.NameUnknown,
+        "Name matches no file git lists; got `" & name & "`.",
+      )
 
 
 func isKindNim(e: Entry): bool =
@@ -261,10 +266,11 @@ func queriesSemantic*(
 
 proc checkConversions*(
   root: string, tree: Tree, directories: openArray[string]
-): tuple[found: seq[Finding], warned: seq[string]] =
+): tuple[found: seq[Finding], warned: seq[Finding]] =
   ## Report each type conversion `x.T` in Nim files under directories, as semantic pass settles
   ##   it (STYLE.md §5), so check reports what fix rewrites (D1 of #558). File holding no
-  ##   candidate asks nothing; file pass cannot resolve warns, with reason, and finds nothing.
+  ##   candidate asks nothing; file pass cannot resolve warns at its path, with reason and no
+  ##   article, under rule `type-conversion`, and finds nothing.
   var queries: seq[Query]
   for e in tree:
     if not e.isKindNim or not directories.anyIt(e.path.startsWith(it & "/")): continue
@@ -272,8 +278,13 @@ proc checkConversions*(
     if query.sites.len > 0: queries.add query
   for answer in resolve(root, tree, queries):
     if answer.reason.len > 0:
-      result.warned.add answer.path & ": type conversion stays unread, since semantic pass " &
-        "resolved no name; got `" & answer.reason & "`."
+      result.warned.add finding(
+        answer.path,
+        0,
+        "Type conversion stays unread, since semantic pass resolved no name; got `" &
+          answer.reason & "`.",
+        rule = Rule.Conversion.id,
+      )
       continue
     for e in tree:
       if e.path == answer.path:
@@ -471,6 +482,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add finding(
       e.path,
       0,
+      Check.NimbleLocked,
       "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
@@ -521,6 +533,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
         ") stays for hand, since rename to `" &
         plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
         "`.",
+      rule = plan.rename.rule.id,
     )
   let entry = e.content.blockEntry
   if entry.refusal.len > 0:
@@ -529,11 +542,13 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
       entry.bindings[0][0],
       "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
         entry.refusal & "; got `" & entry.bindings[0][1] & "`.",
+      rule = Rule.BlockEntry.id,
     )
   if e.path in context.answers and context.answers[e.path].reason.len > 0:
     result.left.add finding(
       e.path,
       0,
+      Check.BackendCompile,
       "File compiles on no backend of its pin, so fixers resting on semantic pass leave it; " &
         "got `" & context.answers[e.path].reason & "`.",
     )
@@ -626,10 +641,10 @@ proc fixProven*(
   locked: openArray[string];
   context: Context;
   provers: ProversPin,
-): tuple[fix: Fixed, failures: seq[string]] =
+): tuple[fix: Fixed, failures: seq[Finding]] =
   ## Fix entries as `fixEntries` does, ask parser of each pin what fix asked, and fix again, at
-  ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning, led
-  ##   by rule id: `needless-parentheses: <message>`.
+  ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning of
+  ##   rule `needless-parentheses`, with no location and no article, as knoller prints it.
   ##   Entry that asked nothing read only sources answered, and answer once held never changes,
   ##   so each round fixes again only entries that asked.
   var
@@ -639,8 +654,8 @@ proc fixProven*(
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
     for failure in known.answered(tree, asked, provers):
-      let line = Rule.ParenthesesNeedless.id & ": " & failure
-      if line notin result.failures: result.failures.add line
+      let warning = finding("", 0, failure, rule = Rule.ParenthesesNeedless.id)
+      if warning notin result.failures: result.failures.add warning
     for k, e in entries:
       if parts[k].asked.len > 0: parts[k] = e.fixEntry(locked, known)
   result.fix = scoped(branch, parts)

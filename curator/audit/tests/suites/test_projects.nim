@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, strutils, tempfiles, unittest]
-import ../../src/[font_stacks, projects]
+import ../../src/[findings, font_stacks, projects]
 import ./fixtures
 
 
@@ -58,9 +58,10 @@ suite "Article IX":
     check failed.mapIt(it.path) == @[
       "contributor/ronri/imports/" & FILE_DRIVER, "contributor/ronri/refuses/" & FILE_DRIVER,
     ]  # driver that runs and prints nothing fails nothing
-    check "got exit `1`" in failed[0].message  # compiler refused driver
-    check "lists_absent" in failed[0].message  # last line of its stderr, which says why
-    check "got exit `1`" in failed[1].message  # `nim r` gives 1 for each code of verb but 0
+    check "got exit `1`" in failed[0].brief  # compiler refused driver
+    check failed.anyIt(it.rule == "koch.system-packages")
+    check "lists_absent" in failed[0].brief  # last line of its stderr, which says why
+    check "got exit `1`" in failed[1].brief  # `nim r` gives 1 for each code of verb but 0
 
 
   test "IX.6 testament drives each project and reports failures":
@@ -75,7 +76,8 @@ suite "Article IX":
       found = runTests(root, [pass, fail])
     check found.len == 1  # one finding: passing project clean
     check found[0].path == "contributor/ronri/fail/tests"  # failing named
-    check found[0].message.endsWith("got exit `1`.")  # testament exits 1 on failure
+    check found[0].brief.endsWith("got exit `1`")  # testament exits 1 on failure
+    check found.anyIt(it.rule == "koch.testament")
 
 
   test "IX.6 project's own verb runs through its driver, and its exit becomes finding":
@@ -93,7 +95,8 @@ suite "Article IX":
     let found = runHead(root, [Target(directory: "contributor/ronri/lags")])
     check found.len == 1  # reference moved
     check found[0].path == "contributor/ronri/lags/" & FILE_DRIVER
-    check found[0].message.endsWith("got exit `1`.")  # verb's own code, unchanged
+    check found[0].brief.endsWith("got exit `1`")  # verb's own code, unchanged
+    check found.anyIt(it.rule == "koch.project-verb")
     check runHead(root, newSeq[Target]()).len == 0  # no project carries verb
 
 
@@ -138,11 +141,11 @@ if plan != "none":
     root.writeInto(directory & "/plan.txt", "skip")
     let skipped = runDriven(root, [pages])
     check skipped.len == 1
-    check "`U+4E09` in `::before` uncollected" in skipped[0].message
+    check "`U+4E09` in `::before` uncollected" in skipped[0].brief
     root.writeInto(directory & "/plan.txt", "drop")
     let dropped = runDriven(root, [pages])
     check dropped.len == 1  # digit beside numeral, which `found.json` never holds (#822)
-    check "`U+0033` in `::before` unwritten" in dropped[0].message
+    check "`U+0033` in `::before` unwritten" in dropped[0].brief
     root.writeInto(directory & "/plan.txt", "fail")
     let failed = runDriven(root, [pages])
     check failed.len == 1  # verb's own exit, and no verdict over file it left before

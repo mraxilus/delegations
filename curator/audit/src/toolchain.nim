@@ -56,6 +56,7 @@ func checkPin*(path, nimble: string): seq[Finding] =
     result.add finding(
       path,
       0,
+      Check.PinCompiler,
       "Nimble file must pin compiler exactly as `requires \"" & NIM & " " & EXACT &
         " <version>\"`, or by full commit where project follows compiler onto devel; " &
         "ranges cannot record what was verified; got `" &
@@ -83,6 +84,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
     if path != PATH_WORKFLOW: return
     return @[finding(
       DIRECTORY_DRIVER & "/" & DIRECTORY_DRIVER.split('/')[^1] & ".nimble", 0,
+      Check.PinDriver,
       "Driver project pins version, never commit: setup action installs releases only, and " &
         "every job waits on it; got `" & pin & "`.",
     )]
@@ -92,14 +94,17 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
     result.add finding(
       path,
       0,
-      "Workflow must state driver version as `" & KEY_VERSION & " '<version>'`; got nothing.",
+      Check.VersionDriver,
+      "Workflow must state driver version as `" & KEY_VERSION & " '<version>'`.",
     )
   elif stated.get != pin:
     result.add finding(
       path,
       0,
+      Check.VersionDriver,
       "Driver version must equal `" & DIRECTORY_DRIVER & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
+      expected = some(pin),
     )
 
 
@@ -109,6 +114,8 @@ func checkKnoller*(path: string; pin, driver: Option[string]): seq[Finding] =
   result.add finding(
     path,
     0,
+    Check.PinKnoller,
     "Project driver imports by path pins driver version `" & driver.get & "`, since koch " &
       "compiles it; got `" & pin.get & "`.",
+    expected = some(driver.get),
   )

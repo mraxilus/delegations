@@ -86,13 +86,13 @@ func spellingsCode(source: string): seq[string] =
 
 suite "Outlines":
   test "nuance stands two spaces past sentence of its parent, past its tag, and moves with it":
-    check checkOutlines("a.nim", PRIMITIVES).mapIt((it.line, it.rule, it.message)) == @[
-      (4, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
-      (5, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
-      (9, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
+    check checkOutlines("a.nim", PRIMITIVES).mapIt((it.line, it.rule, it.brief)) == @[
+      (4, Rule.OutlineDoc, "nuance indents two spaces past its parent's sentence; got `3` " &
+        "spaces after `#`, parent's sentence at `7`"),
+      (5, Rule.OutlineDoc, "nuance indents two spaces past its parent's sentence; got `3` " &
+        "spaces after `#`, parent's sentence at `7`"),
+      (9, Rule.OutlineDoc, "nuance indents two spaces past its parent's sentence; got `3` " &
+        "spaces after `#`, parent's sentence at `7`"),
     ]  # lines 4, 5 and 9 of `pga/multivectors.nim`
     check PRIMITIVES.fixed ==
       "## Define fundamental geometric types of PGA.\n\n" &
@@ -137,9 +137,9 @@ suite "Outlines":
 
 
   test "nuance off its step moves there, in doc and comment, at any column":
-    check checkOutlines("a.nim", GRADE).mapIt(it.message) == @[
-      "Nuance indents two spaces past its parent's sentence; got `2` spaces after `##`, " &
-        "parent's sentence at `1`.",
+    check checkOutlines("a.nim", GRADE).mapIt(it.brief) == @[
+      "nuance indents two spaces past its parent's sentence; got `2` spaces after `##`, " &
+        "parent's sentence at `1`",
     ]  # line 354 of `pga/algebra.nim`
     check GRADE.fixed == GRADE.replace("##  I.e.", "##   I.e.")
     let trailing = "type O = object\n  count*: int  ## Count of items,\n" &
@@ -152,16 +152,16 @@ suite "Outlines":
   test "doc holds one summary line: second moves under it, and summary run on stays for hand":
     let second = "proc f() =\n  ## Do one thing.\n  ## Do other thing.\n  ##   In parts.\n" &
       "  discard\n"
-    check checkOutlines("a.nim", second).mapIt((it.line, it.rule, it.message)) == @[
-      (3, Rule.SummaryDoc, "Doc holds one summary line, so next claim indents two spaces; " &
-        "got `Do other thing.`."),
+    check checkOutlines("a.nim", second).mapIt((it.line, it.rule, it.brief)) == @[
+      (3, Rule.SummaryDoc, "doc holds one summary line, so next claim indents two spaces; " &
+        "got `Do other thing.`"),
     ]
     check second.fixed == "proc f() =\n  ## Do one thing.\n  ##   Do other thing.\n" &
       "  ##     In parts.\n  discard\n"  # lines below it move with it
     let runs = "proc f() =\n  ## Do one thing and\n  ## other thing.\n  discard\n"
-    check checkOutlines("a.nim", runs).mapIt((it.line, it.rule, it.message)) == @[
-      (2, Rule.SummaryDoc, "Summary line of doc ends its sentence, or wraps two spaces " &
-        "deeper; got `Do one thing and`."),
+    check checkOutlines("a.nim", runs).mapIt((it.line, it.rule, it.brief)) == @[
+      (2, Rule.SummaryDoc, "summary line of doc ends its sentence, or wraps two spaces " &
+        "deeper; got `Do one thing and`"),
     ]
     check runs.fixed == runs  # hand alone knows where summary ends
     for kept in [
@@ -194,9 +194,9 @@ suite "Outlines":
 
 
   test "summary of generated doc ends in period, or wraps two spaces deeper to one that does":
-    check checkOutlines("a.nim", NORM).mapIt((it.line, it.rule, it.message)) == @[
-      (4, Rule.SummaryDoc, "Summary line of generated doc ends in period; got `Get round " &
-        "weight squared norm of multivector,`."),
+    check checkOutlines("a.nim", NORM).mapIt((it.line, it.rule, it.brief)) == @[
+      (4, Rule.SummaryDoc, "summary line of generated doc ends in period; got `Get round " &
+        "weight squared norm of multivector,`"),
     ]  # line 222 of `pga/operators.nim`
     check NORM.fixed == NORM  # string holds doc, so hand writes it
     for kept in [
