@@ -186,6 +186,8 @@ suite "numbers as Metaculus":
     check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, State.Annulled).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 3e6, 3e6, 7e6, 1101421).scoreNumber.isNone
+    # 5th above range drops out of curve, so check of rising percentiles alone refuses it.
+    check initNumber(TEXT_TOKENS, 2e9, 3e6, 7e6, 4e6, confidence = 0.9).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 1.0).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.0).scoreNumber.isNone
     check initClaim(0.7, State.Hit).scoreNumber.isNone
