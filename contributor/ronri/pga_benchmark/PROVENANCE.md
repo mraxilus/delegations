@@ -89,7 +89,7 @@ e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ 
 reproduces the library on every pair of basis elements: 400 cases at rga3d, 1 245 at cga4d.
 They cover every product, complement, dual, part, attitude, carrier and cocarrier.
 
-The expansion also reproduces the support, center, container and partner on one integer operand of
+The expansion also reproduces the support, centre, container and partner on one integer operand of
 each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
 motor transforms factor the expansion to 14 multiplies, where it spends 30. The partners are
 factored by hand, 15 multiplies for a dipole where the expansion spends 36. The script stays out of
@@ -1526,9 +1526,9 @@ or a statement, at top level or under `when` and `suite`. Two versions pair defi
 context, kind and name, same head first. Lines in no definition follow as other lines.
 
 **An edit that no longer fits the library at pin still shows its code.** A whole-file replacement
-whose digest the file at pin lacks stands against that file. Its tally reads "digest moved", and a
-note names both digests. So its diff holds each change of the pin since, too. A quote that the
-file at pin lacks shows as written, with no line numbers, under its count.
+whose digest the file that the change finds lacks stands against that file. Its tally reads "digest
+moved", and a note names both digests. So its diff also holds each change to that file since. A
+quote that the file does not hold once shows as written, with no line numbers, under its count.
 
 `drive` names each misfit of an active proposal, and none of a frozen one, which applies at no pin.
 So a deferred or an implemented proposal keeps its code on its page as the pin moves. Rejected: a
