@@ -138,6 +138,18 @@ suite "Objects":
       check axis.get.toMultivector ∧ line =~ 0
 
 
+  test "a read takes no horizon answer from its caller":
+    # Fault: five reads took `is_horizon` from caller, and answer that disagreed with value
+    #   gave wrong place or direction in silence (repository issue 970).
+    let line_horizon = ⊖PLANES[0]
+    check positionAnchor(line_horizon).isNone
+    check not compiles(positionAnchor(line_horizon, is_horizon = false))
+    check not compiles(direction(line_horizon, is_horizon = false))
+    check not compiles(directionHorizon(POINTS[0], is_horizon = true))
+    check not compiles(directionNormalHorizon(LINES[0], is_horizon = true))
+    check not compiles(directionNormal(line_horizon, is_horizon = false))
+
+
   test "frame of plane is orthonormal, inside plane, and normal to its normal":
     for plane in PLANES:
       let axes = frame(plane)
