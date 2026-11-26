@@ -167,7 +167,7 @@ To read a file, give its message to `protoc`. Run this command from the folder o
 
 ```sh
 tail -c +29 build/examples/390a130dbd59a40f.exchange |
-  protoc --decode=lojban_tagger.Exchange app/exchanges.proto
+  protoc --decode=rictadni.Exchange app/exchanges.proto
 ```
 
 The command prints the first hop of the example `page` as text. `app/exchanges_example.txtpb`

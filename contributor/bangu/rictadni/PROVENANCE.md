@@ -596,6 +596,13 @@ is `app/exchanges.proto`, beside `app/exchanges.nim`, which owns the format. Nim
 the message only through the types that `import_proto3` of `protobuf_serialization` generates.
 Verified by `suites/test_exchanges.nim`.
 
+**The package of the schema is `rictadni`, the name of the project.** The Architect ruled so
+on #946. No byte of a message names its package, so a file written under the old package
+`lojban_tagger` decodes the same. `check-schemas` holds the shipped schema under the new package,
+so each field stays held. Verified by `suites/test_exchanges.nim`, which encodes the text format
+file as `rictadni.Exchange`. Verified by hand with `protoc` 3.21.12 on 2026-11-26: that file
+encodes to the same bytes under either package.
+
 The generator names each type after its message, and leaves out the package. So its `Exchange`
 and `Reply` would clash with `Exchange` of `exchanges.nim` and `Reply` of `suggestions.nim`. The
 types live in `app/exchanges_schema.nim`, which `exchanges.nim` imports with `from
@@ -689,7 +696,7 @@ project, this command prints the first hop of the example `page`:
 
 ```sh
 tail -c +29 build/examples/390a130dbd59a40f.exchange |
-  protoc --decode=lojban_tagger.Exchange app/exchanges.proto
+  protoc --decode=rictadni.Exchange app/exchanges.proto
 ```
 
 Verified by hand with `protoc` 3.21.12 on 2026-11-19, for each file that `examples` writes.
@@ -990,6 +997,3 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
 - **Title and textarea.** The reader reads their content as markup, where HTML reads it as text.
-- **The package of the schema.** It keeps `lojban_tagger`, though D1 on #946 moves each name.
-  `check-schemas` refuses a new package, by the rule `FILE_SAME_PACKAGE` of `buf breaking`, and no
-  byte of a message names a package. The curator decides on #981 whether the package may change.
