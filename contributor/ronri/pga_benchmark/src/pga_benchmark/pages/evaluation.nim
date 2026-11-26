@@ -634,17 +634,18 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
     if edit.kind == KindEdit.Quote:
       unfit.mgetOrPut(edit.path, @[]).add (edit, held.count(edit.quote))
       continue
-    # Whole file stands against file at pin: its diff then holds what pin changed since.
-    notes.mgetOrPut(edit.path, @[]).add(
+    # Whole file stands against file that change finds: its diff then holds what changed since.
+    let note =
       if edit.kind == KindEdit.Add:
-        ("file held at pin", "Adds a file that pin holds already, so it shows replacing it.")
+        ("file held already",
+          "Adds a file that the change finds already, so it shows replacing it.")
       elif edit.path notin after:
-        ("file absent at pin", "Replaces a file that pin lacks, so it shows as added.")
+        ("file absent", "Replaces a file that the change does not find, so it shows as added.")
       else:
         ("digest moved", "Written against digest " & code(edit.digest) &
-          ", where the file at pin has " & code(held.digest) &
-          ". So this diff holds each change of pin since, too.")
-    )
+          ", where the file that the change finds has " & code(held.digest) &
+          ". So this diff also holds each change to that file since.")
+    notes.mgetOrPut(edit.path, @[]).add note
     after[edit.path] = edit.replacement
   var paths: seq[string]
   for edit in change.edits:
@@ -656,9 +657,11 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
       lines_after = toLines(after.getOrDefault(path))
       before = splitDefinitions(lines_before)
       later = splitDefinitions(lines_after)
-      status =
-        if path notin files: "added"
-        elif change.edits.anyIt(it.path == path and it.kind == KindEdit.Replace): "replaced"
+      status =  # Follows notes: addition over held file replaces it; quote alone finds none.
+        if path notin files:
+          if change.edits.anyIt(it.path == path and it.kind != KindEdit.Quote): "added"
+          else: "absent"
+        elif change.edits.anyIt(it.path == path and it.kind != KindEdit.Quote): "replaced"
         else: "edited"
     var
       sections: seq[string]
@@ -785,7 +788,7 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
     for (edit, count) in unfit.getOrDefault(path):
       sections.add "<div class=\"definition other\"><p class=\"where\">" &
           "<span class=\"badge\">as written</span> This edit finds its quote " & $count &
-          " times in the file at pin.</p>" &
+          " times in the file that the change finds.</p>" &
           htmlDiff(diffLines(toLines(edit.quote), toLines(edit.replacement), 0, 0), "nim") &
           "</div>"
 
