@@ -783,7 +783,8 @@ ni'o **ro lerfu pe `0` bi'o `9` cu du pa valsi poi le genturfa'i cu tcidu ke'a t
   .i ne'i lo javni pe `CLL 4.9` le lerfu cu na karsna gi'e na zunsna
   .i ne'i lo cipra po'u `Internal: Stream` Verified by `suites/test_stream.nim`.
 
-ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i zo pi
+ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i zo pi va'o lo nu
+    le porsi cu vasru pa boi denpa bu po'o
   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi poi se tcidu ta'i zo
       ki'o**
   .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
@@ -810,14 +811,17 @@ ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i 
 
 ni'o **ro boi denpa bu pe lo porsi poi vasru su'o re boi denpa bu cu du pa valsi poi se tcidu ta'i
     zo pi'e**
-  .i le porsi cu vasru lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini be re
-      lerfu
   .i `Architect` jdice di'u bu'u `#1003` ta'i `D5 c`
   .i se ki'u bo le genturfa'i cu tcidu lo'u li pa pi'e re pi'e ci le'u fi zoi gy. li 1.2.3 .gy.
   .i le genturfa'i cu tcidu lo'u li pa so re pi'e pa xa bi pi'e no pi'e pa le'u fi
       zoi gy. li 192.168.0.1 .gy. Verified by `suites/test_stream.nim`.
+  .i le porsi cu vasru lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini be re
+      lerfu
+  .i `D5 c` cusku no da fi slaka bu
   .i se ki'u lo nu slaka bu cu pagbu le porsi kei zoi gy. li 1.2,000.3 .gy. cu se tcidu ta'i re boi
       zo pi'e Verified by `suites/test_stream.nim`.
+  .i se to'e cuxna fa lo nu slaka bu cu fendi le porsi ki'u lo nu da'i zoi gy. li 1.2,000.3 .gy. cu
+      se tcidu ta'i re boi zo pi to `D5 b` toi
   .i pa boi denpa bu po'o cu sinxa zo pi mu'u zoi gy. li 18.10 .gy. ki'u lo nu le lerfu cu jarco no
       du'u xu kau le namcu cu vasru re pagbu Verified by `suites/test_stream.nim`.
   .i `CLL 18.10` cusku zoi gy. pi'e PA compound base point .gy.
@@ -828,8 +832,15 @@ ni'o **ro boi denpa bu pe lo porsi poi vasru su'o re boi denpa bu cu du pa valsi
   .i le valsi .e le tricu pe ro le namcu ne'i ro jufra pe `FRAMES_NUMBER` cu du le valsi .e le
       tricu pe le namcu poi zo pi'e cu se ciska ne'i ke'a Verified by `suites/test_prose.nim`.
   .i `runDigits` tcidu ro porsi pa roi ca lo nu le pamoi lerfu pe le porsi cu se tcidu
-  .i de'i `2026-11-26` no mupli pe `CLL` .e no clani prosa pe `Wikipedia` .e no jufra pe `Tatoeba`
-      cu vasru lo porsi poi vasru su'o re boi denpa bu
+  .i de'i `2026-11-26` lo temci be lo nu `readStream` cu tcidu lo porsi poi vasru 160000 boi
+      denpa bu cu du li 183 bi'o 186 `ms` ca `d9af8629` .e li 202 bi'o 212 `ms` ca `28b90c23`
+  .i ro le namcu cu se cuxna fi ze lo nu tcidu ta'i lo nu cmalu gi'e se zbasu sepi'o `-d:release`
+      ne'i le vi skami
+  .i ji'a lo temci be lo nu tcidu lo porsi poi vasru 20000 boi denpa bu cu du li 21 bi'o 35 `ms`
+      ca `28b90c23`
+  .i de'i `2026-11-26` `grep -E '[0-9]\.[0-9]+\.[0-9]'` cu facki no porsi poi vasru su'o re boi
+      denpa bu ne'i lo lojbo selci'a pe `tests/cll` .e `tests/articles_wikipedia` .e
+      `tests/sample_tatoeba` .e le vreji pe `Tatoeba`
 
 ni'o se to'e cuxna fa lo nu le genturfa'i cu to'e curmi lo porsi poi vasru su'o re boi denpa bu
   .i ki'u bo lo pagbu be lo cukta .e lo judri pe `IP` cu se ciska ta'i lo porsi poi vasru su'o re
