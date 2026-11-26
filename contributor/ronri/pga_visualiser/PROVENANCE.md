@@ -1297,8 +1297,8 @@ only while the gate is open. Both open it while the diagnostics section is shown
 
 **The counts pool in the ring of the PGA share.** `share.RingShare` takes any array of counts, so
 both figures keep one window and one rule. A frame drained while the gate was shut counts nothing,
-so a mean never takes in frames that nobody read. The ring takes a `Natural` second, since no bucket
-holds a second before the start.
+so a mean never takes in frames that nobody read. The ring's seconds are `Natural`, as no bucket
+holds one before the start. It starts at its type's default, whose zero counts add to no pool.
 
 **Values alone, in `boundary` alone.** A motor counts as one value, as a direction does, though it
 carries 8 coefficients against 3. Plain numbers are not counted, such as the depths and distances
