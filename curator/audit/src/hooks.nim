@@ -379,9 +379,10 @@ const
     ## Value of number of item that breaks paragraph of claim from inside its bullet (CommonMark,
     ##   List items), as Markdown lets list that opens at 1 alone break paragraph; `01.` and
     ##   `001)` open at 1 too, as pandoc 3.1.3 of GFM reads them.
-  MARK_PERCENTILES = ", as the 10th"
-    ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
-    ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
+  MARKS_PERCENTILES = [", as the 5th", ", as the 10th"]
+    ## Words that open percentiles of claim, as samples of GUIDE.md write them at 90% coverage
+    ##   (7191274618), and as block written at 80% before writes them; where first of them is
+    ##   first mark, claim ends there and no percentage ends it, since they state its confidence
     ##   (7023048202).
   OPENING_CRITERION = ". "  ## Full stop and space that open resolution criterion of claim.
   WORDS_CRITERION = "resolution criterion"
@@ -2184,9 +2185,11 @@ func stopClaim(text: string): int =
   ##     before one final full stop of its bullet (7017902016).
   ##   Criterion is read in text in lower case (`findCriterion`), whose places are those of text,
   ##     since case of ASCII letter keeps its length.
-  let
-    ranged = text.find(MARK_PERCENTILES)
-    criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
+  var ranged = -1  # First place of percentiles; -1 where none.
+  for mark in MARKS_PERCENTILES:
+    let at = text.find(mark)
+    if at >= 0 and (ranged < 0 or at < ranged): ranged = at
+  let criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
   if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
   result = (if criterion >= 0: criterion else: text.len)
   for at in countdown(result - 1, 0):  # last percentage first: it is confidence
@@ -2240,7 +2243,7 @@ func isNumber*(text, claim: string): bool =
   let position = text.positionClaim(claim)
   if position == 0: return false
   let bullet = text.bulletsClaim[position - 1]
-  bullet.continuesWith(MARK_PERCENTILES, bullet.stopClaim)
+  MARKS_PERCENTILES.anyIt bullet.continuesWith(it, bullet.stopClaim)
 
 
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
@@ -2489,7 +2492,8 @@ proc readEfforts*(root: string): Table[string, string] =
 func contextStart*(
   branch, prompt, contributor, heading_carried, record: string;
   drift: seq[Finding];
-  lags: openArray[string] = [],
+  lags: openArray[string] = [];
+  rates: openArray[string] = [];
 ): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, commits of
   ##   lock that lag `main`, headings of record, list.
@@ -2500,6 +2504,8 @@ func contextStart*(
   ##   that shows them, so start asks for new stamp only where finding does.
   ##   Lags are lines `noticesLag` of `lags.nim` renders, which `koch check` prints too; each
   ##     stands as given, and fails nothing (D2 of #927).
+  ##   Rates are lines `linesBase` of `claims_scores.nim` renders from logs of claims: past
+  ##     figures of each kind, as base rate (GUIDE.md, Prediction, critic and reflection).
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
   ##     reads its headings, then each section work touches, and Open questions (GUIDE.md); line
   ##     each heading opens on lets it read that section alone.
@@ -2519,6 +2525,10 @@ func contextStart*(
       "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
     for f in drift: lines.add "  " & f.render
   for line in lags: lines.add line
+  if rates.len > 0:
+    lines.add "Past figures of each kind, from logs of claims (GUIDE.md, Prediction, critic and " &
+        "reflection):"
+    for line in rates: lines.add "  " & line
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   if record.len > 0:
