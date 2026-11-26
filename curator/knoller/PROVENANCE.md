@@ -337,6 +337,28 @@ static pass of `curator/audit` reads, on every line. So a finding that no fixer 
 - Cost, measured on that run, two runs each. `rga_visualiser` took 34.3 s and 34.6 s, against
   32.7 s and 32.1 s. `curator` took 20.5 s and 19.8 s, against 19.1 s and 19.5 s.
 
+**The command line fixes each file on a pool of threads, one for each core (`pools.nim`).** The
+fix of a file reads its own file and what the run read, and nothing that the fix of another file
+writes. At `2d496af8`, one file waits for the one before it, and the fix of each file takes 26.6 s
+of the 65.0 s of `koch fix --dry-run curator/knoller`. Meanwhile three of the four cores wait (the
+profile on #1001).
+
+- `outcomeProven` gives each file to a thread of the pool, and each file that asked the parser
+  again, after its batch answers. The parts keep the order of the files, as one loop gives them.
+- A job holds the facts of its file, as the call for one file copied them before (`JobPart`). The
+  proofs of its batch and the plans of the run stay in the caller, and the job reads them through a
+  pointer, since a copy would hold each source asked. The caller changes the proofs only between
+  two runs of the pool.
+- `outcome` stays one loop, since a `func` starts no thread.
+- Verified by `suites/test_command.nim`, which holds `outcomeProven` equal to a loop that fixes
+  every file again in each round (`outcomeEvery`). Its files ask the parser, and some do not.
+  Verified by `suites/test_pools.nim`, for the order of the answers.
+- Verified by run of `knoller --check --form:line curator/knoller` over the tree at `2d496af8`,
+  2026-11-26. Knoller built there and at `8a7b2f61` prints the same 2,746 lines in each of three
+  runs, and the runs alternate between the two builds. The median falls from 62.1 s to 34.4 s.
+  Each build is the debug build that `nim c` makes, on 4 cores at 2.10 GHz, under a load of 1.42
+  to 2.25.
+
 **The command lists a directory through `runGit`, which reads stdout and stderr of git apart.**
 Git ends a warning on stderr in a newline, while the paths end in NUL. So one stream that carries
 both glues the warning to the first path. `tree.nim` of `curator/audit` reads git through the same
