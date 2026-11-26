@@ -326,11 +326,13 @@ func turnedAbout(d, axis: Direction; radians: float): Direction =
   ## Turn direction `d` about unit `axis` by `radians`, as right hand turns, through motor.
   ##   Direction lifts to horizon point, which has no place, so line through origin carries
   ##     it as line through any point along `axis` would.
-  ##   Keeps `d` where turn or read refuses; neither can for unit `axis`, as `turnAbout`
+  ##   Fails where turn or read refuses, which neither can for unit `axis`: `turnAbout`
   ##     refuses only line with no direction, and rigid motion keeps horizon in horizon.
   let turn = turnAbout(1.0.e4 ∧ axis.toMultivector, radians)
-  if turn.isNone: return d
-  directionHorizon(d.toMultivector.carried(turn.get)).get(d)
+  doAssert turn.isSome, &"Turn must take axis with direction; got `{axis}`."
+  let turned = directionHorizon(d.toMultivector.carried(turn.get))
+  doAssert turned.isSome, &"Rigid turn must keep direction in horizon; got none for `{d}`."
+  turned.get
 
 
 const
@@ -352,8 +354,11 @@ const
 
 func turnedBy(d: Direction; motor, motor_reversed: Multivector): Direction =
   ## Turn direction `d` through motor caller already holds, with its antireverse.
-  ##   Keeps `d` where read refuses, which rigid motion of horizon point never causes.
-  directionHorizon(d.toMultivector.carried(motor, motor_reversed)).get(d)
+  ##   Fails where read refuses, which rigid motion of horizon point never causes.
+  let turned = directionHorizon(d.toMultivector.carried(motor, motor_reversed))
+  doAssert turned.isSome,
+    &"Motor must keep direction in horizon; got none for `{d}` through `{motor}`."
+  turned.get
 
 
 func toEcliptic(d: Direction): Direction =
