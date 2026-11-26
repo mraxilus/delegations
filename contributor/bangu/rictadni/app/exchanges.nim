@@ -665,7 +665,7 @@ func readExchange*(bytes: string): Recorded =
   let message =
     try: Protobuf.decode(bytes.toOpenArray(at_message, bytes.high), exchanges_schema.Exchange)
     except SerializationError as error:
-      return refuse("Message should decode as `lojban_tagger.Exchange`; got `" &
+      return refuse("Message should decode as `rictadni.Exchange`; got `" &
           error.msg.splitLines[0].toPrintable(RUNES_ANSWER_SHOWN) & "`.")
   if repairEncoding(message.label).count_repaired > 0:
     return refuse("Label should be well-formed UTF-8; got `" & message.label.toEcho & "`.")

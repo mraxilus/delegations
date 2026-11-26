@@ -110,12 +110,15 @@ reflection below says what it cost.
 ### When to start one
 
 - **Do a single task yourself.** Where two independent tasks wait, start one subagent, and do the
-  other task yourself while it runs. A subagent costs its prompt, its prediction, its critic, its
-  resolver and its reflection, and you wait while it runs alone.
+  other task yourself while it runs. A subagent costs its prompt, its prediction and its
+  reflection, and after some kinds a critic and a resolver. You wait while it runs alone.
 - **Where three or more independent tasks wait, do what suits them best.** Give any of them to
   subagents, and do the others yourself.
-- **A check is the one exception.** Start a `critic`, a `resolver` or a `reviewer` even where no
-  other task waits, since a fresh read finds what the writer misses.
+- **Weigh each subagent against its likely gain before you start it.** A subagent costs its run
+  and the steps after it, from the one allowance that every delegate shares. Start one for larger
+  work, or where a fresh read likely finds what you would miss. Do small or minor work yourself,
+  and check it yourself. A `reviewer` still reads each pull request before it goes ready,
+  whatever its size.
 - **Give a subagent read-only work, or a change that is independent and well defined.**
   Read-only work is a search, a reproduction, a measurement or a read of sources. Two changes
   are independent when neither one changes code or a test that the other one reads or writes.
@@ -196,21 +199,34 @@ return it confirmed.
   never give a subagent the path of a live transcript. A subagent can read both.
 - **Write from what you know, and read nothing new for the prediction.** Predict each judgement
   that the subagent will make, and the work that it will do, with its form.
+- **Make at most five judgements, the ones that matter most to the outcome.** A judgement is a
+  claim of yes or no. Make more only where the outcome needs them, since each one takes a row to
+  read and to resolve.
+- **Each prediction also gives three numbers: the tokens, the cost and the time of the
+  subagent.** They stand beside the judgements, and never count against the five, so that each
+  delegate learns to estimate them.
 
 Each claim follows these rules for forecasting:
 
 - **Each claim stands on the side that you believe, from 51% to 98%.**
 - **Each claim has a resolution criterion.** A reader can resolve it from the report, the critic
   and the tree alone.
-- **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
-  confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
+- **A number is three percentiles: the 5th, the 50th and the 95th.** In the table, its
+  confidence is 90%, the mass between its 5th and 95th percentiles. Its state is ✅ where the
   result falls between them, and a result on either percentile counts as inside. Its cell under
   `Result` opens with the value, as `170,000, inside`, since the log of claims reads that number.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
-  scores by the log score of the distribution of its percentiles, with a floor. The track record
-  is a calibration curve with its 90% credible band.
+  scores by the log score of the distribution of its percentiles, with a floor, as Metaculus
+  scores it. The track record is a calibration curve with its 90% credible band.
+- **A number names its unit at the start of its text, after its label: `tokens`, `cost` or
+  `time`.** A count takes the label `Count:` instead. The range of `tokens` is 10,000 to
+  1,000,000,000, that of `cost` $0.01 to $1,000, and that of `time` 0.1 to 10,000 minutes. Each
+  is on the logarithm, with open bounds. A count runs from 0, a closed bound, to 100,000, an open
+  bound, on the logarithm of the count plus one. A number of another unit takes no score.
+- **A label names no unit, except `Count:`.** So `Cost: cost at list price: $0.80, …` takes a
+  score, and `Cost: $0.80, …` takes none.
 - **The table has no column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
@@ -222,15 +238,18 @@ Then the subagent runs, and these steps follow:
   `No prediction` under `Predicted`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
-- **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
-  Its prompt holds the first prompt, the report, and the paths of the evidence, but never your
-  prediction. It checks each claim against the evidence, and never does the work again. Scale
-  it to the stakes: it samples a survey, and it runs the checks of a build again. No critic
-  checks a critic.
-- **The resolver marks every prediction, after the critic.** Its prompt holds each claim with
-  its resolution criterion and with no percentage, the report, and the report of the critic.
-- **Write the reflection when the critic reports**, before any sign-off or working line. Give
-  the subagent and the critic each a line. Each line holds the tokens summed over its requests,
+- **A critic runs after a builder, an investigator or a measurer, whose reports others build on,
+  before your reflection.** After any other kind, check the report against its evidence yourself.
+  The critic is a fresh subagent too. Its prompt holds the first prompt, the report, and the paths
+  of the evidence, but never your prediction. It checks each claim against the evidence, and
+  never does the work again. It runs the checks of a build again, and no critic checks a critic.
+- **A resolver marks each prediction whose subagent a critic checked, after the critic.** Its
+  prompt holds each claim with its resolution criterion and with no percentage, the report, and
+  the report of the critic. Where no critic ran, you mark each claim, and the log names you as its
+  marker.
+- **Write the reflection when the critic reports, or when the report comes where no critic
+  follows**, before any sign-off or working line. Give the subagent a line, and the critic one
+  where it ran. Each line holds the tokens summed over its requests,
   the cost at list price, the calls and the time. The tokens of a request are its input, cache
   write, cache read and output tokens. Each request counts once, by its `requestId`.
 - **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
@@ -248,7 +267,7 @@ Then the subagent runs, and these steps follow:
   claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
   neither stands, it ends before one final full stop of its bullet.
 - **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
-  confidence. It ends at its percentiles, which open with the words `, as the 10th`. A
+  confidence. It ends at its percentiles, which open with the words `, as the 5th`. A
   percentage in brackets in its text, as `(10% cached)`, stays in the claim.
 - **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
   letters, plain or in italics, bold or both. So `. **Resolution criterion:**` and
@@ -280,12 +299,16 @@ Then the subagent runs, and these steps follow:
 
 - Judgement: the race to save one shared key leads the findings (70%). Resolution criterion:
   it is the first finding of the report.
-- Judgement: no test is weakened (85%). Resolution criterion: the critic finds no assertion
-  that the diff removes or loosens.
+- Judgement: no test is weakened (85%). Resolution criterion: the diff removes or loosens no
+  assertion.
 - Judgement: it names the lock of the store as a second risk (60%). Resolution criterion: the
   report names the lock in a finding.
-- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
-  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
+  95th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the cost on the line `**Subagent:**` of the reflection.
+- Time: time to its report, in minutes: 5, 12 and 30, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the minutes on the line `**Subagent:**` of the reflection.
 
 **Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
 ```
@@ -295,15 +318,15 @@ Then the subagent runs, and these steps follow:
 
 **Subagent:** reviewer of the diff of `curator/asset-fetch`, 170,000 tokens and $1.10 at list
 price, 57 calls, 15 min.
-**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min. It held five claims of the
-report and failed one.
 
 | State | Confidence | Predicted | Result |
 | --- | --- | --- | --- |
 | ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
-| ✅ | 85% | no test is weakened | none is (the critic read each test of the diff) |
+| ✅ | 85% | no test is weakened | none is: each assertion of the diff stands |
 | ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
-| ✅ | 80% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
+| ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
+| ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |
+| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.

@@ -452,6 +452,7 @@ alone.
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
 | `claims` | rows of the log of claims outside the tree | moves them into the log of the branch |
+| `figures` | each log of claims of the tree | prints figures by marker, then by the fields named |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |
