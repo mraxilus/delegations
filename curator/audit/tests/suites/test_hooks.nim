@@ -2814,6 +2814,9 @@ suite "Hooks":
     #   percentiles come first runs to them, and keeps each percentage (7023048202, test below).
     for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
         ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
+        ("- a b, as the 5th c", "a b"), ("- a b, as the 10th c, as the 5th d", "a b"),
+        ("- a b (70%), as the 5th c. Resolution criterion: d", "a b (70%)"),
+        ("- a b, as the 5th c (70%). Resolution criterion: d", "a b"),
         ("- a b. Resolution criterion: c", "a b"),
         ("- a b (70%), as the 10th c. Resolution criterion: d", "a b (70%)"),
         ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
@@ -2826,7 +2829,8 @@ suite "Hooks":
     # Brackets with no percentage in them, and other words, end nothing, so claim reads them;
     #   criterion in lower case is mark, by choice of delegate (test below).
     for bullet in ["- a (duty 2) b", "- a (70 %) b", "- a (about 70%) b", "- a(70%) b",
-        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b"]:
+        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b",
+        "- a as the 5th b", "- a, as the 95th b"]:
       check passes(bullet, bullet[2 .. ^1])
       check not passes(bullet, "a")
     check passes("- a. resolution criterion. b", "a")

@@ -204,6 +204,10 @@ suite "Log of claims":
     check PREDICTION_REVIEWER.isNumber(number)
     check not PREDICTION_REVIEWER.isNumber("the race leads the findings")
     check not PREDICTION_REVIEWER.isNumber("tokens summed over its requests")
+    let ninety = PREDICTION_REVIEWER.replace("as the 10th, 50th and\n  90th",
+      "as the 5th, 50th and\n  95th")
+    check ninety != PREDICTION_REVIEWER
+    check ninety.isNumber(number)  # 90% coverage, as GUIDE.md writes it (7191274618)
 
 
   test "each row quoting claim of block call took is claim, with its call, marks and figures":

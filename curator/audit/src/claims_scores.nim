@@ -8,6 +8,9 @@
 ##     its curve runs straight between percentiles at 201 places (`generateQuantileContinuousCdf`),
 ##     takes floor of 1% of even spread and cap of 0.2 for each of 200 buckets (`standardizeCdf`),
 ##     and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome (`score_math.py`).
+##   Confidence of number is mass between its outer two percentiles, so it places them: 5th and
+##     95th at 0.9, as Architect asks on #964 (comment 7191274618), and 10th and 90th at 0.8 of
+##     earlier row.
 ##   Track record counts claims of each band of confidence, from 51% to 60% and on in steps of 10
 ##     to 98%, by percentage rounded; claim under 50% first turns to its other side, so hit at 20%
 ##     counts as miss at 80%, as `D3 c` of #964 rules (comment 7191274618); confidence of 50% or
@@ -73,6 +76,7 @@ const
   BANDS_PERCENT = [(51, 60), (61, 70), (71, 80), (81, 90), (91, 98)]
     ## Bands of confidence of track record, in percent, each bound inside (#964).
   PERCENT = 100.0  ## Percentage of confidence of one.
+  PERCENT_MEDIAN = 50.0  ## Percent of mass at or below median of number.
   MASS_CREDIBLE = 0.9  ## Mass of credible band of share (#964).
   PRIOR_HITS = 1.0  ## Hits of uniform prior of share, `Beta(1, 1)`.
   PRIOR_MISSES = 1.0  ## Misses of uniform prior of share.
@@ -218,11 +222,14 @@ func hydrated(points: openArray[Point], places: openArray[float]): seq[Point] =
     result.add Point(percent: slope * high + intercept, place: high)
 
 
-func curveNumber(number: Number, unit: Unit): seq[float] =
+func curveNumber(number: Number, unit: Unit, confidence: float): seq[float] =
   ## Mass at or below each of `COUNT_BUCKETS + 1` places of range, straight between percentiles,
-  ##   with no mass beyond range before floor (`generateQuantileContinuousCdf`).
+  ##   with no mass beyond range before floor (`generateQuantileContinuousCdf`); confidence is mass
+  ##   between outer two percentiles, so 0.9 places them at 5th and 95th.
+  let tail = (PERCENT - confidence * PERCENT) / 2  # Percent of mass below lowest percentile.
   var points: seq[Point]
-  for (percent, value) in [(10.0, number.low), (50.0, number.median), (90.0, number.high)]:
+  for (percent, value) in [(tail, number.low), (PERCENT_MEDIAN, number.median),
+      (PERCENT - tail, number.high)]:
     let at = value.place(unit)
     if 0 < at and at < 1: points.add Point(percent: percent, place: at)
   points.add Point(percent: 0, place: 0)
@@ -291,14 +298,16 @@ func bucketPlace(at: float): int =
 func scoreNumber*(claim: Claim): Option[float] =
   ## Score of number as Metaculus scores continuous question, `100 × ln(m / b) / 2`: `m` is mass of
   ##   bucket of outcome, and `b` even share of inner mass, or 0.05 beyond range; none for claim of
-  ##   no number, outcome, unit or mark, or whose percentiles do not rise.
+  ##   no number, outcome, unit or mark, of confidence outside 0 to 1, or whose percentiles do not
+  ##   rise.
   if claim.number.isNone or claim.state notin {State.Hit, State.Miss}: return none(float)
+  if claim.confidence <= 0 or claim.confidence >= 1: return none(float)
   let
     number = claim.number.get
     unit = claim.unitClaim
   if number.outcome.isNone or unit.isNone: return none(float)
   if not (number.low < number.median and number.median < number.high): return none(float)
-  let curve = number.curveNumber(unit.get)
+  let curve = number.curveNumber(unit.get, claim.confidence)
   if curve.len != COUNT_BUCKETS + 1: return none(float)
   let
     masses = curve.flooredCurve.massesCurve

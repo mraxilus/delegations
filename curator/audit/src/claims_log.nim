@@ -48,9 +48,9 @@ type
     Resolver  ## Resolver, in table of its report.
 
   Number* = object  ## Define number claim: its percentiles, and value its result gives.
-    low*: float  ## 10th percentile.
+    low*: float  ## Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
     median*: float  ## 50th percentile.
-    high*: float  ## 90th percentile.
+    high*: float  ## Highest percentile: 95th at confidence 0.9, 90th at 0.8.
     outcome*: Option[float]  ## First number of cell under `Result`; none where cell holds none.
 
   Claim* = object  ## Define one row of log: message `Claim` of `claims.proto`.

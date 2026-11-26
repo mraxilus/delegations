@@ -32,9 +32,12 @@ func initClaim(confidence: float, state: State, kind = "reviewer", effort = "hig
   Claim(kind: kind, effort: effort, confidence: confidence, state: state)
 
 
-func initNumber(text: string; low, median, high, outcome: float; state = State.Hit): Claim =
-  ## Number of text, with its percentiles and outcome, marked in state.
-  Claim(text: text, confidence: 0.8, state: state,
+func initNumber(
+  text: string; low, median, high, outcome: float; state = State.Hit; confidence = 0.8
+): Claim =
+  ## Number of text, with its percentiles and outcome, marked in state, at confidence that its outer
+  ##   two percentiles hold between them.
+  Claim(text: text, confidence: confidence, state: state,
     number: some(Number(low: low, median: median, high: high, outcome: some(outcome))))
 
 
@@ -86,19 +89,34 @@ suite "numbers as Metaculus":
       .isNearNumber(79.35020165475868)  # at median, bucket 67
 
 
+  test "number at 90% places its percentiles at 5th and 95th, as copy in Python gives it":
+    # Architect asks on #964 (comment 7191274618): number takes 90% coverage, and row at 80%
+    #   keeps 10th and 90th, so its confidence places its percentiles.
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.9).scoreNumber
+      .isNearNumber(83.61466005318374)  # i01 at 90%: bucket 82
+    check initNumber(TEXT_TOKENS, 4e6, 1e7, 2.4e7, 31211191, confidence = 0.9).scoreNumber
+      .isNearNumber(-97.80192675463397)  # b03: above 95th, bucket 140
+    check initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.10, confidence = 0.9).scoreNumber
+      .isNearNumber(-70.90607341215642)  # r14: below 5th, bucket 40
+    check initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.45, confidence = 0.9).scoreNumber
+      .isNearNumber(85.22672609795858)  # at median, bucket 67
+
+
   test "outcome beyond either open bound keeps mass 0.001, and scores 100 × ln(0.001 / 0.05) / 2":
     let expected = 100 * ln(0.001 / 0.05) / 2
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 2e9).scoreNumber.isNearNumber(expected)
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 5000).scoreNumber.isNearNumber(expected)
 
 
-  test "number of no outcome, unit or mark, or whose percentiles do not rise, takes no score":
+  test "number of no outcome, unit, mark or confidence, or whose percentiles fall, takes none":
     var claim = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)
     claim.number.get.outcome = none(float)
     check claim.scoreNumber.isNone
     check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, State.Annulled).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 3e6, 3e6, 7e6, 1101421).scoreNumber.isNone
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 1.0).scoreNumber.isNone
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.0).scoreNumber.isNone
     check initClaim(0.7, State.Hit).scoreNumber.isNone
 
 

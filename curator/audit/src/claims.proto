@@ -40,9 +40,9 @@ message Claim {
 
 // Define number claim: its three percentiles, and value its result gives.
 message Number {
-  double low = 1;  // 10th percentile.
+  double low = 1;  // Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
   double median = 2;  // 50th percentile.
-  double high = 3;  // 90th percentile.
+  double high = 3;  // Highest percentile: 95th at confidence 0.9, 90th at 0.8.
   optional double outcome = 4;  // First number of cell under `Result`; absent where none.
 }
 

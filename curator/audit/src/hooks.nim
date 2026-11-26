@@ -379,9 +379,10 @@ const
     ## Value of number of item that breaks paragraph of claim from inside its bullet (CommonMark,
     ##   List items), as Markdown lets list that opens at 1 alone break paragraph; `01.` and
     ##   `001)` open at 1 too, as pandoc 3.1.3 of GFM reads them.
-  MARK_PERCENTILES = ", as the 10th"
-    ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
-    ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
+  MARKS_PERCENTILES = [", as the 5th", ", as the 10th"]
+    ## Words that open percentiles of claim, as samples of GUIDE.md write them at 90% coverage
+    ##   (7191274618), and as block written at 80% before writes them; where first of them is
+    ##   first mark, claim ends there and no percentage ends it, since they state its confidence
     ##   (7023048202).
   OPENING_CRITERION = ". "  ## Full stop and space that open resolution criterion of claim.
   WORDS_CRITERION = "resolution criterion"
@@ -2184,9 +2185,11 @@ func stopClaim(text: string): int =
   ##     before one final full stop of its bullet (7017902016).
   ##   Criterion is read in text in lower case (`findCriterion`), whose places are those of text,
   ##     since case of ASCII letter keeps its length.
-  let
-    ranged = text.find(MARK_PERCENTILES)
-    criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
+  var ranged = -1  # First place of percentiles; -1 where none.
+  for mark in MARKS_PERCENTILES:
+    let at = text.find(mark)
+    if at >= 0 and (ranged < 0 or at < ranged): ranged = at
+  let criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
   if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
   result = (if criterion >= 0: criterion else: text.len)
   for at in countdown(result - 1, 0):  # last percentage first: it is confidence
@@ -2240,7 +2243,7 @@ func isNumber*(text, claim: string): bool =
   let position = text.positionClaim(claim)
   if position == 0: return false
   let bullet = text.bulletsClaim[position - 1]
-  bullet.continuesWith(MARK_PERCENTILES, bullet.stopClaim)
+  MARKS_PERCENTILES.anyIt bullet.continuesWith(it, bullet.stopClaim)
 
 
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
