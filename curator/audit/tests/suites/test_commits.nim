@@ -33,6 +33,8 @@ suite "Article XI":
     check checkCommits("contributor/ronri/alpha/work", [at_limit]).len == 0  # at limit
     check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"]).mapIt(it.brief) ==
       @["commit subject exceeds 100 characters; got `101`; expect `at most 100`"]  # one over
+    check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"])
+      .anyIt(it.rule == "koch.commit-subject-width")
     let wide = "feat(alpha): a" & "∧".repeat(SUBJECT_MAX - 14)
     check checkCommits("contributor/ronri/alpha/work", [wide]).len == 0  # runes, not bytes
     check checkCommits("claude/setup", ["x".repeat(SUBJECT_MAX + 1)]).len ==
@@ -44,6 +46,8 @@ suite "Article XI":
       .len == 0  # scope equals project
     check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"]).mapIt(it.brief) ==
       @["commit scope must be `alpha`; got `feat(beta): add`"]  # scope named
+    check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"])
+      .anyIt(it.rule == "koch.commit-scope")
     check checkCommits("curator/audit/work", ["feat(audit): add"]).len == 0  # curator project
     check checkCommits("curator/audit/work", ["docs(curator): x"]).mapIt(it.brief) ==
       @["commit scope must be `audit`; got `docs(curator): x`"]  # not curator
@@ -65,6 +69,7 @@ suite "Article XI":
     let found = checkCommits("curator/work", ["fix(audit): stop it"])
     check found.len == 1
     check found[0].brief.endsWith("got `fix(audit): stop it`")
+    check found.anyIt(it.rule == "koch.test-before-fix")
     check "CONTRIBUTOR.md" in found[0].brief  # cites rule where it lives; Article IX has none
     check checkCommits(
       "curator/work", ["test(audit): cover it", "fix(audit): stop it"]
@@ -91,6 +96,7 @@ suite "Article XI":
     let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & trailers
     check checkBody("s", listed).len == 0
     check "sentence case" in checkBody("s", "reason sits here.")[0].brief
+    check checkBody("s", "reason sits here.").anyIt(it.rule == "koch.commit-body")
     check "runs on" in checkBody("s", "Reason wraps across\nlines.")[0].brief
     check "got two" in checkBody("s", "One sentence. Second one.")[0].brief
     check checkBody("s", "Call `a. B` once.").len == 0  # code span holds no boundary
@@ -104,6 +110,7 @@ suite "Article XI":
     check checkCommitRecord("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
     let mixed = checkCommitRecord("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
     check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].brief
+    check mixed.anyIt(it.rule == "koch.record-commit")
 
 
   test "history runs subject, ladder, body and paths over every commit":

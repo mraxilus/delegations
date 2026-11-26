@@ -119,6 +119,7 @@ suite "Imports by path":
     check PROJECTS_CHECKER == [DIRECTORY_DRIVER, DIRECTORY_KNOLLER]
     check tree.found == @[(SOURCE_CHECKER & "/probing.nim", 1)]  # koch.nim is in no project
     check tree.checkImportsProject[0].brief.endsWith("got `" & PROBE & "`" & HELP)
+    check tree.checkImportsProject.anyIt(it.rule == "koch.project-import")
 
 
 
@@ -184,6 +185,7 @@ suite "Driver":
         .replaced(project & "/" & FILE_DRIVER, "import std/os\n" & source)
       check tree.reached.mapIt((it[0], it[1])) == @[(project & "/" & FILE_DRIVER, 2)]
       check tree.reached[0][2].endsWith("got " & got)
+      check tree.checkImportsDriver[0].rule == "koch.driver-import"
     check own.without(project & "/" & FILE_DRIVER).reached.len == 0  # project with no driver
 
 

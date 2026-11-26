@@ -25,6 +25,7 @@ suite "Duty 10":
     check found.len == 1
     check found[0].path == "b.md" and found[0].line == 3
     check "first at `a.md:1`" in found[0].brief
+    check found.anyIt(it.rule == "koch.duplicate-paragraph")
     check found[0].brief.endsWith(
       "got `" & LONG[0 ..< 60] & "`; help: write it once and point at it",
     )

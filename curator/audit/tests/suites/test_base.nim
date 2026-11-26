@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, sequtils, strutils, unittest]
 import ../../src/[base, findings, plan, provenance]
 import ./fixtures
 
@@ -168,6 +168,7 @@ suite "Base":
     discard root.git("checkout -q curator/older")
     let moved = checkBase(readDrift(root, "main"))
     check moved.len == 1 and moved[0].brief.endsWith("got `" & STAMP & "`" & HELP_STAMP)
+    check moved.anyIt(it.rule == "koch.drift")
     discard root.git("checkout -q main")
     root.writeInto("GUIDE.md", GUIDE.replace("Pin.", "Pin it."))
     discard root.git("commit -q -am 'docs(curator): pin it'")

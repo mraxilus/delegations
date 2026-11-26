@@ -30,6 +30,7 @@ suite "Article VIII":
     check checkProvenance("p", good, "deadbeefdeadbeef").len == 0  # complete header passes
     check checkProvenance("p", "# x\n\nprose\n", "s").mapIt(it.brief) ==
       @["header table `| Field | Value |` missing or empty"]  # no table
+    check checkProvenance("p", "# x\n\nprose\n", "s").anyIt(it.rule == "koch.provenance-header")
     let unreviewed = good.replace("| Review | **Unreviewed.** |\n", "")
     check checkProvenance("p", unreviewed, "deadbeefdeadbeef").mapIt(it.brief) ==
       @["header lacks field; got `Review`"]  # review row required
@@ -42,6 +43,7 @@ suite "Article VIII":
     )  # stale
     check "`0000000000000000`" in stale[0].brief  # expected stamp named
     check stale[0].is_propagation  # curator's in any project, never held
+    check stale[0].rule == "koch.stale-stamp"
     check not checkProvenance("p", unreviewed, "deadbeefdeadbeef")[0].is_propagation  # project's
 
 
@@ -80,6 +82,7 @@ suite "Article VIII":
       "got `tgone.nim`; help: write verification that can be repeated, or name tool and date " &
         "instead",
     )  # Article IV.4 echoes value
+    check found.anyIt(it.rule == "koch.cited-test")
 
     # Citation naming another project's test does not resolve here.
     check checkCitations(

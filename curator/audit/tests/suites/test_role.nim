@@ -53,6 +53,7 @@ suite "Role":
     )
     check wrong.len == 1
     check wrong[0].brief.endsWith("got `**Role:** curator/probe`" & EXPECT_ROLE)  # line echoed
+    check wrong.anyIt(it.rule == "koch.role-line")
 
 
   test "block of listed harness is passed only whole, once and in order":
@@ -165,6 +166,7 @@ suite "Role":
       check found.len == 1
       check found[0].brief == "pull request must carry label `curator`, which job `label` of " &
         "`role.yml` adds from its branch; got `" & labels.join(", ") & "`"
+      check found.anyIt(it.rule == "koch.role-label")
 
 
   test "branch outside grammar reports nothing, since scope already fails it":
@@ -181,14 +183,17 @@ suite "Role":
     let charter = checkTitle("curator/mend-it", "Charter: label architect, linked names")
     check charter.len == 1
     check charter[0].brief.startsWith("pull request title must match")
+    check charter.anyIt(it.rule == "koch.pull-request-title")
     check checkTitle("curator/mend-it", "docs(curator): order it.").len == 1  # final period
     check checkTitle("curator/mend-it", "docs(curator): Order it").len == 1  # capital summary
     let scoped = checkTitle("contributor/ronri/pga_visualiser/x", "feat(pga_benchmark): add it")
     check scoped.len == 1
     check scoped[0].brief.startsWith("pull request title scope must be `pga_visualiser`")
+    check scoped[0].rule == "koch.title-scope"
     check checkTitle("curator/audit/x", "feat(curator): add it").len == 1  # project branch
     let wide = checkTitle("curator/mend-it", "docs(curator): " & "a".repeat(90))
     check wide.len == 1 and wide[0].brief.startsWith("pull request title exceeds 100")
+    check wide.len == 1 and wide[0].rule == "koch.title-width"
     check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it
 
 
@@ -210,6 +215,7 @@ suite "Role":
         "each and in that order; got `## Intent`, `## Scope`, `## Verification`, `## Record`, " &
         "`## Notes`",
     ]
+    check checkBodyPull(old).anyIt(it.rule == "koch.body-headings")
     # Each heading missing, then twice, then turned with next: sections of form, joined again.
     let
       parts = form.sections  # part above first heading, then one for each heading
@@ -248,6 +254,7 @@ suite "Role":
         "section `## What` opens with summary of one to three sentences, then its points; " &
           "got `" & opening.splitLines[0] & "`",
       ]
+      check found.anyIt(it.rule == "koch.section-summary")
     let unfilled = checkBodyPull(form.replace("This adds one check.\n\n- One point.", "<!-- -->"))
     check unfilled.len == 1 and unfilled[0].brief.endsWith("got ``")  # comment alone
     check checkBodyPull(TEMPLATE_PULL).mapIt(it.brief.endsWith("got ``")) == @[true].cycle(4)
@@ -308,6 +315,7 @@ suite "Role":
         "link counted by its text; got `2501`; expect `at most 2500`; help: fold long output in " &
         "`<details>`",
     ]
+    check checkBodyPull(full & "x").anyIt(it.rule == "koch.body-length")
     for body in [
       full.replace("The suites pass.", "The [suites](https://github.com/o/r/actions/runs/1) pass."),
       full.replace("\n", "\r\n"),  # edited on GitHub, as runner reads it

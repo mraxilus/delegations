@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils, unittest]
+import std/[options, sequtils, strutils, unittest]
 import ../../src/[findings, workflows]
 
 
@@ -29,6 +29,7 @@ suite "Workflows":
     check found.len == 1
     check found[0].path == ".github/workflows/watch.yml"
     check "actions" in found[0].brief
+    check found.anyIt(it.rule == "koch.workflow-scopes")
     # Message names what it read, so reader is not left guessing which scopes were granted.
     check "contents, issues" in found[0].brief
 
@@ -147,6 +148,7 @@ jobs:
     check weekly.daysCron == 7
     check checkWindow("check.yml", weekly, 7).len == 0
     check "got `7` days against `1`" in checkWindow("check.yml", weekly, 1)[0].brief
+    check checkWindow("check.yml", weekly, 1).anyIt(it.rule == "koch.recent-window")
     check weekly.replace("* * 1", "* * *").daysCron == 1
     check weekly.replace("* * 1", "* * 1-5").daysCron == 0  # shape untaught reads as 0
     check checkWindow("ledger.yml", weekly.replace("--recent", ""), 1).len == 0  # no window

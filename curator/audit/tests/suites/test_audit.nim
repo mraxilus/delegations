@@ -93,6 +93,7 @@ suite "Audit":
       "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
         "`SECTIONS_PROCESS` in `provenance.nim`",
     )
+    check found.anyIt(it.rule == "koch.process-section")
     check found.len == 1 and found[0].line == 0  # whole document
     check good.without("GUIDE.md").auditTree.anyIt(it.path == "GUIDE.md" and it.brief.endsWith(
       "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
@@ -112,6 +113,7 @@ suite "Audit":
     check found.len == 1 and found[0].brief.endsWith(
       "got `Independent changes`; help: cite heading or bold rule it holds, or quote its text",
     )
+    check found.anyIt(it.rule == "koch.cited-section")
 
 
   test "import by path into other project, and package of driver, reach umbrella (D1 of #927)":
@@ -141,6 +143,7 @@ suite "Audit":
     )
     check undefined.auditTree.mapIt(it.path) == @["GLOSSARY.md"]  # shape checked at root
     check "lacks definition" in undefined.auditTree[0].brief  # same check projects get
+    check undefined.auditTree.anyIt(it.rule == "koch.glossary-form")
 
 
   test "idioms of any Nim code reach scripts and packages, and module's rules stay on modules":
@@ -199,6 +202,7 @@ suite "Audit":
       )]
     let unlisted = treeGood().with(entry(module, STRICT_FUNCS & "\n\n" & source))
     check unlisted.auditTree.mapIt(it.brief).filterIt("acronym" in it).len == 3  # none listed
+    check unlisted.auditTree.anyIt(it.rule == "koch.acronym")
 
 
   test "form and prose findings reach umbrella":
@@ -287,6 +291,8 @@ suite "Audit":
     check findingsPruned(root, @[entry(after, pruned(elsewhere))]).mapIt(it.brief) == @[
       "`Pruned` must name commit that touched this record; got `" & elsewhere[0..7] & "`",
     ]  # commit beside record still finding
+    check findingsPruned(root, @[entry(after, pruned(elsewhere))])
+      .anyIt(it.rule == "koch.pruned-row")
 
 
   test "Pruned row names merge commit that log of renames drops":

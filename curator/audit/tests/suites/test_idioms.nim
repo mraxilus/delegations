@@ -184,6 +184,7 @@ suite "Idioms":
 
   test "machine path is finding in any kind but Markdown":
     check checkPathsMachine("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
+    check checkPathsMachine("a.nim", "let p = \"/home/me/data\"\n")[0].rule == "koch.machine-path"
     check checkPathsMachine("a.yml", "run: cd /Users/me\n").len == 1
     check checkPathsMachine("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
 
@@ -213,6 +214,7 @@ suite "Idioms":
     let one_off = all_set.replace("\"strict\": true", "\"strict\": false")
     check checkTsconfig("tsconfig.json", one_off).mapIt(it.brief).anyIt("`strict`" in it)
     check checkTsconfig("tsconfig.json", "{}").len == FLAGS_TYPESCRIPT.len
+    check checkTsconfig("tsconfig.json", "{}").allIt(it.rule == "koch.typescript-config")
 
 
 

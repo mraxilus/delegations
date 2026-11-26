@@ -57,6 +57,7 @@ suite "Glossary":
     )
     check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
     check found[0].brief.endsWith("got `SI`")  # repeated from root
+    check found.anyIt(it.rule == "koch.root-standard")
     check found[1].brief.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`")  # shared
     check found.allIt(it.is_propagation)  # moving standard is curator's, never held
     check checkStandardsAcross([("GLOSSARY.md", root), ("x/b/GLOSSARY.md", glossary_b)]).len == 0
@@ -88,6 +89,7 @@ suite "Glossary":
     let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
     check found[0].brief.endsWith("got `owner`; help: write agreed term")
+    check found.anyIt(it.rule == "koch.word-for-people")
 
 
   test "import line of Claude Code names file, so people check reads no word of it":

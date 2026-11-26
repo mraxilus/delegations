@@ -44,6 +44,7 @@ suite "Article VI":
     check found[0].brief.endsWith(
       "got `" & DIRECTORY_PARSER & "`; help: remove its entry, or name project where it moved",
     )  # IV.4 echo value
+    check found.anyIt(it.rule == "koch.own-prose")
 
 
   test "VI.5, VI.8 suite entry demands is finding where tree lacks it, at that suite":

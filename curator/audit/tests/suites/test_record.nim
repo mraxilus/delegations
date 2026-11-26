@@ -60,6 +60,7 @@ suite "Article VIII":
       found = checkRecord("p", setext)
     check found.len == 1 and found[0].line == 12
     check found[0].brief.endsWith("write `## Design`")
+    check found.anyIt(it.rule == "koch.record-headings")
     let title = textProvenance("d") & "\nProvenance\n===\n\nWhat is.\n"
     check messages(title) ==
       @["heading is underlined, which no reader here sees; help: write `# Provenance`"]
@@ -79,6 +80,7 @@ suite "Article VIII":
     check found[0].brief == "record over " & $LINES_RECORD & " lines (provenance guide); got `" &
       $(long.count('\n')) & "`; expect `at most " & $LINES_RECORD & "`; help: prune to log and " &
       "set `Pruned` row"  # count as wc -l counts
+    check found.anyIt(it.rule == "koch.record-length")
     check messages(textProvenance("d") & "line\n".repeat(LINES_SECTION - 10)).len == 0
 
 
@@ -91,6 +93,7 @@ suite "Article VIII":
       "section over " & $LINES_SECTION & " lines (provenance guide); got `" &
         $(LINES_SECTION + 1) & "`; expect `at most " & $LINES_SECTION & "`; help: prune to log " &
         "or split it"
+    check found.anyIt(it.rule == "koch.section-length")
     check found[0].line == wide.splitLines.find("## Body sim") + 1  # heading, not overflow
     # Same body, split in two, passes: ceiling is on section and not on record.
     let split = textProvenance("d") & "\n## One\n" & "line\n".repeat(LINES_SECTION - 1) &
@@ -117,6 +120,8 @@ suite "Article VIII":
     check checkCounts("p/PROVENANCE.md", "Suite holds 12 suites.\n").mapIt(it.brief) ==
       @["count is never number in prose (provenance guide); got `12 suites`; help: name command " &
         "that counts"]
+    check checkCounts("p/PROVENANCE.md", "Suite holds 12 suites.\n")
+      .anyIt(it.rule == "koch.count-in-prose")
     check checkCounts("p/PROVENANCE.md", "Run `koch test`; it lists suites.\n").len == 0
     check checkCounts("p/PROVENANCE.md", "Command prints `12 files`.\n").len == 0  # code span
     check checkCounts("p/PROVENANCE.md", "```text\n12 files\n```\n").len == 0  # fenced output

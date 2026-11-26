@@ -3,7 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tables, tempfiles, unittest]
+import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
 from std/posix import close, dup, dup2, STDOUT_FILENO
 import ../../../knoller/src/knoller
 import ../../src/[findings, merge, tree]
@@ -144,6 +144,7 @@ suite "Merge":
       found = writeMerge(root, "main").findings
     check found.len == 1 and sameFile(found[0].path, folder)
     check found.len == 1 and "no worktree of its own" in found[0].brief
+    check found.anyIt(it.rule == "koch.second-tree")
     check readFile(folder / "notes.md") == "Kept.\n"
     check root.git("worktree list --porcelain").count("worktree ") == 1  # none added
 
@@ -202,6 +203,7 @@ suite "Merge":
     let found = writeMerge(root, "main").findings
     check found.len == 1 and found[0].path.len == 0 and found[0].line == 0
     check found.len == 1 and "merge base" in found[0].brief and "/sync" in found[0].brief
+    check found.anyIt(it.rule == "koch.merge-conflict")
     check found.len == 1 and found[0].brief.endsWith(
       "got `koch.nim`; help: merge base, resolve each conflict, then check again, as /sync says",
     )
@@ -386,6 +388,7 @@ suite "Merge":
     let broken = judgeMerged(root, "main", "curator/older", toolchains)
     check broken.is_merged and broken.code == 1 and broken.findings.len == 1
     check broken.findings.len == 1 and "failed to build" in broken.findings[0].brief
+    check broken.findings.anyIt(it.rule == "koch.merge-build")
     check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
 
 

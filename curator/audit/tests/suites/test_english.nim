@@ -63,10 +63,12 @@ suite "Article VI.8":
       "got `" & $(SENTENCES_PARAGRAPH + 1) & "`; expect `at most " & $SENTENCES_PARAGRAPH &
         "`; help: split it",
     )
+    check found[0].rule == "koch.paragraph-length"
     found = checkEnglish("GUIDE.md", "Ensure it passes.")
     check found.len == 1
     check found[0].brief ==
       "word is outside approved dictionary (ASD-STE100); got `ensure`; expect `make sure`"
+    check found[0].rule == "koch.approved-word"
 
 
   test "word matches whole, without case, and through punctuation":
@@ -132,6 +134,7 @@ suite "Article VI.8":
       "sentence must hold at most 25 words (ASD-STE100); got " &
         "`mi klama le zarci .i do klama le ...`; help: split it",
     ]  # what check reads in lojban
+    check findingsEnglish("x.md", PROSE_LOJBAN).anyIt(it.rule == "koch.sentence-length")
     for file in FILES_PROJECT:
       check not isGoverned(DIRECTORY_PARSER & "/" & file)  # listed project
       check checkEnglish(DIRECTORY_PARSER & "/" & file, PROSE_LOJBAN).len == 0

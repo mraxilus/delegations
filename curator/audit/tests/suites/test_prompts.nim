@@ -29,6 +29,7 @@ suite "Duty 10":
     check found[0].brief.endsWith(
       "got `issue 25`; help: state rule and its cost here, and leave incident to record or log",
     )
+    check found.anyIt(it.rule == "koch.prompt-incident")
 
 
   test "every file that opens delegate is prompt, entry file and coordinator's too":
@@ -45,6 +46,7 @@ suite "Duty 10":
     check @PATHS_ROLE == @["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]  # each role file
     for path in PATHS_ROLE:
       check checkPrompt(path, "# Role\n\nDuties.\n").mapIt(it.brief) == @[absent]
+      check checkPrompt(path, "# Role\n\nDuties.\n").anyIt(it.rule == "koch.reading-heading")
       check checkPrompt(path, "# Role\n\n## Read first\n\n1. Read.\n").len == 1  # cut
       check checkPrompt(path, "# Role\n\n```md\n" & HEADING_READ & "\n```\n").len == 1  # fence
       check checkPrompt(path, "# Role\n\n" & HEADING_READ & "\n\n1. Read.\n").len == 0
@@ -58,4 +60,5 @@ suite "Duty 10":
     check found.len == 1
     check found[0].brief == "prompt over " & $BYTES_PROMPT & " bytes (duty 10); got `" &
       $long.len & "`; expect `at most " & $BYTES_PROMPT & "`; help: prune before adding"
+    check found.anyIt(it.rule == "koch.prompt-size")
     check checkPrompt("AGENTS.md", "x".repeat(BYTES_PROMPT)).len == 0  # at ceiling

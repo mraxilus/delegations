@@ -279,6 +279,7 @@ suite "Font faces judged":
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
     check "`index`: `p.note` draws `U+00E9`" in verdict[0].brief
+    check verdict.anyIt(it.rule == "koch.system-font-face")
     check verdict[0].path == "written.json"
 
 
@@ -290,6 +291,7 @@ suite "Font faces judged":
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
     check "`Noto Sans` at weight `700`, status `error`" in verdict[0].brief
+    check verdict.anyIt(it.rule == "koch.font-face-load")
 
 
   test "run drawn in bold browser synthesises is finding, naming weight asked and found (#730)":
@@ -302,6 +304,7 @@ suite "Font faces judged":
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
     check "`index`: `div#ruler` asks `commit mono ui` for weight `600`" in verdict[0].brief
+    check verdict.anyIt(it.rule == "koch.bold-synthesis")
     check "font face of weight `400`" in verdict[0].brief
     check verdict[0].path == "written.json"
 
@@ -408,6 +411,7 @@ suite "Font faces judged":
     let verdict = checkFontFaces(root, PROJECT)
     check verdict.len == 1
     check "`U+0033` in `::before` unwritten" in verdict[0].brief
+    check verdict.anyIt(it.rule == "koch.font-collector")
 
     # Pass place whose run holds whole string, whatever run of numeral alone stands beside it.
     var beside = control()
@@ -430,6 +434,7 @@ suite "Font faces judged":
     let absent = checkFontFaces(root, PROJECT)
     check absent.len == 1
     check "absent.ttf" in absent[0].brief
+    check absent.anyIt(it.rule == "koch.written-font-faces")
     writeFile(folder / FILE_WRITTEN, """{"index": {"runs": [{"element": "p"}]}}""")
     check checkFontFaces(root, PROJECT).len == 1  # run without stack
     writeFile(folder / FILE_WRITTEN, "[]")

@@ -46,6 +46,7 @@ suite "Coverage":
     check found[0].path == PAGE
     check found[0].line == 3
     check found[0].brief.endsWith("got `U+21C4` for `⇄`")
+    check found.anyIt(it.rule == "koch.font-coverage")
 
 
   test "font faces merge by codepoint range, so character any font face of project covers passes":

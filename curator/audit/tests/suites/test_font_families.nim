@@ -42,6 +42,7 @@ suite "Font families":
     check found.len == 1
     check found[0].line == 1  # names line, so page opens at link
     check found[0].brief.endsWith("got `fonts.googleapis.com`")
+    check found[0].rule == "koch.font-host"
     for host in HOSTS:  # every host listed is reported, not first alone
       check checkFontFamilies(
         "p.html",
@@ -95,6 +96,7 @@ suite "Font families":
     let found = checkFontFamilies("p.html", heading_sans)
     check found.len == 1
     check found[0].brief.endsWith("got `Noto Sans`")
+    check found[0].rule == "koch.heading-family"
     # Serif heading passes, and so does non-heading element taking sans.
     check checkFontFamilies(
       "p.html",
@@ -152,6 +154,7 @@ suite "Font families":
     check found.len == 1
     check found[0].line == 0  # whole-file finding: property may go anywhere
     check MONO in found[0].brief
+    check found[0].rule == "koch.font-ligatures"
     # Either property satisfies it, since either can carry `calt`.
     for property in LIGATURES:
       check checkFontFamilies("p.html", unligated & "  code { " & property & ": x; }\n").len == 0
@@ -241,6 +244,7 @@ suite "Font families":
     check found.len == 1
     check found[0].line == 1  # where joined declaration opens
     check found[0].brief.endsWith("got `ui-sans-serif`")
+    check found.anyIt(it.rule == "koch.font-stack")
     # Admitted family behind same join passes.
     check checkFontFamilies("p.nim", joined.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
     # Joining keeps every line where it stood, so finding below join keeps its line.

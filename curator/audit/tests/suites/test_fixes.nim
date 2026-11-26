@@ -78,6 +78,7 @@ suite "Fixes":
     check unknown.len == 0
     let typo = tree.entriesNamed(["curator/audi"]).unknown
     check typo.len == 1 and typo[0].brief.endsWith("got `curator/audi`")  # whole folder only
+    check typo.anyIt(it.rule == "koch.unknown-name")
 
 
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
@@ -554,6 +555,7 @@ suite "Fixes":
       left = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, [failed]))
     check left.written.len == 0
     check left.left[0].brief.endsWith("got `undeclared identifier: 'x'`")
+    check left.left[0].rule == "koch.compile-backend"
 
 
   test "private symbol sibling reaches takes its marker, and `{.all.}` reaching none goes, by uses":
@@ -986,6 +988,7 @@ suite "Fixes":
     check tree.nimblesLocked == @[nimble.path]
     let plan = fixEntries(BRANCH_CONTRIBUTOR, [nimble], tree.nimblesLocked)
     check plan.written.len == 0 and plan.left.len == 1 and "atlas.lock" in plan.left[0].brief
+    check plan.left.anyIt(it.rule == "koch.locked-nimble")
     check checkFormatting(tree).len == 0  # silent on it
     check checkFormatting(@[nimble]).len == 1  # read where no lock holds its copy
     check fixEntries(BRANCH_CONTRIBUTOR, [nimble]).written.len == 1

@@ -113,6 +113,9 @@ suite "Schemas":
     check found.mapIt((it.path, it.line)) ==
       @[(FOLDER / NAME, 13), (FOLDER / NAME, 0), (FOLDER, 0)]  # branch, shipped, unread line
     check "`m`" in found[0].brief and "as base shipped it" in found[1].brief
+    check found.anyIt(it.rule == "koch.schema-tool")
+    check found.anyIt(it.rule == "koch.schema-compile")
+    check found.anyIt(it.rule == "koch.breaking-schema")
     check "what is no finding" in found[2].brief
 
 
@@ -213,6 +216,7 @@ suite "Schemas":
     for found in [split, merged]:
       check found.len == 1
       check found.allIt("no one package of base maps to one of branch" in it.brief)
+      check found[0].rule == "koch.schema-package"
 
 
   test "package in each form that `buf` reads moves, so renamed schema holds each field":
