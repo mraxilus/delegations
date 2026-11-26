@@ -899,7 +899,8 @@ suite "Fixes":
   test "names read once for projects entries name ask and write what names of whole tree do":
     # Case held: `koch fix` read names of every project twice, once for semantic pass and once for
     #   context, though fixer of file reads names of its own project alone (profile of #1001).
-    #   Domain: project entry lies in, and other project, which declares word cut would read.
+    #   Domain: project entry lies in, other project, which declares word cut would read, and
+    #   library, whose word cut reads none of, since library adds landmarks alone.
     let
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
       words = entry(DIRECTORY_AUDIT & "/src/a.nim", head & "func scalar*(): int = 1\n  ## One.\n")
@@ -912,6 +913,10 @@ suite "Fixes":
     check names == tree[0..1].namesEntries([glued])  # other project changes none
     check queriesSemantic(tree, [glued], [], renamed) == queriesSemantic(tree, [glued])
     check queriesSemantic(tree, [glued], [], renamed).mapIt(it.names) == @[@["SCALAR_ANTI"]]
+    let
+      vectored = entry(DIRECTORY_AUDIT & "/src/d.nim", head & "const ANTIVECTOR* = 3  ## Three.\n")
+      library = {toSeq(names.keys)[0]: @[head & "func vector*(): int = 3\n  ## Three.\n"]}.toTable
+    check tree.renames([vectored], [], tree.namesEntries([vectored], library)).len == 0  # no word
     var answers = @[Answer(path: glued.path)]
     answers[0].symbols[(5, 6)] =
       Symbol(kind: "skConst", name: "b.ANTISCALAR", file: "/r/" & glued.path, line: 5, column: 6)
