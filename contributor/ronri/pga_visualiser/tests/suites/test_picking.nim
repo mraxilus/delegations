@@ -20,8 +20,8 @@ suite "Picking":
 
 
   test "each reader of a frame's placements answers as it does placing each object itself":
-    # Mutant of whole form of each reader passed every case, since no case handed it frame's
-    #   placements whole (repository issue 970).
+    # Guards against break on purpose that no case caught (repository issue 970): no case
+    #   handed frame's placements whole, so wrong read of whole form passed every case.
     let
       camera = cameraAround(Position(x: 0.5, y: -0.3, z: 0.2), 14.0, Direction(x: 3, y: 2, z: 1))
       view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
@@ -704,6 +704,48 @@ suite "Picking":
         scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
         width_pick, height_pick, cursor
       ).isNone
+
+
+  test "the disc broad phase never rejects a cursor over its sphere, at every size and nearness":
+    # Untested over whole domain (repository issue 970): one disc, from one distance. Here
+    #   sphere spans three decades of radius, eye stands from just outside it to ten
+    #   thousand radii off, and centre falls off axis, so bound is held where it is loosest.
+    for i in 0..<4:
+      let centre = PLACES[i]
+      for radius in [1.0e-3, 1.0, 30.0]:
+        for ratio in [1.01, 3.0, 1.0e4]:
+          for out_to in [
+            Direction(x: 1, y: 0, z: 0), Direction(x: 6, y: 8, z: 4), Direction(x: -6, y: 5, z: -6),
+          ]:
+            let
+              pivot = centre + Direction(x: 0.3 * radius * ratio, y: -0.2 * radius * ratio, z: 0)
+              camera = cameraAround(pivot, radius * ratio, out_to)
+              view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+              tangent = camera.drawExtentFor(height_pick, 0.0).tangent_half_view
+              (eye, forward) = (camera.eye, camera.frame.forward)
+            for a in 0..<12:
+              for b in 0..6:
+                let
+                  (theta, phi) = (float(a) * TAU / 12.0, float(b) * PI / 6.0)
+                  on_sphere = Position(
+                    x: centre.x + radius * sin(phi) * cos(theta),
+                    y: centre.y + radius * sin(phi) * sin(theta),
+                    z: centre.z + radius * cos(phi),
+                  )
+                if dot(on_sphere - eye, forward) <= 0.0: continue
+                let cursor = projectToScreen(view_projection, width_pick, height_pick, on_sphere)
+                check not isBeyondDisc(
+                  view_projection, width_pick, height_pick, tangent, centre, radius, cursor
+                )
+      # Eye inside sphere: every pixel may hold disc, so phase lets every cursor through.
+      let
+        camera = cameraAround(centre, 0.5, Direction(x: 6, y: 8, z: 4))
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+        tangent = camera.drawExtentFor(height_pick, 0.0).tangent_half_view
+      check not isBeyondDisc(
+        view_projection, width_pick, height_pick, tangent,
+        camera.eye + Direction(x: 0.1, y: 0, z: 0), 1.0, ScreenPosition(x: 0.0, y: 0.0, depth: 0.0),
+      )
 
 
   test "the disc broad phase never rejects a cursor over the disc's own sphere":

@@ -167,11 +167,11 @@ macro defineMeasurand(
     implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     pool_m = parseExpr(
       if implementation == Implementation.Reference: namePoolReference(measurand.operands[0])
-      else: namePoolLibrary(measurand.operands[0], measurand.grade),
+      else: namePoolLibrary(measurand.operands[0], measurand.grade, 0 in measurand.typed),
     )
     pool_n = parseExpr(
       if implementation == Implementation.Reference: namePoolReference(measurand.operands[1])
-      else: namePoolLibrary(measurand.operands[1], measurand.grade),
+      else: namePoolLibrary(measurand.operands[1], measurand.grade, 1 in measurand.typed),
     )
   quote do:
     block:

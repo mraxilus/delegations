@@ -231,9 +231,10 @@ are D6 a, D7 a, D8 a, D9 b, D10 b, D11 b, D12 b, D13 b and D51 b.
   as P14 leaves it.
 - **P05, `multivector-align`.** It adds nothing once this proposal lands, since this proposal
   aligns the whole set by the same rule (D14 b, D15 b).
-- **P09 and P10.** P09, `object-names`, names objects by the aliases at pin. P10,
-  `homogeneous-scalar`, multiplies its pairs through the `⟑` and `⟇` of this proposal. Both
-  build on it.
+- **P09, P10 and P13.** P09, `object-names`, names objects by the aliases at pin. P10,
+  `homogeneous-scalar`, multiplies its pairs through the `⟑` and `⟇` of this proposal. P13,
+  `transform-operator`, builds its sandwich from the types of both operands, beside the forms of
+  this proposal. Each builds on it.
 - **P08, `compound-tables`.** It builds the supports, the cocarrier, the center and the container
   from one table each. Here each of them takes any type through the forms that it reads. So
   whichever of the two lands second gives each of those tables a form.
@@ -241,9 +242,8 @@ are D6 a, D7 a, D8 a, D9 b, D10 b, D11 b, D12 b, D13 b and D51 b.
   32-bit build aligns by the same rule, and at least to 4 bytes. `laws.nim` holds this at 32 bits
   at each algebra up to 5D.
 - **Shared quotes.** These texts quote lines that this proposal edits: the changes
-  `conformal-norms`, `doc-comments`, `doc-comments-2` and `partner-guard`, and P03, P07, P10, P11
-  and P13. Whichever of each pair lands second quotes them again. P13, `transform-operator`, is
-  written again by type after this proposal.
+  `conformal-norms`, `doc-comments`, `doc-comments-2` and `partner-guard`, and P03, P07, P10 and
+  P11. Whichever of each pair lands second quotes them again.
 
 ## Evidence
 

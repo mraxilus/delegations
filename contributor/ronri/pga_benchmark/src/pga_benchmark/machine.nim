@@ -42,8 +42,10 @@ macro defineWrapper(name: untyped; measurand: static Measurand): untyped =
   let
     body = parseExpr(measurand.expression)
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
-    pool_m = parseExpr(namePoolLibrary(measurand.operands[0], measurand.grade))
-    pool_n = parseExpr(namePoolLibrary(measurand.operands[1], measurand.grade))
+    pool_m = parseExpr(
+      namePoolLibrary(measurand.operands[0], measurand.grade, 0 in measurand.typed))
+    pool_n = parseExpr(
+      namePoolLibrary(measurand.operands[1], measurand.grade, 1 in measurand.typed))
   if measurand.arity == 2:
     quote do:
       proc `name`(`m`: typeof(`pool_m`[0]); `n`: typeof(`pool_n`[0])): auto {.
@@ -69,8 +71,10 @@ macro defineWrappers(): untyped =
       let
         measurand = CATALOGUE[index]
         name = ident((if is_copy: "copy" else: "wrapper") & $index)
-        pool_m = parseExpr(namePoolLibrary(measurand.operands[0], measurand.grade))
-        pool_n = parseExpr(namePoolLibrary(measurand.operands[1], measurand.grade))
+        pool_m = parseExpr(
+          namePoolLibrary(measurand.operands[0], measurand.grade, 0 in measurand.typed))
+        pool_n = parseExpr(
+          namePoolLibrary(measurand.operands[1], measurand.grade, 1 in measurand.typed))
         id = newLit(measurand.id)
         copy = newLit(is_copy)
       result.add newCall(
