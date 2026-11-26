@@ -28,7 +28,7 @@
 ##
 ## ni'o lo gacri be lo srejge cu mecrai
 ##   .i no genvla poi le gacri cu cliva ke'a se tcidu ta'i pa mulselci'a
-##   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+##   .i naku su'o re spisa poi lamji cu se tcidu ta'i pa `text`
 ##   .i ki'u bo va'o lo nu pa jimca cu kuspe le genvla .a le re spisa kei le gacri cu cliva lo
 ##       mecygenvla gi'a pilno lo me'aspi
 ##
@@ -72,32 +72,32 @@ type
 const
   COUNT_READ_LEAST = 1800
     ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi se tcidu
-    ##   .i le selci'aste cu vasru pasovopa selci'a
+    ##   .i le selci'aste cu vasru 1941 selci'a
     ##   .i le flalu cu tcidu ro le selci'a sepi'o `readTextMarked`
   COUNT_REFUSED_LEAST = 100
     ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi `readText` to'e curmi ke'a
-    ##   .i le selci'aste cu vasru pasovopa selci'a
-    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` to'e curmi papano selci'a
+    ##   .i le selci'aste cu vasru 1941 selci'a
+    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` to'e curmi 110 selci'a
   COUNT_COVERS_LEAST = 90
     ## lo mecraiterkancu be lo srejge poi vasru lo jimca ku'o ne'i ro selci'a poi se to'e curmi
     ##   .i le selci'a cu cmima le selci'aste .a lo selci'a poi selfi'i
-    ##   .i ca lo nu jmina le flalu pe lo gacri kei sovo lo srejge cu vasru lo jimca
+    ##   .i ca lo nu jmina le flalu pe lo gacri kei 94 lo srejge cu vasru lo jimca
   COUNT_EXPECTED = 24
     ## lo te kancu be lo nu sisti poi le flalu pe `expects` tcidu ke'a
     ##   .i le flalu cu tcidu le pamoi se ciska poi le gerna cu to'e curmi ke'a
     ##   .i le selci'a pe le selci'aste cu lidne le selci'a poi selfi'i
     ##   .i lo nu sisti pe ro le selci'a cu se lidne lo genvla
     ##   .i lo te kancu be le gerna valsi cu na zmadu `STOP_EXPECTED_MOST`
-    ##   .i muze selci'a cu mapti
+    ##   .i 57 selci'a cu mapti
     ##
-    ## ni'o ro le parevo klesi zo'u le flalu cu tcidu le selci'a bu'u le stuzi pa roi
+    ## ni'o ro le 124 klesi zo'u le flalu cu tcidu le selci'a bu'u le stuzi pa roi
     ##   .i le nu tcidu cu nitcu lo temci poi jibni `2 s` ne'i lo cikryzba
   STOP_EXPECTED_MOST = 8
     ## lo rairterkancu be lo genvla poi lidne lo nu sisti ku'o ne'i le flalu pe `expects`
   TEXTS_CONSTRUCTED = [
     # `Stream` to'e curmi ki'u lo lerfu ce'o lo lerfu ce'o lo nu basna ce'o lo nu sitna ce'o lo nu
     #     fendi
-    "mi 1987 klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
+    "mi html klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
     "la .lauras. klama",
     "mi xau klama", "ba'e xau klama",  # `Selmaho` to lo cmavo be `BAhE` cu tcita le cmavo toi
     "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # `Construct`
@@ -111,16 +111,18 @@ const
     #       fa'orma'o
     "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
     "mi klama le zarci ku ku",
-    "si mi 1987 xau klama le",  # ro velru'e cu to'e curmi ne'i pa selci'a
+    "si mi html xau klama le",  # ro velru'e cu to'e curmi ne'i pa selci'a
     # zo su poi fanmo lo selci'a poi vasru lo srera
-    "si su mi klama", "mi 1987 su klama", "lu mi su do li'u",
+    "si su mi klama", "mi html su klama", "lu mi su do li'u",
+    "mi viska 3 .i do cadzu", "de'i li 1987 so'o goi gy gunka cu fendi lo girzu",
+      # lo selci'a poi vasru lo lerfu pe li 10 gi'e se to'e curmi gi'e vasru lo jimca
   ]
     ## lo selci'a poi selfi'i fi ro velru'e poi to'e curmi ku'o .e ro stuzi poi le gerna cu sisti
     ##     bu'u ke'a
   TEXTS_PARTED = [
     "mi klama su do", "mi su", "su do", "mi su su do", "ba'e su mi", "mi ui su ui do",
     "mi klama le su do", "lu mi su do", "lo'u mi su do le'u", "mi cusku zo su",
-    "mi klama si do", "do sa mi klama", "mi si su do si ko", "mi fa'o .i ko 1987",
+    "mi klama si do", "do sa mi klama", "mi si su do si ko", "mi fa'o .i ko html",
     "ba'e mi si do",  # lo nu vimcu .e zo fa'o .e lo valsi poi se lidne zo fa'o
   ]
     ## lo selci'a poi `readText` tcidu ke'a zi'e poi zo su fendi ke'a
@@ -133,18 +135,22 @@ const
     ##   .i ki'u bo no le selci'aste cu vasru zo su poi fendi lo selci'a
   TEXTS_COVERED = [
     "le,nu mi klama", "mi KLAmaku", "zoi gy. a, b .gy. cu glico", "mi klama si si fa'omi do",
-    "mi 1987 ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
+    "mi html ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
+    "mi ponse €5 .e $6", "lo jdima cu du 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
+    "5 € .i 5€6 .i mi ponse £5",
   ]
     ## lo selci'a poi selfi'i fi le flalu pe lo gacri
     ##   .i le selci'a cu vasru slaka bu .e lo brale'u .e lo nu sitna poi vasru lo sinxa ku'o .e lo
     ##       valsi poi no pagbu cu vasru ke'a ku'o .e lo valsi poi zvati lo jbini be lo valsi .e lo
     ##       cnivla poi tcita le valsi
+    ##   .i ji'a le selci'a cu vasru lo jdini sinxa poi pencu pa namcu ku'o .e lo jdini sinxa poi se
+    ##       to'e curmi to `#1003` toi
   EXAMPLES_MARKED = [
     # le selci'avla cu zvati lo jbini be lo sumti .e lo brirebla poi sruri le selci'avla
     (
-      text: "mi 1987 klama",
+      text: "mi html klama",
       module: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
-        "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
+        "(rivbi Stream Letter 3 7 \"html\") (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))",
     ),  # lo selci'avla poi lo porsi be lo valsi cu to'e curmi ke'a
     (
@@ -169,7 +175,7 @@ const
         "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 20 25 \"klama\")) (tail_terms))))",
     ),  # zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a to `CLL 19.9` .e `#859` toi
-    # le gerna cu sisti bu'u le fanmo be le selci'a ne'i `sumti-6` noi ckini li soze gi'e denpa
+    # le gerna cu sisti bu'u le fanmo be le selci'a ne'i `sumti-6` noi ckini li 97 gi'e denpa
     (
       text: "mi klama le",
       module: "(srera 11 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
@@ -194,6 +200,32 @@ const
         "(rivbi Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 (KOhA 12 14 \"do\"))) " &
         "(rivbi FAhO 15 19 \"faho\") (rivbi Stream FAhO 20 22 \"ko\"))",
     ),  # lo valsi poi zo si vimcu ke'a kansa zo si
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i denpa bu .e slaka bu poi zvati lo jbini be lo lerfu cu pagbu pa selci'avla
+    (
+      text: "li 3.1,4 du",
+      module: "(srera 9 sumti_6 (nitcu BAI BIhI BU BY CAhA COI CUhE DOI FAhA FEhE FUhA GA GAhO " &
+        "GUhA JOI JOhI KE KI LAU LAhE MAhO MOhE MOhI NAhE NAhU NIhE PA PEhO PU SE SEI SOI TAhE " &
+        "TEI TO VA VEI VEhA VIhA VUhU XI ZAhO ZEhA ZI) (LI 0 2 \"li\") (rivbi Stream Comma 3 8 " &
+        "\"3.1,4\") (bridi_tail_3 0 (tanru_unit_2 130 (GOhA 9 11 \"du\")) (tail_terms)))",
+    ),  # pa selci'avla poi vasru denpa bu .e slaka bu poi na mapti cu se to'e curmi ta'i pa pagbu
+    (
+      text: "li 3,14.5 du",
+      module: "(srera 10 sumti_6 (nitcu BAI BIhI BU BY CAhA COI CUhE DOI FAhA FEhE FUhA GA GAhO " &
+        "GUhA JOI JOhI KE KI LAU LAhE MAhO MOhE MOhI NAhE NAhU NIhE PA PEhO PU SE SEI SOI TAhE " &
+        "TEI TO VA VEI VEhA VIhA VUhU XI ZAhO ZEhA ZI) (LI 0 2 \"li\") (rivbi Stream Comma 3 9 " &
+        "\"3,14.5\") (bridi_tail_3 0 (tanru_unit_2 130 (GOhA 10 12 \"du\")) (tail_terms)))",
+    ),  # denpa bu poi zvati lo jbini be re lerfu cu na fendi le selci'avla poi se to'e curmi
+    (
+      text: "mi fa'o 3.5 do",
+      module: "(text (sumti_6 2 (KOhA 0 2 \"mi\")) (rivbi FAhO 3 7 \"faho\") (rivbi Stream FAhO " &
+        "8 11 \"3.5\") (rivbi Stream FAhO 12 14 \"do\"))",
+    ),  # denpa bu poi zvati lo jbini be re lerfu cu na fendi lo valsi poi se lidne zo fa'o
+    (
+      text: "mi fa'o 1,000.5 do",
+      module: "(text (sumti_6 2 (KOhA 0 2 \"mi\")) (rivbi FAhO 3 7 \"faho\") (rivbi Stream FAhO " &
+        "8 15 \"1,000.5\") (rivbi Stream FAhO 16 18 \"do\"))",
+    ),  # lo namcu poi vasru zo ki'o .e zo pi cu du pa valsi poi se lidne zo fa'o
   ]
     ## lo selci'a poi selfi'i
     ##   .i ro le selci'a cu kansa lo gejyjge pe le selci'a be fi `NIF` be'o poi `nif.nim` ciska
@@ -507,7 +539,7 @@ suite "Internal: Marks":
           let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
           check not terminals[span].readGrammar.is_read
             # ja'i le krapinka pe `grammar.nim` lo gacri cu pilno lo mecraispi
-            #   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+            #   .i naku su'o re spisa poi lamji cu se tcidu ta'i pa `text`
         inc count
     check count >= COUNT_COVERS_LEAST  # ja'i `IX.3` lo bandu cu ralte lo gacri
 

@@ -2,7 +2,7 @@
 ##   .i le galfi samtci cu tcidu lo valsi jo'u lo rafsi vu'o pe le gimste ra'i lo stuzi be le
 ##       datnypau gi'e tcidu lo valsi jo'u lo selma'o vu'o pe le ma'oste ra'i lo stuzi be le
 ##       datnypau
-##   .i ro linji pe lo samtci datnyvei poi selci'a cu vasru su'e panono stuzi
+##   .i ro linji pe lo samtci datnyvei poi selci'a cu vasru su'e 100 stuzi
 ##   .i lo cipra cu raptcidu le samtci datnyvei
 ##   .i va'o lo nu le liste poi selra'e cu selrapci'a kei le jalge cu mintu le samtci datnyvei poi
 ##       selra'e
@@ -96,13 +96,13 @@ const
       " bi    biv          8                                         digit/number: 8 " &
       "(digit)                                                                          3a " &
       "  0"
-    ## le vomumoi linji pe `gismu.txt`
+    ## le 45moi linji pe `gismu.txt`
     ##   .i le cmavo po'u zo bi noi ponse lo rafsi
   LINE_BLOTI =
       " bloti lot blo lo'i boat                                      x1 is a " &
       "boat/ship/vessel [vehicle] for carrying x2, propelled by x3                         " &
       "     7f  33    (cf. falnu, fulta, marce, jatna, sabnu)"
-    ## le xamumoi linji pe `gismu.txt`
+    ## le 65moi linji pe `gismu.txt`
     ##   .i zo bloti
     ##   .i ro stuzi be lo rafsi cu culno
   LINE_CUKTA =
@@ -111,7 +111,7 @@ const
       "1f 163    [x1 is a manifestation/container [a physical object or its analogue] of a " &
       "work/content, not necessarily using paper (= selpapri)]; (cf. cfika, prina, prosa, " &
       "tcidu, papri)"
-    ## le revozemoi linji pe `gismu.txt`
+    ## le 247moi linji pe `gismu.txt`
     ##   .i zo cukta
     ##   .i le linji cu vasru pa rafsi po'o noi seltai `CCV`
   LINE_DATNI =
@@ -119,14 +119,14 @@ const
       "[fact/measurement] is data/information/statistic(s) about x2 gathered by method x3  " &
       "   8b  14    [evidence (= velji'i datni or just velji'i, sidydatni)] (cf. fatci, " &
       "saske, vreji)"
-    ## le resonomoi linji pe `gismu.txt`
+    ## le 290moi linji pe `gismu.txt`
     ##   .i zo datni
     ##   .i le linji cu vasru no rafsi
   LINE_VREJI =
       " vreji rej     vei  record                                    x1 is a record of x2 " &
       "(data/facts/du'u) about x3 (object/event) preserved in medium x4            8c   4  " &
       "  (cf. sorcu, datni, papri)"
-    ## le pacicicimoi linji pe `gismu.txt`
+    ## le 1333moi linji pe `gismu.txt`
     ##   .i zo vreji
     ##   .i le linji cu vasru pa rafsi poi seltai `CVC` ku'o .e pa rafsi poi seltai `CVV`
   LINES_GISMU = [LINE_BACRU, LINE_BAKFU, LINE_BI, LINE_BLOTI, LINE_CUKTA, LINE_DATNI, LINE_VREJI]
@@ -152,60 +152,60 @@ const
   LINE_BADGAI =
       "badgai#defend+cover: protective cover/ shield:$bandu1 $=gacri1 $bandu2 $=gacri1 " &
       "$bandu3"
-    ## le pavomoi linji pe `lujvo.txt`
+    ## le 14moi linji pe `lujvo.txt`
     ##   .i le tanru pe le linji cu vasru lo glikikyvla
     ##   .i `#` lidne le tanru
   LINE_DATNYVEI =
       "datnyvei:datni+vreji:file (incl. computers):$vreji1 $vreji2 $=datni2 $vreji3 " &
       "$vreji4 [ = manner of encoding]"
-    ## le xacivomoi linji pe `lujvo.txt`
+    ## le 634moi linji pe `lujvo.txt`
     ##   .i zo datnyvei
     ##   .i le tanru pe le linji cu lojbo
   LINE_FEBJICLA = "febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1"
-    ## le bivopamoi linji pe `lujvo.txt`
+    ## le 841moi linji pe `lujvo.txt`
     ##   .i le tanru cu glico
     ##   .i lo smuvla cu selci'a re roi
     ##   .i le pamoi cu selra'e
   LINE_CIMNALSRA = "cimnalsra:foldi::cilmo+na'e+srasu foldi marsh"
-    ## le cixanomoi linji pe `lujvo.txt`
+    ## le 360moi linji pe `lujvo.txt`
     ##   .i le linji cu vasru pa pagbu
     ##   .i lo smuvla cu kunti
   LINE_SEZYPEVDUA =
       "sezypevdu'a:sevzi+[figurative::]+dunda to dedicate oneself to someone/something, to " &
       "give oneself away"
-    ## le rebivobimoi linji pe `lujvo.txt`
+    ## le 2848moi linji pe `lujvo.txt`
     ##   .i lo lerfu po'u zoi gy. : .gy. zvati lo jbini be zoi gy. [ .gy. jo'u zoi gy. ] .gy.
     ##   .i lo smuvla cu kunti
   LINE_JGETERJOE = "jgeterjo'e#knot+3rd-place-of+joined"
-    ## le parecibimoi linji pe `lujvo.txt`
+    ## le 1238moi linji pe `lujvo.txt`
     ##   .i le linji cu vasru `#` .e no lerfu po'u zoi gy. : .gy.
     ##   .i se ki'u bo le linji cu vasru no smuvla
   LINE_CIERSMITAI =
       "ci'ersmitai#system+similar+shape:$tarmi1 $=simsa1 $tarmi2 $=simsa2 $ciste1 $=simsa3"
-    ## le cireremoi linji pe `lujvo.txt`
+    ## le 322moi linji pe `lujvo.txt`
     ##   .i le linji cu vasru `#`
     ##   .i lo smuvla cu du lo porsi be lo terbri
   LINE_PEVYSOASELTAI =
       "pevyso'aseltai#[figurative:]+egg+2nd-place-of+shape:egg-shaped:$tarmi2 $tarmi1"
-    ## le rerexapamoi linji pe `lujvo.txt`
+    ## le 2261moi linji pe `lujvo.txt`
     ##   .i le linji cu vasru `#`
     ##   .i lo lerfu po'u zoi gy. : .gy. zvati lo jbini be zoi gy. [ .gy. jo'u zoi gy. ] .gy.
   LINE_DATKYPIU = "datkypi'u gairki'e:datka+pimlu gacri+kicne:eiderdown [quilt]"
-    ## le xacinomoi linji pe `lujvo.txt`
+    ## le 630moi linji pe `lujvo.txt`
     ##   .i le linji cu ciska lo jufpau ne'i lo stuzi be lo valsi
     ##   .i lo kutle'u cu zvati ne'i le jufpau
   LINE_JAIRTAI = "jairtai:denmi:xance jgari+tarmi denmi xance:fist:$tarmi1 (omit $tarmi2 $=jgari3)"
-    ## le panosopamoi linji pe `lujvo.txt`
+    ## le 1091moi linji pe `lujvo.txt`
     ##   .i le linji cu vasru mu datnypau
     ##   .i le tanru cu vasru pa pagbu
   LINE_BLOTI_ZERLEA = "bloti zerle'a:bloti zekri+lebna:pirate:"
-    ## le pamunomoi linji pe `lujvo.txt`
+    ## le 150moi linji pe `lujvo.txt`
     ##   .i le linji cu ciska lo jufpau ne'i lo stuzi be lo valsi
     ##   .i lo lerfu po'u zoi gy. : .gy. fanmo lo smuvla
   LINE_NALSUTYDZUKEPKLA =
       "nalsutydzukepkla:na'e+sutra+cadzu+,+klama:to go without walking fast:$klama1 " &
       "$klama2 $klama3 $klama4 $klama5"
-    ## le renonobimoi linji pe `lujvo.txt`
+    ## le 2008moi linji pe `lujvo.txt`
     ##   .i `,` zvati lo jbini be lo pagbu
   LINES_LUJVO = [
     LINE_BAARMOA, LINE_BADGAI, LINE_DATNYVEI, LINE_FEBJICLA, LINE_CIMNALSRA, LINE_SEZYPEVDUA,
@@ -251,30 +251,30 @@ const
   LINE_BAHE =
       " ba'e      BAhE     emphasize next                            forethought emphasis i" &
       "ndicator; indicates next word is especially emphasized"
-    ## le rezemoi linji pe `cmavo.txt`
+    ## le 27moi linji pe `cmavo.txt`
     ##   .i `ba'e`
     ##   .i le selma'o po'u `BAhE` vasru `h`
   LINE_BIHU =
       " bi'u      UI3a     new information                           discursive: newly intr" &
       "oduced information - previously introduced information                              " &
       "(cf. nindatni, saurdatni)"
-    ## le muremoi linji pe `cmavo.txt`
+    ## le 52moi linji pe `cmavo.txt`
     ##   .i `bi'u`
     ##   .i lo klesi po'u `3a` se lidne le selma'o
   LINE_CINO =
       " cino      PA*      30                                        number/quantity: 30 [t" &
       "hirty]"
-    ## le panopamoi linji pe `cmavo.txt`
+    ## le 101moi linji pe `cmavo.txt`
     ##   .i `cino`
     ##   .i le ma'orgunma cu vasru re cmavo be `PA`
   LINE_LE_GOHI =
       " le go'i   KOhA*    the x1 of last bridi                      description pro-sumti:" &
       " reuses the value of the x1 of the previous bridi"
-    ## le vonobimoi linji pe `cmavo.txt`
+    ## le 408moi linji pe `cmavo.txt`
     ##   .i `le go'i` noi jufpau gi'e vasru re valsi
   LINE_YHY =
       ".y'y       BY2      '                                         letteral for '"
-    ## le panovobimoi linji pe `cmavo.txt`
+    ## le 1048moi linji pe `cmavo.txt`
     ##   .i `.y'y`
     ##   .i pa nacle'u cu se lidne le selma'o gi'e sinxa lo klesi
   LINES_CMAVO = [LINE_A, LINE_AACUHI, LINE_BAHE, LINE_BIHU, LINE_CINO, LINE_LE_GOHI, LINE_YHY]
@@ -445,7 +445,7 @@ suite "Internal: Lists":
   test "every committed entry fits columns":
     for entry in LIST_GISMU:  # ro stecmi
       # lo stuzi pe le valsi
-      check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # li re bi'o li xa
+      check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # li 2 bi'o li 6
       # ro rafsi cu vasru ci lerfu .a vo lerfu
       check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # ci stuzi
       check entry.rafsi.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # lo rafsi cu gunma lo lerfu
@@ -501,7 +501,7 @@ suite "Internal: Lists":
 
   test "every committed cmavo entry fits its columns, once, in order":
     for i, entry in LIST_CMAVO:  # ro stecmi
-      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no denpa bu
+      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no boi denpa bu
       # ro valsi cu selci'a pa roi
       if i > 0: check LIST_CMAVO[i - 1].word < entry.word  # ja'i lo porsi be lo stuzi
 

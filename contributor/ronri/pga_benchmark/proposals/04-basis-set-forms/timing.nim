@@ -3,8 +3,8 @@
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Stand-ins hold 3 to 16 floats, counts that basis-set types reach from rga3d to cga5d, under
 ##     natural, 16-byte and 64-byte alignment, so cost of each layout reads beside its padding.
-##     Stand-in of 4 floats also takes 32 bytes, which `alignment` gives that count. Stand-ins
-##     need no library.
+##     `alignment` gives 8 or 16 bytes; 64 bytes, one cache line, is alternative it gives up.
+##     Stand-ins need no library.
 ##   Stand-in is summed and negated through operator of its own, returned by value. Raw loop
 ##     over elements of `var seq` parameter stays scalar, since each store may alias `seq` itself,
 ##     and so it shows no cost of layout.
@@ -40,7 +40,7 @@ template timeRounds(label: string, loop: untyped) =
 
 
 template declareStandIn(name: untyped; count, alignment: static int) =
-  ## Declare stand-in of `count` floats at one of four alignments, with sum and negation.
+  ## Declare stand-in of `count` floats at one of three alignments, with sum and negation.
   ##   Operators return by value and loop each coefficient.
   when alignment == 8:
     type name = object
@@ -48,9 +48,6 @@ template declareStandIn(name: untyped; count, alignment: static int) =
   elif alignment == 16:
     type name = object
       elements {.align(16).}: array[count, float]
-  elif alignment == 32:
-    type name = object
-      elements {.align(32).}: array[count, float]
   else:
     type name = object
       elements {.align(64).}: array[count, float]
@@ -92,7 +89,6 @@ declareStandIn(StandIn3Aligned64, 3, 64)
 declareStandIn(StandIn4Natural, 4, 8)
 declareStandIn(StandIn4Aligned16, 4, 16)
 declareStandIn(StandIn4Aligned64, 4, 64)
-declareStandIn(StandIn4Aligned32, 4, 32)
 declareStandIn(StandIn5Natural, 5, 8)
 declareStandIn(StandIn5Aligned16, 5, 16)
 declareStandIn(StandIn5Aligned64, 5, 64)
@@ -119,7 +115,6 @@ proc main() =
   timeStandIn(StandIn4Natural, "4 natural")
   timeStandIn(StandIn4Aligned16, "4 align16")
   timeStandIn(StandIn4Aligned64, "4 align64")
-  timeStandIn(StandIn4Aligned32, "4 align32")
   timeStandIn(StandIn5Natural, "5 natural")
   timeStandIn(StandIn5Aligned16, "5 align16")
   timeStandIn(StandIn5Aligned64, "5 align64")

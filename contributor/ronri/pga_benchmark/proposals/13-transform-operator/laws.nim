@@ -1,10 +1,13 @@
-## Hold sandwich operator to chain pin spells (`transform-operator`).
+## Hold sandwich operator to chain pin spells, for each pair of types (`transform-operator`).
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     is verdict: every law below holds, or program stops on assertion.
-##   Chain is spelled through operators proposal leaves alone: ⟇ and ~∘.
-##   Laws: for motion operator 𝐧, i.e. antieven element, 𝐦 ⟇⟇~∘ 𝐧 = (𝐧 ⟇ 𝐦) ⟇ 𝐧̰; for any 𝐧, it
-##     equals chain of antieven part of 𝐧 alone; alias `transform` reads same.
-##   Samples are dense, every coefficient drawn, so each law reads every term of table.
+##   Chain is spelled through operators proposal leaves alone, ⟇ and ~∘, on full multivectors.
+##   Laws, for each pair of types below: 𝐦 ⟇⟇~∘ 𝐧 equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ of widened operands; its type
+##     holds exactly bases chain reaches over samples; alias `transform` reads same.
+##   Pairs hold motor and flector parts, single grades and full type, so each kind of table runs.
+##   Full 𝐧 takes chain itself, whatever type 𝐦 has: result equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ bit for bit, and
+##     its type is full, as Architect ruled (D1 b of #990).
+##   Samples are dense in their types, every coefficient drawn, so each law reads every term.
 
 {.experimental: "strictFuncs".}
 
@@ -17,41 +20,120 @@ import pga
 
 
 const
-  SAMPLES = 256  ## Seeded dense samples each law is checked on.
+  SAMPLES = 256  ## Seeded samples each law is checked on, for each pair of types.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
+  TOLERANCE_ZERO = 1e-12  ## Magnitude below which coefficient of chain counts as unreached.
 
 
-func isAntiEven(b: Basis): bool =
-  ## Decide whether basis belongs to antieven part, which motion operator holds alone.
-  int(b.gradeAnti) mod 2 == 0
-
-
-proc sample(r: var Rand, is_antieven_only = false): Multivector =
-  ## Draw dense sample; each coefficient uniform in [-1, 1], antieven bases alone if asked.
+func basesAntieven(): Bases {.compileTime.} =
+  ## Choose bases of even antigrade, which motion operator holds alone.
   for b in Basis:
-    if not is_antieven_only or b.isAntiEven: result[b] = r.rand(-1.0 .. 1.0)
+    if int(b.gradeAnti) mod 2 == 0: result.incl b
 
 
-func antieven(m: Multivector): Multivector =
-  ## Keep antieven part of multivector.
+func basesAntiodd(): Bases {.compileTime.} =
+  ## Choose bases of odd antigrade, which reflection operator holds alone.
   for b in Basis:
-    if b.isAntiEven: result[b] = m[b]
+    if int(b.gradeAnti) mod 2 != 0: result.incl b
+
+
+func basesOfGrade(g: int): Bases {.compileTime.} =
+  ## Choose bases of grade `g`.
+  for b in Basis:
+    if int(b.grade) == g: result.incl b
+
+
+func basesEvery(): Bases {.compileTime.} =
+  ## Choose every basis, i.e. bases of full type.
+  for b in Basis: result.incl b
+
+
+func basesType[B: static Bases](t: typedesc[MultivectorOf[B]]): Bases =
+  ## Read bases of basis-set type.
+  B
+
+
+proc sample[B: static Bases](r: var Rand, t: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
+  ## Draw sample dense in its type; each coefficient uniform in [-1, 1].
+  for b in B: result[b] = r.rand(-1.0 .. 1.0)
+
+
+template holdPair(r: var Rand, name: string, M, N: typedesc) =
+  ## Hold sandwich of type `M` by type `N` to chain, its type to bases chain reaches, and alias.
+  block:
+    var reached: Bases
+    for _ in 0 ..< SAMPLES:
+      let
+        m = r.sample(M)
+        n = r.sample(N)
+        sandwich = m ⟇⟇~∘ n
+        m_full = toMultivector(m)
+        n_full = toMultivector(n)
+        chain = (n_full ⟇ m_full) ⟇ (~∘ n_full)
+      doAssert toMultivector(sandwich) =~ chain, name & ": sandwich must equal chain."
+      doAssert toMultivector(transform(m, n)) =~ chain, name & ": alias must equal chain."
+      for b in Basis:
+        if abs(chain[b]) > TOLERANCE_ZERO: reached.incl b
+    const typed = basesType(typeof(default(M) ⟇⟇~∘ default(N)))
+    doAssert reached <= typed, name & ": chain must reach no basis outside type of result."
+    doAssert typed <= reached, name & ": type of result must hold no basis that chain misses."
+
+
+template holdFull(r: var Rand, name: string, M: typedesc) =
+  ## Hold sandwich of type `M` by full operator to chain itself, bit for bit, and its type to full.
+  block:
+    for _ in 0 ..< SAMPLES:
+      let
+        m = r.sample(M)
+        n = toMultivector(r.sample(MultivectorOf[basesEvery()]))
+        sandwich = toMultivector(m ⟇⟇~∘ n)
+        chain = (n ⟇ m) ⟇ (~∘ n)
+        alias = toMultivector(transform(m, n))
+      for b in Basis:
+        doAssert sandwich[b] == chain[b], name & ": sandwich must equal chain bit for bit."
+        doAssert alias[b] == chain[b], name & ": alias must equal chain bit for bit."
+      doAssert sandwich =~ (n ⟇ toMultivector(m)) ⟇ (~∘ n),
+        name & ": sandwich must equal chain of widened operands."
+    doAssert typeof(default(M) ⟇⟇~∘ default(Multivector)) is Multivector,
+      name & ": type of result must be full."
 
 
 proc main() =
-  var r = initRand(SEED)
+  var
+    r = initRand(SEED)
+    held = 0
+  holdPair(r, "full by motor part", MultivectorOf[basesEvery()], MultivectorOf[basesAntieven()])
+  held.inc
+  holdPair(r, "full by flector part", MultivectorOf[basesEvery()], MultivectorOf[basesAntiodd()])
+  held.inc
+  holdPair(r, "vector by motor part", MultivectorOf[basesOfGrade(1)],
+    MultivectorOf[basesAntieven()])
+  held.inc
+  holdPair(r, "bivector by motor part", MultivectorOf[basesOfGrade(2)],
+    MultivectorOf[basesAntieven()])
+  held.inc
+  holdPair(r, "motor part by motor part", MultivectorOf[basesAntieven()],
+    MultivectorOf[basesAntieven()])
+  held.inc
+  holdPair(r, "vector by vector", MultivectorOf[basesOfGrade(1)], MultivectorOf[basesOfGrade(1)])
+  held.inc
+  holdPair(r, "full by vector", MultivectorOf[basesEvery()], MultivectorOf[basesOfGrade(1)])
+  held.inc
+  holdFull(r, "vector by full", MultivectorOf[basesOfGrade(1)])
+  held.inc
+  holdFull(r, "motor part by full", MultivectorOf[basesAntieven()])
+  held.inc
   for _ in 0 ..< SAMPLES:
     let
-      m = r.sample
-      motion = r.sample(is_antieven_only = true)
-      general = r.sample
-    let chain = (motion ⟇ m) ⟇ (~∘ motion)
-    doAssert (m ⟇⟇~∘ motion) =~ chain, &"Sandwich must equal chain for motion operator; got `{m=}`."
-    doAssert transform(m, motion) =~ chain, &"Alias must equal operator; got `{m=}`."
-    let part = antieven(general)
-    doAssert (m ⟇⟇~∘ general) =~ (part ⟇ m) ⟇ (~∘ part),
-      &"Sandwich must read antieven part of operator alone; got `{general=}`."
-  echo &"{DIMENSIONS}D, conformal {IS_CONFORMAL}: 3 laws hold on {SAMPLES} samples."
+      m = toMultivector(r.sample(MultivectorOf[basesEvery()]))
+      n = toMultivector(r.sample(MultivectorOf[basesEvery()]))
+      sandwich = m ⟇⟇~∘ n
+      chain = (n ⟇ m) ⟇ (~∘ n)
+    for b in Basis:
+      doAssert sandwich[b] == chain[b], "Two full multivectors must take chain itself."
+  held.inc
+  echo &"{DIMENSIONS}D, conformal {IS_CONFORMAL}: laws hold for {held} pairs of types " &
+    &"on {SAMPLES} samples."
 
 
 main()

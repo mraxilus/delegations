@@ -7,7 +7,7 @@
 ##   | isHoldingUnchanged  | run stands unbroken, and no group around it changes it      |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Tanru units come from fold of `lojban_parser` (`tanru_units.nim` there), which keeps `ke`
+##   Tanru units come from fold of `ricysoho` (`tanru_units.nim` there), which keeps `ke`
 ##     and `ke'e` of each group that cmavo bind as tanru units of their own, and drops rest.
 ##   Group that cmavo bind changes run inside it in three ways. Run ending where group ends holds
 ##     its head, which conversion converts (5.11) and abstraction turns to event (12.12), so
@@ -26,7 +26,7 @@
 
 import std/[options, sequtils]
 
-import lojban_parser
+import ricysoho
 
 
 func isSelmaho(unit: TanruUnit, selmaho: Selmaho): bool =

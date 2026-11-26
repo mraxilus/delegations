@@ -16,7 +16,7 @@
 ## ni'o ro samtci pagbu cu se tcidu ta'i pa cmene
 ##   .i le vi datnyvei cu sitna le samtci pagbu sepi'o zo la'o pu lo nu le genturfa'i cu tcidu le
 ##       samtci pagbu
-##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le soze moi javni pe
+##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le 97 moi javni pe
 ##       `CLL 21.1`
 ##   .i `Architect` jdice di'u bu'u `#818` ta'i `D1 a`
 ##   .i zo zo poi lidne lo samtci pagbu cu se to'e curmi ki'u lo nu zo zo ka'e sitna zo la'o poi le
@@ -74,7 +74,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils]
+import std/[options, os, sequtils, strutils]
 
 import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 
@@ -83,7 +83,7 @@ type
   Place* = object
     ## lo stuzi be pa lerfu ne'i lo datnyvei
     ##   .i le stuzi cu du lo namcu pe lo linji ge'u .e lo namcu pe lo lerfu ne'i le linji
-    ##   .i ro le re namcu cu selkra li pa
+    ##   .i ro le re namcu cu selkra li 1
     line*: int  ## lo namcu pe le linji
     column*: int  ## lo namcu pe le lerfu ne'i le linji
 
@@ -107,7 +107,7 @@ type
     shape*: Shape  ## lo tarmi be le selci'a ne'i le datnyvei
     opening*: int
       ## lo klani be lo cmavo po'u zo ni'o poi krasi le selci'a
-      ##   .i li ni'u pa va'o lo nu no javni cu jdice le klani
+      ##   .i li ni'u 1 va'o lo nu no javni cu jdice le klani
     text*: string
       ## le selci'a poi le genturfa'i cu tcidu ke'a
       ##   .i ro samtci pagbu cu se sitna sepi'o zo la'o
@@ -150,6 +150,8 @@ const
   RULE_SENTENCE = "sentence"  ## lo javni poi pa jufra cu mapti ke'a
   RULE_TERMS = "terms"  ## lo javni poi lo porsi be lo sumti cu mapti ke'a
   RULE_TAIL = "bridi-tail"
+  RULE_NUMBER = "number"  ## lo javni poi lo porsi be lo valsi pe `PA` cu mapti ke'a
+  RULE_LERFU_STRING = "lerfu-string"  ## lo javni poi lo porsi be lo lerfu valsi cu mapti ke'a
     ## lo javni poi le selbri pe pa jufra ge'u .e le sumti poi se lidne le selbri cu mapti ke'a
   RULE_SELBRI = "selbri"  ## lo javni poi pa selbri cu mapti ke'a
   TERMINALS_JOINING = [TERMINAL_BRIVLA, Selmaho.Se.toTerminal, Selmaho.Nu.toTerminal,
@@ -173,6 +175,17 @@ const
     ## lo namcu poi lo stuzi be lo linji poi lo jufra cu ranji ke'a cu sumji ke'a lo stuzi be le
     ##     linji poi krasi le jufra
     ##   .i `Architect` jdice le namcu bu'u `#890`
+  CMAVO_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
+  CMAVO_INSIDE = ["pi", "pi'e", "ki'o"]
+    ## lo cmavo pe `PA` poi ka'e zvati lo jbini be re lerfu pe pa namcu
+    ##   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` .e `CLL 18.74` cu pilno le cmavo
+  MARKS_INSIDE = [".", ","]
+    ## lo sinxa poi zvati lo jbini be re lerfu pe pa namcu gi'e se tcidu ta'i zo pi .a zo ki'o
+  CMAVO_BEFORE = ["ni'u", "ma'u", "ji'i", "pi"]
+    ## lo cmavo pe `PA` poi ka'e zvati lo jbini be zo li .e lo namcu
+  WORDS_NUMBERED = ["li", "me'o"]
+    ## lo cmavo poi lidne lo namcu poi selci'a ta'i lo lerfu pe `0` bi'o `9` ro roi
 
 
 func fencedOut(markdown: string): string =
@@ -218,7 +231,7 @@ func isCarrying(line: string): bool =
 
 func markerLen(line: string): int =
   ## tcidu lo ni clani be lo stesni poi krasi le linji
-  ##   .i li no jalge va'o lo nu no stesni cu krasi le linji
+  ##   .i li 0 jalge va'o lo nu no stesni cu krasi le linji
   ##   .i fukpi `markerLen` pe `english.nim`
   if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
   var i = 0
@@ -670,6 +683,16 @@ func errors*(text: Text): seq[Error] =
   text.errors(text.text.readTextMarked)
 
 
+func errorsMessage*(message: string): seq[Error] =
+  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i pa notci pe lo samtci
+  ##   .i ro samtci pagbu pe le notci cu se tcidu ta'i pa cmene ja'i `shaped`
+  ##   .i va'o lo nu le notci cu na du pa rospau kei dunda pa srera
+  let texts = textsRecord("notci.md", message)
+  if texts.len != 1:
+    return @[Error(path: "notci.md", place: Place(line: 1, column: 1), why: "not one paragraph")]
+  texts[0].errors
+
+
 func openersTree(node: Node, units: seq[Unit], parent: string, found: var seq[int]) =
   ## jmina lo namcu be ro pagbu poi krasi pa jufra .a pa ju'agri pe le jgena
   ##   .i `parent` du lo cmene be le javni pe lo jgena poi vasru le jgena
@@ -778,7 +801,7 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
 
 func spanUnits(node: Node): tuple[first, last: int] =
   ## dunda lo stuna'u be le pamoi pagbu be'o .e lo stuna'u be le romoi pagbu pe le jgena
-  ##   .i va'o lo nu le jgena cu vasru no pagbu kei le romoi stuna'u cu du li ni'u pa
+  ##   .i va'o lo nu le jgena cu vasru no pagbu kei le romoi stuna'u cu du li ni'u 1
   if node.is_terminal: return (node.at, node.at)
   result = (int.high, -1)
   for child in node.children:
@@ -831,6 +854,105 @@ func faultsJoined*(text: Text, marked: ReadingMarked): seq[Error] =
     let start = marked.occurrences[marked.units[at].words[0]].start
     result.add Error(path: text.path, place: text.place(start),
       why: "selbri after open tanru, with no cu")
+
+
+func mixedTree(node: Node, found: var seq[int]) =
+  ## jmina lo stuna'u be le pamoi pagbu be ro namcu poi vasru lo lerfu valsi ku'o .e ro lerfu porsi
+  ##     poi vasru lo valsi pe `PA`
+  ##   .i zo boi fendi lo namcu .e lo lerfu porsi poi lamji to `CLL 17.9` toi
+  ##   .i lo jgena pe lo srera cu na se cipra
+  if node.is_terminal: return
+  let is_mixed = node.stop.isNone and (
+    (node.rule == RULE_NUMBER and node.children.anyIt(not it.is_terminal)) or
+    (node.rule == RULE_LERFU_STRING and node.children.anyIt(it.is_terminal)))
+  if is_mixed:
+    found.add node.spanUnits.first
+    return
+  for child in node.children: mixedTree(child, found)
+
+
+func faultsRuns*(text: Text, marked: ReadingMarked): seq[Error] =
+  ## dunda ro namcu .e ro lerfu porsi pe le selci'a poi vasru lo valsi pe `PA` .e lo lerfu valsi
+  ##   .i `marked` se tcidu fi le selci'a
+  var found: seq[int]
+  mixedTree(marked.tree, found)
+  for at in found:
+    let start = marked.occurrences[marked.units[at].words[0]].start
+    result.add Error(path: text.path, place: text.place(start),
+      why: "number and letter with no boi between them")
+
+
+func digitRead(occurrence: Occurrence): int =
+  ## dunda le namcu poi le valsi cu sinxa ke'a
+  ##   .i le valsi cu du pa lerfu pe `0` bi'o `9` .a pa cmavo pe `CMAVO_DIGITS`
+  ##   .i va'o lo drata le se dunda cu mleca li 0
+  if not occurrence.reading.is_word: return -1
+  let word = occurrence.text
+  if word.len == 1 and word[0] in {'0' .. '9'}: ord(word[0]) - ord('0')
+  else: CMAVO_DIGITS.find(word)
+
+
+func faultsNumbers*(occurrences: openArray[Occurrence]): seq[tuple[start: int, why: string]] =
+  ## dunda ro namcu poi na mapti le javni be lo nu ciska lo lerfu pe `0` bi'o `9` ku'o .e lo krinu
+  ##   .i pa namcu cu du lo porsi be lo valsi poi sinxa lo lerfu gi'e ka'e vasru lo cmavo pe
+  ##       `CMAVO_INSIDE` .a lo sinxa pe `MARKS_INSIDE`
+  ##   .i va'o lo nu le namcu cu vasru su'o re lerfu gi'a se lidne pa cmavo pe `WORDS_NUMBERED` kei
+  ##       le namcu cu vasru no cmavo pe `CMAVO_DIGITS`
+  ##   .i re lerfu poi lamji cu zvati pa selci'avla
+  ##   .i ki'u bo zo boi fendi re namcu poi lamji to `CLL 18.6` toi
+  ##   .i no namcu cu cfari ta'i lo lerfu po'u `0` poi lidne lo drata lerfu
+  ##   .i lo valsi poi zo zo .a zo lu .a zo lo'u sitna ke'a cu na se cipra
+  var
+    at = 0
+    depth = 0  # lo klani be lo se sitna be zo lu poi ca'o kalri
+    is_quoted, is_after_zo = false
+  while at < occurrences.len:
+    let word = occurrences[at].text
+    if is_after_zo: is_after_zo = false
+    elif is_quoted: is_quoted = word != "le'u"
+    elif word == "zo": is_after_zo = true
+    elif word == "lo'u": is_quoted = true
+    elif word == "lu": inc depth
+    elif word == "li'u" and depth > 0: dec depth
+    elif depth == 0 and occurrences[at].digitRead >= 0:
+      var
+        last = at
+        digits = @[at]
+      while last + 1 < occurrences.len:
+        let next = occurrences[last + 1]
+        if next.digitRead >= 0: digits.add last + 1
+        elif not next.reading.is_word or
+            (next.text notin CMAVO_INSIDE and next.text notin MARKS_INSIDE): break
+        inc last
+      var before = at - 1
+      while before >= 0 and occurrences[before].text in CMAVO_BEFORE: dec before
+      let
+        start = occurrences[at].start
+        is_number = digits.len >= 2 or (before >= 0 and occurrences[before].text in WORDS_NUMBERED)
+      if is_number and digits.anyIt(occurrences[it].text.len > 1):
+        result.add (start, "number in cmavo of digits")
+      for k in 1 ..< digits.len:
+        if digits[k] == digits[k - 1] + 1 and
+            occurrences[digits[k - 1]].finish < occurrences[digits[k]].start:
+          result.add (start, "two numbers with no boi between them")
+          break
+      if digits.len >= 2 and digits[1] == digits[0] + 1 and occurrences[at].digitRead == 0:
+        result.add (start, "number that opens with 0")
+      at = last
+    inc at
+
+
+func faultsNumbers*(text: Text, marked: ReadingMarked): seq[Error] =
+  ## dunda ro namcu pe le selci'a poi na mapti le javni pe `faultsNumbers` ku'o .e lo stuzi be ri
+  ##   .i `marked` se tcidu fi le selci'a
+  for (start, why) in marked.occurrences.faultsNumbers:
+    result.add Error(path: text.path, place: text.place(start), why: why)
+
+
+func faultsNumbersMessage*(message: string): seq[Error] =
+  ## dunda ro namcu pe pa notci pe lo samtci poi na mapti le javni pe `faultsNumbers`
+  for text in textsRecord("notci.md", message):
+    result.add text.faultsNumbers(text.text.readTextMarked)
 
 
 func texts*(path, content: string): seq[Text] =

@@ -54,7 +54,7 @@ proc copyProject(source, target: string) =
 suite "Driver before restore of packages":
   test "Driver prints each system package in copy of project that holds no package":
     let
-      directory = getTempDir() / ("lojban_tagger_driver_" & $getCurrentProcessId())
+      directory = getTempDir() / ("rictadni_driver_" & $getCurrentProcessId())
       cache = directory / "nimcache"
     removeDir(directory)
     copyProject(DIRECTORY_PROJECT, directory)
@@ -83,7 +83,7 @@ suite "Driver before restore of packages":
       names = @["lojban_tagger", "rictadni"]
       missing: seq[string]
     for _ in 1 .. COUNT_NAMES_SEEDED: names.add rng.nameFolder
-    let root = getTempDir() / ("lojban_tagger_folders_" & $getCurrentProcessId())
+    let root = getTempDir() / ("rictadni_folders_" & $getCurrentProcessId())
     removeDir(root)
     for name in names:
       let (source, target) = (root / "source" / name, root / "target" / name)

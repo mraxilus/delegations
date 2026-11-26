@@ -5,13 +5,13 @@
 ##   | lo samtci cmene       | `CLL`                                                  | lo pagbu  |
 ##   |-----------------------|--------------------------------------------------------|-----------|
 ##   | `VOWELS`              | lo karsna po'u `a e i o u` noi na vasru `y`            | `CLL 3.1` |
-##   | `CONSONANTS`          | le paze zunsna noi na vasru zoi gy. ' .gy.             | `CLL 3.6` |
+##   | `CONSONANTS`          | le 17 zunsna noi na vasru zoi gy. ' .gy.             | `CLL 3.6` |
 ##   | `CONSONANTS_VOICED`   | lo voksa zunsna pe le vokste                      | `CLL 3.6` |
 ##   | `CONSONANTS_UNVOICED` | lo na'e voksa zunsna pe le vokste                 | `CLL 3.6` |
 ##   | `CONSONANTS_SIBILANT` | lo selcmi po'u `c, j, s, z` pe le cimoi javni          | `CLL 3.6` |
 ##   | `PAIRS_FORBIDDEN`     | `cx kx xc xk mz` pe le vomoi javni                     | `CLL 3.6` |
 ##   | `isPairPermissible`   | lo zunsna remei poi selcru gi'e selsni `C/C`       | `CLL 3.6` |
-##   | `PAIRS_INITIAL`       | `CC` noi sinxa le vobi zunsna remei poi krasi lo valsi | `CLL 3.7` |
+##   | `PAIRS_INITIAL`       | `CC` noi sinxa le 48 zunsna remei poi krasi lo valsi | `CLL 3.7` |
 ##   | `isPairInitial`       | lo zunsna remei poi ka'e krasi lo valsi                | `CLL 3.7` |
 ##   | `TRIPLES_FORBIDDEN`   | `ndj ndz ntc nts`                                      | `CLL 3.7` |
 ##   | `isTriplePermissible` | lo midju zunsna cimei                                  | `CLL 3.7` |
@@ -47,7 +47,7 @@ const
   CONSONANTS* = {
     'b', 'c', 'd', 'f', 'g', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'x', 'z'
   }
-    ## le paze zunsna pe `CLL 3.6`
+    ## le 17 zunsna pe `CLL 3.6`
     ##   .i ne'i `CLL 3.6` zoi gy. ' .gy. na zunsna
   CONSONANTS_VOICED* = {'b', 'd', 'g', 'j', 'v', 'z'}  ## lo voksa zunsna pe le liste pe `CLL 3.6`
   CONSONANTS_UNVOICED* = {'c', 'f', 'k', 'p', 's', 't', 'x'}
@@ -97,7 +97,7 @@ const
         lut[a][b] = not (is_doubled or is_voicing_mixed or is_sibilant_both or is_named)
     lut
   LUT_INITIAL_BY_PAIR = block:
-    ## jdice ro remei ja'i le liste pe `CLL 3.7`
+    ## jdice ro boi remei ja'i le liste pe `CLL 3.7`
     var lut: PairsJudged
     for pair in PAIRS_INITIAL: lut[pair[0]][pair[1]] = true
     lut
@@ -119,7 +119,7 @@ func isVowel*(c: char): bool {.inline.} = c in VOWELS
   ## jdice lo du'u le lerfu cu karsna ja'i `CLL 3.1` gi'e na du `y`
 
 func isConsonant*(c: char): bool {.inline.} = c in CONSONANTS
-  ## jdice lo du'u le lerfu cu cmima le paze zunsna pe `CLL 3.6`
+  ## jdice lo du'u le lerfu cu cmima le 17 zunsna pe `CLL 3.6`
 
 
 

@@ -1,70 +1,49 @@
-# One generated operator for the transform of a multivector by a motion operator
+# One operator for the transform of a multivector, built from the types of its operands
 
-`constructSandwich` expands 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ into a table of terms over pairs of antieven bases of 𝐧.
-A third `defineOperator` turns that table into the operator `⟇⟇~∘`, and `pga.nim` names it
-`transform`. Every edit quotes text of pin.
+`⟇⟇~∘` transforms 𝐦 by 𝐧 in one call: the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, which pin spells in three steps. Its
+typed form builds the table of that sandwich from the types of both operands, when the code
+compiles. So each value of each type transforms exactly. A full operator takes the three steps of
+pin, whatever the type of 𝐦 is. `pga.nim` names the operator `transform`, and two tests of the
+suite `Typed operators` hold both to the chain. Every edit quotes text of P04.
 
-## Edit `pga/cayleys.nim`
+## Edit `pga/operators.nim`
 
 ```nim
-  Spatial*[T] = object
-    base*, anti*: T
+# Functions rather than templates, unlike full forms above: generic template over static bases
+#   crashes compiler where called ("field 'sons' is not accessible"), in Nim 2.4.0 and devel.
 ```
 
 ```nim
-  Spatial*[T] = object
-    base*, anti*: T
+#[ Sandwich ]#
 
-type  ## Define type definitions for constructing sandwich of multivector by operator.
-  TermSandwich* = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
-    operand*: Basis  ## Basis k of transformed multivector 𝐦.
-    pair*: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads (𝐧ᵢ + 𝐧ᵢ)𝐧ⱼ.
-    coefficient*: int  ## Signed weight of product of pair, halved for cross pair.
-  CayleySandwich* =  ## Define data structure for constructing sandwich of multivector by operator.
-    array[Basis, seq[TermSandwich]]
-```
+# Sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ reads table built from types of both operands, when code compiles:
+#   pairs of bases of 𝐧, both orders summed, against bases of 𝐦. So each value of each type
+#   transforms exactly, and motor type reads its antieven pairs alone. Full operator takes three
+#   steps of pin instead, whatever type 𝐦 has: table over every pair of 𝐧 grows past them with
+#   dimension, and code that needs speed types its operator.
 
-## Edit `pga/cayleys.nim`
+type
+  TermSandwich = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
+    operand: Basis  ## Basis k of transformed multivector 𝐦.
+    pair: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads (𝐧ᵢ + 𝐧ᵢ)𝐧ⱼ.
+    coefficient: int  ## Signed weight of product of pair, halved for cross pair.
+  CayleySandwich = array[Basis, seq[TermSandwich]]  ## Define terms of sandwich per output basis.
 
-```nim
-const
-  CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
-    base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
-    anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
-  )
-```
 
-```nim
-const
-  CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
-    base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
-    anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
-  )
-
-const
-  CAYLEY_TRANSFORM* = constructSandwich(CAYLEYS_WEDGE_DOT.anti, CAYLEYS_REVERSE.anti)
-    ## Sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ over antieven bases of 𝐧, which are all that motion operator holds.
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
-#[ Basis Transformations ]#
-```
-
-```nim
-func constructSandwich(product: Cayley2D, reverse: Cayley1D): CayleySandwich {.compileTime.} =
-  ## Construct sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ as map quadratic in antieven coefficients of 𝐧.
+func constructSandwich(a, b: Bases): CayleySandwich {.compileTime.} =
+  ## Construct sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ over bases `a` of 𝐦 and pairs of bases `b` of 𝐧.
   ##   Term 𝐧ᵢ𝐦ₖ𝐧ⱼ lands where 𝐞ᵢ ⟇ 𝐞ₖ ⟇ 𝐞̰ⱼ does. Coefficients commute, so pair i < j sums both
   ##     orders, which comes out even in each algebra, and keeps half, as its product reads
   ##     doubled 𝐧ᵢ. So each rigid term weighs ±1.
   ##   Walks each pair and operand basis once, so no term is searched for; VM bounds iterations.
-  for i in Basis:
-    if int(i.gradeAnti) mod 2 != 0: continue
-    for j in Basis:
-      if ord(j) < ord(i) or int(j.gradeAnti) mod 2 != 0: continue
+  let
+    product = CAYLEYS_WEDGE_DOT.anti
+    reverse = CAYLEYS_REVERSE.anti
+  for i in b:
+    for j in b:
+      if ord(j) < ord(i): continue
       let orders = if i == j: @[(i, j)] else: @[(i, j), (j, i)]
-      for k in Basis:
+      for k in a:
         var sums: seq[(Basis, int)]  # Coefficient of each output basis, over both orders.
         for (left, right) in orders:
           for first in product[left][k]:
@@ -89,61 +68,59 @@ func constructSandwich(product: Cayley2D, reverse: Cayley1D): CayleySandwich {.c
           )
 
 
+func basesSandwiched(a, b: Bases): Bases {.compileTime.} =
+  ## Choose bases that sandwich of bases `a` of 𝐦 by pairs of bases `b` of 𝐧 reaches.
+  let table = constructSandwich(a, b)
+  for output in Basis:
+    if table[output].len > 0: result.incl output
 
-#[ Basis Transformations ]#
-```
 
-## Edit `pga/operators.nim`
-
-```nim
-#[ Operator Macros ]#
-```
-
-```nim
-#[ Operator Macros ]#
-
-macro defineOperator(
-  symbols, docs: static[string];
-  cayley: static[CayleySandwich];
-): untyped =
-  ## Construct sandwich of multivector by operator using provided table.
-  ##   Names product of each pair of operator once, so each coefficient reads products alone.
-
-  # Determine pairs read, and bases of operator that cross pairs read doubled.
+macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
+  ## Emit one assignment per basis that table of bases `A` of `m` and pairs of `B` of `n` reaches.
+  ##   Names doubled basis and product of each pair once, so each coefficient reads products alone.
+  ##   Each loop walks each term once, so table over every pair at six dimensions stays under
+  ##     loop bound of VM.
+  let table = constructSandwich(A, B)
   var
     pairs: seq[array[2, Basis]]
-    doubled: set[Basis]
-  for b in Basis:
-    for term in cayley[b]:
-      if term.pair notin pairs: pairs.add term.pair
-      if term.pair[0] != term.pair[1]: doubled.incl term.pair[0]
+    paired: array[Basis, Bases]  # Bases j that pair with i so far, so each term tests in one step.
+    doubled: Bases
+  for output in Basis:
+    for term in table[output]:
+      let (i, j) = (term.pair[0], term.pair[1])
+      if j notin paired[i]:
+        paired[i].incl j
+        pairs.add term.pair
+      if i != j: doubled.incl i
 
-  # Name each doubled basis, then product of each pair.
   func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
   func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
-  var products = newNimNode(nnkLetSection)
-  for b in doubled:
-    let source = nnkBracketExpr.newTree(ident"n", ident($b))
-    products.add newIdentDefs(nameDoubled(b), newEmptyNode(), infix(source, "+", source))
-  for pair in pairs:
-    let
-      first =
-        if pair[0] == pair[1]: nnkBracketExpr.newTree(ident"n", ident($pair[0]))
-        else: nameDoubled(pair[0])
-      second = nnkBracketExpr.newTree(ident"n", ident($pair[1]))
-    products.add newIdentDefs(namePair(pair), newEmptyNode(), infix(first, "*", second))
 
-  # Construct each coefficient as sum over operand bases of weighted products times operand.
-  var assignments = newStmtList(products)
-  for b in Basis:
-    var operands: seq[Basis]
-    for term in cayley[b]:
-      if term.operand notin operands: operands.add term.operand
-    var expression = newFloatLitNode(0.0)
-    for (index, k) in operands.pairs:
+  result = newStmtList()
+  if pairs.len > 0:
+    var products = newNimNode(nnkLetSection)
+    for x in doubled:
+      let bx = emitBasis(x)
+      products.add newIdentDefs(nameDoubled(x), newEmptyNode(), quote do: `n`[`bx`] + `n`[`bx`])
+    for pair in pairs:
+      let
+        b0 = emitBasis(pair[0])
+        b1 = emitBasis(pair[1])
+        first = (if pair[0] == pair[1]: (quote do: `n`[`b0`]) else: nameDoubled(pair[0]))
+      products.add newIdentDefs(namePair(pair), newEmptyNode(), quote do: `first` * `n`[`b1`])
+    result.add products
+  for output in Basis:
+    if table[output].len == 0: continue
+    var
+      operands: Bases
+      terms: array[Basis, seq[TermSandwich]]  # Terms of output by basis of `m` that they read.
+    for term in table[output]:
+      operands.incl term.operand
+      terms[term.operand].add term
+    var summands: seq[NimNode]
+    for k in operands:
       var weight: NimNode = nil
-      for term in cayley[b]:
-        if term.operand != k: continue
+      for term in terms[k]:
         let
           product = namePair(term.pair)
           magnitude =
@@ -154,70 +131,125 @@ macro defineOperator(
         weight =
           if weight.isNil: (if term.coefficient < 0: prefix(magnitude, "-") else: magnitude)
           else: infix(weight, if term.coefficient < 0: "-" else: "+", magnitude)
-      let summand = infix(weight, "*", nnkBracketExpr.newTree(ident"m", ident($k)))
-      expression = if index == 0: summand else: infix(expression, "+", summand)
-    assignments.add newAssignment(nnkBracketExpr.newTree(ident"result", ident($b)), expression)
+      let bk = emitBasis(k)
+      summands.add infix(weight, "*", quote do: `m`[`bk`])
+    let
+      b = emitBasis(output)
+      value = emitSum(summands)
+    result.add quote do:
+      `r`[`b`] = `value`
 
-  # Construct function definition from generated assignments.
-  emitFunc(
-    name = symbols,
-    docs = docs,
-    params = nnkFormalParams.newTree(
-      ident"Multivector",
-      nnkIdentDefs.newTree(ident"m", ident"n", ident"Multivector", newEmptyNode()),
-    ),
-    pragma = nnkPragma.newTree(ident"inline", ident"noinit"),
-    body = assignments,
-    is_quoted = true,
-    is_public = true,
-  )
-```
 
-## Edit `pga/operators.nim`
+func `⟇⟇~∘`*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B],
+): typeof(zeroNamed[basesSandwiched(A, B)]()) {.inline, noinit.} =
+  ## Transform multivector by operator of any types, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, from table of both types.
+  emitSandwichedByBasis(A, B, result, m, n)
 
-```nim
-defineOperator(
-  symbols = "⟇",
-  docs = "Multiply multivectors through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧.",
-  cayley = CAYLEYS_WEDGE_DOT.anti,
-)
-```
 
-```nim
-defineOperator(
-  symbols = "⟇",
-  docs = "Multiply multivectors through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧.",
-  cayley = CAYLEYS_WEDGE_DOT.anti,
-)
-defineOperator(
-  symbols = "⟇⟇~∘",
-  docs = "Transform multivector by motion operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, reading antieven part of 𝐧.",
-  cayley = CAYLEY_TRANSFORM,
-)
+func `⟇⟇~∘`*[A: static Bases](m: MultivectorOf[A], n: Multivector): Multivector {.inline.} =
+  ## Transform multivector of any type by full operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, in three steps of pin.
+  (n ⟇ m) ⟇ (~∘ n)
+
+
+# Functions rather than templates, unlike full forms above: generic template over static bases
+#   crashes compiler where called ("field 'sons' is not accessible"), in Nim 2.4.0 and devel.
 ```
 
 ## Edit `pga.nim`
 
 ```nim
-##   | ∧☆  | expandWeight          | 𝐦 ∧ 𝐧☆       |
+##   | ∧∨☆ | projectOrthogonalAnti | 𝐧 ∧ (𝐦 ∨ 𝐧☆) |
 ```
 
 ```nim
-##   | ∧☆  | expandWeight          | 𝐦 ∧ 𝐧☆       |
+##   | ∧∨☆ | projectOrthogonalAnti | 𝐧 ∧ (𝐦 ∨ 𝐧☆) |
 ##   | ⟇⟇~∘| transform             | 𝐧 ⟇ 𝐦 ⟇ 𝐧̰     |
 ```
 
 ## Edit `pga.nim`
 
 ```nim
-func expandWeight*(m, n: Multivector): Multivector {.inline.} = m ∧☆ n
-  ## Multiply multivectors through right inner product weight expansion, i.e. 𝐦 ∧ 𝐧☆.
+func projectOrthogonalAnti*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B],
+): auto {.inline.} = n ∧ (m ∨☆ n)
+  ## TODO: Document.
 ```
 
 ```nim
-func expandWeight*(m, n: Multivector): Multivector {.inline.} = m ∧☆ n
-  ## Multiply multivectors through right inner product weight expansion, i.e. 𝐦 ∧ 𝐧☆.
+func projectOrthogonalAnti*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B],
+): auto {.inline.} = n ∧ (m ∨☆ n)
+  ## TODO: Document.
 
-func transform*(m, n: Multivector): Multivector {.inline.} = m ⟇⟇~∘ n
-  ## Transform multivector by motion operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, reading antieven part of 𝐧.
+func transform*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B],
+): auto {.inline.} = m ⟇⟇~∘ n
+  ## Transform multivector by operator, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, as `⟇⟇~∘` reads it.
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+const EMPTY: Bases = {}
+```
+
+```nim
+template checkTypedSandwich(A, B: static Bases) =
+  ## Check typed sandwich of samples over `A` by samples over `B` near chain of full forms.
+  ##   Table and chain sum their terms in other orders, so they agree within tolerance alone.
+  ##   Also check its type holds each basis that chain reaches, and no other.
+  block:
+    var reached: Bases
+    for _ in 0 ..< SAMPLES:
+      let
+        m = sampleOf[A]()
+        n = sampleOf[B]()
+        (f, g) = (m.toMultivector, n.toMultivector)
+        chain = (g ⟇ f) ⟇ (~∘ g)
+      check (m ⟇⟇~∘ n).toMultivector =~ chain
+      for b in Basis:
+        if abs(chain[b]) > TOLERANCE_ABS: reached.incl(b)
+    check basesType(sampleOf[A]() ⟇⟇~∘ sampleOf[B]()) == reached
+
+
+const EMPTY: Bases = {}
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+  test "Scaling, norms and unitizing: equal full forms exactly, scaling keeps type":
+    checkTypedScaling(VECTORS)
+    checkTypedScaling(EVEN)
+    checkTypedScaling(SCATTERED)
+```
+
+```nim
+  test "Scaling, norms and unitizing: equal full forms exactly, scaling keeps type":
+    checkTypedScaling(VECTORS)
+    checkTypedScaling(EVEN)
+    checkTypedScaling(SCATTERED)
+
+
+  test "Sandwich: near chain of full forms, typed by bases its table reaches":
+    checkTypedSandwich(ALL, EVEN)
+    checkTypedSandwich(ALL, ODD)
+    checkTypedSandwich(VECTORS, EVEN)
+    checkTypedSandwich(VECTORS, ODD)
+    checkTypedSandwich(BIVECTORS, EVEN)
+    checkTypedSandwich(EVEN, ODD)
+    checkTypedSandwich(SCATTERED, VECTORS)
+
+
+  test "Sandwich: equal chain exactly for full operator, and alias reads operator":
+    for (m, n, _) in sampleMultivectors():
+      let (v, e) = (sampleOf[VECTORS](), sampleOf[EVEN]())
+      checkSame(m ⟇⟇~∘ n, (n ⟇ m) ⟇ (~∘ n))
+      checkSame(v ⟇⟇~∘ n, (n ⟇ v) ⟇ (~∘ n))
+      checkSame(e ⟇⟇~∘ n, (n ⟇ e) ⟇ (~∘ n))
+      checkSame(transform(v, n), v ⟇⟇~∘ n)
+    check (sampleOf[VECTORS]() ⟇⟇~∘ sampleOf[ALL]()) is Multivector
+    let (v, e) = (sampleOf[VECTORS](), sampleOf[EVEN]())
+    check transform(v, e).toMultivector =~ (v ⟇⟇~∘ e).toMultivector
 ```

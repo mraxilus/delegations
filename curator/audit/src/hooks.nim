@@ -13,10 +13,12 @@
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
 ##     names `#N` outside link or cites charter reference with no description, sign-off from
 ##     turn that read no open issue of its role, call of subagent of kind that no block of
-##     model turn before it predicts, report of critic with no reflection after it, and cell of
-##     reflection that quotes no block call took; `start` prints role, read order, each
-##     finding of drift, headings of record branch works on, and carried list; `prompt` reads
-##     each message of Architect; `push` and `msg` serve git hooks.
+##     earlier model turn naming that kind predicts with no subagent started between them,
+##     report of critic with no reflection after it, and cell of reflection that is neither
+##     whole claim of block call took nor `No prediction`;
+##     `start` prints role, read order, each finding of drift, headings of record branch works
+##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
+##     git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -57,13 +59,17 @@
 ##     alone, since it starts again at each message of Architect. Transcript names message
 ##     person typed by `origin.kind`, which no wake carries; turn still starts at wake, since
 ##     what turn did is read from there.
-##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962
-##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
-##     just before its own, which starts no subagent; each report of critic takes
-##     `## Reflection` block after it; each cell under `Predicted` of reflection quotes block
-##     call took. Model turn ends where model stops, never at `user` entry, so block checks read
-##     model turns, and every other check reads turn since message of person. Kinds are read
-##     from templates at each stop (`readKinds`).
+##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962 and #969
+##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block that names its
+##     kind, of model turn before its own and after each earlier turn that starts subagent,
+##     nearest turn first; each report of critic takes `## Reflection` block after it; each
+##     cell under `Predicted` of reflection is one whole claim of block call took, with or
+##     without its label, or `No prediction`. Model turn ends where model stops, never at
+##     `user` entry, so block checks read model turns, and every other check reads turn since
+##     message of person. Kinds are read from templates at each stop (`readKinds`). `Agent` call
+##     whose result has `is_error` and no `agentId` is skipped (7022770415). Assumed: harness
+##     writes such result only for call that it rejects; probe Q5 gives its shape, and frozen
+##     copy of transcript holds no `Agent` result with `is_error`.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -82,15 +88,18 @@
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
-##   Cost: blocks pair with calls by order alone, so hook never reads which subagent block
-##     names; it never reads state, confidence or figures of header of reflection, run of
+##   Cost: hook never reads state, confidence or figures of header of reflection, run of
 ##     resolver, or rules of forecasting, so reading holds those.
-##   Cost: reply to refusal of `stop` is model turn of its own, so block whose turn is refused
-##     stands two turns before call that follows reply.
+##   Cost: block in turn after call it names still serves later call of its own kind; block in
+##     turn of that call serves none. Block of later turn replaces block of its kind of earlier
+##     turn, while inside one turn call takes earliest (7027197745); so of blocks for two
+##     subagents of one kind, first call takes block of nearer turn.
+##   Cost: call that starts subagent and then fails with result that has `is_error` and no
+##     `agentId` is skipped too, as rejected call is.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, sequtils, strutils, uri]
+import std/[algorithm, json, options, os, sequtils, strutils, tables, uri]
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -143,6 +152,9 @@ type
     id*: string  ## Id of tool use, which its result names.
     is_foreground*: bool  ## Input `run_in_background` is false, so result can hold report.
     place*: Place  ## Where call stands.
+    model*: string
+      ## `resolvedModel` of result of call, else input `model`; empty where neither names one.
+    effort*: string  ## Input `effort`; empty where call names none.
 
   Block* = object  ## Define one `## Prediction` or `## Reflection` block of assistant text.
     text*: string  ## Lines after heading, to end of block, each fenced line blanked.
@@ -150,6 +162,9 @@ type
     is_counted*: bool
       ## Heading stands above first `## Sign-off` or working line of last text of its turn, or
       ##   in other text.
+    uuid*: string  ## `uuid` of entry holding block; empty where entry gives none.
+    timestamp*: string  ## `timestamp` of that entry, in ISO 8601; empty where it gives none.
+    delegate*: string  ## `sessionId` of that entry, which names delegate; empty where none.
 
   Subagents* = object  ## Define what transcript says about subagents, by model turn.
     turns*: int  ## Count of model turns; last one is current.
@@ -332,17 +347,77 @@ const
     ## Kinds whose call passes with no block: prediction of critic is optional (6975216328),
     ##   and resolver marks prediction, so it takes none.
   HEADING_PREDICTION* = "## Prediction"  ## Heading of block that predicts subagent.
+  LABEL_SUBAGENT = "**Subagent:**"
+    ## Opening of line of block whose first word after it names kind of call that block serves
+    ##   (7017187857).
+  LABELS_SUBAGENT* = ["**subagent:**", "**subagent**:"]
+    ## Forms of `LABEL_SUBAGENT` that line opens with, in lower case: match reads it in any case,
+    ##   with colon inside or outside bold (7027197745).
+  MARKS_KIND = {'`', '*', '_'}
+    ## Marks of code, bold and italic that word of kind may stand inside; match drops them, with
+    ##   case and final mark of `MARKS_END_KIND` (7022770415).
+  MARKS_END_KIND = {',', '.', ':'}
+    ## Marks after word of kind that match drops, once, as in `builder,` (7022770415) and
+    ##   `builder.` or `builder:` (7027197745).
   HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
-  KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
+  KIND_CRITIC* = "critic"  ## Kind whose report asks for reflection.
   KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
   TYPE_QUEUED = "queued_command"  ## Type of attachment that hand-back queued inside turn takes.
   STATUS_LAUNCHED = "async_launched"
     ## Status of result of `Agent` call that runs in background: launch notice, and no report.
-  COLUMN_PREDICTED = "Predicted"  ## Column of table of reflection whose cells quote claims.
+  COLUMN_PREDICTED* = "Predicted"  ## Column of table of reflection whose cells quote claims.
+  NO_PREDICTION* = "No prediction"
+    ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
+  MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
+  MARKS_ITEM = {'.', ')'}  ## Marks after number of item of numbered list, as `1.` or `1)`.
+  DIGITS_ITEM = 9  ## Digits that number of item holds at most, as CommonMark reads it.
+  SPACES_INDENT = {' ', '\t'}  ## Characters of indent, and of gap after marker of item.
+  COLUMNS_TAB = 4  ## Columns between stops of tab, as CommonMark reads indent.
+  INDENT_INSIDE = 2
+    ## Columns of indent from which line stands inside bullet of claim, as `- ` opens it.
+  NUMBER_INSIDE = 1
+    ## Value of number of item that breaks paragraph of claim from inside its bullet (CommonMark,
+    ##   List items), as Markdown lets list that opens at 1 alone break paragraph; `01.` and
+    ##   `001)` open at 1 too, as pandoc 3.1.3 of GFM reads them.
+  MARK_PERCENTILES = ", as the 10th"
+    ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
+    ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
+    ##   (7023048202).
+  OPENING_CRITERION = ". "  ## Full stop and space that open resolution criterion of claim.
+  WORDS_CRITERION = "resolution criterion"
+    ## Words that open resolution criterion of claim, as samples of GUIDE.md write them, in lower
+    ##   case: claim reads them in any case of letters (choice), after `OPENING_CRITERION` and
+    ##   marks of emphasis, so criterion in such form makes no later percentage confidence.
+    ##   Where they are first mark, claim ends at them (7016134603), or at confidence before them
+    ##   (7018501890).
+  MARKS_EMPHASIS = {'*', '_'}  ## Marks of italics and bold, as Markdown writes them.
+  EMPHASIS_CRITERION = 3
+    ## Marks of emphasis that may stand between full stop and words of criterion: none, italics,
+    ##   bold, or both, as `. ***Resolution criterion:***` (7027197745); four or more stay text.
+  POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
+  PIPE = '|'  ## Mark between cells of row of table.
+  PIPE_ESCAPED = "\\" & PIPE
+    ## Pipe as cell of table must write it; cell and claim each read it as `PIPE` (7022872980).
+  SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
+  FORMS_LABEL = [("***", ":*** "), (BOLD, ":" & BOLD & " "), (BOLD, BOLD & ": "),
+    ("__", ":__ "), ("", SEPARATOR_LABEL)]
+    ## Opening and closing of label of claim, longest opening first: bold with colon inside, as
+    ##   in `**Judgement:** ` (7022872980), bold with colon outside, bold of underscores, and bold
+    ##   and italic (7027197745), or plain, as in `Judgement: `.
+  FULL_STOP = '.'
+    ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
+    ##   (7017902016).
+  RULE_CELL = "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" &
+    HEADING_PREDICTION & "` block that call took, up to its confidence, percentiles or " &
+    "resolution criterion, or before final full stop of bullet with none, with or without its " &
+    "label of one word that opens with capital, or `" & NO_PREDICTION & "` (GUIDE.md, " &
+    "Prediction, critic and reflection)"
+    ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
+    ##   each names `No prediction` as form of miss (7015791554).
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
-    "mend each cell under `Predicted` that quotes no block that call took:"
+    "mend each cell under `Predicted` that is no whole claim of block that call took:"
     ## Line opening part of refusal of `stop` that blocks of subagents take.
 
 
@@ -1882,42 +1957,87 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   )]
 
 
-func blocksTaken(subagents: Subagents; kinds: openArray[string]): seq[int] =
+func kindNamed*(text: string, kinds: openArray[string]): string =
+  ## Read kind block text names: first word after `**Subagent:**` (7017187857), on first line
+  ##   of block that opens with it, after any indent; empty where no line opens so, or that word
+  ##   is no kind.
+  ##   Label reads in any case, with colon inside or outside bold (7027197745), so
+  ##     `**subagent**:` opens such line; each other form, as `__Subagent:__`, opens none.
+  ##   Word runs to next whitespace. Match drops its case, each mark of `MARKS_KIND` around it,
+  ##     and one final mark of `MARKS_END_KIND` (7022770415, 7027197745), so `**Builder**,` and
+  ##     `builder.` name `builder`; kind read is name its template gives. Each other mark stays,
+  ##     so `builder;` and `builder..` name none.
+  for line in text.splitLines:
+    let
+      s = line.strip(trailing = false)
+      lower = s.toLowerAscii
+    var at = -1  # End of label that line opens with; -1 where it opens with none.
+    for label in LABELS_SUBAGENT:
+      if lower.startsWith(label): at = label.len
+    if at < 0: continue
+    let words = s[at .. ^1].splitWhitespace
+    if words.len == 0: return ""
+    var word = words[0].strip(chars = MARKS_KIND)
+    if word.len > 0 and word[^1] in MARKS_END_KIND:
+      word = word[0 ..< word.high].strip(leading = false, chars = MARKS_KIND)
+    for kind in kinds:
+      if cmpIgnoreCase(kind, word) == 0: return kind
+    return ""
+  ""
+
+
+func turnsBack(subagents: Subagents, turn: int): Slice[int] =
+  ## Read turns that call of turn looks back over: each turn after latest earlier turn holding
+  ##   `Agent` call of any type, up to turn before its own (7014974932).
+  var before = -1  # Latest turn before `turn` that starts subagent; -1 where none.
+  for call in subagents.calls:
+    if call.place.turn < turn: before = call.place.turn
+  before + 1 ..< turn
+
+
+func nearestFirst(subagents: Subagents, blocks: seq[int]): seq[int] =
+  ## Sort indices in `predictions`: block of nearest turn first, and earliest block first inside
+  ##   one turn (7017187857).
+  blocks.sortedByIt((-subagents.predictions[it].place.turn, it))
+
+
+func blocksTaken*(subagents: Subagents, kinds: openArray[string]): seq[int] =
   ## Read index in `predictions` of block each call took, by index of call; -1 where none.
-  ##   Block serves calls of next model turn alone, and only from turn that starts no subagent of
-  ##     any type (`D2 a` of 6982373798), since prediction is last message of turn of its own,
-  ##     which timer ends, and next turn starts subagent (6980006567).
-  ##   Each call of kind that is not exempt takes earliest block no call took, in order of
-  ##     calls; exempt call takes block only where one is left after them.
+  ##   Block serves later call where no subagent starts between them, whatever count of turns
+  ##     between (7014974932), so call looks back over turns `turnsBack` gives.
+  ##   So block of turn that starts subagent is no evidence (`D2 a` of 6982373798), and nor is
+  ##     block of turn of call, since prediction is last message of turn of its own (6980006567).
+  ##   Block serves only call of kind it names (`kindNamed`), exempt kind too, and call takes
+  ##     free one of nearest of those turns, earliest in that turn (`nearestFirst`, 7017187857);
+  ##     calls of one turn take in their order.
   ##   Call of type no template names is tool use, and takes none.
   result = newSeqWith(subagents.calls.len, -1)
-  var first = 0
-  while first < subagents.calls.len:
-    let turn = subagents.calls[first].place.turn
-    var stop = first
-    while stop < subagents.calls.len and subagents.calls[stop].place.turn == turn: inc stop
-    if turn > 0 and not subagents.calls.anyIt(it.place.turn == turn - 1):
-      var free = toSeq(0 ..< subagents.predictions.len)
-        .filterIt(subagents.predictions[it].place.turn == turn - 1)
-      for is_exempt in [false, true]:
-        for k in first ..< stop:
-          let kind = subagents.calls[k].kind
-          if free.len == 0 or kind notin kinds or (kind in KINDS_EXEMPT) != is_exempt: continue
-          result[k] = free[0]
-          free.delete(0)
-    first = stop
+  let named = subagents.predictions.mapIt(it.text.kindNamed(kinds))
+  for k, call in subagents.calls:
+    if call.kind notin kinds: continue
+    let
+      back = subagents.turnsBack(call.place.turn)
+      free = toSeq(0 ..< subagents.predictions.len)
+        .filterIt(subagents.predictions[it].place.turn in back and named[it] == call.kind)
+        .filterIt(it notin result)
+    if free.len > 0: result[k] = subagents.nearestFirst(free)[0]
 
 
-func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
+func checkPredictions(subagents: Subagents, kinds: openArray[string]): seq[Finding] =
   ## Report each call of current model turn, of kind that is not exempt, that took no block.
   ##   Missing prediction asks for no block, since block after call is no evidence: reply names
   ##     it, and reflection counts it as miss, with its cause (6979936148).
+  ##   Block no call took, of turns call looks back over, adds what nearest one names: other
+  ##     kind, or none, since block serves only call of kind it names (7017187857).
   ##   Block in turn of call adds that block stands in earlier turn, and thinking with no text
   ##     before call adds that block in thinking reaches neither chat nor hook (`D3 a` of
   ##     6982373798). Call of earlier turn was held at its own stop.
   let
     taken = subagents.blocksTaken(kinds)
     current = subagents.turns - 1
+    back = subagents.turnsBack(current)
+    left = subagents.nearestFirst(toSeq(0 ..< subagents.predictions.len)
+      .filterIt(subagents.predictions[it].place.turn in back and it notin taken))
   for k, call in subagents.calls:
     if call.place.turn != current or call.kind notin kinds or call.kind in KINDS_EXEMPT or
         taken[k] >= 0:
@@ -1929,22 +2049,28 @@ func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Findi
       is_written = subagents.predictions.anyIt(it.place.isBefore)
       is_thought = subagents.thinking.anyIt(it.isBefore) and not subagents.texts.anyIt(it.isBefore)
     var hint = ""
+    if left.len > 0:
+      let named = subagents.predictions[left[0]].text.kindNamed(kinds)
+      hint = ", and block of such turn names " &
+        (if named.len > 0: "`" & named & "`" else: "no kind") &
+        ": block serves only call of kind that first word of its `" & LABEL_SUBAGENT &
+        "` line names"
     if is_written:
-      hint = ", and block in turn of call, which is no evidence: block stands in earlier turn"
+      hint.add ", and block in turn of call, which is no evidence: block stands in earlier turn"
     elif is_thought:
-      hint = ", and thinking with no text before call: block in thinking reaches neither " &
+      hint.add ", and thinking with no text before call: block in thinking reaches neither " &
         "chat nor hook"
     result.add finding(
       "",
       0,
-      "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn just " &
-        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
-        "reflection); got none for `" & call.kind & "` call `" & call.description & "`" & hint &
-        ".",
+      "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn before " &
+        "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
+        "critic and reflection); got none for `" & call.kind & "` call `" & call.description &
+        "`" & hint & ".",
     )
 
 
-func cellsRow(line: string): seq[string] =
+func cellsRow*(line: string): seq[string] =
   ## Read stripped cells of pipe-table row, `\|` read as `|`; none where line opens with no `|`.
   let s = line.strip
   if not s.startsWith("|"): return
@@ -1964,22 +2090,174 @@ func cellsRow(line: string): seq[string] =
   if cell.strip.len > 0: result.add cell.strip
 
 
-func isRowSeparator(cells: openArray[string]): bool =
+func isRowSeparator*(cells: openArray[string]): bool =
   ## Decide whether row is `| --- | --- |` rule under header.
   cells.len > 0 and cells.allIt(it.len > 0 and it.allCharsInSet({'-', ':'}))
 
 
-func collapsed(text: string): string =
+func collapsed*(text: string): string =
   ## Read text with each run of whitespace as one space, and none at either end.
   text.splitWhitespace.join(" ")
 
 
+func isBullet(line: string): bool =
+  ## Decide whether line opens bullet: `-`, `*` or `+`, then space, after any indent.
+  let s = line.strip(trailing = false)
+  s.len > 1 and s[0] in MARKERS_BULLET and s[1] == ' '
+
+
+func isItem(line: string): bool =
+  ## Decide whether line opens item of list, as Markdown reads it right under claim (choice):
+  ##   marker of bullet, or one to `DIGITS_ITEM` digits then `.` or `)`, each then space, tab or
+  ##   end of line.
+  ##   From `INDENT_INSIDE` columns of indent, line stands inside bullet of claim, and there only
+  ##     marker or number of value 1, with text after it, breaks paragraph (CommonMark, List
+  ##     items); value reads past leading zeros, so `01.` breaks it as `1.` does.
+  ##   Cost: from six columns, Markdown reads such line as text of claim, yet it opens item here,
+  ##     as bullet at any indent ends claim.
+  var
+    column = 0  # Column of first character after indent; tab reaches next stop.
+    i = 0
+  while i < line.len and line[i] in SPACES_INDENT:
+    column = (if line[i] == '\t': column - column mod COLUMNS_TAB + COLUMNS_TAB else: column + 1)
+    inc i
+  let start = i
+  if i < line.len and line[i] in MARKERS_BULLET: inc i
+  else:
+    while i < line.len and i - start < DIGITS_ITEM and line[i] in Digits: inc i
+    if i == start or i >= line.len or line[i] notin MARKS_ITEM: return false
+    inc i
+  if i < line.len and line[i] notin SPACES_INDENT: return false
+  column < INDENT_INSIDE or (line[i .. ^1].strip.len > 0 and
+    (line[start] in MARKERS_BULLET or line[start ..< i - 1].parseInt == NUMBER_INSIDE))
+
+
+func isPercentage(text: string, at: int): bool =
+  ## Decide whether percentage in brackets opens at `at` of text: space, `(`, digits, then point
+  ##   and digits where it has decimal part, as `(62.5%)`, then `%)`. Ruling 7016134603 ends
+  ##   claim at its percentage, and digits alone would narrow it.
+  if not text.continuesWith(" (", at): return false
+  var i = at + 2
+  while i < text.len and text[i] in Digits: inc i
+  if i == at + 2: return false
+  if i + 1 < text.len and text[i] == POINT_DECIMAL and text[i + 1] in Digits:
+    i += 2
+    while i < text.len and text[i] in Digits: inc i
+  text.continuesWith("%)", i)
+
+
+func labelClaim(claim: string): string =
+  ## Read label that opens claim, with its closing: run with no space whose first character is
+  ##   capital letter, as `Judgement: `, `Q1: ` or `Follow-up: `, plain or in form of bold of
+  ##   `FORMS_LABEL`, as `**Judgement:** ` (7022872980) or `__Judgement:__ ` (7027197745);
+  ##   empty where claim opens with none.
+  ##   Run ends at first closing of its form after its capital; capital is `A` to `Z` alone.
+  for (opening, closing) in FORMS_LABEL:
+    let start = opening.len  # First character of run.
+    if not claim.startsWith(opening) or start >= claim.len or claim[start] notin UppercaseLetters:
+      continue
+    let stop = claim.find(closing, start + 1)  # End of run.
+    if stop >= 0 and ' ' notin claim[start ..< stop]: return claim[0 ..< stop + closing.len]
+  ""
+
+
+func findCriterion(lower: string): int =
+  ## Read first place of resolution criterion in text in lower case: `OPENING_CRITERION`, up to
+  ##   `EMPHASIS_CRITERION` marks of emphasis, then `WORDS_CRITERION`; -1 where text holds none.
+  var at = lower.find(OPENING_CRITERION)
+  while at >= 0:
+    let start = at + OPENING_CRITERION.len  # First character after full stop and space.
+    var i = start
+    while i < lower.len and i - start < EMPHASIS_CRITERION and lower[i] in MARKS_EMPHASIS: inc i
+    if lower.continuesWith(WORDS_CRITERION, i): return at
+    at = lower.find(OPENING_CRITERION, at + 1)
+  -1
+
+
+func stopClaim(text: string): int =
+  ## Read where claim of collapsed bullet text ends, from first of its marks.
+  ##   Claim whose percentiles come first ends at them, and no percentage in brackets ends it,
+  ##     since percentiles state its confidence (7023048202).
+  ##   Other claim runs up to its confidence: last percentage in brackets before its resolution
+  ##     criterion, or before its end; percentage before confidence stays in claim (7018501890).
+  ##     With no percentage there, claim runs up to criterion (7016134603); with neither, it ends
+  ##     before one final full stop of its bullet (7017902016).
+  ##   Criterion is read in text in lower case (`findCriterion`), whose places are those of text,
+  ##     since case of ASCII letter keeps its length.
+  let
+    ranged = text.find(MARK_PERCENTILES)
+    criterion = text.toLowerAscii.findCriterion  # First place of criterion; -1 where none.
+  if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
+  result = (if criterion >= 0: criterion else: text.len)
+  for at in countdown(result - 1, 0):  # last percentage first: it is confidence
+    if text.isPercentage(at): return at
+  if result == text.len and text.endsWith(FULL_STOP): dec result  # no mark: one full stop goes
+
+
+func bulletsClaim(text: string): seq[string] =
+  ## Read text of each bullet of block text that can hold claim, collapsed.
+  ##   Such bullet has no indent, and runs to next blank line, next line opening bullet at any
+  ##     indent, next line opening other item (`isItem`, choice), or end of block; each run of
+  ##     whitespace reads as one space (7016134603), and `\|` reads as `|`, as cell reads it
+  ##     (7022872980).
+  var is_open = false  # Line continues last bullet: no blank line or item since it opened.
+  for line in text.splitLines:
+    if line.isBullet and line[0] in MARKERS_BULLET:
+      result.add line[2 .. ^1]
+      is_open = true
+    elif line.strip.len == 0 or line.isBullet or line.isItem: is_open = false
+    elif is_open: result[^1].add "\n" & line
+  for bullet in result.mitems: bullet = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
+
+
+func claims*(text: string): seq[string] =
+  ## Read each claim of block text, with its label and without it, as reflection may quote it.
+  ##   Claim is text of bullet `bulletsClaim` reads, up to where `stopClaim` reads: its
+  ##     percentiles, its confidence, its resolution criterion, or final full stop of bullet.
+  ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
+  ##     claim reads whole (7018501890).
+  for text in text.bulletsClaim:
+    let claim = text[0 ..< text.stopClaim].strip
+    if claim.len == 0: continue
+    result.add claim
+    let label = claim.labelClaim
+    if label.len > 0 and claim.len > label.len: result.add claim[label.len .. ^1]
+
+
+func positionClaim*(text, claim: string): int =
+  ## Read position from 1 of first bullet of block text whose claim, with or without its label,
+  ##   is claim; 0 where none holds it.
+  for k, bullet in text.bulletsClaim:
+    let
+      whole = bullet[0 ..< bullet.stopClaim].strip
+      label = whole.labelClaim
+    if claim == whole or (label.len > 0 and claim == whole[label.len .. ^1]): return k + 1
+
+
+func isNumber*(text, claim: string): bool =
+  ## Decide whether claim, with or without its label, is number of block text: claim of bullet
+  ##   whose percentiles end it, as `stopClaim` reads them (7023048202).
+  let position = text.positionClaim(claim)
+  if position == 0: return false
+  let bullet = text.bulletsClaim[position - 1]
+  bullet.continuesWith(MARK_PERCENTILES, bullet.stopClaim)
+
+
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ## Report reflection whose first table with column `Predicted` is missing or holds no row, and
-  ##   each cell under that column that is empty or stands in no block call took.
+  ##   each cell under that column that is empty, or is neither claim of block call took nor
+  ##   `No prediction`.
   ##   Table is run of lines opening with `|`, header first; text is fenced out already.
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
-  ##     each is finding, as cell that quotes no block is.
+  ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
+  ##     so it names `No prediction`, which row of missed prediction holds.
+  ##   Cell equals one claim of block call took, with or without its label (7016134603), run
+  ##     that opens with capital, plain or in form of bold of `FORMS_LABEL` (7022872980,
+  ##     7027197745), each run of whitespace read as one space. Fragment of claim, claim with
+  ##     other label before it, claim with its confidence (7018501890), or claim with no mark
+  ##     that keeps final full stop of its bullet (7017902016) is none.
+  ##   Cell `No prediction` passes too, in that case of letters alone: it counts missing
+  ##     prediction in row of its own, with cause of miss under `Result` (7015791554).
   let lines = text.splitLines
   var i = 0
   while i < lines.len:
@@ -2001,18 +2279,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
     for n, row in rows:
       let cell = (if column < row.len: row[column].collapsed else: "")
       if cell.len == 0:
-        result.add finding(
-          "", 0, "Cell under `" & COLUMN_PREDICTED & "` quotes claim of block word for word; " &
-            "got empty cell in row `" & $(n + 1) & "`."
-        )
-      elif not quoted.anyIt(cell in it):
-        result.add finding(
-          "",
-          0,
-          "Cell under `" & COLUMN_PREDICTED & "` stands word for word in `" &
-            HEADING_PREDICTION & "` block that call took (GUIDE.md, Prediction, critic and " &
-            "reflection); got `" & cell & "`.",
-        )
+        result.add finding("", 0, RULE_CELL & "; got empty cell in row `" & $(n + 1) & "`.")
+      elif cell != NO_PREDICTION and cell notin quoted:
+        result.add finding("", 0, RULE_CELL & "; got `" & cell & "`.")
     return
   @[finding(
     "", 0, "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
@@ -2022,14 +2291,14 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
 
 func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
   ## Report each report of critic in current model turn with no `## Reflection` block of its own
-  ##   after it, and each table of reflection of turn that quotes no block call took.
+  ##   after it, and each table of reflection of turn that quotes no claim call took.
   ##   Reports match headings earliest first, so n reports need n headings, and heading counts
   ##     above first `## Sign-off` or working line of last text of turn alone, whichever comes
   ##     first, since reflection comes before any sign-off or working line (6974524232).
   ##   Cell quotes block word for word (6975486646), and only block call used (6980006567): block
   ##     no call took is no evidence, so reflection quotes none of it.
-  ##   Each run of whitespace on both sides reads as one space before compare; no ruling holds
-  ##     that, so it is choice.
+  ##   Cell quotes whole claim of block, with or without its label (7016134603), or is
+  ##     `No prediction` (7015791554); each run of whitespace collapses, as ruling holds.
   let
     current = subagents.turns - 1
     reports = subagents.reports.filterIt(it.turn == current)
@@ -2049,7 +2318,7 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
         "for report `" & $(n + 1) & "` of `" & $reports.len & "` in this turn.",
     )
   let quoted = subagents.blocksTaken(kinds).filterIt(it >= 0)
-    .mapIt(subagents.predictions[it].text.collapsed)
+    .mapIt(subagents.predictions[it].text.claims).concat
   for reflection in subagents.reflections:
     if reflection.place.turn == current: result.add findingsTable(reflection.text, quoted)
 
@@ -2174,15 +2443,25 @@ proc readPrompt*(root, branch: string): string =
   if path.len > 0 and fileExists(root / path): readFile(root / path) else: ""
 
 
-func nameMatter(text: string): string =
-  ## Read value of `name:` line of front matter, i.e. lines between opening `---` and next one;
+func valueMatter(text, key: string): string =
+  ## Read value of line `<key>:` of front matter, i.e. lines between opening `---` and next one;
   ##   empty where text opens with none, or matter names none.
-  let lines = text.splitLines
+  let
+    lines = text.splitLines
+    opening = key & ":"
   if lines.len == 0 or lines[0].strip != "---": return ""
   for line in lines.toOpenArray(1, lines.high):
     if line.strip == "---": return ""
-    if line.startsWith("name:"): return line["name:".len .. ^1].strip(chars = Whitespace + {'"'})
+    if line.startsWith(opening): return line[opening.len .. ^1].strip(chars = Whitespace + {'"'})
   ""
+
+
+proc readTemplates(root: string): seq[string] =
+  ## Read text of each `*.md` template of `.claude/agents/` of root; none where folder is missing.
+  let directory = root / DIRECTORY_AGENTS
+  if not dirExists(directory): return
+  for kind, path in walkDir(directory):
+    if kind in {pcFile, pcLinkToFile} and path.endsWith(".md"): result.add readFile(path)
 
 
 proc readKinds*(root: string): seq[string] =
@@ -2191,13 +2470,20 @@ proc readKinds*(root: string): seq[string] =
   ##   Kinds are read at each stop and never listed in code, so template added is kind at once.
   ##   Read lives here and not in koch, since no suite runs `main` of koch, and suite reads it
   ##     over scratch root.
-  let directory = root / DIRECTORY_AGENTS
-  if not dirExists(directory): return
-  for kind, path in walkDir(directory):
-    if kind notin {pcFile, pcLinkToFile} or not path.endsWith(".md"): continue
-    let name = readFile(path).nameMatter
+  for text in root.readTemplates:
+    let name = text.valueMatter("name")
     if name.len > 0: result.add name
   result.sort
+
+
+proc readEfforts*(root: string): Table[string, string] =
+  ## Read `effort:` of front matter of each template `readKinds` reads, by its kind; template
+  ##   that names no effort adds none, so its call reads effort of call alone.
+  for text in root.readTemplates:
+    let
+      name = text.valueMatter("name")
+      effort = text.valueMatter("effort")
+    if name.len > 0 and effort.len > 0: result[name] = effort
 
 
 func contextStart*(
@@ -2415,12 +2701,28 @@ func isReportEntry(
   true
 
 
+func usesRejected(e: JsonNode): seq[string] =
+  ## Read id of each tool use whose result entry gives as rejected by harness: item
+  ##   `tool_result` whose `is_error` is true, in `user` entry whose `toolUseResult` names no
+  ##   `agentId`, so no subagent started (7022770415).
+  ##   Call that launched names its agent, so entry that names one rejects none, and call keeps
+  ##     its effect (7022770415).
+  if e{"type"}.getStr != "user" or e{"toolUseResult", "agentId"}.getStr.len > 0: return
+  for item in e{"message", "content"}.getElems:
+    let id = item{"tool_use_id"}.getStr
+    if item{"type"}.getStr == "tool_result" and item{"is_error"}.getBool and id.len > 0:
+      result.add id
+
+
 func toSubagents(entries: openArray[JsonNode]): Subagents =
   ## Read each `Agent` call, block, report of critic, thinking and text of transcript, in order,
   ##   with model turn of each.
   ##   Fence reads over joined text of each entry, as `parseTurn` joins it, so fence crossing two
   ##     items reads right; each item still ends its own block. Fence is `fencedOut`'s, so tilde
   ##     fence and indented code are text.
+  ##   Call whose result gives it as rejected (`usesRejected`) drops out before that entry is
+  ##     read as report, so it takes no block, ends no turns, asks for no block, and its result
+  ##     is no report (7022770415).
   let turns = entries.turnsModel
   result.turns = (if turns.len == 0: 1 else: turns[^1] + 1)
 
@@ -2436,7 +2738,15 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
   for i, e in entries:
     let turn = turns[i]
     if e{"type"}.getStr != "assistant":
+      let rejected = e.usesRejected
+      if rejected.len > 0: result.calls.keepItIf(it.id notin rejected)
       if entries.isReportEntry(i, result.calls): result.reports.add Place(turn: turn, at: at)
+      # Result names model harness ran subagent on, which replaces model input asked for.
+      let model = e{"toolUseResult", "resolvedModel"}.getStr
+      if model.len > 0:
+        for item in e{"message", "content"}.getElems:
+          for call in result.calls.mitems:
+            if call.id.len > 0 and item{"tool_use_id"}.getStr == call.id: call.model = model
       inc at
       continue
     let items = e{"message", "content"}.getElems
@@ -2461,10 +2771,15 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
         result.texts.add place
         let stop = line + pieces[k].len
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_PREDICTION):
-          result.predictions.add Block(text: found.text, place: place, is_counted: true)
+          result.predictions.add Block(
+            text: found.text, place: place, is_counted: true, uuid: e{"uuid"}.getStr,
+            timestamp: e{"timestamp"}.getStr, delegate: e{"sessionId"}.getStr,
+          )
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_REFLECTION):
           result.reflections.add Block(
-            text: found.text, place: place, is_counted: line + found.line < cut
+            text: found.text, place: place, is_counted: line + found.line < cut,
+            uuid: e{"uuid"}.getStr, timestamp: e{"timestamp"}.getStr,
+            delegate: e{"sessionId"}.getStr,
           )
         line = stop
       of TYPES_THINKING[0], TYPES_THINKING[1]: result.thinking.add place
@@ -2477,6 +2792,8 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
           id: item{"id"}.getStr,
           is_foreground: background != nil and background.kind == JBool and not background.getBool,
           place: place,
+          model: item{"input", "model"}.getStr,
+          effort: item{"input", "effort"}.getStr,
         )
       else: discard
 

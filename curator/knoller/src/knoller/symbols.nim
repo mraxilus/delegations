@@ -62,6 +62,8 @@ type
     kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
                    ##   whose own name pass answers with its result, kind unread.
     name*: string  ## Qualified name, e.g. `system.float`.
+    section*: string  ## Command section line answers, e.g. `def` or `use`.
+    signature*: string  ## Type of symbol as compiler spells it, which tells overloads apart.
     file*: string  ## Absolute path of definition, separators written `/` (`slashed`).
     line*: int  ## One-based line of definition.
     column*: int  ## Zero-based byte column of definition.
@@ -70,6 +72,7 @@ type
     path*: string  ## Repository-relative path.
     sites*: seq[(int, int)]  ## One-based line and zero-based byte column of each name.
     names*: seq[string]  ## Names whose global declarations to list.
+    usages*: seq[(int, int)]  ## Site of each name whose every use to list (`use`).
 
   Request* = object  ## Define query of one file, and where and with what toolchain it runs.
     query*: Query
@@ -86,6 +89,8 @@ type
     reason*: string  ## Why file stays unresolved; empty where it compiled.
     symbols*: Table[(int, int), Symbol]  ## Symbol each site resolves to; absent where none.
     globals*: Table[string, seq[Symbol]]  ## Global declarations of each name, any module.
+    usages*: Table[(int, int), seq[Symbol]]
+      ## Every line answering `use` at each site: definition and each use, of each symbol there.
 
   Entry = object  ## Define one `nimsuggest` run: where, on what, for which files.
     root: string  ## Absolute directory query paths are relative to.
@@ -94,6 +99,14 @@ type
     bin: string  ## Directory of toolchain serving pin; empty names PATH.
     defines: seq[string]  ## Options it takes before entry.
     queries: seq[Query]
+
+  Checked* = object  ## Define what compiler says of text it checks from stdin.
+    errors*: seq[(int, string)]  ## One-based line in text, and message, of each error there.
+    unused*: seq[(int, string)]
+      ## One-based line in text, and name, of each symbol compiler hints is declared and never
+      ##   used there; read where caller asks hints.
+    is_clean*: bool  ## Compiler ran, and reported no error.
+    reason*: string  ## Why compiler did not run; empty where it ran.
 
   Asked = object  ## Define `nimsuggest` run started: process, file of commands, file of answers.
     process: Process  ## Run itself; nil where `missing` says why none started.
@@ -107,14 +120,23 @@ const
   PARALLEL = 4  ## Entries running at once at most.
   MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.
   SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
-  BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
+  BACKEND_JS* = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
   KIND_RESULT = "skResult"  ## Kind of routine's implicit `result`.
   SUFFIX_RESULT = ".result"  ## Last part of qualified name of implicit `result`.
   KIND_ROUTINE = "routine"  ## Kind given routine declared at site whose answer is its result.
   COMMAND_SITE = "def"  ## Command resolving site of entry itself: its definition alone.
   COMMAND_INCLUDED = "dus"
     ## Command resolving site of included file: its definition first, then each use of it.
+  COMMAND_USES = "use"  ## Command listing definition and every use of each symbol at site.
   TEMP_PREFIX = "knoller_suggest_"  ## Opening of name of each temporary file of run.
+  FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
+  CODES_MISSING = [126, 127, 9009]
+    ## Exit codes of shell where compiler did not start: 126 and 127 of `sh`, 9009 of `cmd`.
+  FILE_TEXT = "text.nim"  ## File in private directory of check that holds text compiler reads.
+  FILE_OUTPUT = "output.txt"  ## File in private directory of check that holds what compiler says.
+  MARK_ERROR = " Error: "  ## Text between place and message of error line of compiler.
+  MARK_UNUSED = "is declared but not used [XDeclaredButNotUsed]"
+    ## Closing of hint compiler gives of private symbol its module never uses.
   TEMP_COMMANDS = ".commands"  ## Extension of file run reads commands from.
   TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
@@ -135,6 +157,8 @@ func toSymbol*(line: string): Option[Symbol] =
       Symbol(
         kind: fields[1],
         name: fields[2],
+        section: fields[0],
+        signature: fields[3],
         file: fields[4].slashed,
         line: fields[5].parseInt,
         column: fields[6].parseInt,
@@ -174,6 +198,15 @@ func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
   )
 
 
+func pathIncluded(file, line: string): string =
+  ## Read path, relative to directory of files, that `include` on line of file names; empty where
+  ##   line holds none.
+  let s = line.strip
+  if not s.startsWith("include "): return
+  let named = s["include ".len .. ^1].strip(chars = {'"', ' '})
+  normalizedPath(file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")).slashed
+
+
 func includer*(files: openArray[(string, string)], path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it. Files are path and text, paths relative to one directory.
@@ -183,29 +216,44 @@ func includer*(files: openArray[(string, string)], path: string): string =
     for (file, text) in files:
       if not file.endsWith(".nim"): continue
       for line in text.splitLines:
-        let s = line.strip
-        if not s.startsWith("include "): continue
-        let
-          named = s["include ".len .. ^1].strip(chars = {'"', ' '})
-          target = file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")
-        if target.normalizedPath.slashed == result: found = file
+        if file.pathIncluded(line) == result: found = file
       if found.len > 0: break
     if found.len == 0: return
     result = found
 
 
+func enclosing*(files: openArray[(string, string)], path: string): (string, string) =
+  ## Read text of file whose `include` names path, before and after that line, so text it
+  ##   includes checks inside them; both empty where nothing includes path.
+  for (file, text) in files:
+    if not file.endsWith(".nim"): continue
+    let lines = text.split('\n')
+    for k, line in lines:
+      if file.pathIncluded(line) != path: continue
+      return (lines[0 ..< k].mapIt(it & "\n").join, lines[k + 1 .. ^1].join("\n"))
+
+
 func lineRedirected*(
-  tool: string; arguments: openArray[string]; commands, answers: string; cmd = ""
+  tool: string; arguments: openArray[string]; commands, answers: string; cmd = "";
+  is_merged = false; directory = "",
 ): string =
   ## Render line running tool with arguments, reading commands from file and writing answers to
   ##   file: through `sh` where `cmd` is empty, else through `cmd` at that path, as Windows
   ##   needs. Every word is quoted there, since no path holds `"` on Windows; `/d` skips
   ##   AutoRun commands, `/v:off` reads `!` as itself, and `/s` strips outer quotes alone.
+  ##   Where caller merges (`is_merged`), errors go to file of answers too, as both shells write.
+  ##   Where caller names directory, line moves into it first, so run moves no directory of
+  ##     caller: `startProcess` given `workingDir` moves that of whole process on POSIX, around
+  ##     spawn, so threads of pool would move it under each other (`pools.nim`).
+  let merged = if is_merged: " 2>&1" else: ""
   if cmd.len == 0:
-    return (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
-      commands.quoteShellPosix & " > " & answers.quoteShellPosix
-  let inner = (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" & commands &
-    "\" > \"" & answers & '"'
+    let moved = if directory.len > 0: "cd " & directory.quoteShellPosix & " && " else: ""
+    return moved & (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
+      commands.quoteShellPosix & " > " & answers.quoteShellPosix & merged
+  let
+    moved = if directory.len > 0: "cd /d \"" & directory & "\" && " else: ""
+    inner = moved & (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" &
+      commands & "\" > \"" & answers & '"' & merged
   '"' & cmd & "\" /d /v:off /s /c \"" & inner & '"'
 
 
@@ -234,6 +282,8 @@ proc ask(entry: Entry, is_js: bool): Asked =
     for (line, column) in query.sites:
       commands.add command & " \"" & file & "\":" & $line & ":" & $column & "\n"
     for name in query.names: commands.add "globalSymbols " & name & "\n"
+    for (line, column) in query.usages:
+      commands.add COMMAND_USES & " \"" & file & "\":" & $line & ":" & $column & "\n"
   commands.add "quit\n"
 
   # Run through shell, which redirects both streams to files.
@@ -244,8 +294,10 @@ proc ask(entry: Entry, is_js: bool): Asked =
   result.answers = path.changeFileExt(TEMP_ANSWERS)
   let
     cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
-    line = lineRedirected(tool, arguments, result.commands, result.answers, cmd)
-  result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
+    line = lineRedirected(
+      tool, arguments, result.commands, result.answers, cmd, directory = entry.directory
+    )
+  result.process = startProcess(line, options = {poEvalCommand})
 
 
 proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
@@ -283,6 +335,14 @@ proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
           if symbol.isSome and symbol.get.name.split('.')[^1].identity == name.identity:
             found.add symbol.get
       answer.globals[name] = found
+      inc at
+    for site in query.usages:
+      var found: seq[Symbol]
+      if at < blocks.len:
+        for line in blocks[at]:
+          let symbol = line.toSymbol
+          if symbol.isSome: found.add symbol.get
+      answer.usages[site] = found
       inc at
     result.add answer
 
@@ -322,3 +382,106 @@ proc resolve*(requests: openArray[Request]): seq[Answer] =
       for i, answer in answers:
         result.add(if answer.reason.len == 0 or again[i].reason.len > 0: answer else: again[i])
     k += PARALLEL
+
+func toErrors(output: string): seq[(int, string)] =
+  ## Read line and message of each error compiler reports in text it read from stdin:
+  ##   `stdinfile.nim(L, C) Error: …`.
+  for line in output.splitLines:
+    if not line.startsWith(FILE_STDIN & "("): continue
+    let
+      close = line.find(')')
+      marker = line.find(MARK_ERROR)
+    if close < 0 or marker < close: continue
+    let place = line[FILE_STDIN.len + 1 ..< close].split(',')
+    try: result.add (place[0].strip.parseInt, line[marker + MARK_ERROR.len .. ^1])
+    except ValueError: discard
+
+
+func toUnused(output: string): seq[(int, string)] =
+  ## Read line and name of each symbol compiler hints is declared and never used in text it read
+  ##   from stdin: `stdinfile.nim(L, C) Hint: 'name' is declared but not used […]`.
+  for line in output.splitLines:
+    if not line.startsWith(FILE_STDIN & "(") or not line.endsWith(MARK_UNUSED): continue
+    let
+      close = line.find(')')
+      first = line.find('\'', close)
+      last = line.rfind('\'', 0, line.len - MARK_UNUSED.len)
+    if close < 0 or first < 0 or last <= first: continue
+    try: result.add (line[FILE_STDIN.len + 1 ..< close].split(',')[0].strip.parseInt,
+                     line[first + 1 ..< last])
+    except ValueError: discard
+
+
+proc checked*(
+  text, directory, nim: string; defines: openArray[string]; is_hinting = false
+): Checked =
+  ## Check text by compiler `nim` under defines, read from stdin in directory, so its imports and
+  ##   configuration resolve as for file there and nothing is written there; cache sits in
+  ##   private temporary directory removed after. Reason says why compiler did not run. Where
+  ##   caller asks hints (`is_hinting`), each symbol hint names declared and never used reads too.
+  ##   Shell gives compiler text from file and writes its output and errors to file, both in that
+  ##     directory, and run takes streams of caller, so it opens no pipe (`lineRedirected`).
+  ##     Child another thread starts meanwhile inherits each pipe open then (`pools.nim`): its
+  ##     copy of write end of pipe of text would keep compiler waiting on end of text for ever.
+  ##   Compiler `findExe` finds nowhere runs no shell, and says so: `sh` and `cmd` give missing
+  ##     command exit codes of their own, so code alone would not tell it on each platform.
+  if findExe(nim).len == 0:
+    result.reason = "compiler did not run: no compiler at " & nim
+    return
+  let cache = createTempDir("knoller_check_", "")
+  defer: removeDir(cache)
+  let
+    hints = if is_hinting: "--hints:on" else: "--hints:off"
+    arguments = @["check", hints, "--warnings:off", "--nimcache:" & cache] & @defines & @["-"]
+    cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
+    line = lineRedirected(
+      nim,
+      arguments,
+      cache / FILE_TEXT,
+      cache / FILE_OUTPUT,
+      cmd,
+      is_merged = true,
+      directory = directory,
+    )
+  writeFile(cache / FILE_TEXT, text)
+  var
+    output = ""
+    code = CODES_MISSING[1]
+  try:
+    let process = startProcess(line, options = {poEvalCommand, poParentStreams})
+    code = process.waitForExit
+    process.close
+    if fileExists(cache / FILE_OUTPUT): output = readFile(cache / FILE_OUTPUT)
+  except OSError as e: output = e.msg
+  let last = if output.strip.len == 0: "no output" else: output.strip.splitLines[^1]
+  if code in CODES_MISSING:
+    result.reason = "compiler did not run: " & last
+    return
+  result.errors = output.toErrors
+  if is_hinting: result.unused = output.toUnused
+  result.is_clean = code == 0 and result.errors.len == 0
+  if not result.is_clean and result.errors.len == 0: result.errors.add (0, last)
+
+
+func cleanBut(checked: Checked; ignored: openArray[int]): Checked =
+  ## Read check as clean where compiler ran and each error stands on zero-based line of
+  ##   `ignored`, whose errors caller reads itself.
+  result = checked
+  if not checked.is_clean and checked.reason.len == 0 and checked.errors.len > 0 and
+      checked.errors.allIt(it[0] - 1 in ignored):
+    result.is_clean = true
+
+
+proc checkedBackend*(
+  text, directory, nim: string;
+  defines: openArray[string];
+  is_hinting = false;
+  ignored: openArray[int] = [],
+): tuple[checked: Checked, defines: seq[string]] =
+  ## Check text as `checked` does, on C backend, else on JavaScript where C refuses it, as
+  ##   semantic pass asks file C rejects; defines name backend that answered. Error on zero-based
+  ##   line of `ignored` leaves check clean, since caller reads it itself.
+  result = (checked(text, directory, nim, defines, is_hinting).cleanBut(ignored), @defines)
+  if result.checked.is_clean or result.checked.reason.len > 0: return
+  let js = checked(text, directory, nim, @defines & @[BACKEND_JS], is_hinting).cleanBut(ignored)
+  if js.is_clean: result = (js, @defines & @[BACKEND_JS])

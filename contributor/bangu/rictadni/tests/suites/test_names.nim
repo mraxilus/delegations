@@ -1,4 +1,4 @@
-## Hold that this project exports no type, constant or variable whose name `lojban_parser` exports.
+## Hold that this project exports no type, constant or variable whose name `ricysoho` exports.
 ##   Suites and tools import umbrella of parser beside modules of this project, and Nim refuses
 ##     bare name that two of their modules export: #878 found `HEADER` of `index.nim` and of
 ##     `nif.nim` of parser, refused at line 74 of `test_index.nim`.
@@ -28,11 +28,11 @@ const
     [DIRECTORY_PROJECT / "src", DIRECTORY_PROJECT / "app", DIRECTORY_PROJECT / "tools"]
     ## Folders of modules that suites and tools import beside umbrella of parser.
   DIRECTORY_PARSER =
-    DIRECTORY_PROJECT / "dependencies" / "lojban_parser" / "contributor" / "bangu" /
-      "lojban_parser" / "src"
-    ## Folder of umbrella of `lojban_parser`, and of folder of its modules, in clone Atlas
+    DIRECTORY_PROJECT / "dependencies" / "ricysoho" / "contributor" / "bangu" /
+      "ricysoho" / "src"
+    ## Folder of umbrella of `ricysoho`, and of folder of its modules, in clone Atlas
     ##   restores from `atlas.lock`: search path of `nim.cfg`, so names read are names compiled.
-  PATH_UMBRELLA_PARSER = DIRECTORY_PARSER / "lojban_parser.nim"  ## Umbrella of parser.
+  PATH_UMBRELLA_PARSER = DIRECTORY_PARSER / "ricysoho.nim"  ## Umbrella of parser.
   FLOOR_MODULES_PARSER = 14  ## Least modules umbrella of parser exports: 16 read on 2026-11-11.
   FLOOR_NAMES_PROJECT = 52  ## Least names read in this project: 58 read on 2026-11-11.
   FLOOR_NAMES_PARSER = 60  ## Least names read in parser: 67 read on 2026-11-11.
@@ -98,7 +98,7 @@ proc namesIn(paths: openArray[string]): Table[string, string] =
 
 
 
-suite "Names apart from lojban_parser":
+suite "Names apart from ricysoho":
   test "Reader of names reads type, constant and variable that section declares":
     check namesExported("const\n  HEADER* = \"lojban_tagger index 1\"") == @["HEADER"]  # #878
     check namesExported("const\n  PLACES_SAME*: Places = [1, 2, 3, 4, 5]") ==
@@ -126,11 +126,11 @@ suite "Names apart from lojban_parser":
     check "HEADER".normalized != "hEADER".normalized  # manual, first letter as written
 
 
-  test "No name that this project exports is one that lojban_parser exports":
+  test "No name that this project exports is one that ricysoho exports":
     let
       modules = readFile(PATH_UMBRELLA_PARSER).modulesExported
       names = DIRECTORIES_PROJECT.pathsUnder.namesIn
-      parser = modules.mapIt(DIRECTORY_PARSER / "lojban_parser" / it & ".nim").namesIn
+      parser = modules.mapIt(DIRECTORY_PARSER / "ricysoho" / it & ".nim").namesIn
     check modules.len >= FLOOR_MODULES_PARSER  # reader still reads umbrella of parser
     check names.len >= FLOOR_NAMES_PROJECT  # reader still reads this project
     check parser.len >= FLOOR_NAMES_PARSER  # reader still reads parser

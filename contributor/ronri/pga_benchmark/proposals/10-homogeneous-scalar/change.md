@@ -61,7 +61,7 @@ object has an imaginary radius, where pin gives NaN.
 ##   Functions are not linear, so no table holds them, and derivation acts on their code.
 ##   Cost: body calls float function named as function of pair through its operand, e.g. `s.exp`,
 ##     or by module.
-## Products of pairs are forms of `basis_sets.nim`, so module writes none of them.
+## Products of pairs are forms of `operators.nim`, so module writes none of them.
 ## Absence lives in return type, never NaN, and each function has one type in every algebra.
 ##   Inverse, root, inverse root, tangent and division are optional, as each lacks value somewhere.
 ##   Each unwraps by test and `get`, as `gradeAnti` does, and never by `map`.
@@ -80,7 +80,7 @@ object has an imaginary radius, where pin gives NaN.
 
 import std/[macros, math, options, strformat, tables]
 
-import ./[algebra, basis_sets, cayleys {.all.}, emitters, multivectors]
+import ./[algebra, cayleys {.all.}, emitters, multivectors, operators]
 
 
 
@@ -354,21 +354,21 @@ func `/`*(m: Multivector, n: MultivectorScalars): Option[Multivector] =
 ## Edit `pga.nim`
 
 ```nim
-import ./pga/[algebra, basis_sets, cayleys, multivectors, operators]
-export algebra, basis_sets, cayleys, multivectors, operators
+import ./pga/[algebra, cayleys, multivectors, operators]
+export algebra, cayleys, multivectors, operators
 ```
 
 ```nim
 import std/options
 
-import ./pga/[algebra, basis_sets, cayleys, multivectors, operators, scalars]
-export algebra, basis_sets, cayleys, multivectors, operators, scalars
+import ./pga/[algebra, cayleys, multivectors, operators, scalars]
+export algebra, cayleys, multivectors, operators, scalars
 ```
 
 ## Edit `pga.nim`
 
 ```nim
-  func normRadius*(m: Multivector): MultivectorScalars {.inline.} = |⊘m
+  func normRadius*[A: static Bases](m: MultivectorOf[A]): auto {.inline.} = |⊘m
     ## Get radius norm of multivector.
 ```
 

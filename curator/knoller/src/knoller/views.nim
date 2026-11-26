@@ -105,6 +105,22 @@ func indentWidth*(line: string): int =
     inc result
 
 
+func indents*(source: string): seq[int] =
+  ## Read indent of each line of code, `-1` for blank or comment line.
+  for line in source.codeOnly.splitLines:
+    result.add(if line.strip.len == 0: -1 else: line.indentWidth)
+
+
+func parents*(indents: openArray[int], line: int): seq[int] =
+  ## Read each zero-based line opening block around zero-based line, nearest first.
+  var depth = indents[line]
+  if depth < 0: return
+  for k in countdown(line - 1, 0):
+    if indents[k] >= 0 and indents[k] < depth:
+      result.add k
+      depth = indents[k]
+
+
 func identifierAt*(text: string, start: int): string =
   ## Read identifier opening at index, after optional spaces; empty where none.
   var i = start

@@ -92,6 +92,7 @@
 import std/[options, strutils, tables]
 
 import ./[dictionary, grammar, nif, nif_read, prose, selmaho, tanru]
+from ./nif_read {.all.} import toSumti
 
 
 type
@@ -114,7 +115,7 @@ type
     of false:
       part*: Option[int]
         ## lo namcu pe lo jgena poi se to'e curmi
-        ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
+        ##   .i li 0 cu krasi lo nu kancu lo jgena poi se lidne lo minde
         ##   .i va'o lo nu le selci'a na se tcidu kei le datnypau cu kunti
       reason*: string  ## lo seltcu be le selci'a be fi `NIF`
 
@@ -140,7 +141,9 @@ func toTerminal*(name: string): Terminal =
   if name == $TERMINAL_CMENE: return TERMINAL_CMENE
   let named = name.toSelmaho
   if named.isNone:
-    raise newException(ValueError, "Class of terminal should name selma'o; got `" & name & "`.")
+    raise newException(
+      ValueError, "le cmene po'u " & name.toSumti & " cu cmene no klesi be lo genvla"
+    )
   named.get.toTerminal
 
 
@@ -161,9 +164,12 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   ##   .i va'o lo nu le velru'e cu du `Stream` kei lo lerfu cu stali
   ##   .i va'o lo nu le jgena cu vasru no tarmi poi `nif.nim` ciska ke'a kei renro `ValueError`
   template refuse(shape: string) =
-    raise newException(ValueError, "Node `" & node.text & "` of NIF should hold " & shape & ".")
+    raise newException(
+      ValueError, "le jgena poi se tcita " & node.text.toSumti & " cu nitcu " & shape
+    )
 
-  if node.kind != KindNif.Compound: refuse("tag")
+  if node.kind != KindNif.Compound:
+    raise newException(ValueError, "pa jgena pe le selci'a be fi `NIF` cu nitcu lo tcita")
   if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
     var
       terminal = node.text
@@ -172,13 +178,13 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
       terminal.add ' '
       terminal.add node.children[k].text
       inc k
-    if (node.children.len - k) mod 3 != 0: refuse("bytes and letters of each word")
+    if (node.children.len - k) mod 3 != 0: refuse("lo re mulna'u .e lo lerpoi vu'o pe ro valsi")
     var literals: seq[string]
     for m in countup(k, node.children.high, 3):
       let is_word = node.children[m].kind == KindNif.Number and
         node.children[m + 1].kind == KindNif.Number and
         node.children[m + 2].kind == KindNif.Literal
-      if not is_word: refuse("bytes and letters of each word")
+      if not is_word: refuse("lo re mulna'u .e lo lerpoi vu'o pe ro valsi")
       literals.add node.children[m + 2].text
     let
       is_kept = terminal.startsWith(TAG_UNREAD & " " & RefusalText.Stream.spelling)
@@ -194,9 +200,11 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
     let is_error = node.children.len > 2 and node.children[0].kind == KindNif.Number and
       node.children[1].kind == KindNif.Identifier and
       node.children[2].kind == KindNif.Compound and node.children[2].text == TAG_EXPECTS
-    if not is_error: refuse("byte, rule and terminals read where grammar stops")
+    if not is_error:
+      refuse("lo stuzi poi le gerna cu sisti bu'u ke'a ku'o .e lo javni .e lo genvla poi le " &
+          "gerna cu nitcu ke'a bu'u le stuzi")
     let rule = node.children[1].text.replace('_', '-')
-    if rule notin LUT_NUMBER_BY_RULE: refuse("name of rule of 21.1")
+    if rule notin LUT_NUMBER_BY_RULE: refuse("lo cmene be pa javni pe `CLL 21.1`")
     var expected: seq[Terminal]
     for k in 0 ..< node.children[2].children.len:
       expected.add node.children[2].children[k].text.toTerminal
@@ -207,15 +215,15 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
     for k in 3 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
     return
   let rule = node.text.replace('_', '-')
-  if rule notin LUT_NUMBER_BY_RULE: refuse("name of rule of 21.1")
+  if rule notin LUT_NUMBER_BY_RULE: refuse("lo cmene be pa javni pe `CLL 21.1`")
   var count = 0
   while count < node.children.len and node.children[count].kind == KindNif.Number: inc count
-  if count > 1: refuse("at most number of rule opening its chain")
+  if count > 1: refuse("su'e pa mulna'u po'u lo namcu pe le javni poi krasi le porsi")
   result = Node(is_terminal: false, rule: rule, number: LUT_NUMBER_BY_RULE[rule])
   for k in count ..< node.children.len: result.children.add node.children[k].toTree(terminals)
   if count == 1:
     let ends = (node.children[0].number, result.number)
-    if ends notin LUT_CHAIN_BY_ENDS: refuse("two ends of chain of 21.1")
+    if ends notin LUT_CHAIN_BY_ENDS: refuse("re fanmo be pa porsi pe `CLL 21.1`")
     let chain = LUT_CHAIN_BY_ENDS[ends]
     for k in countdown(chain.len - 2, 0):
       result = Node(
@@ -261,7 +269,7 @@ func isHoldingError(node: NodeNif): bool =
 func reach(node: NodeNif): int =
   ## dunda lo stuzi poi se lidne lo romoi valsi poi lo jgena pe `NIF` vasru ke'a
   ##   .i lo ni le valsi cu dizlo cu na vajni
-  ##   .i va'o lo nu le jgena cu vasru no valsi kei dunda li no
+  ##   .i va'o lo nu le jgena cu vasru no valsi kei dunda li 0
   if node.kind != KindNif.Compound: return 0
   for k in 0 ..< node.children.len:
     template child: untyped = node.children[k]
@@ -425,7 +433,9 @@ func mergeParts*(nif: string): MergeNif =
       if not node.children[k].isDropped: result.children.add node.children[k].kept
 
   if not nif.startsWith(HEADER):
-    return refused(none(int), "NIF should open with directives `nif.nim` writes")
+    return refused(
+      none(int), "lo minde poi `nif.nim` cu ciska ke'a cu na krasi le selci'a be fi `NIF`"
+    )
   var module: seq[NodeNif]
   try: module = nif.readModule
   except ValueError as error: return refused(none(int), error.msg)

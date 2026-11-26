@@ -16,9 +16,9 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import lojban_parser
+import ricysoho
 
-import ../../src/lojban_tagger/[commands, english, index, search, tags]
+import ../../src/rictadni/[commands, english, index, search, tags]
 
 
 const

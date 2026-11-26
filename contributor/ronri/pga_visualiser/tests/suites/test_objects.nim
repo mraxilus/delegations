@@ -83,6 +83,19 @@ suite "Objects":
     check classify(1.0 + POINTS[0]).isNone
 
 
+  test "a point reads its grade against its largest coefficient, whatever its weight":
+    # Guards against break on purpose that no case caught (repository issue 970): library's
+    #   reading off point itself at weight under one, against its absolute tolerance, takes
+    #   point of half weight beside stray term under billionth for point.
+    # Stray term stays under absolute tolerance, and above billionth of each weight below.
+    let
+      point = Position(x: 0.25, y: -0.5, z: 0.75).toMultivector
+      stray = initElement(Basis.E12, 0.999e-9)
+    for weight in [0.998, 0.9, 0.5, 1.0e-3]:
+      check classify(weight * point + stray).isNone
+      check classify(weight * point + (1.0e-12 * weight) * stray) == some(Kind.Point)
+
+
   test "support lies on its object":
     for i in 0..<SAMPLES:
       for geometry in [LINES[i], PLANES[i]]:

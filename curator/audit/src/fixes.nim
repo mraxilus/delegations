@@ -16,13 +16,18 @@
 ##     of its pin: 2.2.12 lexes as names glyphs that 2.4.0 lexes as operators. Pin nothing
 ##     serves proves nothing, and run prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
-##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
-##     one rename where both rules ask at one name; and type conversion `x.T`
-##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
-##     (`checker.nim`), whose `*` goes where its own module calls it. Fix of named files reads
-##     tree whole, and rename writing file it leaves out is refused. File holding candidate
-##     that compiles on no backend is left to hand, with its error.
+##     from what `initContext` reads: rename of abbreviation (V.6), to case of name's kind
+##     (V.1, V.11), and to cut of V.2 that words of project decide (`cuts.nim`), across files,
+##     planned whole or refused whole (`names.nim`, `rewrites.nim`), one rename where several
+##     rules ask at one name; type conversion `x.T` (`conversions.nim`), each from semantic pass
+##     (`symbols.nim`); alias of each landmark index (V.8), from names of project
+##     (`packages.nim`); marker of each private symbol sibling reaches, and drop of each
+##     `{.all.}` reaching none (STYLE.md §5), from uses compiler reads (`markers.nim`); `func` of
+##     each `proc` compiler proves pure (STYLE.md §1, `purity.nim`); then dead export of checker
+##     (`checker.nim`), whose `*` goes where its own module calls it. Marker moves trailing doc
+##     to next line, so each later report traces back to line as given. Fix of named files reads
+##     tree whole, and rename writing file it leaves out is refused. File holding candidate that
+##     compiles on no backend is left to hand, with its error.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
@@ -32,6 +37,19 @@
 ##     of.
 ##   Knoller reads tests, stubs and umbrella from nimble file nearest each file, and its caller
 ##     finds that file; koch gives that of project holding it (`nimbleProject`).
+##   Knoller reads what other modules of project tell fixer of one file, and `initContext` reads
+##     it over tree by project: whether file declares `formatValue`, constants each module
+##     exports, defaults of configurations, and names of its modules, with aliases of library
+##     it builds on, which no file of tree holds, so caller reads library from disk.
+##   Uses of private symbols and pure routines come from compiler, and library from disk:
+##     `readFacts` reads them under root through readers of knoller's command line
+##     (`resolveMarkers`, `resolvePures`, `modulesLibrary`), so both read alike, and koch passes
+##     them to `initContext`, as it passes answers of semantic pass.
+##   Finding of rule resting on context that fix leaves stays for hand, as knoller's command line
+##     leaves it: marker and `func` no edit writes, index whose alias no edit writes, and call
+##     of constructor, which no fix writes (STYLE.md §5). Fenced line of rule reading names
+##     counts in warning of its fence, which reads names too; file whose uses or pures compiler
+##     resolved none warns, with reason.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -50,8 +68,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, sets, strutils, tables]
+import std/[algorithm, options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
+from ../../knoller/src/knoller/command import modulesLibrary, resolveMarkers, resolvePures
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
   waits,
@@ -68,12 +87,23 @@ type
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
     proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
+    formatting: seq[string]
+      ## Nimble file of each project declaring `formatValue`, whose interpolated strings never join.
+    configurations: Table[string, Configurations]
+      ## Defaults of configurations of each project, read from its modules, by nimble file.
+    constants: Table[string, seq[string]]
+      ## Constants modules of each project export, read as fixed by build, by nimble file.
+    names: Table[string, NamesPackage]
+      ## Names of each project, aliases of library it builds on among them, by nimble file.
+    uses: Table[string, Uses]  ## Use of each private symbol and `{.all.}` of each file, by path.
+    pures: Table[string, Pures]  ## Each `proc` compiler checks as `func` in each file, by path.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
     fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
-    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
+    warned: seq[Finding]
+      ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 
@@ -90,7 +120,13 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
   ## Report each rule `koch fix` clears in full in source of Nim syntax, as knoller reads its
   ##   dialect (`checkFormatting` there); other kind is read by none.
   if kind.rule.syntax != Syntax.Nim: return
-  checkFormatting(path, source, kind.dialect, nimble = path.nimbleProject)
+  checkFormatting(
+    path,
+    source,
+    kind.dialect,
+    nimble = path.nimbleProject,
+    should_drop_articles = not path.isProseOwn,
+  )
 
 
 func checkFormatting*(tree: Tree): seq[Finding] =
@@ -137,12 +173,30 @@ func scopeRename(tree: Tree, rename: Rename): seq[(string, string)] =
       result.add (e.path, e.content)
 
 
+func namesProjects(
+  tree: Tree, libraries = initTable[string, seq[string]]()
+): Table[string, NamesPackage] =
+  ## Read names of each project from its `.nim` modules (`namesPackage`), and aliases of library
+  ##   it builds on too, as `libraries` holds its modules, by nimble file; empty name stands for
+  ##   files at root, which lie in no project.
+  var modules: Table[string, seq[string]]
+  for e in tree:
+    if e.path.endsWith(".nim"): modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
+  for project, sources in modules:
+    result[project] = namesPackage(sources, libraries.getOrDefault(project))
+
+
 func renames(
-  tree: Tree, entries: openArray[Entry], locked: openArray[string]
+  tree: Tree,
+  entries: openArray[Entry],
+  locked: openArray[string],
+  names: Table[string, NamesPackage],
 ): seq[(Rename, string)] =
   ## Read rename of each declaration in entries, as names check reads it with words glossaries
-  ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), and case of
-  ##   name's kind (V.1, V.11), which spells abbreviation out too and takes its place.
+  ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), case of name's
+  ##   kind (V.1, V.11), which spells abbreviation out too and takes its place, and name cut
+  ##   (V.2), from axis values and words of project (`names`), which joins case rename of same
+  ##   declaration into one rename of rule of case (`composed`).
   let directories = tree.directoriesProject
   var glossaries: seq[(string, string)]
   for e in tree:
@@ -152,7 +206,10 @@ func renames(
     if not e.isKindNim or e.path in locked: continue
     let
       exempt = glossaries.exemptions(e.path)
-      recased = renamesCase(e.content, exempt)
+      package = names.getOrDefault(e.path.nimbleProject)
+      recased = renamesCase(e.content, exempt).composed(
+        renamesCut(e.content, package.axes, package.words, exempt),
+      )
     for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
       let rename = Rename(
@@ -181,13 +238,14 @@ func queriesSemantic*(
   tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
-  ##   §5), and every site of each name rename of abbreviation (V.6) or case (V.1, V.11) would
-  ##   write, across its scope. File fix leaves as written, and rename refused already, ask
+  ##   §5), and every site of each name rename of abbreviation (V.6), case (V.1, V.11) or cut
+  ##   (V.2) would write, across its scope; cut reads names of project from tree, as library adds
+  ##   no axis value or word. File fix leaves as written, and rename refused already, ask
   ##   nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
-  for (rename, refusal) in renames(tree, entries, locked):
+  for (rename, refusal) in renames(tree, entries, locked, tree.namesProjects):
     if refusal.len == 0: asked.add rename.queries(tree.scopeRename(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
@@ -222,16 +280,51 @@ proc checkConversions*(
         result.found.add checkConversions(e.path, e.content, answer).toFindings
 
 
+proc readFacts*(
+  root: string, entries: openArray[Entry], locked: openArray[string] = []
+): tuple[
+  uses: Table[string, Uses], pures: Table[string, Pures], libraries: Table[string, seq[string]]
+] =
+  ## Read, from disk under root, what fixers of entries ask beyond semantic pass of
+  ##   `queriesSemantic`, through knoller's own readers, so `koch fix` reads them as command
+  ##   line does: use of each private symbol and `{.all.}` (`resolveMarkers`), and each `proc`
+  ##   compiler checks as `func` (`resolvePures`), by path; and modules of library each project
+  ##   builds on, under each `--path` of `nim.cfg` beside its nimble file (`modulesLibrary`), by
+  ##   nimble file. Each reads project of file as git lists it there, with no define, as command
+  ##   line names none; file at root lies in no project, so it asks none, as nimble file
+  ##   `locked` names asks none.
+  let
+    absolute = root.absolutePath
+    files = entries.filterIt(
+      it.isKindNim and it.path notin locked and it.path.nimbleProject.len > 0,
+    ).mapIt((it.path, it.content))
+  var toolchains = initToolchains()
+  result.uses = files.resolveMarkers("", absolute, toolchains)
+  result.pures = files.resolvePures("", absolute, toolchains)
+  var nimbles = initTable[string, string]()  # Absolute path of each nimble file, by tree's.
+  for (path, _) in files: nimbles[path.nimbleProject] = absolute / path.nimbleProject
+  let libraries = nimbles.modulesLibrary
+  for nimble, path in nimbles:
+    if path in libraries: result.libraries[nimble] = libraries[path]
+
+
 func initContext*(
   tree: Tree,
   entries: openArray[Entry] = [],
   answers: openArray[Answer] = [],
   locked: openArray[string] = [],
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
+  libraries = initTable[string, seq[string]](),
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
-  ##   of each abbreviation and case in entries, refused where it would write file entries
-  ##   leave out.
+  ##   of each abbreviation, case and cut in entries, refused where it would write file entries
+  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
+  ##   defaults of its configurations, and names of its modules (`namesProjects`), aliases of
+  ##   library it builds on among them, as `libraries` holds its modules by nimble file.
+  ##   Use of each private symbol and `{.all.}` of each file, and each `proc` compiler checks as
+  ##   `func` there, as `uses` and `pures` hold them by path (`readFacts`), pass through.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -239,9 +332,20 @@ func initContext*(
       sources.add e.content
     if e.path.isCalling: suites.add e.content
   result.dead = exportsDead(paths, sources, suites).deduplicate
+  var modules: Table[string, seq[string]]
+  for e in tree:
+    if not e.path.endsWith(".nim"): continue
+    if e.content.isDeclaringFormatValue: result.formatting.add e.path.nimbleProject
+    modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
+  for project, sources in modules:
+    result.configurations[project] = readConfigurations(sources)
+    result.constants[project] = sources.mapIt(it.constantsExported).concat
+  result.names = tree.namesProjects(libraries)
+  result.uses = uses
+  result.pures = pures
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for (rename, refusal) in renames(tree, entries, locked):
+  for (rename, refusal) in renames(tree, entries, locked, result.names):
     if refusal.len > 0:
       result.plans.add Plan(rename: rename, refusal: refusal)
       continue
@@ -265,43 +369,94 @@ func warnUnsettled*(path: string, fix: Fix): seq[Finding] =
 
 func fixSource(
   path, source: string; kind: Kind; fence: Fence; context: Context
-): tuple[source: string, fixed, warned: seq[Finding], asked: seq[string]] =
-  ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
-  ##   (`formatted`); none of those edits moves line, so every report names line of source as
-  ##   given. Source knoller cannot settle keeps those edits alone, with warning that says why
-  ##   (`warnUnsettled`), since rename planned whole reaches other files too.
+): tuple[source: string, fixed, left, warned: seq[Finding], asked: seq[string]] =
+  ## Write edits semantic pass, compiler and tree settle, off fenced lines, then fix rest by
+  ##   knoller (`formatted`); every report names line of source as given, traced through marker
+  ##   that moves trailing doc to next line (`originApplied`), then through chain. Report of rule
+  ##   resting on context that no edit writes is left for hand: marker, `func`, and rule reading
+  ##   names of project off fenced lines, which warning of fence counts. Source knoller cannot
+  ##   settle keeps those edits alone, with warning that says why (`warnUnsettled`), since rename
+  ##   planned whole reaches other files too.
 
-  # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
-  var renamed: seq[Edit]
+  # Write edits semantic pass, names of project and compiler settle, off fenced lines, as
+  #   knoller's command line writes them: renames, conversions, alias of each landmark index,
+  #   then markers and `func`; marker moving trailing doc to next line alone moves line.
+  var semantic: seq[Edit]
   for plan in context.plans:
     if plan.refusal.len > 0 or path notin plan.edits: continue
-    renamed.add plan.edits[path]
+    semantic.add plan.edits[path]
     for (file, line) in plan.lines:
       if file == path: result.fixed.add initReport(path, line, plan.rename.rule).toFinding
-  var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
-      editsConversion(path, source, context.answers[path], fence.lines, renamed)
-    base = source.applied(renamed & edits)
+      editsConversion(path, source, context.answers[path], fence.lines, semantic)
+    semantic.add edits
     result.fixed.add reports.toFindings
+  let
+    names = context.names.getOrDefault(path.nimbleProject)
+    (aliased, aliasing) = editsLandmark(path, source, names.landmarks, fence.lines, semantic)
+  semantic.add aliased
+  result.fixed.add aliasing.toFindings
+  let
+    uses = context.uses.getOrDefault(path)
+    (marks, marked) = editsMarkers(path, source, uses, fence.lines, semantic)
+  semantic.add marks
+  let
+    pures = context.pures.getOrDefault(path)
+    (funcs, purified) = editsPure(path, source, pures, fence.lines, semantic)
+  semantic.add funcs
+  result.fixed.add toFindings(marked & purified)
 
-  # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
+  # Leave for hand each marker and `func` no edit writes, each index alias edits leave, as
+  #   choice of aliases, and each call of constructor, which no fix writes, in order of lines.
+  #   Edit of marker or `func` answers one report of its rule on its line; index is read again
+  #   from source alias edits wrote, which keeps its lines, as knoller reads what fixers leave.
+  #   Fence warning counts fenced report of rule reading names, and reads no uses or pures.
+  var
+    unwritten = (marked & purified).mapIt((it.line, it.rule))
+    kept: seq[Report]
+  for report in checkMarkers(path, source, uses) & checkPure(path, source, pures) &
+      checkLandmarks(path, source.applied(aliased), names.landmarks) &
+      checkConstructors(path, source, names.calls):
+    let
+      at = unwritten.find((report.line, report.rule))
+      is_warned = report.rule notin {Rule.UsedMarker, Rule.PureFunc} and
+          report.line - 1 in fence.lines
+    if at >= 0: unwritten.delete at
+    elif not is_warned: kept.add report
+  result.left = kept.sortedByIt(it.line).toFindings
+
+  # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped. Fence
+  #   reads edited source, whose lines marker may move, and each report traces back.
+  var base = Fix(source: source.applied(semantic), origin: source.originApplied(semantic))
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
-    let step = fixExportsDead(path, base.masked(fence), dead)
-    if step.source.shapeFence == base.masked(fence).shapeFence:
-      base = step.source.restored(base, fence)
-      result.fixed.add step.fixed
+    let
+      fenced = base.source.fence
+      masked = base.source.masked(fenced)
+      step = fixExportsDead(path, masked, dead)
+    if step.source.shapeFence == masked.shapeFence:
+      base.source = step.source.restored(base.source, fenced)
+      for f in step.fixed:
+        var traced = f
+        traced.line = base.traced(f.line)
+        result.fixed.add traced
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  #   Articles stay in file of project keeping its own prose (`isProseOwn`).
-  let fix = formatted(
-    path,
-    base,
-    kind.dialect,
-    context.proofs.getOrDefault(path),
-    should_drop_articles = not path.isProseOwn,
-    nimble = path.nimbleProject,
+  #   Articles stay in file of project keeping its own prose (`isProseOwn`), and interpolated
+  #   strings stay split in project declaring `formatValue`.
+  let fix = base.chain(
+    formatted(
+      path,
+      base.source,
+      kind.dialect,
+      context.proofs.getOrDefault(path),
+      should_drop_articles = not path.isProseOwn,
+      nimble = path.nimbleProject,
+      has_format_value = path.nimbleProject in context.formatting,
+      configurations = context.configurations.getOrDefault(path.nimbleProject),
+      constants = context.constants.getOrDefault(path.nimbleProject),
+    ),
   )
   result.source = fix.source
   result.asked = fix.asked
@@ -332,7 +487,29 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     should_drop_articles = not e.path.isProseOwn,
     nimble = e.path.nimbleProject,
     is_drive = e.path.isCodeDrive,
+    configurations = context.configurations.getOrDefault(e.path.nimbleProject),
+    constants = context.constants.getOrDefault(e.path.nimbleProject),
+    names = context.names.getOrDefault(e.path.nimbleProject),
   ).toFindings
+  result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
+  let uses = context.uses.getOrDefault(e.path)
+  if uses.reason.len > 0:
+    result.warned.add initReport(
+      e.path,
+      0,
+      Rule.UsedMarker,
+      "Semantic pass resolved no use, so each private symbol and `{.all.}` stays as written; " &
+      "got `" & uses.reason & "`.",
+    ).toFinding
+  let pures = context.pures.getOrDefault(e.path)
+  if pures.reason.len > 0:
+    result.warned.add initReport(
+      e.path,
+      0,
+      Rule.PureFunc,
+      "Compiler proved no routine pure, so each `proc` stays as written; got `" & pures.reason &
+      "`.",
+    ).toFinding
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
@@ -363,6 +540,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
   let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
   for source in fix.asked:
     if (e.path, source) notin result.asked: result.asked.add (e.path, source)
+  result.left.add fix.left
   result.warned.add fix.warned
   if fix.source == e.content: return
   result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
@@ -389,9 +567,10 @@ func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
 ): Fixed =
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
-  ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
-  ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`checkFenceHeld`), and for each file knoller's fixers do not settle (`warnUnsettled`).
+  ##   written with reason (nimble file `locked` names, fence fix cannot read), finding left for
+  ##   hand of each rule resting on context that fix leaves, and one warning for each fence,
+  ##   which keeps its lines as written, naming each rule broken among them (`checkFenceHeld`),
+  ##   and for each file knoller's fixers do not settle (`warnUnsettled`).
   ##   `context` carries what tree tells fixers across modules, as `initContext` reads it,
   ##   and answers of parser; each source chain asks and no answer holds is in `asked`, source
   ##   as given too where fence holds lines, since its warning reads it.

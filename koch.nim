@@ -61,6 +61,7 @@ import ./curator/audit/src/[
   assets,
   audit,
   base,
+  claims_log,
   commits,
   domains,
   findings,
@@ -91,6 +92,7 @@ Verbs:
   check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line, label, title and form of body, from ROLE_* env
+  claims         move rows of log of claims that wait outside tree into log of branch
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
@@ -321,9 +323,14 @@ proc runHook(root, event, input: string): int =
       }}
       0
     else:
+      # Each row of reflection of turn reaches log of claims at every stop, reply to refusal
+      #   too; key keeps row from second write, and failed write blocks no turn (`logStop`).
+      let
+        turn = readFile(data{"transcript_path"}.getStr).parseTurn
+        kinds = readKinds(root)
+      discard logStop(root, branch_root, pathWaiting(), turn.subagents)
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
-      let turn = readFile(data{"transcript_path"}.getStr).parseTurn
       var found = checkNumbersBare(turn.text)
       found.add checkReferencesBare(turn.text)
       found.add checkLinksReference(turn.text)
@@ -339,7 +346,7 @@ proc runHook(root, event, input: string): int =
         )
       let unread = checkSignoffRead(turn.text, turn.calls)
       # Blocks of subagents hold at end of every model turn, for kinds root names now.
-      let blocks = turn.subagents.checkBlocks(readKinds(root))
+      let blocks = turn.subagents.checkBlocks(kinds)
       if found.len == 0 and unread.len == 0 and blocks.len == 0: return 0
       let has_signoff = turn.text.isSignoff
       echo %*{"decision": "block", "reason": reasonStop(found, unread, has_signoff, blocks)}
@@ -515,6 +522,19 @@ proc run(options: Options): int =
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
     found.add checkTitle(options.branchOrDefault, getEnv("ROLE_TITLE"))
     found.add checkBodyPull(getEnv("ROLE_BODY"))
+  of "claims":
+    # Rows of checkout outside grammar wait outside tree, as root curator's do, since hook
+    #   never writes in detached checkout; branch inside grammar takes them into its log.
+    if not options.isReadAll({Root}): return options.refused
+    let
+      branch = options.root.branch
+      (moved, path) = moveClaims(options.root, branch, pathWaiting())
+    if path.len == 0:
+      stderr.writeLine "Rows outside tree are of root curator, so root branch alone takes them; " &
+        "got `" & branch & "`."
+      return 1
+    echo $moved & " row(s) moved to `" & path & "`."
+    return 0
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,
@@ -550,7 +570,8 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; so does each file knoller's fixers do not settle, with no article, since
     #   fault is tool's. Exit code ignores warnings.
-    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
+    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`);
+    #   compiler and disk under root give rest fixers read across project (`fixes.readFacts`).
     #   Parser of each project's pin proves each needless group (`fixes.fixProven`); run that
     #   proved nothing prints one warning saying why.
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
@@ -567,12 +588,13 @@ proc run(options: Options): int =
     let
       locked = tree.nimblesLocked
       answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
+      (uses, pures, libraries) = readFacts(options.root, entries, locked)
       (fix, failures) = fixProven(
         options.branchOrDefault,
         tree,
         entries,
         locked,
-        initContext(tree, entries, answers, locked),
+        initContext(tree, entries, answers, locked, uses, pures, libraries),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix

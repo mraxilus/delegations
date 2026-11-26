@@ -8,8 +8,8 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f52e8f8e8f4f2a1d |
-| Pruned  | 5a7e3bc6b52c8d61d9f0e545a49f562447845e7e |
+| Rules   | d99abdcc1d9a849b |
+| Pruned  | 6ed293192c184658e451559ebaee8bca91602836 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -1489,10 +1489,11 @@ Verified by driven check:
 - one frame of the page classifies each live object once, in each state that it counts.
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
-`placeInto` writes give what `placeObject` gave. Verified by `suites.nim`: each exit of placing
-tests the horizon of its object once at most. A line and a plane through the origin are among them,
-and each lands where the reads alone land. Assumed: that no edit of the desktop lands between
-`placeEdited` and the emission of its frame, which no check drives.
+`placeInto` writes give what `placeObject` gave. Each reader answers alike from the placements of a
+frame and from placing each object, `anchorFor` among them. Verified by `suites.nim`: each exit of
+placing tests the horizon of its object once at most. A line and a plane through the origin are
+among them, and each lands where the reads alone land. Assumed: that no edit of the desktop lands
+between `placeEdited` and the emission of its frame, which no check drives.
 
 ## Scene storage
 
@@ -2273,11 +2274,10 @@ after a flight of 10 s, in the opening scene and in the demo of 360. Only 9 view
 the opening scene, had nothing drawn ahead.
 
 For a point or a plane it is depth along the sight, and never distance, because what a reader turns
-away from is not drawn.
-It is the middle of the object, with no drawn radius taken off. A camera at the surface of a planet
-then reads its radius rather than zero. A near clip of one four-hundredth of that still holds the
-whole planet. It is never the depth of the pointer, which would move the furniture and the depth
-mapping at every pointer move of a still camera.
+away from is not drawn. It is the middle of the object, with no drawn radius taken off. A camera at
+the surface of a planet then reads its radius rather than zero. A near clip of one four-hundredth of
+that still holds the whole planet. It is never the depth of the pointer, which would move the
+furniture and the depth mapping at every pointer move of a still camera.
 
 **A line reaches its distance from the eye**, where any point of it stands ahead. No point of the
 line stands nearer the eye. The near clip stands a four-hundredth of that distance ahead. A point of
@@ -2627,6 +2627,7 @@ mirrors `renderer.nim`, and a person keeps the two in step by hand.
 *Checked.* Verified by `suites.nim`:
 
 - the widening reference against the algebra;
+- the step off a segment against the join from 1e-6 to 1e6, and its refusal under a unit;
 - the near crossing of a line within a pixel of its recorded place, in a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
 - the static corners of the disc as two triangles that tile its box;
@@ -2716,13 +2717,12 @@ bound. What the library costs is the library's (Render paths). The check names t
 copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,038 objects it reads
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all.
 
-**The hang of the selection menu writes its place field by field too** (Interaction model). The
-page hangs the menu on each frame that it shows, and an object built into the result of the hang
-costs one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
-anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls,
-and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene
-has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
-`pointMenuHung`.
+**The hang of the selection menu writes its place field by field too** (Interaction model). The page
+hangs the menu on each frame that it shows, and an object built into the result of the hang costs
+one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
+anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls, and
+fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene has
+objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in `pointMenuHung`.
 
 **A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
 template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
@@ -2774,10 +2774,9 @@ into a `DrawScratch`, and emits after. For the lattices and the axes the seam is
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer holds
 while the camera moves. `tessellateObject(placeObject(...))` is what `addObject` is.
 
-Two steps stay on the placing side inside `tessellateObject`: the stand-off of a horizon marker,
-and the two vanishing points of a line. The cut that the panel reports is by kind of work, and not
-by proc.
-`tessellate` takes its scratch as a parameter: the desktop hands it swap arena memory, and the
+Two steps stay on the placing side inside `tessellateObject`: the stand-off of a horizon marker, and
+the two vanishing points of a line. The cut that the panel reports is by kind of work, and not by
+proc. `tessellate` takes its scratch as a parameter: the desktop hands it swap arena memory, and the
 browser a fixed buffer.
 
 **A timed stretch is charged at its end, so nothing leaves it early.** `timed` reads the clock on
@@ -3106,10 +3105,9 @@ of two basis elements is the right complement of the product of their left compl
 pure slide falls out of the same expression, because its direction is zero, and so does a pure turn.
 No branch means no branch to get wrong.
 
-`ANGLE_SERIES` at 1e-4 chooses the series over the closed form. `a*cos(a) - sin(a)` subtracts two
-values near `a` to reach one near `a³/3`, so it loses about `3ε/a²` of its digits. At an `a` of 1e-6
-the closed form keeps about four. The next term of the series is `a⁴/840`, under 1e-19 at that
-crossing, so the two arms agree there.
+`ANGLE_SERIES` at 0.1 chooses the series, through `a⁶`, over the closed form. That form subtracts
+two values near `a` to reach one near `a³/3`, and loses `3ε/a²`: 7e-14 at 0.1. The next term of the
+series is under 1e-14. Rejected: a crossing at 1e-4, where the closed form is 7e-8 off.
 
 **`log` takes the short way round.** A motor and its negation carry every point alike, so `log`
 reads one with a negative antiscalar through its negation. The half-angle then stays at or under
@@ -3131,8 +3129,8 @@ back with `carried`. Nothing else in the tree names a motor.
 - a turn about a line off the origin, which carries the origin about that line;
 - a horizon line, which names no axis and turns nothing;
 - a slide that carries every point by one offset, in two terms and no more;
-- `exp(log(Q))` against `Q`, and unit weight, over 64 seeded screws, one in seven of them
-  at a half-angle below `ANGLE_SERIES`;
+- `exp(log(Q))` against `Q`, and unit weight, over 64 screws, each seventh far below `ANGLE_SERIES`;
+- both series of the half-angle against twenty terms of each, to a trillionth, up to `π`;
 - the identity, the inverse through `~∘`, and the grade that survives a sandwich;
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
@@ -3479,7 +3477,7 @@ destination, and a removal of an object clears the highlight on both paths.
 
 - both boundaries of each radius, and all three priority pairings;
 - a horizon point picked;
-- the disc bound sampled from inside the view;
+- the disc bound over three decades of radius, from just outside its sphere to 1e4 radii off;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
 - a point reads as backdrop at 0.8 of its fill depth, as a handle at 1.25 of it and 1,000 units;
 - the ground reads as backdrop from 9 units, and as a handle from 12, under nine tenths covered;
@@ -3913,11 +3911,11 @@ other stays selected.
 
 ## Storyboard and seeds
 
-`storyboard.addSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at
-the origin, and `ground`, a plane joined from three points at `z = 0`. `o` must stay off `ground`,
+`storyboard.addSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at the
+origin, and `ground`, a plane joined from three points at `z = 0`. `o` must stay off `ground`,
 because one step projects it onto that plane. `STEPS` is eleven derived steps, and both entry points
-compute the seed count from `scene.len`. One step (`a ^ ground`) is a grade-4 volume, and correctly
-reports "mixed grade, nothing to draw", which is its documented purpose.
+compute the seed count from `scene.len`. One step (`a ^ ground`) is a grade-4 volume, and reports
+"antiscalar, nothing to draw", which is its documented purpose. Verified by `suites.nim`.
 
 Both apps open on the seeds alone. `runStoryboard` tells "reached" from "focal", and draws reached
 but not focal muted rather than hidden. Horizon steps aim the capture through
@@ -3954,7 +3952,7 @@ already written held it. The desktop converts through `std/endians`.
 
 | Bytes | Field |
 |-------|-------|
-| 4 | Magic `RGAS` |
+| 4 | Magic `PGAS`, or `RGAS` in a file saved before the name PGA |
 | 1 | Format version (`VERSION_SCENE` = 7) |
 | 1 | Basis count (16 under this build); must match |
 | 4 | Object count, little-endian `uint32` |
@@ -3971,8 +3969,8 @@ build to read what it wrote.
 names the extension that both front-ends save under, and `EXTENSIONS_SCENE_READ` names both
 extensions. The page reaches them through `nimSceneExtension` and `nimSceneExtensionsRead`, for its
 picker and for the entry that it opens in a zip. The desktop reads a scene from any path. The magic
-stays `RGAS`, because the bytes after it did not change, so one reader serves both. Rejected: the
-magic `PGAS`, which every earlier build refuses.
+is `PGAS`, and `MAGICS_SCENE_READ` takes `RGAS` too, which the page asks through
+`nimSceneReadsMagic`. Cost: an older build refuses each file saved now, as ruled on issue 946.
 
 Only live objects are written, **in creation order** (`nimSceneHandlesCreated`). That order is the
 whole of what version 3 added. Version 4 appended the radius after the geometry of each object.
@@ -4002,22 +4000,22 @@ one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
 radius that is zero, negative or NaN, as it refuses an unknown palette index. Version 1 costs
 colours alone: its ordinals name a palette that no longer exists, folded by the same cycle that
-`inkCycled` walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote
-is refused.
+`inkCycled` walks. `ORDINAL_INK_HIGH_V1` 14 bounds it, refusing a byte that version 1 never wrote.
 
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
 
-*Checked.* Verified by a cross-read, and not by a round-trip: the sixteen-object demo saved,
-reloaded and compared object for object in creation order. Each label, ink, visibility and all
-sixteen coefficients, 304 scalar comparisons, are exactly equal. The desktop saves the
-browser-written file again byte-identical, all 2245 bytes. Both parsers read hand-built files of
-version 1 and version 2 the same, and refuse a file one version ahead. They refuse ordinal 15 in a
-version-1 file, and the version-6 fold is pinned ordinal by ordinal.
+*Checked.* Verified by a cross-read, and not by a round-trip. The sixteen-object demo was saved,
+reloaded and compared in creation order: label, ink, visibility and 16 coefficients, 304 equal
+comparisons. The desktop saves the browser-written file again byte-identical, all 2245 bytes. Both
+parsers read hand-built files of versions 1 and 2 alike, and refuse a file one version ahead and
+ordinal 15 in version 1. The version-6 fold is pinned per ordinal.
 
 Verified by watching: the seeds arrive over 0.480 s, and the sixteen of the demo over 1.84 s in the
-browser. Verified by `suites.nim`: the on-disk bytes of a known float. Assumed: the big-endian host
-path, which is never exercised (see Known limitations).
+browser. Verified by `suites.nim`: the on-disk bytes of a known float, and the magic of each scene
+read. Verified by `koch drive`: the page loads a scene of `RGAS`. Verified by a run on 2026-11-20:
+the reader at `89576aa5` refuses a file of `PGAS`. Assumed: the big-endian host path, which is never
+exercised (see Known limitations).
 
 ## Demo: the solar neighbourhood
 
@@ -4253,16 +4251,18 @@ Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The deskt
 rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
-primitive to build on. Both front-ends print a multivector through one writer
-(`scene.multivectorText`), and the kind of a multivector through one (`scene.kindText`). Diagnostics
-readings keep `%.*f` through `appendFixed`, because a live number that changes width is harder to
-read. Fixed char storage is read through `format.toText`, and never through `$toCstring`. That casts
-the *address* of the storage, and yields an empty string on the JS backend.
+primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
+(`scene.multivectorText`, `scene.kindText`). A value of no kind is named as it is: zero, scalar,
+antiscalar, mixed grade or not finite. A subnormal object names its kind, but draws nothing: only
+the word lifts it by a power of two. Diagnostics readings keep `%.*f` through `appendFixed`, because
+a live number that changes width is harder to read. Fixed char storage is read through
+`format.toText`, never `$toCstring`, which casts its *address* and reads empty on the JS backend.
 
 *Checked.* Verified by `suites.nim` on both backends: 17,001 values across 25 decades, including
 every exact eighth. There were zero disagreements against the `%.4g` of C, and zero between
 backends. The JS entry point pins the text of the tie cases. A C-only `magnitudesAgree` stays green
-while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`.
+while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`. The suite
+holds each word of no kind from subnormal values to 1e6, and at NaN and infinity (issue 970).
 
 ## Animation
 

@@ -39,7 +39,7 @@
 ##   .i lo rafsi be lo cmavo be `NU` cu galfi lo bavla'i tanru pagbu po'o
 ##   .i lo rafsi be lo cmavo be `SE` .a `NAhE` cu go'i ji'a to `CLL 12.12` toi
 ##   .i le gerna cu punji lo cmavo be `SE` .e `NAhE` pa tanru pagbu to `CLL 21.1` .e le javni pe li
-##       pamure toi
+##       152 toi
 ##
 ## ni'o lo cmavo be `JAI` cu jorne ji'a
 ##   .i ku'i lo liste cu dunda no rafsi zo jai
@@ -47,10 +47,10 @@
 ##
 ## ni'o lo cmavo be `NA` cu jorne le multau
 ##   .i zo na natfe lo mulbri gi'e na natfe lo pagbu be lo selbri to `CLL 15.2` toi
-##   .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li re fo li pa kei
+##   .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li 2 fo li 1 kei
 ##       le tanru cu se fendi ta'i lo nu pa zo na lidne pa girzu poi vasru le multau
 ##   .i lo du'u zo na zvati ma kau na vajni
-##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei le tanru cu se fendi ta'i lo nu no
+##   .i va'o lo nu le te kancu cu se dilcu fi li 2 fo li 0 kei le tanru cu se fendi ta'i lo nu no
 ##       zo na zvati
 ##   .i ki'u bo lo re lamji zo na galfi no da to `CLL 15.2` toi
 ##
@@ -61,7 +61,7 @@
 ##       `JA` cu jmina lo pagbu to `CLL 5.6` toi
 ##
 ## ni'o lo namcu jo'u lo cmavo be `MOI` cu zbasu pa tanru pagbu to `CLL 21.1` .e le javni pe li
-##     pamure toi
+##     152 toi
 ##   .i ku'i jdima fa lo nu ro cmavo be `PA` cu selvau pa taurpau poi vasru no datpau
 ##   .i se ki'u bo zo re .e zo pa .e zo moi selvau lo fictaupau ne'i lo nu fendi zo relpavmomci'a
 ##
@@ -95,7 +95,7 @@
 ##   .i se ki'u bo lu datni ke vreji liste li'u se fendi ta'i lu datni vreji liste li'u
 ##   .i ku'i `CLL 5.3` dunda lo ficygri le re tanru
 ##
-## ni'o zo kei fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi
+## ni'o zo kei fanmo lo sucta to `CLL 21.1` .e le javni pe li 152 toi
 ##   .i le nu fendi cu tcidu zo kei ta'i zo ke'e poi fanmo lo girzu
 ##   .i zo ke poi krasi le girzu cu se lidne le cmavo be `NU` pe le girzu
 ##   .i se ki'u bo ne'i lu nu citka gasnu kei klama li'u lo sucta cu vasru re taurpau
@@ -161,7 +161,7 @@ type
       ##   .i le datnypau cu kunti va'o lo nu galfi lo porsi be lo sumti
   TanruUnit* = object
     ## lo taurpau noi vasru pa valsi .e lo cmavo poi jorne le valsi to `CLL 21.1` .e le javni pe li
-    ##     pamure toi
+    ##     152 toi
     part*: Part
       ## lo brivla .a lo cmavo poi jorne no da mu'u zo ke
       ##   .i lo pagbu poi no liste cu vasru ke'a jorne no da
@@ -195,7 +195,7 @@ const
   WORD_KE = "ke".word.get  ## lo cmavo poi krasi lo girzu to `CLL 5.5` toi
   WORD_KEHE = "ke'e".word.get  ## lo cmavo poi fanmo lo girzu to `CLL 5.5` toi
   WORD_KEI = "kei".word.get
-    ## lo cmavo poi fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi
+    ## lo cmavo poi fanmo lo sucta to `CLL 21.1` .e le javni pe li 152 toi
   WORD_BO = "bo".word.get
     ## lo cmavo poi zbasu lo girzu po'o
     ##   .i lo du'u le cmavo cu zvati ma kau na vajni to `CLL 5.3` toi
@@ -233,7 +233,7 @@ func isWord(part: Part, w: Word): bool = part.is_listed and part.word == w
 
 func swapping(word: Word): int =
   ## tcidu lo sumti poi le cmavo be `SE` cu rinka lo nu ke'a .e lo pamoi sumti cu simxu lo ka basti
-  ##   .i lo jalge cu du li no va'o lo nu le valsi cu na cmavo be `SE`
+  ##   .i lo jalge cu du li 0 va'o lo nu le valsi cu na cmavo be `SE`
   let at = WORDS_CONVERSION.find(word)
   if at < 0: 0 else: at + 2
 
@@ -241,7 +241,7 @@ func swapping(word: Word): int =
 func swapping(part: Part): int = (if part.is_listed: part.word.swapping else: 0)
   ## tcidu lo sumti poi lo cmavo be `SE` pe `part` cu rinka lo nu ke'a .e lo pamoi sumti cu simxu lo
   ##     ka basti
-  ##   .i lo jalge cu du li no va'o lo nu `part` na cmavo be `SE`
+  ##   .i lo jalge cu du li 0 va'o lo nu `part` na cmavo be `SE`
 
 func isAbstraction(part: Part): bool = part.is_listed and part.word in WORDS_ABSTRACTION
   ## jdice lo du'u xu kau `part` cmavo be `NU`
@@ -310,7 +310,7 @@ func placeOpening(parts: openArray[Part]): int =
   ## facki lo stuzi poi se lidne le porsi
   ##   .i le porsi cu porsi lo cmavo poi jorne gi'e traji lo ka jibni le fanmo gi'e zvati no girzu
   ##       gi'e lidne su'o re taurpau
-  ##   .i lo jalge cu du li ni'u pa va'o lo nu no porsi cu mapti
+  ##   .i lo jalge cu du li ni'u 1 va'o lo nu no porsi cu mapti
   for at in countdown(parts.len, 1):
     if not parts[at - 1].isBinding or (at < parts.len and parts[at].isBinding): continue
     if parts.depthAt(at) == 0 and parts.countItems(at, parts.len) >= 2: return at
@@ -319,16 +319,16 @@ func placeOpening(parts: openArray[Part]): int =
 
 func withImplied(parts: openArray[Part]): seq[Part] =
   ## punji zo ke .e zo ke'e vu'o poi lo lujvo cu claxu ke'a
-  ##   .i va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li re fo li pa kei pa lo'u na
+  ##   .i va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li 2 fo li 1 kei pa lo'u na
   ##       ke le'u selpu'i lo stuzi poi lidne le multau
-  ##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei no da selpu'i
+  ##   .i va'o lo nu le te kancu cu se dilcu fi li 2 fo li 0 kei no da selpu'i
   ##   .i ki'u bo zo na natfe lo mulbri
   ##   .i ji'a lo re zo na galfi no da to `CLL 15.2` toi
   ##
   ## ni'o zo ke se lidne lo pamoi be lo re lamyma'o be `SE` to `CLL 12.11` toi
   ##   .i zo kei se tcidu ta'i zo ke'e poi fanmo lo girzu poi zo ke krasi ke'a
   ##   .i zo ke se lidne le cmavo be `NU` poi traji lo ka jibni gi'e ka'e selfa'o zo kei to
-  ##       `CLL 21.1` .e le javni pe li pamure toi
+  ##       `CLL 21.1` .e le javni pe li 152 toi
   ##   .i zo kei selvi'u va'o lo nu no cmavo be `NU` cu lidne zo kei
   let plain = parts.filterIt(not it.isWord(WORD_NA))
   if (parts.len - plain.len) mod 2 == 1: result.add [WORD_NA.toPart, WORD_KE.toPart]

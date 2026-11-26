@@ -143,6 +143,12 @@ The gap list reads the baseline of each algebra.
 - **Cause of each miss:** the diff was smaller than the delegate read.
 """
     ## Block that answers report of critic, each cell under `Predicted` quoting `PREDICTION`.
+  RULE_CELL = "Cell under `Predicted` is one whole claim of `## Prediction` block that call " &
+    "took, up to its confidence, percentiles or resolution criterion, or before final full " &
+    "stop of bullet with none, with or without its label of one word that opens with capital, " &
+    "or `No prediction` (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
+    ##   7017902016, 7018501890 and 7022872980 of #969 give it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -247,6 +253,50 @@ func linesForeground(kind, background, status: string; agent = "a1"): string =
 proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[string] =
   ## Read messages of findings `checkBlocks` gives transcript at stop, for kinds.
   transcript.parseTurn.subagents.checkBlocks(kinds).messages
+
+
+func refusalCell(cell: string): string =
+  ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
+  ##   `No prediction`, as rules of D5 b, 7017902016 and 7018501890 of #969 state it.
+  RULE_CELL & "; got `" & cell & "`."
+
+
+func refusalEmpty(row: int): string =
+  ## Write finding of empty cell under `Predicted` in row, which states rule as `refusalCell`
+  ##   does, so it names `No prediction` as form of miss.
+  RULE_CELL & "; got empty cell in row `" & $row & "`."
+
+
+func refusalCall(kind, description: string, hint = ""): string =
+  ## Write finding of call of kind that took no block, with hint after its description.
+  "Call of subagent of kind takes `## Prediction` block of model turn before its own, and " &
+    "after each earlier turn that starts subagent (GUIDE.md, Prediction, critic and " &
+    "reflection); got none for `" & kind & "` call `" & description & "`" & hint & "."
+
+
+func hintNamed(named: string): string =
+  ## Write hint that block of turns call looks back over names other kind or none, as rule of
+  ##   7017187857 on #969 states it; named is kind in backticks, or `no kind`.
+  ", and block of such turn names " & named & ": block serves only call of kind that first " &
+    "word of its `**Subagent:**` line names"
+
+
+func predicting(kind: string): string =
+  ## Write `PREDICTION` for subagent of kind, which first word of its `**Subagent:**` line names.
+  PREDICTION.replace("**Subagent:** builder of", "**Subagent:** " & kind & " of")
+
+
+proc quoted(bullets, cell: string): seq[string] =
+  ## Read findings of reflection whose one row holds cell under `Predicted`, after report of
+  ##   critic, where block that call of `reviewer` took holds bullets alone.
+  let prediction = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
+    bullets & "\n"
+  blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
+    lineUser("<task-notification>timer</task-notification>", "task-notification") &
+    linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+    linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+    lineSaid("## Reflection\n\n| State | Confidence | Predicted | Result |\n" &
+      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | it holds |\n"))
 
 
 
@@ -1828,8 +1878,8 @@ suite "Hooks":
 
   test "call of kind takes block of model turn before its own, which starts no subagent (#962)":
     # Ruling 6980006567: prediction is last message of turn of its own, timer wakes delegate, and
-    #   next turn starts subagent. `D2 a` of 6982373798: block serves calls of next turn alone,
-    #   and only from turn that starts no subagent.
+    #   next turn starts subagent. `D2 a` of 6982373798: block serves only from turn that starts
+    #   no subagent. D1 c of #969 replaces its limit to next turn (test below).
     let
       asked = lineUser("Build the check.", "human")
       read = lineSaid("Read.")
@@ -1858,43 +1908,46 @@ suite "Hooks":
     #   before call.
     for after in [lineSaid(PREDICTION, "tool_use"), lineThought()]:
       let late = blocksHeld(asked & read & wake & linesAgent("builder") & after & started)
-      check late == @["Call of subagent of kind takes `## Prediction` block of model turn just " &
-        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
-        "reflection); got none for `builder` call `Do the work`."]
+      check late == @["Call of subagent of kind takes `## Prediction` block of model turn before " &
+        "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
+        "critic and reflection); got none for `builder` call `Do the work`."]
 
-    # Block two turns back, or in turn that starts subagent of any type, is no evidence.
-    let back = blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
-      linesAgent("builder") & started)
-    check back.len == 1 and back[0].endsWith("call `Do the work`.")  # no hint of turn of call
+    # Block in turn that starts subagent of any type is no evidence, though it names kind of call;
+    #   block two turns back is, since D1 c of #969 (test below).
+    check blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
+      linesAgent("builder") & started).len == 0
     for kind in ["web-fetch", "builder"]:
-      check blocksHeld(asked & linesAgent(kind) & lineSaid(PREDICTION) & wake &
+      check blocksHeld(asked & linesAgent(kind) & lineSaid(predicting("reviewer")) & wake &
         linesAgent("reviewer") & started).anyIt("`reviewer`" in it)
 
-    # One block serves one call, earliest call first; exempt call takes what is left.
+    # One block serves one call, earliest call of its kind first; call of other kind takes block
+    #   that names its kind, and exempt call takes only block of its own kind (7017187857).
     let two = blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("builder") &
       linesAgent("reviewer") & started)
     check two.len == 1 and "`reviewer`" in two[0]
-    check blocksHeld(asked & lineSaid(PREDICTION & "\n" & PREDICTION) & wake &
+    check blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("builder", "First") &
+      linesAgent("builder", "Second") & started) == @[refusalCall("builder", "Second")]
+    check blocksHeld(asked & lineSaid(PREDICTION & "\n" & predicting("reviewer")) & wake &
       linesAgent("builder") & linesAgent("reviewer") & started).len == 0
     check blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
       linesAgent("builder") & started).len == 0
 
     # Each call takes earliest free block of turn before: of n blocks and m calls, blocks after
-    #   first m are taken by no call, so cell that quotes one of them is finding.
+    #   first m are taken by no call, so cell that quotes one of them is finding, in text of
+    #   D5 b of #969.
     const header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
     for n in 1 .. 3:
       for m in 1 .. n:
         var blocks, rows: seq[string]
         for b in 1 .. n:
-          blocks.add "## Prediction\n\n- Judgement: claim " & $b & " holds (70%)."
+          blocks.add "## Prediction\n\n**Subagent:** builder of claim " & $b &
+            ".\n\n- Judgement: claim " & $b & " holds (70%)."
           rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
         let found = blocksHeld(asked & lineSaid(blocks.join("\n\n")) & wake &
           linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
           linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
           lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
-        check found == toSeq(m + 1 .. n).mapIt("Cell under `Predicted` stands word for word in " &
-          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
-          "got `claim " & $it & " holds`.")
+        check found == toSeq(m + 1 .. n).mapIt(refusalCell("claim " & $it & " holds"))
 
     # Kinds `critic` and `resolver` are exempt, named here and not read from code; each other
     #   kind is held.
@@ -1921,12 +1974,493 @@ suite "Hooks":
     # Call of such type takes no block, so later call of kind in its turn takes it, as critic of
     #   hook on #962 found for `web-fetch` in foreground.
     for kind in ["general-purpose", "web-fetch", "Explore"]:
-      check blocksHeld(asked & lineSaid(PREDICTION) & wake &
+      check blocksHeld(asked & lineSaid(predicting("reviewer")) & wake &
         linesForeground(kind, "false", "completed") & linesAgent("reviewer") & started).len == 0
 
     # Call of earlier turn was held at its own stop.
     check blocksHeld(asked & read & wake & linesAgent("builder") & started &
       lineUser("Thanks.", "human") & lineSaid("Noted.")).len == 0
+
+
+  test "block serves later call across turns that start no subagent (D1 c of #969)":
+    # Ruling 7014974932, D1 c of #969: block of prediction serves later call of subagent, where no
+    #   subagent starts between them, whatever count of turns between; hook looks back from turn
+    #   of call, past each turn that starts no subagent. Ruling replaces limit to next turn of
+    #   `D2 a` of 6982373798, and block in turn of its call stays no evidence. Cases as found are
+    #   those D1 of #969 asks about: reply to refusal, and wake by hand-back or by message of
+    #   Architect, between block and call.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      refused = "got none for `reviewer` call `Do the work`."
+    let
+      asked = lineUser("Review the diff.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      started = lineSaid("Started.")
+      refusal = lineUser("Stop hook feedback:\nMend message that ends this turn.") &
+        $(%*{"type": "attachment", "attachment": {"type": "hook_blocking_error"}}) & "\n"
+      reply = refusal & lineSaid("```diff\n- see #964\n+ see [the log (#964)](x)\n```")
+      handback = lineHandback("builder", "abuilder") & lineSaid("The builder reported.")
+      message = lineUser("Is the reviewer running?", "human") & lineSaid("Not yet.")
+      waited = wake & lineSaid("Waiting.")
+      called = wake & linesAgent("reviewer") & started
+      predicted = predicting("reviewer")  # Block that names kind of call, as 7017187857 asks.
+    for between in [reply, handback, message]:
+      check blocksHeld(asked & lineSaid(predicted) & between & called).len == 0
+
+    # Block serves call at each count of turns between them, and across each kind of turn at once.
+    for count in 0 .. 4:
+      check blocksHeld(asked & lineSaid(predicted) & waited.repeat(count) & called).len == 0
+    check blocksHeld(asked & lineSaid(predicted) & reply & handback & message & waited & called)
+      .len == 0
+
+    # Call of any type between them ends turns hook looks back over, so block left over serves no
+    #   later call: kind, exempt kind, type no template names, and no type, which harness runs
+    #   as general subagent (C1 of critic of pairing build), in background or foreground.
+    for kind in ["builder", "critic", "resolver", "web-fetch", "general-purpose", ""]:
+      for between in [linesAgent(kind), linesForeground(kind, "false", "completed")]:
+        let found = blocksHeld(asked & lineSaid(predicted & "\n" & predicted) & wake & between &
+          started & called)
+        check found.len == 1 and found[0].endsWith(refused)
+
+    # Block in turn that starts subagent, before or after its call, is no evidence, and adds no
+    #   hint; block in turn of call adds its hint, after turns with no block.
+    for kind in ["builder", "web-fetch"]:
+      for earlier in [lineSaid(predicted, "tool_use") & linesAgent(kind),
+          linesAgent(kind) & lineSaid(predicted, "tool_use")]:
+        check blocksHeld(asked & earlier & started & waited & called) == @["Call of subagent of " &
+          "kind takes `## Prediction` block of model turn before its own, and after each " &
+          "earlier turn that starts subagent (GUIDE.md, Prediction, critic and reflection); " &
+          "got none for `reviewer` call `Do the work`."]
+    let inside = blocksHeld(asked & lineSaid(predicted) & wake & linesAgent("web-fetch") &
+      started & waited & wake & lineSaid(predicted, "tool_use") & linesAgent("reviewer") & started)
+    check inside.len == 1 and inside[0].endsWith("block stands in earlier turn.")
+
+    # Each call takes block of nearest of turns hook looks back over (7017187857): of n blocks,
+    #   one in each turn, and m calls, blocks before last m are taken by no call.
+    for n in 1 .. 3:
+      for m in 1 .. n:
+        var turns, rows: seq[string]
+        for b in 1 .. n:
+          turns.add lineSaid("## Prediction\n\n**Subagent:** builder of claim " & $b &
+            ".\n\n- Judgement: claim " & $b & " holds (70%).")
+          rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
+        let found = blocksHeld(asked & turns.join(wake) & wake &
+          linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
+          linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+          lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
+        check found == toSeq(1 .. n - m).mapIt(refusalCell("claim " & $it & " holds"))
+
+    # Calls of one turn share turns hook looks back over, and each takes block that names its
+    #   kind; exempt call takes only block of its own kind, and none ahead of other calls.
+    check blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & lineSaid(predicted) & wake &
+      linesAgent("critic") & linesAgent("builder") & linesAgent("reviewer") & started).len == 0
+    let short = blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & linesAgent("critic") &
+      linesAgent("builder") & linesAgent("reviewer") & started)
+    check short.len == 1 and short[0].endsWith(refused)
+
+    # Reflection quotes block that call took across turns, and block of earlier call stays taken
+    #   once later call starts.
+    let flow = asked & lineSaid(PREDICTION) & reply & message & wake & linesAgent("builder") &
+      started & lineHandback("builder", "abuilder") & linesAgent("critic") &
+      lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(flow & lineSaid(REFLECTION)).len == 0
+
+    # Block that reply to refusal writes again serves call, since call takes block of nearest
+    #   turn (7017187857), so reflection quotes block as written again, and not as first written.
+    let mended = asked & lineSaid(PREDICTION) & refusal &
+      lineSaid(PREDICTION.replace("four to eight", "five to nine")) & wake &
+      linesAgent("builder") & started & lineHandback("builder", "abuilder") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(mended & lineSaid(REFLECTION.replace("four to eight", "five to nine")))
+      .len == 0
+    check blocksHeld(mended & lineSaid(REFLECTION)) ==
+      @[refusalCell("four to eight findings, each with `file:line`")]
+
+
+  test "block serves only call of kind it names, nearest turn first (7017187857 of #969)":
+    # Ruling 7017187857 of #969, how block pairs: block serves only call of kind that its
+    #   `**Subagent:**` line names, as `**Subagent:** reviewer of …`, so late block for reviewer
+    #   serves no builder and no critic; it replaces pairing by order alone. Same comment, which
+    #   block: where turns before call hold more than one free block for it, call takes block of
+    #   nearest earlier turn, and earliest block inside that turn; it replaces "earliest" of
+    #   ruling on timer (6980006567). Cases as found are probes of critic of D1 c of #969, where
+    #   build `61233948` refused Q1, which keeps guide, and passed Q2 and Q3, whose block was
+    #   written after call it names.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      layouts = 48
+        ## Cases of law of nearest turn: each layout of one or two blocks to turn, over two or
+        ##   three turns, with each count of calls up to count of blocks.
+    func predictedProbe(kind, claim: string): string =
+      ## Write block of probe for subagent of kind, holding one claim, with its working line.
+      "## Prediction\n\n**Subagent:** " & kind & " of the fix, fresh context.\n**Basis:** what " &
+        "this delegate knows, with no new read.\n\n- Judgement: " & claim & " (60%). " &
+        "Resolution criterion: the report says so.\n\n**Working:** a timer of 5 seconds wakes " &
+        "this delegate, and the next turn starts it."
+
+    func reflectedProbe(cells: varargs[string]): string =
+      ## Write reflection of probe, whose rows hold cells under `Predicted`.
+      "## Reflection\n\n**Subagent:** builder, 170,000 tokens and $1.10 at list price, 57 " &
+        "calls, 15 min.\n**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min." &
+        "\n\n" & header & cells.mapIt("| ✅ | 60% | " & it & " | it holds |").join("\n") &
+        "\n\n- **Cause of each miss:** none.\n- **Change:** none."
+
+    func named(kind, claim: string): string =
+      ## Write block for subagent of kind, holding one claim.
+      "## Prediction\n\n**Subagent:** " & kind & " of the fix.\n\n- Judgement: " & claim & " (70%)."
+
+    let
+      timer = linesCall("sleep 5")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      ran = lineSaid("It runs.\n\n**Working:** the subagent runs, and its report wakes this " &
+        "delegate.")
+      review = lineUser("Review the diff of curator/asset-fetch.", "human")
+      build = lineUser("Build the fix of curator/asset-fetch.", "human")
+      checked = linesAgent("critic", "Critic of the fix") & ran & lineHandback("critic", "acritic")
+
+    # Q1: block for reviewer, then plan changes, and block for builder stands in turn just before
+    #   its call, as guide asks; builder takes its own block, and reflection that quotes it passes.
+    let guided = review & timer &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineUser("Build the fix first, then review it.", "human") & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & checked &
+      lineSaid(reflectedProbe("the builder adds two commits"))
+    check blocksHeld(guided).len == 0
+
+    # Q2: block for reviewer, written after its call, serves no later builder; hint names kind of
+    #   block.
+    let late = review & linesAgent("reviewer", "Review the fix") & ran &
+      lineUser("Where is the prediction?", "human") &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineHandback("reviewer", "areviewer") & lineSaid("The reviewer reported.") &
+      lineUser("Go on.", "human") & linesAgent("builder", "Build the fix") & ran
+    check blocksHeld(late) == @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]
+
+    # Q3: block for reviewer, written after its report, serves no critic, so reflection that
+    #   quotes it is refused.
+    let hindsight = review & linesAgent("reviewer", "Review the fix") & ran &
+      lineHandback("reviewer", "areviewer") &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineUser("Run the critic.", "human") & lineSaid("Noted.") & wake & checked &
+      lineSaid(reflectedProbe("the reviewer finds no race"))
+    check blocksHeld(hindsight) == @[refusalCell("the reviewer finds no race")]
+
+    # Q4: optional block of critic, written after report of builder, serves critic called two
+    #   turns later, as break Z2 of critic of D1 c asks.
+    let optional = build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & timer &
+      lineSaid(predictedProbe("critic", "the critic fails one claim")) &
+      lineUser("Is the critic running?", "human") & lineSaid("Not yet.") & wake & checked &
+      lineSaid(reflectedProbe("the builder adds two commits", "the critic fails one claim"))
+    check blocksHeld(optional).len == 0
+
+    # Block six or more turns back serves its call, as break Z1 of critic of D1 c asks.
+    for count in 5 .. 8:
+      check blocksHeld(build & timer & lineSaid(predictedProbe("builder", "it holds")) &
+        (wake & lineSaid("Waiting.")).repeat(count) & wake &
+        linesAgent("builder", "Build the fix") & ran).len == 0
+
+    # Three groups of calls: block for reviewer before call of `web-fetch` serves no later
+    #   reviewer, as break Z3 of critic of D1 c asks.
+    let grouped = build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & timer &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) & wake &
+      linesAgent("web-fetch", "Read the page") & lineSaid("Fetched.") &
+      lineUser("Go on.", "human") & linesAgent("reviewer", "Review the fix") & ran
+    check blocksHeld(grouped) == @[refusalCall("reviewer", "Review the fix")]
+
+    # Ruling 7022770415 of #969: hook skips `Agent` call whose result has `is_error` and no
+    #   `agentId`, so such call takes no block and ends no turns that later call looks back over;
+    #   call that launched keeps its effect. Case as found is probe Q5 of critic of D1 c: build
+    #   `05cb3bbd` read call that harness rejects as call, so it refused its retry.
+    let
+      rejection = $(%*{"type": "assistant", "message": {"content": [{
+        "type": "tool_use", "id": "toolu_rejected", "name": "Agent",
+        "input": {"subagent_type": "builder", "description": "Build the fix", "prompt": "Do it."},
+      }], "stop_reason": "tool_use"}}) & "\n" & $(%*{"type": "user", "message": {"content": [{
+        "type": "tool_result", "tool_use_id": "toolu_rejected", "is_error": true,
+        "content": "The tool use was rejected.",
+      }]}, "toolUseResult": "Error: The tool use was rejected."}) & "\n"
+      rejected = build & timer &
+        lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake & rejection &
+        lineSaid("The call was rejected.") & lineUser("Try again.", "human") &
+        linesAgent("builder", "Build the fix") & ran
+    check blocksHeld(rejected).len == 0
+
+    func answered(kind: string; error, answer: JsonNode; is_foreground = false): string =
+      ## Write transcript lines of `Agent` call of kind and its result, whose item holds error as
+      ##   `is_error` and whose entry holds answer as `toolUseResult`; each is absent where nil.
+      var
+        input = %*{"subagent_type": kind, "description": "Build the fix", "prompt": "Do it."}
+        item = %*{"type": "tool_result", "tool_use_id": "toolu_r" & kind, "content": "Error."}
+        entry = %*{"type": "user", "message": {"content": []}}
+      if is_foreground: input["run_in_background"] = %false
+      if error != nil: item["is_error"] = error
+      entry["message"]["content"].add item
+      if answer != nil: entry["toolUseResult"] = answer
+      $(%*{"type": "assistant", "message": {"content": [{
+        "type": "tool_use", "id": "toolu_r" & kind, "name": "Agent", "input": input,
+      }], "stop_reason": "tool_use"}}) & "\n" & $entry & "\n"
+
+    proc retried(between: string): seq[string] =
+      ## Read findings of retry of builder whose block stands before call that between writes.
+      blocksHeld(build & timer &
+        lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake & between &
+        lineSaid("The call was answered.") & lineUser("Try again.", "human") &
+        linesAgent("builder", "Build the fix") & ran)
+
+    # Result with `is_error` and no `agentId` skips call of each type, so retry takes block;
+    #   `toolUseResult` that is text, absent, or object with no agent or empty one names none.
+    let
+      error = %true
+      unnamed = [%"Error: The tool use was rejected.", nil, %*{"status": "error"},
+        %*{"agentId": ""}]
+    for kind in ["builder", "critic", "resolver", "web-fetch", ""]:
+      for answer in unnamed:
+        check retried(answered(kind, error, answer)).len == 0
+
+    # Call that launched names its agent, so it keeps its effect with `is_error` too: it takes
+    #   block of its kind and ends turns, so retry is refused. So does result with no `is_error`,
+    #   or with one that is false or no boolean.
+    for kind in ["builder", "web-fetch"]:
+      check retried(answered(kind, error, %*{"agentId": "a1", "status": "completed"})) ==
+        @[refusalCall("builder", "Build the fix")]
+      for flag in [nil, %false, %"true", %1]:
+        check retried(answered(kind, flag, %"Error: The tool use was rejected.")) ==
+          @[refusalCall("builder", "Build the fix")]
+
+    # Skipped call of current turn asks for no block, and skipped call of critic in foreground
+    #   gives no report; call that launched still asks for each.
+    let read = lineSaid("Read.")
+    check blocksHeld(build & read & wake & answered("builder", error, %"Error.") & ran).len == 0
+    check blocksHeld(build & read & wake & answered("builder", error, %*{"agentId": "a1"}) & ran) ==
+      @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & read & wake &
+      answered("critic", error, %"Error.", is_foreground = true) & ran).len == 0
+    check blocksHeld(build & read & wake &
+      answered("critic", error, %*{"agentId": "a1"}, is_foreground = true) & ran).anyIt(
+      it.startsWith("Report of critic takes `## Reflection` block"))
+
+    # Skip drops rejected call alone: call of its kind that launched before it keeps block it
+    #   took, so reflection that quotes that block passes (break X3 of critic of last build,
+    #   which dropped each earlier call of kind of rejected call too).
+    check blocksHeld(build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") &
+      checked & answered("builder", error, %"Error: The tool use was rejected.") &
+      lineSaid(reflectedProbe("the builder adds two commits"))).len == 0
+
+    # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
+    #   any indent, up to whitespace. Ruling 7022770415 of #969: before match, word drops case,
+    #   backticks, bold or italic marks, and final comma, so `**Subagent:** Builder of the fix`
+    #   names `builder`. Ruling 7027197745 of #969: label reads in any case, with its colon
+    #   inside or outside bold, and word drops final full stop or colon too, so line
+    #   `**subagent:** builder. of the fix` names `builder`. Block with no such line, or whose
+    #   word is no kind, names no kind and serves no call, and hint says so. Cases as found are
+    #   probes S02 to S16
+    #   of critic of pairing build: build `05cb3bbd` read word as written, so kind with capital,
+    #   as table of guide spells it, or in backticks, italics or bold, or with comma, named none;
+    #   build `9d4b7eff` read label as written, so S05, S10 and S15 named none.
+    proc heldAfter(text: string, kinds: openArray[string] = KINDS): seq[string] =
+      ## Read findings of builder call after block that holds text, then one claim, in turn
+      ##   before its own.
+      blocksHeld(build & lineSaid("## Prediction\n\n" & text & "\n\n- Judgement: it builds " &
+        "(70%).") & wake & linesAgent("builder", "Build the fix") & ran, kinds)
+
+    for text in ["**Subagent:** builder of the fix.", "  **Subagent:** builder of the fix.",
+        "**Subagent:**  builder\tof the fix.", "**Subagent:** builder",
+        "**Subagent:**builder of the fix.", "**Subagent:** builder (fresh context) of the fix.",
+        "**Basis:** none.\n**Subagent:** builder of the fix.",
+        "- Judgement: it is first (70%).\n\n**Subagent:** builder of the fix.",
+        "**Subagent:** builder of the fix.\n**Subagent:** reviewer of the diff.",
+        "**Subagent:** Builder of the fix.", "**Subagent:** `builder` of the fix.",
+        "**Subagent:** builder, fresh context.", "**Subagent:** *builder* of the fix.",
+        "**Subagent:** **builder** of the fix.", "**Subagent:** BUILDER, of the fix.",
+        "**Subagent:** builder: the fix.", "**Subagent:** builder. Of the fix.",
+        "**Subagent**: builder of the fix.", "**subagent:** builder of the fix.",
+        "**SUBAGENT:** builder of the fix.", "**subagent**: builder of the fix.",
+        "**subagent:** builder. of the fix", "**Subagent:** `builder`. of the fix.",
+        "**Subagent:** **builder**: of the fix.", "  **sUbAgEnT**:  Builder,\tof the fix."]:
+      check heldAfter(text).len == 0
+    check heldAfter("**Subagent:** reviewer of the diff.\n**Subagent:** builder of the fix.") ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]  # first line alone
+    for first in ["**Subagent:**", "**Subagent:** the builder of the fix."]:
+      check heldAfter(first & "\n**Subagent:** builder of the fix.") ==
+        @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]  # first line names none
+
+    # Word keeps each other mark, second final mark, and its words, and label keeps its marks
+    #   but colon, so each of these names no kind; strike and semicolon are such marks (X5 of
+    #   critic of last build).
+    for text in ["**Basis:** what this delegate knows.", "**Subagent:**",
+        "**Subagent:**\nbuilder of the fix.", "**Subagent:** the builder of the fix.",
+        "**Subagent:** a builder of the fix.", "**Subagent:** builders of the fix.",
+        "**Subagent:** builder,, of the fix.", "**Subagent:** ,builder of the fix.",
+        "**Subagent:** builder.. of the fix.", "**Subagent:** builder,. of the fix.",
+        "**Subagent:** builder:, of the fix.", "**Subagent:** builder; of the fix.",
+        "**Subagent:** ~~builder~~ of the fix.", "**Subagent:** .builder of the fix.",
+        "**Subagent:** \"builder\" of the fix.", "**Subagent:** (builder) of the fix.",
+        "**Subagent:** b`uild`er of the fix.", "**Subagent:** ** builder of the fix.",
+        "**Subagent:** builder of the fix.", "**Subagent:** surveyor of the fix.",
+        "**Subagent:** web-fetch of the page.", "Subagent: builder of the fix.",
+        "**Subagent** builder of the fix.", "__Subagent:__ builder of the fix.",
+        "*Subagent:* builder of the fix.", "***Subagent:*** builder of the fix.",
+        "**Subagent:**: builder of the fix.", "**Sub agent:** builder of the fix.",
+        "- **Subagent:** builder of the fix.", "The **Subagent:** builder of the fix.",
+        "> **Subagent:** builder of the fix.", "```\n**Subagent:** builder of the fix.\n```"]:
+      check heldAfter(text) == @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
+    let repository = readKinds(currentSourcePath().parentDir / "../../../..")
+    check heldAfter("**Subagent:** surveyor of the fix.", repository) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`surveyor`"))]  # kind of templates
+
+    # Kind that word names is name its template gives: hint gives that name, and call of
+    #   template whose name holds capital takes block whose word holds none.
+    check heldAfter("**Subagent:** **Reviewer**, of the diff.") ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]
+    check blocksHeld(build & lineSaid("## Prediction\n\n**Subagent:** builder of the fix.\n\n" &
+      "- Judgement: it builds (70%).") & wake & linesAgent("Builder", "Build the fix") & ran,
+      ["Builder"]).len == 0
+
+    # Law: word of each kind, in each case, inside each mark of code, italic or bold, with final
+    #   comma, full stop or colon or none, outside or inside marks, names that kind, exempt kind
+    #   too, so its call takes block and reflection quotes its claim; so does plain word after
+    #   label in each case, with colon inside or outside bold (7022770415, 7027197745).
+    const
+      wraps = ["", "`", "*", "**", "***", "_", "__"]
+        ## Marks that word may stand inside: none, code, italic, bold, and both.
+      ends = [",", ".", ":"]
+        ## Marks after word that match drops, once, outside or inside marks.
+      labels = ["**Subagent:**", "**subagent:**", "**SUBAGENT:**", "**Subagent**:",
+        "**sUbAgEnT**:"]
+        ## Forms of label: cases of letters, with colon inside or outside bold.
+      forms = 816
+        ## Cases of law: kinds of `KINDS` in four cases, each in 46 forms of marks after first
+        ##   label, and plain after each of five labels.
+    var lenient = 0
+    for kind in KINDS:
+      for word in [kind, kind.capitalizeAscii, kind.toUpperAscii,
+          toSeq(kind.pairs).mapIt(if it[0] mod 2 == 0: it[1].toUpperAscii else: it[1]).join]:
+        var lines = labels.mapIt(it & " " & word)
+        for wrap in wraps:
+          lines.add labels[0] & " " & wrap & word & wrap
+          for mark in ends:
+            lines.add labels[0] & " " & wrap & word & wrap & mark
+            if wrap.len > 0: lines.add labels[0] & " " & wrap & word & mark & wrap
+        for line in lines:
+          check blocksHeld(build & lineSaid("## Prediction\n\n" & line &
+            " of the fix.\n\n- Judgement: it builds (70%).") & wake &
+            linesAgent(kind, "Do it") & ran & lineHandback(kind, "a" & kind) & checked &
+            lineSaid(reflectedProbe("it builds"))).len == 0
+          inc lenient
+    check lenient == forms
+
+    # Hint names what nearest free block names, earliest first inside its turn; it stands where
+    #   no call took that block, inside turns call looks back over, and hint of turn of call
+    #   follows it.
+    let nameless = "## Prediction\n\n- Judgement: it builds (70%)."
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(predicting("critic") & "\n" & nameless) & wake &
+      linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`critic`"))]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(nameless & "\n\n" & predicting("critic")) & wake &
+      linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake & linesAgent("reviewer") &
+      linesAgent("builder", "Build the fix") & ran) == @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake & linesAgent("web-fetch") &
+      ran & wake & linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(PREDICTION, "tool_use") & linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`") & ", and block in turn " &
+        "of call, which is no evidence: block stands in earlier turn")]
+
+    # Exempt call takes only block of its own kind, never block of other exempt kind (C3 of
+    #   critic of pairing build); call of type no template names, or of no type, takes none,
+    #   though block names no kind, so reflection quotes none of it.
+    for (prediction, count) in [(predicting("resolver"), 0), (PREDICTION, 2),
+        (predicting("critic"), 2)]:
+      check blocksHeld(review & lineSaid(prediction) & wake & linesAgent("resolver") & ran &
+        checked & lineSaid(REFLECTION)).len == count
+
+    # Exempt call looks back over turns any call does: block of critic before call of builder
+    #   serves no later critic (C25), and of two blocks of critic it takes nearest (C26).
+    let
+      refused = @[refusalCell("the race to save one shared key leads the findings"),
+        refusalCell("four to eight findings, each with `file:line`")]
+      far = named("critic", "the critic fails one claim")
+      near = named("critic", "the critic holds each claim")
+    check blocksHeld(review & lineSaid(predicting("critic")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") &
+      checked & lineSaid(REFLECTION)) == refused
+    check blocksHeld(review & lineSaid(far) & wake & lineSaid(near) & wake & checked &
+      lineSaid(reflectedProbe("the critic fails one claim", "the critic holds each claim"))) ==
+      @[refusalCell("the critic fails one claim")]
+
+    # Two blocks of one kind in two text items of one turn, with tool call between them: call
+    #   takes earliest, so reflection that quotes it passes, and claim of later one is refused
+    #   (C12).
+    check blocksHeld(build & lineSaid(named("builder", "claim 1 holds"), "tool_use") &
+      linesCall("ls") & lineSaid(named("builder", "claim 2 holds")) & wake &
+      linesAgent("builder") & ran & lineHandback("builder", "abuilder") & checked &
+      lineSaid(reflectedProbe("claim 1 holds", "claim 2 holds"))) ==
+      @[refusalCell("claim 2 holds")]
+
+    # Cost: later block of kind, written before call, replaces earlier block of that kind, as
+    #   guide states (7022770415). So of two blocks for two subagents of one kind, first call
+    #   takes block of nearer turn, and reflection that quotes other one is refused (probe F4).
+    check blocksHeld(review & lineSaid(named("reviewer", "diff one has a race")) &
+      lineUser("Review diff two too.", "human") &
+      lineSaid(named("reviewer", "diff two has no race")) & wake &
+      linesAgent("reviewer", "Review diff one") & ran & lineHandback("reviewer", "areviewer") &
+      checked & lineSaid(reflectedProbe("diff one has a race"))) ==
+      @[refusalCell("diff one has a race")]
+    for kind in ["", "web-fetch"]:
+      check blocksHeld(review & lineSaid(nameless) & wake & linesAgent(kind) & ran & checked &
+        lineSaid(reflectedProbe("it builds"))) == @[refusalCell("it builds")]
+
+    # Calls of two kinds in one turn each take block of own kind from nearest turn, in either
+    #   order of calls, so claims of blocks of farther turn are refused.
+    for calls in [@["reviewer", "builder"], @["builder", "reviewer"]]:
+      check blocksHeld(review &
+        lineSaid(named("builder", "b0") & "\n\n" & named("reviewer", "r0")) & wake &
+        lineSaid(named("reviewer", "r1") & "\n\n" & named("builder", "b1")) & wake &
+        calls.mapIt(linesAgent(it)).join & ran & checked & lineSaid("## Reflection\n\n" & header &
+        ["b0", "r0", "r1", "b1"].mapIt("| ✅ | 70% | " & it & " | it holds |").join("\n") & "\n")) ==
+        @[refusalCell("b0"), refusalCell("r0")]
+
+    # Each layout of one or two blocks to turn, over two and three turns: m calls of one kind in
+    #   one turn take first m blocks, nearest turn first and earliest first inside it, and claim
+    #   of each other block is refused.
+    var cases = 0
+    for turns in 2 .. 3:
+      for mask in 0 ..< (1 shl turns):  # Turn `t` holds two blocks where bit `t` is set.
+        var
+          texts: seq[string]  # Blocks of each turn, earliest turn first.
+          numbers: seq[seq[int]]  # Number of each block of each turn, from 1.
+          count = 0
+        for t in 0 ..< turns:
+          var blocks: seq[string]
+          numbers.add @[]
+          for _ in 0 .. (mask shr t and 1):
+            inc count
+            numbers[^1].add count
+            blocks.add named("builder", "claim " & $count & " holds")
+          texts.add blocks.join("\n\n")
+        var order: seq[int]  # Numbers of blocks, nearest turn first, earliest first inside it.
+        for t in countdown(turns - 1, 0): order.add numbers[t]
+        let rows = toSeq(1 .. count).mapIt("| ✅ | 70% | claim " & $it & " holds | it holds |")
+        for m in 1 .. count:
+          let found = blocksHeld(build & texts.mapIt(lineSaid(it)).join(wake) & wake &
+            linesAgent("builder").repeat(m) & ran & lineHandback("builder", "abuilder") &
+            checked & lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
+          check found == toSeq(1 .. count).filterIt(it notin order[0 ..< m])
+            .mapIt(refusalCell("claim " & $it & " holds"))
+          inc cases
+    check cases == layouts
 
 
   test "kinds are names of front matter of templates under `.claude/agents`, read at stop":
@@ -2044,9 +2578,12 @@ suite "Hooks":
     check blocksHeld(taken & report & read & lineUser("Next.", "human") & lineSaid("Noted.")).len ==
       0
 
-    # Refusal asks for missing reflection now, and for mend of cell that quotes no block.
+    # Refusal asks for missing reflection now, and for mend of cell that is no whole claim of
+    #   block, as D5 b of #969 asks.
     let reason = reasonStop([], [], blocks = @[finding("", 0, "Report of critic.")])
-    check "Write each missing reflection now" in reason and "mend each cell under" in reason
+    check "Write each missing reflection now" in reason
+    check "mend each cell under `Predicted` that is no whole claim of block that call took" in
+      reason
 
 
   test "reflection counts above first sign-off or working line of last text of turn (#962)":
@@ -2117,10 +2654,10 @@ suite "Hooks":
       "it leads |\n| ⬜ | 60% | four to eight findings, each with `a \\| b` | three |",
       asked & lineSaid(wrapped) & calls).len == 0
 
-    # Case as found: sample of `GUIDE.md` before #962 quotes claims short, with percentage.
-    check reflected(header & "| ✅ | 70% | The race leads (70%) | it leads |") == @[
-      "Cell under `Predicted` stands word for word in `## Prediction` block that call took " &
-        "(GUIDE.md, Prediction, critic and reflection); got `The race leads (70%)`."]
+    # Case as found: sample of `GUIDE.md` before #962 quotes claims short, with percentage;
+    #   refusal states rule of D5 b of #969.
+    check reflected(header & "| ✅ | 70% | The race leads (70%) | it leads |") ==
+      @[refusalCell("The race leads (70%)")]
 
     # Block in turn of call, and block no call took, are no quote.
     let late = asked & lineSaid("Read.") & wake & lineSaid(PREDICTION, "tool_use") &
@@ -2130,9 +2667,13 @@ suite "Hooks":
     let unused = asked & lineSaid(PREDICTION) & wake & lineSaid("No subagent.") &
       lineHandback("critic")
     check blocksHeld(unused & lineSaid(REFLECTION)).len == 2
-    let critic = asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
-      lineSaid("The critic runs.") & lineHandback("critic")
-    check blocksHeld(critic & lineSaid(REFLECTION)).len == 0  # prediction of critic is optional
+
+    # Prediction of critic is optional, and block that names `critic` serves its call; block for
+    #   other kind serves no critic, so reflection quotes none of it (7017187857).
+    for (kind, count) in [("critic", 0), ("builder", 2), ("reviewer", 2)]:
+      let critic = asked & lineSaid(predicting(kind)) & wake & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+      check blocksHeld(critic & lineSaid(REFLECTION)).len == count
 
     # Reflection quotes nothing with no table, no row, or empty cell.
     check reflected("No table.").anyIt("column `Predicted` (GUIDE.md" in it)
@@ -2150,9 +2691,7 @@ suite "Hooks":
     #   answers no report.
     for cut in ["## Sign-off\n\n**Role:** curator, at `main`\n", "**Working:** it runs.\n"]:
       check blocksHeld(taken & lineSaid(REFLECTION & "\n" & cut & "\n## Reflection\n\n" & header &
-        "| ⬜ | 60% | not quoted | x |\n")) == @["Cell under `Predicted` stands word for word in " &
-          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
-          "got `not quoted`."]
+        "| ⬜ | 60% | not quoted | x |\n")) == @[refusalCell("not quoted")]
 
     # First table with column `Predicted` is read, and no other.
     check reflected("| Item | Cost |\n| --- | --- |\n| run | $1 |\n\n" & header &
@@ -2162,6 +2701,819 @@ suite "Hooks":
     # Reflection of earlier turn was held at its own stop.
     check blocksHeld(taken & lineSaid("## Reflection\n\nNo table.\n") & lineUser("Next.", "human") &
       lineSaid("Noted.")).len == 0
+
+
+  test "each cell is whole claim of block call took, or `No prediction` (D2 c and D5 b of #969)":
+    # Ruling 7016134603, D5 b of #969: each cell under `Predicted` equals one claim of block that
+    #   call took, with or without its label; claim runs up to its percentage, its percentiles or
+    #   its resolution criterion, and runs of whitespace collapse as before. Ruling 7015791554,
+    #   D2 c of #969: reflection counts missing prediction in row of its own, whose cell holds
+    #   exactly `No prediction`, with cause of miss under `Result`; quote check passes that one
+    #   exact cell. Cases as found are costs of record, Blocks of subagents: cell standing in
+    #   block passed, as `-`, and reflection of missing prediction where no call took block
+    #   could not pass.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      predicted = """
+## Prediction
+
+**Subagent:** reviewer of the diff, fresh context.
+**Basis:** what this delegate knows, with no new read.
+
+- Judgement: the race leads the findings (70%). Resolution criterion: it is the first finding.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
+  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Calls: 10th 150, 50th 260, 90th 420. Resolution criterion: the count of its calls.
+- Judgement: no test is weakened.
+
+**Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
+"""
+        ## Block in form of `GUIDE.md`, with each mark that ends claim, and bullet with none.
+      claims = [
+        ("Judgement: ", "the race leads the findings"),
+        ("Work: ", "tokens summed over its requests: 100,000, 160,000 and 300,000"),
+        ("Calls: ", "10th 150, 50th 260, 90th 420"),
+        ("Judgement: ", "no test is weakened"),
+      ]
+        ## Label and claim of each bullet of `predicted`, as rulings cut them.
+      fragments = 111
+        ## Runs of words of `claims` that are neither claim nor claim without its label.
+    let
+      asked = lineUser("Review the diff.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      calls = wake & linesAgent("reviewer") & lineSaid("Started.") &
+        lineHandback("reviewer", "areviewer") & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+      taken = asked & lineSaid(predicted) & calls
+    proc reflected(cells: openArray[string]; before = taken): seq[string] =
+      ## Read findings of reflection whose rows hold cells under `Predicted`, after report of
+      ##   critic.
+      var rows = ""
+      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | it holds |\n"
+      blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
+    proc passes(bullets, cell: string): bool =
+      ## Decide whether cell passes, where block that call took holds bullets alone, after line
+      ##   that names kind of call (7017187857).
+      reflected([cell], asked & lineSaid("## Prediction\n\n**Subagent:** reviewer of the diff." &
+        "\n\n" & bullets & "\n") & calls).len == 0
+
+    # Each claim passes, with and without its label, one to table and all in one.
+    for (label, claim) in claims:
+      check reflected([label & claim]).len == 0
+      check reflected([claim]).len == 0
+    check reflected(claims.mapIt(it[0] & it[1]) & claims.mapIt(it[1])).len == 0
+
+    # Each other run of words of claim is fragment, and refused: each word alone, cut that drops
+    #   end or start of claim, and part after second `: `.
+    var runs = 0
+    for (label, claim) in claims:
+      let words = (label & claim).splitWhitespace
+      for first in 0 ..< words.len:
+        for last in first ..< words.len:
+          let cell = words[first .. last].join(" ")
+          if cell in [label & claim, claim]: continue
+          check reflected([cell]) == @[refusalCell(cell)]
+          inc runs
+    check runs == fragments
+
+    # Marker of bullet, cut inside word, and line of block that is no bullet each are no claim.
+    for cell in ["-", "- Judgement: the race leads the findings", "he race leads the findings",
+        "the race leads the finding", "reviewer of the diff, fresh context.",
+        "**Basis:** what this delegate knows, with no new read."]:
+      check reflected([cell]) == @[refusalCell(cell)]
+
+    # Claim that keeps its percentage, percentiles, resolution criterion or whole bullet is
+    #   refused, and so is claim of bullet with no mark that keeps its final full stop
+    #   (7017902016).
+    for cell in ["the race leads the findings (70%)",
+        "Judgement: the race leads the findings (70%)", "the race leads the findings (70%).",
+        "the race leads the findings (70%). Resolution criterion: it is the first finding.",
+        "tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and " &
+          "90th percentiles", "10th 150, 50th 260, 90th 420.", "no test is weakened.",
+        "Judgement: no test is weakened."]:
+      check reflected([cell]) == @[refusalCell(cell)]
+
+    # Claim ends at its confidence, last percentage in brackets of any count of digits before
+    #   first of `, as the 10th` and `. Resolution criterion`, in any order, or before its end
+    #   (7018501890, test below); with no percentage there, at that first mark; with none, it
+    #   runs to end of bullet, before one final full stop (7017902016, test below). Claim whose
+    #   percentiles come first runs to them, and keeps each percentage (7023048202, test below).
+    for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
+        ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
+        ("- a b. Resolution criterion: c", "a b"),
+        ("- a b (70%), as the 10th c. Resolution criterion: d", "a b (70%)"),
+        ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
+        ("- a b. Resolution criterion: c (70%), as the 10th d", "a b"),
+        ("- a b. Resolution criterion: c, as the 10th d (70%)", "a b"),
+        ("- a b c (60%) d (70%)", "a b c (60%) d"), ("- a b", "a b"), ("- a b.", "a b")]:
+      check passes(bullet, claim)
+      check passes(bullet, bullet[2 .. ^1]) == (bullet[2 .. ^1] == claim)
+
+    # Brackets with no percentage in them, and other words, end nothing, so claim reads them;
+    #   criterion in lower case is mark, by choice of delegate (test below).
+    for bullet in ["- a (duty 2) b", "- a (70 %) b", "- a (about 70%) b", "- a(70%) b",
+        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b"]:
+      check passes(bullet, bullet[2 .. ^1])
+      check not passes(bullet, "a")
+    check passes("- a. resolution criterion. b", "a")
+    check not passes("- a. resolution criterion. b", "a. resolution criterion. b")
+
+    # Label is one word that opens with capital, then `: `, at start of claim (7018501890, test
+    #   below); `: ` of resolution criterion alone opens none.
+    for (bullet, cells, refused) in [
+        ("- Judgement: a b (70%).", @["Judgement: a b", "a b"], @["Judgement:", "b"]),
+        ("- Judgement: a: b (70%).", @["Judgement: a: b", "a: b"], @["b", "Judgement: a"]),
+        ("- a b. Resolution criterion: c d.", @["a b"], @["c d.", "a b. Resolution criterion"]),
+        ("- Judgement:a b (70%).", @["Judgement:a b"], @["a b"])]:
+      for cell in cells: check passes(bullet, cell)
+      for cell in refused: check not passes(bullet, cell)
+
+    # Bullet runs over each line to next blank line or bullet, indented or not, whitespace
+    #   collapsed, so claim and its mark may wrap; nested bullet ends it and opens no claim.
+    for (bullets, claim) in [("- Judgement: a\n  b (70%)", "a b"),
+        ("- Judgement: a\nb (70%)", "a b"), ("- a b\n  (70%) c", "a b"),
+        ("- a b, as the\n  10th c", "a b"), ("- a b.\n  Resolution criterion: c", "a b"),
+        ("- a  b\t(70%)", "a b"), ("- a b\n- c d (70%)", "c d")]:
+      check passes(bullets, claim)
+    for (bullets, claim, refused) in [("- a b\n\n  c (70%)", "a b", "a b c"),
+        ("- a b\n- c d (70%)", "a b", "a b - c d"), ("- a b\n  - c d (70%)", "a b", "c d"),
+        ("- a b\n  - c d (70%)", "a b", "a b - c d"), ("- a b\n  * c d (70%)", "a b", "a b * c d")]:
+      check passes(bullets, claim)
+      check not passes(bullets, refused)
+
+    # Bullet opens with `-`, `*` or `+` and space, at no indent; other line opens no claim.
+    for marker in ["-", "*", "+"]:
+      check passes(marker & " a b (70%)", "a b")
+    for bullets in ["  - a b (70%)", "\t- a b (70%)", "1. a b (70%)", "-a b (70%)", "a b (70%)",
+        "> - a b (70%)"]:
+      check not passes(bullets, "a b")
+
+    # Pipe of claim reads as `\|` in cell.
+    check passes("- a `x | y` b (70%)", "a `x \\| y` b")
+
+    # `No prediction` passes where no call took block, where critic alone ran, and where call
+    #   took block, beside claims; its whitespace collapses, as each cell's does.
+    let
+      missed = asked & lineSaid("Read.") & calls
+      alone = asked & wake & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+    for before in [missed, alone, taken]:
+      check reflected(["No prediction"], before).len == 0
+      check reflected(["No  prediction", "No\tprediction"], before).len == 0
+    check reflected(claims.mapIt(it[1]) & @["No prediction", "No prediction"]).len == 0
+
+    # Each other case of letters, and each mark or word added, is refused.
+    var cased = 0
+    for i, c in "No prediction":
+      if c notin Letters: continue
+      var cell = "No prediction"
+      cell[i] = (if c.isUpperAscii: c.toLowerAscii else: c.toUpperAscii)
+      for before in [missed, alone, taken]:
+        check reflected([cell], before) == @[refusalCell(cell)]
+      inc cased
+    check cased == "Noprediction".len
+    for cell in ["no prediction", "NO PREDICTION", "No prediction.", "No prediction:",
+        "No predictions", "Noprediction", "No prediction (70%)", "No prediction of builder"]:
+      for before in [missed, alone, taken]:
+        check reflected([cell], before) == @[refusalCell(cell)]
+
+    # Claim of block no call took is refused, with its label or without it: block in turn of
+    #   call, and block of turn after which no call starts.
+    let
+      late = asked & lineSaid("Read.") & wake & lineSaid(predicted, "tool_use") &
+        linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+        linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+      unused = asked & lineSaid(predicted) & wake & lineSaid("No subagent.") &
+        lineHandback("critic")
+    for before in [late, unused]:
+      for (label, claim) in claims:
+        for cell in [label & claim, claim]:
+          check reflected([cell], before) == @[refusalCell(cell)]
+
+
+  test "claim with no mark ends before one final full stop of its bullet (7017902016 of #969)":
+    # Ruling 7017902016 of #969: claim with no percentage, no percentiles and no resolution
+    #   criterion ends before one final full stop of its bullet. Case as found is stop of entry
+    #   882 of copy of transcript of delegate on #962 (record, Blocks of subagents): reflection
+    #   quoted two bullets of block of entry 817 that hold no mark, and cut final full stop of
+    #   each, which build `b8491db8` refused.
+    let
+      asked = lineUser("Research the practice of forecasting.", "human")
+      calls = lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("researcher") & lineSaid("Started.") &
+        lineHandback("researcher", "aresearcher") & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+    proc passes(bullets, cell: string): bool =
+      ## Decide whether cell passes, where block that call of `researcher` took holds bullets
+      ##   alone.
+      blocksHeld(asked & lineSaid("## Prediction\n\n**Subagent:** researcher of forecasting " &
+        "practice, fresh context.\n\n" & bullets & "\n") & calls & lineSaid("## Reflection\n\n" &
+        "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 80% | " &
+        cell & " | it holds |\n"), ["critic", "researcher"]).len == 0
+
+    # Case as found: each cell drops final full stop of its bullet, and passes; cell that keeps
+    #   it is refused. Text before `: ` of each bullet is several words, so it is no label, and
+    #   part after it is refused (7018501890, test below).
+    const found = "- Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
+      "million, 90th percentile 8 million.\n- Cost at list price: 10th percentile $1.50, median " &
+      "$3.50, 90th percentile $8."
+    for cell in ["Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
+        "million, 90th percentile 8 million",
+        "Cost at list price: 10th percentile $1.50, median $3.50, 90th percentile $8"]:
+      check passes(found, cell)
+      check not passes(found, cell & ".")
+    for cell in ["10th percentile 1 million, median 3 million, 90th percentile 8 million",
+        "10th percentile $1.50, median $3.50, 90th percentile $8"]:
+      check not passes(found, cell)
+      check not passes(found, cell & ".")
+
+    # Claim with no mark ends before one final full stop, whatever whitespace or wrap ends its
+    #   bullet, and before no other mark; full stop inside claim stays, and so does one before
+    #   mark, since claim with mark ends at mark.
+    for (bullet, cells, refused) in [
+        ("- a b", @["a b"], @["a b.", "a"]),
+        ("- a b.", @["a b"], @["a b.", "a"]),
+        ("- a b..", @["a b."], @["a b..", "a b"]),
+        ("- a b.\t ", @["a b"], @["a b."]),
+        ("- a\n  b.", @["a b"], @["a b.", "a"]),
+        ("- a. b.", @["a. b"], @["a. b.", "a"]),
+        ("- Judgement: a b.", @["Judgement: a b", "a b"], @["Judgement: a b.", "a b."]),
+        ("- a b?", @["a b?"], @["a b"]),
+        ("- a b!", @["a b!"], @["a b"]),
+        ("- a b.)", @["a b.)"], @["a b.", "a b"]),
+        ("- a b. (70%)", @["a b."], @["a b", "a b. (70%)"]),
+        ("- a b. (70%).", @["a b."], @["a b", "a b. (70%)"]),
+        ("- a b., as the 10th c.", @["a b."], @["a b"]),
+        ("- a b. Resolution criterion: c.", @["a b"], @["a b.", "a b. Resolution criterion: c"]),
+        ("- a b (70%).", @["a b"], @["a b.", "a b (70%)"])]:
+      for cell in cells: check passes(bullet, cell)
+      for cell in refused: check not passes(bullet, cell)
+
+
+  test "confidence ends claim: last percentage in brackets before its marks (7018501890 of #969)":
+    # Ruling 7018501890 of #969: claim runs up to its own confidence, last percentage in brackets
+    #   before its percentiles, its resolution criterion or its end; percentage inside text of
+    #   claim stays in claim. So for `- the replay refuses 2 of 54 stops (4%) or fewer (70%).`,
+    #   cell `the replay refuses 2 of 54 stops (4%) or fewer` passes, and its part is refused.
+    #   Cases as found are probes M1 and M2 of critic of build of D5 b: build `b8491db8` ended
+    #   claim at its first percentage, so it refused whole claim and passed its part.
+    const found = "- Result: the replay refuses 2 of 54 stops (4%) or fewer (70%). Resolution " &
+      "criterion: the report says so.\n- Judgement: no test is weakened (85%). Resolution " &
+      "criterion: the report says so."
+    for cell in ["the replay refuses 2 of 54 stops (4%) or fewer",
+        "Result: the replay refuses 2 of 54 stops (4%) or fewer", "no test is weakened"]:
+      check quoted(found, cell).len == 0
+    for cell in ["the replay refuses 2 of 54 stops", "Result: the replay refuses 2 of 54 stops",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Example of ruling, with no label and no resolution criterion.
+    const example = "- the replay refuses 2 of 54 stops (4%) or fewer (70%)."
+    check quoted(example, "the replay refuses 2 of 54 stops (4%) or fewer").len == 0
+    for cell in ["the replay refuses 2 of 54 stops", "the replay refuses 2 of 54 stops (4%)",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)."]:
+      check quoted(example, cell) == @[refusalCell(cell)]
+
+    # Law over one to three percentages, with words after last one or none, before each end:
+    #   claim runs up to last percentage and keeps each one before it; cut before earlier one,
+    #   claim that keeps last one, and whole bullet are refused. Claim with percentiles runs up
+    #   to them and keeps each percentage (7023048202), so each cut before them is refused.
+    const
+      ends = ["", ".", ". Resolution criterion: z.", ", as the 10th z."]
+        ## Ends of bullet after its words: none, full stop, and each mark.
+      layouts = 24
+        ## Bullets of law: three counts of percentages, two tails, and each end.
+    var laid = 0
+    for count in 1 .. 3:
+      for tail in ["", " y"]:
+        for ending in ends:
+          var
+            text = "w0"
+            cuts: seq[string]  # Text before each percentage, in order.
+          for n in 1 .. count:
+            cuts.add text
+            text.add " (" & $(10 * n) & "%)"
+            if n < count: text.add " w" & $n
+          let bullet = "- " & text & tail & ending
+          if ending.startsWith(", as the 10th"):
+            check quoted(bullet, text & tail).len == 0
+            for cell in cuts & (if tail.len > 0: @[text] else: @[]) & @[bullet[2 .. ^1]]:
+              check quoted(bullet, cell) == @[refusalCell(cell)]
+          else:
+            check quoted(bullet, cuts[^1]).len == 0
+            for cell in cuts[0 ..< cuts.high] & @[text, bullet[2 .. ^1]]:
+              check quoted(bullet, cell) == @[refusalCell(cell)]
+          inc laid
+    check laid == layouts
+
+    # Percentage after first mark is no confidence, and two percentages may stand side by side.
+    for (bullet, claim, refused) in [
+        ("- a (10%) b. Resolution criterion: c (20%).", "a", @["a (10%) b"]),
+        ("- a (10%) b, as the 10th c (20%). Resolution criterion: d (30%).", "a (10%) b", @["a"]),
+        ("- a b. Resolution criterion: c (20%).", "a b", @["a b. Resolution criterion: c"]),
+        ("- a (10%) (20%).", "a (10%)", @["a", "a (10%) (20%)"]),
+        ("- a (10%) b. (20%).", "a (10%) b.", @["a", "a (10%) b"])]:
+      check quoted(bullet, claim).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Mark between two percentages ends no claim, full stop too, so confidence stays last one
+    #   (KC3 of critic of claim build).
+    for joint in [". ", ", ", "; ", " "]:
+      let bullet = "- a (10%)" & joint & "b (20%)."
+      check quoted(bullet, "a (10%)" & joint & "b").len == 0
+      check quoted(bullet, "a") == @[refusalCell("a")]
+
+    # Mark that stands twice in bullet ends claim at its first place (KC1).
+    for (bullet, refused) in [
+        ("- a. Resolution criterion: b. Resolution criterion: c.", "a. Resolution criterion: b"),
+        ("- a, as the 10th b, as the 10th c.", "a, as the 10th b"),
+        ("- a (70%). Resolution criterion: b (20%). Resolution criterion: c.",
+          "a (70%). Resolution criterion: b")]:
+      check quoted(bullet, "a").len == 0
+      check quoted(bullet, refused) == @[refusalCell(refused)]
+
+
+  test "percentage in brackets may hold decimal part, as `(62.5%)` (D5 b of #969)":
+    # Ruling 7016134603, D5 b of #969: claim runs up to its percentage, which ruling 7018501890
+    #   names its confidence; digits alone narrowed it. Case as found is probe M6 of critic of
+    #   build of D5 b: build `b8491db8` read no percentage in `(62.5%)`, so it refused claim cut
+    #   before it, and passed claim that keeps it.
+    const found = "- Judgement: the race to save one shared key leads the findings (62.5%). " &
+      "Resolution criterion: the report says so.\n- Judgement: no test is weakened (85%). " &
+      "Resolution criterion: the report says so."
+    for cell in ["the race to save one shared key leads the findings",
+        "Judgement: the race to save one shared key leads the findings"]:
+      check quoted(found, cell).len == 0
+    for cell in ["the race to save one shared key leads the findings (62.5%)",
+        "Judgement: the race to save one shared key leads the findings (62.5%)"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Percentage is digits, then point and digits where it has decimal part, then `%)`; other
+    #   text in brackets is none, so claim keeps it.
+    for percentage in ["(0.5%)", "(62.5%)", "(99.99%)", "(100.0%)", "(7%)", "(05%)"]:
+      let whole = "a b " & percentage & " c"
+      check quoted("- " & whole & ".", "a b").len == 0
+      check quoted("- " & whole & ".", whole) == @[refusalCell(whole)]
+    for brackets in ["(62.%)", "(.5%)", "(62,5%)", "(6.2.5%)", "(62.5 %)", "(62. 5%)",
+        "(62 .5%)", "( 62.5%)", "(62.5)", "(62.5%", "(62..5%)"]:
+      let whole = "a b " & brackets & " c"
+      check quoted("- " & whole & ".", whole).len == 0
+      check quoted("- " & whole & ".", "a b") == @[refusalCell("a b")]
+
+    # Decimal percentage is confidence where it stands last, and stays in claim where it does not,
+    #   as in claim with percentiles (7023048202).
+    for (bullet, claim) in [("- a (1.5%) b (62.5%).", "a (1.5%) b"),
+        ("- a (62.5%) b (70%).", "a (62.5%) b"), ("- a b (62.5%)", "a b"),
+        ("- a b (62.5%), as the 10th c.", "a b (62.5%)")]:
+      check quoted(bullet, claim).len == 0
+      check quoted(bullet, bullet[2 .. ^1]) == @[refusalCell(bullet[2 .. ^1])]
+
+
+  test "claim with percentiles runs to them, and keeps each percentage (7023048202 of #969)":
+    # Ruling 7023048202 of #969: percentiles of number claim state its confidence, so claim with
+    #   percentiles takes no confidence in brackets. It runs to its percentiles, and percentage in
+    #   brackets in its text, as `(10% cached)`, stays in claim. Cases as found are probe F11 of
+    #   critic of claim build and cost that record named: build `1f4d159a` ended such claim at
+    #   last percentage of its text, so it refused cell that quotes claim whole.
+    const found = "- Work: refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%), as the 10th, 50th " &
+      "and 90th percentiles. Resolution criterion: the replay."
+    for cell in ["refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%)",
+        "Work: refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%)"]:
+      check quoted(found, cell).len == 0
+    for cell in ["refused stops (of 54): 2 (4%), 3 (6%) and 5", "refused stops (of 54): 2",
+        "refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%), as the 10th, 50th and 90th " &
+          "percentiles"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Example of ruling, and cost that record named, whose expected result changes by ruling.
+    const
+      cached = "- Work: tokens: 1, 2 and 3 million (10% cached), as the 10th, 50th and 90th " &
+        "percentiles."
+      ranged = "- Work: a (5%) b: 1, 2 and 3, as the 10th, 50th and 90th percentiles."
+    check quoted(cached, "tokens: 1, 2 and 3 million (10% cached)").len == 0
+    check quoted(cached, "tokens: 1, 2 and 3 million") ==
+      @[refusalCell("tokens: 1, 2 and 3 million")]
+    for cell in ["a (5%) b: 1, 2 and 3", "Work: a (5%) b: 1, 2 and 3"]:
+      check quoted(ranged, cell).len == 0
+    for cell in ["Work: a", "a"]: check quoted(ranged, cell) == @[refusalCell(cell)]
+
+    # Percentiles must be first mark: percentage after them ends nothing, and criterion before
+    #   them leaves claim at its confidence, since percentiles then belong to criterion.
+    for (bullet, claim, refused) in [
+        ("- Work: tokens: 1, 2 and 3, as the 10th, 50th and 90th percentiles (80%). Resolution " &
+          "criterion: the sum.", "tokens: 1, 2 and 3", @["tokens: 1, 2 and 3, as the 10th"]),
+        ("- a (5%) b (70%), as the 10th c (20%).", "a (5%) b (70%)", @["a (5%) b", "a"]),
+        ("- a (5%) b (70%). Resolution criterion: c, as the 10th d.", "a (5%) b",
+          @["a (5%) b (70%)", "a"]),
+        ("- a (62.5%) b (7.5%), as the 10th c.", "a (62.5%) b (7.5%)", @["a (62.5%) b", "a"])]:
+      check quoted(bullet, claim).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+
+  test "criterion with or without bold, in any case, is mark that ends claim (choice on #969)":
+    # Choice of delegate, which no comment names: mark of resolution criterion is read with or
+    #   without bold marks and in any case of letters, so `**Resolution criterion:**` and
+    #   `Resolution Criterion:` end claim too, and percentage of criterion is no confidence.
+    #   Cases as found are probes F02, F03 and F07 of critic of claim build: build `1f4d159a`
+    #   read words of samples alone, so percentage of such criterion ended claim. Ruling
+    #   7027197745 of #969: after full stop, criterion in italics, in bold, or in both ends claim
+    #   too, as `. *Resolution criterion:*`; build `9d4b7eff` read italics as text.
+    for (found, refused) in [
+        ("- Judgement: the race leads the findings (70%). **Resolution criterion:** the critic " &
+          "holds at least 4 of 5 claims (80%).", "the race leads the findings (70%). " &
+          "**Resolution criterion:** the critic holds at least 4 of 5 claims"),
+        ("- Judgement: the race leads the findings (70%). **Resolution criterion:** it is the " &
+          "first finding.", "the race leads the findings (70%)"),
+        ("- Judgement: the race leads the findings (70%). Resolution Criterion: at least 4 of 5 " &
+          "claims (80%) hold.", "the race leads the findings (70%). Resolution Criterion: at " &
+          "least 4 of 5 claims")]:
+      check quoted(found, "the race leads the findings").len == 0
+      check quoted(found, refused) == @[refusalCell(refused)]
+
+    # Law: words of criterion in each case, plain, or in each form of italics, bold or both, with
+    #   colon inside or outside marks, end claim at confidence before them, or at them where none
+    #   stands there (7027197745).
+    const
+      cases = ["Resolution criterion", "resolution criterion", "Resolution Criterion",
+        "RESOLUTION CRITERION", "rEsOlUtIoN cRiTeRiOn"]
+        ## Cases of letters of words of criterion.
+      wraps = [("*", "*"), ("_", "_"), ("**", "**"), ("__", "__"), ("***", "***"),
+        ("_**", "**_"), ("**_", "_**"), ("*__", "__*"), ("__*", "*__"), ("___", "___")]
+        ## Opening and closing of each form of italics, bold, and both.
+      marks = 210
+        ## Bullets of law: each case, plain and in twenty forms of marks, with confidence before
+        ##   or none.
+    var laid = 0
+    for words in cases:
+      var forms = @[words & ":"]
+      for (opening, closing) in wraps:
+        forms.add opening & words & ":" & closing
+        forms.add opening & words & closing & ":"
+      for form in forms:
+        for (bullet, claim) in [("- a (70%). " & form & " b (80%).", "a"),
+            ("- a c. " & form & " b (80%).", "a c")]:
+          check quoted(bullet, claim).len == 0
+          check quoted(bullet, bullet[2 .. ^2]) == @[refusalCell(bullet[2 .. ^2])]
+          inc laid
+    check laid == marks
+
+    # Choice leaves out each other form, so later percentage stays confidence there: criterion
+    #   after semicolon or comma, in italics there too, plural, on next line with no full stop,
+    #   with no space after full stop, in four marks, struck, and other words (probes F04, F05
+    #   and F06).
+    for form in ["; resolution criterion:", ", resolution criterion:", "; *Resolution criterion:*",
+        ". Resolution criteria:", "\n  Resolution criterion:", ".*Resolution criterion:*",
+        ". ****Resolution criterion:****", ". ~~Resolution criterion:~~", ". Criterion:",
+        ". Resolution:"]:
+      let bullet = "- a (70%)" & form & " b (80%)."
+      check quoted(bullet, "a") == @[refusalCell("a")]
+      check quoted(bullet, ("a (70%)" & form & " b").splitWhitespace.join(" ")).len == 0
+
+    # Of two forms of criterion in one bullet, first one ends claim, whichever form it is, as
+    #   first of `, as the 10th` and criterion does.
+    for (first, second) in [("Resolution criterion:", "**Resolution criterion:**"),
+        ("**Resolution criterion:**", "Resolution criterion:"),
+        ("resolution criterion:", "Resolution Criterion:"),
+        ("*Resolution criterion:*", "Resolution criterion:"),
+        ("Resolution criterion:", "_**Resolution criterion:**_")]:
+      let bullet = "- a (70%). " & first & " b (80%). " & second & " c (90%)."
+      check quoted(bullet, "a").len == 0
+      check quoted(bullet, "a (70%). " & first & " b") ==
+        @[refusalCell("a (70%). " & first & " b")]
+
+
+  test "label is one word that opens with capital, then `: ` (7018501890 of #969)":
+    # Ruling 7018501890 of #969: label is one word that opens with capital, then `: `, as
+    #   `Judgement:` or `Work:`; colon inside sentence makes no label, so cell quotes whole claim
+    #   there. Cases as found are probes M3, M4 and M5 of critic of build of D5 b: build
+    #   `b8491db8` read text before first `: ` of claim as label, so it passed part after colon
+    #   of claim with no label (M4), and claim without its words before colon (M5). Ruling
+    #   7022872980 makes bold label (M3) label, so cell may drop it (test below).
+    for (found, cells, refused) in [
+        ("- **Judgement:** the race to save one shared key leads the findings (70%). " &
+          "Resolution criterion: the report says so.",
+          @["**Judgement:** the race to save one shared key leads the findings",
+            "the race to save one shared key leads the findings"],
+          @["Judgement: the race to save one shared key leads the findings"]),
+        ("- the refusal names one cause: the missing block (70%). Resolution criterion: the " &
+          "report says so.", @["the refusal names one cause: the missing block"],
+          @["the missing block", "the refusal names one cause"]),
+        ("- Cost at list price: $15 to $35 (60%). Resolution criterion: the sum of its requests.",
+          @["Cost at list price: $15 to $35"], @["$15 to $35", "list price: $15 to $35"])]:
+      for cell in cells: check quoted(found, cell).len == 0
+      for cell in refused: check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Label of one word whose first is capital, then `: `, at start of claim: claim passes with it
+    #   and without it, and part after first `: ` of rest of claim is refused. Ruling 7022872980
+    #   makes any run with no space such word, as `Q1` (test below).
+    for label in ["Judgement", "Work", "Result", "Cost", "Tokens", "A", "NOTE", "WorK", "Q1",
+        "Follow-up", "Judgement's", "Judgement."]:
+      let bullet = "- " & label & ": a: b (70%)."
+      for cell in [label & ": a: b", "a: b"]: check quoted(bullet, cell).len == 0
+      for cell in ["b", label & ": b", "a"]: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other text before `: ` is no label, so cell quotes whole claim: word in lower case, two or
+    #   more words, word that opens with mark, and words of sentence. Bold word before `: ` is
+    #   label (7027197745, test below).
+    for opening in ["judgement", "jUDGEMENT", "work", "Cost at list price", "Big Work",
+        "Tokens, summed over its requests", "*Judgement*", "`Judgement`", "_Judgement_",
+        "the refusal names one cause"]:
+      let bullet = "- " & opening & ": a b (70%)."
+      check quoted(bullet, opening & ": a b").len == 0
+      check quoted(bullet, "a b") == @[refusalCell("a b")]
+
+    # Capital word and `: ` inside claim make no label: label opens claim.
+    for (bullet, whole, refused) in [
+        ("- a Judgement: b (70%).", "a Judgement: b", @["b", "Judgement: b", "a"]),
+        ("- the hook says Work: b c (70%).", "the hook says Work: b c", @["b c", "Work: b c"]),
+        ("- Judgement:  a b (70%).", "Judgement: a b", @["Judgement:", "Judgement: a"]),
+        ("- Judgement: (70%).", "Judgement:", @["Judgement"])]:
+      check quoted(bullet, whole).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other label before whole claim, label before claim that has none, and label twice are
+    #   refused.
+    for (bullet, refused) in [
+        ("- Judgement: a b (70%).", @["Work: a b", "Result: a b", "judgement: a b",
+          "Judgement: Judgement: a b", "Work: Judgement: a b"]),
+        ("- a b (70%).", @["Judgement: a b", "Work: a b"]),
+        ("- Cost at list price: a b (70%).", @["Cost: a b", "Work: Cost at list price: a b"])]:
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Cell that differs from claim only in case of one letter is refused, with label or without.
+    const
+      claimed = "- Judgement: the Race leads (70%)."
+        ## Bullet whose claim holds letters of each case, in its label and after it.
+      letters = 33
+        ## Letters of `Judgement: the Race leads` and of `the Race leads`, each flipped once.
+    var flipped = 0
+    for claim in ["Judgement: the Race leads", "the Race leads"]:
+      check quoted(claimed, claim).len == 0
+      for i, c in claim:
+        if c notin Letters: continue
+        var cell = claim
+        cell[i] = (if c.isUpperAscii: c.toLowerAscii else: c.toUpperAscii)
+        check quoted(claimed, cell) == @[refusalCell(cell)]
+        inc flipped
+    check flipped == letters
+
+
+  test "label in bold is label, so cell may drop it (7022872980 of #969)":
+    # Ruling 7022872980 of #969: label in bold, as `**Judgement:**`, is label, so cell may drop
+    #   it. Case as found is probe M3 of critic of build of D5 b, as test above holds it: build
+    #   `1f4d159a` read bold label as text, so it refused cell that drops it.
+    # Ruling 7027197745 of #969: bold label with its colon outside bold, `__Judgement:__` and
+    #   `***Judgement:***` are labels too. Cases as found are in D2 of report of last build,
+    #   and its critic: build `9d4b7eff` read each as text, so it refused cell that drops it.
+    # Label and its colon in each form of bold, then space, at start of claim: claim passes with
+    #   it and without it; part after first `: ` of rest, label with no bold or no colon, and
+    #   claim that drops label but keeps its marks are refused.
+    const forms = [("**", ":**"), ("**", "**:"), ("__", ":__"), ("***", ":***")]
+      ## Opening and closing of each form of bold label, with colon inside or outside bold.
+    for (opening, closing) in forms:
+      for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK", "Q1", "Follow-up"]:
+        let
+          bold = opening & label & closing
+          bullet = "- " & bold & " a: b (70%)."
+        for cell in [bold & " a: b", "a: b"]: check quoted(bullet, cell).len == 0
+        for cell in ["b", bold & " b", label & ": a: b", opening & label & opening & " a: b",
+            opening & opening & " a: b", closing & " a: b"]:
+          check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other bold or marked text makes no label, so cell quotes whole claim: italic, bold of
+    #   underscores or bold and italic with colon outside, italic around bold, bold around
+    #   italic, two words, lower case, empty bold, space inside bold, and no space after.
+    for opening in ["*Judgement:*", "_Judgement:_", "__Judgement__:", "***Judgement***:",
+        "_**Judgement:**_", "**_Judgement:_**", "**Big Work:**", "**judgement:**", "**:**",
+        "** Judgement:**", "**Judgement: **", "**Judgement** :"]:
+      let bullet = "- " & opening & " a b (70%)."
+      check quoted(bullet, opening & " a b").len == 0
+      check quoted(bullet, "a b") == @[refusalCell("a b")]
+    for opening in ["**Judgement:**", "**Judgement**:"]:
+      check quoted("- " & opening & "a b (70%).", opening & "a b").len == 0
+      check quoted("- " & opening & "a b (70%).", "a b") == @[refusalCell("a b")]
+
+    # Claim drops one label alone, bold or not, at its start; bold label inside claim is text.
+    for (bullet, cells, refused) in [
+        ("- **Judgement:** Work: b (70%).", @["**Judgement:** Work: b", "Work: b"], @["b"]),
+        ("- Judgement: **Work:** b (70%).", @["Judgement: **Work:** b", "**Work:** b"], @["b"]),
+        ("- a **Judgement:** b (70%).", @["a **Judgement:** b"], @["b", "**Judgement:** b"])]:
+      for cell in cells: check quoted(bullet, cell).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+
+  test "label is any run with no space that opens with capital, then `: ` (7022872980 of #969)":
+    # Ruling 7022872980 of #969: label is any run with no space that opens with capital letter,
+    #   then `: `, so `Q1:` and `Follow-up:` are labels. Cases as found are probes F21 and F22 of
+    #   critic of claim build: build `1f4d159a` read label as letters alone, so it refused cell
+    #   that drops `Follow-up:` or `Q1:`.
+    for (found, cell) in [
+        ("- Follow-up: the critic asks for one more test (60%). Resolution criterion: its " &
+          "report.", "the critic asks for one more test"),
+        ("- Q1: the race leads the findings (70%). Resolution criterion: it is first.",
+          "the race leads the findings")]:
+      check quoted(found, cell).len == 0
+      check quoted(found, found[2 ..< found.find(" (")]).len == 0
+
+    # Law: capital letter, then each class of character, is label, in each form of bold or not
+    #   (7027197745); run that opens with other character, or holds space, is none.
+    const
+      tails = ["", "1", "bc", "-up", "'s", ".", "_b", "/b", "(b)", "#2", "`b`", "*b", ":"]
+        ## Rest of run after its capital: none, digit, letters, and each mark.
+      openings = ["a1", "1a", "-a", "'a", ".a", "_a", "`a`", "(a)", "#a", "R b", "R1 b"]
+        ## Runs that open with no capital, or hold space.
+      laws = 120
+        ## Bullets of law: each tail and each opening, plain and in four forms of bold.
+    var laid = 0
+    for (runs, is_label) in [(tails.mapIt("R" & it), true), (openings.toSeq, false)]:
+      for run in runs:
+        for label in [run & ": ", "**" & run & ":** ", "**" & run & "**: ", "__" & run & ":__ ",
+            "***" & run & ":*** "]:
+          let bullet = "- " & label & "a: b (70%)."
+          check quoted(bullet, label & "a: b").len == 0
+          check (quoted(bullet, "a: b").len == 0) == is_label
+          check quoted(bullet, "b") == @[refusalCell("b")]
+          inc laid
+    check laid == laws
+
+
+  test "finding of empty cell names `No prediction` as form of miss (D2 c of #969)":
+    # Ruling 7015791554, D2 c of #969: row of missing prediction holds exactly `No prediction`
+    #   under `Predicted`, and guide names form. Case as found is item 13 of part 5 of report of
+    #   critic of build of D5 b: finding of empty cell asked for claim word for word alone, and
+    #   named no `No prediction`, though cell left empty most likely counts missed prediction.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      missing = "| ⬜ | - | No prediction | it never ran |\n"
+        ## Row of missing prediction, which passes wherever its reflection stands.
+    let
+      asked = lineUser("Build the check.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      calls = wake & linesAgent("builder") & lineSaid("Started.") &
+        lineHandback("builder", "abuilder") & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+      taken = asked & lineSaid(PREDICTION) & calls
+      missed = asked & lineSaid("Read.") & calls
+      alone = asked & wake & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+
+    # Empty cell in each row, two empty cells, short row, and cell of whitespace alone, where call
+    #   took block, where no call took one, and where critic alone ran: finding states rule of
+    #   each cell, `No prediction` in it.
+    for before in [taken, missed, alone]:
+      for (rows, found) in [
+          ("| ⬜ | 60% |  | missed |\n", @[refusalEmpty(1)]),
+          (missing & "| ⬜ | 60% |  | missed |\n" & missing, @[refusalEmpty(2)]),
+          (missing & missing & "| ⬜ | 60% |  | missed |\n", @[refusalEmpty(3)]),
+          ("| ⬜ | 60% |  | a |\n| ⬜ | 60% |  | b |\n", @[refusalEmpty(1), refusalEmpty(2)]),
+          ("| ⬜ | 60% |\n", @[refusalEmpty(1)]),
+          ("| ⬜ | 60% |  \t  | missed |\n", @[refusalEmpty(1)])]:
+        let held = blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
+        check held == found
+        check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
+
+
+  test "claim reads `\\|` as `|`, as cell does (7022872980 of #969)":
+    # Ruling 7022872980 of #969: check reads `\|` as `|` in claim too, as it does in cell, so
+    #   cell that quotes such claim with `\|` passes. Case as found is cost that record named:
+    #   build `1f4d159a` kept `\|` in claim, so cell that copied it was refused, and only cell
+    #   that wrote `\\|` quoted it. Expected result of that check changes by ruling.
+    const piped = "- Judgement: a \\| b (70%)."
+    for cell in ["a \\| b", "Judgement: a \\| b"]: check quoted(piped, cell).len == 0
+    for cell in ["a \\\\| b", "Judgement: a \\\\| b"]:
+      check quoted(piped, cell) == @[refusalCell(cell.replace("\\\\|", "\\|"))]
+
+    # Law: each count of pipes up to three, each one bare or escaped in block, quotes as cell that
+    #   escapes each one, and refuses cell that escapes any one twice.
+    const pipes = 14  ## Bullets of law: two forms of each of one, two and three pipes.
+    var laid = 0
+    for count in 1 .. 3:
+      for mask in 0 ..< (1 shl count):  # Pipe `n` is escaped in block where bit `n` is set.
+        var written, cell: string
+        for n in 0 ..< count:
+          written.add "w" & $n & (if (mask shr n and 1) == 1: " \\| " else: " | ")
+          cell.add "w" & $n & " \\| "
+        let bullet = "- " & written & "end (70%)."
+        check quoted(bullet, cell & "end").len == 0
+        for n in 0 ..< count:
+          let twice = cell.replace("w" & $n & " \\| ", "w" & $n & " \\\\| ") & "end"
+          check quoted(bullet, twice).len == 1
+        inc laid
+    check laid == pipes
+
+    # Two backslashes before pipe of block read as one, as in cell, and other escape stays.
+    check quoted("- a \\\\| b (70%).", "a \\\\| b").len == 0
+    check quoted("- a \\\\| b (70%).", "a \\| b") == @[refusalCell("a | b")]
+    check quoted("- a \\* b (70%).", "a \\* b").len == 0
+    check quoted("- Q\\|1: a (70%).", "a").len == 0  # pipe of label reads first
+
+
+  test "line right under claim that opens item ends claim (choice on #969)":
+    # Choice of delegate, which no comment names: line right under claim that Markdown opens as
+    #   item, as `1. ` or marker with tab, ends that claim, since Markdown reads it as new item.
+    #   Cases as found are probes F08 and F09 of critic of claim build: build `1f4d159a` read such
+    #   line as text of claim above it, so its percentage became confidence of that claim.
+    for (bullets, cells) in [
+        ("- Judgement: the race leads the findings (70%). Resolution criterion: it is first.\n" &
+          "- Judgement: no test is weakened (85%).\n1. Work: four commits (60%).",
+          @["the race leads the findings", "no test is weakened"]),
+        ("- Judgement: no test is weakened (85%).\n-\tWork: four commits (60%).",
+          @["no test is weakened"])]:
+      for cell in cells: check quoted(bullets, cell).len == 0
+      check quoted(bullets, "four commits") == @[refusalCell("four commits")]  # opens no claim
+
+    # Law: each form under claim `a b`, or under claim `a b d` that wraps once, at each indent,
+    #   ends claim where pandoc 3.1.3 of GFM breaks paragraph, and goes on with claim where it
+    #   reads text of claim. Below two columns each marker of item ends claim; from two, line
+    #   stands inside bullet, where only marker or number of value 1 with text after it ends
+    #   claim (CommonMark, List items), so `01.` does as `1.` does. Cases as found are `01. c` and
+    #   `001) c` of critic of last build, where build `9d4b7eff` compared text `01` with `1`, and
+    #   its breaks X9 and X2, which no test caught: wrapped claim, and colon after number.
+    const
+      indents = ["", " ", "  ", "   ", "    ", "\t", "     "]
+        ## Indents of zero to five columns, tab as four.
+      forms = [("1. c", true), ("1) c", true), ("1.\tc", true), ("-\tc", true), ("*\tc", true),
+        ("+\tc", true), ("- c", true), ("* c", true), ("01. c", true), ("001) c", true),
+        ("2. c", false), ("10) c", false), ("123456789. c", false), ("2.\tc", false),
+        ("0. c", false), ("02. c", false), ("1.", false), ("2)", false), ("*", false),
+        ("+", false), ("1. ", false)]
+        ## Lines that open item below two columns, and whether they open one from two columns.
+      texts = ["1234567890. c", "1.c", "1: c", "c", "c (70%)"]
+        ## Lines that open no item: ten digits, no space after mark, colon, and text.
+      openers = [("- a b\n", "a b"), ("- a b\n  d\n", "a b d")]
+        ## Claims above each line: on one line, and wrapped once.
+      lines = 364
+        ## Cases of law: each form and each text at each indent, under each claim.
+    var laid = 0
+    for (opener, claim) in openers:
+      for indent in indents:
+        let is_inside = indent.len >= 2 or indent == "\t"
+        for (form, is_inside_item) in @forms & texts.mapIt((it, false)):
+          let
+            bullets = opener & indent & form
+            is_item = form notin texts and (not is_inside or is_inside_item)
+          check (quoted(bullets, claim).len == 0) == is_item
+          inc laid
+    check laid == lines
+
+
+  test "costs of read of claim stay as record names them (#969)":
+    # Record, Quotes of claims, names these costs, which critic of build of D5 b found by probe;
+    #   each holds here so that change to it shows.
+    # Indent of one to three spaces, `1.`, or tab after marker opens no claim, so no cell quotes
+    #   that bullet.
+    for bullet in [" - a b (70%).", "   - a b (70%).", "-\ta b (70%).", "*\ta b (70%).",
+        "1. a b (70%).", "1) a b (70%)."]:
+      for cell in ["a b", bullet.strip.split(maxsplit = 1)[1]]:
+        check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Bullet that is no claim, as question, reads as one.
+    check quoted("- Judgement: does it hold?", "does it hold?").len == 0
+
+    # Percentage in brackets after confidence, before mark or end, is last one, so claim runs
+    #   past its confidence up to it (probe F20 of critic of claim build).
+    const after = "- Judgement: the replay refuses fewer stops (70%), as 2 of 54 (4%). " &
+      "Resolution criterion: the replay."
+    for cell in ["the replay refuses fewer stops (70%), as 2 of 54",
+        "Judgement: the replay refuses fewer stops (70%), as 2 of 54"]:
+      check quoted(after, cell).len == 0
+    check quoted(after, "the replay refuses fewer stops") ==
+      @[refusalCell("the replay refuses fewer stops")]
+
+    # From six columns of indent, Markdown reads line under claim as text of claim, yet item or
+    #   bullet there ends claim, as each does at two columns (test of line under claim above).
+    for form in ["1. c", "1) c", "-\tc", "- c", "* c"]:
+      check quoted("- a b\n      " & form, "a b").len == 0
+      check quoted("- a b\n      " & form, "a b " & form.splitWhitespace.join(" ")).len == 1
+
+    # Capital word and colon that open claim make label, whatever sentence they open, as `Koch:`
+    #   of probe F17 of critic of claim build (7022872980); capital outside `A` to `Z` makes none.
+    const capital = "- Koch: the check passes at the head (80%). Resolution criterion: the log."
+    for cell in ["Koch: the check passes at the head", "the check passes at the head"]:
+      check quoted(capital, cell).len == 0
+    check quoted("- Écart: a b (70%).", "Écart: a b").len == 0
+    check quoted("- Écart: a b (70%).", "a b") == @[refusalCell("a b")]
+
+    # Each capital from `A` to `Z` opens label (break X14 of critic of last build, which dropped
+    #   `Z`).
+    for capital in 'A' .. 'Z':
+      check quoted("- " & capital & "b: a (70%).", "a").len == 0
+
+    # Words of percentiles read in lower case alone, so `, As the 10th` opens none, and claim
+    #   runs to its criterion (break X1 of critic of last build, which read them in any case).
+    const upper = "- Work: cost: $1, $2 and $3, As the 10th, 50th and 90th percentiles. " &
+      "Resolution criterion: the usage."
+    check quoted(upper, "cost: $1, $2 and $3, As the 10th, 50th and 90th percentiles").len == 0
+    check quoted(upper, "cost: $1, $2 and $3") == @[refusalCell("cost: $1, $2 and $3")]
+
+    # Words of criterion that claim quotes in its text end it there, as mark does (critic of
+    #   last build), so cell quotes claim up to them.
+    const quoting = "- Judgement: the hook reads `. **Resolution criterion:**` as mark (70%). " &
+      "Resolution criterion: the report."
+    check quoted(quoting, "the hook reads `").len == 0
+    check quoted(quoting, "the hook reads `. **Resolution criterion:**` as mark") ==
+      @[refusalCell("the hook reads `. **Resolution criterion:**` as mark")]
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":

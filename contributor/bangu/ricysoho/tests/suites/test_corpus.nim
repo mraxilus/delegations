@@ -19,9 +19,9 @@
 ##       .e lo nu claxu le valsi
 ##
 ## ni'o lo linji poi vasru lo sinxa pe le cukta zi'e poi na lojbo cu na se tcidu
-##   .i le sinxa cu du lo nacle'u pe lo cmene be lo sumstu be'o to `CLL 2.5` toi ge'u .a ci denpa bu
-##       .a lo cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a zoi gy. -
-##       .gy.
+##   .i le sinxa cu du lo nacle'u pe lo cmene be lo sumstu be'o to `CLL 2.5` toi ge'u .a ci boi
+##       denpa bu .a lo cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a
+##       zoi gy. - .gy.
 ##   .i va'o lo nu ro linji pe pa mupli cu vasru lo sinxa poi na lojbo kei no linji pe le mupli cu
 ##       se tcidu
 ##
@@ -52,11 +52,16 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/ricysoho/prose
+import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 import ../cll/examples
 
 
 const
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
+  COUNT_DIGITS_LEAST = 200
+    ## lo mecrailai be lo mupli poi vasru lo cmavo pe `CLL 18.2` gi'e se tcidu
+    ##   .i ca lo nu jmina le flalu kei 218 mupli cu se tcidu
   NUMBERS_WRONG = [
     # zoi gy. reserved for experimental purposes .gy.
     #   .i claxu lo selma'o
@@ -70,10 +75,10 @@ const
     ## lo mupli poi le cukta cu cusku lo du'u ke'a na drani ku'o .a lo mupli poi gliju'a
     ##   .i ro mupli cu se kansa le nu to'e curmi pe vo'a
   EXAMPLES_BROKEN = [
-    # le javni pe li pano
+    # le javni pe li 10
     #   .i `.i` basti `.ije`
     ("14.27", "la djan. .i la .alis. klama le zarci"),  # `CLL 14.6`
-    # le javni pe li bipa
+    # le javni pe li 81
     #   .i `pe'e` lidne lo me `joik` me'u .a lo me `jek`
     #   .i se ki'u bo `je` basti `.e` noi me `ek`
     (
@@ -83,29 +88,29 @@ const
     (
       "14.131",
       "nu'i mi ce'e bau la lojban. pe'e joi do ce'e bau la gliban. nu'u casnu",
-    # le javni pe li bimu
+    # le javni pe li 85
     #   .i `nu'u` fanmo lo me `termset` me'u ba `nu'i` po'o
     ),  # `CLL 14.15`
-    # le javni pe li bimu
+    # le javni pe li 85
     #   .i lo me `termset` cu jorne no pagbu sepi'o `fa'u` poi se lidne `nu'u`
     #   .i `pe'e fa'u` jorne
     (
       "14.133",
       "la djan. fa'u la frank. cusku nu'i bau la lojban. pe'e fa'u bai tu'a la djordj. nu'u",
     ),  # `CLL 14.15`
-    # le javni pe li cizepa
+    # le javni pe li 371
     #   .i `gu'e` basti `ge`
     ("14.152", "li re gu'e su'i gi pi'i re du li vo"),  # `CLL 14.17`
-    # le javni pe li soze
+    # le javni pe li 97
     #   .i zo xi poi se lidne lo lerpoi cu nitcu zo boi
     ("17.38", "xy. boi xi ky."),  # `CLL 17.11`
-    # le javni pe li cizepa
+    # le javni pe li 371
     #   .i mintu `CLL 14.152`
     ("18.118", "li re gu'e su'i gi pi'i re du li vo"),  # `CLL 18.17`
-    # le javni pe li binoxa
+    # le javni pe li 806
     #   .i `GAhO` re roi
     ("18.122", "li pimu su'i ni'upimu ke'i bi'o ke'i ma'upimu"),  # `CLL 18.17`
-    # le javni pe li soze
+    # le javni pe li 97
     #   .i mintu `CLL 17.38`
     ("18.123", "xy. boi xi vei by. ce'o dy. ve'o"),  # `CLL 18.17`
   ]
@@ -141,6 +146,29 @@ func isNotation(row: string): bool =
   ## jdice lo du'u xu kau le linji cu vasru lo sinxa pe le cukta zi'e poi no jboselci'a cu vasru
   ##     ke'a
   row.anyIt(it in {'0'..'9', '(', ')', ':', '-'}) or "…" in row
+
+
+func shapeTree(node: Node, units: seq[Unit]): string =
+  ## ciska lo javni .e lo klesi be lo genvla pe le tricu ta'i lo porsi
+  ##   .i le se ciska cu claxu lo lerfu .e lo stuzi
+  if node.is_terminal: return $units[node.at].terminal
+  result = "(" & node.rule
+  for child in node.children: result.add " " & child.shapeTree(units)
+  result.add ")"
+
+
+func withDigits(text: string): string =
+  ## lo lerfu pe `0` bi'o `9` cu basti ro valsi pe `CLL 18.2` poi le selci'a cu vasru ke'a
+  ##   .i va'o lo nu le porsi be lo valsi cu se to'e curmi kei dunda le selci'a
+  let stream = text.readStream
+  result = text
+  if not stream.is_read: return
+  for k in countdown(stream.occurrences.high, 0):
+    let
+      word = stream.occurrences[k]
+      digit = LUT_CMAVO_BY_DIGIT.find(word.text)
+    if digit < 0 or not word.reading.is_word or word.reading.selmaho != some(Selmaho.Pa): continue
+    result[word.start ..< word.finish] = $digit
 
 
 func variants(text: string): seq[string] =
@@ -205,6 +233,38 @@ suite "Chapters 1-19":
     # le bandu cu cipra lo du'u le linji po'o poi le bandu cu cmene ke'a na'e se tcidu
     check count_rows_notation == COUNT_ROWS_NOTATION  # `Article IX.3`
 
+
+  test "Each example writing cmavo of 18.2 reads to same tree with digit in place of each":
+    var count = 0
+    for example in EXAMPLES_CLL:
+      let text = example.rows.filterIt(not it.isNotation).join(" ").variants[0]
+      if ',' in text: continue
+      let reading = text.readText
+      if not reading.is_read: continue
+      let digits = text.withDigits
+      if digits == text: continue
+      checkpoint "Example " & example.number & ": " & digits
+      let read = digits.readText
+      # lo lerfu pe `0` bi'o `9` cu sinxa lo cmavo pe `CLL 18.2`
+      check read.is_read  # `CLL 18.2`
+      if not read.is_read: continue
+      # le tricu cu mintu ro javni .e ro klesi be lo genvla
+      check read.tree.shapeTree(read.units) == reading.tree.shapeTree(reading.units)
+      inc count
+    check count >= COUNT_DIGITS_LEAST  # `Article IX.3`
+
+
+  test "Decimal point and digit group read to same tree as pi and ki'o":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    for (text, cmavo) in [
+        ("li 3.14", "li ci pi pa vo"), ("li 1,000", "li pa ki'o no no no"),
+        ("li 1,234,567", "li pa ki'o re ci vo ki'o mu xa ze"),
+        ("li 1,000.5", "li pa ki'o no no no pi mu")]:
+      checkpoint text
+      let (read, reading) = (text.readText, cmavo.readText)
+      check read.is_read and reading.is_read  # `CLL 18.6` .e `CLL 18.11`
+      if not (read.is_read and reading.is_read): continue
+      check read.tree.shapeTree(read.units) == reading.tree.shapeTree(reading.units)
 
   test "Each example of mex alone reads after li":
     for number in NUMBERS_MEX:

@@ -1,7 +1,10 @@
-# lojban_tagger
+# rictadni
+
+The name `rictadni` is a lujvo of the tanru `tricu tadni`, tree and study. It means a
+dendrologist, a person who studies trees. `tagger read rictadni` reads it as the tag `tricu+tadni`.
 
 A system that tags anything with lojban words and finds it again. A tag is a gismu or a lujvo.
-The project `lojban_parser` reads each tag, and this project reduces it to the words of its tanru.
+The project `ricyso'o` reads each tag, and this project reduces it to the words of its tanru.
 
 A search matches on its gismu. So a search for one gismu finds every thing whose tag holds that
 gismu, alone or inside a lujvo. A search for a lujvo with a cmavo, such as `selci'a`, lists first
@@ -27,7 +30,7 @@ In this example, four spaces stand for the tab that separates a name from its ta
 ## Authority
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997.
-This project reads each word through the project `lojban_parser`, which replicates the morphology
+This project reads each word through the project `ricyso'o`, which replicates the morphology
 of chapters 3 and 4. It also folds a tanru by the rules of chapters 5, 7, 9, 12 and 15. This
 project replicates the tag of 4.5 and 4.11 itself. It also replicates how a group in chapters 5,
 12 and 15 changes a run of tanru units, which a search ranks by. The suites carry the names of
@@ -35,14 +38,14 @@ those chapters, and each assertion cites its section.
 
 The word lists come from the Logical Language Group, which placed them in the public domain.
 This project commits the English of the gismu list, and the whole lujvo list, as typed Nim
-modules under `src/lojban_tagger/lists/`. The words and rafsi of the gismu list stand in
-`lojban_parser`, as the Architect ruled.
+modules under `src/rictadni/lists/`. The words and rafsi of the gismu list stand in
+`ricyso'o`, as the Architect ruled.
 
 ## Build and test
 
 ```sh
 nim r koch check                                  # from repository root: every check
-nim r koch test contributor/bangu/lojban_tagger   # this project alone
+nim r koch test contributor/bangu/rictadni        # this project alone
 nim r tools/build.nim tagger                      # from project root: build binaries/tagger
 nim r tools/build.nim suggester                   # build binaries/suggester, with TLS
 nim r tools/build.nim examples                    # write worked examples of suggester
@@ -50,23 +53,26 @@ nim r tools/build.nim lists                       # write both lists again from 
 nim r tools/build.nim head                        # compare committed lists with lojban-common
 ```
 
-The build needs the compiler that `lojban_tagger.nimble` pins, and `libssl3`, because
+The build needs the compiler that `rictadni.nimble` pins, and `libssl3`, because
 `suggester` and the suites compile with TLS. The suites also run the command `openssl`, which
 makes a test root for each run, and they need `protoc` to compile. `suggester` needs
 `ca-certificates` when it runs. The verbs `lists` and `head` also need the Debian package
 `lojban-common`. The verb `system` declares all of them.
 
-Every build also needs the Nim package `lojban_parser`, at the commit that `atlas.lock` pins.
+Every build also needs the Nim package `ricysoho`, at the commit that `atlas.lock` pins.
 `suggester`, the verb `examples` and the suites also need the Nim package
 `protobuf_serialization`, which the lock pins too. `nim r koch fetch-deps
-contributor/bangu/lojban_tagger` restores both under `dependencies/`, and `nim r koch test` does
+contributor/bangu/rictadni` restores both under `dependencies/`, and `nim r koch test` does
 so before it runs the suites.
 
 ## Use
 
 `tagger` keeps its index in one text file. The option `--index:<path>` names it. Otherwise the
-variable `LOJBAN_TAGGER_INDEX` names it, and otherwise it is `lojban_tagger/index` under the
-data directory of the user.
+variable `RICTADNI_INDEX` names it, and otherwise it is `rictadni/index` under the data
+directory of the user. The tagger still reads the names that it had before the rename. It reads
+`LOJBAN_TAGGER_INDEX` where `RICTADNI_INDEX` is unset or empty, and `lojban_tagger/index` where
+the new folder holds no index. The first change writes the new folder, and the old file stays as
+it is.
 
 - `tag <name> <word>...` adds tags to a thing. A path, a URL or a title is a name.
 - `untag <name> <word>...` removes tags.
@@ -112,20 +118,24 @@ a mistyped flag never sends a paid request. Put `--` before a text that holds su
 
 | Variable | Default | Effect |
 |---|---|---|
-| `LOJBAN_TAGGER_SERVICE` | `claude` | `claude`, `openrouter`, or `chat` for another server |
-| `LOJBAN_TAGGER_ENDPOINT` | the URL of the service | `chat` needs one |
-| `LOJBAN_TAGGER_MODEL` | `claude-opus-5-5`, or `anthropic/claude-opus-5.5` | `chat` needs one |
-| `LOJBAN_TAGGER_EFFORT` | `medium`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
-| `LOJBAN_TAGGER_API_KEY` | none | The key, read first |
-| `LOJBAN_TAGGER_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
+| `RICTADNI_SERVICE` | `claude` | `claude`, `openrouter`, or `chat` for another server |
+| `RICTADNI_ENDPOINT` | the URL of the service | `chat` needs one |
+| `RICTADNI_MODEL` | `claude-opus-5-5`, or `anthropic/claude-opus-5.5` | `chat` needs one |
+| `RICTADNI_EFFORT` | `medium`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `RICTADNI_API_KEY` | none | The key, read first |
+| `RICTADNI_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
 
-Where `LOJBAN_TAGGER_API_KEY` is unset, `claude` reads `ANTHROPIC_API_KEY`, and `openrouter`
-reads `OPENROUTER_API_KEY`. Each reads that name only for the host of its default endpoint. So a
-key that you set for other tools never goes to another host. The report names the variable that
-it read, and never the key. Put the key in the environment, never on the command line.
+Each variable still reads under its name before the rename, as `LOJBAN_TAGGER_MODEL` for
+`RICTADNI_MODEL`, where the variable of the new name is unset or empty.
+
+Where `RICTADNI_API_KEY` and `LOJBAN_TAGGER_API_KEY` are both unset, `claude` reads
+`ANTHROPIC_API_KEY`, and `openrouter` reads `OPENROUTER_API_KEY`. Each reads that name only for
+the host of its default endpoint. So a key that you set for other tools never goes to another
+host. The report names the variable that it read, and never the key. Put the key in the
+environment, never on the command line.
 
 Get a Claude key at `https://platform.claude.com/settings/keys`, and scope it to one workspace
-when you create it. Otherwise, set `LOJBAN_TAGGER_WORKSPACE` to the ID of the workspace, which
+when you create it. Otherwise, set `RICTADNI_WORKSPACE` to the ID of the workspace, which
 starts with `wrkspc_`. Get an OpenRouter key at `https://openrouter.ai/settings/keys`.
 
 The tool reads `https_proxy`, `HTTPS_PROXY`, `http_proxy`, `no_proxy` and `NO_PROXY` as curl
@@ -146,15 +156,17 @@ password. The client would also send them to the host behind the proxy.
 
 ### Exchange files
 
-An exchange file holds one request and its reply. It starts with a frame of 33 bytes: the line
-`lojban_tagger exchange 2`, then the length and the CRC-32C of the message, in four bytes each.
+An exchange file holds one request and its reply. It starts with a frame of 28 bytes: the line
+`rictadni exchange 2`, then the length and the CRC-32C of the message, in four bytes each.
 The message follows, in the Protocol Buffers format that `app/exchanges.proto` gives. The tool
-checks the frame before it reads the message, so it refuses a file that is cut or changed.
+checks the frame before it reads the message, so it refuses a file that is cut or changed. A
+file written before the rename opens with `lojban_tagger exchange 2`, in a frame of 33 bytes, and
+the tool still reads it.
 
 To read a file, give its message to `protoc`. Run this command from the folder of the project:
 
 ```sh
-tail -c +34 build/examples/390a130dbd59a40f.exchange |
+tail -c +29 build/examples/390a130dbd59a40f.exchange |
   protoc --decode=lojban_tagger.Exchange app/exchanges.proto
 ```
 
@@ -168,7 +180,7 @@ The project publishes no page.
 ## Status
 
 The tags, the index, the search and the command line work, and the suites hold them to CLL. They
-read each word through `lojban_parser`.
+read each word through `ricyso'o`.
 
 `suggester` works on recorded replies. On 2026-10-31, it read a live page,
 `https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. A loopback

@@ -1,4 +1,4 @@
-# lojban_tagger
+# rictadni
 
 A tagging and search system whose tags are lojban words. A parser reads each tag, and reduces it
 to the words of its tanru. The Architect selected each term below before it was written.
@@ -10,7 +10,7 @@ This project takes its symbols from The Complete Lojban Language, which the
 
 ## Language
 
-The glossary of the project `lojban_parser` defines these words of lojban under Words of lojban:
+The glossary of the project `ricyso'o` defines these words of lojban under `lo valsi pe la lojban`:
 gismu, cmavo, rafsi, tanru, tanru unit, lujvo and brivla. The Architect selected
 each one. This project uses each word with that meaning, and does not write the definitions a
 second time.

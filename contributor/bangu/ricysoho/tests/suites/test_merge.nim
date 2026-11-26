@@ -89,6 +89,8 @@ import std/[options, random, strutils, unittest]
 
 import ../../src/ricysoho/[merge, nif, nif_read, prose]
 import ./[corpora, texts_built]
+from std/unicode import validateUtf8
+from ./reader_prose import errorsMessage
 
 
 const
@@ -98,37 +100,37 @@ const
     ##   .i ro le selci'a cu selka'a ta'i ro lo re tadji
   COUNT_READ_LEAST = 1800
     ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a
-    ##   .i le selci'aste cu vasru pasovopa selci'a
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pabicipa
+    ##   .i le selci'aste cu vasru 1941 selci'a
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 1831
   COUNT_PARTED_LEAST = 100
     ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a zi'e
     ##     poi selka'a fi su'o re jgena
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pacici
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 133
   COUNT_MARKED_LEAST = 350
     ## lo klani be lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a
     ##   .i le selci'a cu pagbu le selci'aste gi'a selzba
     ##   .i ro nu katna cu se kancu
     ##   .i no pagbu be le selci'a cu vasru lo srejge
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li cibibi
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 388
   COUNT_RUNS_LEAST = 900
     ## lo klani be lo porsi be lo pagbu be'o poi se jmina gi'e sruri lo srejge
     ##   .i le porsi cu pagbu lo selci'a pe le selci'aste ge'u .a lo selci'a poi selzba
     ##   .i ro nu katna cu se kancu
     ##   .i va'o lo nu le selci'a pe le porsi cu se tcidu po'o kei le selci'a cu dunda le mi'uvla
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li socize
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 937
   RUNS_OUTSIDE_MOST = 0.1
     ## lo frinu pe lo porsi poi lo selci'a pe ke'a dunda lo datyvla va'o lo nu le selci'a cu se
     ##     tcidu po'o
     ##   .i le frinu cu mleca ja du le vi namcu
-    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li no pi no ze so
+    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 0 pi 079
     ##   .i ro le porsi cu frica ki'u lo valsi poi bancu lo krasi be le porsi
   COUNT_BUILT_READ_LEAST = 200
     ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li rexaci
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 263
   COUNT_BUILT_SU_LEAST = 30
     ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a kei gi'e vasru
     ##     zo su poi fanmo lo selci'a poi lidne zo su
-    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li voxa
+    ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li 46
   MARKS_TRAILING = {' ', '\t', '\n', '.', ','}
     ## lo sinxa poi zvati lo jbini be lo valsi gi'e fanmo lo selci'a
     ##   .i `NIF` dunda no stuzi pe le sinxa
@@ -166,6 +168,8 @@ const
     # lo cmavo be zoi gy. BAhE .gy. cu lidne zo zoi
     "ba'e zoi gy. a'h .gy. ui su ko",  # .i se ki'u bo lo se sitna cu vomoi valsi
     "zoi gy. ab'h .gy. cu melbi",  # lo selci'a poi zo zoi sitna ke'a ralte `'` .e `h`
+    # lo valsi poi lo jdini sinxa cu sinxa ke'a cu vasru no stuzi to `#1003` toi
+    "mi ponse €5 .e $6 .i do ponse 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
   ]
     ## lo selci'a poi selfi'i gi'e se tcidu ca lo nu tcidu le mulselci'a
     ##   .i lo pagbu be ro le selci'a cu se jmina fo lo selci'a be fi `NIF` be'o pe le selci'a
@@ -250,44 +254,73 @@ const
     ## lo selci'a poi selzba
     ##   .i lo mivypau be le selci'a cu na mapti lo flalu
     ##   .i ku'i lo pagbu be le selci'a ta'i lo nu tcidu le mulselci'a cu mapti le flalu
-    ##   .i le ci selci'a cu pagbu lo cinonono selci'a poi selzba sepi'o lo tsiju pe le cipra gi'e
+    ##   .i le ci selci'a cu pagbu lo 3000 selci'a poi selzba sepi'o lo tsiju pe le cipra gi'e
     ##       selka'a ta'i ro lo re tadji
-    ##   .i lo namcu pe le ci selci'a cu du li panoremuso .e li pasopavopa .e li remucimuvo
+    ##   .i lo namcu pe le ci selci'a cu du li 10259 .e li 19141 .e li 25354
     ##
     ## ni'o ro mupli cu vasru lo du'u xu kau lo nu tcidu le mulselci'a cu curmi le selci'a pe le
     ##     mupli kei .e lo jgena poi lo nu jmina lo mivypau cu dunda ke'a ta'i le tarmi pe
     ##     `EXAMPLES_KEPT`
   MODULES_MALFORMED = [
-    ("", "should open with directives", -1),  # no minde
-    (HEADER & "(sentence 0", "NIF should hold", -1),  # lo jgena poi no roi selfa'o
-    (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o", 0),  # lo klesi poi cmene no selma'o
-    (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no porsi pe `CLL 21.1`
-    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "number of rule opening", 0),
+    ("", "lo minde poi `nif.nim` cu ciska ke'a cu na krasi le selci'a be fi `NIF`", -1),
+      # no minde
+    (HEADER & "(sentence 0", "ku'o cu cpedu `)` poi fanmo le jgena", -1),
+      # lo jgena poi no roi selfa'o
+    (HEADER & "(FOO 0 2 \"mi\")\n", "le cmene po'u `FOO` cu cmene no klesi be lo genvla", 0),
+      # lo klesi poi cmene no selma'o
+    (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "cu nitcu re fanmo be pa porsi", 0),
+      # no porsi pe `CLL 21.1`
+    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n",
+      "cu nitcu su'e pa mulna'u po'u lo namcu pe le javni", 0),
       # lo namcu pe lo javni poi fanmo lo porsi
       #   .i lo cmene be le javni cu jarco le namcu to lo seljdi pe `#859` pe `comment 6805527878`
       #       toi
-    (HEADER & "(sumti_6 97 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),
+    (HEADER & "(sumti_6 97 (KOhA 0 2 \"mi\"))\n", "cu nitcu re fanmo be pa porsi", 0),
       # lo jgena poi pagbu no porsi ta'i lo nu `NIF` pu ciska ke'a
       #   .i le jgena cu ka'e se tcidu ta'i no datytricu
-    (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "name of rule of 21.1", 0),  # lo cmene be no javni
-    (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # lo valsi poi ponse no famstu
-    (HEADER & "(srera 0 sumti_6)\n", "byte, rule and terminals", 0),  # lo srejge pe no `nitcu`
-    (HEADER & "(srera 0 sumti_6 97 (nitcu BRIVLA))\n", "byte, rule and terminals", 0),
+    (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "`sumti_9` cu nitcu lo cmene be pa javni", 0),
+      # lo cmene be no javni
+    (HEADER & "(KOhA 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi vu'o pe ro valsi", 0),
+      # lo valsi poi ponse no famstu
+    (HEADER & "(KOhA \"x\" 0 \"mi\")\n",
+      "cu nitcu lo re mulna'u .e lo lerpoi vu'o pe ro valsi", 0),
+      # lo valsi poi lo lerpoi cu krasi ke'a
+    (HEADER & "(srera 0 sumti_6)\n", "cu nitcu lo stuzi poi le gerna cu sisti bu'u ke'a", 0),
+      # lo srejge pe no `nitcu`
+    (HEADER & "(srera 0 sumti_6 97 (nitcu BRIVLA))\n",
+      "cu nitcu lo stuzi poi le gerna cu sisti bu'u ke'a", 0),
       # lo namcu pe lo javni poi le gerna cu sisti ne'i ke'a
       #   .i lo cmene be le javni cu jarco le namcu to `#859` pe `comment 6806614095` toi
-    (HEADER & "(srera 0 sumti_9 (nitcu BRIVLA))\n", "name of rule of 21.1", 0),  # cmene no javni
+    (HEADER & "(srera 0 sumti_9 (nitcu BRIVLA))\n", "`srera` cu nitcu lo cmene be pa javni", 0),
+      # cmene no javni
+    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\") 5)\n",
+      "pa jgena pe le selci'a be fi `NIF` cu nitcu lo tcita", 0),
+      # lo jgena poi na se tcita
+    (HEADER & "(sumti\\60x 1 (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru lo lerfu po'u `backtick`
+    (HEADER & "(a\\60b 0 2 \"mi\")\n", "le cmene po'u lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo klesi poi vasru lo lerfu po'u `backtick`
+    (HEADER & "(sumti\\0A\\0Ax 1 (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru re lerfu poi fanmo lo linji
+    (HEADER & "(s\xFF (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru pa me `byte` me'u poi zmadu li 173
+    (HEADER & "(srera 0 sumti_6 (nitcu 5))\n", "le cmene po'u lo kunti cmene", 0),
+      # lo genvla poi se cmene no da
     (
       HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
         "(FOO 8 10 \"do\")\n",
-      "should name selma'o", 1,
+      "le cmene po'u `FOO` cu cmene no klesi be lo genvla", 1,
     ),  # lo remoi jgena cu cmene no selma'o
   ]
     ## lo selci'a be fi `NIF` be'o poi lo nu jmina cu to'e curmi ke'a
     ##   .i ro le selci'a cu vasru no tarmi poi `nif.nim` ciska ke'a
     ##   .i ro le selci'a cu kansa lo pagbu be lo krinu be'o .e lo namcu pe lo jgena poi lo nu jmina
     ##       cu cusku ke'a
-    ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
-    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u pa
+    ##   .i li 0 cu krasi lo nu kancu lo jgena poi se lidne lo minde
+    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u 1
 
 
 
@@ -620,3 +653,13 @@ suite "Internal: Merge of parts":
     # lo srejge poi vasru no tarmi poi le ciska cu dunda ke'a
     expect ValueError:  # lo nu rapyzba cu to'e curmi
       discard readModule(HEADER & "(srera 0 sumti_6)\n")[2].toTree(terminals)
+
+
+  test "Each refusal of merge reads as lojban, each span of code as name":
+    for (module, reason, part) in MODULES_MALFORMED:
+      checkpoint module
+      let merged = module.mergeParts
+      checkpoint merged.reason
+      check not merged.is_merged  # lo nu jmina cu to'e curmi
+      check merged.reason.errorsMessage.len == 0  # lo jboselci'a
+      check merged.reason.validateUtf8 == -1  # lo selci'a pe `UTF-8`

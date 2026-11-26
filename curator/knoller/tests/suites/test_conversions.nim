@@ -35,7 +35,37 @@ suite "Style §5":
     for kept in [
       "let a = x.T(y)\n",  # two arguments
       "let b = Kind.Nim\n",  # capitalised receiver: type or enum
+      "let b = T.int\n",  # one capital: placeholder (V.12), never global
+      "let b = A.Nim.int\n",  # capitalised receiver ending chain
       "import std/os\nlet c = os.DirSep\n",  # imported module
       "export layout.Entry\n",  # export statement
     ]:
       check queryConversion("a.nim", kept).sites.len == 0
+
+
+  test "dotted conversion of global becomes prefix call, which static pass leaves for now":
+    # Case held: `FLOAT_TOLERANCE.float` asked nothing, since its receiver opens on capital; line
+    #   88 of `pga/algebra.nim` of PGA library at `3d9696e` (rule 15 of #443). Global is
+    #   `SCREAMING_SNAKE_CASE` (V.1), so value, never type or module. Domain: global of each shape,
+    #   alone and ending chain, beside receivers that stay.
+    let
+      source = "const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))\n"
+      query = queryConversion("a.nim", source)
+    check query.sites == @[(1, 59), (1, 43)]  # type name, then global
+    var answer = Answer(path: "a.nim")
+    answer.symbols[(1, 59)] = Symbol(kind: "skType")
+    answer.symbols[(1, 43)] = Symbol(kind: "skConst")
+    let (edits, reports) = editsConversion("a.nim", source, answer, [])
+    check source.applied(edits) ==
+      "const TOLERANCE_ABS* = Coefficient(10.pow(-float(FLOAT_TOLERANCE)))\n"
+    check reports.mapIt((it.line, it.rule)) == @[(1, Rule.Conversion)]
+    check checkConversions("a.nim", source, answer).len == 0  # static pass reads it later (#443)
+    for (global, column_global, column_type) in [
+      ("let a = SAMPLES.float\n", 8, 16),
+      ("let a = PI.float32\n", 8, 11),
+      ("let a = LIMIT_2.int\n", 8, 16),
+      ("let a = -CAYLEYS.Cayley1D\n", 9, 17),
+      ("let a = m.SAMPLES.int\n", 10, 18),  # global ends chain
+    ]:
+      let sites = queryConversion("a.nim", global).sites
+      check (1, column_type) in sites and (1, column_global) in sites

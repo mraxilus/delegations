@@ -65,8 +65,8 @@ type
 
 const
   DIGEST_WIKIPEDIA* = "6bbe766025354f3dd9e7335ccd779cc868dbaddd9d8f2071eeb9680a0a3d0c21"
-    ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li vonovovo .a li paso .a li
-    ##     zeno
+    ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li 4044 .a li 19 .a li
+    ##     70
     ##   .i le danfu cu selra'e de'i `2026-11-06`
   URL_API* = "https://jbo.wikipedia.org/w/api.php"
     ## le judri be `API` poi le danfu cu selkra ke'a
@@ -179,7 +179,7 @@ func toModuleArticles*(articles: Articles): string =
     "    article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri",
     "    index* {.requiresInit.}: int",
     "      ## lo namcu pe le ju'agri ne'i le prosa",
-    "      ##   .i le namcu pe le pamoi ju'agri cu du li pa",
+    "      ##   .i le namcu pe le pamoi ju'agri cu du li 1",
     "    text* {.requiresInit.}: string",
     "      ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji",
     "    verdict* {.requiresInit.}: string",

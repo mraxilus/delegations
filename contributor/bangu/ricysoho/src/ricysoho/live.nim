@@ -8,6 +8,7 @@
 ##   | lo cmene         | lo smuni                                                                 |
 ##   |------------------|--------------------------------------------------------------------------|
 ##   | `ReaderLive`     | le ca selci'a .e `NIF` poi pu selbe'i .e lo kravla poi denpa      |
+##   |                  | .i ji'a le mulcmi pe le romoi pagbu poi se tcidu to `ChartsKept` toi     |
 ##   | `ChangeNif`      | lo cenba pe pa spisa ne'i `NIF`                                          |
 ##   |                  | .i re stuzi .e lo jgena .e lo rebla                                      |
 ##   | `initReaderLive` | lo mivyselci'atcidu noi `NIF` pe ke'a vasru lo minde po'o         |
@@ -29,6 +30,8 @@
 ##
 ## ni'o ro spisa cu na raptcidu le mulselci'a gi'e tcidu le selci'a poi selkra le pagbu poi ca'o
 ##     kalri
+##   .i le mulcmi pe le pagbu cu stali to `ChartsKept` toi
+##   .i se ki'u bo ro spisa cu tisna lo selcmi po'o pe lo valsi poi cnino
 ##   .i lo valsi poi galfi lo pu valsi cu rinka lo nu raptcidu le selci'a poi selkra lo jgena poi le
 ##       valsi cu klama ke'a
 ##   .i `NIF` selka'a bu'u lo stuzi poi le jgena cu krasi bu'u ke'a
@@ -192,7 +195,7 @@ type
     held: int
       ## lo namcu pe lo romoi jgena poi vasru lo pagbu poi se tcidu
       ##   .i le romoi jgena cu du le jgena .a lo jgena poi lidne le jgena
-      ##   .i va'o lo nu no jgena cu vasru lo pagbu poi se tcidu kei le namcu cu du li ni'u pa
+      ##   .i va'o lo nu no jgena cu vasru lo pagbu poi se tcidu kei le namcu cu du li ni'u 1
     is_parted: bool
       ## lo du'u su'o pagbu be lo selci'a pe le jgena cu pu selbe'i bu'u le jgena .a lo jgena poi
       ##     lidne le jgena
@@ -233,7 +236,7 @@ type
     after: int
       ## lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
       ##   .i le stuzi cu se lidne lo koivla pe zo zoi
-      ##   .i li no va'o lo nu le kravla cu na du zo zoi
+      ##   .i li 0 va'o lo nu le kravla cu na du zo zoi
     delimiter: string
       ## lo koivla pe zo zoi ge'u zi'e noi fanmo le nu sitna
       ##   .i le koivla cu kunti va'o lo nu le kravla cu na du zo zoi
@@ -270,6 +273,9 @@ type
       ##   .i lo fanmo be le selci'a cu tcidu ba le stuzi
       ##   .i ki'u bo lo famvla pe lo kravla poi lidne zo fa'o cu ka'e sitna zo fa'o
     is_ended: bool  ## lo du'u lo fanmo be le mivyselci'a cu pu se tcidu
+    charts: ChartsKept
+      ## lo mulcmi pe le romoi pagbu poi se tcidu
+      ##   .i ro lo spisa cu tisna lo selcmi po'o pe lo valsi poi cnino to `fillSets` toi
 
 
 func initReaderLive*(): ReaderLive =
@@ -319,7 +325,7 @@ func addLeaves(node: Node, leaves: var seq[int]) =
 func stopMost(node: Node): int =
   ## jarco lo romoi pagbu poi le gerna cu sisti bu'u ke'a ne'i le tricu
   ##   .i lo srejge cu sinxa le stuzi poi le gerna cu sisti bu'u ke'a
-  ##   .i va'o lo nu le gerna cu sisti bu'u no pagbu kei jarco li ni'u pa
+  ##   .i va'o lo nu le gerna cu sisti bu'u no pagbu kei jarco li ni'u 1
   if node.is_terminal: return -1
   result = (if node.stop.isSome: node.stop.get.at else: -1)
   for k in 0 ..< node.children.len: result = max(result, node.children[k].stopMost)
@@ -425,7 +431,7 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
     ##   .i `let` da'i fukpi le valsi
   let cleans = occurrences.toCleans
   # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
-  #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+  #   .i li ni'u 1 cu sinxa lo nu no pagbu cu vasru le valsi
   var holders = newSeq[int](occurrences.len)
   for w in 0 ..< occurrences.len: holders[w] = -1
   for u in 0 ..< units.len:
@@ -472,11 +478,11 @@ func byteQuoted(text: string, at: int, delimiter: string): int =
   ##   .i va'o lo drata le stuzi cu se lidne lo selci'avla poi vasru zo zoi
   ##   .i ca la'e di'u le selci'avla cu vasru le koivla
   var a = at
-  while a < text.len and text[a] notin MARKS_BOUNDARY: inc a
+  while a < text.len and not text.isBoundary(a): inc a
   var b = a
-  while b < text.len and text[b] in MARKS_BOUNDARY: inc b
+  while b < text.len and text.isBoundary(b): inc b
   var c = b
-  while c < text.len and text[c] notin MARKS_BOUNDARY: inc c
+  while c < text.len and not text.isBoundary(c): inc c
   if text[b ..< c].toLowerAscii.replace(",", "") == delimiter: c else: a
 
 
@@ -486,11 +492,11 @@ func isSpelled(text: string, first, last: int, delimiter: string): bool =
   ##     ke'a to `CLL 19.10` toi
   var at = first
   while at < last:
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       inc at
       continue
     let start = at
-    while at < last and text[at] notin MARKS_BOUNDARY: inc at
+    while at < last and not text.isBoundary(at): inc at
     if text[start ..< at].toLowerAscii.replace(",", "") == delimiter: return true
   false
 
@@ -507,11 +513,11 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
   ##   .i ku'i lo fanmo be le se tcidu cu se kancu ba lo selci'a poi se lidne zo fa'o
   var ending = reader.text.len
   if not is_final:
-    while ending > start and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
+    while ending > start and not reader.text.isBoundarySettled(ending - 1): dec ending
   let
     last = (if reader.stop.isSome and not is_final: min(ending, reader.stop.get) else: ending)
     is_lohu = reader.openers.anyIt(it.selmaho == Selmaho.Lohu and it.at < start)
-  result = readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
+  result = reader.charts.readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
   reader.count_read += last - start
   for occurrence in result.reading.occurrences.mitems:
     (occurrence.start, occurrence.finish) = (occurrence.start + start, occurrence.finish + start)
@@ -546,9 +552,9 @@ func boundary(reader: ReaderLive, at: int): int =
   ##   .i ki'u bo le porsi be lo valsi cu tcidu ro selci'avla ta'i lo mulno
   ##   .i va'o lo nu no jgena cu zvati le stuzi kei le stuzi cu du lo krasi be le selci'a
   result = at
-  while result > 0 and reader.text[result - 1] notin MARKS_BOUNDARY:
+  while result > 0 and not reader.text.isBoundary(result - 1):
     var first = result - 1
-    while first > 0 and reader.text[first - 1] notin MARKS_BOUNDARY: dec first
+    while first > 0 and not reader.text.isBoundary(first - 1): dec first
     var k = reader.items.high
     while k >= 0 and reader.items[k].start > first: dec k
     result = (if k >= 0: reader.items[k].start else: 0)
@@ -752,7 +758,7 @@ func addItems(
     #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du lo klani be le panzi
     first_su = children.len
     # lo romoi pezli be zo su ne'i le panzi
-    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u pa
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u 1
     last_su = -1
     # lo pamoi pezli poi se lidne le selci'a
     #   .i ro le pezli cu du zo fa'o poi fanmo le selci'a ku'o .a lo valsi poi se lidne zo fa'o
@@ -848,7 +854,7 @@ func addOpeners(
     # ro pagbu cu ponse lo stuzi poi lo selku'e be lo panzi poi vasru le pagbu cu krasi bu'u ke'a
     owners = newSeq[int](units.len)
     # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
-    #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+    #   .i li ni'u 1 cu sinxa lo nu no pagbu cu vasru le valsi
     holders = newSeq[int](occurrences.len)
     erased_first = int.high  # lo stuzi pe lo pamoi valsi poi lo nu vimcu cu pu vimcu ke'a
     added: seq[OpenerLive]
@@ -935,11 +941,11 @@ func addRest(reader: var ReaderLive, first: int): ChangeNif =
   result = ChangeNif(at: reader.nif.len, start: first)
   var at = first
   while at < reader.ending:
-    if reader.text[at] in MARKS_BOUNDARY:
+    if reader.text.isBoundary(at):
       inc at
       continue
     let start = at
-    while at < reader.ending and reader.text[at] notin MARKS_BOUNDARY: inc at
+    while at < reader.ending and not reader.text.isBoundary(at): inc at
     let
       ended = ReadingMarked(
         occurrences: @[reader.text.occurrenceEnded(start, at)],
@@ -976,7 +982,7 @@ func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
   if region.faho.isNone: return
   let faho = region.reading.byteAt(region.faho.get)
   var stop = faho
-  while stop < reader.text.len and reader.text[stop] notin MARKS_BOUNDARY: inc stop
+  while stop < reader.text.len and not reader.text.isBoundary(stop): inc stop
   reader.stop = some(stop)
   # lo panzi poi vasru zo fa'o
   #   .i lo fanmo be le selci'a cu raptcidu bu'u lo selku'e be le panzi
@@ -1002,7 +1008,7 @@ func push*(reader: var ReaderLive, piece: string): ChangeNif =
   doAssert not reader.is_ended, "Live text should take no piece after its end."
   reader.text.add piece
   var ending = reader.text.len  # le se tcidu cu fanmo ba le romoi sinxa poi jbini lo valsi
-  while ending > reader.ending and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
+  while ending > reader.ending and not reader.text.isBoundarySettled(ending - 1): dec ending
   if ending == reader.ending:
     return ChangeNif(at: reader.nif.len, start: reader.start_tail, tail: reader.tail)  # no cnino
   for n in 0 ..< reader.openers.len:

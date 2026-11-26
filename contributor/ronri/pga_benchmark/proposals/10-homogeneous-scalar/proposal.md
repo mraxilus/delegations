@@ -182,8 +182,8 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
 
 - **Order.** After P04, since the module takes its basis-set forms `⟑` and `⟇`.
 - **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
-  `pga.nim`, and `std/options` above them. P04 adds `basis_sets` to the same lines, and this edit
-  quotes them as P04 leaves them. The change `doc-comments` keeps these lines, so the quotes of
+  `pga.nim`, and `std/options` above them. P04 leaves these lines as at pin, and this edit quotes
+  them so. The change `doc-comments` keeps these lines, so the quotes of
   this proposal fit after it. If this proposal lands first, that change quotes the import line
   again. The change `doc-comments-2` edits the export line, so the second of the two to land
   quotes it again.
@@ -244,7 +244,7 @@ A copy whose root takes the smaller part by its own root fails the law of the sm
 and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
 see the cancellation.
 
-The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-11-15. The table
+The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-11-19. The table
 counts the pairs with a root, of 4 114. It also counts the radius norms that are none, beside the
 float roots of `|⊘` that are NaN, on the same 4 096 multivectors.
 

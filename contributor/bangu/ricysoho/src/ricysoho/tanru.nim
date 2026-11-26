@@ -73,7 +73,7 @@
 ##   .i se ki'u bo lo pagbu pe le rafsi cu ralte lo lerfu po'u `brod`
 ##
 ## ni'o lo cmavo poi se tcidu ta'i lo nu mulno cu ponse lo selma'o be vo'a
-##   .i le ma'oste cu dunda le selma'o to le renomoi ckupau be `CLL` toi
+##   .i le ma'oste cu dunda le selma'o to le 20moi ckupau be `CLL` toi
 ##   .i lo cmavo poi no liste cu vasru ke'a ponse no selma'o mu'u lo cipma'o po'u zo ku'a'e
 ##
 ## ni'o lo pagbu be lo lujvo cu ponse no selma'o
@@ -195,6 +195,14 @@ type
       ## lo selci'avla poi se lidne zo fa'o noi fanmo lo se tcidu to `CLL 19.15` toi
       ##   .i no da se to'e curmi
       ##   .i lo porsi be lo valsi cu na tcidu le selci'avla
+    Sign
+      ## lo jdini sinxa cu pencu no namcu .a re namcu
+      ##   .ija le namcu poi le sinxa cu pencu ke'a cu pencu lo drata jdini sinxa
+      ##   .i `Architect` jdice lo du'u lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e
+      ##       curmi kei bu'u `#1003` ta'i `D3 a`
+      ##   .i ji'a ro namcu cu ponse su'e pa jdini sinxa ki'u lo nu lo jdini klani cu vasru lo valsi
+      ##       pe pa sinxa po'o to `D2 a` toi
+      ##   .i le tcila cu du le sinxa
 
   Reading* = object  ## lo jalge be lo nu tcidu lo selci'a ta'i pa valsi
     case is_word*: bool
@@ -205,7 +213,7 @@ type
         ## lo rafsi poi le selci'a cu ciska ke'a
         ##   .i le datnypau cu kunti va'o lo nu le valsi cu mulseltcidu
       selmaho*: Option[Selmaho]
-        ## lo selma'o poi le ma'oste cu dunda ke'a lo cmavo poi mulno se tcidu to le renomoi ckupau
+        ## lo selma'o poi le ma'oste cu dunda ke'a lo cmavo poi mulno se tcidu to le 20moi ckupau
         ##     be `CLL` toi
         ##   .i va'o lo drata le datnypau cu kunti
     of false:
@@ -223,7 +231,7 @@ const
     'u', 'v', 'x', 'y', 'z', '\'',
   }
     ## lo lerfu poi lo valsi cu vasru ke'a ne'i lo raltai
-    ##   .i le lerfu cu du lo karsna .e `y` .e lo paze zunsna .e zoi gy. ' .gy. to `CLL 3.1` .e
+    ##   .i le lerfu cu du lo karsna .e `y` .e lo 17 zunsna .e zoi gy. ' .gy. to `CLL 3.1` .e
     ##       `CLL 3.6` toi
   MARKS_STREAM* = block:
     ## lo lerfu poi sinxa lo porsi be lo valsi be'o .enai lo valsi

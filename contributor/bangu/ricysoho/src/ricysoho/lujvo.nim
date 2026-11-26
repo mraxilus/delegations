@@ -103,7 +103,7 @@ const
     Form.Ccvcv: 3,
   ]
     ## lo namcu poi `step 4` pe `CLL 4.12` dunda ke'a lo tarmi
-    ##   .i ku'i lo rafsi poi seltai `CVV` gi'e vasru zoi gy. ' .gy. cpacu li xa
+    ##   .i ku'i lo rafsi poi seltai `CVV` gi'e vasru zoi gy. ' .gy. cpacu li 6
 
 
 

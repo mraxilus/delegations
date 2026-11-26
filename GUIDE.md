@@ -109,11 +109,18 @@ reflection below says what it cost.
 
 ### When to start one
 
-- **Start a subagent for read-only work, or for a change that is independent and well
-  defined.** Read-only work is a search, a review, a reproduction, a measurement or a read of
-  sources. Two changes are independent when neither one changes code or a test that the other
-  one reads or writes. Neither one waits on the other to merge. A change is well defined when
-  its prompt can say what done means.
+- **Do a single task yourself.** Where two independent tasks wait, start one subagent, and do the
+  other task yourself while it runs. A subagent costs its prompt, its prediction, its critic, its
+  resolver and its reflection, and you wait while it runs alone.
+- **Where three or more independent tasks wait, do what suits them best.** Give any of them to
+  subagents, and do the others yourself.
+- **A check is the one exception.** Start a `critic`, a `resolver` or a `reviewer` even where no
+  other task waits, since a fresh read finds what the writer misses.
+- **Give a subagent read-only work, or a change that is independent and well defined.**
+  Read-only work is a search, a reproduction, a measurement or a read of sources. Two changes
+  are independent when neither one changes code or a test that the other one reads or writes.
+  Neither one waits on the other to merge. A change is well defined when its prompt can say what
+  done means.
 - **Do small work yourself**, as a few calls, a lookup in one known place, or a file that you
   will edit. A subagent costs more than such work, and returns less.
 - **Give one area of code one writer.** Two writers of one area make choices that disagree,
@@ -172,7 +179,18 @@ return it confirmed.
   Start work that a kind covers through that kind, and never through a general type.
 - **The prediction is the last message of a turn of its own, which starts no subagent.** Start
   a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
-  starts the subagent. A block serves only the calls of that next turn.
+  starts the subagent. A block of such a turn serves a later call where no subagent starts
+  between them, whatever the count of turns between. A subagent of any type counts here, tool use
+  too.
+- **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
+  `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
+  word of this line names. The hook reads the label in any case, with its colon inside or
+  outside the bold. It reads that word in any case, and drops backticks, bold or italic marks
+  around it, and a final comma, full stop or colon. So `**subagent:** Builder. of the fix` names
+  `builder`.
+- **Where more than one block serves a call, the call takes the block of the nearest earlier
+  turn.** Inside that turn, it takes the earliest block. So a block of a later turn, written
+  before the call, replaces a block of that kind of an earlier turn.
 - **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
   and a block in the turn of its call is no evidence. Never write a prediction to a file, and
   never give a subagent the path of a live transcript. A subagent can read both.
@@ -186,7 +204,8 @@ Each claim follows these rules for forecasting:
   and the tree alone.
 - **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
   confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
-  result falls between them, and a result on either percentile counts as inside.
+  result falls between them, and a result on either percentile counts as inside. Its cell under
+  `Result` opens with the value, as `170,000, inside`, since the log of claims reads that number.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
@@ -199,7 +218,8 @@ Then the subagent runs, and these steps follow:
 
 - **The prediction of a critic is optional, and a resolver takes none.**
 - **A missing prediction is a miss.** Name it in your reply, and count it as a miss in the
-  reflection, with its cause. Write no block after its call.
+  reflection, with its cause. Write no block after its call. Its row in the table holds exactly
+  `No prediction` under `Predicted`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
 - **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
@@ -216,7 +236,24 @@ Then the subagent runs, and these steps follow:
 - **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
   ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event. The state ➖ marks a claim
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
-  is a miss. Each cell under `Predicted` quotes a claim of the block word for word.
+  is a miss.
+- **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
+  claim is a bullet at the top level of the block. Its label opens it: any run with no space
+  that opens with a capital from `A` to `Z`, then `: `, as `Q1:` or `Follow-up:`. A label in
+  bold, as `**Judgement:**`, `**Judgement**:`, `__Judgement:__` or `***Judgement:***`, is a
+  label too. Other text before a `: ` makes no label, as a word in lower case or more than one
+  word. A part of a claim, or a claim with its confidence, quotes no claim.
+- **A claim ends at its confidence**, the last percentage in brackets, as `(70%)` or `(62.5%)`,
+  before its resolution criterion or its end. A percentage before its confidence stays in the
+  claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
+  neither stands, it ends before one final full stop of its bullet.
+- **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
+  confidence. It ends at its percentiles, which open with the words `, as the 10th`. A
+  percentage in brackets in its text, as `(10% cached)`, stays in the claim.
+- **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
+  letters, plain or in italics, bold or both. So `. **Resolution criterion:**` and
+  `. *Resolution criterion:*` end a claim too. A line right under a claim that opens an item, as
+  `1. ` or a marker and a tab, ends that claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
@@ -224,9 +261,14 @@ Then the subagent runs, and these steps follow:
   line. Where its mark of a claim differs from yours, give one line that says which way the
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
-  with no block in the turn before it. It refuses a report of a critic with no reflection after
-  it. It refuses a cell under `Predicted` that quotes no block that a call took. A reply to a
-  refusal passes unread, so the hook holds no step there.
+  other than `critic` and `resolver` that no block serves. It refuses a report of a critic with
+  no reflection after it. It refuses a cell under `Predicted` that is neither a whole claim of a
+  block that a call took, nor `No prediction`. A reply to a refusal passes unread, so the hook
+  holds no step there.
+- **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
+  log is `claims.txtpb` beside your record, and each row is one `Claim` of
+  `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
+  Commit the log in a commit of its own, as `chore(<project>): log the claims of the reviewer`.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
@@ -657,6 +699,32 @@ helps: a diagram in a code block, a small table, a worked example or a picture. 
 helps, add none. The ruling goes where the decision says, as for any decision. A message that
 explains a decision pushes and posts nothing, so it takes no sign-off. After the last ruling,
 close each turn as The sign-off says.
+
+#### An explanation asked again
+
+**When the Architect asks again about an explanation, explain it again in full and from the
+start.** This holds for an explanation of a decision, of code or of math. The skill `explain`
+points here too. Such an explanation is long, because the Architect asked for it in full.
+
+1. **Start from nothing.** Say what each symbol, word and rule means before the first step that
+   uses it, as "A decision explained" asks of each name.
+2. **Take one small example with real values.** Carry it through each step, from the inputs to
+   the result.
+3. **Show each step.** Give each line of the math, and each value between the lines. Leave no
+   step for the reader to add.
+4. **Show the real code as it stands.** Give the level that the Architect names, as the source,
+   the expansion or the output, with its file and line.
+5. **Explain the code part by part, in the order that it runs.** Say what each name and each
+   call does in plain words, where it first appears.
+6. **Show what each part does on the example.** Give the values that a run printed, and never a
+   value that you did not see. Where a value does not show, add a print line to a copy in
+   scratch, and say so.
+7. **Use no idea that the steps do not need.** Where an idea helps, explain it first, as point 1
+   asks.
+8. **Say what the explanation takes as given**, as the entries of a table, and offer to show
+   where it comes from.
+9. **Where the question compares two ways, carry the same example through both**, with the cost
+   of each.
 
 #### The table
 

@@ -39,14 +39,14 @@ import ../../src/ricysoho/lists/gismu
 
 const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
-    ## le paze zunsna poi zoi gy. C .gy. sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
+    ## le 17 zunsna poi zoi gy. C .gy. sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
   ORDER_VOWELS = "aeiou"
     ## le mu karsna poi zoi gy. V .gy. sinxa ke'a
     ##   .i zoi gy. V .gy. na sinxa `y` to le pamoi javni pe `CLL 4.1` toi
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"
     ## lo lerfu pe `CLL 3.1` .e zoi gy. ' .gy. .e slaka bu .e denpa bu
   DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
-    ## lo cmavo pe le pano namcu po'u li no bi'o li so ja'i le liste pe `CLL 18.2`
+    ## lo cmavo pe le 10 namcu po'u li 0 bi'o li 9 ja'i le liste pe `CLL 18.2`
   RAFSI_BLACI = ["bac", "lac", "ba'i", "bai", "la'i", "lai", "bla"]
     ## lo cmarafsi poi le liste pe `CLL 4.6` curmi lo nu zo blaci ponse ke'a
     ##   .i ro le rafsi cu seldu'a fi lo datyvla
@@ -90,11 +90,11 @@ const
   FLOOR_UNLISTED = 9450
     ## lo nityjimte be lo te kancu be le se galfi poi na zvati le liste
     ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki no da
-    ##   .i le jimte cu xadba li pabisonomu noi du le te kancu ca lo nu le tsiju cu du li no
+    ##   .i le jimte cu xadba li 18905 noi du le te kancu ca lo nu le tsiju cu du li 0
   FLOOR_LISTED = 177
     ## lo nityjimte be lo te kancu be le se galfi poi du pa drata liste cmima
     ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki pa stecmi
-    ##   .i le jimte cu xadba li cimuvo noi du le te kancu ca lo nu le tsiju cu du li no
+    ##   .i le jimte cu xadba li 354 noi du le te kancu ca lo nu le tsiju cu du li 0
   SAMPLES_PAIRS = 20000  ## lo remei be lo valsi poi se karbi to lo tsiju cu jdice le remei toi
   STEMS_4_13 = [
     ("gerk", "gerku"), ("zdan", "zdani"), ("logj", "logji"), ("bang", "bangu"),
@@ -233,7 +233,8 @@ suite "Chapter 4":
       check w in found  # `CLL 4.6`
       # zo broda pe `CLL 4.4`
       if text.startsWith("brod"): check found.mapIt($it) == @GISMU_ASSIGNABLE
-      else: check found == @[w]  # ja'i `CLL 4.4` no re gismu cu frica fi lo fanmo karsna po'o
+      else: check found == @[w]
+        # ja'i `CLL 4.4` naku su'o re gismu cu frica fi lo fanmo karsna po'o
 
 
   test "Section 4.6":
@@ -245,7 +246,7 @@ suite "Chapter 4":
         check wordRafsi(one) == some(w)  # `CLL 4.6`
     var count_found = 0
     for notation in ["CVC", "CCV", "CVV", "CV'V"]:
-      for text in texts(positionsNotation(notation)):  # ro le cizevono lerpoi
+      for text in texts(positionsNotation(notation)):  # ro le 3740 lerpoi
         let found = wordRafsi(text)
         # ja'i `CLL 4.6` le liste cu jdice lo rafsi
         #   .i no rafsi cu rapseldu'a
@@ -340,7 +341,7 @@ suite "Chapter 4":
     check isAssigned("ro'i", "rokci")  # zo ro'inre'o pe `CLL 4.6` to le nu fendi cu selru'a toi
     check isAssigned("re'o", "renro")  # zo ro'inre'o pe `CLL 4.6` to le nu fendi cu selru'a toi
     check isAssigned("rok", "rokci")  # zo rokre'o pe `CLL 4.6` to le nu fendi cu selru'a toi
-    for text in DIGITS:  # ro le pano namcu poi `CLL 18.2` cusku ke'a
+    for text in DIGITS:  # ro le 10 namcu poi `CLL 18.2` cusku ke'a
       let found = word(text)
       # ja'i `CLL 4.6` ro le namcu cu ponse lo rafsi poi seltai `CVC`
       #   .i se ki'u bo le gimste cu vasru le namcu
@@ -442,9 +443,9 @@ suite "Internal: Dictionary":
       check is_gismu == ($w).isBrivla  # le klesi cu tugni `isBrivla`
       check is_gismu == (($w).len == 5)  # le klesi cu fendi le liste ja'i lo ni clani
       if is_gismu: inc count_gismu else: inc count_cmavo
-    check count_gismu == 1342  # lo nu lo te kancu cu stali to le liste cu vasru pacivore gismu toi
+    check count_gismu == 1342  # lo nu lo te kancu cu stali to le liste cu vasru 1342 gismu toi
     # lo nu lo te kancu cu stali
-    #   .i le liste cu vasru sovo cmavo poi ponse lo rafsi
+    #   .i le liste cu vasru 94 cmavo poi ponse lo rafsi
     check count_cmavo == 94  # lo nu lo te kancu cu stali
 
 
@@ -508,7 +509,7 @@ suite "Internal: Dictionary":
     check count_listed >= FLOOR_LISTED  # `Article IX.3`
     var count_stemmed = 0
     for notation in ["CVCC", "CCVC"]:
-      for text in texts(positionsNotation(notation)):  # ro le vosopacino lerpoi
+      for text in texts(positionsNotation(notation)):  # ro le 49130 lerpoi
         let found = wordsStem(text)
         # lo nu sisku ta'i lo nu rapfendi fi re pagbu cu mintu lo nu tcidu ro stecmi ta'i lo porsi
         check found == wordsStemScanned(text)  # lo re nu sisku cu mintu

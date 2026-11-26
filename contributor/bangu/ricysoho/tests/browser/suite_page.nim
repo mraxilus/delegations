@@ -3,8 +3,8 @@
 ##   .i le papri cu selzba fi le mitcalku
 ##   .i le vi cipra cu du le samtci pe le papri gi'e basti `src/browser/page.nim` gi'e vasru ro
 ##       pagbu be `src/browser/page.nim`
-##   .i ki'u bo va'o lo nu pa remoi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti lo
-##       fancu pe le pamoi to `tools/browser.nim` toi
+##   .i ki'u bo va'o lo nu pa boi remoi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti
+##       lo fancu pe le pamoi to `tools/browser.nim` toi
 ##
 ## ni'o le cipra cu karbi lo selja'o be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
 ##     ke'a ku'o le pixra poi le jbezba cu dunda ke'a
@@ -52,8 +52,8 @@ const
   MODE_REFUSED = "refused"
     ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
     ##   .i `data-mode` pe `body` jarco le tadji
-  MODE_WORKER = "A worker reads the text."  ## le linji pe le tadji va'o lo nu pa gunka cu tcidu
-  MODE_PAGE = "This page reads the text, since it gives no worker."
+  MODE_WORKER = "pa gunka cu tcidu le selci'a"  ## le linji pe le tadji va'o lo nu pa gunka cu tcidu
+  MODE_PAGE = "le vi papri cu tcidu le selci'a ki'u lo nu le papri cu dunda no gunka"
     ## le linji pe le tadji va'o lo nu le papri cu to'e curmi lo gunka
   KINDS = ["whole", "stream", "typed", "edit"]
     ## lo klesi poi ro se cipra pe le sabji samtci cu cmima ke'a
@@ -160,8 +160,8 @@ proc runSuite() {.async.} =
       "merge draws trees native build merges to: " & claim
     expectThat merges[k].status == cases[k].merged_status,
       "line of merge names what native build names: " & claim
-    if cases[k].merged_status.startsWith("Merged · one tree"): inc count_whole
-    elif cases[k].merged_status.startsWith("Merged · "): inc count_kept
+    if cases[k].merged_status.startsWith("se jmina · 1 tricu"): inc count_whole
+    elif cases[k].merged_status.startsWith("se jmina · "): inc count_kept
   expectThat count_whole > 0 and count_kept > 0, "cases merge whole, and keep error"  # `IX.3`
   ended "Merge draws trees of completed parts as native build merges them, error in place"
 

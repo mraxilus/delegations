@@ -24,6 +24,8 @@ import ../src/pga_benchmark/pages/[
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
   readLibrary, compileCost, pairTimes
+from ../src/pga_benchmark/catalogue {.all.} import isTypingSound
+from ../src/pga_benchmark/inspect {.all.} import keyLibrary, keyedCatalogue, stemLibrary
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -110,8 +112,8 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
     let
       expression = parseExpr(p.expression)
       reference = parseExpr(p.reference)
-      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       m_reference = parseExpr(namePoolReference(p.operands[0]))
       n_reference = parseExpr(namePoolReference(p.operands[1]))
       name = newLit(p.id & "  # " & p.cite)
@@ -180,8 +182,8 @@ macro checkTransformsAnyNorm(measurands: static seq[Measurand]): untyped =
     let
       expression = parseExpr(p.expression)
       reference = parseExpr(p.reference)
-      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       m_reference = parseExpr(namePoolReference(p.operands[0]))
       n_reference = parseExpr(namePoolReference(p.operands[1]))
       name = newLit(p.id & " at motor scaled by 2  # " & p.cite)
@@ -237,8 +239,8 @@ macro checkFormsDense(measurands: static seq[Measurand]): untyped =
       dense =
         if p.arity == 2: newCall(ident(p.nameDense), m, n)
         else: newCall(ident(p.nameDense), m)
-      pool_m = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      pool_n = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      pool_m = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      pool_n = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       name = newLit(p.id)
     result.add quote do:
       test `name`:
@@ -364,6 +366,20 @@ suiteInProc "Internal: Catalogue":
         check p.expression == "((n ⟇ m) ⟇ (~∘ n))" and p.headEmitted == ""  # chain, as D08 names
 
 
+  test "catalogue may type motor of transform alone, and its build stops else":
+    when compiles(Kind.Motor):
+      for p in CATALOGUE:
+        checkpoint p.id
+        var (bare, marked) = (p, p)
+        bare.typed = {}
+        marked.typed = {1}
+        check bare.isTypingSound
+        let is_transform = p.id.startsWith("transform_") and p.operands[1] == Kind.Motor
+        check marked.isTypingSound == is_transform
+    else:
+      skip()  # algebra holds no motor
+
+
   test "aliases match every name library's umbrella exports":
     let
       exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
@@ -397,6 +413,30 @@ suiteInProc "Internal: Dense forms":
 
 
 suiteInProc "Internal: Measurements":
+  test "typed pool of motors holds antieven part of each widened motor, which holds nothing else":
+    # Law: library reads motor of transform at its own type where it can, so typed image must
+    #   lose no coefficient of widened one; motor is motion operator, antieven alone.
+    when declared(POOL_MOTOR_TYPED):
+      for i in 0..<OBJECTS:
+        for b in Basis:
+          if b in BASES_MOTOR: check POOL_MOTOR_TYPED[i][b] == POOL_MOTOR_WIDENED[i][b]
+          else: check POOL_MOTOR_WIDENED[i][b] == 0.0
+    else:
+      skip()  # algebra holds no typed motor
+
+  test "operand read at its type takes typed pool, and widened one else":
+    when declared(POOL_MOTOR_TYPED):
+      check static(namePoolLibrary(Kind.Motor, none(int), is_typed = true)) == "POOL_MOTOR_TYPED"
+      check static(namePoolLibrary(Kind.Motor, none(int))) == "POOL_MOTOR_WIDENED"
+      check not compiles(static(namePoolLibrary(Kind.Point, none(int), is_typed = true)))  # none
+    check static(namePoolLibrary(Kind.General, none(int), is_typed = true)) == "POOL_GENERAL"
+    for p in CATALOGUE:
+      checkpoint p.id
+      when declared(POOL_MOTOR_TYPED):  # motor of transform alone reads at its type
+        check p.typed.card == 0 or (p.typed == {1} and p.operands[1] == Kind.Motor)
+      else:
+        check p.typed.card == 0
+
   test "every pool starts on cache line":
     # Pool off line puts 128-byte multivector across three lines, not two, and typed object
     #   across lines in other patterns, so library and reference read different layouts.
@@ -413,6 +453,7 @@ suiteInProc "Internal: Measurements":
       heldToLine(POOL_POINT_WIDENED)
       heldToLine(POOL_LINE_WIDENED)
       heldToLine(POOL_MOTOR_WIDENED)
+      heldToLine(POOL_MOTOR_TYPED)
     when declared(POOL_PLANE):
       heldToLine(POOL_PLANE)
       heldToLine(POOL_PLANE_WIDENED)
@@ -636,6 +677,85 @@ suiteInProc "Internal: Inspector":
     if found.len == 1:
       check found[0].parameters == @["set[Basis]"]
 
+  test "library generic that timed calls instantiate is kept by its head, and helper there is not":
+    # Case: under P04, sum, difference, negation and four projections are generic, and timed
+    #   calls instantiate them first, so C names them after module `measurements`; evaluations
+    #   of P04, P09 and P10 at rga4d and cga5d read none of those seven.
+    # Domain: each kind of module as `bench` builds it, and dense forms and timed calls as built
+    #   from elsewhere, against head of catalogue and helper of bench, through `keyedCatalogue`,
+    #   which `inspect` writes its document by.
+    const
+      parameters = "(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* n_p1, " &
+        "tyObject_Multivector__h* Result) {"
+      modules = [  # module suffix; kept with head; kept with helper's symbol
+        ("OOZdependenciesZprojective_geometric_algebra_illuminatedZpgaZoperators", true, true),
+        ("referenceZrigid3", true, true),
+        ("dense", true, true),
+        ("OOZsrcZpga95benchmarkZdense", true, true),  # dense form, built from elsewhere
+        ("measurements", true, false),
+        ("OOZsrcZpga95benchmarkZmeasurements", true, false),  # timed calls, as suites build them
+        ("pools", false, false),  # other module of bench
+        ("OOZpgaZoperators", false, false),  # library outside its checkout
+      ]
+      heads_mangled = ["plus__u0", "projectCentral_u0"]  # `+` encoded, and plain identifier
+      helper_mangled = "fold_u0"  # helper of bench in `measurements`
+    let heads = CATALOGUE.heads
+    check "+" in heads and "projectCentral" in heads and "fold" notin heads
+    var
+      fixture: seq[string]
+      expected: seq[string]
+    for (module, is_kept_head, is_kept_helper) in modules:
+      for (mangled, is_kept) in [(heads_mangled[0], is_kept_head),
+          (heads_mangled[1], is_kept_head), (helper_mangled, is_kept_helper)]:
+        let name = mangled & "__" & module
+        fixture.add "static N_INLINE(void, " & name & ")" & parameters & "\n}"
+        if is_kept: expected.add name
+    let kept = keyedCatalogue(functionsIn(fixture.join("\n"))).mapIt(it[1].name)
+    check kept.sorted == expected.sorted
+
+  test "no helper of timed calls takes symbol of head, save generic at typed motor":
+    # Law: each function of `measurements` here is helper of bench, save instance of library's
+    #   generic that timed transform makes first at typed motor; helper sharing head would join it.
+    const count_timed_least = 1  # functions of timed calls law must read, so it is not vacuous
+    let heads = CATALOGUE.heads
+    var count_timed = 0
+    for f in INSPECTED:
+      if f.isTimed:
+        inc count_timed
+        checkpoint f.name
+        check f.symbol notin heads or (f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters)
+    check count_timed >= count_timed_least
+
+
+  test "transform reads its motor at its type exactly where library takes that type":
+    # Probe spelled here apart from catalogue's, so catalogue that types no motor fails.
+    const is_typed_library =
+      when IS_RIGID: compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
+      else: false
+    var is_emitted = false  # instance at typed motor, which timed transform calls
+    for f in INSPECTED:
+      if f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters: is_emitted = true
+    check is_emitted == is_typed_library
+    let keys = keyedCatalogue(INSPECTED).mapIt(it[0])  # keys of document, as gap list joins them
+    for p in CATALOGUE:
+      if 1 in p.typed: check p.keyLibrary in keys
+    for p in CATALOGUE:
+      checkpoint p.id
+      let
+        is_transform = p.id.startsWith("transform_")
+        expected: set[0..1] = (if is_typed_library and is_transform: {1} else: {})
+      check p.typed == expected
+
+
+  test "typed stem is motor's alone, and a typed stem of any other kind fails":
+    when compiles(Kind.Point):
+      check stemLibrary(Kind.Motor, is_typed = true) == STEM_MOTOR
+      expect AssertionDefect:
+        discard stemLibrary(Kind.Point, is_typed = true)
+    else:
+      skip()  # algebra holds no typed kind
+
+
   test "functions are split and counted from fixture C":
     const
       multivector_mangled = "tyObject_Multivector__h"
@@ -705,7 +825,7 @@ suiteInProc "Internal: Inspector":
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
 
 
-  test "instance of `MultivectorOf` reads as library type of its count, aligned or not":
+  test "instance of `MultivectorOf` reads as first type of its count, aligned or not":
     # Case: at 3d9696e, field of P05 and of P04 opens with `NIM_ALIGN(64)`, and instance kept
     #   its C name, so evaluation of P05 listed each of 38 functions at rga4d as gone and new.
     for field in ["tyArray__a elements;", "NIM_ALIGN(64) tyArray__a elements;"]:
@@ -723,6 +843,18 @@ suiteInProc "Internal: Inspector":
       check functions.len == 1  # one definition read
       if functions.len == 1:
         check functions[0].parameters == @["Multivector"]  # named by count of its array
+    let shared = functionsIn(  # two stems of one count: first names instance
+      [
+        "typedef NF tyArray__a[16];",
+        "struct tyObject_MultivectorOf__h {",
+        "\ttyArray__a elements;",
+        "};",
+        "N_LIB_PRIVATE N_NIMCALL(void, negate__u0__m)(tyObject_MultivectorOf__h* m_p0) {",
+        "}",
+      ].join("\n") & "\n",
+      [(16, "Multivector"), (16, "Other")],
+    )
+    check shared.len == 1 and shared[0].parameters == @["Multivector"]
 
 
   test "terms inside loops of constant bound count once per trip":
@@ -862,6 +994,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
     check sizeOfStem("Point", 64, "referenceZrigid2") == 24  # 2D point, not 3D one
     check sizeOfStem("Circle", 128, "referenceZconformal2") == 32  # 2D circle, not 3D one
+    check sizeOfStem(STEM_MOTOR, SIZE_MULTIVECTOR) == sizeof(MultivectorOf[BASES_MOTOR])  # motor
 
 
   test "no lower bound outruns what library spends on same operation":
@@ -1063,7 +1196,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         if f.symbol != p.emitted: continue
         var arity = 0
         for stem in f.parameters:
-          if stem == "Multivector" or stem == "float": inc arity
+          if stem in ["Multivector", STEM_MOTOR, "float"]: inc arity
         if arity == int(p.arity): is_found = true
       check is_found  # every spelled operator is emitted at its arity
     when IS_RIGID and DIMENSIONS == 4:

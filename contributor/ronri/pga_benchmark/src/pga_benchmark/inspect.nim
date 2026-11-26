@@ -3,7 +3,8 @@
 ##   Compiled once per algebra, as `bench` is, since it carries catalogue: document names
 ##   every measurand with key of library function its expression calls and key of reference's,
 ##   so gap list joins measurands to counts without reading any Nim. Functions kept: library's
-##   own, whose module names its checkout, typed reference's, and dense forms.
+##   own, whose module names its checkout, typed reference's, and dense forms. Library generic
+##   that timed calls instantiate first carries their module, and is kept by its measurand's head.
 ##
 ##   Cost: reads every C file of cache, megabytes at six dimensions; seconds.
 ##   Cost: functions sharing stems share key; later ones are numbered by overload index,
@@ -17,7 +18,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, json, os, strutils, tables]
+import std/[json, os, strutils, tables]
 
 import pga
 
@@ -29,12 +30,6 @@ const
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
   METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
     ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
-  MARK_LIBRARY = "illuminatedZpga"
-    ## Substring of module suffix of every library module, from its checkout path.
-  MARK_REFERENCE = "referenceZ"  ## Prefix of module suffix of every typed reference module.
-  MODULE_DENSE = "dense"
-    ## Module suffix of dense form module, as bench entry beside it names it.
-    ##   Build from elsewhere spells path before it, ending `Zdense`.
   KEY_SELECT = "{}(Multivector,int)"
     ## Key both grade selections share.
     ##   Antigrade's instantiation, second declared, takes key numbered by its overload index.
@@ -42,35 +37,15 @@ const
     ## Key component read shares with its `var` twin; read is declared first.
 
 
-func isKept(f: FunctionC): bool =
-  ## Decide whether function belongs to library, reference or dense forms, i.e. to gap list.
-  MARK_LIBRARY in f.module or f.module.startsWith(MARK_REFERENCE) or
-      f.module == MODULE_DENSE or f.module.endsWith("Z" & MODULE_DENSE)
-
-
-func keyed(functions: seq[FunctionC]): seq[(string, FunctionC)] =
-  ## Key kept functions, numbering those sharing stems by overload index.
-  ##   Key then holds whatever order compiler emits them in: lowest index keeps bare key,
-  ##     others append `#u<n>`.
-  ##   `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
-  var
-    groups: Table[string, seq[FunctionC]]
-    order: seq[string]
-  for f in functions:
-    if not f.isKept: continue
-    if f.key notin groups: order.add f.key
-    groups.mgetOrPut(f.key, @[]).add f
-  for key in order:
-    var group = groups[key]
-    group.sort(proc (a, b: FunctionC): int = cmp(a.overload, b.overload))
-    for i, f in group:
-      let numbered = if i == 0: key else: key & "#u" & $f.overload
-      result.add (numbered, f)
-
-
-func stemLibrary(k: Kind): string =
-  ## Read C stem library takes for operand: `float` for scalar, dense multivector else.
-  if k == Kind.Scalar: "float" else: "Multivector"
+func stemLibrary(k: Kind, is_typed: bool): string =
+  ## Read C stem library takes for operand: `float` for scalar, motor's stem where typed, since
+  ##   catalogue types motor alone and stops build else, and dense multivector else.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
+  if k == Kind.Scalar: return "float"
+  if is_typed:
+    doAssert $k == "Motor", "Typed stem exists for motor alone; got `" & $k & "`."
+    return STEM_MOTOR
+  "Multivector"
 
 
 func stemReference(k: Kind): string =
@@ -80,12 +55,13 @@ func stemReference(k: Kind): string =
 
 func keyLibrary(p: Measurand): string =
   ## Get key of library function measurand's expression calls; empty where it composes several.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
   let head = p.headEmitted
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], i in p.typed)
   head & "(" & stems.join(",") & ")"
 
 
@@ -108,7 +84,7 @@ func keyDense(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], is_typed = false)
   p.nameDense & "(" & stems.join(",") & ")"
 
 
@@ -147,6 +123,11 @@ func nodeMissing(): JsonNode =
     result[p.id] = %*{"symbol": p.symbol, "alias": p.alias, "cite": p.cite}
 
 
+func keyedCatalogue*(functions: seq[FunctionC]): seq[(string, FunctionC)] =
+  ## Key functions inspector keeps, by heads of catalogue's measurands, as `main` writes them.
+  functions.keyed(CATALOGUE.heads)
+
+
 proc main(): int =
   ## Read cache, count kept functions, write document.
   if paramCount() != 5:
@@ -167,7 +148,7 @@ proc main(): int =
   var
     kept = newJObject()
     count = 0
-  for (key, f) in functions.keyed:
+  for (key, f) in functions.keyedCatalogue:
     kept[key] = nodeFunction(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count
   doc["functions"] = kept

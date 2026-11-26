@@ -17,7 +17,7 @@ when compileOption("profiler"):
 
 import std/[os, osproc, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, index, tags]
+import ../../src/rictadni/[commands, index, tags]
 
 
 type
@@ -28,21 +28,28 @@ type
 
 
 const
-  PREFIX_DIRECTORY = "lojban_tagger_suite_tagger_"  ## Opening of temporary directory name.
-  KEY_INDEX = "LOJBAN_TAGGER_INDEX"  ## Environment name `app/tagger.nim` reads index path from.
+  PREFIX_DIRECTORY = "rictadni_suite_tagger_"  ## Opening of temporary directory name.
+  KEY_INDEX = "RICTADNI_INDEX"  ## Environment name `app/tagger.nim` reads index path from.
+  KEY_INDEX_OLD = "LOJBAN_TAGGER_INDEX"
+    ## Name `app/tagger.nim` reads where `KEY_INDEX` is unset: name before rename (#946).
   NIM = getCurrentCompilerExe()  ## Compiler building suite, which builds `tagger` too.
   PATH_APP = currentSourcePath().parentDir.parentDir.parentDir / "app" / "tagger.nim"
     ## Source of `tagger`, found from this file.
 
 
-proc runTagger(binary, path_index: string; arguments: openArray[string]): Answer =
-  ## Run `tagger` with `KEY_INDEX` naming `path_index`; output and report read apart.
+proc runTaggerUnder(binary, prefix: string; arguments: openArray[string]): Answer =
+  ## Run `tagger` under shell prefix, as `env -u NAME KEY=value`; output and report read apart.
   let
     path_report = binary.parentDir / "report"
-    command = KEY_INDEX & "=" & quoteShell(path_index) & " " &
-        (@[binary] & @arguments).map(quoteShell).join(" ") & " 2>" & quoteShell(path_report)
+    command = prefix & " " & (@[binary] & @arguments).map(quoteShell).join(" ") & " 2>" &
+        quoteShell(path_report)
     (output, code) = execCmdEx(command, options = {poUsePath})
   Answer(output: output, report: readFile(path_report), code: code)
+
+
+proc runTagger(binary, path_index: string; arguments: openArray[string]): Answer =
+  ## Run `tagger` with `KEY_INDEX` naming `path_index`; output and report read apart.
+  binary.runTaggerUnder(KEY_INDEX & "=" & quoteShell(path_index), arguments)
 
 
 func toIndex(rows: openArray[(string, seq[string])]): Index =
@@ -138,6 +145,54 @@ suite "Internal: Tagger":
     check readFile(path_environment) == before  # environment's file untouched
     let shown = runTagger(binary, path_environment, ["--index:" & path_option, "show"])
     check shown.output == "photo\tpixra\n"  # option's file read
+
+
+  test "`LOJBAN_TAGGER_INDEX` names index where `RICTADNI_INDEX` is unset or empty":
+    # Ruling of D1 on #946: each reader still takes old name, so variable set before rename
+    #   still names index; new name wins where both are set.
+    let
+      (path_new, path_old) = (directory / "named_new", directory / "named_old")
+      kept = "lojban_tagger index 1\nnotes\tdatni\n"  # file as person holds it, old header too
+    writeFile(path_old, kept)
+    for prefix in ["env -u " & KEY_INDEX, KEY_INDEX & "="]:  # unset, then empty
+      let shown = binary.runTaggerUnder(prefix & " " & KEY_INDEX_OLD & "=" & quoteShell(path_old),
+          ["show"])
+      check shown.code == 0 and shown.output == "notes\tdatni\n"  # old name read
+    let tagged = binary.runTaggerUnder(KEY_INDEX & "=" & quoteShell(path_new) & " " &
+        KEY_INDEX_OLD & "=" & quoteShell(path_old), ["tag", "photo", "pixra"])
+    check tagged.code == 0
+    check readFile(path_new) == toIndex([("photo", @["pixra"])]).toText  # new name wins
+    check readFile(path_old) == kept  # file of old name untouched
+
+
+  test "index lives in `rictadni` of data directory, and one in `lojban_tagger` reads till then":
+    # Ruling of D1 on #946: folder takes new name, and index of old folder still reads where new
+    #   folder holds none; first change writes new folder, and old file stays as artifact.
+    let
+      data = directory / "data"
+      (path_new, path_old) = (data / "rictadni" / "index", data / "lojban_tagger" / "index")
+      prefix = "env -u " & KEY_INDEX & " -u " & KEY_INDEX_OLD & " XDG_DATA_HOME=" &
+          quoteShell(data)
+      kept = "lojban_tagger index 1\nnotes\tdatni\n"  # file as person holds it, old header too
+    createDir(path_old.parentDir)
+    writeFile(path_old, kept)
+    check binary.runTaggerUnder(prefix, ["show"]).output == "notes\tdatni\n"  # old folder read
+    check binary.runTaggerUnder(prefix, ["tag", "photo", "pixra"]).code == 0
+    check readFile(path_new) ==
+        toIndex([("notes", @["datni"]), ("photo", @["pixra"])]).toText  # new folder, tags kept
+    check readFile(path_old) == kept  # old file untouched
+    writeFile(path_old, toIndex([("other", @["vreji"])]).toText)
+    check binary.runTaggerUnder(prefix, ["show"]).output ==
+        "notes\tdatni\nphoto\tpixra\n"  # new folder wins once it holds index
+
+    # Review finding F5 of #982: empty variable reads as unset, so both names empty name
+    #   folder of data; before change, empty `LOJBAN_TAGGER_INDEX` named path `""`.
+    let
+      data_empty = directory / "data_empty"
+      emptied = KEY_INDEX & "= " & KEY_INDEX_OLD & "= XDG_DATA_HOME=" & quoteShell(data_empty)
+    check binary.runTaggerUnder(emptied, ["tag", "photo", "pixra"]).code == 0
+    check readFile(data_empty / "rictadni" / "index") ==
+        toIndex([("photo", @["pixra"])]).toText  # both empty read as unset
 
 
   test "absent index file reads as empty, and only change makes it":

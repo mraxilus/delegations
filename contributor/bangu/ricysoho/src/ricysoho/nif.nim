@@ -132,7 +132,7 @@
 ##
 ## ni'o lo selci'a poi zo zoi .a zo la'o sitna ke'a cimoi lo lerpoi pe lo genvla pe `ZOI` gi'e stali
 ##   .i ro midle'u pe `NIF` .e ro stuzi poi mleca lo kutle'u cu se basti `\xx`
-##   .i `#` .e `:` .e lo kutle'u .e ro stuzi poi na mleca li parebi cu stali
+##   .i `#` .e `:` .e lo kutle'u .e ro stuzi poi na mleca li 128 cu stali
 ##
 ## ni'o se to'e cuxna fa `\2D` pe lo tcita ge'u .e `\27` pe lo valsi
 ##   .i le velski cu dunda le re basysni
@@ -149,7 +149,7 @@
 ## ni'o se to'e cuxna fa lo nu lo datni be lo linji cu jarco lo stuzi pe lo valsi
 ##   .i ki'u bo `NIF` ciska le datni ta'i lo vujnu be fi lo mamjge
 ##   .i le tcidu pe `nimony` pilno `10 bits` po'o lo nu ralte lo stuzi ne'i lo linji
-##   .i se ki'u bo le tcidu cu katna lo stuzi poi zmadu li panoreci lo'o to `#852` toi
+##   .i se ki'u bo le tcidu cu katna lo stuzi poi zmadu li 1023 lo'o to `#852` toi
 ##   .i se to'e cuxna fa lo bakfu pe `nimony` zi'e noi na ka'e se fanva fi `JavaScript` to `#852`
 ##       toi
 ##
@@ -203,7 +203,7 @@ const
   KEPT_STRING = {'#', ':'}
     ## lo midle'u poi lo lerpoi cu vasru ke'a gi'e na basti ke'a to `String literals` toi
   KEPT_IDENTIFIER = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
-    ## lo stuzi poi mleca li parebi zi'e poi lo cmene cu vasru ke'a gi'e na basti ke'a to
+    ## lo stuzi poi mleca li 128 zi'e poi lo cmene cu vasru ke'a gi'e na basti ke'a to
     ##     `Identifiers` toi
   HEADER* = "(.nif27)\n(.lang \"cll-21.1\")\n"
     ## lo minde poi krasi lo selci'a be fi `NIF`
@@ -228,13 +228,13 @@ const
 func escaped(text: string, is_identifier: bool): string =
   ## ciska lo selci'a
   ##   .i lo basysni `\xx` basti ro stuzi poi `NIF` na vasru ke'a ta'i lo nu stali
-  ##   .i `\xx` ciska lo stuzi ta'i re lerfu pe li paxa gi'e pilno lo brale'u
+  ##   .i `\xx` ciska lo stuzi ta'i re lerfu pe li 16 gi'e pilno lo brale'u
   ##
-  ## ni'o ne'i lo cmene le basysni cu basti ro stuzi poi mleca li parebi gi'e na lerfu gi'e na namcu
+  ## ni'o ne'i lo cmene le basysni cu basti ro stuzi poi mleca li 128 gi'e na lerfu gi'e na namcu
   ##     gi'e na du `_`
   ##   .i ne'i lo lerpoi le basysni cu basti ro midle'u poi na du `#` gi'e na du `:` ku'o .e ro
   ##       stuzi poi mleca lo kutle'u ku'o .e `DEL`
-  ##   .i ro stuzi poi na mleca li parebi cu stali
+  ##   .i ro stuzi poi na mleca li 128 cu stali
   for c in text:
     let is_kept =
       if ord(c) >= 128: true
@@ -294,7 +294,7 @@ func indexQuoted*(letters: openArray[string]): int =
   ##   .i le fancu cu pilno lo lerfu pe lo valsi pe le genvla gi'e tcidu `h` ta'i lo nu tcidu `'`
   ##   .i le valsi cu remoi lo valsi poi se lidne lo cmavo be zoi gy. ZOI .gy.
   ##   .i ro cmavo be zoi gy. BAhE .gy. poi basna le cmavo cu lidne le cmavo to le javni pe li
-  ##       papanono toi
+  ##       1100 toi
   while result < letters.len and letters[result].replace('h', '\'').selmaho != some(Selmaho.Zoi):
     inc result
   result += DISTANCE_QUOTED

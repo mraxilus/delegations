@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f52e8f8e8f4f2a1d |
+| Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
@@ -40,8 +40,9 @@ for, and it names that form.
 
 The transform measurands spell the motor sandwich as a chain of three steps, since the library at
 pin has no operator for it. Where the library declares `⟇⟇~∘`, as P13 adds, they spell
-`(m ⟇⟇~∘ n)` and name its one function. So an evaluation of P13 times and counts the operator,
-and D08 names the chain at pin.
+`(m ⟇⟇~∘ n)` and name its one function. P13 builds its table from the types of both operands, so
+the motor reads the typed pool where the operator takes it (Widening and pools). So an evaluation
+of P13 times and counts the table of a motor, and D08 names the chain at pin.
 
 Expressions are strings, fully parenthesised, because the header of the library warns that
 `∨` parses as additive and `∧` as multiplicative. They are lowered by `parseExpr` where the
@@ -69,8 +70,8 @@ expression compiles against the library. The set of symbols equals the set of ex
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
-Verified by the evaluation of P13 on 2026-11-15: each transform counts `⟇⟇~∘`, 82 multiplies at
-rga4d and 23 at rga3d.
+Verified by the evaluation of P13 on 2026-11-20. Each transform counts `⟇⟇~∘` at a motor type: 82
+multiplies at rga4d, and 23 at rga3d.
 
 ## Reference
 
@@ -222,8 +223,25 @@ once from `randomize(0)`: dense multivectors of every grade, typed objects in ge
 lines and planes joined from points, and motors unitized. Every typed pool has a widened
 image, so the two implementations read equivalent operands.
 
+**A transform reads its motor at the type of a motor where the library can.** The pool
+`POOL_MOTOR_TYPED` holds the antieven part of each widened motor, at `MultivectorOf[BASES_MOTOR]`.
+Where the library's `⟇⟇~∘` takes that type, the catalogue marks the motor of each transform as
+typed. Its library side then reads that pool, and the inspector keys it by the stem
+`MultivectorMotor` (Inspector and movement). At the pin no transform takes it, so no measurand
+reads a typed operand. A motor holds its antieven part alone, so the typed image loses no
+coefficient.
+
+Only the motor of a transform reads at its type. The catalogue stops its build where it types any
+other operand. The namer of pools and the inspector refuse a typed name of any other kind.
+
+- Rejected: every typed operand at its type. P04 takes each type, so each evaluation that builds
+  on P04 would then time its forms in every measurand, beside the change that it weighs.
+
 Verified by `test_rga4d.nim` and the other stubs. Suite `Chapter 2` and the `Wiki` suites run
-through the widening, and suite `Internal: Measurements` runs every measurand over the pools.
+through the widening, and suite `Internal: Measurements` runs every measurand over the pools. That
+suite also holds the typed pool to the widened one, and the name of each pool. It holds that a
+typed name of any other kind stops the build. Suite `Internal: Catalogue` holds the guard of the
+catalogue on each measurand, typed and not.
 
 ## Measurements
 
@@ -363,10 +381,37 @@ compiler puts in the name of a type, since that hash follows the path of its mod
 an enum reads as `set[Basis]`, and a key holds on every machine.
 
 The compiler gives every instance of `MultivectorOf` one name with a hash. So the inspector names
-each instance after the library type of its count, which it reads from the array of the field.
+each instance after the type of its count, which it reads from the array of the field.
 A field that carries an alignment opens with `NIM_ALIGN`, as the types of P04 and P05 do, and the
 inspector skips that word. So an aligned type keeps its key, and its evaluation lists no function
 twice.
+
+**A typed motor reads as half of every basis.** The motor holds the antieven half of the bases in
+each algebra. So its count names the stem `MultivectorMotor`, and movement sizes that stem as half
+of `Multivector`. A count names the first stem that holds it, so at rga2d the motor reads as
+`MultivectorScalars`, which holds the same two bases. Elsewhere each type of half of the bases
+reads as motor, as `MultivectorEven` and `MultivectorOdd` do, at the same bytes. So the stem does
+not tell a motor from a flector part, or from any other type of half of the bases.
+
+**The inspector keeps the functions of the library, of the reference and of the dense forms.** It
+knows each one by the module in its C name. The compiler names an instance of a generic after the
+module that instantiates it first. In the build of `bench`, the timed calls in `measurements`
+instantiate each generic that no code of the library instantiates first. There it sits beside the
+helpers of the bench. So the inspector also keeps a function of `measurements` whose symbol is the
+head of a measurand.
+
+A bench build at rga4d under P04, by hand on 2026-11-19, names seven generics after that module.
+They are the sum, the difference and the negation of whole multivectors, and the four projections.
+The evaluations `basis-set-forms.json`, `object-names.json` and `homogeneous-scalar.json` lose none
+of them at rga4d and cga5d.
+
+The cost is that a generic of the library whose symbol no measurand names still drops from the
+list. So does a generic that another module of the bench instantiates first. A function of
+`measurements` that took the symbol of a head would join it. A law of the suite holds that no
+helper of the bench does so at the pin.
+
+- Rejected: every function of `measurements`. Its helpers, such as `fold` and `isAnyNan`, would
+  then join the comparison of each evaluation as functions that move.
 
 The inspector then counts what the C spells:
 
@@ -396,11 +441,18 @@ what a user of the library gets by default.
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. It covers:
 
 - a demangling table with overload indices;
+- each kind of module, against a head of the catalogue and a helper of the bench, through
+  `keyedCatalogue`, which the entry calls;
+- the law that no helper of the timed calls takes the symbol of a head, save the library's
+  generic at the typed motor;
+- each transform, which reads its motor at its type exactly where the library takes that type;
+- the stem of a typed operand, which is the motor's alone;
 - a fixture C source with known counts;
-- an instance named by its count, with an aligned field and without;
+- an instance named by its count, with an aligned field and without, and by the first of two
+  stems of one count;
 - loops of literal, nested and variable bound;
 - divisions inside a loop and inside a callee, and callee folding;
-- movement from stems;
+- movement from stems, and the size of the typed motor;
 - the nimcache of the test binary itself, which holds every catalogued symbol at its arity.
 
 ## Baseline and guard
@@ -867,9 +919,8 @@ own lines do. So a change that still applies at head still says what it meant.
 A section `## Add` holds a new file whole, and applies only where no file stands at its path. A
 file that head adds under the same path makes the addition stale, so it is a finding and never an
 overwrite. So a proposal that adds a module is a change of the library, and its laws import the
-library alone. P04 adds `pga/basis_sets.nim` this way, and P10 adds `pga/scalars.nim`. Rejected: a
-prototype beside the library, which P04 was. Each proposal on it then imported the prototype, and
-no evaluation built the library that the proposals described.
+library alone. P10 adds `pga/scalars.nim` this way. Rejected: a prototype beside the library, since
+no evaluation builds the library that the proposals on a prototype describe.
 
 Verified by `test_rga4d.nim`, suite `Internal: Changes`.
 
@@ -1006,26 +1057,33 @@ best run of each binary, and not the usual run.
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
 the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A copy of P10 whose
 root takes the smaller part by its own root fails the law of the small part at cga3d and cga4d.
+Verified by hand on 2026-10-24: the laws of P10 ran on a copy of P10 with that fault.
 `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and `limits.nim` its limits
 over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
 
 `proposals/12-cayley-cells/laws.nim` holds the size of the cell of P12 tight at each of the nine
 algebras. A copy whose cell holds three terms under the conformal metric fails it at cga3d. A copy
-whose cell holds one term there stops the build, where `add` names the full cell.
+whose cell holds one term there stops the build, where `add` names the full cell. Verified by hand
+on 2026-11-08: the laws of P12 ran on copies of P12 with each cell.
 
-A basis-set form of P04 that reaches no basis stops the compile. So its laws hold such a form to
-zero in the library, at each type and pair that they sweep. Where a map drops the sign of its
-table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
-hold at rga4d, whose metric is diagonal.
+A basis-set form of P04 that reaches no basis returns the type of no bases. At each type and pair
+that they sweep, its laws hold each value to the library, which gives zero there. They hold each
+map and product to the bases that the library gives on single bases of its operands. So a form
+holds no basis where the library gives none. A squared norm reads pairs of bases, so its laws hold
+its value alone.
+
+Where a map drops the sign of its table, the laws fail at rga4d. Where `⟑` takes one basis more,
+written as zero, they fail there too. Where a squared norm reads half its table, they fail at cga5d
+and hold at rga4d, whose metric is diagonal. Verified by hand on 2026-11-19: the laws of P04 ran
+under Nim 2.4.0 on a copy of the library with each fault.
 
 Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
-multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
-term that a form emits.
+multivector. At 6D they sweep a vector with each type.
 
-At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A vector with each type there
-takes 2 minutes and 1 196 MiB. Measured as the peak resident size of each build under Nim 2.4.0,
-2026-10-29. The same measure of 2026-11-15 reads 68 s and 1 223 MiB for a vector with each type.
-That run was on a Xeon of family 6 model 173.
+At cga6d every pair takes 7 minutes and 4 831 MiB to build and run. A vector with each type there
+takes 2 minutes and 1 458 MiB. Each figure is the wall time of the build and the run, and the peak
+resident size of the largest process of the build. The builds ran one after the other. Measured
+under Nim 2.4.0 on 2026-11-19, on a Xeon of family 6 model 207.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -1066,12 +1124,11 @@ P99, `nimony-port`, holds the patches of its compiler, the record of its deviati
 regression program, each as Markdown. The program is Markdown and no module, since Nimony refuses
 the line `{.experimental: "strictFuncs".}` that `STYLE.md` asks of every module.
 
-**The Architect reads each proposal, and implements it in the library over time,** as the
-Architect ruled on 2026-10-04. So no sign-off asks whether the library takes a proposal, and each
-one stays `proposed` until the library or the Architect settles it. The Architect states each
-rejection, and that proposal is then withdrawn. The Architect may never state an adoption, since
-a try to implement can lead elsewhere. So a new commit of the library is where an adoption
-shows.
+**The Architect reads each proposal, and rules on its adoption** on
+[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
+also states each rejection, and that proposal is then withdrawn. An adopted proposal stays
+`proposed` until a commit of the library holds it, since a try to implement can lead elsewhere. So
+a new commit of the library is where an implementation shows.
 
 The daily `head` workflow opens an issue for this project when the head moves past the pin. This
 project then checks each proposal that is not frozen against that head, and updates it, or sets
@@ -1703,33 +1760,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Open questions
 
-- Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
-  grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
-  no zero fill and two error checks. P01 and P08 alone spend 437, 71 and 106. Both are the
-  counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
-- Whether the library takes P04, `basis-set-forms`, so that each operator from one table returns the
-  exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
-  only because they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a
-  dot, an antidot or a squared norm. Under P04 each of them writes 8 bytes on a basis-set type.
-  The measurands hold whole multivectors, so they keep the operators of the library.
-- Whether the library takes P05, `multivector-align`. It aligns the whole set to `min(64, size)`,
-  one cache line from three dimensions up, so it pads no multivector. P04 aligns every basis-set
-  type to `alignment` of its count instead, as the Architect ruled on 2026-10-04. That is the
-  largest power of two that divides their bytes, at most 64, and it gives the whole set the same.
-  Both edit the one definition of `MultivectorOf`, so the second to land quotes the first.
-
-  On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
-  `-m` at ×0.42 to ×0.93 of the pin. It times `m + n` at ×0.70 to ×0.88, at no cost in size. On
-  Emerald Rapids under SSE2, `/ m` and `★ m` at cga5d run ×1.10 and ×1.11 of the pin. The
-  figures are in `proposals/05-multivector-align/proposal.md`.
-
-  Under P05 and under P04, an AVX2 build can fault where the pin runs. It faults on a multivector
-  in raw storage, which `alloc` aligns to 16 bytes. It also faults on one in a `seq` under
-  `--mm:refc`, whose data the pinned compiler does not align.
-  `proposals/04-basis-set-forms/proposal.md` and `proposals/05-multivector-align/proposal.md` state
-  each case. So each of the two holds one more decision, among three options. They are the
-  alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
-  `defined(gcDestructors)`.
 - When Nimony has a release, whether to port the library again at that release, or to update P99,
   `nimony-port`. Its open decisions also name 20 optional changes of its review, and 15 defects of
   Nimony that wait to be reported.

@@ -15,10 +15,10 @@
 ##   .i `test_marks.nim` raptcidu le selci'a ta'i lo nu sinxa ro srera
 ##
 ## ni'o lo cipra pe lo selzba pe `JavaScript` pilno le tcidu pe le vi cipra gi'e cipra le mitfla
-##     ne'i ro vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF` to
-##     `tests/test_javascript.nim` toi
+##     ne'i ro boi vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF`
+##     to `tests/test_javascript.nim` toi
 ##
-## ni'o le selci'aste cu vasru lo stuzi poi na mleca li parebi .e lo krastu poi zmadu li panoreci .e
+## ni'o le selci'aste cu vasru lo stuzi poi na mleca li 128 .e lo krastu poi zmadu li 1023 .e
 ##     lo pagbu poi vasru su'o re valsi
 ##   .i lo selci'a be fi `NIF` be'o pe le selci'aste cu ciska lo basysni ne'i lo selci'a poi se
 ##       sitna po'o
@@ -37,11 +37,21 @@ import ../../src/ricysoho/grammar {.all.}
 import ../../src/ricysoho/nif {.all.}
 import ../../src/ricysoho/[prose, selmaho]
 import ./[corpora, reader_nif]
+from std/unicode import validateUtf8
+from ./reader_prose import errorsMessage, faultsNumbersMessage, textsRecord
 
 
 const
+  EXAMPLE_NIF_SIGN = (
+    text: "€5",
+    module: "(.nif27)\n(.lang \"cll-21.1\")\n(sumti_6 0 (LE 3 3 \"lo\") (tanru_unit_1 111 " &
+      "(tanru_unit_2 (BRIVLA 3 3 \"ronruhu\")) (linkargs (BE 3 3 \"be\") (sumti_6 83 (LI 3 3 " &
+      "\"li\") (number 310 (PA 3 4 \"5\"))) (BEhO 4 4 \"beho\"))) (KU 4 4 \"ku\"))\n",
+  )
+    ## lo jdini klani poi lo jdini sinxa cu sinxa ke'a to `#1003` toi
+    ##   .i ro valsi pe le jdini sinxa cu vasru no stuzi gi'e se ciska ta'i re mintu stuzi
   COUNT_TREES_LEAST = 1800
-    ## lo klani be lo selci'a poi se tcidu gi'e pagbu le pasovopa selci'a pe le selci'aste
+    ## lo klani be lo selci'a poi se tcidu gi'e pagbu le 1941 selci'a pe le selci'aste
     ##   .i le flalu cu tcidu lo tricu pe ro le selci'a
   COUNT_CHAINS = 591
     ## lo klani be lo javni remei pe `CLL 21.1` zi'e poi lo porsi cu jorne ke'a
@@ -52,7 +62,7 @@ const
     (rule: "sumti-2", number: 92), (rule: "sumti-3", number: 93), (rule: "sumti-4", number: 94),
     (rule: "sumti-5", number: 95), (rule: "sumti-6", number: 97),
   ]
-    ## lo porsi poi selkra `terms<80>` gi'e selfa'o `sumti-6<97>` ja'i le javni pe li bino bi'o soze
+    ## lo porsi poi selkra `terms<80>` gi'e selfa'o `sumti-6<97>` ja'i le javni pe li 80 bi'o 97
     ##     pe `CLL 21.1`
     ##   .i ro javni cu vasru lo bavla'i javni po'o va'o lo nu le selci'a cu dunda no pagbu poi le
     ##       javni cu ka'e jmina ke'a
@@ -65,7 +75,7 @@ const
       "la'o gy. Größe .gy.",
       "\"laho\" 5 7 \"gy\" 9 16 \"Größe\" 18 20 \"gy\"",
     # zo la'o sitna lo cmene
-    #   .i lo stuzi poi na mleca li parebi cu se kancu
+    #   .i lo stuzi poi na mleca li 128 cu se kancu
     ),  # `CLL 19.10`
     # `\t` .e lo fanmo be lo linji cu zvati ne'i le se sitna
     #   .i le mupli cu selfi'i
@@ -84,7 +94,7 @@ const
     VERSION & "\n(KOhA 0 \"ko'a\")",  # `Control characters` to ne'i lo lerpoi `'` se basti toi
     VERSION & "\n(a \"\\\\\")",  # `Escape sequences` to `\\` na basysni toi
     VERSION & "\n(a \"\\2d\")",  # `Escape sequences` to lo barda lerfu po'o cu curmi toi
-    # lo stuzi poi mleca li cire cu na visle'u
+    # lo stuzi poi mleca li 32 cu na visle'u
     VERSION & "\n(a \"\x01\")",  # `String literals`
     VERSION & "\n(a \"b)",  # `Control characters` to ne'i lo lerpoi `)` se basti toi
     VERSION & "\n(a \"b",  # `String literals` to `"` fanmo lo lerpoi toi
@@ -94,10 +104,23 @@ const
     VERSION & "\n(a b.0)",  # `Symbols` noi le ciska na ciska ke'a
     VERSION & "\n(a .)",  # `Empty` noi le ciska na ciska ke'a
     VERSION & "\n(a 'b')",  # `Char literals` noi le ciska na ciska ke'a
-    VERSION & "\n(a 0x1F)",  # `Numbers` to le ciska cu ciska lo namcu poi pilno pano lerfu po'o toi
+    VERSION & "\n(a 0x1F)",  # `Numbers` to le ciska cu ciska lo namcu poi pilno 10 lerfu po'o toi
+    VERSION & "\n(a -x)",  # `Numbers` to lo lerfu pe li 10 cu se lidne `-` toi
+    VERSION & "\n(a `)",  # lo lerfu po'u `backtick` na ka'e zvati pa samtci pagbu
   ]
     ## lo selci'a be fi `NIF` be'o poi le tcidu cu to'e curmi ke'a
     ##   .i ro le selci'a cu se to'e curmi `NIF` gi'a vasru lo tarmi poi le ciska na ciska ke'a
+  MODULES_FOUND = [
+    (VERSION & "\n(a \"b", "le stuzi cu fanmo le selci'a"),  # lo fanmo
+    (" (.nif27)", "lo kutle'u cu zvati le stuzi"),  # lo kutle'u
+    (VERSION & "\n(a @)", "`@` cu zvati le stuzi"),  # lo lerfu poi le notci cu sitna ke'a
+    (VERSION & "\n(a `)", "lo me `byte` me'u po'u li 96 cu zvati le stuzi"),
+      # lo lerfu po'u `backtick`
+    (VERSION & "\n(a \"\x01\")", "lo me `byte` me'u po'u li 1 cu zvati le stuzi"),
+      # lo lerfu poi na se viska
+  ]
+    ## lo selci'a be fi `NIF` .e lo pagbu be lo notci
+    ##   .i le pagbu cu cusku lo zvati be le stuzi poi le tcidu cu to'e curmi bu'u ke'a
 
 
 
@@ -112,6 +135,16 @@ func names(): seq[string] =
   for selmaho in Selmaho: result.add $selmaho.toTerminal
   result.add $TERMINAL_BRIVLA
   result.add $TERMINAL_CMENE
+
+
+func pathsWord(node: Node, reading: ReadingText, word: string, trail: seq[string],
+    found: var seq[seq[string]]) =
+  ## jmina lo porsi be ro javni poi sruri lo genvla poi le valsi cu krasi ke'a
+  if node.is_terminal:
+    let unit = reading.units[node.at]
+    if unit.words.len > 0 and reading.occurrences[unit.words[0]].text == word: found.add trail
+    return
+  for child in node.children: child.pathsWord(reading, word, trail & node.rule, found)
 
 
 
@@ -131,7 +164,7 @@ suite "NIF data format, version 2027":
       let module = VERSION & "\n(" & name.tag & ")\n"
       # le tcita cu selraptcidu ta'i le cmene
       check module.readModule[1].text.replace('_', '-') == name  # `Identifiers`
-    # lo bibi javni .e lo selma'o
+    # lo 88 javni .e lo selma'o
     check spelled.len == COUNT_RULES + Selmaho.toSeq.len + 2  # `CLL 21.1` .e `CLL 20`
     # ro javni .e ro klesi cu se tcita pa tcita
     check spelled.deduplicate.len == spelled.len  # `CLL 21.1` .e `CLL 20`
@@ -171,9 +204,9 @@ suite "Internal: NIF":
 
 
   test "Two ends give one chain, as 21.1 gives chain from terms to sumti-6":
-    # ro remei poi lo porsi cu jorne ke'a se kancu pa roi
+    # ro boi remei poi lo porsi cu jorne ke'a se kancu pa roi
     check LUT_CHAIN_BY_ENDS.len == COUNT_CHAINS  # `CLL 21.1`
-    # le javni pe li bino bi'o soze
+    # le javni pe li 80 bi'o 97
     #   .i ro le javni cu vasru lo bavla'i javni
     check LUT_CHAIN_BY_ENDS[(80, 97)] == @CHAIN_TERMS  # `CLL 21.1`
 
@@ -196,8 +229,58 @@ suite "Internal: NIF":
     check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
 
 
+  test "Word that a currency sign stands for writes two equal bytes and its letters":
+    # `Architect` jdice `D2 a` bu'u `#1003`
+    #   .i ro valsi pe le jdini klani cu vasru no stuzi
+    let reading = EXAMPLE_NIF_SIGN.text.readText
+    check reading.toNif == EXAMPLE_NIF_SIGN.module  # lo krapinka pe `nif.nim` to le mupli toi
+    check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
+
+
   test "Reader refuses each construct writer writes none of, and each byte NIF asks to escape":
     for module in MODULES_REFUSED:
       checkpoint module
       expect ValueError:  # `MODULES_REFUSED` to lo pagbu be le velski cu lamji ro le selci'a toi
         discard module.readModule
+
+
+  test "Each refusal of reader reads as lojban, each span of code as name":
+    for module in MODULES_REFUSED:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      check message.len > 0  # le tcidu cu to'e curmi
+      check message.errorsMessage.len == 0  # lo jboselci'a
+      check message.faultsNumbersMessage.len == 0  # lo namcu cu vasru lo lerfu pe `0` bi'o `9`
+      check message.validateUtf8 == -1  # lo selci'a pe `UTF-8`
+
+
+  test "Each refusal of reader puts its place in main bridi, outside each relative clause":
+    for module in MODULES_REFUSED:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      let texts = textsRecord("notci.md", message)
+      check texts.len == 1  # pa rospau
+      if texts.len != 1: continue
+      let reading = texts[0].text.readText
+      check reading.is_read
+      if not reading.is_read: continue
+      var paths: seq[seq[string]]
+      reading.tree.pathsWord(reading, "bu'u", @[], paths)
+      check paths.len == 1  # pa zo bu'u po'o
+      for path in paths: check "relative-clause" notin path  # le stuzi pe le ralju bridi
+
+
+  test "Reader names what stands where it refuses: end, whitespace, byte it shows, or its number":
+    for (module, phrase) in MODULES_FOUND:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      check phrase in message

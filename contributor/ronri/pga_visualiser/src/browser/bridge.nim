@@ -2548,6 +2548,10 @@ proc nimShownCounted(shown, total: cint): cstring {.exportc.} =
 proc nimSceneMagic(): cstring {.exportc.} = cstring(MAGIC_SCENE)
   ## Report four bytes scene file opens with, for packer in browser scripts.
 
+proc nimSceneReadsMagic(magic: cstring): bool {.exportc.} = isSceneMagic($magic)
+  ## Report whether scene file opening with these bytes is one reader takes.
+  ##   Rule rather than list in browser scripts: list is what drifts.
+
 proc nimSceneExtension(): cstring {.exportc.} = cstring(EXTENSION_SCENE)
   ## Report extension packer names saved scene file with.
 
