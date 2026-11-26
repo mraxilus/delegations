@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | c35ccbd94b403a76121e3ddef5cb71e3f7b2b842 |
+| Pruned  | 5edcefea6e882fbf0e68b83dcd3a8af3a30cde89 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2452,11 +2452,10 @@ driver, where the compiler says why. It goes to stderr, since the runner pipes s
   closes stdout waits on that pipe.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
-`SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
-for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
-`libbrotli1`, because `koch drive` and the suite of the store read `woff2` font faces through
-`font_files.nim`. The runner holds it: verified by run 906 of `check`, whose `test` job
-ran that suite and passed.
+`SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar` for the
+tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds `libbrotli1`,
+because `koch drive` and the suite of the store read `woff2` font faces through `font_files.nim`.
+The runner holds it: verified by run 906 of `check`, whose `test` job ran that suite and passed.
 
 `koch list-packages` with no project prints those and every project's, unscoped, so one
 command answers what a machine needs before any of this runs. To name a project keeps the
@@ -4346,8 +4345,8 @@ holds the `sessionId` of the delegate, and section Scores of claims joins the lo
 - The claim takes the latest call before the reflection whose block holds it, of the kind that
   the line `**Subagent:**` of the reflection names. Where no call of that kind holds it, a call
   of any kind serves. So the claim of the block of a critic takes the call of the critic.
-- The kind is the `subagent_type` of the call. The model is the `resolvedModel` of its result,
-  else the input `model`. The effort is the input `effort`, else the `effort:` of its template.
+- The kind is the `subagent_type` of the call. The effort is the input `effort`, else the
+  `effort:` of its template. The model stays empty, as D1 b of #1025 rules.
 - The state is the marker that opens the cell under `State`, and the confidence is the
   percentage of the cell under `Confidence`. The tokens and the cost are the first `<n> tokens`
   and `$<x>` of the line `**Subagent:**`. A call of `critic` that this line does not name reads
@@ -4361,8 +4360,8 @@ holds the `sessionId` of the delegate, and section Scores of claims joins the lo
   of a `critic` alone, and of three calls whose blocks hold one claim.
 - Verified by hand on 2026-11-20, by `koch hook stop` built at `176d9e7a`, over a frozen copy of
   the transcript of the delegate on #963. The copy holds 7,442 entries, and ends at the
-  reflection of a `critic` at `max`. The 3 rows read `resolvedModel` and the input `effort` of
-  a call in the background. Assumed: a call in the foreground carries both the same way.
+  reflection of a `critic` at `max`. The 3 rows read the input `effort` of a call in the
+  background. Assumed: a call in the foreground carries it the same way.
 
 **The branch of the checkout names the log, in the scope that its role may write.** A branch
 `contributor/<domain>/<project>/<name>` or `curator/<project>/<name>` writes `claims.txtpb` at the
@@ -4392,8 +4391,9 @@ each reflection and each report of a resolver of the study. It wrote each row th
 
 - A row takes the tokens and the cost that its reflection used, and its outcome after the id of
   its run. The key of a resolver row ends in `MARKER_RESOLVER`.
-- No row names a model, as no row of the log does, since this harness keeps model names out of
-  pushed files (#1025). Each run of the study used one model.
+- No row names a model, since this harness keeps model names out of pushed files (#1025). Each
+  run of the study used one model.
+- Cost: no figure groups by model, since no row of any log names one.
 - Verified by hand on 2026-11-26: `protoc` reads the 761 rows of the log, no key repeats, and
   `koch figures` reads each row. By hand on 2026-11-21, each count of a batch agrees with its
   result on #963. Each of 150 outcomes agrees with the usage of its row too.
