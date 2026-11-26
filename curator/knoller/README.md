@@ -12,7 +12,7 @@ Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.
 ## Use
 
 ```sh
-knoller [--check] [--nim:path] path...
+knoller [--check] [--nim:path] [--form:terminal|line] path...
 ```
 
 - A path names a file or a directory. A directory stands for the `.nim`, `.nims` and `.nimble`
@@ -37,10 +37,10 @@ knoller [--check] [--nim:path] path...
   a stub reads it. The rules `stub-keys`, `stub-header` and `profiler-import` read a stub this way.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
-- After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
-  and fails the run. A fence keeps its lines from the fixers, and from the checks of layout that
-  `koch fix` clears, with `not-over-binary`. It never keeps them from a check that the static pass
-  of `koch` reads, such as width, names or idioms.
+- After the fix, every check reads the text that the fixers leave. Each finding there stays for
+  the hand, and fails the run. A fence keeps its lines from the fixers, and from the checks of
+  layout that `koch fix` clears, with `not-over-binary`. It never keeps them from a check that the
+  static pass of `koch` reads, such as width, names or idioms.
 - Knoller reads no glossary, since a glossary belongs to a repository. So it runs no rule that
   needs one, and the acronym rule of V.9 stays with `koch`. The names check takes no word as exempt
   beyond the jargon of V.6. A caller such as `koch` adds the words that its glossaries list.
@@ -138,24 +138,47 @@ knoller [--check] [--nim:path] path...
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
 
-Each finding names a path, a line and a rule id, and the output is sorted in that order. An
-unsettled file names its path alone:
+Each line names a path, a line and a rule id, and the output is sorted in that order. An
+unsettled file names its path alone. Each rewrite and each unsettled file takes one line. Each
+finding that no fix clears comes after them, then each warning, then the count:
 
 ```text
 path:line: <rule-id> fixed
 path: unsettled: <message>
-path:line: <rule-id> left: <message>
-path:line: fence-held warning: <message>
-path:line: debug-output warning: <message>
-path: type-conversion warning: <message>
-path: marker-used warning: <message>
-path: func-pure warning: <message>
-path:line: name-case warning: <message>
-needless-parentheses warning: <message>
+<each finding, then each warning>
 N fixed.
 ```
 
-With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`.
+With `--check`, each `fixed` reads `to fix`.
+
+A finding and a warning print through the renderer `report.nim`, in a form of STYLE.md §3. At a
+terminal they take the terminal form, which shows the line as given. In a pipe or a log they take
+the line form, one line each. `--form:terminal` or `--form:line` forces one form. Color shows at a
+terminal alone, and `NO_COLOR` set to any text turns it off. One finding reads as follows in each
+form:
+
+```text
+a.nim:7  line-width
+
+  line exceeds 100 characters
+
+     7 │   ## Compute area of rectangle whose sides are given, as product of its width an…
+
+  actual  120
+  expect  at most 100
+
+  help: break line by hand, or fence block of fixed shape between `#!fix off` and `#!fix on`
+```
+
+```text
+a.nim:7: line-width: actual="120" expect="at most 100" message="line exceeds 100 characters"
+```
+
+A warning takes `warning` after its rule. A fence warns (`fence-held`), and so does debug output
+(`debug-output`). A semantic pass that cannot run on a file warns at its path alone
+(`type-conversion`, `marker-used`, `func-pure`). A rename that stays for the hand warns under its
+own rule, as `name-case`. A compiler that proves no removal warns with no location
+(`needless-parentheses`).
 
 A file that the fixers still change after their last round stays as written, and its line reads
 `unsettled` after the path alone. That line names no rule, because the fault is in the tool, and
@@ -181,8 +204,10 @@ A warning changes no exit code. The exit codes are these:
 
 Each rule id is stable, so a tool can read the output. Each line names its rule by the id, and a
 message names no article of a charter. A message reads `<sentence>; got <value>.`, or
-`<sentence>.` where it gives no value. A caller such as `koch` adds the article of each rule where
-the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, os`.``.
+`<sentence>.` where it gives no value. The renderer prints the sentence as the summary, with its
+first letter in lowercase, and the value as `actual`. A caller such as `koch` adds the article of
+each rule where the sentence ends, as in
+``Bracket import is alphabetised (X.5); got `strutils, os`.``.
 
 | Id | Rule |
 |----|------|

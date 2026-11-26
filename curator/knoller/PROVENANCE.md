@@ -121,12 +121,18 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   as no-color.org reads it, and `formOutput` takes the form that a flag forces.
 - Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
   draws them, and each case above.
+- The command line of knoller prints each finding that stays for the hand through the renderer,
+  and each warning too. Each shows the text of its line as given. A rewrite and an unsettled file
+  keep their one line, since a tool reads them. `--form` forces a form, and else `main` takes the
+  terminal form where stdout is a terminal. In the terminal form, a blank line stands before
+  each finding and before the count.
+- Verified by `suites/test_command.nim`: both forms of one run, the flag, and the line form of
+  each warning. The suites that read what a run prints hold the line form.
 - Cost: the line form carries no `help`, since STYLE.md §3 gives it none. A reader of a log
   loses it.
 - Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
   emoji, shifts the marker to the right of its span.
-- Cost: no report of knoller and no finding of koch prints through the renderer, so each tool
-  still prints its own form.
+- Cost: no finding of koch prints through the renderer yet, so koch still prints its own form.
 
 ## Chain
 
