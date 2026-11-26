@@ -3,13 +3,17 @@
 ##     confidence of hit and one minus it of miss; claim annulled, waiting or unmarked takes none,
 ##     and so does confidence outside 0 to 1, which no cell gives.
 ##   Number scores as Metaculus scores continuous question, from its source at `8e413fb`, as `D2 a`
-##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band.
+##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band. Each step
+##     copies step of source, and their join is choice (comment 7189682360): curve of form of
+##     percentiles takes floor that Metaculus puts on slider alone.
 ##   Unit opens text of number, as `tokens`, or labels it, as `Count:`, and fixes range on
 ##     logarithm above zero point, with each bound open or closed: curve runs straight between
 ##     percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor of 1% of even
 ##     spread, least mass beyond each open bound and cap of 0.2 for each of 200 buckets
 ##     (`standardizeCdf`), and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome
-##     (`score_math.py`); outcome beyond closed bound takes none.
+##     (`score_math.py`); outcome beyond closed bound takes none, and so does curve whose step
+##     lies under 0.01 / 200 or above 0.59, as form of percentiles refuses it
+##     (`validateUserQuantileData`).
 ##   Confidence of number is mass between its outer two percentiles, so it places them: 5th and
 ##     95th at 0.9, as Architect asks on #964 (comment 7191274618), and 10th and 90th at 0.8 of
 ##     earlier row.
@@ -93,6 +97,8 @@ const
   SEPARATOR_KEY* = " / "  ## Mark between values of key of group.
   KEY_ALL = "all"  ## Key that line of figures gives group of all claims.
   KIND_NONE = "call of no kind"  ## Name that base rate gives kind of call that names none.
+  LINE_NO_ROW = "No log of claims in tree holds row."  ## Line of verb `figures` with no row.
+  LINE_NO_RATE = "Logs of claims give no base rate; "  ## Opening of line of fault of rates.
   NAMES_FIELD: array[Field, string] = ["delegate", "model", "effort", "project", "kind", "marker"]
     ## Name of each field, as verb `figures` reads it.
   UNITS* = [
@@ -105,6 +111,9 @@ const
     ##   time in minutes likewise (`D5 a`), and count from closed bound at 0, on logarithm of count
     ##   plus one (`D1 a`, comment 7193361977).
   COUNT_BUCKETS = 200  ## Inner buckets of curve, as `DEFAULT_INBOUND_OUTCOME_COUNT` of Metaculus.
+  STEP_LEAST = 0.01 / float(COUNT_BUCKETS)
+    ## Least step of curve, 1% of mass spread even over buckets (`validateUserQuantileData`).
+  STEP_MOST = 0.59  ## Most step of curve of continuous question (`validateUserQuantileData`).
   SHARE_EVEN = 0.01  ## Share of even spread that floor mixes into curve (`standardizeCdf`).
   MASS_OPEN = 0.001  ## Least mass beyond each open bound (`standardizeCdf`).
   CAP_BUCKET = 0.2  ## Most mass of inner bucket (`standardizeCdf`).
@@ -264,6 +273,17 @@ func curveNumber(number: Number, unit: Unit, confidence: float): seq[float] =
         break
 
 
+func isCurveTaken*(curve: openArray[float]): bool =
+  ## Whether Metaculus takes curve as forecast: `COUNT_BUCKETS + 1` places, and each step, rounded
+  ##   to 10 places, from `STEP_LEAST` to `STEP_MOST` (`validateUserQuantileData`). Each mass of
+  ##   floor of such curve lies above 0, so search of scale under cap ends.
+  if curve.len != COUNT_BUCKETS + 1: return false
+  for i in 1..curve.high:
+    let step = floor((curve[i] - curve[i-1]) * DIGITS_ROUND + 0.5) / DIGITS_ROUND
+    if step < STEP_LEAST or step > STEP_MOST: return false
+  true
+
+
 func massesCapped(masses: openArray[float], scale: float): seq[float] =
   ## Masses, each inner one scaled and held at most `CAP_BUCKET`, and two beyond range as they are.
   for i, mass in masses:
@@ -280,7 +300,7 @@ func massesCurve(curve: openArray[float]): seq[float] =
 func flooredCurve(curve: openArray[float], unit: Unit): seq[float] =
   ## Curve with floor of Metaculus for bounds of unit: 1% of even spread mixed in, least mass beyond
   ##   each open bound and none beyond closed one, and inner buckets held under cap by search of
-  ##   scale (`standardizeCdf`).
+  ##   scale (`standardizeCdf`); curve is one that `isCurveTaken` takes, else search never ends.
   let
     share = 1 - SHARE_EVEN - MASS_OPEN * float(unit.countOpen)  # Share of forecast in curve.
     below = (if unit.is_open_low: MASS_OPEN else: 0)  # Least mass below lower bound.
@@ -320,7 +340,7 @@ func scoreNumber*(claim: Claim): Option[float] =
   ## Score of number as Metaculus scores continuous question, `100 × ln(m / b) / 2`: `m` is mass of
   ##   bucket of outcome, and `b` even share of inner mass, or 0.05 beyond range; none for claim of
   ##   no number, outcome, unit or mark, of confidence outside 0 to 1, whose percentiles do not
-  ##   rise, or whose outcome lies beyond closed bound.
+  ##   rise, whose curve Metaculus refuses, or whose outcome lies beyond closed bound.
   if claim.number.isNone or claim.state notin {State.Hit, State.Miss}: return none(float)
   if claim.confidence <= 0 or claim.confidence >= 1: return none(float)
   let
@@ -329,7 +349,7 @@ func scoreNumber*(claim: Claim): Option[float] =
   if number.outcome.isNone or unit.isNone: return none(float)
   if not (number.low < number.median and number.median < number.high): return none(float)
   let curve = number.curveNumber(unit.get, claim.confidence)
-  if curve.len != COUNT_BUCKETS + 1: return none(float)
+  if not curve.isCurveTaken: return none(float)
   let
     masses = curve.flooredCurve(unit.get).massesCurve
     bucket = number.outcome.get.place(unit.get).bucketPlace
@@ -478,3 +498,24 @@ func linesBase*(claims: openArray[Claim]): seq[string] =
     if figures.count + figures.count_number == 0: continue
     let name = (if group.key.len > 0: "`" & group.key & "`" else: KIND_NONE)
     result.add lineFigures("Base rate of " & name, figures)
+
+
+proc linesTree*(root, names: string): seq[string] =
+  ## Lines of verb `figures` over each log of tree at root: marks of delegate and of resolver apart,
+  ##   then groups of fields that names give, as `kind,effort`, with marks apart too; one line where
+  ##   no log holds row. `ValueError` for row or name that reads no way, and `IOError` where root
+  ##   holds no repository.
+  let
+    claims = root.claimsTree
+    fields = names.fieldsNamed
+  if claims.len == 0: return @[LINE_NO_ROW]
+  # Marks of delegate and of resolver stay apart, so that figures compare them (#964).
+  result = claims.groups({Field.Marker}).linesFigures
+  if fields.card > 0: result.add claims.groups(fields + {Field.Marker}).linesFigures
+
+
+proc ratesTree*(root: string): seq[string] =
+  ## Base rate of each kind over logs of tree at root, as `start` prints it (`linesBase`); one line
+  ##   that names fault where tree or its log reads no way.
+  try: root.claimsTree.linesBase
+  except CatchableError as error: @[LINE_NO_RATE & error.msg]

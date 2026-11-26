@@ -355,6 +355,7 @@ suite "Log of claims":
     claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled,
       marker: Marker.Delegate)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Resolver)
+    claims.add Claim(text: "carriage \r return", state: State.Hit, marker: Marker.Delegate)
     claims.add Claim(text: "n", state: State.Miss, marker: Marker.Delegate,
       number: some(Number(low: 0.15, median: 0.45, high: 1.2)))
     check claims.anyIt(it.number.isSome and it.number.get.outcome.isSome)
@@ -381,6 +382,14 @@ suite "Log of claims":
     expect ValueError: discard claimLine("claims { result { low: 1 } }")
     expect ValueError: discard claimLine("claims { number { mean: 1 } }")
     expect ValueError: discard claimLine("claims { } text: \"a\" }")  # text after closing brace
+    expect ValueError: discard claimLine("claims { number { number { low: 1 } } }")  # in block
+    expect ValueError: discard claimLine("claims { text \"a\" }")  # no colon after name
+    # Rows whose one fault is block in block, and name with no colon, so no other check refuses
+    #   them: each reads as claim where its check is gone.
+    expect ValueError: discard claimLine("claims { number { number { low: 1 } }")
+    expect ValueError: discard claimLine("claims { confidence 0.7 }")
+    expect ValueError: discard claimLine("claims { text: \"\\x\" }")  # escape cut short
+    expect ValueError: discard claimLine("claims { text: \"\\x0\" }")
 
 
   test "tree joins rows of each log it holds, by order of path, and reads no other file":

@@ -2,8 +2,9 @@
 //   File holds frame, then one `Exchange`: format line `rictadni exchange 2` and line break,
 //     then length and CRC-32C of message, four bytes each, least significant first; reader
 //     checks all three before it decodes (`exchanges.nim`).
-//   Package keeps `lojban_tagger`, though D1 on #946 moves each name: `check-schemas` refuses new
-//     package by rule `FILE_SAME_PACKAGE` of `buf breaking`, though no byte names it (#981).
+//   Package takes name of project, as D1 on #946 ruled.
+//     No byte names package, so file written under old package `lojban_tagger` decodes unchanged.
+//     Under new package, `check-schemas` holds shipped schema field by field (#981, #996).
 //   Field numbers carry versions of format: field joins under new number, and leaves only with
 //     its number and name reserved (CONTRIBUTOR.md, Data).
 //   No field is `optional`: each defaults to zero, empty or false, as reply lacking header holds
@@ -13,7 +14,7 @@
 
 syntax = "proto3";
 
-package lojban_tagger;
+package rictadni;
 
 // Define one request to service or page, and its reply, as exchange file keeps it.
 message Exchange {

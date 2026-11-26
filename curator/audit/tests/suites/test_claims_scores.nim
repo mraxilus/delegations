@@ -6,10 +6,11 @@
 ##   Each expected score is `100 × (ln p − ln 0.5) / ln 2`, computed apart in floats.
 ##   Each expected score of number comes from copy by hand in Python of method of Metaculus, at
 ##     its source `8e413fb`, run apart; outcome beyond range checks against mass 0.001 by hand.
+##     Second copy, made apart in review of #1012, gives each score of number to last digit.
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, sequtils, unittest]
+import std/[math, options, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[claims_log, claims_scores]
 
 
@@ -24,6 +25,7 @@ const
     ## Text of number of count, as row of #1022 gives it, with its label.
   TEXT_TIME = "Time: time to its report, in minutes: 5, 12 and 30"
     ## Text of number of time, as sample of `GUIDE.md` gives it.
+  COUNT_STEPS = 200  ## Steps of curve, one for each inner bucket of Metaculus.
 
 
 func isNear(value, expected: float): bool =
@@ -48,6 +50,14 @@ func initNumber(
 func isNearNumber(score: Option[float], expected: float): bool =
   ## Whether score of number is some, within `TOLERANCE_NUMBER` of expected one.
   score.isSome and abs(score.get - expected) <= TOLERANCE_NUMBER
+
+
+func curveStep(at: int, step: float): seq[float] =
+  ## Curve of `COUNT_STEPS + 1` places from 0 to 1, whose step after place `at` is `step`, and each
+  ##   other step even.
+  let other = (1 - step) / float(COUNT_STEPS - 1)
+  result.add 0
+  for i in 0 ..< COUNT_STEPS: result.add result[^1] + (if i == at: step else: other)
 
 
 
@@ -137,6 +147,37 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 5000).scoreNumber.isNearNumber(expected)
 
 
+  test "value at or below zero point of unit lies below its range":
+    # `place` gives -1 where logarithm of Metaculus takes no value: 0 tokens lies at zero point,
+    #   so below open bound, and count of -2 below zero point of count, so below closed bound.
+    check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 0).scoreNumber
+      .isNearNumber(100 * ln(0.001 / 0.05) / 2)
+    check initNumber("Count: false findings: 1, 2 and 4", 1, 2, 4, -2, confidence = 0.9)
+      .scoreNumber.isNone
+
+
+  test "floor holds each inner bucket to cap of 0.2, as copy in Python gives it":
+    # Step of curve may pass 0.2 and still lie under 0.59 (`validateUserQuantileData`). Copy in
+    #   Python finds 4 buckets at cap, whose mass 0.2 scores near 100 × ln(0.2 / 0.0045) / 2.
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.45, confidence = 0.9).scoreNumber
+      .isNearNumber(189.71200628858753)  # bucket 67, at cap
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.42, confidence = 0.9).scoreNumber
+      .isNearNumber(189.7120062885875)  # bucket 65, at cap
+    check initNumber(TEXT_COST, 0.40, 0.45, 0.50, 0.30, confidence = 0.9).scoreNumber
+      .isNearNumber(-57.448749931990804)  # bucket 60, below 5th
+
+
+  test "percentile on closed bound or beyond range drops out of curve, as copy in Python gives it":
+    # `generateQuantileContinuousCdf` keeps each percentile inside range: 5th at 0 lies on closed
+    #   bound of count, and 95th at 2,000,000,000 above range of tokens.
+    check initNumber("Count: false findings: 0, 1 and 3", 0, 1, 3, 1, confidence = 0.9)
+      .scoreNumber.isNearNumber(105.35283940348799)  # bucket 13
+    check initNumber("Count: false findings: 0, 1 and 3", 0, 1, 3, 0, confidence = 0.9)
+      .scoreNumber.isNearNumber(107.92287413663888)  # outcome on closed bound: bucket 1
+    check initNumber(TEXT_TOKENS, 1e8, 4e8, 2e9, 5e8, confidence = 0.9).scoreNumber
+      .isNearNumber(97.24691480033533)  # bucket 188
+
+
   test "number of no outcome, unit, mark or confidence, or whose percentiles fall, takes none":
     var claim = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)
     claim.number.get.outcome = none(float)
@@ -147,6 +188,30 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 1.0).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.0).scoreNumber.isNone
     check initClaim(0.7, State.Hit).scoreNumber.isNone
+
+
+  test "number whose curve Metaculus refuses takes none, and its score ends":
+    # Case as found: review of #1012 found that time of 10, 11 and 12 minutes at 90% never ended.
+    #   Each point of curve takes mean slope of its two sides (`hydrateQuantiles`), so narrow
+    #   percentiles make curve that rises above 1 and falls; floor then holds masses under 0, and
+    #   search of scale under cap never reaches 1. Metaculus refuses such curve first
+    #   (`validateUserQuantileData`); copy in Python finds each step that falls.
+    check initNumber(TEXT_TIME, 10, 11, 12, 11, confidence = 0.9).scoreNumber.isNone  # 195 fall
+    check initNumber(TEXT_COUNT, 10, 11, 12, 11, confidence = 0.9).scoreNumber.isNone  # 196 fall
+    check initNumber(TEXT_TOKENS, 3e6, 3.3e6, 3.6e6, 3.3e6, confidence = 0.9).scoreNumber.isNone
+    check initNumber(TEXT_TIME, 10, 12, 15, 12, confidence = 0.9).scoreNumber.isNone  # 191 fall
+
+
+  test "curve that Metaculus takes holds 201 places, each step rounded from 0.01 / 200 to 0.59":
+    # `validateUserQuantileData` of Metaculus: step rounds to 10 places, then 1% of mass spread
+    #   even over buckets is least step, and 0.59 most step of continuous question.
+    check curveStep(100, 1 / COUNT_STEPS).isCurveTaken  # even
+    check curveStep(100, 0.59).isCurveTaken
+    check not curveStep(100, 0.5901).isCurveTaken
+    check curveStep(100, 0.01 / COUNT_STEPS).isCurveTaken
+    check not curveStep(100, 0.00004).isCurveTaken
+    check not curveStep(100, -0.001).isCurveTaken  # falls
+    check not curveStep(100, 1 / COUNT_STEPS)[0 ..< COUNT_STEPS].isCurveTaken  # place short
 
 
   test "figures count numbers that take score, with their mean score, apart from bands":
@@ -325,3 +390,39 @@ suite "lines of figures":
     check @[resolver].linesBase.len == 0
     check @[initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)].linesBase ==
         @["Base rate of call of no kind: 0 of 0 claims held; 1 numbers, mean score 77.7"]
+
+
+
+suite "figures of tree":
+  test "verb and start read each log of tree, and name fault of tree, row or field":
+    # `koch figures` prints `linesTree`, and `start` prints `ratesTree`, so suite runs both over
+    #   tree of its own; each band of one claim is Beta(2, 1) or Beta(1, 2), solved by hand.
+    let
+      root = createTempDir("figures_", "_tree")
+      log = root / PATH_LOG_CURATOR
+      delegate = initClaim(0.75, State.Hit)
+    var resolver = initClaim(0.75, State.Miss)
+    resolver.marker = Marker.Resolver
+    expect IOError: discard linesTree(root, "")  # no repository
+    check ratesTree(root)[0].startsWith("Logs of claims give no base rate; git failed")
+    check execCmdEx("git init -q", workingDir = root).exitCode == 0
+    check linesTree(root, "") == @["No log of claims in tree holds row."]
+    check ratesTree(root).len == 0
+    createDir(log.parentDir)
+    writeFile(log, HEADER_LOG & [delegate, resolver].mapIt(it.lineClaim & "\n").join)
+    let marks = @[
+      "delegate: 1 of 1 claims held, mean baseline score 58.5",
+      "  71% to 80%: 1 of 1, 90% band 0.22 to 0.97",  # √0.05 and √0.95
+      "resolver: 0 of 1 claims held, mean baseline score -100.0",
+      "  71% to 80%: 0 of 1, 90% band 0.03 to 0.78",  # 1 − √0.95 and 1 − √0.05
+    ]
+    check linesTree(root, "") == marks
+    check linesTree(root, "Kind") == marks & marks.mapIt(
+      if it.startsWith(" "): it else: "reviewer / " & it)
+    check ratesTree(root) == @["Base rate of `reviewer`: 1 of 1 claims held, mean baseline " &
+      "score 58.5"]  # marks of delegate alone
+    expect ValueError: discard linesTree(root, "colour")
+    writeFile(log, HEADER_LOG & "claims { text: \"open }\n")
+    expect ValueError: discard linesTree(root, "")
+    check ratesTree(root)[0].startsWith("Logs of claims give no base rate; Quoted text")
+    removeDir(root)

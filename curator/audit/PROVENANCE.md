@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 5edcefea6e882fbf0e68b83dcd3a8af3a30cde89 |
+| Pruned  | c35ccbd94b403a76121e3ddef5cb71e3f7b2b842 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2481,8 +2481,7 @@ with gcc 15.2.0, between 2026-11-04 and 2026-11-09. On it, `koch drive` of pga_b
 findings: `compiler_c` and `tracer` differ in each of four machine baselines (#848).
 
 - Verified from the logs of the runner. Image `ubuntu-24.04` 20261101.360.1 drove pga_benchmark
-  green on 2026-11-04, and image `ubuntu-26.04` 20261101.186.1 gave the 8 findings on
-  2026-11-09.
+  green on 2026-11-04, and image `ubuntu-26.04` 20261101.186.1 gave the 8 findings on 2026-11-09.
 - Rejected: new baselines taken on 26.04. A delegate container would then name another build
   than the baselines, and its `koch check` would fail.
 - Cost: when GitHub retires the image of 24.04, the jobs, the containers and the baselines move
@@ -2504,16 +2503,14 @@ declaration is the only statement and nothing can drift from it.
 
 ## Tests
 
-**Testament over `tests/t*.nim`, with each stub carrying the header from STYLE.md §6, and
-without `-r`.** `-r` would run every test twice, and `--outdir` breaks the search of testament
-for the binary. So binaries sit beside sources, and git ignores them everywhere
-(`**/tests/t*`).
+**Testament over `tests/t*.nim`, with each stub carrying the header from STYLE.md §6, and without
+`-r`.** `-r` would run every test twice, and `--outdir` breaks the search of testament for the
+binary. So binaries sit beside sources, and git ignores them everywhere (`**/tests/t*`).
 
-Suites are named after an article of the constitution where one fits, else after the module.
-The suite or test name cites the clause that it replicates. A trailing comment labels the case
-that one assertion separates. `suites/fixtures.nim` builds the fixtures: a smallest clean tree
-with a project under each root, and throwaway git repositories. It also reads the table in the
-header of a module.
+Suites are named after an article of the constitution where one fits, else after the module. The
+suite or test name cites the clause that it replicates. A trailing comment labels the case that one
+assertion separates. `suites/fixtures.nim` builds the fixtures: a smallest clean tree with a project
+under each root, and throwaway git repositories. It also reads the table in the header of a module.
 
 **The suites of this project compile as one program.** Each suite is a module under
 `tests/suites/`, and `tests/test_suites.nim` is the one stub. It imports every suite, so the
@@ -2574,13 +2571,12 @@ nothing else, because what a check needs differs for each project, while the nam
 
 ## Driven checks
 
-**The runner drives what the suites cannot reach, through the verb of that project.**
-`koch drive` restores the checkouts and node tools of a project, then runs
-`tools/build.nim drive`. The verb builds the page and drives it through held keys, wheels,
-right-button pans, two-finger pinches and long presses. Testament tests rules, such as what a
-slide does to the pivot, and nothing in it presses a key. So a rule wired to the wrong event is
-a defect that no suite here can see. A driven check that the runner never runs is evidence only
-that its writer ran it (Article IX.6).
+**The runner drives what the suites cannot reach, through the verb of that project.** `koch drive`
+restores the checkouts and node tools of a project, then runs `tools/build.nim drive`. The verb
+builds the page and drives it through held keys, wheels, right-button pans, two-finger pinches and
+long presses. Testament tests rules, such as what a slide does to the pivot, and nothing in it
+presses a key. So a rule wired to the wrong event is a defect that no suite here can see. A driven
+check that the runner never runs is evidence only that its writer ran it (Article IX.6).
 
 **Enrolment is the verb, read from the driver of the project itself.** `directoriesVerb` reads the
 dispatch of `tools/build.nim` and selects the projects that name `drive`, the derivation that
@@ -2614,19 +2610,17 @@ fetch is 6.6 s cold, and the copy into `build/fonts` is milliseconds, recorded 2
 - A looser `restore-keys` entry is safe here by construction rather than by check. The store
   names entries by digest, so an entry that no row declares is unreachable rather than wrong.
   `koch fetch-assets` fetches whatever an older restore lacks.
-- Verified on the runner, 2026-09-12: with no cache of `build/fonts`, the second `assets` pass
-  of a job copies nothing. The first pass puts every font face in place, so that cache saves
-  nothing.
+- Verified on the runner, 2026-09-12: with no cache of `build/fonts`, the second `assets` pass of a
+  job copies nothing. The first pass puts every font face in place, so that cache saves nothing.
 
 **The browser that a declaration names is the browser that runs, and the snap serves.**
 `apt-get install chromium` on `ubuntu-24.04` gives `/snap/bin/chromium`, a wrapper rather than
 a plain binary, and Playwright launches it. Where a package does not serve the runner, the
 declaration of the project changes. A name is never substituted here in silence.
 
-Verified on the runner, 2026-09-07, which is the only place the claim means anything. Every
-driven check passed with 0 findings, in a real Chromium over real gestures, with the gate
-reading its verdict. Verified by a break of it: on the compiler of koch the same command fails
-inside `pga`.
+Verified on the runner, 2026-09-07, which is the only place the claim means anything. Every driven
+check passed with 0 findings, in a real Chromium over real gestures, with the gate reading its
+verdict. Verified by a break of it: on the compiler of koch the same command fails inside `pga`.
 
 ## Head checks
 
@@ -2637,10 +2631,9 @@ forbids that for a check of the code. So the project carries that read as its ow
 and `test` and `drive` hold the pin alone. `koch head` restores the project and runs
 `tools/build.nim head` on its own pin, as `koch drive` does, and `check` never calls it.
 
-**Enrolment is the verb, as for `drive`.** `carryingOnly` keeps the projects that
-`list-projects` selected and whose driver dispatches the verb, and `drivenOnly` is that filter
-for `drive`. `head.yml` asks `list-projects --all --head`, because a reference moves whether or
-not code changed.
+**Enrolment is the verb, as for `drive`.** `carryingOnly` keeps the projects that `list-projects`
+selected and whose driver dispatches the verb, and `drivenOnly` is that filter for `drive`.
+`head.yml` asks `list-projects --all --head`, because a reference moves whether or not code changed.
 
 **One issue stands for each project while its verb fails.** `head.yml` edits the open issue that
 carries the marker of the project to the latest run. It comments only where the finding
@@ -2660,10 +2653,9 @@ issue, and the next failure opens a new one. The finding is the output from the 
   `check.yml`. A workflow shares steps only through an action of its own.
 - Verified by `suites/test_plan.nim` and `suites/test_projects.nim`: the filter, and a real
   driver whose `head` exits 1.
-- Verified by hand against a stub `gh`, GNU bash 5.2, 2026-10-02. A failing verb with no issue
-  opens one. The same finding the next day edits it and adds no comment. A new finding edits it
-  and adds one comment. A passing verb closes an open issue, and posts nothing where none is
-  open.
+- Verified by hand against a stub `gh`, GNU bash 5.2, 2026-10-02. A failing verb with no issue opens
+  one. The same finding the next day edits it and adds no comment. A new finding edits it and adds
+  one comment. A passing verb closes an open issue, and posts nothing where none is open.
 
 ## Names
 
@@ -2687,8 +2679,7 @@ and a collection type named for its member and its form (V.6).
 - `exemptions` reads those two glossaries for each path. The static pass gives their words to
   the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
   passes too.
-- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
-  reading.
+- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by reading.
 - The binding of an entry block is the rule of the entry block (V.10), which knoller checks
   beside its fixer. So the names check reports no second finding there, and the static pass runs
   both checks on each kind of Nim.
@@ -2708,8 +2699,7 @@ and a collection type named for its member and its form (V.6).
 **The idioms of STYLE.md and Article X.5 are knoller's, and the audit keeps two of its own.**
 Knoller reads each idiom that one line or one header shows (`checkIdioms` there), and its record
 gives them under Idioms. The static pass runs that check on each kind of Nim, with the dialect of
-its kind. A module takes every idiom, and a script or a package takes those that read any Nim
-code.
+its kind. A module takes every idiom, and a script or a package takes those that read any Nim code.
 
 - A path of one machine is a finding in every kind but Markdown (CONTRIBUTOR.md, System). The
   checker names such paths as fixtures, so its own project is left out, as the font families check
@@ -2888,11 +2878,10 @@ the dead exports. They run once, on the source as given, and their edits move no
 next, so later fixers read clean line ends and the final gap of each comment. The entry block
 moves after form, because the move shifts lines and widens none.
 
-The content fixers follow, because each changes the width of its line. The idioms run next,
-because the bindings fixer indents lines, and every later width reads that indent. The
-blank lines, the doc position and the literal defaults follow, because a joined doc and a dropped
-type change widths. Spacing runs before wrapping, because the spaces it adds are width that
-wrapping measures.
+The content fixers follow, because each changes the width of its line. The idioms run next, because
+the bindings fixer indents lines, and every later width reads that indent. The blank lines, the doc
+position and the literal defaults follow, because a joined doc and a dropped type change widths.
+Spacing runs before wrapping, because the spaces it adds are width that wrapping measures.
 
 Wrapping runs separators, then signatures, then calls, then continuations. A layout joins groups
 with the separator it reads. No fixer adds a separator after the last item of a list, since that
@@ -3070,9 +3059,8 @@ the two lines after the last pragma that opens the module, with a blank line on 
   makes one module of both. The Architect ruled so on the report of the PGA library, whose eight
   stubs include `tests/suites.nim`, and that suite carries the import. The stub of STYLE.md §6
   holds that form too.
-- Cost: the check reads no included file, so whether that file carries the import is held by
-  reading alone. An include inside a `when` branch serves one configuration alone, so it frees
-  no stub.
+- Cost: the check reads no included file, so whether that file carries the import is held by reading
+  alone. An include inside a `when` branch serves one configuration alone, so it frees no stub.
 - Rejected: the import in both the stub and its suite. The compiler accepts the duplicate, and
   `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The ruling keeps the
   stub of STYLE.md §6 as it is written instead.
@@ -4451,24 +4439,36 @@ unmarked takes none.
   6 claims of a kind, where that band runs from 0 to 1.
 
 **A number scores as Metaculus scores a continuous question, as D2 a of #964 rules (comment
-7189788889).** Each step copies the source of Metaculus at `8e413fb`, which was read and never
-run. The unit of a number fixes its range, as `GUIDE.md` gives it. Its confidence is the mass
-between its outer two percentiles, so it places them. They are the 5th and 95th at 90%, and the
-10th and 90th at 80% (comment 7191274618). A number takes no baseline score, and no band.
+7189788889).** Each step copies a step of the source of Metaculus at `8e413fb`, which was read
+and never run. The unit of a number fixes its range, as `GUIDE.md` gives it. Its confidence is
+the mass between its outer two percentiles, so it places them. They are the 5th and 95th at 90%,
+and the 10th and 90th at 80% (comment 7191274618). A number takes no baseline score, and no band.
 
+- The join of the steps is a choice, which comment 7189682360 describes and the ruling accepts.
+  The curve is that of the form of percentiles, with no mass beyond the range. The floor is that
+  of the slider, which Metaculus puts on the slider alone.
+- A curve that the form refuses takes no score. `validateUserQuantileData` refuses each step
+  under 0.01 / 200 or above 0.59. Narrow percentiles make a curve that falls, and the search of
+  the floor never ends on such a curve. The checks of the server have no copy, since the floor
+  gives each open bound 0.001 and caps each bucket at 0.2.
 - Time and a count take their ranges by D5 a and D1 a of #964 (comment 7193361977). A count is
-  named by its label `Count:`, and runs from a closed bound at 0, on the logarithm of the count
-  plus one. An outcome beyond a closed bound takes no score.
-- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart, for
-  each unit at 80% and 90%. By hand on 2026-11-26, eleven mutants of the steps each fail it.
+  named by its label `Count:`, and scores on the logarithm of the count plus one. It runs from a
+  closed bound at 0 to an open bound at 100,000. D1 a names 0 alone as closed, so 100,000 stays
+  open, as each bound of the other units is. An outcome beyond a closed bound takes no score.
+- Verified by `suites/test_claims_scores.nim`, against two copies by hand in Python, made and run
+  apart, for each unit at 80% and 90%. By hand on 2026-11-26, 29 of 32 mutants of the steps, the
+  reader and the verb each fail a suite. The other three pass. The first and last points of
+  `hydrateQuantiles` lie on places, so its branch for them never runs. No case gives a sum of
+  exactly 1 in the search, or a place of exactly 1.
 - Rejected: the log score on the logarithm with no range, whose level no other site shares.
 - Cost: a number of another unit takes no score until code fixes its range.
 
 **`koch figures` prints the figures of the logs of the tree, and `start` a base rate of each
 kind.** The verb keeps the marks of the delegate and of the resolver apart, so that they
 compare. It groups them by the fields that it names. The base rate reads the marks of the
-delegate alone, one for each claim. Verified by `suites/test_hooks.nim`, and by
-`suites/test_claims_scores.nim`.
+delegate alone, one for each claim. `linesTree` gives the lines of the verb, and `ratesTree` the
+base rates, so the verb and `start` only print them. Verified by `suites/test_claims_scores.nim`,
+over a tree of its own, and by `suites/test_hooks.nim` for the lines that `start` lays out.
 
 ## Skills
 

@@ -395,7 +395,8 @@ func positionOnObjectUnder(
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
   ##   `placed` is object's placement, which says what it is, which way line runs and
-  ##   plane faces: nothing is classified, or tested for horizon, again.
+  ##   plane faces: nothing is classified again. Anchor tests horizon only where object
+  ##   passes through origin.
   ##   Anchor is support of `geometry`, read once, as hit has always been reckoned: support
   ##   of point differs from its place by rounding, and plane's disc centre is not support.
   ##   `geometry` is world's, so its anchor is read about `origin`, and plane is met as
@@ -414,7 +415,7 @@ func positionOnObjectUnder(
   of Case.Nothing, Case.PointToward, Case.LineAcross, Case.PlaneEverywhere: return
   let heading = direction(ray)
   if heading.isNone: return
-  let anchor_world = positionAnchor(geometry, is_horizon = false)
+  let anchor_world = positionAnchor(geometry)
   if anchor_world.isNone: return
   let anchor = anchor_world.get.toView(origin)
   var found = none(Position)

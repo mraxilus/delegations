@@ -374,9 +374,7 @@ proc runHook(root, event, input: string): int =
     try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
     # Past figures of each kind come from logs of tree; log that reads no row names its fault.
-    var rates: seq[string]
-    try: rates = root.claimsTree.linesBase
-    except CatchableError as error: rates = @["Logs of claims give no base rate; " & error.msg]
+    let rates = root.ratesTree
     # Record branch works on is read where it exists; new project has none until it writes one.
     #   File of role is read same way, in `readPrompt`, where suite reaches it.
     let record = branch_root.pathRecord
@@ -545,22 +543,13 @@ proc run(options: Options): int =
   of "figures":
     # Logs of each project join, as #964 asks; argument names fields of groups, as `kind,effort`.
     if not options.isReadAll({Root}, has_project = true): return options.refused
-    var
-      claims: seq[Claim]
-      fields: set[Field]
-    try:
-      claims = options.root.claimsTree
-      fields = options.project.fieldsNamed
-    except ValueError as error:
+    var lines: seq[string]
+    # Row or field that reads no way, and root that holds no repository, each name fault.
+    try: lines = linesTree(options.root, options.project)
+    except CatchableError as error:
       stderr.writeLine error.msg
       return 1
-    if claims.len == 0:
-      echo "No log of claims in tree holds row."
-      return 0
-    # Marks of delegate and of resolver stay apart, so that figures compare them (#964).
-    for line in claims.groups({Field.Marker}).linesFigures: echo line
-    if fields.card > 0:
-      for line in claims.groups(fields + {Field.Marker}).linesFigures: echo line
+    for line in lines: echo line
     return 0
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
