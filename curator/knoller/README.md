@@ -154,8 +154,8 @@ With `--check`, each `fixed` reads `to fix`.
 A finding and a warning print through the renderer `report.nim`, in a form of STYLE.md §3. At a
 terminal they take the terminal form, which shows the line as given. In a pipe or a log they take
 the line form, one line each. `--form:terminal` or `--form:line` forces one form. Color shows at a
-terminal alone, and `NO_COLOR` set to any text turns it off. One finding reads as follows in each
-form:
+terminal alone, and `NO_COLOR` set to any text turns it off. One finding reads as follows in the
+terminal form:
 
 ```text
 a.nim:7  line-width
@@ -170,8 +170,11 @@ a.nim:7  line-width
   help: break line by hand, or fence block of fixed shape between `#!fix off` and `#!fix on`
 ```
 
+In the line form, each part stands as a key and a quoted value, and `help` stands last where the
+finding holds one. So a log keeps the help too. A name of the wrong case reads so:
+
 ```text
-a.nim:7: line-width: actual="120" expect="at most 100" message="line exceeds 100 characters"
+a.nim:5: name-case: actual="sides" message="global is `SCREAMING_SNAKE_CASE`"
 ```
 
 A warning takes `warning` after its rule. A fence warns (`fence-held`), and so does debug output

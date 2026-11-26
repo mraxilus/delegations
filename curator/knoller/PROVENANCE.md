@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -113,8 +113,9 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   source line prints as its control picture, as `␉`, so the marker stays under its rune.
 - The terminal form quotes a value that is empty, or whose edge or control character would hide
   it. So each value stays visible, as Article IV.4 asks.
-- The line form reads `path:line:column: rule: actual="…" expect="…" message="…"`. Each value is
-  quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+- The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
+  value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+  Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
 - A warning prints in both forms, with `warning` after its rule, as the command line of knoller
   marks it (D2 a of #1002). A rewrite is no finding, so its caller keeps its one line.
 - Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
@@ -128,14 +129,11 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   each finding and before the count.
 - Verified by `suites/test_command.nim`: both forms of one run, the flag, and the line form of
   each warning. The suites that read what a run prints hold the line form.
-- Cost: the line form carries no `help`, since STYLE.md §3 gives it none. A reader of a log
-  loses it.
 - Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
   emoji, shifts the marker to the right of its span.
-- Each verb of koch that reports prints each finding and warning through the renderer too. A
-  finding of a report of knoller keeps the id of its rule there.
-- Cost: no check of koch gives the id of its rule yet, so its findings print with no rule.
-- Cost: each hook of koch prints the message of each finding alone, outside the renderer.
+- Each verb of koch that reports prints each finding and warning through the renderer too, and
+  each hook prints each finding in the line form. A finding of a report of knoller keeps the id
+  of its rule there. Each check of koch takes an id `koch.<name>` (D4 a of #1002).
 
 ## Chain
 
