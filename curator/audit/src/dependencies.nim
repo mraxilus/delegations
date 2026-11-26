@@ -192,8 +192,9 @@ func checkCommitCheckout*(
     path_lock,
     0,
     Check.CommitCheckout,
-    "Checkout stands at other commit than lock holds after restore; got `" & commit_found.get &
-      "` for `" & checkout.name & "` at `" & checkout.commit & "`.",
+    "Checkout of `" & checkout.name & "` stands at other commit than lock holds after restore; " &
+      "got `" & commit_found.get & "`.",
+    expected = some(checkout.commit),
   )
 
 
@@ -274,7 +275,7 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
     return @[finding(
       target.directory & "/" & MANIFEST_NODE, 0,
       Check.RestoreNode,
-      "Type check needs npm on `PATH`; got nothing.",
+      "Type check needs npm on `PATH`.",
       help = "install node, or drop this project's manifest",
     )]
   let code = runIn(root / target.directory, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)

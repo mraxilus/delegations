@@ -353,7 +353,7 @@ func checkStrictFuncs*(path: string; lines, code: seq[string]): seq[Report] =
       path,
       0,
       Rule.StrictFuncs,
-      "Module carries `" & STRICT_FUNCS & "` before its imports; got none.",
+      "Module carries `" & STRICT_FUNCS & "` before its imports.",
     )
   elif import_at >= 0 and strict_at > import_at:
     result.add initReport(
@@ -401,7 +401,7 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
         path,
         i + 1,
         Rule.ConsumerUsed,
-        "`{.used.}` carries comment naming its consumer; got none.",
+        "`{.used.}` carries comment naming its consumer.",
       )
     if s.startsWith("{.push"):
       var
@@ -460,7 +460,7 @@ func checkTests(
     )
   if dialect == Dialect.Module and path.isStub(source, nimble) and
       source.find(HEADER_TESTAMENT) < 0:
-    result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header; got none.")
+    result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header.")
   for i, c in code:
     if c.wordFirst == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
       result.add initReport(
@@ -907,7 +907,7 @@ func checkProfiler*(path, source: string; nimble = ""): seq[Report] =
       0,
       Rule.ImportProfiler,
       "Entry module, library umbrella and stub that includes no suite import profiler right " &
-        "after pragmas; got none.",
+        "after pragmas.",
     )
 
 

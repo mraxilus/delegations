@@ -5,7 +5,7 @@
 ##   One check names one rule, whatever messages it gives: three messages of commit body are one
 ##     check, as each rule of knoller holds one id across its messages.
 ##   Report of knoller keeps id of its own rule (`toFinding`), and fault of tool names none.
-##   List runs by module that holds check, in order of its path.
+##   List runs by module that holds check, in order of its path, and checks of hooks last.
 
 {.experimental: "strictFuncs".}
 

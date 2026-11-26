@@ -340,7 +340,7 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
     result.add finding(
       path, 0,
       Check.CollectorFont,
-      "Collector reads control page `koch drive` writes, as page `" & PAGE_CONTROL & "`; got none.",
+      "Collector reads control page `koch drive` writes, as page `" & PAGE_CONTROL & "`.",
     )
     return
   let collected = found[PAGE_CONTROL]{"characters"}.getElems.mapIt(it{"codepoint"}.getInt)

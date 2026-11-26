@@ -208,7 +208,7 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
         path,
         0,
         Check.SuiteCheck,
-        "Check module needs suite; got nothing.",
+        "Check module needs suite.",
         help = "write `" & suite & "`",
       )
 

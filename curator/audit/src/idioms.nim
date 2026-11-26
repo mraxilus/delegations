@@ -68,5 +68,5 @@ func checkTsconfig*(path, config: string): seq[Finding] =
         path,
         0,
         Check.ConfigTypescript,
-        "`tsconfig.json` sets `" & flag & "` to `true` (CONTRIBUTOR.md, TypeScript); got none.",
+        "`tsconfig.json` sets `" & flag & "` to `true` (CONTRIBUTOR.md, TypeScript).",
       )

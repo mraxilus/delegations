@@ -1109,12 +1109,13 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       "",
       0,
       Check.Decision,
-      "Decisions are numbered from D1 in order; got `" & name & "`.",
+      "Decisions are numbered from D1 in order; got `D" & $d.number & "`.",
+      expected = some("D" & $(at + 1)),
     )
   if d.class.len == 0:
-    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Class:`; got none.")
+    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Class:`.")
   if d.where.len == 0:
-    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Where:`; got none.")
+    result.add finding("", 0, Check.Decision, "Decision " & name & " lacks `Where:`.")
   if d.class.startsWith(CLASS_BLOCKS_OTHERS):
     let roles = d.class[CLASS_BLOCKS_OTHERS.len .. ^1].replace(" and ", ",").split(',')
     for r in roles:
@@ -1181,7 +1182,7 @@ func findingsDecision(d: Decision, at: int): seq[Finding] =
       "",
       0,
       Check.Decision,
-      "Decision " & name & " lacks `Recommends:`; got none.",
+      "Decision " & name & " lacks `Recommends:`.",
     )
   elif pick.len != 1 or pick[0] notin d.options.mapIt(it.letter):
     result.add finding(
@@ -1349,6 +1350,7 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
           0,
           Check.RowsSignoff,
           "Sign-off rows are numbered from 1 in order across its tables; got `" & name & "`.",
+          expected = some($expected),
         )
       expected = max(row.first, row.last) + 1
       if row.state < last:
@@ -1578,7 +1580,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
         "",
         0,
         Check.Signoff,
-        "Sign-off lacks `" & label & "` in its order; got none.",
+        "Sign-off lacks `" & label & "` in its order.",
       )
   var readable = starts
   readable[Part.Work] = 0  # Work reads after context where its rule line is missing.
@@ -1611,6 +1613,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
         Check.Signoff,
         "Sign-off role line closes with word `" & WORD_BRANCH & "` and last part of branch, as `" &
           tail & "`; got `" & rest_role[text_role.len .. ^1] & "`.",
+        expected = some(tail),
       )
   if word_state notin STATES_SIGNOFF:
     result.add finding(
@@ -1971,7 +1974,7 @@ func checkEndTurn*(message, branch: string; is_writing: bool): seq[Finding] =
     Check.EndTurn,
     "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` block once done, " &
       "blocked or waiting, or with line `" & LABEL_WORKING & "` while work runs (GUIDE.md, " &
-      "Output contract); got neither."
+      "Output contract)."
   )]
 
 
@@ -2058,7 +2061,7 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
     Check.ReadIssues,
     "Sign-off follows read of open issues labelled `" & label & "` in its turn, " &
       "through `mcp__github__list_issues` or `gh issue list`, since request can arrive while " &
-      "delegate works (GUIDE.md, Output contract); got none."
+      "delegate works (GUIDE.md, Output contract)."
   )]
 
 
@@ -2404,7 +2407,7 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
     0,
     Check.TableReflection,
     "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
-      "(GUIDE.md, Prediction, critic and reflection); got none."
+      "(GUIDE.md, Prediction, critic and reflection)."
   )]
 
 
@@ -2492,8 +2495,9 @@ func checkPush*(recorded, tree_pushed: string): seq[Finding] =
       "",
       0,
       Check.CheckPush,
-      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); last green tree `" &
-        recorded.strip & "`; got `" & tree_pushed.strip & "`.",
+      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); got `" & tree_pushed.strip &
+        "`.",
+      expected = some(recorded.strip),
     )
 
 

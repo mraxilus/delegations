@@ -95,7 +95,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
       path,
       0,
       Check.VersionDriver,
-      "Workflow must state driver version as `" & KEY_VERSION & " '<version>'`; got nothing.",
+      "Workflow must state driver version as `" & KEY_VERSION & " '<version>'`.",
     )
   elif stated.get != pin:
     result.add finding(
@@ -117,4 +117,5 @@ func checkKnoller*(path: string; pin, driver: Option[string]): seq[Finding] =
     Check.PinKnoller,
     "Project driver imports by path pins driver version `" & driver.get & "`, since koch " &
       "compiles it; got `" & pin.get & "`.",
+    expected = some(driver.get),
   )

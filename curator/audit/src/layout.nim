@@ -303,7 +303,7 @@ func checkFileEntry(tree: Tree, paths: Table[string, int]): seq[Finding] =
       0,
       Check.FileEntry,
       "`" & FILE_CLAUDE & "` imports entry file on line `" & IMPORT_ENTRY & "` of its own, " &
-        "outside code, as Claude Code loads no import in code; got none.",
+        "outside code, as Claude Code loads no import in code.",
     )
 
 

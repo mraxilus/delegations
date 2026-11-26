@@ -236,7 +236,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
         0,
         Check.ConfigTypescript,
         "Project holding TypeScript carries `tsconfig.json` at its root (CONTRIBUTOR.md, " &
-          "TypeScript); got none.",
+          "TypeScript).",
       )
 
   # Names: every Nim file is held to words glossaries admit, root and its own project, acronyms
