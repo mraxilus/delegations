@@ -165,7 +165,19 @@ suite "track record":
     check found[1].share_high.isNear(0.8646496378284162)
 
 
-  test "confidence outside 51% to 98% falls in nearest band":
+  test "claim under 50% counts as its other side, with hit and miss swapped, and 50% stays":
+    # `D3 c` of #964 (comment 7191274618): claim at 20% that held is claim at 80% that missed,
+    #   with same baseline score, so it falls in band of 71% to 80% as miss.
+    let found = @[initClaim(0.2, State.Hit), initClaim(0.45, State.Miss),
+      initClaim(0.5, State.Hit)].bands
+    check found.mapIt((it.low, it.count, it.hits)) == @[(51, 2, 2), (71, 1, 0)]
+    check found[0].confidence.isNear((0.55 + 0.5) / 2)
+    check found[1].confidence.isNear(0.8)
+    check initClaim(0.2, State.Hit).scoreBaseline.get.isNear(
+      initClaim(0.8, State.Miss).scoreBaseline.get)
+
+
+  test "confidence of 50%, or above 98%, falls in nearest band":
     let found = @[initClaim(0.5, State.Hit), initClaim(0.99, State.Miss)].bands
     check found.mapIt((it.low, it.count)) == @[(51, 1), (91, 1)]
 

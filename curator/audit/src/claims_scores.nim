@@ -9,7 +9,9 @@
 ##     takes floor of 1% of even spread and cap of 0.2 for each of 200 buckets (`standardizeCdf`),
 ##     and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome (`score_math.py`).
 ##   Track record counts claims of each band of confidence, from 51% to 60% and on in steps of 10
-##     to 98%, by percentage rounded; confidence outside that span falls in nearest band.
+##     to 98%, by percentage rounded; claim under 50% first turns to its other side, so hit at 20%
+##     counts as miss at 80%, as `D3 c` of #964 rules (comment 7191274618); confidence of 50% or
+##     above 98% falls in nearest band.
 ##   Each band gives count, share of hits, and 90% credible band of share: 5th and 95th
 ##     percentiles of Beta posterior from uniform prior, `Beta(hits + 1, misses + 1)`.
 ##   Group holds claims whose named fields agree, sorted by key; each figure names its count.
@@ -317,17 +319,21 @@ func indexBand(confidence: float): int =
 
 func bands*(claims: openArray[Claim]): seq[Band] =
   ## Bands of confidence of claims that take score, each that holds claim, from lowest, with
-  ##   share of hits and its credible band (#964).
+  ##   share of hits and its credible band (#964); claim under 50% counts as its other side, at one
+  ##   minus its confidence, with hit and miss swapped (`D3 c`), which keeps its baseline score.
   var
     counts: array[BANDS_PERCENT.len, int]
     hits: array[BANDS_PERCENT.len, int]
     sums: array[BANDS_PERCENT.len, float]
   for claim in claims:
     if claim.scoreBaseline.isNone: continue
-    let i = claim.confidence.indexBand
+    let
+      is_turned = claim.confidence < CONFIDENCE_EVEN
+      confidence = (if is_turned: 1 - claim.confidence else: claim.confidence)
+      i = confidence.indexBand
     counts[i] += 1
-    sums[i] += claim.confidence
-    if claim.state == State.Hit: hits[i] += 1
+    sums[i] += confidence
+    if (claim.state == State.Hit) != is_turned: hits[i] += 1
   let tail = (1 - MASS_CREDIBLE) / 2
   for i, (low, high) in BANDS_PERCENT:
     if counts[i] == 0: continue
