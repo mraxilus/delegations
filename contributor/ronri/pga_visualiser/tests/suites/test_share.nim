@@ -121,14 +121,22 @@ suite "Share":
 
 
   test "a second before the start has no bucket, so the ring refuses it by its type":
-    # Fault: negative second indexed ring at negative bucket and stopped, and second -1 read as
-    #   ring's own mark of empty bucket (repository issue 970).
+    # Fault: negative second indexed ring below its first bucket and stopped, or, as multiple of
+    #   `SECONDS_SHARE`, wrote into one in silence. `pooled` read -1 as ring's own mark of empty
+    #   bucket (repository issue 970).
+    # Domain: each second of two spans before start, both multiples among them. Second 0, low
+    #   end of `Natural`, keeps what it counts.
     var ring = initRingShare[CountsShare]()
-    let second_before = -1
-    expect RangeDefect:
-      ring.add(second_before, default(CountsShare))
-    expect RangeDefect:
-      discard ring.pooled(second_before)
+    for second_before in -2 * SECONDS_SHARE .. -1:
+      checkpoint $second_before
+      expect RangeDefect:
+        ring.add(second_before, default(CountsShare))
+      expect RangeDefect:
+        discard ring.pooled(second_before)
+    let counts = [Owner.Rest: 1, Owner.Pga: 2, Owner.Algebra: 0, Owner.Boundary: 0,
+      Owner.Euclidean: 0]
+    ring.add(0, counts)
+    check ring.pooled(0) == counts
 
 
   test "each value that crosses the boundary counts once, each way, while the tally is open":
