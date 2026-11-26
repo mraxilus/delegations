@@ -55,6 +55,7 @@ type
       ## Whole second each bucket counts.
       ##   Bucket that counts none yet is empty value, as IV.4 asks: its zero counts add nothing
       ##     to any pool, whatever second it names, so no mark in range of second stands for it.
+      ##   Rejected: `Option` for each second, which JS backend copies on each read of ring.
 
 
 
