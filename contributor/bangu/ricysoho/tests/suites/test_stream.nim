@@ -1317,8 +1317,9 @@ suite "Internal: Stream":
   test "Amount opens before the sign of its number":
     # `Architect` jdice `D2 a` bu'u `#1003` to le jdini klani cu vasru le namcu toi
     #   .i lo sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` toi
-    let amount = @["lo", "ronru'u", "be", "li", "ni'u", "mu", "be'o", "ku"]
-    let percent = @["lo", "ronru'u", "be", "li", "mu", "ce'i", "be'o", "ku"]
+    let
+      amount = @["lo", "ronru'u", "be", "li", "ni'u", "mu", "be'o", "ku"]
+      percent = @["lo", "ronru'u", "be", "li", "mu", "ce'i", "be'o", "ku"]
     for (text, cmavo) in [
         ("-5€", amount), ("−5€", amount),
         ("mi ponse ~5¥", @["mi", "ponse", "lo", "ponjo", "ja", "jungo", "rupnu", "be", "li", "ji'i",
@@ -1345,7 +1346,8 @@ suite "Internal: Stream":
       checkpoint text
       check text.refusalSigned == some((at, text.character(at)))
     # lo kutle'u cu fendi re namcu
-    check "5€ -5".cmavoRead == some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
+    check "5€ -5".cmavoRead ==
+        some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
 
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
