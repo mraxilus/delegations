@@ -22,6 +22,10 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i `CLL 3.1` na liste le lerfu
   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
   .i denpa bu poi zvati lo jbini be re lerfu cu se tcidu ta'i zo pi mu'u zoi gy. li 3.14 .gy.
+  .i ku'i ro boi denpa bu pe lo porsi poi vasru su'o re boi denpa bu cu se tcidu ta'i zo pi'e mu'u
+      zoi gy. li 192.168.0.1 .gy. to `D5 c` pe `#1003` toi
+  .i le porsi cu vasru lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini be re
+      lerfu
   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu se tcidu ta'i zo ki'o mu'u zoi gy.
       li 1,000 .gy.
   .i ro porsi be lo valsi pe `PA` cu du pa namcu to `CLL 18.6` toi

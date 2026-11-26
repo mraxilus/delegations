@@ -770,6 +770,8 @@ ni'o **lo valsi poi zo zo .a zo lo'u sitna ke'a galfi no da
       `CLL 19.15` .e `CLL 21.1` toi Verified by `suites/test_stream.nim`.
   .i ne'i `CLL 4.9`
 
+## ni'o ni'o ni'o lo lerfu pe lo namcu
+
 ni'o **ro lerfu pe `0` bi'o `9` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo pe
     `PA` poi le lerfu cu sinxa ke'a to `CLL 18.2` toi**
   .i `CLL 3.1` na liste le lerfu
@@ -792,8 +794,8 @@ ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i 
       zoi gy. .5 .gy. Verified by `suites/test_stream.nim`.
   .i le cipra cu tcidu ro selci'a poi zo li lidne ke'a gi'e vasru su'e ze lerfu po'u `1` .a denpa bu
       .a slaka bu .a lo kutle'u
-  .i ro le selci'a cu se tcidu ja'i lo fancu poi ciska le javni gi'e pilno no fancu pe
-      `stream.nim` Verified by `suites/test_stream.nim`.
+  .i ro le selci'a cu se tcidu ja'i lo fancu poi ciska le javni pe `D1 a` .e `D5 c` gi'e pilno no
+      fancu pe `stream.nim` Verified by `suites/test_stream.nim`.
   .i le tricu pe ro le namcu cu du le tricu pe le cmavo Verified by `suites/test_corpus.nim`.
   .i ji'a le mivyselci'a cu tcidu le namcu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi
       cu katna Verified by `suites/test_live.nim`.
@@ -806,7 +808,47 @@ ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i 
   .i de'i `2026-11-20` no cipra cu facki lo selci'a poi rinka lo nu `boundary` .a `byteQuoted` .a
       `isSpelled` .a `stop` pe `live.nim` cu frica le nu pilno `MARKS_BOUNDARY`
 
-ni'o le nu tcidu denpa bu ta'i zo pi cu frica `CLL 3.3` noi cusku lo du'u denpa bu cu sinxa lo denpa
+ni'o **ro boi denpa bu pe lo porsi poi vasru su'o re boi denpa bu cu du pa valsi poi se tcidu ta'i
+    zo pi'e**
+  .i le porsi cu vasru lo lerfu pe `0` bi'o `9` .e denpa bu .e slaka bu poi zvati lo jbini be re
+      lerfu
+  .i `Architect` jdice di'u bu'u `#1003` ta'i `D5 c`
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li pa pi'e re pi'e ci le'u fi zoi gy. li 1.2.3 .gy.
+  .i le genturfa'i cu tcidu lo'u li pa so re pi'e pa xa bi pi'e no pi'e pa le'u fi
+      zoi gy. li 192.168.0.1 .gy. Verified by `suites/test_stream.nim`.
+  .i se ki'u lo nu slaka bu cu pagbu le porsi kei zoi gy. li 1.2,000.3 .gy. cu se tcidu ta'i re boi
+      zo pi'e Verified by `suites/test_stream.nim`.
+  .i pa boi denpa bu po'o cu sinxa zo pi mu'u zoi gy. li 18.10 .gy. ki'u lo nu le lerfu cu jarco no
+      du'u xu kau le namcu cu vasru re pagbu Verified by `suites/test_stream.nim`.
+  .i `CLL 18.10` cusku zoi gy. pi'e PA compound base point .gy.
+  .i ji'a `CLL 18.10` cusku zoi gy. The same mechanism using pi'e can be used to express numbers
+      which have a base larger than 16 .gy.
+  .i lo mupli po'u `CLL 18.74` du lo'u ci pi'e rere pi'e vono le'u
+  .i lo mupli po'u `CLL 18.76` du lo'u li pa pi'e re pi'e ci ju'u reno du li vovoci le'u
+  .i le valsi .e le tricu pe ro le namcu ne'i ro jufra pe `FRAMES_NUMBER` cu du le valsi .e le
+      tricu pe le namcu poi zo pi'e cu se ciska ne'i ke'a Verified by `suites/test_prose.nim`.
+  .i `runDigits` tcidu ro porsi pa roi ca lo nu le pamoi lerfu pe le porsi cu se tcidu
+  .i de'i `2026-11-26` no mupli pe `CLL` .e no clani prosa pe `Wikipedia` .e no jufra pe `Tatoeba`
+      cu vasru lo porsi poi vasru su'o re boi denpa bu
+
+ni'o se to'e cuxna fa lo nu le genturfa'i cu to'e curmi lo porsi poi vasru su'o re boi denpa bu
+  .i ki'u bo lo pagbu be lo cukta .e lo judri pe `IP` cu se ciska ta'i lo porsi poi vasru su'o re
+      boi denpa bu
+  .i ji'a se to'e cuxna fa lo nu ro boi denpa bu pe le porsi cu sinxa zo pi
+  .i ki'u bo `CLL 18.4` cusku zoi gy. However, many combinations are as yet undefined: .gy. pu lo
+      mupli po'u `CLL 18.20` noi du lo'u pa pi re pi ci le'u gi'e se ciska ta'i zoi gy. 1.2.3 .gy.
+
+ni'o jdima fa lo nu zoi gy. 86.000.704 .gy. cu se tcidu ta'i ci pagbu gi'e na se tcidu ta'i
+    li 86,000,704 Verified by `suites/test_stream.nim`.
+  .i `Architect` cpedu lo nu le vi selgu'a cu na tcidu lo tarmi be lo namcu pe la .europas.
+  .i ji'a le genturfa'i cu tcidu zoi gy. 1.2.3 .gy. ta'i lo valsi poi na du le valsi pe lo mupli
+      po'u `CLL 18.20`
+  .i ji'a pa boi denpa bu po'o cu sinxa zo pi gi'e na sinxa zo pi'e
+  .i se ki'u bo lo mupli po'u `CLL 18.79` .e `CLL 18.80` cu nitcu lo nu zo pi'e cu se ciska
+  .i lo mupli po'u `CLL 18.80` du lo'u dei jufra panopi'epapamoi le'u
+
+ni'o le nu tcidu denpa bu ta'i zo pi .a zo pi'e cu frica `CLL 3.3` noi cusku lo du'u denpa bu cu
+    sinxa lo denpa
   .i ku'i `CLL 3.3` cusku zoi gy. A pause (or glottal stop) may appear between any two words .gy.
   .i se ki'u bo lo denpa poi zvati lo jbini be re lerfu cu galfi no namcu
   .i de'i `2026-11-20` no jufra be le 17495 jufra pe le mulvei pe `Tatoeba` cu vasru denpa bu .a
