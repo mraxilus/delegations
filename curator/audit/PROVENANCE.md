@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | ed0a06b0579bbc10 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 30f7b8175167235fc2a49882b8e55661f63bec3e |
+| Pruned  | 8086631753ff33ac5620286ca9d7d9d4bc2f5e7e |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2060,11 +2060,10 @@ patch releases of its series (GUIDE.md, Toolchain), and its bump is its own (CUR
 - In the series of `X.Y.Z`, it asks each patch from `Z + 1` until two in a row are missing. From
   1.6 to 2.4, each series leaves out one patch number at most (HEAD of patches 0 to 24,
   2026-11-26). Cost: a later gap of two would read as the end of the series, and exit 0.
-- It prints each of `X.(Y + 1).0`, `X.(Y + 2).0` and `(X + 1).0.0` that exists as a note that
-  waits on the Architect. It exits 1 where the pin of `curator/audit` lags its series.
-- A search that cannot stand exits 2, as a usage error does. It cannot stand on an unread answer,
-  a pin that the host does not serve, or 50 patches in a row published. Read as missing, it would
-  close the issue for work never done. The longest series, 1.6, ends at 1.6.20.
+- It prints each of `X.(Y + 1).0`, `X.(Y + 2).0` and `(X + 1).0.0` that exists as a note for the
+  Architect. It exits 1 where the pin of `curator/audit` lags its series. A search that fails exits
+  2, so the issue names a lag alone, and exit 0 would close the issue for work never done. An unread
+  answer, a pin that the host lacks, or 50 patches published fails it, though 1.6 ends at 1.6.20.
 - Rejected: the tags of `nim-lang/Nim`, which name a tag and not the tarball of koch. Cost: six
   asks where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
 - Verified by `suites/test_releases.nim` over a fake host, 2026-11-26: each of 32 mutants of
