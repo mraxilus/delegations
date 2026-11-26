@@ -447,18 +447,7 @@ under 0.1 ms in release (Figures).
 
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim` against documented shapes. One live reply of `claude`
-agrees (below).
-
-**One live reply of `claude` reads as its documented shape.** One request under `--record:`
-reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
-`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
-read them back. The replay of that exchange file, with no key and no network, gave the same 14
-gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
-
-Cost: the request went to the default model of `claude` at effort `medium`. It took 56 input
-tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
-each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
-costs $5 for each million tokens. So the request cost about $0.071 at that price.
+agrees (Live replies).
 
 **JSON appears only on the wire of each service, which forces it.** An exchange file holds those
 bytes unchanged. The rule of data keeps JSON on the wire of an outside service that speaks it alone
@@ -511,6 +500,49 @@ next meta. Verified by `suites/test_suggestions.nim`.
 **The tool decodes two groups of labels.** It decodes the UTF-8 group and the windows-1252 group,
 as the WHATWG Encoding Standard names them. A page cut at its cap drops the character that the
 cut split, and never counts it as ill-formed. Verified by `suites/test_suggestions.nim`.
+
+## Live replies
+
+**One live reply of `claude` reads as its documented shape.** One request under `--record:`
+reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
+`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
+read them back. The replay of that exchange file, with no key and no network, gave the same 14
+gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
+
+Cost: the request went to the default model of `claude` at effort `medium`. It took 56 input
+tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
+each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
+costs $5 for each million tokens. So the request cost about $0.071 at that price.
+
+**Sonnet 5.5 at effort `low` keeps most tags of the default, and Haiku 5.5 does not.** On
+2026-11-26, a live grid sent the same 10 texts to each configuration, one request for each. The
+texts are short notes, a recipe, an email, a commit message, a news paragraph, a lojban sentence,
+a poem and a technical paragraph. The tenth is the article of Wikipedia on Alice's Adventures in
+Wonderland, by URL, which the tool cuts at 64 KiB. The default, Opus 5.5 at effort `medium`, gives
+the reference gismu.
+
+| Configuration | Recall of 5 | Recall of 10 | Unrelated gismu | Answers cut short | Cost of 10 |
+|---|---|---|---|---|---|
+| Opus 5.5, `medium` | reference | reference | 0 | 2 | $0.270 |
+| Opus 5.5, `low` | 39 of 40 | 74 of 79 | 0 | 2 | $0.279 |
+| Sonnet 5.5, `low` | 37 of 40 | 64 of 79 | about 5 | 0 | $0.143 |
+| Haiku 5.5, `medium` | 31 of 40 | 49 of 79 | about 22 | 0 | $0.009 |
+| Haiku 5.5, `low` | 23 of 40 | 38 of 79 | about 70 | 0 | $0.008 |
+
+Recall counts each of the first 5 or 10 gismu of the reference that a configuration also gives.
+It reads only the 8 texts where the reference kept 9 gismu or more. An unrelated gismu has no
+sense in its text, as `sanli`, stand, for the paragraph on TCP. The delegate marked each one by
+hand. A cost takes the list price of 2026-11-26 and a cold cache, and the page by URL is about
+half of it.
+
+An answer cut short ends at an element of five letters that is no gismu, such as `samtc` or
+`tevec`. Each looks like the start of a lujvo, and the answer has no element after it. So that
+answer kept 1 to 9 gismu, where the answers not cut short kept 9 to 26 for the same text. Sonnet
+gave no such element in 10 answers, and Haiku none in 20. Verified by hand with
+`binaries/suggester`, each request recorded by `--record:`, on 2026-11-26.
+
+Cost: each configuration has one sample for each text, so the spread of each figure is unmeasured.
+The mark of an unrelated gismu is the judgement of one reader.
 
 ## Transport
 
@@ -1009,7 +1041,9 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   2026-10-28. The record does not name the service of each reply of 401. A run under
   `--record:` into its own directory records one once a key of OpenRouter exists.
 - **The hits of the cache.** No run measured how often a request reads the system text from the
-  cache. The quality of the answers at effort `low` against `medium` is unmeasured too.
+  cache.
+- **The spread of each configuration.** The grid of Suggestion sent one request for each text
+  and configuration. So it does not show how far a second request of the same text can differ.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
