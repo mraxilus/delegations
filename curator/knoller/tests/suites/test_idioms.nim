@@ -130,8 +130,8 @@ suite "Idioms":
     check reported("tests/suites/test_x.nim", debug) == @[
       (
         Rule.OutputDebug,
-        "test leaves no debug output; label report, or print under failing condition; got " &
-          "`echo x`",
+        "test leaves no debug output; got `echo x`; help: label report, or print under " &
+          "failing condition",
       ),
     ]
     check checkIdioms("tests/suites/test_x.nim", debug, nimble = NIMBLE)[0].line == LINES_HEAD + 2

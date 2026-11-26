@@ -7,6 +7,11 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[form, reports]
 
 
+const WIDTH = "; expect `at most 100`; help: break line by hand, or fence block of fixed " &
+  "shape between `#!fix off` and `#!fix on`"
+  ## Value and help that each finding of line width gives after its actual.
+
+
 func fixed(source: string): Fix =
   ## Fix form of Nim source, as `koch fix` does, each line held.
   result.source = source
@@ -15,7 +20,7 @@ func fixed(source: string): Fix =
 
 func messageGap(spaces: int): string =
   ## Render X.9 finding message for gap of given spaces.
-  "trailing comment takes two spaces before its marker; got `" & $spaces & "`"
+  "trailing comment takes two spaces before its marker; got `" & $spaces & "`; expect `2`"
 
 
 func messagesGap(source: string): seq[string] =
@@ -33,7 +38,7 @@ suite "Article X":
   test "X.1 width counts runes, not bytes":
     check findings("é ".repeat(49) & "éé\n").len == 0  # 100 runes pass
     check findings("é ".repeat(49) & "ééé\n") ==
-      @[(Rule.LineWidth, "line exceeds 100 characters; got `101`")]  # 101 runes, breakable
+      @[(Rule.LineWidth, "line exceeds 100 characters; got `101`" & WIDTH)]  # 101 runes
     check findings("é".repeat(101) & "\n").len == 0  # one 101-rune token: no whitespace to break
 
 
@@ -44,7 +49,7 @@ suite "Article X":
     check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
     check findings(link & "\n").len == 0  # URL has no whitespace
     check findings("<p>" & "word ".repeat(40) & "</p>\n") ==
-      @[(Rule.LineWidth, "line exceeds 100 characters; got `207`")]  # prose always breaks
+      @[(Rule.LineWidth, "line exceeds 100 characters; got `207`" & WIDTH)]  # prose breaks
     check findings("<svg>" & "<circle/>".repeat(200) & "</svg>\n").len == 1  # past `TOKEN_MAX`
     check not ("x".repeat(TOKEN_MAX + 1)).isUnbreakable  # machine output, not URL
     check ("x".repeat(TOKEN_MAX)).isUnbreakable  # longest token exemption covers

@@ -230,14 +230,14 @@ suite "Names":
 
   test "V.6 V.3 V.5 V.10 abbreviation, verb, lookup and global findings, and no acronym":
     let found = checkNames("x.nim", SOURCE, []).mapIt((it.rule, it.brief))
-    check (Rule.Abbreviation, "name coins abbreviation; write `directory`; got `dir_hint`") in
+    check (Rule.Abbreviation, "name coins abbreviation; got `dir_hint`; expect `directory`") in
         found  # V.6
-    check (Rule.Abbreviation, "name coins abbreviation; write `temporary`; got `tmp_count`") in
+    check (Rule.Abbreviation, "name coins abbreviation; got `tmp_count`; expect `temporary`") in
         found  # V.6
     for (full, name) in [("buffer", "buf"), ("error", "err"), ("destination", "dest"),
                          ("arguments", "args")]:
-      check (Rule.Abbreviation, "name coins abbreviation; write `" & full & "`; got `" & name &
-        "`") in found  # V.6
+      check (Rule.Abbreviation, "name coins abbreviation; got `" & name & "`; expect `" &
+        full & "`") in found  # V.6
     check (Rule.VerbAction, "action is imperative verb and property is bare noun; got " &
       "`getGrade`") in found  # V.3
     check (Rule.WordGlobal, "global never shares its word with type; got `ALGEBRA`") in
