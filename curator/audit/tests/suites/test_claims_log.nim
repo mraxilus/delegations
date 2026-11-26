@@ -17,7 +17,7 @@ const
   DELEGATE = "s1"  ## `sessionId` of each entry of reflection.
   UUID = "u9"  ## `uuid` of entry of reflection.
   STAMP = "2026-11-20T11:57:03.512Z"  ## `timestamp` of entry of reflection.
-  MODEL = "claude-opus-5-5"  ## Model result of each call names, unless test names other.
+  MODEL = "model-a"  ## Model result of each call names, unless test names other.
   PROJECT = "contributor/bangu/rictadni"  ## Project rows of `BRANCH` belong to.
   BRANCH = "contributor/bangu/rictadni/outside-names"  ## Branch whose log suite writes.
   PREDICTION_REVIEWER = """## Prediction
@@ -168,6 +168,22 @@ proc protoc(verb, input: string): tuple[output: string, code: int] =
   process.close
 
 
+func fieldsMessage(schema, message: string): seq[string] =
+  ## Read name of each field of message of schema text, in order of lines.
+  var is_inside = false
+  for line in schema.splitLines:
+    let row = line.strip
+    if row.startsWith("message " & message & " {"):
+      is_inside = true
+    elif is_inside and row.startsWith("}"):
+      break
+    elif is_inside and row.len > 0 and not row.startsWith("//"):
+      let
+        words = row.split({' ', '='}).filterIt(it.len > 0)
+        at = (if words[0] in ["optional", "repeated"]: 2 else: 1)
+      if words.len > at: result.add words[at]
+
+
 
 suite "Log of claims":
   test "each number of text reads with its groups and decimal part, and nothing around it":
@@ -188,6 +204,10 @@ suite "Log of claims":
     check PREDICTION_REVIEWER.isNumber(number)
     check not PREDICTION_REVIEWER.isNumber("the race leads the findings")
     check not PREDICTION_REVIEWER.isNumber("tokens summed over its requests")
+    let ninety = PREDICTION_REVIEWER.replace("as the 10th, 50th and\n  90th",
+      "as the 5th, 50th and\n  95th")
+    check ninety != PREDICTION_REVIEWER
+    check ninety.isNumber(number)  # 90% coverage, as GUIDE.md writes it (7191274618)
 
 
   test "each row quoting claim of block call took is claim, with its call, marks and figures":
@@ -289,36 +309,105 @@ suite "Log of claims":
     let claim = transcript().claimsRead[0]
     check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
       "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" model: " &
-      "\"claude-opus-5-5\" effort: \"medium\" text: \"the race leads the findings\" " &
+      "\"model-a\" effort: \"medium\" text: \"the race leads the findings\" " &
       "confidence: 0.7 state: STATE_HIT marker: MARKER_DELEGATE tokens: 170000 cost: 1.1 " &
       "address: \"s1/u9/1\" key: \"s1/toolu_reviewer/1/STATE_HIT\" result: " &
       "\"it leads, as \\\"high\\\" | first\" }"
     check Claim(text: "a\\b\n\t\x01").lineClaim ==
-      "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
+        "claims { text: \"a\\\\b\\n\\t\\x01\" marker: MARKER_DELEGATE }"
+    check Claim(text: "a", marker: Marker.Resolver).lineClaim ==
+        "claims { text: \"a\" marker: MARKER_RESOLVER }"
 
 
-  test "protoc reads each line back against schema, field by field, and refuses misspelt field":
+  test "protoc and reader read each line back, field by field, and protoc refuses misspelt field":
+    # `D1 a` of #964 (comment 7189788889): suite holds reader to `protoc` on same rows.
     var claims = transcript().claimsRead
-    claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled)
-    claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit)
-    let (encoded, code) = protoc("--encode", HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join)
+    claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled,
+      marker: Marker.Delegate)
+    claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Delegate)
+    claims.add Claim(text: "b", state: State.Miss, marker: Marker.Resolver)
+    let
+      lines = claims.mapIt(it.lineClaim)
+      (encoded, code) = protoc("--encode", HEADER_LOG & lines.mapIt(it & "\n").join)
     check code == 0
     let (decoded, back) = protoc("--decode", encoded)
     check back == 0
     check decoded.count("claims {") == claims.len
     for field in [  # as `protoc` prints each field it read, by name, from first row and others
       "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
-      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"claude-opus-5-5\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"model-a\"",
       "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
       "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
       "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",
       "result: \"it leads, as \\\"high\\\" | first\"", "low: 100000", "median: 160000",
       "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
       "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
-      "text: \"a\\\\b\\n\\t\\001\"",
+      "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER",
     ]:
       check decoded.splitLines.anyIt(it.strip == field)
+    check lines.mapIt(it.claimLine) == claims  # each field `protoc` printed, as claim holds it
     check protoc("--encode", "claims { dat: \"2026-11-20\" }\n").code != 0  # misspelt field
+
+
+  test "reader reads each row of writer back into same claim, and each row of log in order":
+    var claims = transcript().claimsRead
+    claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled,
+      marker: Marker.Delegate)
+    claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Resolver)
+    claims.add Claim(text: "carriage \r return", state: State.Hit, marker: Marker.Delegate)
+    claims.add Claim(text: "n", state: State.Miss, marker: Marker.Delegate,
+      number: some(Number(low: 0.15, median: 0.45, high: 1.2)))
+    check claims.anyIt(it.number.isSome and it.number.get.outcome.isSome)
+    for claim in claims:
+      check claim.lineClaim.claimLine == claim
+    check claimsLog(HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join & "\n") == claims
+
+
+  test "claim that names no marker reads back as marked by delegate, as its line writes it":
+    check Claim(text: "a").lineClaim.claimLine == Claim(text: "a", marker: Marker.Delegate)
+
+
+  test "reader knows each field of schema, and no field that schema lacks":
+    let schema = readFile(currentSourcePath().parentDir / "../../src/claims.proto")
+    check schema.fieldsMessage("Claim") == @FIELDS_CLAIM
+    check schema.fieldsMessage("Number") == @FIELDS_NUMBER
+
+
+  test "reader refuses row that writer writes no way, and unknown field, value or block":
+    expect ValueError: discard claimLine("rows { text: \"a\" }")
+    expect ValueError: discard claimLine("claims { dat: \"2026-11-20\" }")
+    expect ValueError: discard claimLine("claims { state: STATE_GOOD }")
+    expect ValueError: discard claimLine("claims { text: \"open }")
+    expect ValueError: discard claimLine("claims { result { low: 1 } }")
+    expect ValueError: discard claimLine("claims { number { mean: 1 } }")
+    expect ValueError: discard claimLine("claims { } text: \"a\" }")  # text after closing brace
+    expect ValueError: discard claimLine("claims { number { number { low: 1 } } }")  # in block
+    expect ValueError: discard claimLine("claims { text \"a\" }")  # no colon after name
+    # Rows whose one fault is block in block, and name with no colon, so no other check refuses
+    #   them: each reads as claim where its check is gone.
+    expect ValueError: discard claimLine("claims { number { number { low: 1 } }")
+    expect ValueError: discard claimLine("claims { confidence 0.7 }")
+    expect ValueError: discard claimLine("claims { text: \"\\x\" }")  # escape cut short
+    expect ValueError: discard claimLine("claims { text: \"\\x0\" }")
+
+
+  test "tree joins rows of each log it holds, by order of path, and reads no other file":
+    let
+      root = createTempDir("claims_", "_tree")
+      claims = transcript().claimsRead
+      project = root / PROJECT / FILE_LOG
+      curator = root / PATH_LOG_CURATOR
+    check execCmdEx("git init -q", workingDir = root).exitCode == 0
+    check root.claimsTree.len == 0  # no log yet
+    createDir(project.parentDir)
+    createDir(curator.parentDir)
+    writeFile(curator, HEADER_LOG & claims[0].lineClaim & "\n")
+    writeFile(project, HEADER_LOG & claims[1 .. ^1].mapIt(it.lineClaim & "\n").join)
+    writeFile(root / "curator/other.txtpb", "rows { text: \"none\" }\n")
+    check root.claimsTree == claims[1 .. ^1] & claims[0..0]  # `contributor/` sorts first
+    writeFile(curator, HEADER_LOG & "claims { text: \"open }\n")
+    expect ValueError: discard root.claimsTree
+    removeDir(root)
 
 
   test "driver of audit declares `protoc` that suite reads log with":
