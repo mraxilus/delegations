@@ -276,7 +276,7 @@ const
     ##   ignores.
   ENCODED_EXAMPLE = gorgeEx("mkdir -p " & quoteShell(PATH_EXAMPLE_ENCODED.parentDir) &
       " && protoc --proto_path=" & quoteShell(PATH_EXAMPLE.parentDir) &
-      " --encode=lojban_tagger.Exchange " &
+      " --encode=rictadni.Exchange " &
       quoteShell(PATH_EXAMPLE.parentDir / "exchanges.proto") & " < " & quoteShell(PATH_EXAMPLE) &
       " > " & quoteShell(PATH_EXAMPLE_ENCODED))
     ## Output and exit code of `protoc --encode` of worked example, run at compile time, as STYLE.md
@@ -564,7 +564,7 @@ func problemChecksum(named, held: uint32): string =
 
 func problemMessage(error: string): string =
   ## Build problem reader gives for message decoder refuses, naming its error.
-  "Message should decode as `lojban_tagger.Exchange`; got `" & error & "`."
+  "Message should decode as `rictadni.Exchange`; got `" & error & "`."
 
 
 func problemLabel(label: string): string =

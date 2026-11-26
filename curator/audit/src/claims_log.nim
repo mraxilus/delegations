@@ -21,10 +21,12 @@
 ##   Text format is written here, one row to line, as exception to CONTRIBUTOR.md, Data, that
 ##     Architect ruled on #989 (comment 7053329096); suite reads it back through `protoc`, which
 ##     refuses misspelt field.
+##   Text format is read here too, by `claimLine`, as `D1 a` of #964 rules (comment 7189788889):
+##     each field by name, each escape of `quotedText` undone, and unknown field refused.
 ##
 ##   Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as
 ##     Data asks: first dependency of audit and `protoc` at each stop of each delegate, and row
-##     of 17 lines, which `union` joins no longer.
+##     of 14 lines, which `union` joins into one block that `protoc` refuses.
 ##   Rejected: tokens summed from transcript of subagent: cost would need price of each model in
 ##     code, and reflection states both.
 ##   Cost: one claim in blocks of several calls of one kind takes latest such call alone.
@@ -32,18 +34,23 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, sets, strutils, tables]
-import ./[domains, hooks]
+import std/[options, os, sequtils, sets, strformat, strutils, tables]
+import ./[domains, hooks, tree]
 
 
 type
   State* {.pure.} = enum  ## Define state of claim, in order of enum `State` of `claims.proto`.
     Unspecified, Hit, Miss, Annulled, Waiting
 
+  Marker* {.pure.} = enum  ## Define who marked state, in order of enum `Marker` of `claims.proto`.
+    Unspecified  ## No marker named; line writes delegate, as each row of `stop` is.
+    Delegate  ## Delegate, in table of its reflection.
+    Resolver  ## Resolver, in table of its report.
+
   Number* = object  ## Define number claim: its percentiles, and value its result gives.
-    low*: float  ## 10th percentile.
+    low*: float  ## Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
     median*: float  ## 50th percentile.
-    high*: float  ## 90th percentile.
+    high*: float  ## Highest percentile: 95th at confidence 0.9, 90th at 0.8.
     outcome*: Option[float]  ## First number of cell under `Result`; none where cell holds none.
 
   Claim* = object  ## Define one row of log: message `Claim` of `claims.proto`.
@@ -57,6 +64,7 @@ type
     text*: string  ## Claim, as cell under `Predicted` quotes it.
     confidence*: float  ## Percentage of cell under `Confidence`, as fraction.
     state*: State  ## Marker opening cell under `State`.
+    marker*: Marker  ## Who marked state; delegate where none is named.
     tokens*: int  ## Tokens line of reflection gives for call.
     cost*: float  ## Dollars line of reflection gives for call.
     address*: string  ## Delegate, `uuid` of entry of reflection, and row from 1, by `/`.
@@ -64,6 +72,9 @@ type
     number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
     result*: string  ## Cell under `Result`.
 
+  Cursor = object  ## Define place that reader of row has reached in its line.
+    line: string  ## Line of row.
+    at: int  ## Index of next character to read.
 
 const
   FILE_LOG* = "claims.txtpb"  ## Log of each project, beside its record (#964).
@@ -79,6 +90,15 @@ const
     ## Comment new log opens with, which names its schema.
   FIELD_LOG = "claims"  ## Field of `Log` each row fills.
   FIELD_KEY = "key: \""  ## Opening of key of row, as `lineClaim` writes it.
+  FIELD_NUMBER = "number"  ## Field of `Claim` that holds message `Number`.
+  FIELDS_CLAIM* = ["date", "delegate", "project", "kind", "call", "model", "effort", "text",
+    "confidence", "state", "marker", "tokens", "cost", "address", "key", FIELD_NUMBER, "result"]
+    ## Fields of message `Claim` of `claims.proto` that reader of row knows.
+  FIELDS_NUMBER* = ["low", "median", "high", "outcome"]
+    ## Fields of message `Number` of `claims.proto` that reader of row knows.
+  OPENING_ROW = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
+  CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
+  MARK_COMMENT = '#'  ## Mark that opens comment line of log, as header of log does.
   COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
     ## Columns of table of reflection, in order of their cells in `rowsTable`.
   MARKERS_STATE = [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
@@ -87,7 +107,8 @@ const
   NAMES_STATE: array[State, string] =
     ["STATE_UNSPECIFIED", "STATE_HIT", "STATE_MISS", "STATE_ANNULLED", "STATE_WAITING"]
     ## Name of each value of enum `State` of `claims.proto`.
-  MARKER_DELEGATE = "MARKER_DELEGATE"  ## Value of `Marker` of row table of delegate gives.
+  NAMES_MARKER: array[Marker, string] = ["MARKER_UNSPECIFIED", "MARKER_DELEGATE", "MARKER_RESOLVER"]
+    ## Name of each value of enum `Marker` of `claims.proto`.
   LABELS_CRITIC = ["**critic:**", "**critic**:"]
     ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
   WORD_TOKENS = " tokens"  ## Word after count of tokens, as line of reflection writes it.
@@ -240,6 +261,7 @@ func claimsTurn*(
         text: quoted,
         confidence: row[1].confidenceCell,
         state: state,
+        marker: Marker.Delegate,
         tokens: figures.tokens,
         cost: figures.cost,
         address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
@@ -293,7 +315,8 @@ func lineClaim*(claim: Claim): string =
   if claim.text.len > 0: put "text", claim.text.quotedText
   if claim.confidence != 0: put "confidence", $claim.confidence
   if claim.state != State.Unspecified: put "state", NAMES_STATE[claim.state]
-  put "marker", MARKER_DELEGATE
+  let marker = (if claim.marker == Marker.Unspecified: Marker.Delegate else: claim.marker)
+  put "marker", NAMES_MARKER[marker]
   if claim.tokens != 0: put "tokens", $claim.tokens
   if claim.cost != 0: put "cost", $claim.cost
   if claim.address.len > 0: put "address", claim.address.quotedText
@@ -302,9 +325,122 @@ func lineClaim*(claim: Claim): string =
     let number = claim.number.get
     var inside = @["low: " & $number.low, "median: " & $number.median, "high: " & $number.high]
     if number.outcome.isSome: inside.add "outcome: " & $number.outcome.get
-    fields.add "number { " & inside.join(" ") & " }"
+    fields.add FIELD_NUMBER & " { " & inside.join(" ") & " }"
   if claim.result.len > 0: put "result", claim.result.quotedText
   FIELD_LOG & " { " & fields.join(" ") & " }"
+
+
+func skipSpaces(cursor: var Cursor) =
+  ## Move cursor past each space.
+  while cursor.at < cursor.line.len and cursor.line[cursor.at] == ' ': inc cursor.at
+
+
+func word(cursor: var Cursor): string =
+  ## Read run of characters up to space, colon, brace or quote.
+  while cursor.at < cursor.line.len and cursor.line[cursor.at] notin {' ', ':', '{', '}', '"'}:
+    result.add cursor.line[cursor.at]
+    inc cursor.at
+
+
+func quoted(cursor: var Cursor): string =
+  ## Read quoted text from its opening quote, undoing each escape that `quotedText` writes.
+  inc cursor.at
+  while cursor.at < cursor.line.len and cursor.line[cursor.at] != '"':
+    if cursor.line[cursor.at] == '\\' and cursor.at + 1 < cursor.line.len:
+      inc cursor.at
+      case cursor.line[cursor.at]
+      of 'n': result.add '\n'
+      of 'r': result.add '\r'
+      of 't': result.add '\t'
+      of 'x':  # Slice stays inside line: short escape fails in `parseHexInt`, or at closing quote.
+        result.add char(parseHexInt(cursor.line.substr(cursor.at + 1, cursor.at + 2)))
+        cursor.at += 2
+      else: result.add cursor.line[cursor.at]
+    else: result.add cursor.line[cursor.at]
+    inc cursor.at
+  if cursor.at >= cursor.line.len:
+    raise newException(ValueError, &"Quoted text of row has no closing quote; got `{cursor.line}`.")
+  inc cursor.at
+
+
+func valueName[E: enum](names: array[E, string], value: string): E =
+  ## Value of enum whose name of `claims.proto` is value; `ValueError` where none is.
+  for member, name in names:
+    if name == value: return member
+  raise newException(ValueError, &"Row of log holds no known value of enum; got `{value}`.")
+
+
+func claimLine*(line: string): Claim =
+  ## Read claim of one row that `lineClaim` writes, each field by its name; `ValueError` for row
+  ##   that opens or closes otherwise, holds text after its closing brace, or holds unknown field
+  ##   or value.
+  if not (line.startsWith(OPENING_ROW) and line.endsWith(CLOSING_ROW)):
+    raise newException(ValueError, &"Row of log is no row of `lineClaim`; got `{line}`.")
+  var
+    cursor = Cursor(line: line, at: OPENING_ROW.len)
+    number = Number()
+    is_number = false
+  while true:
+    cursor.skipSpaces
+    if cursor.at >= line.len:
+      raise newException(ValueError, &"Row of log ends inside field; got `{line}`.")
+    if line[cursor.at] == '}':
+      inc cursor.at
+      if not is_number: break
+      is_number = false
+      result.number = some(number)
+      continue
+    let name = cursor.word
+    cursor.skipSpaces
+    if cursor.at < line.len and line[cursor.at] == '{':
+      if name != FIELD_NUMBER or is_number:
+        raise newException(ValueError, &"Row of log opens block of no known field; got `{name}`.")
+      is_number = true
+      inc cursor.at
+      continue
+    if cursor.at >= line.len or line[cursor.at] != ':':
+      raise newException(ValueError, &"Field of row has no colon after its name; got `{name}`.")
+    inc cursor.at
+    cursor.skipSpaces
+    let value = (if cursor.at < line.len and line[cursor.at] == '"': cursor.quoted
+      else: cursor.word)
+    if is_number:
+      case name
+      of "low": number.low = value.parseFloat
+      of "median": number.median = value.parseFloat
+      of "high": number.high = value.parseFloat
+      of "outcome": number.outcome = some(value.parseFloat)
+      else: raise newException(ValueError, &"Number of row holds unknown field; got `{name}`.")
+      continue
+    case name
+    of "date": result.date = value
+    of "delegate": result.delegate = value
+    of "project": result.project = value
+    of "kind": result.kind = value
+    of "call": result.call = value
+    of "model": result.model = value
+    of "effort": result.effort = value
+    of "text": result.text = value
+    of "confidence": result.confidence = value.parseFloat
+    of "state": result.state = NAMES_STATE.valueName(value)
+    of "marker": result.marker = NAMES_MARKER.valueName(value)
+    of "tokens": result.tokens = value.parseInt
+    of "cost": result.cost = value.parseFloat
+    of "address": result.address = value
+    of "key": result.key = value
+    of "result": result.result = value
+    else: raise newException(ValueError, &"Row of log holds unknown field; got `{name}`.")
+  if cursor.at != line.len:
+    raise newException(ValueError, &"Row of log holds text after its closing brace; got `{line}`.")
+
+
+func claimsLog*(text: string): seq[Claim] =
+  ## Read claim of each row of log text, in order; blank line and comment line, as header of
+  ##   log, read as none.
+  for line in text.splitLines:
+    let row = line.strip
+    if row.len == 0 or row[0] == MARK_COMMENT: continue
+    result.add row.claimLine
 
 
 func keysIn*(text: string): HashSet[string] =
@@ -334,6 +470,13 @@ func projectBranch*(branch: string): string =
   ##   since root curator alone keeps checkout outside it (CURATOR.md, Branch and commits).
   let parsed = branch.parseBranch
   if parsed.isSome: parsed.get.nameRole else: CURATOR
+
+
+proc claimsTree*(root: string): seq[Claim] =
+  ## Read claim of each row of each log of claims that tree holds, in order of its path
+  ##   (`listPaths`), so figures join log of each project (#964).
+  for path in root.listPaths:
+    if path.extractFilename == FILE_LOG: result.add readFile(root / path).claimsLog
 
 
 proc pathWaiting*(): string =

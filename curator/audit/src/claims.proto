@@ -24,7 +24,7 @@ message Claim {
   string project = 3;  // Role of branch that writes row, as `curator/audit`; `curator` outside it.
   string kind = 4;  // Kind of subagent, as `reviewer`.
   string call = 5;  // Id of tool use of call that claim takes.
-  string model = 6;  // Model harness ran subagent on, as `claude-opus-5-5`.
+  string model = 6;  // Model harness ran subagent on, as `resolvedModel` of its result names it.
   string effort = 7;  // Effort of call, else of template of its kind, as `high`.
   string text = 8;  // Claim, as cell under `Predicted` quotes it.
   double confidence = 9;  // Confidence of claim, from 0.51 to 0.98; 0.8 for number.
@@ -40,9 +40,9 @@ message Claim {
 
 // Define number claim: its three percentiles, and value its result gives.
 message Number {
-  double low = 1;  // 10th percentile.
+  double low = 1;  // Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
   double median = 2;  // 50th percentile.
-  double high = 3;  // 90th percentile.
+  double high = 3;  // Highest percentile: 95th at confidence 0.9, 90th at 0.8.
   optional double outcome = 4;  // First number of cell under `Result`; absent where none.
 }
 
