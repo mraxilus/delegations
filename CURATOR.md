@@ -238,6 +238,12 @@ and the shared allowance. This section adds only what differs for a curator.
    disagrees. So bump the pin and every workflow together, with `nim r koch check` on the new
    version.
 
+   The `nim` workflow keeps an issue open while the pin of `curator/audit` lags a release of its
+   series. While it is open, move the curator pins and `NIM_VERSION` of each workflow together,
+   to the release that it names. The next run after the merge closes the issue. Each contributor
+   project then reads its lag in `koch check`, and moves its own pin as `GUIDE.md`, Toolchain,
+   asks.
+
    `curator/knoller` pins the same version, because the checker imports it by path, and
    `toolchain.nim` fails the audit where it disagrees. A sibling imported by path is not a
    package, so it needs no lock. Its pin moves with the pin of `curator/audit`.
