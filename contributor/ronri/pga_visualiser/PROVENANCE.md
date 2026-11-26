@@ -2339,8 +2339,7 @@ held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
-- a line reaches its distance from the eye, and one through the eye or square behind it reaches
-  nothing;
+- a line reaches its distance from the eye and one through or square behind the eye reaches nothing;
 - 200 seeded lines reach their distance from the eye, with no sample in frame under the near clip;
 - a line alone beside the eye stays within half a pixel of its whole image, the pivot 19 to 4.7
   million units off.
@@ -3281,8 +3280,7 @@ support. So `OFFSET_MARKER_RAIL` means **the widest that the pair may read anywh
 measures one rail against the other at every drawn end (`apartWidest`), and narrows the world offset
 until the widest reading meets the ceiling. Three traps are live here:
 
-- **Settle, do not solve** (`PASSES_MARKER_RAIL` 4): narrowing moves where each rail leaves the
-  view.
+- **Settle, do not solve** (`PASSES_MARKER_RAIL` 4): narrowing moves where each rail exits the view.
 - **Settle against the finished rail, then draw at the progress asked for**, or the gap widens as a
   touch hold fills.
 - **Measure one rail against the other, and not either against the line between them.**
@@ -3809,8 +3807,7 @@ lifts, so a third finger lifting back to two takes no old grip.
 
 *Checked.* Verified by `suites.nim`:
 
-- two fingers on points at two depths hold both within 0.05 px, through a spread, a slide and a
-  twist;
+- two fingers on points at two depths hold both within 0.05 px through a spread, slide and twist;
 - the slop there costs its own share of the gap and the angle, and no more;
 - two fingers carried together, wobbling 10 px and 0.15 inside the slop, slide, and neither zoom nor
   roll;
@@ -3840,10 +3837,8 @@ Verified by driven checks, in Chromium on 2026-10-08:
   pivot at 19.000;
 - a spread and a slide on empty sky came 10.819 in, turned nothing, and drew the distance to the
   pivot from 19.000 to 7.707;
-- two fingers carried together, wobbling inside the slop, slid 2.288, came 5.0e-6 in and turned
-  1.6e-7;
-- a twist of 0.300 on empty sky about the middle turned the picture 0.0900, and moved the eye
-  5.9e-6;
+- two fingers carried together, wobbling in the slop, slid 2.288, came 5.0e-6 in and turned 1.6e-7;
+- a twist of 0.300 on empty sky about the middle turned the picture 0.0900 and moved the eye 5.9e-6;
 - four pinches in with nothing selected zoomed out by 3.25, 3.70, 3.83 and 3.87;
 - with `o` selected, the pivot moved 2.2e-14 as the distance to it came from 19.000 to 13.763;
 - with `o` selected, four pinches in zoomed out by 3.10 to 3.28;
@@ -4254,6 +4249,12 @@ Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The deskt
 `nimFormatNumber`: a decimal exponent by `log10`, scaled digits, and **half-to-even** rounding. C
 rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`. Under
 1e-305 the value scales by 1e308 first, since 10^309 is infinite.
+
+**A product near a tie reads its side off exact digits.** There `format.roundedExact` writes each
+decimal digit of the value, up to 767, and rounds half to even as C does. Each value outside a band
+of 2^-40 keeps the fast path. Rejected: products of doubled precision, whose bound rests on a proof
+that no test holds. Verified by a probe that is not kept, on 2026-11-26: 16,956,000 values at and
+beside each tie read as C reads them. The suite seeds ties at each seventh decade.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
@@ -4995,6 +4996,5 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
   (Origins, Classification at any scale).
-- Near a tie of four digits, the page can round a magnitude otherwise than C does (issue 1053).
 
 [replications]: https://gitlab.com/mraxilus/replications
