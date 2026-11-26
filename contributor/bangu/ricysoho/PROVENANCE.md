@@ -930,9 +930,16 @@ ni'o **lo jdini sinxa poi pencu no namcu .a re namcu cu se to'e curmi ta'i `Sign
 ni'o **zoi gy. + .gy. sinxa zo ma'u
   .i zoi gy. - .gy. .e zoi gy. − .gy. cu sinxa zo ni'u
   .i zoi gy. ~ .gy. sinxa zo ji'i
-  .i le sinxa cu se tcidu va'o lo nu lo lerfu pe `0` bi'o `9` cu se lidne le sinxa kei .e lo nu
+  .i le sinxa cu se tcidu va'o lo nu le ralju pagbu be le namcu cu se lidne le sinxa kei .e lo nu
       no lerfu pe `0` bi'o `9` cu lidne le sinxa**
-  .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+  .i le ralju pagbu cu cfari ta'i lo lerfu pe `0` bi'o `9` .a zoi gy. π .gy. .a zoi gy. ∞ .gy. .a
+      zoi gy. ½ .gy.
+  .i ji'a pa jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le ralju pagbu
+  .i `Architect` jdice le valsi .e le lerfu pe `0` bi'o `9` poi se lidne le sinxa bu'u `#1003` ta'i
+      `D4 b`
+  .i `Architect` jdice le drata sinxa poi se lidne le sinxa bu'u `#1003` ta'i `D7 c`
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li ni'u ci'i le'u fi zoi gy. li -∞ .gy.
+      Verified by `suites/test_stream.nim`.
   .i `CLL 18.3` cusku zoi gy. Grammatically, the signs are part of the number to which they are
       attached .gy.
   .i `CLL 18.9` cusku lo du'u zo ji'i poi krasi lo namcu cu sinxa lo du'u ro le namcu cu jibni
@@ -956,10 +963,11 @@ ni'o **zoi gy. % .gy. sinxa zo ce'i
 ni'o **zoi gy. π .gy. sinxa zo pai
   .i zoi gy. ∞ .gy. sinxa zo ci'i
   .i zoi gy. ½ .gy. sinxa lo'u pa fi'u re le'u
-  .i le sinxa cu se tcidu va'o lo nu no lerfu pe `0` bi'o `9` .e no sinxa cu pencu le sinxa**
+  .i le sinxa cu se tcidu va'o lo nu no lerfu pe `0` bi'o `9` cu pencu le sinxa kei .e lo nu ro
+      sinxa poi pencu le sinxa cu pagbu le namcu .a le jdini klani**
   .i le genturfa'i cu tcidu lo'u li pa fi'u re le'u fi zoi gy. li ½ .gy.
       Verified by `suites/test_stream.nim`.
-  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b` gi'e jdice le stuzi ta'i `D6 b`
+  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b` gi'e jdice le stuzi ta'i `D6 b` .e `D7 c`
   .i lo mupli po'u `CLL 18.18` du zo pai
   .i lo mupli po'u `CLL 18.15` du lo'u ma'u ci'i le'u
   .i lo mupli po'u `CLL 18.7` du lo'u re fi'u ze le'u
@@ -1010,19 +1018,39 @@ ni'o **lo jdini klani cu vasru ro sinxa pe le namcu**
       zoi gy. -5€ .gy. Verified by `suites/test_stream.nim`.
   .i se to'e cuxna fa lo nu lo valsi pe le jdini klani cu lidne le pamoi lerfu pe `0` bi'o `9`
   .i ki'u bo da'i zo ni'u cu klani le jdini klani
-  .i le jdini sinxa cu pencu lo lerfu pe `0` bi'o `9` to `D3 a` toi
-  .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. €-5 .gy. .e zoi gy. -€5 .gy. .e
-      zoi gy. 5%€ .gy. Verified by `suites/test_stream.nim`.
-  .i `Architect` na jdice lo nu lo sinxa cu pencu lo drata sinxa to `D7` pe `#1003` toi
+  .i lo jdini sinxa cu pencu pa namcu va'o lo nu pencu lo lerfu .a lo sinxa pe le namcu
+  .i `Architect` jdice di'u bu'u `#1003` ta'i `D3 a` .e `D7 c`
+  .i se ki'u bo le genturfa'i cu tcidu lo'u lo rupnu be li ni'u mu be'o ku le'u fi zoi gy. $-5 .gy.
+      .e zoi gy. -$5 .gy. Verified by `suites/test_stream.nim`.
+  .i ji'a zoi gy. 5%€ .gy. .e zoi gy. €½ .gy. cu sinxa lo jdini klani
+      Verified by `suites/test_stream.nim`.
+  .i ne'i zoi gy. -€5 .gy. le jdini klani cu cfari pu zo ni'u
+  .i ro stuzi pe le jdini sinxa cu zvati no valsi Verified by `suites/test_stream.nim`.
+  .i lo jdini sinxa poi pencu re namcu cu se to'e curmi to `D3 a` toi
+  .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e
+      zoi gy. €5%€5 .gy. Verified by `suites/test_stream.nim`.
+  .i de'i `2026-11-26` `grep -P` cu facki no sinxa poi pencu lo drata sinxa pe pa namcu ne'i le
+      vreji pe `Tatoeba` .e `tests/cll` .e `tests/articles_wikipedia` .e `tests/sample_tatoeba`
+
+ni'o se to'e cuxna fa lo nu lo sinxa poi pencu lo drata sinxa cu se to'e curmi ki'u lo nu
+    zoi gy. -∞ .gy. cu ciska pa namcu to `D7 a` toi
+  .i ji'a se to'e cuxna fa lo nu lo jdini sinxa cu pencu lo lerfu po'o ki'u lo nu zoi gy. -$5 .gy.
+      cu ciska pa jdini klani to `D7 b` toi
+
+ni'o jdima fa lo nu le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. noi pu se tcidu
+  .i ku'i lo kutle'u cu fendi re namcu
+  .i se ki'u bo zoi gy. 5€ -5 .gy. cu se tcidu ta'i lo jdini klani .e lo'u ni'u mu le'u
+      Verified by `suites/test_stream.nim`.
 
 ni'o **le cipra cu tcidu ro selci'a poi vasru su'e mu pagbu po'u `1` .a `a` .a lo kutle'u .a
     zoi gy. - .gy. .a zoi gy. − .gy. .a zoi gy. % .gy. .a zoi gy. π .gy. .a zoi gy. ½ .gy. .a
     zoi gy. € .gy.**
   .i ro le selci'a cu se tcidu ja'i lo fancu poi ciska le javni gi'e pilno no fancu pe
       `stream.nim` Verified by `suites/test_stream.nim`.
-  .i ne'i ro jufra pe `FRAMES_NUMBER` le tricu pe ro sinxa cu du le tricu pe le valsi poi se ciska
-  .i ji'a ne'i ro jufra pe `FRAMES_PROSE` le tricu pe ro jdini klani poi vasru lo sinxa pe
-      `LUT_CMAVO_BY_PREFIX` cu du le tricu pe le valsi poi se ciska
+  .i ne'i ro jufra pe `FRAMES_NUMBER` le valsi .e le tricu pe ro sinxa cu du le valsi .e le tricu
+      pe le valsi poi se ciska
+  .i ji'a ne'i ro jufra pe `FRAMES_PROSE` le valsi .e le tricu pe ro jdini klani poi vasru lo sinxa
+      pe le namcu cu du le valsi .e le tricu pe le valsi poi se ciska
       Verified by `suites/test_prose.nim`.
   .i ji'a le mivyselci'a cu tcidu le sinxa ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso
       stuzi cu katna Verified by `suites/test_live.nim`.
@@ -4890,7 +4918,3 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
-- ny.mai **lo sinxa pe lo namcu poi pencu lo drata sinxa**
-  .i le genturfa'i cu to'e curmi zoi gy. -∞ .gy. .e zoi gy. -$5 .gy. .e zoi gy. $½ .gy.
-      Verified by `suites/test_stream.nim`.
-  .i `D7` pe `#1003` cu denpa lo nu `Architect` cu jdice
