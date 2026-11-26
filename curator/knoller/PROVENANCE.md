@@ -340,8 +340,8 @@ static pass of `curator/audit` reads, on every line. So a finding that no fixer 
 **The command line fixes each file on a pool of threads, one for each core (`pools.nim`).** The
 fix of a file reads its own file and what the run read, and nothing that the fix of another file
 writes. At `2d496af8`, one file waits for the one before it, and `koch fix` runs the same loop.
-There the fixes of all files take 26.6 s of the 65.0 s of `koch fix --dry-run curator/knoller`,
-while three of the four cores wait (the profile on #1001).
+There the fixes of all files take 26.6 s of the 65.0 s of `koch fix --dry-run curator/knoller`.
+Meanwhile three of the four cores wait (the profile on #1001).
 
 - `outcomeProven` gives each file to a thread of the pool, and each file that asked the parser
   again, after its batch answers. The parts keep the order of the files, as one loop gives them.

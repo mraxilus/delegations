@@ -3331,7 +3331,7 @@ of knoller, under Content fixes.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
   once held. So each round fixes again only the entries that asked, and the scope check reads all
   parts joined. The first fix and each round run on the pool of knoller, as its command line does
-  (`## Command line` of knoller), and the parts keep the order of the entries.
+  (`## Command line` of knoller). The parts keep the order of the entries.
 - Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
   pin, the group that the parser refuses stays, and a second fix writes nothing. `fixProven` gives
   what a loop that fixes every entry again in each round gives (`fixEvery`).
