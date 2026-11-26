@@ -74,8 +74,8 @@ returns `Multivector1`.
   prints that type with its bases.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it.
-- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.7 MiB against 210.5 MiB at pin.
-  At cga6d it takes 13.26 s against 13.11 s, so ×1.01.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.4 MiB against 210.2 MiB at pin.
+  At cga6d it takes 14.68 s against 15.70 s, so ×0.94.
 - **Sum at rga4d.** In the bench, `+` of whole multivectors reads ×1.02 of pin at rga4d, about
   0.09 ns. Its loop holds the same 8 vector sums as the code of pin, and takes them in turn on
   three registers. The cause of the 0.09 ns is not isolated.
@@ -113,12 +113,14 @@ on Node. With the change, no operation adds one at rga3d, rga4d, cga4d and cga5d
 136, 171, 171 and 210 operations. At pin it fails at each of those algebras on `Multivector +`,
 one copy for each call, and on no other operation.
 
-Its evaluation of 2026-11-19 finds three functions moved at each algebra: `+`, `-` and negation
-of whole multivectors. Each loops over the one run of the whole set, in 127 to 178 lines of C at
-rga4d against 132 to 183 at pin. There `+` zeroes no byte before it writes and moves 384 bytes,
-where pin zeroes 128 and moves 512. At rga4d negation and difference read ×1.00 of pin, `+` reads
-×1.02, and the other 108 measurands read ×0.99 to ×1.01. At cga5d the three read ×1.00, and the
-other 132 measurands read ×0.98 to ×1.00.
+Its evaluation of 2026-11-26 finds three functions moved at each algebra: `+`, `-` and negation
+of whole multivectors. Each loops over the one run of the whole set, in 25 lines of C at rga4d
+against 26 to 30 at pin. There `+` zeroes no byte before it writes and moves 384 bytes, where pin
+zeroes 128 and moves 512. At rga4d negation and difference read ×1.00 of pin, `+` reads ×1.02, and
+the other 108 measurands read ×1.00 to ×1.01. At cga5d the three read ×1.00, and the other 132
+measurands read ×0.99 to ×1.02. At rga3d `+` reads ×1.01, the other two ×1.00, and the other 85
+measurands ×1.00 to ×1.01. At cga4d `+` reads ×1.02, negation ×1.01 and difference ×1.00, and the
+other 114 measurands ×0.97 to ×1.03.
 
 One line for each basis costs time in two ways, which a loop for each run avoids. In the timed loop
 at cga5d, the compiler loads all 16 vectors of a negation before it stores any, and keeps the sign
@@ -127,9 +129,10 @@ boundary that the optimiser cannot see through, each line compiles to scalar cod
 of pin and the loop for each run compile to vector code. A check that the result and the operand
 do not overlap guards that code.
 
-Runs by hand on 2026-11-19 give these medians of paired ratios against pin. They ran on
-`linux amd64, 4 cores`, a Xeon of family 6 model 207, with Nim `14991af`, gcc 13.3.0 and
-`-d:release`. Each bench take is 41 alternating runs, and each take alone is 21.
+Runs by hand on 2026-11-19, at library commit `3d9696e`, give these medians of paired ratios
+against that commit. They ran on `linux amd64, 4 cores`, a Xeon of family 6 model 207, with Nim
+`14991af`, gcc 13.3.0 and `-d:release`. Each bench take is 41 alternating runs, and each take
+alone is 21.
 
 | Measure | Algebra | One line for each basis | Loop for each run |
 |---------|---------|------------------------:|------------------:|
@@ -140,5 +143,6 @@ Runs by hand on 2026-11-19 give these medians of paired ratios against pin. They
 | Negation alone | rga4d | ×1.27, ×1.27 | ×1.00, ×1.00 |
 | Sum and difference alone | rga4d | ×1.20, ×1.20 | ×1.00, ×1.00 |
 
-The same line for each basis read ×1.13 of pin for negation at cga5d on 2026-11-15, on a host of the
-same model. So the size of the cost of the spill varies with the host, and the spill does not.
+The same line for each basis read ×1.13 of pin `3d9696e` for negation at cga5d on 2026-11-15, on a
+host of the same model. So the size of the cost of the spill varies with the host, and the spill
+does not.

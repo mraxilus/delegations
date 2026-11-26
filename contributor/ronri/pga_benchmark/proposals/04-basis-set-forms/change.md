@@ -33,9 +33,10 @@ P14. Every edit quotes text of pin as P14 leaves it.
 #[ Type Definition ]#
 
 type
-  Bases* = set[Basis]  ## TODO: Make distinct.
-  MultivectorOf*[B: static Bases] = object
-    elements: array[B.card, Coefficient]
+  # TODO: Make distinct.
+  Bases* = set[Basis]  ## TODO: Document.
+  MultivectorOf*[B: static Bases] = object  ## TODO: Document.
+    elements: array[B.card, Coefficient]  ## TODO: Document.
 ```
 
 ```nim
@@ -52,7 +53,8 @@ func alignment(count: int): int =
 
 
 type
-  Bases* = set[Basis]  ## TODO: Make distinct.
+  # TODO: Make distinct.
+  Bases* = set[Basis]  ## TODO: Document.
   MultivectorOf*[B: static Bases] = object
     ## Align to `alignment` of count through `when`, as Nim rejects `align` of `B`.
     ##   Count reads `Bases(B).card`: bare `B.card` of `{}` crashes compiler (firstOrd(tyEmpty)).
@@ -122,14 +124,14 @@ func convertByBasis[A, B: static Bases](m: MultivectorOf[A]): MultivectorOf[B] {
 
 ```nim
 func toMultivector*[B: static Bases](m: MultivectorOf[B]): Multivector {.inline.} =
-  ## TODO: Define via macro.
+  ## TODO: Document.
   for b in B:
     result[b] = m[b]
 ```
 
 ```nim
 func toMultivector*[B: static Bases](m: MultivectorOf[B]): Multivector {.inline.} =
-  ## TODO: Define via macro.
+  ## TODO: Document.
   when Bases(B).card > 0:  # Skip empty set: its `index` returns empty range, which Nim refuses.
     for b in B:
       result[b] = m[b]
@@ -834,16 +836,16 @@ func expandWeight*(m, n: Multivector): Multivector {.inline.} = m ∧☆ n
   ## Multiply multivectors through right inner product weight expansion, i.e. 𝐦 ∧ 𝐧☆.
 
 func projectCentral*(m, n: Multivector): Multivector {.inline.} = n ∨ (m ∧★ n)
-  ## TODO: Document.
+  ## Project multivector centrally onto another, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧★).
 
 func projectCentralAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨★ n)
-  ## TODO: Document.
+  ## Project multivector anticentrally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧★).
 
 func projectOrthogonal*(m, n: Multivector): Multivector {.inline.} = n ∨ (m ∧☆ n)
-  ## TODO: Document.
+  ## Project multivector orthogonally onto another, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧☆).
 
 func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨☆ n)
-  ## TODO: Document.
+  ## Project multivector antiorthogonally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
 ```
 
 ```nim
@@ -870,22 +872,22 @@ func expandWeight*[A, B: static Bases](
 func projectCentral*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∨ (m ∧★ n)
-  ## TODO: Document.
+  ## Project multivector centrally onto another, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧★).
 
 func projectCentralAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∧ (m ∨★ n)
-  ## TODO: Document.
+  ## Project multivector anticentrally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧★).
 
 func projectOrthogonal*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∨ (m ∧☆ n)
-  ## TODO: Document.
+  ## Project multivector orthogonally onto another, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧☆).
 
 func projectOrthogonalAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): auto {.inline.} = n ∧ (m ∨☆ n)
-  ## TODO: Document.
+  ## Project multivector antiorthogonally onto another, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
 ```
 
 ## Edit `tests/suites.nim`

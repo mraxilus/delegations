@@ -13,8 +13,8 @@ a note never points at lines that say something else.
 `pga/multivectors.nim` · proposal
 
 ```nim
-  MultivectorOf*[B: static Bases] = object
-    elements: array[B.card, Coefficient]
+  MultivectorOf*[B: static Bases] = object  ## TODO: Document.
+    elements: array[B.card, Coefficient]  ## TODO: Document.
 ```
 
 Each product takes and returns `Multivector`, the instance over all 2^D bases. A point carries
@@ -173,11 +173,11 @@ its partner into such a local.
 `pga/cayleys.nim` · decide
 
 ```nim
-  Formal*[T] = object
-    when IS_CONFORMAL:
-      flat*, round*: T
+  Formal*[T] = object  ## TODO: Document.
+    when IS_RIGID:
+      round*: T  ## TODO: Document.
     else:
-      round*: T
+      flat*, round*: T  ## TODO: Document.
 ```
 
 Under the rigid metric, `Formal` has one field, `round`, and nothing in a rigid algebra is

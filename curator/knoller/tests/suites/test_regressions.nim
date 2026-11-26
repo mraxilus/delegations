@@ -1,7 +1,7 @@
 ## Hold each case that review of PGA library and delegate reports found, end to end: source as
 ##   found, comment naming where it came from, run through whole chain as `koch fix` runs it
 ##   (`formatted`), to exact output; second run writes nothing.
-##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
+##   Parser of compiler building this suite, at pin, proves needless parentheses in each case,
 ##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
 ##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller,
@@ -16,7 +16,7 @@ import ./sources
 
 
 const
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, at pin, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =
     HEAD &

@@ -67,9 +67,8 @@ testament key, and renamed, the browser suite runs on the wrong backend. `visual
 a compile-time define named in the `matrix` of the small suite. A compile against it checks that the
 constant and the define still meet.
 
-**Nim compares names without case after the first letter, and without underscores**, so a module
-variable `PREVIEW` would shadow the type `Preview`. The variables are `PREVIEW_EDIT` and
-`PREVIEW_APPLY`.
+**Nim compares names without case after the first letter, and without underscores**, so a variable
+`PREVIEW` shadows the type `Preview`. The variables are `PREVIEW_EDIT` and `PREVIEW_APPLY`.
 
 **`horizon` stays the word of `pga`**, and has no entry here, because the vocabulary of the algebra
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
@@ -546,18 +545,18 @@ the nimble file. A run on another build fails, and names its build. The counted 
 shipped one, which runs the optimiser. So a count is evidence for the interpreter alone (IX.6).
 
 **The band of each count is zero.** The counted code calls nothing that selects its code by
-processor, and every input is held, the clock among them. Six runs in fresh browsers on 2026-11-15
+processor, and every input is held, the clock among them. Three runs in fresh browsers on 2026-11-26
 read each count the same. A count under its baseline passes, and the baseline is then counted again.
 
 **A static count stands beside each count of the machine, because it names the line.** The check of
 the marker reports the copy sites in the functions that its span reaches: 50 sites in 84 functions.
-The check of the lattice reports those that only the lattice reaches: 13 sites in 16 functions.
+The check of the lattice reports those that only the lattice reaches: 12 sites in 16 functions.
 
-| Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
-|-------|----------|--------------------|----------------------------|
-| Copies of a marker and its pulse, over 5 objects | 15,887 | 15,883 | 16,523 |
-| Calls of a marker and its pulse, over 5 objects | 48,653 | 48,642 | 79,810 |
-| Calls that the lattice adds to 9 moving frames | 4,817,497 | 4,817,506 | 8,893,698 |
+| Count | Baseline, `7ef9f4d` | Repair, 2026-10-22 | With its fault, 2026-10-22 |
+|-------|---------------------|--------------------|----------------------------|
+| Copies of a marker and its pulse, over 5 objects | 15,883 | 15,883 | 16,523 |
+| Calls of a marker and its pulse, over 5 objects | 48,644 | 48,642 | 79,810 |
+| Calls that the lattice adds to 9 moving frames | 3,531,425 | 4,817,506 | 8,893,698 |
 | Bytes that the lattice adds to those frames | 219,136 | 219,136 | 219,136 |
 
 **Each fault is stood in for by hand, and its count reads over its repair.** Neither fault was
@@ -585,7 +584,7 @@ count returned to its reading at `3d9696e`.
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
 as the table gives, and the counts of the other span did not move. Assumed: that each fault still
-reads over the baselines of 2026-11-15, within 11 calls and 4 copies of its repair.
+reads over the baselines of 2026-11-26, since each stand-in only adds work, and the band is zero.
 
 ## Browser front-end
 
@@ -1298,7 +1297,8 @@ only while the gate is open. Both open it while the diagnostics section is shown
 
 **The counts pool in the ring of the PGA share.** `share.RingShare` takes any array of counts, so
 both figures keep one window and one rule. A frame drained while the gate was shut counts nothing,
-so a mean never takes in frames that nobody read.
+so a mean never takes in frames that nobody read. The ring takes a `Natural` second, since no bucket
+holds a second before the start.
 
 **Values alone, in `boundary` alone.** A motor counts as one value, as a direction does, though it
 carries 8 coefficients against 3. Plain numbers are not counted, such as the depths and distances
@@ -1421,6 +1421,11 @@ turns them places straight after, the capture of the storyboard included. Reject
 which the next frame overwrites. Cost: a second block of placements on each front-end, 645,120 bytes
 on the desktop (Memory and allocation).
 
+**A type, and no length, says whether a reader holds the placements of a frame.** A reader takes
+`PlacementsWhole`, with one placement for each handle, so no walk to the bound reads past its end. A
+reader that can also place what it reads takes `PlacementsHeld`, which is that type or
+`PlacementsNone`. The compiler selects the form (IV.8). Rejected: any array, whose length chose it.
+
 **One frame classifies each live object once, its overlay included.** `kindInto` tallies each
 classification while a reader counts (Algebra boundary). `driveClassifiedOnce` counts one frame of
 the page, from its build to the placing of its menu, at the largest demo. It counts with nothing
@@ -1486,10 +1491,11 @@ Verified by driven check:
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
 `placeInto` writes give what `placeObject` gave. Each reader answers alike from the placements of a
-frame and from placing each object, `anchorFor` among them. Verified by `suites.nim`: each exit of
-placing tests the horizon of its object once at most. A line and a plane through the origin are
-among them, and each lands where the reads alone land. Assumed: that no edit of the desktop lands
-between `placeEdited` and the emission of its frame, which no check drives.
+frame and from placing each object, `anchorFor` among them. Verified by `suites.nim`: each shared
+reader refuses a sequence of any length, and a short array. Each exit of placing tests the horizon
+of its object once at most. A line and a plane through the origin are among them, and each lands
+where the reads alone land. Assumed: that no edit of the desktop lands between `placeEdited` and the
+emission of its frame, which no check drives.
 
 ## Scene storage
 
@@ -1743,9 +1749,8 @@ The fill of an ordinary plane then blends over the sky, whatever handles they oc
 a muted object read as the grid.
 
 **Draw sizes live in `mesh.nim`, not `renderer.nim`.** They are `DIAMETER_POINT_LEAST` 6.0,
-`WIDTH_LINE_OBJECT` 2.5 and `WIDTH_LINE_FURNITURE` 1.5, in *framebuffer* pixels. A `static:
-doAssert` holds that object lines exceed furniture lines, and `marker` derives every clearance from
-them.
+`WIDTH_LINE_OBJECT` 2.5 and `WIDTH_LINE_FURNITURE` 1.5, in framebuffer pixels. A `static: doAssert`
+holds that object lines exceed furniture lines, and `marker` derives every clearance from them.
 
 **Every point has a radius in world units, and is drawn in perspective.** `Scene.radii` holds one
 radius for each handle. `RADIUS_OBJECT_DEFAULT` is 0.08, what a nine-pixel sprite spans at the
@@ -2783,11 +2788,10 @@ Rejected: a `try`/`finally` bracket, which puts a `try` around the placing of ev
 cost that is not measured.
 
 **`pointFrom` tallies each read while a reader counts.** `countPointsRead` opens the gate
-`IS_COUNTING_POINTS_READ`, and only the suite opens it. Closed, a read costs one load and one branch
-in the emitted JS. The tally is a write that `strictFuncs` counts as an effect, so a
-`cast(noSideEffect)` covers it alone. Rejected: `pointFrom` as a `proc`, which makes each `func`
-that reads a point a `proc`. Rejected: a build flag, since an instrument is gated on its reader
-(STYLE.md).
+`IS_COUNTING_POINTS_READ`, and only the suite opens it. Closed, a read costs a load and a branch in
+the emitted JS. The tally writes a global, which a `func` may not do, so a `cast(noSideEffect)`
+covers it alone. Rejected: `pointFrom` as a `proc`, which makes each `func` that reads a point a
+`proc`. Rejected: a build flag, since an instrument is gated on its reader (STYLE.md).
 
 **`toMultivector` tallies each lift of a motor the same way**, through `setCountingLifts`. The suite
 opens it, and so does the driven check of the page, through the bridge (Camera). **`kindInto`
@@ -3119,7 +3123,7 @@ narrower form as the parameter, since the operators of the library take the whol
 
 **A carry takes its antireverse itself**, so no caller hands in one that disagrees with its motor.
 Rejected: a type that holds both. Each build of it copies the motor on the page, and a still frame
-copied 4,886 times, over its bound of 4,876. Cost: these tests and each carry's antireverse add 537
+copied 4,886 times, over its bound of 4,858. Cost: these tests and each carry's antireverse add 537
 calls to a still frame with a point picked, and 1,095 with the plane. `unitize` in `log` adds 103 of
 those calls, and 2 copies, as frames after a pick ease. Verified by `counted.ts` and a break on
 purpose, 2026-11-26: with it undone, the frames copy 4,856 and 10,014 times.
@@ -3604,9 +3608,8 @@ under the pinned heading, rather than at the own edge of the scroller, which the
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is drawable
 where the sum is 4 or less. `∨` adds antigrades and is drawable where the sum is 4 or more. The
-table covers every ordered pair of point, line and plane in general position. Points lie on the
-moment curve `(t, t², t³)`, where "no three collinear and no four coplanar" is a Vandermonde
-theorem.
+table holds each ordered pair of point, line and plane in general position. Points lie on the moment
+curve `(t, t², t³)`, where "no three collinear and no four coplanar" is a Vandermonde theorem.
 
 | first → second | join `∧` | meet `∨` | project | plain release takes |
 |---|---|---|---|---|
@@ -3783,8 +3786,7 @@ stands the pivot at the reach of the point that the last zoom took. Rejected:
 - the nearest object ahead, which far out in the orrery is a star off to the side;
 - the object shown nearest at any depth, which can be a star a thousand times deeper.
 
-With a selection, a finger on empty space holds the point on the orbit's sphere, as a left drag
-does.
+With a selection, a finger on empty space holds the point on the orbit's sphere, like a left drag.
 
 **Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
 zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom out
@@ -4088,10 +4090,9 @@ Rejected: a motor built for each star, which cost the Catalogue 1,058 ms, becaus
 is most of what a turn costs. On JS, a turn built on the spot costs 52.5 µs a call, and a turn by a
 held motor 24.4 µs. A bearing costs 21.3 µs, a point 9.8 µs, and the reading of two angles 0.7 µs.
 
-Read off the built scene, the normal of Luna leans 5.16° from +z, and that of Io 2.2° from it. The
-normal of Miranda has z = 0.155, and that of Triton z = −0.646, a ring run backwards. The horizon
-plane is `att(ecliptic) ∧ att(earth ∧ luna)`, and exists only because the ring of Luna leaves the
-ecliptic.
+In the built scene, the normal of Luna leans 5.16° from +z, and that of Io 2.2° from it. The normal
+of Miranda has z = 0.155, and that of Triton z = −0.646, a ring run backwards. The horizon plane is
+`att(ecliptic) ∧ att(earth ∧ luna)`, and exists only because the ring of Luna leaves the ecliptic.
 
 **Stated simplifications.** Planets ring Sol in the ecliptic, with the inclinations dropped, of
 which the 7° of Mercury is the largest. Earth in the spanned plane is what the horizon block turns
@@ -4475,9 +4476,8 @@ Verified by driven check:
 
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
-`stanceApproaching`, which puts the pivot on the object itself. That is its own anchor, or for a
-line the point nearest the eye. Every pick therefore centres, whether a pointer made it or the
-objects list did.
+`stanceApproaching`, which puts the pivot on the object. That is its own anchor, or for a line the
+point nearest the eye. So every pick centres, whether a pointer made it or the objects list did.
 
 The camera slides and never turns, so the angles and roll survive. `stanceRepivoted` carries the
 pivot onto the object, and `stanceDollied` sets the reach. Rejected: the object held under the pixel

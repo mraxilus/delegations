@@ -502,10 +502,10 @@ suite "Camera":
     scene.addObject(Position(x: -4.0, y: 0.0, z: 0.0).toMultivector, "ahead", Ink.Rose)
     scene.addObject(Position(x: 9.0, y: 0.0, z: 0.0).toMultivector, "behind", Ink.Jade)
     scene.addObject(Position(x: -30.0, y: 0.0, z: 0.0).toMultivector, "far", Ink.Cobalt)
-    var placed = newSeq[Placement](scene.bound)
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
-        placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+        PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
@@ -531,10 +531,9 @@ suite "Camera":
         discard scene.addObject(
           place.toMultivector ∧ (place + way).toMultivector, "line", Ink.Rose
         )
-      var placed = newSeq[Placement](scene.bound)
       for handle in 0..<scene.bound:
-        placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-      reachNear(placed, scene, camera.originView, camera.eye, camera.frame.forward)
+        PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      reachNear(PLACEMENTS, scene, camera.originView, camera.eye, camera.frame.forward)
     let
       beside = (Position(x: 1.0, y: 0.0, z: 0.25), Direction(x: -1.0, y: 0.5, z: 0.0))
       through = (Position(x: 1.0, y: 0.0, z: 0.0), Direction(x: -1.0, y: 1.0, z: 0.0))

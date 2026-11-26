@@ -86,8 +86,8 @@ func `^∘`*(m: Multivector): Multivector {.inline, noinit.} =
   ##   I.e. 𝐦̂∘ = 𝐦 ÷ ‖𝐦‖∘.
   ##   Performs no-op where weight norm is 0.
   let
-    m_norm_weight = (`|∘²`m)[Basis.scalarAnti].sqrt
-    reciprocal = if m_norm_weight != 0: 1.0 / m_norm_weight else: 1.0
+    norm_weight_m = (`|∘²`m)[Basis.scalarAnti].sqrt
+    reciprocal = if norm_weight_m != 0: 1.0 / norm_weight_m else: 1.0
   for b in Basis:
     result[b] = m[b] * reciprocal
 ```
@@ -99,10 +99,10 @@ func `^∘`*(m: Multivector): Multivector {.noinit.} =
   ##   Performs no-op where W(𝐦) is 0.
   when IS_CONFORMAL:
     let
-      m_norm_weight_round_squared = (`|∘²`m)[Basis.scalarAnti]
-      m_norm_radius_squared = abs((`|⊘²`m)[Basis.scalarAnti])
+      norm_weight_round_squared_m = (`|∘²`m)[Basis.scalarAnti]
+      norm_radius_squared_m = abs((`|⊘²`m)[Basis.scalarAnti])
     var is_round =
-      m_norm_weight_round_squared > TOLERANCE_ABS * TOLERANCE_ABS * m_norm_radius_squared
+      norm_weight_round_squared_m > TOLERANCE_ABS * TOLERANCE_ABS * norm_radius_squared_m
     if is_round:  # Scan grades only where round weight passes, and stop at second grade.
       var
         largest: Coefficient = 0.0
@@ -117,7 +117,7 @@ func `^∘`*(m: Multivector): Multivector {.noinit.} =
         elif b.grade != grade_first:
           is_round = false
           break
-    let divisor = (if is_round: m_norm_weight_round_squared else: m_norm_radius_squared).sqrt
+    let divisor = (if is_round: norm_weight_round_squared_m else: norm_radius_squared_m).sqrt
   else:
     let divisor = (`|∘²`m)[Basis.scalarAnti].sqrt
   let reciprocal = if divisor != 0: 1.0 / divisor else: 1.0
@@ -142,7 +142,7 @@ template `^`*(m: Multivector): Multivector = ^∘m
 ## Edit `tests/suites.nim`
 
 ```nim
-  m div (norm[Basis.scalar] + norm[Basis.scalarAnti])
+  m div (s + t)
 
 
 
@@ -150,7 +150,7 @@ suite "Internal":
 ```
 
 ```nim
-  m div (norm[Basis.scalar] + norm[Basis.scalarAnti])
+  m div (s + t)
 
 
 when IS_CONFORMAL:
