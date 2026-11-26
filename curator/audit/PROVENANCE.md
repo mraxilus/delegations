@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 8712e4d86744aa37030b20476fdb867f56c7dad6 |
+| Pruned  | 4a5aebde498e58b70fac5e23281104f520881d0f |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2021,12 +2021,14 @@ workflows state a version. Verified by `suites/test_toolchain.nim` over both pat
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** Nim assigns
 no CVE, so no release carries one. So the reason to move is what the release notes carry, or a
-ruling. The curator projects pin 2.4.0, the stable release, as the Architect asked on
-2026-10-29. Its notes add a check of the host name of a certificate to `std/asyncnet`, and to
-`std/net` on Windows. No curator project opens a socket, so that check reaches none of them.
+ruling. The curator projects pin 2.4.2, the first patch release of the 2.4 series. On
+2026-11-26 the Architect asked each project to keep up with the patch releases of that series,
+for their fixes. A project leaves the series only when the Architect asks for a newer one.
 
-- Verified by `nim r koch test` over `curator/knoller`, `curator/audit`, `curator/assayer` and
-  `curator/probe` on 2.4.0, 2026-10-29: every suite passes.
+- The notes of 2.4.2 fix 23 bugs of 2.4.0. Among them are a segfault of destructors under
+  `-d:release`, and parsers that raise on bad input.
+- Verified by `nim r koch test` over `curator/knoller`, `curator/assayer` and `curator/probe`, and
+  by `nim r koch check` with 2.4.2 building koch, on 2.4.2, 2026-11-26: every suite passes.
 - Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
   assigned gets an int register for it. To write `result = 0.0` first avoids it.
   `dance_ontology` diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by
@@ -3145,8 +3147,7 @@ reason, and the finding stays for the hand.
 
 - A guard other than `isMainModule` alone, such as `isMainModule and defined(js)`. A routine at
   module level compiles where that guard fails.
-- A `{.global.}`, `{.threadvar.}` or foreign pragma in the body, which binds at module level
-  alone.
+- A `{.global.}`, `{.threadvar.}` or foreign pragma in the body, which binds at module level alone.
 - An `import`, `include`, `from`, `export`, `method` or `converter` at any depth of the block, or
   an export marker.
 - A `quit` with a value at the block's own indent. Its code then belongs in a `main` that returns
@@ -3246,9 +3247,8 @@ traces back to the line as given (`originApplied`).
   which keeps its lines. It reads the calls of constructors on the source as given. Knoller checks
   its fixed text instead. So an index that a conversion writes bare reports in knoller alone, until
   the next run writes its alias.
-- Cost: two markers or two `func` on one line match their edits by line and rule alone. So where
-  one of them stays, the finding left can name the other one. How often a line holds two is
-  unmeasured.
+- Cost: two markers or two `func` on one line match their edits by line and rule alone. So where one
+  of them stays, the finding left can name the other one. How often a line holds two is unmeasured.
 - A fenced landmark index or constructor call counts in the warning of its fence, which reads the
   names. A fenced marker or `proc` prints as left, since the fence warning reads no uses and no
   pures.
