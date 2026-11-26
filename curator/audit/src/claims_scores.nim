@@ -105,6 +105,9 @@ const
     ##   time in minutes likewise (`D5 a`), and count from closed bound at 0, on logarithm of count
     ##   plus one (`D1 a`, comment 7193361977).
   COUNT_BUCKETS = 200  ## Inner buckets of curve, as `DEFAULT_INBOUND_OUTCOME_COUNT` of Metaculus.
+  STEP_LEAST = 0.01 / float(COUNT_BUCKETS)
+    ## Least step of curve, 1% of mass spread even over buckets (`validateUserQuantileData`).
+  STEP_MOST = 0.59  ## Most step of curve of continuous question (`validateUserQuantileData`).
   SHARE_EVEN = 0.01  ## Share of even spread that floor mixes into curve (`standardizeCdf`).
   MASS_OPEN = 0.001  ## Least mass beyond each open bound (`standardizeCdf`).
   CAP_BUCKET = 0.2  ## Most mass of inner bucket (`standardizeCdf`).
@@ -264,6 +267,17 @@ func curveNumber(number: Number, unit: Unit, confidence: float): seq[float] =
         break
 
 
+func isCurveTaken*(curve: openArray[float]): bool =
+  ## Whether Metaculus takes curve as forecast: `COUNT_BUCKETS + 1` places, and each step, rounded
+  ##   to 10 places, from `STEP_LEAST` to `STEP_MOST` (`validateUserQuantileData`). Each mass of
+  ##   floor of such curve lies above 0, so search of scale under cap ends.
+  if curve.len != COUNT_BUCKETS + 1: return false
+  for i in 1..curve.high:
+    let step = floor((curve[i] - curve[i-1]) * DIGITS_ROUND + 0.5) / DIGITS_ROUND
+    if step < STEP_LEAST or step > STEP_MOST: return false
+  true
+
+
 func massesCapped(masses: openArray[float], scale: float): seq[float] =
   ## Masses, each inner one scaled and held at most `CAP_BUCKET`, and two beyond range as they are.
   for i, mass in masses:
@@ -280,7 +294,7 @@ func massesCurve(curve: openArray[float]): seq[float] =
 func flooredCurve(curve: openArray[float], unit: Unit): seq[float] =
   ## Curve with floor of Metaculus for bounds of unit: 1% of even spread mixed in, least mass beyond
   ##   each open bound and none beyond closed one, and inner buckets held under cap by search of
-  ##   scale (`standardizeCdf`).
+  ##   scale (`standardizeCdf`); curve is one that `isCurveTaken` takes, else search never ends.
   let
     share = 1 - SHARE_EVEN - MASS_OPEN * float(unit.countOpen)  # Share of forecast in curve.
     below = (if unit.is_open_low: MASS_OPEN else: 0)  # Least mass below lower bound.
@@ -320,7 +334,7 @@ func scoreNumber*(claim: Claim): Option[float] =
   ## Score of number as Metaculus scores continuous question, `100 × ln(m / b) / 2`: `m` is mass of
   ##   bucket of outcome, and `b` even share of inner mass, or 0.05 beyond range; none for claim of
   ##   no number, outcome, unit or mark, of confidence outside 0 to 1, whose percentiles do not
-  ##   rise, or whose outcome lies beyond closed bound.
+  ##   rise, whose curve Metaculus refuses, or whose outcome lies beyond closed bound.
   if claim.number.isNone or claim.state notin {State.Hit, State.Miss}: return none(float)
   if claim.confidence <= 0 or claim.confidence >= 1: return none(float)
   let
@@ -329,7 +343,7 @@ func scoreNumber*(claim: Claim): Option[float] =
   if number.outcome.isNone or unit.isNone: return none(float)
   if not (number.low < number.median and number.median < number.high): return none(float)
   let curve = number.curveNumber(unit.get, claim.confidence)
-  if curve.len != COUNT_BUCKETS + 1: return none(float)
+  if not curve.isCurveTaken: return none(float)
   let
     masses = curve.flooredCurve(unit.get).massesCurve
     bucket = number.outcome.get.place(unit.get).bucketPlace
