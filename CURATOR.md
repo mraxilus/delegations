@@ -79,6 +79,7 @@ Every rule below serves it:
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
 | `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
+| `.github/workflows/nim.yml` | Weekly `releases`, into one issue while the driver lags | curator |
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | Skills, and the templates of subagents | curator |
@@ -145,8 +146,8 @@ and the shared allowance. This section adds only what differs for a curator.
 - **An answered issue that you close by hand** also says where the result differs from what
   was asked.
 - **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-  `curator` when `check`, `ledger` or `head` concludes failure on `main`, so a red `main` reaches
-  the queue. Read the run anyway, since a run cancelled, still queued or never triggered
+  `curator` when `check`, `ledger`, `head` or `nim` concludes failure on `main`, so a red `main`
+  reaches the queue. Read the run anyway, since a run cancelled, still queued or never triggered
   concludes nothing. A red `main` is the first work of the delegate.
 
 ## Duties
@@ -266,8 +267,8 @@ and the shared allowance. This section adds only what differs for a curator.
    - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
      under Repository settings the Architect applies.
 
-   `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
-   workflow.
+   `watch.yml` watches `check`, `ledger`, `head` and `nim`, and opens or extends one issue for
+   each workflow.
 
 10. **Opening prompts.** `AGENTS.md`, `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open
     new delegates, so every paragraph is read on every start. Keep each self-contained.
