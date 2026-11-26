@@ -71,6 +71,7 @@
 import std/[algorithm, options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 from ../../knoller/src/knoller/command import modulesLibrary, resolveMarkers, resolvePures
+from ../../knoller/src/knoller/pools import mapParallel
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
   waits,
@@ -105,6 +106,13 @@ type
     warned: seq[Finding]
       ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
+
+  JobEntry = object
+    ## Define one entry `fixEntry` fixes on thread of pool. Locked paths and context stay in
+    ##   caller, read in place, as each copy would hold names of each project and every plan.
+    entry: Entry  ## Entry to fix.
+    locked: ptr seq[string]  ## Path of each nimble file whose copy lock holds.
+    context: ptr Context  ## What tree, semantic pass and parser tell fixer.
 
 
 const ASKS_MAX = 8
@@ -634,6 +642,11 @@ proc answered*(
     if proving.failure.len > 0 and proving.failure notin result: result.add proving.failure
 
 
+func fixedEntry(job: JobEntry): Fixed =
+  ## Fix one entry as `fixEntry` does, so thread of pool runs it.
+  job.entry.fixEntry(job.locked[], job.context[])
+
+
 proc fixProven*(
   branch: string;
   tree: Tree;
@@ -647,15 +660,19 @@ proc fixProven*(
   ##   rule `needless-parentheses`, with no location and no article, as knoller prints it.
   ##   Entry that asked nothing read only sources answered, and answer once held never changes,
   ##   so each round fixes again only entries that asked.
+  ##   Each fix runs on threads of pool (`pools.nim` of knoller), and parts keep order of
+  ##     entries, as one loop gives them; answers join context only between runs of pool.
   var
     known = context
-    parts = entries.mapIt(it.fixEntry(locked, known))
+    held = @locked
+    jobs = entries.mapIt(JobEntry(entry: it, locked: held.addr, context: known.addr))
+    parts = jobs.mapParallel(fixedEntry)
   for ask in 1 .. ASKS_MAX:
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
     for failure in known.answered(tree, asked, provers):
       let warning = finding("", 0, failure, rule = Rule.ParenthesesNeedless.id)
       if warning notin result.failures: result.failures.add warning
-    for k, e in entries:
-      if parts[k].asked.len > 0: parts[k] = e.fixEntry(locked, known)
+    let again = toSeq(0..<parts.len).filterIt(parts[it].asked.len > 0)
+    for k, part in again.mapIt(jobs[it]).mapParallel(fixedEntry): parts[again[k]] = part
   result.fix = scoped(branch, parts)
