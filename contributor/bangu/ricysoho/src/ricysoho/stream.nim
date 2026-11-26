@@ -16,8 +16,8 @@
 ## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
 ##   .i lo kutle'u .e denpa bu cu fendi lo valsi
 ##   .i denpa bu cu sinxa lo denpa
-##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi gi'e na fendi to `isBoundary`
-##       toi
+##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi .a zo pi'e gi'e na fendi to
+##       `isBoundary` toi
 ##   .i slaka bu cu fendi lo slaka ne'i lo valsi
 ##   .i ku'i slaka bu poi se lidne pa lerfu cu sinxa zo ki'o gi'a se to'e curmi
 ##   .i lo brale'u cu sinxa lo slaka poi se basna
@@ -637,7 +637,8 @@ func isBoundary*(text: string, at: int): bool =
   ## jdice lo du'u xu kau le lerfu poi zvati `at` cu fendi lo selci'avla
   ##   .i lo kutle'u cu fendi
   ##   .i denpa bu cu fendi va'o po'o lo nu na zvati lo jbini be re lerfu pe `DIGITS_STREAM`
-  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi to `D1 a` pe `#991` toi
+  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi .a zo pi'e to `D1 a` pe
+  ##       `#991` .e `D5 c` pe `#1003` toi
   let c = text[at]
   if c in Whitespace: return true
   if c != '.': return false
@@ -648,7 +649,7 @@ func isBoundary*(text: string, at: int): bool =
 func isBoundarySettled*(text: string, at: int): bool =
   ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
   ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `DIGITS_STREAM` cu na fendi
-  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi .a zo pi'e
   ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
   text.isBoundary(at) and
     not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in DIGITS_STREAM)
