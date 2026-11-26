@@ -58,6 +58,25 @@ suite "Objects":
           (0.5 * offset[Basis.E2]).e31 + (0.5 * offset[Basis.E3]).e12 + 1.0.e1234
 
 
+  test "a slide reads a weightless offset alone, and a motor reads back with no odd part":
+    # Fault: `motorSliding` dropped weight and every other grade of its offset, and `toMotor`
+    #   dropped every odd grade of its motor, both in silence (repository issue 970).
+    for i in 0..<SAMPLES:
+      let
+        p = PLACES[i]
+        offset = Direction(x: p.x, y: p.y, z: p.z).toMultivector
+        motor = motorSliding(offset)
+      check motor.toMotor.toMultivector =~ motor
+      expect AssertionDefect:
+        discard motorSliding(offset + 1.0.e4)
+      expect AssertionDefect:
+        discard motorSliding(offset + 1.0.e23)
+      expect AssertionDefect:
+        discard toMotor(motor + 1.0.e1)
+      expect AssertionDefect:
+        discard toMotor(motor + 1.0.e423)
+
+
   test "the inner product of two directions is their classical dot product":
     # `inner` is how camera reads sides and cosines; classical form is reference.
     for i in 0..<SAMPLES:
