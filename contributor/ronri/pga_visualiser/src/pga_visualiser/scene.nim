@@ -622,16 +622,10 @@ const WIDTH_KIND_WORD* = 32
   ## Bound kind word alone, longest being "horizon plane, nothing to draw".
 
 
-func powerOfTwo(exponent: int): float =
-  ## Build `2^exponent` by doubling, exact on either backend and folded at compile time.
-  result = 1.0
-  for _ in 1..exponent: result *= 2.0
-
-
 const SCALE_SUBNORMAL = powerOfTwo(600)
   ## Lift subnormal value into normal range, exactly, for reading its grade alone.
   ##   Takes largest coefficient under `2^-1022` to under `2^-422`, and least `2^-1074` to
-  ##     `2^-474`: its square, which `isHorizon` forms, stays normal, and nothing overflows.
+  ##     `2^-474`: `scaleFree` then reads it, and nothing overflows.
   ##   Power of two, so lifted copy carries every bit value carried.
 
 
