@@ -504,9 +504,12 @@ suite "Scene":
   test "a multivector prints each coefficient that is not finite, and each term beside it":
     # Fault: infinite coefficient set floor of what prints at infinity, so `-inf 𝐞₁ + 1 𝐞₄`
     #   printed `0 𝟏` (repository issue 970). NaN never set floor, and printed.
-    # Domain: each value that is not finite, at each basis element, beside 2 on another.
+    # Domain: each value that is not finite, at each basis element, beside 2 on another and
+    #   rounding of 1e-12 on third, which stands under billionth of finite largest.
     for b in Basis:
-      let other = if b == Basis.E4: Basis.E1 else: Basis.E4
+      let
+        other = if b == Basis.E4: Basis.E1 else: Basis.E4
+        third = if b == Basis.E2: Basis.E3 else: Basis.E2
       for (value, word) in [(Inf, "inf "), (-Inf, "inf "), (NaN, "nan ")]:
         let
           term = word & LUT_NAME_BY_BASIS[b]
@@ -514,7 +517,8 @@ suite "Scene":
           expected =
             if b < other: (if value < 0.0: " - " else: "") & term & " + " & beside
             else: beside & (if value < 0.0: " - " else: " + ") & term
-          text = formatMultivectorString(initElement(b, value) + initElement(other, 2.0))
+          text = formatMultivectorString(
+            initElement(b, value) + initElement(other, 2.0) + initElement(third, 1.0e-12))
         checkpoint &"{b} at {value}"
         check text == expected
 
