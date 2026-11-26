@@ -201,6 +201,12 @@ func motorSliding*(offset: Multivector): Multivector =
   ##   Moment alone, at half offset, beside unit weight. Such bivector antisquares
   ##   to zero, so its exponential stops at two terms, and this *is* that motor rather than
   ##   bivector to raise: see `motors.exp`.
+  ##   Fails where `offset` holds weight or another grade: such value names no offset, and
+  ##     reading three coefficients alone would drop that part in silence.
+  ##     Every caller's offset is difference of two unit-weight points, or sum of multiples
+  ##     of horizon points, so its weight is zero exactly.
+  doAssert offset.isWithin(Multivector1.bases - {Basis.origin}),
+    "Slide must take weightless offset point alone; got `" & $offset & "`."
   result[Basis.E23] = 0.5 * offset[Basis.E1]
   result[Basis.E31] = 0.5 * offset[Basis.E2]
   result[Basis.E12] = 0.5 * offset[Basis.E3]
@@ -208,8 +214,12 @@ func motorSliding*(offset: Multivector): Multivector =
 
 
 func toMotor*(m: Multivector): Motor =
-  ## Read rigid motion back out of multivector, dropping every odd-grade coefficient.
-  ##   Caller hands motor; odd grades are zero in one, so dropping them loses nothing.
+  ## Read rigid motion back out of motor.
+  ##   Fails where `m` holds odd-grade part: such value names no rigid motion, and reading
+  ##     even grades alone would drop that part in silence. Product of motors holds none.
+  ##     Fails before its tally, as read handing no value out counts no crossing.
+  doAssert m.isWithin(MultivectorEven.bases),
+    "Rigid motion must read motor of even grade alone; got `" & $m & "`."
   tallyCrossing(Crossing.ToEuclidean)
   Motor(
     turn_x: m[Basis.E41],

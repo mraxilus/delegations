@@ -477,11 +477,11 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
         let anchor = positionAnchor(operand)
         if anchor.isSome: return anchor
 
-  func slid(m, motor, motor_reversed: Multivector): Multivector =
+  func slid(m, slide: Multivector): Multivector =
     ## Carry `m` through slide, keeping only grades `m` occupies.
     ##   Slide keeps every grade, so what lands on another is sandwich's rounding: about `ε`
     ##   of distance slid, against `m`. Join metre across one unit out reads it as mixed.
-    let moved = m.carried(motor, motor_reversed)
+    let moved = m.carried(slide)
     var occupied: array[0..DIMENSIONS, bool]
     for b in Basis:
       if m[b] != 0.0: occupied[int(b.grade)] = true
@@ -499,9 +499,8 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
     let
       origin_point = origin.get.toMultivector
       slide = motorSliding(subtract(1.0.e4, origin_point))
-      slide_reversed = ~∘slide
-    m_model = slid(m, slide, slide_reversed)
-    n_model = slid(n, slide, slide_reversed)
+    m_model = slid(m, slide)
+    n_model = slid(n, slide)
     scale_origin = origin_point.coefficientLargest
   result = operated(operation, m_model, n_model)
 
@@ -519,7 +518,7 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   # Slide result back to world origin.
   if origin.isSome:
     let back = motorSliding(subtract(origin.get.toMultivector, 1.0.e4))
-    result = slid(result, back, ~∘back)
+    result = slid(result, back)
 
 
 func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[Position] =

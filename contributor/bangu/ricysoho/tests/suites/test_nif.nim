@@ -50,6 +50,15 @@ const
   )
     ## lo jdini klani poi lo jdini sinxa cu sinxa ke'a to `#1003` toi
     ##   .i ro valsi pe le jdini sinxa cu vasru no stuzi gi'e se ciska ta'i re mintu stuzi
+  EXAMPLE_NIF_NUMBER = (
+    text: "li -5% .e li ½",
+    module: "(.nif27)\n(.lang \"cll-21.1\")\n(sumti_2 0 (sumti_6 93 (LI 0 2 \"li\") (number 310 " &
+      "(PA 3 4 \"-\") (PA 4 5 \"5\") (PA 5 6 \"%\"))) (ek 421 (A 8 9 \"e\")) (sumti_6 93 " &
+      "(LI 10 12 \"li\") (number 310 (PA 13 15 \"½\") (PA 15 15 \"fihu\") (PA 15 15 \"re\"))))\n",
+  )
+    ## lo namcu poi lo sinxa pe lo namcu cu sinxa ke'a to `D4 b` pe `#1003` toi
+    ##   .i le pamoi valsi pe ro sinxa cu se ciska ta'i le stuzi pe le sinxa
+    ##   .i ro drata valsi pe le sinxa cu se ciska ta'i re mintu stuzi
   COUNT_TREES_LEAST = 1800
     ## lo klani be lo selci'a poi se tcidu gi'e pagbu le 1941 selci'a pe le selci'aste
     ##   .i le flalu cu tcidu lo tricu pe ro le selci'a
@@ -234,6 +243,14 @@ suite "Internal: NIF":
     #   .i ro valsi pe le jdini klani cu vasru no stuzi
     let reading = EXAMPLE_NIF_SIGN.text.readText
     check reading.toNif == EXAMPLE_NIF_SIGN.module  # lo krapinka pe `nif.nim` to le mupli toi
+    check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
+
+
+  test "Word that a number sign stands for writes bytes of the sign, or two equal bytes after":
+    # `Architect` jdice `D4 b` bu'u `#1003`
+    #   .i le pamoi valsi pe le sinxa cu vasru ro stuzi pe le sinxa
+    let reading = EXAMPLE_NIF_NUMBER.text.readText
+    check reading.toNif == EXAMPLE_NIF_NUMBER.module  # lo krapinka pe `nif.nim` to le mupli toi
     check reading.isReadBack  # le morna be le tarmi to le multricu cu selrapyzba toi
 
 

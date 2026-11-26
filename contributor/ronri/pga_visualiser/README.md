@@ -70,7 +70,7 @@ nim r tools/build.nim desktop
 
 Atlas restores the `pga` library from `atlas.lock` into `dependencies/`, and it is never
 committed. `nim r koch fetch-deps contributor/ronri/pga_visualiser` restores it alone. It is
-pinned at `3d9696e`, which was the head of that library when the pin last moved. The `head` verb
+pinned at `7ef9f4d`, which was the head of that library when the pin last moved. The `head` verb
 says whether the pin is still the head, and a workflow runs that verb each day. See Dependencies
 and vendoring in `PROVENANCE.md`.
 
