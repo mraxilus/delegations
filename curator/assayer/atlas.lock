@@ -44,7 +44,7 @@
   },
   "hostOS": "linux",
   "hostCPU": "amd64",
-  "nimVersion": "2.4.2",
+  "nimVersion": "2.4.2 b27dcb4f70883978e984e427cc24b64eeb7c875f",
   "gccVersion": "13.3.0",
   "clangVersion": ""
 }
