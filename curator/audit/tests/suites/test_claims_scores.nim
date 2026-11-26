@@ -10,7 +10,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, sequtils, unittest]
+import std/[math, options, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[claims_log, claims_scores]
 
 
@@ -390,3 +390,39 @@ suite "lines of figures":
     check @[resolver].linesBase.len == 0
     check @[initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421)].linesBase ==
         @["Base rate of call of no kind: 0 of 0 claims held; 1 numbers, mean score 77.7"]
+
+
+
+suite "figures of tree":
+  test "verb and start read each log of tree, and name fault of tree, row or field":
+    # `koch figures` prints `linesTree`, and `start` prints `ratesTree`, so suite runs both over
+    #   tree of its own; each band of one claim is Beta(2, 1) or Beta(1, 2), solved by hand.
+    let
+      root = createTempDir("figures_", "_tree")
+      log = root / PATH_LOG_CURATOR
+      delegate = initClaim(0.75, State.Hit)
+    var resolver = initClaim(0.75, State.Miss)
+    resolver.marker = Marker.Resolver
+    expect IOError: discard linesTree(root, "")  # no repository
+    check ratesTree(root)[0].startsWith("Logs of claims give no base rate; git failed")
+    check execCmdEx("git init -q", workingDir = root).exitCode == 0
+    check linesTree(root, "") == @["No log of claims in tree holds row."]
+    check ratesTree(root).len == 0
+    createDir(log.parentDir)
+    writeFile(log, HEADER_LOG & [delegate, resolver].mapIt(it.lineClaim & "\n").join)
+    let marks = @[
+      "delegate: 1 of 1 claims held, mean baseline score 58.5",
+      "  71% to 80%: 1 of 1, 90% band 0.22 to 0.97",  # √0.05 and √0.95
+      "resolver: 0 of 1 claims held, mean baseline score -100.0",
+      "  71% to 80%: 0 of 1, 90% band 0.03 to 0.78",  # 1 − √0.95 and 1 − √0.05
+    ]
+    check linesTree(root, "") == marks
+    check linesTree(root, "Kind") == marks & marks.mapIt(
+      if it.startsWith(" "): it else: "reviewer / " & it)
+    check ratesTree(root) == @["Base rate of `reviewer`: 1 of 1 claims held, mean baseline " &
+      "score 58.5"]  # marks of delegate alone
+    expect ValueError: discard linesTree(root, "colour")
+    writeFile(log, HEADER_LOG & "claims { text: \"open }\n")
+    expect ValueError: discard linesTree(root, "")
+    check ratesTree(root)[0].startsWith("Logs of claims give no base rate; Quoted text")
+    removeDir(root)
