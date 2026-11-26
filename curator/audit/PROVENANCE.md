@@ -304,8 +304,8 @@ break at, prose always does, and minified markup is one run far past the bound.
 **Knoller holds these rules, and the audit runs them on every kind.** They read text alone, so
 knoller holds one copy of them (`checkForm` there), and its record gives them under Form. The
 audit keeps the exemptions from width that name files of this repository: `LICENSE.md`, each
-`atlas.lock` and each `claims.txtpb` (X.1). A log keeps one row to a line, for `union`. Each
-finding prints its article where its sentence ends, as `Line holds tab (X.1).` does.
+`atlas.lock`, and each `claims.txtpb`, which X.1 names. That log keeps one row to a line, for
+`union`. Each finding prints its article where its sentence ends, as `Line holds tab (X.1).` does.
 
 - Each `atlas.lock` takes no width rule, as the Architect ruled (D1 a of #821). Atlas copies each
   line of the nimble file into the lock as a JSON string, behind six spaces, with each quote
