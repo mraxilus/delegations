@@ -117,7 +117,8 @@ reflection below says what it cost.
 - **Weigh each subagent against its likely gain before you start it.** A subagent costs its run
   and the steps after it, from the one allowance that every delegate shares. Start one for larger
   work, or where a fresh read likely finds what you would miss. Do small or minor work yourself,
-  and check it yourself.
+  and check it yourself. A `reviewer` still reads each pull request before it goes ready,
+  whatever its size.
 - **Give a subagent read-only work, or a change that is independent and well defined.**
   Read-only work is a search, a reproduction, a measurement or a read of sources. Two changes
   are independent when neither one changes code or a test that the other one reads or writes.

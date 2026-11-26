@@ -512,13 +512,13 @@ Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `k
   and why. A screenshot cannot reach a pull request through an API, and Pages and assets keeps
   binaries out of the repository. So it goes in the message that says the work is ready, and the
   pull request carries the figures.
-- **Open it as a draft; mark it ready only when it is, and put it back the moment you intend
-  another commit.** Ready means CI green on the runner, every review comment answered, and
-  nothing you still intend to change. A draft says "not yet" in the one place the Architect
-  looks, and an open pull request says "merge me". Local green is not the signal, because
+- **Open it as a draft; mark it ready only when it is, and put it back the moment you intend another
+  commit.** Ready means a `reviewer` read its diff, CI green on the runner, every review comment
+  answered, and nothing you still intend to change. A draft says "not yet" in the one place the
+  Architect looks, and an open pull request says "merge me". Local green is not the signal, because
   `koch check` and the runner disagree whenever the machines differ, which is what the runner is
-  for. A record entry still to write, a figure under measurement, or a fix you just found
-  each sends it back to draft. Mark it ready again after.
+  for. A record entry still to write, a figure under measurement, or a fix you just found each sends
+  it back to draft. Mark it ready again after.
 - **The Architect merges what is green and ready**, promptly and correctly. Intent that
   lives only in your working copy is not a signal. A commit you have not pushed is one that
   nobody else can see. Either push before you mark it ready, or draft it while you finish.
