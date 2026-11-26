@@ -680,18 +680,20 @@ suite "Regressions":
     let
       outcome = outcome([("pga/a.nim", CUTS)], [], is_check = true,
         nimbles = {"pga/a.nim": "pga.nimble"}.toTable)
-      left = outcome.lines.filterIt("name-cut left" in it or "conversion-prefix left" in it)
+      left = outcome.lines.filterIt("name-cut: " in it or "conversion-prefix: " in it)
     check left == @[
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_basis`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_name`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
-        "`right_basis`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
-        "`right_name`.",
-      "pga/a.nim:26: name-cut left: Property leads name, value it belongs to last; got " &
-        "`m_norm_bulk`.",
-      "pga/a.nim:28: conversion-prefix left: Routine takes one call form on plain first " &
-        "argument across package, where `2` calls take dot; got `initElement(Basis.origin)`.",
-      "pga/a.nim:34: name-cut left: Property leads name, value it belongs to last; got " &
-        "`𝐦_grade`.",
+      "pga/a.nim:8: name-cut: actual=\"left_basis\" message=\"name opens with head, axis value " &
+        "`left` last\"",
+      "pga/a.nim:8: name-cut: actual=\"left_name\" message=\"name opens with head, axis value " &
+        "`left` last\"",
+      "pga/a.nim:8: name-cut: actual=\"right_basis\" message=\"name opens with head, axis " &
+        "value `right` last\"",
+      "pga/a.nim:8: name-cut: actual=\"right_name\" message=\"name opens with head, axis value " &
+        "`right` last\"",
+      "pga/a.nim:26: name-cut: actual=\"m_norm_bulk\" message=\"property leads name, value it " &
+        "belongs to last\"",
+      "pga/a.nim:28: conversion-prefix: actual=\"initElement(Basis.origin)\" message=\"routine " &
+        "takes one call form on plain first argument across package, where `2` calls take dot\"",
+      "pga/a.nim:34: name-cut: actual=\"𝐦_grade\" message=\"property leads name, value it " &
+        "belongs to last\"",
     ]  # rule 8 renames through semantic pass (`test_packages.nim`); rule 15 writes no form

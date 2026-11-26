@@ -70,8 +70,7 @@ suite "Debug output":
 
   test "command line prints each warning, which changes no exit code":
     let outcome = ran(is_check = true)
-    check outcome.lines.anyIt(
-      it.startsWith("pga/multivectors.nim:5: debug-output warning: Code leaves no debug output")
-    )
-    check not outcome.lines.anyIt("debug-output left: " in it)  # warning, never finding
+    check outcome.lines.anyIt(it.startsWith("pga/multivectors.nim:5: debug-output warning: ") and
+      "message=\"code leaves no debug output" in it)
+    check not outcome.lines.anyIt("debug-output: " in it)  # warning, never finding
     check outcome.code == 0  # source breaks no other rule, so warning stands alone
