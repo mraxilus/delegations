@@ -3,7 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[os, sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
 import ../../src/checks
 
@@ -21,3 +21,10 @@ suite "Checks":
     check ids.deduplicate.len == ids.len  # no two checks share id
     check ids.allIt(it.startsWith("koch.") and it.len > "koch.".len and it[^1] != '-')
     for rule in Rule: check rule.id notin ids  # prefix keeps tools apart
+
+
+  test "each id stands in suite, so one test of each check holds what tool reads (D3 of #1002)":
+    var text = ""
+    for kind, path in walkDir(currentSourcePath.parentDir):
+      if path.endsWith(".nim") and path != currentSourcePath: text.add readFile(path)
+    for member in Check: check ("\"" & member.id & "\"") in text

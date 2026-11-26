@@ -173,6 +173,10 @@ suite "Base":
     root.writeInto("GUIDE.md", GUIDE.replace("Pin.", "Pin it."))
     discard root.git("commit -q -am 'docs(curator): pin it'")
     discard root.git("checkout -q curator/older")
-    let found = checkBase(readDrift(root, "main"))
+    let
+      drift = readDrift(root, "main")
+      found = checkBase(drift)
     check found.len == 2 and found[0].path == "GUIDE.md" and "re-stamp" in found[0].brief
-    check found.len == 2 and "; got `## Toolchain`; help: read `git diff " in found[0].brief
+    check found.len == 2 and found[0].brief.endsWith(
+      "got `## Toolchain`" & HELP_MOVED.replace("3f2a9c1..origin/main", drift.fork & "..main"),
+    )

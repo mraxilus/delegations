@@ -798,7 +798,7 @@ suite "Hooks":
     check "each wrong phrase after `-`, that phrase mended after `+`" in reason
     check "never send it, a line of it, or its sign-off again" in reason
     check reason.splitLines.len == 3  # reason line, then one line for each finding
-    check reason.splitLines[1].startsWith("koch.turn-end: actual=\"neither\" ")  # line form
+    check reason.splitLines[1].startsWith("koch.turn-end: message=\"turn that pushed")  # line form
 
 
   test "stop hook asks for read of unread queue, and no diff for it (#742)":
@@ -823,7 +823,7 @@ suite "Hooks":
       role = "contributor/ronri/pga_benchmark, branch `gap-list`"
     let curator = PLAIN.replace(role, "curator, at main")
     check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])
-      .messages.anyIt("labelled `curator`" in it and "got `none`" in it)
+      .messages.anyIt("labelled `curator`" in it)
     check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])[0].rule ==
       "koch.issue-read"
 
@@ -879,11 +879,11 @@ suite "Hooks":
     const working = "Pushed.\n\n**Working:** run 890 of `check`, whose result wakes me.\n"
     check checkEndTurn(SIGNOFF, BRANCH, is_writing = true).len == 0
     check checkEndTurn(working, BRANCH, is_writing = true).len == 0
-    check checkEndTurn("Pushed.\n", BRANCH, is_writing = true).messages.anyIt("got `neither`" in it)
+    check checkEndTurn("Pushed.\n", BRANCH, is_writing = true).messages.anyIt("turn that" in it)
     check checkEndTurn("Pushed.\n\n**Working:**\n", BRANCH, is_writing = true)
-      .messages.anyIt("got `neither`" in it)  # names nothing
+      .messages.anyIt("turn that" in it)  # names nothing
     check checkEndTurn(working & "\nMore.\n", BRANCH, is_writing = true)
-      .messages.anyIt("got `neither`" in it)  # working line is last
+      .messages.anyIt("turn that" in it)  # working line is last
     check checkEndTurn(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH, is_writing = true)
       .messages.anyIt("lacks `**Summary:**`" in it)  # sign-off read in full
     let working_state = PLAIN.replace("**State:** done", "**State:** working")
@@ -902,7 +902,7 @@ suite "Hooks":
     # Sign-off in fence is quoted example, so message holds none, and no read follows it.
     let quoted = "The form:\n\n```md\n" & gist & "```\n"
     check checkEndTurn(quoted, BRANCH, is_writing = false).len == 0
-    check checkEndTurn(quoted, BRANCH, is_writing = true).messages.anyIt("got `neither`" in it)
+    check checkEndTurn(quoted, BRANCH, is_writing = true).messages.anyIt("turn that" in it)
     check checkEndTurn(quoted, BRANCH, is_writing = true).anyIt(it.rule == "koch.turn-end")
     check checkEndTurn(quoted & "\n" & SIGNOFF, BRANCH, is_writing = true).len == 0  # real one
     check checkSignoffRead(quoted, []).len == 0

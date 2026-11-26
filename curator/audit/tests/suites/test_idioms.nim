@@ -38,7 +38,8 @@ func isSettled(source: string): bool =
 suite "Idioms":
   test "module carries strictFuncs pragma before its imports":
     check messages("a.nim", module("import std/os\n")).len == 0
-    check "got `none`" in messages("a.nim", "## Do.\n\nimport std/os\n")[0]
+    check messages("a.nim", "## Do.\n\nimport std/os\n") ==
+      @["module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2)"]
     let late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n"
     check "got `it after`" in messages("a.nim", late)[0]
 
@@ -65,7 +66,7 @@ suite "Idioms":
 
   test "used pragma carries comment naming its consumer":
     check messages("a.nim", module("func f() {.used.} = discard\n")) ==
-      @["`{.used.}` carries comment naming its consumer (STYLE.md §2); got `none`"]  # koch's text
+      @["`{.used.}` carries comment naming its consumer (STYLE.md §2)"]  # koch's text
     check messages("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
     check messages("a.nim", module("{.used.}\n")).len == 0  # module pragma, not symbol
 
@@ -100,7 +101,7 @@ suite "Idioms":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check messages("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
     check messages("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
-      @["test stub carries testament header (STYLE.md §6); got `none`"]  # text koch prints
+      @["test stub carries testament header (STYLE.md §6)"]  # text koch prints
     let with_run = header.replace("nim c ", "nim c -r ") & module("")
     check "got `-r`" in messages("tests/test_x.nim", with_run)[0]
     let batched = header.replace("action: run", "action: run\nbatchable: false") & module("")
@@ -147,7 +148,7 @@ suite "Idioms":
     ]  # list fixed below split reports at its line as given
     check fixed(one).source.isSettled and checkProfiler("a.nim", fixed(one).source).len == 0
     let entry = module("import std/os\n\nwhen isMainModule:\n  echo 1\n")
-    check checkProfiler("a.nim", entry)[0].brief.endsWith("got `none`")
+    check checkProfiler("a.nim", entry)[0].brief.endsWith("import profiler right after pragmas")
     check fixed(entry).source ==
       module(IMPORT_PROFILER & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
     check fixed(entry).source.isSettled and checkProfiler("a.nim", fixed(entry).source).len == 0

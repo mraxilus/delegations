@@ -81,8 +81,8 @@ suite "Dependencies":
     ) == @[(
       LOCK,
       0,
-      "checkout stands at other commit than lock holds after restore; got `" & COMMIT_FOUND &
-        "` for `knoller` at `" & COMMIT_LACKED & "`",
+      "checkout of `knoller` stands at other commit than lock holds after restore; got `" &
+        COMMIT_FOUND & "`; expect `" & COMMIT_LACKED & "`",
     )]  # case as found, both commits named
     check checkCommitCheckout(LOCK, knoller, some(COMMIT_LACKED)).len == 0  # at commit of lock
     check checkCommitCheckout(LOCK, knoller, none(string)).mapIt(it.brief) ==
@@ -104,8 +104,8 @@ suite "Dependencies":
       commit_root = root.git("rev-parse HEAD").strip
     root.writeInto("curator/probe/atlas.lock", textLock("knoller", COMMIT_LACKED))
     check checkCheckouts(root, "curator/probe").mapIt(it.brief) == @[
-      "checkout stands at other commit than lock holds after restore; got `" &
-        commit_checkout & "` for `knoller` at `" & COMMIT_LACKED & "`",
+      "checkout of `knoller` stands at other commit than lock holds after restore; got `" &
+        commit_checkout & "`; expect `" & COMMIT_LACKED & "`",
     ]  # other commit, read through git
     removeDir(checkout / ".git")
     root.writeInto("curator/probe/atlas.lock", textLock("knoller", commit_root))
@@ -137,7 +137,7 @@ suite "Dependencies":
     let found = restoreNode(getTempDir(), Target(directory: "curator/probe"))
     check found.mapIt((it.rule, it.brief)) == @[(
       "koch.node-restore",
-      "type check needs npm on `PATH`; got `nothing`; help: install node, or drop this " &
+      "type check needs npm on `PATH`; help: install node, or drop this " &
         "project's manifest",
     )]
 

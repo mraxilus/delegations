@@ -63,7 +63,7 @@ suite "Toolchain":
     let drifted = checkKnoller(path, some("2.2.6"), some(PIN))
     check drifted.len == 1  # drift
     check drifted[0].path == path  # points at knoller's nimble file
-    check drifted[0].brief.endsWith("got `2.2.6`")  # Article IV.4 echoes value
+    check drifted[0].brief.endsWith("got `2.2.6`; expect `" & PIN & "`")  # IV.4 echoes value
     check drifted.anyIt(it.rule == "koch.knoller-pin")
     check checkKnoller(path, none(string), some(PIN)).len == 0  # absent is layout's finding
     check checkKnoller(path, some(PIN), none(string)).len == 0  # driver unpinned, same

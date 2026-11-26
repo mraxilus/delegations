@@ -32,7 +32,7 @@ func reported(path, source: string): seq[(Rule, string)] =
 suite "Idioms":
   test "STYLE.md §2 used pragma carries comment naming its consumer":
     check reported("a.nim", module("func f() {.used.} = discard\n")) == @[
-      (Rule.ConsumerUsed, "`{.used.}` carries comment naming its consumer; got `none`"),
+      (Rule.ConsumerUsed, "`{.used.}` carries comment naming its consumer"),
     ]
     check checkIdioms("a.nim", module("func f() {.used.} = discard\n"))[0].line == LINES_HEAD + 1
     check reported("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
@@ -84,7 +84,7 @@ suite "Idioms":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check reported("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
     check reported("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
-      @[(Rule.HeaderStub, "test stub carries testament header; got `none`")]
+      @[(Rule.HeaderStub, "test stub carries testament header")]
     check reported("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
     check reported("src/test_x.nim", module("")).len == 0  # outside `tests/`, no stub
 

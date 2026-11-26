@@ -154,7 +154,7 @@ suite "Layout":
     #   file missing, beside `CLAUDE.md` or without it.
     const
       absent = "`CLAUDE.md` imports entry file on line `@AGENTS.md` of its own, outside code, " &
-        "as Claude Code loads no import in code; got `none`"
+        "as Claude Code loads no import in code"
       lacking = [
         "# Claude Code\n\nRead rules.\n",  # none
         "# Claude Code\n\n@README.md\n",  # other file

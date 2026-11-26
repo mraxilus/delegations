@@ -187,7 +187,7 @@ suite "Findings":
         # fence warning, of two rules
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `#!fix off` and `#!fix on` either side.",
-      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
+      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2).",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got it after.",
       "Bracket import is alphabetised (X.5); got `strutils, os`.",
       "Standard library comes first, then packages, then local modules (X.5); got `std/math`.",

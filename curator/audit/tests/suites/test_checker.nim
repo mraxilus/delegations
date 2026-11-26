@@ -103,7 +103,7 @@ suite "Checker":
     let alone = ["curator/audit/src/form.nim"]
     check checkSuites(alone).len == 1
     check checkSuites(alone)[0].brief.endsWith(
-      "got `nothing`; help: write `curator/audit/tests/suites/test_form.nim`",
+      "check module needs suite; help: write `curator/audit/tests/suites/test_form.nim`",
     )
     check checkSuites(alone).anyIt(it.rule == "koch.check-suite")
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only

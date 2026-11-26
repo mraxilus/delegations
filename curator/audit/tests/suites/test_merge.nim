@@ -259,6 +259,8 @@ suite "Merge":
     #   base moving checker builds again.
     check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 3
     check lines(toolchain / "builds.log").len == 1
+    check runMerge(writeMerge(root, "main"), "curator/older", toolchains, "line").code == 3
+    check lines(toolchain / "run.log")[0].endsWith(" --form:line")  # form named passes on
     discard root.git("checkout -q main")
     root.writeInto("koch.nim", "checker of base, moved\n")
     discard root.git("commit -q -am 'feat(audit): move checker again'")
