@@ -95,6 +95,8 @@ const
   SEPARATOR_KEY* = " / "  ## Mark between values of key of group.
   KEY_ALL = "all"  ## Key that line of figures gives group of all claims.
   KIND_NONE = "call of no kind"  ## Name that base rate gives kind of call that names none.
+  LINE_NO_ROW = "No log of claims in tree holds row."  ## Line of verb `figures` with no row.
+  LINE_NO_RATE = "Logs of claims give no base rate; "  ## Opening of line of fault of rates.
   NAMES_FIELD: array[Field, string] = ["delegate", "model", "effort", "project", "kind", "marker"]
     ## Name of each field, as verb `figures` reads it.
   UNITS* = [
@@ -494,3 +496,24 @@ func linesBase*(claims: openArray[Claim]): seq[string] =
     if figures.count + figures.count_number == 0: continue
     let name = (if group.key.len > 0: "`" & group.key & "`" else: KIND_NONE)
     result.add lineFigures("Base rate of " & name, figures)
+
+
+proc linesTree*(root, names: string): seq[string] =
+  ## Lines of verb `figures` over each log of tree at root: marks of delegate and of resolver apart,
+  ##   then groups of fields that names give, as `kind,effort`, with marks apart too; one line where
+  ##   no log holds row. `ValueError` for row or name that reads no way, and `IOError` where root
+  ##   holds no repository.
+  let
+    claims = root.claimsTree
+    fields = names.fieldsNamed
+  if claims.len == 0: return @[LINE_NO_ROW]
+  # Marks of delegate and of resolver stay apart, so that figures compare them (#964).
+  result = claims.groups({Field.Marker}).linesFigures
+  if fields.card > 0: result.add claims.groups(fields + {Field.Marker}).linesFigures
+
+
+proc ratesTree*(root: string): seq[string] =
+  ## Base rate of each kind over logs of tree at root, as `start` prints it (`linesBase`); one line
+  ##   that names fault where tree or its log reads no way.
+  try: root.claimsTree.linesBase
+  except CatchableError as error: @[LINE_NO_RATE & error.msg]
