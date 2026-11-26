@@ -51,6 +51,7 @@ ni'o le genturfa'i cu tcidu lo sinxa pe lo namcu ta'i lo cmavo pe `PA` to `D4 b`
   .i zoi gy. + .gy. .e zoi gy. - .gy. .e zoi gy. ~ .gy. cu sinxa zo ma'u .e zo ni'u .e zo ji'i va'o
       lo nu lo lerfu pe `0` bi'o `9` .a lo sinxa po'u zoi gy. π .gy. .a zoi gy. ∞ .gy. .a
       zoi gy. ½ .gy. cu se lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu lidne le sinxa
+  .i ji'a pa jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le namcu mu'u zoi gy. -$5 .gy.
   .i zoi gy. % .gy. sinxa zo ce'i va'o lo nu lo lerfu pe `0` bi'o `9` cu lidne le sinxa kei .e lo
       nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
   .i zoi gy. π .gy. .e zoi gy. ∞ .gy. .e zoi gy. ½ .gy. cu sinxa zo pai .e zo ci'i .e lo'u pa fi'u

@@ -1037,9 +1037,13 @@ ni'o **lo jdini klani cu vasru ro sinxa pe le namcu**
       Verified by `suites/test_stream.nim`.
   .i ne'i zoi gy. -€5 .gy. le jdini klani cu cfari pu zo ni'u
   .i ro stuzi pe le jdini sinxa cu zvati no valsi Verified by `suites/test_stream.nim`.
-  .i lo jdini sinxa poi pencu re namcu cu se to'e curmi to `D3 a` toi
+  .i lo jdini sinxa poi pencu re namcu ta'i lo lerfu .a lo sinxa cu se to'e curmi
   .i se ki'u bo le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e
       zoi gy. €5%€5 .gy. Verified by `suites/test_stream.nim`.
+  .i `D3 a` cu to'e curmi zoi gy. 5€6 .gy. noi le jdini sinxa cu pencu re namcu ne'i ke'a
+  .i ku'i no jdice cu cusku lo jdini sinxa poi pencu lo sinxa pe pa namcu gi'e pencu lo drata
+      namcu
+  .i se ki'u bo `D8` pe `#1003` cu denpa lo nu `Architect` cu jdice
   .i de'i `2026-11-26` `grep -P` cu facki no sinxa poi pencu lo drata sinxa pe pa namcu ne'i le
       vreji pe `Tatoeba` .e `tests/cll` .e `tests/articles_wikipedia` .e `tests/sample_tatoeba`
 
@@ -1048,10 +1052,11 @@ ni'o se to'e cuxna fa lo nu lo sinxa poi pencu lo drata sinxa cu se to'e curmi k
   .i ji'a se to'e cuxna fa lo nu lo jdini sinxa cu pencu lo lerfu po'o ki'u lo nu zoi gy. -$5 .gy.
       cu ciska pa jdini klani to `D7 b` toi
 
-ni'o jdima fa lo nu le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. noi pu se tcidu
+ni'o jdima fa lo nu le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e
+    zoi gy. €5%€5 .gy.
   .i ku'i lo kutle'u cu fendi re namcu
-  .i se ki'u bo zoi gy. 5€ -5 .gy. cu se tcidu ta'i lo jdini klani .e lo'u ni'u mu le'u
-      Verified by `suites/test_stream.nim`.
+  .i se ki'u bo zoi gy. 5€ -5 .gy. .e zoi gy. 5% €5 .gy. .e zoi gy. €5% €5 .gy. cu se tcidu ta'i
+      lo jdini klani .e lo namcu Verified by `suites/test_stream.nim`.
 
 ni'o **le cipra cu tcidu ro selci'a poi vasru su'e mu pagbu po'u `1` .a `a` .a lo kutle'u .a
     zoi gy. - .gy. .a zoi gy. − .gy. .a zoi gy. % .gy. .a zoi gy. π .gy. .a zoi gy. ½ .gy. .a
@@ -4923,6 +4928,10 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
       namcu poi jorne lo cmavo pe `MOI`
   .i le tricu pe `CLL 21.1` vasru le remei
   .i no samtci pagbu cu ca tcidu lo selsmu fi le tricu
+- ny.mai **lo jdini sinxa poi pencu re namcu ta'i lo sinxa**
+  .i le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e zoi gy. π€5 .gy.
+      Verified by `suites/test_stream.nim`.
+  .i `D8` pe `#1003` cu denpa lo nu `Architect` cu jdice
 - ny.mai **zo zo poi lidne lo sinxa poi sinxa so'i valsi**
   .i zo zo sitna zo lo noi krasi le jdini klani
   .i ji'a zo zo sitna le pamoi valsi pe zoi gy. ½ .gy.
