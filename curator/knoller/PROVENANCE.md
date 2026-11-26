@@ -346,7 +346,7 @@ profile on #1001).
 - `outcomeProven` gives each file to a thread of the pool, and each file that asked the parser
   again, after its batch answers. The parts keep the order of the files, as one loop gives them.
 - A job holds the facts of its file, as the call for one file copied them before (`JobPart`). The
-  proofs of its batch and the plans of the run stay in the caller, and the job reads them through a
+  proofs of its batch and the plans of the run stay in the caller. The job reads them through a
   pointer, since a copy would hold each source asked. The caller changes the proofs only between
   two runs of the pool.
 - `outcome` stays one loop, since a `func` starts no thread.
