@@ -4381,10 +4381,10 @@ each reflection and each report of a resolver of the study. It wrote each row th
 - No row names a model, since this harness keeps model names out of pushed files (#1025). Each
   run of the study used one model.
 - Cost: no figure groups by model, since no row of any log names one.
-- Verified by hand on 2026-11-26: `protoc` reads the 761 rows of the log, no key repeats, and
-  `koch figures` reads each row. By hand on 2026-11-21, each count of a batch agrees with its
-  result on #963. Each of 150 outcomes agrees with the usage of its row too.
-- Cost: 6 claims of the measurer take no resolver row, since its report marks none of them.
+- Verified by hand on 2026-11-26: `protoc` reads the 767 rows of the log, no key repeats, and
+  `koch figures` reads each row. Each claim of the study takes one row of each marker, 372 of
+  each. By hand on 2026-11-21, each count of a batch agrees with its result on #963. Each of 150
+  outcomes agrees with the usage of its row too.
 
 **`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
 exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
