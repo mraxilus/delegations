@@ -544,8 +544,10 @@ The tree keeps neither the texts nor the exchange files.
 
 | Model, effort | Samples | Recall of 5 | Recall of 10 | Unrelated | Placeholder ends | Cost of 10 |
 |---|---|---|---|---|---|---|
+| Opus 5.5, `high` | 3 | 386 of 390 | 739 of 771 | 0 of 552 | 0 of 30 | $0.306 to $0.315 |
 | Opus 5.5, `medium` | 3 | 249 of 260 | 467 of 514 | 0 of 446 | 4 of 30 | $0.270 to $0.284 |
 | Opus 5.5, `low` | 1 | 128 of 130 | 242 of 257 | 0 of 152 | 2 of 10 | $0.276 |
+| Sonnet 5.5, `max` | 3 | 337 of 390 | 629 of 771 | 0 of 477 | 0 of 30 | $0.736 to $0.863 |
 | Sonnet 5.5, `xhigh` | 3 | 382 of 390 | 703 of 771 | 1 of 530 | 0 of 30 | $0.181 to $0.187 |
 | Sonnet 5.5, `high` | 3 | 362 of 390 | 660 of 771 | 18 of 551 | 0 of 30 | $0.149 |
 | Sonnet 5.5, `medium` | 3 | 366 of 390 | 656 of 771 | 12 of 527 | 0 of 30 | $0.146 |
@@ -560,7 +562,9 @@ of the default agree, which is the most that another configuration can expect.
 
 Recall of 5 for each sample falls in these ranges:
 
+- Opus at `high`: 0.98 to 0.99.
 - Opus at `medium`: 0.91 to 0.99.
+- Sonnet at `max`: 0.85 to 0.88.
 - Sonnet at `xhigh`: 0.97 to 0.98.
 - Sonnet at `high`: 0.91 to 0.95.
 - Sonnet at `medium`: 0.90 to 0.96.
@@ -571,6 +575,11 @@ the default is marked against its other samples alone. Of the rest, the delegate
 unrelated where its keyword fits no thing of the text. An example is `sanli`, stand, for the
 paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader knew the
 configuration of each gismu, and the tree does not keep the list of marks.
+
+**Sonnet at `max` keeps no gismu for the article.** In each of its 3 samples, the answer for the
+article reached the limit of 16,000 output tokens, and the tool exits 1 with `max_tokens`. Over the
+other 9 texts, its recall of 5 is 337 of 345, the same as Sonnet at `xhigh`. So its row of recall
+counts no gismu for the article, and its cost holds the tokens of those 3 answers.
 
 Sonnet at `high` gave three gismu with a placeholder gloss, such as `xasli`, glossed unused
 placeholder. The reader marked each one unrelated.
@@ -590,9 +599,12 @@ Each cost takes the list price of 2026-11-26 for each million tokens:
 
 Each cost assumes a cold cache. Most samples read the system text from the cache that an earlier
 sample wrote. For those, the calculation counts one read as one write, so the figure is calculated
-and not billed. The article makes 39% to 48% of the cost of a sample.
-Sonnet at `xhigh` alone spent thinking tokens, 10,240 over its 30 answers, and each other
-configuration spent none. The time of each answer is unmeasured.
+and not billed. The article makes 39% to 48% of the cost of a sample, except Sonnet at `max`,
+where it makes 25% to 30%.
+
+Three configurations spent thinking tokens over their 30 answers. Sonnet at `max` spent 191,572,
+Sonnet at `xhigh` 10,240, and Opus at `high` 2,840. Each other configuration spent none. The time
+of each answer is unmeasured.
 
 A script outside the tree read the reports and the usage of the exchange files. It computed each
 recall, each count and each cost by the rules above. Verified by hand with `binaries/suggester`
