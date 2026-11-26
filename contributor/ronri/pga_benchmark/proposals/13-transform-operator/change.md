@@ -84,6 +84,31 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
   ##     walks them, so equal entries compare term by term among entries of same first pair.
   ##   Loops walk terms, pairs, or entries of one first pair, so table at six dimensions stays
   ##     under loop bound of VM.
+  func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
+  func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
+  func sign(terms: seq[TermSandwich]): int = (if terms[0].coefficient < 0: -1 else: 1)
+
+  func isSame(a, b: seq[TermSandwich]): bool =
+    if a.len != b.len: return false
+    let s = sign(a) * sign(b)
+    for x in 0 ..< a.len:
+      if a[x].pair != b[x].pair or a[x].coefficient != s * b[x].coefficient: return false
+    true
+
+  func emitEntry(terms: seq[TermSandwich], factor: int): NimNode =
+    for term in terms:
+      let
+        coefficient = factor * term.coefficient
+        product = namePair(term.pair)
+        magnitude =
+          case abs(coefficient)
+          of 1: product
+          of 2: infix(product, "+", product)
+          else: infix(newFloatLitNode(float(abs(coefficient))), "*", product)
+      result =
+        if result.isNil: (if coefficient < 0: prefix(magnitude, "-") else: magnitude)
+        else: infix(result, if coefficient < 0: "-" else: "+", magnitude)
+
   let table = constructSandwich(A, B)
   var
     pairs: seq[array[2, Basis]]
@@ -110,29 +135,6 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
     for pair in open:
       if best notin pair: rest.add pair
     open = rest
-
-  func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
-  func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
-  func sign(terms: seq[TermSandwich]): int = (if terms[0].coefficient < 0: -1 else: 1)
-  func isSame(a, b: seq[TermSandwich]): bool =
-    if a.len != b.len: return false
-    let s = sign(a) * sign(b)
-    for x in 0 ..< a.len:
-      if a[x].pair != b[x].pair or a[x].coefficient != s * b[x].coefficient: return false
-    true
-  func emitEntry(terms: seq[TermSandwich], sign: int): NimNode =
-    for term in terms:
-      let
-        coefficient = sign * term.coefficient
-        product = namePair(term.pair)
-        magnitude =
-          case abs(coefficient)
-          of 1: product
-          of 2: infix(product, "+", product)
-          else: infix(newFloatLitNode(float(abs(coefficient))), "*", product)
-      result =
-        if result.isNil: (if coefficient < 0: prefix(magnitude, "-") else: magnitude)
-        else: infix(result, if coefficient < 0: "-" else: "+", magnitude)
 
   var
     entries: array[Basis, array[Basis, seq[TermSandwich]]]  # Terms by output and basis of `m`.
@@ -180,7 +182,7 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
     result.add products
   var
     shared = newNimNode(nnkLetSection)  # Entries that several coefficients read, named once.
-    isNamed = newSeq[bool](firsts.len)
+    is_named = newSeq[bool](firsts.len)
     assignments = newStmtList()
   for output in Basis:
     if table[output].len == 0: continue
@@ -193,9 +195,9 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
       var entry: NimNode
       if readers[index] > 1 and (terms.len > 1 or abs(terms[0].coefficient) > 1):
         let name = ident("entry_" & $index)
-        if not isNamed[index]:
+        if not is_named[index]:
           shared.add newIdentDefs(name, newEmptyNode(), emitEntry(terms, sign(terms)))
-          isNamed[index] = true
+          is_named[index] = true
         entry = if sign(terms) < 0: prefix(name, "-") else: name
       else:
         entry = emitEntry(terms, 1)
