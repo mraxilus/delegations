@@ -447,12 +447,26 @@ under 0.1 ms in release (Figures).
 
 **`claude` and `openrouter` ask Sonnet 5.5 at effort `xhigh` where the environment names none.**
 The Architect ruled it on #1047, from the grid of Live replies. It keeps as many gismu of Opus 5.5
-at `medium` as Opus keeps again, at about two thirds of its cost. `LUT_MODEL_BY_SERVICE` and
-`EFFORT_DEFAULT` of `suggestions.nim` hold it.
+at `medium` as Opus keeps again, at about two thirds of the cost of Opus at `medium`.
+`LUT_MODEL_BY_SERVICE` and `EFFORT_DEFAULT` of `suggestions.nim` hold it. Rejected: Opus 5.5 at
+`high`, which keeps the most gismu at about 1.7 times the cost.
 
-Cost: Sonnet at `xhigh` spends thinking tokens, so an answer
-likely takes longer, which is unmeasured. Sonnet at `max` reached the limit of 16,000 output
-tokens on the article of the grid. Sonnet at `xhigh` stayed under it in 30 answers.
+Verified by hand with `binaries/suggester` on 2026-11-26. With no model and no effort set, the
+replay of an exchange of Sonnet at `xhigh` from the grid matched.
+
+Cost: Sonnet at `xhigh` spends thinking tokens, and Opus at `medium` spent none. So an answer of
+Sonnet at `xhigh` probably takes longer, and the time is unmeasured. Sonnet at `max` reached the
+limit of 16,000 output tokens on the article of the grid. Sonnet at `xhigh` stayed under it in 30
+answers, with at most 1,582 output tokens.
+
+Cost: the default effort also applies to a model that the environment names without an effort.
+So `RICTADNI_MODEL` alone now runs at `xhigh`, and spends more than at `medium`. On `openrouter`,
+the body asks each provider to take the effort, and no live run tried `xhigh` there.
+
+Cost: the fallback of Sonnet 5.5 goes to Sonnet 5, and it retries a refusal of `cyber` or
+`frontier_llm` alone. A refusal of `bio`, `reasoning_extraction` or `general_harms` comes back as
+a refusal. Verified by reading the reference of the Claude API in the skill `claude-api`, section
+Migrating to Claude Sonnet 5.5, Safeguards and fallback, on 2026-11-26.
 
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim` against documented shapes. One live reply of `claude`
@@ -518,14 +532,14 @@ reached the Messages API through the proxy of a cloud sandbox, and the service a
 read them back. The replay of that exchange file, with no key and no network, gave the same 14
 gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
 
-Cost: the request went to Opus 5.5 at effort `medium`. It took 56 input
-tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
-each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
-costs $5 for each million tokens. So the request cost about $0.071 at that price.
+Cost: the request went to Opus 5.5 at effort `medium`. It took 56 input tokens, 12,977 tokens of
+cache write and 288 output tokens. The list price of 2026-11-26 is $4 for each million input tokens,
+and $20 for each million output tokens. A cache write of 5 minutes costs $5 for each million tokens.
+So the request cost about $0.071 at that price.
 
-**Sonnet 5.5 at effort `xhigh` keeps as many gismu of Opus 5.5 at `medium` as Opus keeps again.**
-It costs about two thirds of Opus at `medium`. Sonnet at lower efforts keeps almost as many, and
-gives more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
+**Sonnet 5.5 at effort `xhigh` keeps as many gismu of Opus 5.5 at `medium` as Opus keeps again.** It
+costs about two thirds of the cost of Opus at `medium`. Sonnet at lower efforts keeps almost as
+many, and gives more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
 
 On 2026-11-26, a live grid sent the same 10 texts to each configuration, through
 `binaries/suggester` built at `ed9fe6f`. The texts are these:
@@ -566,9 +580,8 @@ The tree keeps neither the texts nor the exchange files.
 
 Each answer of Opus at `medium` that has no placeholder end and keeps 9 gismu or more is a
 reference, 26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample
-also gives.
-Opus at `medium` reads only the references of its other samples. So its row shows how well two
-runs of it agree, which is the most that another configuration can expect.
+also gives. Opus at `medium` reads only the references of its other samples. So its row shows how
+well two runs of it agree, which is the most that another configuration can expect.
 
 Recall of 5 for each sample falls in these ranges:
 
