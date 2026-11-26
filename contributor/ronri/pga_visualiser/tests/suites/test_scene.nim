@@ -487,9 +487,9 @@ suite "Scene":
     #   Text pinned for eight, which page runs too: two stand nearest any tie, within 1.1e-22
     #   of it, one is exact tie, and one stands under tie that carry to 1e-10 hides.
     const
-      STEP_MANTISSA = 101
-      STEP_DECADE = 7
-      COUNT_VALUES = 90 * 90 * 7 * 2
+      step_mantissa = 101
+      step_decade = 7
+      count_values = 90 * 90 * 7 * 2
         ## Count values compared: 90 mantissas, 90 decades, seven beside each tie, two signs.
     check formatMagnitude(2.3335) == "2.333"
     check formatMagnitude(-2.3335) == "-2.333"
@@ -501,8 +501,8 @@ suite "Scene":
     check formatMagnitude(9.9995e-11) == "9.999e-11"
     when not defined(js):
       var count = 0
-      for mantissa in countdown(9999, 1000, STEP_MANTISSA):
-        for decade in countup(-323, 304, STEP_DECADE):
+      for mantissa in countdown(9999, 1000, step_mantissa):
+        for decade in countup(-323, 304, step_decade):
           let
             tie = parseFloat(&"{mantissa}5e{decade - 4}")
             bits = cast[uint64](tie)
@@ -519,7 +519,7 @@ suite "Scene":
               checkpoint &"{signed}"
               check formatMagnitude(signed) == storage.toText
               inc count
-      check count == COUNT_VALUES
+      check count == count_values
 
 
   test "multivectors print every term they carry, and nothing else":
