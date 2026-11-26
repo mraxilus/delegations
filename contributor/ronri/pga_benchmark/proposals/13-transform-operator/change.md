@@ -25,7 +25,7 @@ suite `Typed operators` hold both to the chain. Every edit quotes text of P04.
 type
   TermSandwich = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
     operand: Basis  ## Basis k of transformed multivector 𝐦.
-    pair: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads (𝐧ᵢ + 𝐧ᵢ)𝐧ⱼ.
+    pair: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads 2𝐧ᵢ𝐧ⱼ.
     coefficient: int  ## Signed weight of product of pair, halved for cross pair.
   CayleySandwich = array[Basis, seq[TermSandwich]]  ## Define terms of sandwich per output basis.
 
@@ -34,7 +34,7 @@ func constructSandwich(a, b: Bases): CayleySandwich {.compileTime.} =
   ## Construct sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ over bases `a` of 𝐦 and pairs of bases `b` of 𝐧.
   ##   Term 𝐧ᵢ𝐦ₖ𝐧ⱼ lands where 𝐞ᵢ ⟇ 𝐞ₖ ⟇ 𝐞̰ⱼ does. Coefficients commute, so pair i < j sums both
   ##     orders, which comes out even in each algebra, and keeps half, as its product reads
-  ##     doubled 𝐧ᵢ. So each rigid term weighs ±1.
+  ##     one basis doubled. So each rigid term weighs ±1.
   ##   Walks each pair and operand basis once, so no term is searched for; VM bounds iterations.
   let
     product = CAYLEYS_WEDGE_DOT.anti
@@ -77,13 +77,18 @@ func basesSandwiched(a, b: Bases): Bases {.compileTime.} =
 
 macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
   ## Emit one assignment per basis that table of bases `A` of `m` and pairs of `B` of `n` reaches.
-  ##   Names doubled basis and product of each pair once, so each coefficient reads products alone.
-  ##   Each loop walks each term once, so table over every pair at six dimensions stays under
-  ##     loop bound of VM.
+  ##   Names product of each pair once. Cross pair reads one of its bases doubled: basis in most
+  ##     cross pairs left, until each pair holds one, so few bases are doubled.
+  ##   Names once each entry that several coefficients read, up to sign, so each sum of products
+  ##     that table repeats is computed once. Entry lists its terms in order of pairs, as table
+  ##     walks them, so equal entries compare term by term among entries of same first pair.
+  ##   Loops walk terms, pairs, or entries of one first pair, so table at six dimensions stays
+  ##     under loop bound of VM.
   let table = constructSandwich(A, B)
   var
     pairs: seq[array[2, Basis]]
     paired: array[Basis, Bases]  # Bases j that pair with i so far, so each term tests in one step.
+    open: seq[array[2, Basis]]  # Cross pairs that no doubled basis holds yet.
     doubled: Bases
   for output in Basis:
     for term in table[output]:
@@ -91,10 +96,71 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
       if j notin paired[i]:
         paired[i].incl j
         pairs.add term.pair
-      if i != j: doubled.incl i
+        if i != j: open.add term.pair
+  while open.len > 0:
+    var count: array[Basis, int]  # Open cross pairs that hold each basis.
+    for pair in open:
+      inc count[pair[0]]
+      inc count[pair[1]]
+    var best = open[0][0]
+    for b in Basis:
+      if count[b] > count[best]: best = b
+    doubled.incl best
+    var rest: seq[array[2, Basis]]
+    for pair in open:
+      if best notin pair: rest.add pair
+    open = rest
 
   func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
   func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
+  func sign(terms: seq[TermSandwich]): int = (if terms[0].coefficient < 0: -1 else: 1)
+  func isSame(a, b: seq[TermSandwich]): bool =
+    if a.len != b.len: return false
+    let s = sign(a) * sign(b)
+    for x in 0 ..< a.len:
+      if a[x].pair != b[x].pair or a[x].coefficient != s * b[x].coefficient: return false
+    true
+  func emitEntry(terms: seq[TermSandwich], sign: int): NimNode =
+    for term in terms:
+      let
+        coefficient = sign * term.coefficient
+        product = namePair(term.pair)
+        magnitude =
+          case abs(coefficient)
+          of 1: product
+          of 2: infix(product, "+", product)
+          else: infix(newFloatLitNode(float(abs(coefficient))), "*", product)
+      result =
+        if result.isNil: (if coefficient < 0: prefix(magnitude, "-") else: magnitude)
+        else: infix(result, if coefficient < 0: "-" else: "+", magnitude)
+
+  var
+    entries: array[Basis, array[Basis, seq[TermSandwich]]]  # Terms by output and basis of `m`.
+    operands: array[Basis, Bases]  # Bases of `m` that each output reads.
+    found: array[Basis, array[Basis, int]]  # Distinct entry that each coefficient reads.
+    firsts: seq[(Basis, Basis)]  # Output and basis of `m` that first read each distinct entry.
+    readers: seq[int]  # Coefficients that read each distinct entry.
+    starting: array[Basis, array[Basis, seq[int]]]  # Distinct entries by their first pair.
+  for output in Basis:
+    for term in table[output]:
+      operands[output].incl term.operand
+      entries[output][term.operand].add term
+    for k in operands[output]:
+      let
+        terms = entries[output][k]
+        (i, j) = (terms[0].pair[0], terms[0].pair[1])
+      var index = -1
+      for x in starting[i][j]:
+        if isSame(entries[firsts[x][0]][firsts[x][1]], terms):
+          index = x
+          break
+      if index < 0:
+        index = firsts.len
+        firsts.add (output, k)
+        readers.add 0
+        starting[i][j].add index
+      inc readers[index]
+      found[output][k] = index
 
   result = newStmtList()
   if pairs.len > 0:
@@ -106,38 +172,41 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
       let
         b0 = emitBasis(pair[0])
         b1 = emitBasis(pair[1])
-        first = (if pair[0] == pair[1]: (quote do: `n`[`b0`]) else: nameDoubled(pair[0]))
-      products.add newIdentDefs(namePair(pair), newEmptyNode(), quote do: `first` * `n`[`b1`])
+        product =
+          if pair[0] == pair[1]: quote do: `n`[`b0`] * `n`[`b1`]
+          elif pair[0] in doubled: (let d = nameDoubled(pair[0]); quote do: `d` * `n`[`b1`])
+          else: (let d = nameDoubled(pair[1]); quote do: `n`[`b0`] * `d`)
+      products.add newIdentDefs(namePair(pair), newEmptyNode(), product)
     result.add products
+  var
+    shared = newNimNode(nnkLetSection)  # Entries that several coefficients read, named once.
+    isNamed = newSeq[bool](firsts.len)
+    assignments = newStmtList()
   for output in Basis:
     if table[output].len == 0: continue
-    var
-      operands: Bases
-      terms: array[Basis, seq[TermSandwich]]  # Terms of output by basis of `m` that they read.
-    for term in table[output]:
-      operands.incl term.operand
-      terms[term.operand].add term
     var summands: seq[NimNode]
-    for k in operands:
-      var weight: NimNode = nil
-      for term in terms[k]:
-        let
-          product = namePair(term.pair)
-          magnitude =
-            case abs(term.coefficient)
-            of 1: product
-            of 2: infix(product, "+", product)
-            else: infix(newFloatLitNode(float(abs(term.coefficient))), "*", product)
-        weight =
-          if weight.isNil: (if term.coefficient < 0: prefix(magnitude, "-") else: magnitude)
-          else: infix(weight, if term.coefficient < 0: "-" else: "+", magnitude)
-      let bk = emitBasis(k)
-      summands.add infix(weight, "*", quote do: `m`[`bk`])
+    for k in operands[output]:
+      let
+        terms = entries[output][k]
+        index = found[output][k]
+        bk = emitBasis(k)
+      var entry: NimNode
+      if readers[index] > 1 and (terms.len > 1 or abs(terms[0].coefficient) > 1):
+        let name = ident("entry_" & $index)
+        if not isNamed[index]:
+          shared.add newIdentDefs(name, newEmptyNode(), emitEntry(terms, sign(terms)))
+          isNamed[index] = true
+        entry = if sign(terms) < 0: prefix(name, "-") else: name
+      else:
+        entry = emitEntry(terms, 1)
+      summands.add infix(entry, "*", quote do: `m`[`bk`])
     let
       b = emitBasis(output)
       value = emitSum(summands)
-    result.add quote do:
+    assignments.add quote do:
       `r`[`b`] = `value`
+  if shared.len > 0: result.add shared
+  result.add assignments
 
 
 func `⟇⟇~∘`*[A, B: static Bases](
