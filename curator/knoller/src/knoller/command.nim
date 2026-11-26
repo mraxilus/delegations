@@ -10,14 +10,15 @@
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
 ##     with `--check`; `path: unsettled: <message>` for file fixers do not settle, which stays
-##     as written, with no line and no rule, since fault is tool's (`Fix.unsettled`);
-##     `path:line: <rule-id> left: <message>` for finding left for hand, as every check of
-##     knoller reads fixed text (`checkSource`), static pass's among them;
-##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
-##     inside it with count and first line, so no fenced line goes unseen (`checkFenceHeld`);
-##     `path:line: debug-output warning: <message>` for each debug output, which no fix removes
-##     (`warnDebug`); then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its
-##     location is path alone.
+##     as written, with no line and no rule, since fault is tool's (`Fix.unsettled`); then each
+##     finding left for hand, as every check of knoller reads fixed text (`checkSource`), static
+##     pass's among them, and each warning, through renderer (`report.nim`, STYLE.md §3): fence
+##     naming each rule broken inside it with count and first line, so no fenced line goes
+##     unseen (`checkFenceHeld`), and debug output, which no fix removes (`warnDebug`); then
+##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
+##   Finding prints in terminal form at terminal, with text of its line as given, and on one
+##     line in pipe or log; `--form` forces either. Color shows at terminal alone, and
+##     `NO_COLOR` set to any text drops it (`main`).
 ##   Every line printed is line of file as given: finding left in fixed text is traced back
 ##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
 ##     given, so it prints at line `0`, path alone, and its message echoes its text.
@@ -31,7 +32,7 @@
 ##     batch, whose prover answers them once each round.
 ##   Pin no compiler serves, and directory holding several nimble files, whose pin nothing can
 ##     trust (nimble refuses such directory), prove nothing: rule removes no group in their
-##     files, and run prints one line `needless-parentheses warning: <message>` for each, before
+##     files, and run prints one warning of rule `needless-parentheses` for each, before
 ##     count. Warning changes no exit code, and no other compiler stands in silently (`GUIDE.md`,
 ##     Toolchain).
 ##   Run fixes every file, asks prover of each batch what its files asked, and fixes again each
@@ -63,26 +64,33 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
+import std/[
+  algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables, terminal,
+]
 import ./[
   chain, compilers, configurations, conversions, cuts, edits, fences, idioms, landmarks, markers,
-  messages, names, packages, parentheses, pins, pools, proofs, purity, reports, rewrites, rules,
-  staging, symbols,
+  messages, names, packages, parentheses, pins, pools, proofs, purity, report, reports, rewrites,
+  rules, staging, symbols,
 ]
 
 
 const
   USAGE = """
-Usage: knoller [--check] [--nim:path] path...
+Usage: knoller [--check] [--nim:path] [--form:terminal|line] path...
 
 Fix each Nim file path names; directory stands for Nim files git lists under it.
 
 Options:
-  --check     write nothing; report each change due, and exit 1 where any
-  --nim:path  compiler whose parser proves each parentheses removal; default:
-              compiler of pin of nearest nimble file above each file, else `nim`
+  --check        write nothing; report each change due, and exit 1 where any
+  --nim:path     compiler whose parser proves each parentheses removal; default:
+                 compiler of pin of nearest nimble file above each file, else `nim`
+  --form:terminal|line
+                 print each finding in terminal form or on one line; default:
+                 terminal form at terminal, one line in pipe or log
 """
     ## Text printed on usage error.
+  FORM_TERMINAL = "terminal"  ## Value of `--form` that prints each finding in terminal form.
+  FORM_LINE = "line"  ## Value of `--form` that prints each finding on one line.
   ASKS_MAX = 8
     ## Rounds of asking parser at most; each answers sources chain asked, and tree settles in
     ##   three (`PROVENANCE.md`, Content fixes).
@@ -94,6 +102,7 @@ type
   Options* = object  ## Define parsed command line.
     is_check*: bool  ## Report changes due and write none.
     nim*: string  ## Compiler whose parser proves each removal of parentheses; empty: none named.
+    form*: Option[Form]  ## Form each finding prints in; none where terminal picks it.
     paths*: seq[string]  ## Paths named, files or directories, in order given.
 
   Outcome* = object  ## Define what one run writes and prints, and its exit code.
@@ -115,6 +124,7 @@ type
 
   Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
     path: string  ## Path as named.
+    source: string  ## Text of file as given, whose lines findings show.
     written: seq[(string, string)]  ## Path and new text, where file changes.
     fixed, left, held: seq[Report]
       ## Rewrite, finding left, and warning of fence or debug output, unsorted.
@@ -156,6 +166,8 @@ proc parseOptions*(arguments: openArray[string]): Option[Options] =
     of cmdLongOption, cmdShortOption:
       if key == "check" and value.len == 0: options.is_check = true
       elif key == "nim" and value.len > 0: options.nim = value
+      elif key == "form" and value == FORM_TERMINAL: options.form = some(Form.Terminal)
+      elif key == "form" and value == FORM_LINE: options.form = some(Form.Line)
       else: return none(Options)
     of cmdEnd: break
   if options.paths.len == 0: none(Options) else: some(options)
@@ -329,6 +341,7 @@ func part(
   )
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
+  result.source = source
   result.unsettled = fix.unsettled
   result.left = (kept & after).shownAs(path)
   if fix.source == source: return
@@ -336,26 +349,49 @@ func part(
   if not is_check: result.written.add (path, fix.source)
 
 
-func joined(parts: openArray[Part], is_check: bool, failures: openArray[string]): Outcome =
-  ## Sort reports of each file's part into lines printed, and decide exit code; each failure of
-  ##   prover prints as one warning, in order given.
+func joined(
+  parts: openArray[Part],
+  is_check: bool,
+  failures: openArray[string],
+  form = Form.Line,
+  is_colored = false,
+): Outcome =
+  ## Sort reports of each file's part into lines printed, and decide exit code: rewrite and
+  ##   unsettled file on one line each; finding left, warning, and each failure of prover as
+  ##   warning, through renderer in form asked (STYLE.md §3). Terminal form takes blank line
+  ##   before each finding, and before count.
   var
     fixed, left, held: seq[Report]
     unsettled: seq[string]
+    texts: Table[string, seq[string]]  # Lines of each file as given, by path as named.
   for part in parts:
     result.written.add part.written
     result.asked.add part.asked
     fixed.add part.fixed
     left.add part.left
     held.add part.held
+    texts[part.path] = part.source.split('\n')
     if part.unsettled.len > 0: unsettled.add part.path & ": unsettled: " & part.unsettled
+
+  func textLine(report: Report): Option[string] =
+    ## Read text of line report names, as file gives it; none for whole file or file unread.
+    let lines = texts.getOrDefault(report.path)
+    if report.line > 0 and report.line <= lines.len: some(lines[report.line - 1])
+    else: none(string)
+
   let outcome = if is_check: " to fix" else: " fixed"
   for report in fixed.sorted: result.lines.add report.located & outcome
   for line in unsettled.sorted: result.lines.add line
-  for report in left.sorted: result.lines.add report.located & " left: " & report.message
-  for report in held.sorted: result.lines.add report.located & " warning: " & report.message
+  var notices: seq[Notice]
+  for report in left.sorted: notices.add report.toNotice(report.textLine)
+  for report in held.sorted: notices.add report.toNotice(report.textLine, is_warning = true)
   for failure in failures:
-    if failure.len > 0: result.lines.add Rule.ParenthesesNeedless.id & " warning: " & failure
+    if failure.len > 0:
+      notices.add initReport("", 0, Rule.ParenthesesNeedless, failure).toNotice(is_warning = true)
+  for notice in notices:
+    if form == Form.Terminal: result.lines.add ""
+    result.lines.add notice.render(form, is_colored)
+  if form == Form.Terminal and notices.len > 0: result.lines.add ""
   result.lines.add $fixed.len & outcome & "."
   result.code = if left.len + unsettled.len > 0 or (is_check and fixed.len > 0): 1 else: 0
   result.asked = result.asked.deduplicate
@@ -421,6 +457,8 @@ func outcome*(
   uses = initTable[string, Uses](),
   pures = initTable[string, Pures](),
   libraries = initTable[string, seq[string]](),
+  form = Form.Line,
+  is_colored = false,
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
@@ -460,7 +498,7 @@ func outcome*(
       configurations.getOrDefault(nimbles.getOrDefault(path)),
       names.getOrDefault(nimbles.getOrDefault(path)),
     )
-  parts.joined(is_check, [failure])
+  parts.joined(is_check, [failure], form, is_colored)
 
 
 proc outcomeProven*(
@@ -475,6 +513,8 @@ proc outcomeProven*(
   uses = initTable[string, Uses](),
   pures = initTable[string, Pures](),
   libraries = initTable[string, seq[string]](),
+  form = Form.Line,
+  is_colored = false,
 ): Outcome =
   ## Fix files as `outcome` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -549,7 +589,7 @@ proc outcomeProven*(
         configurations.getOrDefault(nimbles.getOrDefault(path)),
         names.getOrDefault(nimbles.getOrDefault(path)),
       )
-  parts.joined(is_check, failures)
+  parts.joined(is_check, failures, form, is_colored)
 
 
 proc outcomeProven*(
@@ -1168,6 +1208,9 @@ proc main*(): int =
   #   landmarks.
   var toolchains = initToolchains()
   let
+    is_terminal = stdout.isatty
+    form = formOutput(is_terminal, options.get.form)
+    is_colored = form == Form.Terminal and isColored(is_terminal, getEnv("NO_COLOR"))
     directory = getCurrentDir()
     converted = paths.converted
     files = paths.mapIt((it, readFile(it).judged(it in converted)))
@@ -1189,6 +1232,8 @@ proc main*(): int =
       uses,
       pures,
       nimbles.modulesLibrary,
+      form,
+      is_colored,
     )
   for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line
