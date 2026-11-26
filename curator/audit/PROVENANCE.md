@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | ed0a06b0579bbc10 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 757ccb73358906076e45fc8a457acbcd10108caa |
+| Pruned  | 55f066c4dbef9f0a8eced3ff424be08566bd4759 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2027,10 +2027,9 @@ the series only when the Architect asks.
   reaches it. On Windows, `osproc` refuses an unsafe argument to a batch file (CVE-2024-24576).
   The one batch file that a curator project starts, `npm`, takes the constant `ci --no-audit
   --no-fund`.
-- Verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites of
-  `curator/audit`, `curator/knoller`, `curator/assayer` and `curator/probe` pass on 2.4.2.
-  `nim r koch check` with 2.4.2 building koch gives 0 findings, and knoller prints the same 4,434
-  lines over the tree on both releases.
+- Verified by `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites of `curator/audit`,
+  `curator/knoller`, `curator/assayer` and `curator/probe` pass on 2.4.2. `nim r koch check` on
+  2.4.2 gives 0 findings, and knoller prints the same 4,434 lines over the tree on both releases.
 - Atlas moved with the toolchain, from 0.14.7 to 0.16.3. Its claims below were verified on 0.14.7.
   On 0.16.3 a restore of assayer joins `srcDir` to the root of the clone, warns that the remote
   differs, and `atlas changed` exits 0, 2026-11-26.
