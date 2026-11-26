@@ -2833,6 +2833,25 @@ suiteInProc "Internal: Edits":
     check "definition changed" notin html  # routine beside it is unchanged
 
 
+  test "replacement written against another digest still shows, under both digests":
+    let
+      source = "func a*(): int = 1\n"
+      change = Change(edits: @[Edit(kind: KindEdit.Replace, path: "pga/r.nim",
+        replacement: "func a*(): int = 2\n", digest: "0000000000000000")])
+      html = htmlCode(change, {"pga/r.nim": source}.toTable)
+    check "1 changed" in html  # replacement stands against file at pin
+    check "0000000000000000" in html and digest(source) in html  # note names both digests
+
+
+  test "edit whose quote file at pin lacks shows as written, under its count":
+    let
+      change = Change(edits: @[Edit(kind: KindEdit.Quote, path: "pga/q.nim",
+        quote: "func gone(): int = 0\n", replacement: "func gone(): int = 1\n")])
+      html = htmlCode(change, {"pga/q.nim": "func kept(): int = 2\n"}.toTable)
+    check "finds its quote 0 times" in html  # note says why edit stands apart
+    check "<span class=\"nm\">gone</span>(): int = 1" in html  # edit reaches page as written
+
+
   test "evidence shows one row per function that moved, gains first, and counts rest":
     let
       baselines = {"rga4d": %*{"measurands": {
