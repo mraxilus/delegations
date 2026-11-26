@@ -842,35 +842,44 @@ suite "Chapter 4":
 
 
 
-func numberedRead(written: string): tuple[words: seq[string], refused: Option[int]] =
-  ## tcidu `written` ja'i `D1 a` gi'e dunda lo valsi .a le stuzi pe slaka bu poi se to'e curmi
+func numberedRead(written: string): tuple[words, cmavo: seq[string], refused: Option[int]] =
+  ## tcidu `written` ja'i `D1 a` pe `#991` .e `D5 c` pe `#1003` gi'e dunda lo valsi .e lo cmavo
+  ##     .a le stuzi pe slaka bu poi se to'e curmi
   ##   .i ro lerfu pe `0` bi'o `9` cu du pa valsi
   ##   .i denpa bu poi zvati lo jbini be re lerfu cu du pa valsi
+  ##   .i le cmavo pe le valsi cu du zo pi'e va'o lo nu le porsi be lo lerfu be'o poi vasru le valsi
+  ##       cu vasru su'o re boi denpa bu
+  ##   .i le porsi cu vasru lo lerfu .e denpa bu .e slaka bu poi zvati lo jbini be re lerfu
+  ##   .i va'o lo drata le cmavo cu du zo pi
   ##   .i denpa bu poi na zvati lo jbini be re lerfu cu fendi
   ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi
   ##   .i slaka bu poi na mapti di'u cu se to'e curmi
   ##   .i le fancu cu ciska le javni ji'a gi'e pilno no fancu pe `stream.nim`
+  func isInner(at: int): bool =
+    ## jdice lo du'u le lerfu po'u `at` cu pagbu lo namcu
+    at >= 0 and at < written.len and (written[at] in Digits or
+      (written[at] in {'.', ','} and at > 0 and written[at - 1] in Digits and
+        at + 1 < written.len and written[at + 1] in Digits))
   for at, c in written:
     case c
-    of '0' .. '9': result.words.add $c
+    of '0' .. '9':
+      result.words.add $c
+      result.cmavo.add LUT_CMAVO_BY_DIGIT[ord(c) - ord('0')]
     of '.':
-      if at > 0 and written[at - 1] in Digits and at + 1 < written.len and
-          written[at + 1] in Digits:
-        result.words.add "."
+      if not isInner(at): continue  # le denpa cu fendi
+      var (first, last) = (at, at)  # le stuzi pe le namcu
+      while isInner(first - 1): dec first
+      while isInner(last + 1): inc last
+      result.words.add "."
+      result.cmavo.add(if written[first .. last].count('.') >= 2: "pi'e" else: "pi")
     of ',':
       var count = 0
       while at + 1 + count < written.len and written[at + 1 + count] in Digits: inc count
-      if at == 0 or written[at - 1] notin Digits or count != 3: return (result.words, some(at))
+      if at == 0 or written[at - 1] notin Digits or count != 3:
+        return (result.words, result.cmavo, some(at))
       result.words.add ","
+      result.cmavo.add "ki'o"
     else: discard  # lo kutle'u cu fendi
-
-
-func cmavoNumbered(word: string): string =
-  ## dunda le cmavo poi le valsi pe `numberedRead` cu sinxa ke'a
-  case word
-  of ".": "pi"
-  of ",": "ki'o"
-  else: LUT_CMAVO_BY_DIGIT[ord(word[0]) - ord('0')]
 
 
 func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
@@ -1026,7 +1035,7 @@ suite "Internal: Stream":
     #     lerfu
 
 
-  test "Period between two digits reads as pi, and comma before three digits as ki'o":
+  test "Period between two digits reads as pi in run with one period, comma before three as ki'o":
     # `Architect` jdice `D1 a` bu'u `#991`
     #   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` cu pilno zo pi .e zo ki'o ne'i lo namcu
     for (text, words, cmavo) in [
@@ -1057,8 +1066,41 @@ suite "Internal: Stream":
     check "1.ai".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
 
 
-  test "Each text of digits, periods, commas and spaces after li reads as ruling D1 a reads it":
-    # `Architect` jdice `D1 a` bu'u `#991`
+  test "Run of digits with two or more periods reads each period as pi'e":
+    # `Architect` jdice `D5 c` bu'u `#1003`
+    #   .i zo pi'e cu fendi lo pagbu be lo namcu to `CLL 18.10` toi
+    #   .i lo mupli po'u `CLL 18.74` .e `CLL 18.76` cu pilno zo pi'e ne'i lo namcu poi vasru ci
+    #       pagbu
+    for (text, cmavo) in [
+        ("li 1.2.3", @["li", "pa", "pi'e", "re", "pi'e", "ci"]),
+        ("li 192.168.0.1",
+          @["li", "pa", "so", "re", "pi'e", "pa", "xa", "bi", "pi'e", "no", "pi'e", "pa"]),
+        ("li 1,000.2.3", @["li", "pa", "ki'o", "no", "no", "no", "pi'e", "re", "pi'e", "ci"]),
+        # slaka bu cu pagbu le porsi
+        #   .i se ki'u bo pa porsi cu vasru su'e pa boi zo pi
+        ("li 1.2,000.3", @["li", "pa", "pi'e", "re", "ki'o", "no", "no", "no", "pi'e", "ci"]),
+        # ro porsi pe pa selci'avla cu se tcidu ne'i vo'a
+        ("li 1.2.3boi4.5",
+          @["li", "pa", "pi'e", "re", "pi'e", "ci", "boi", "vo", "pi", "mu"]),
+        ("li 1.2.3 .e li 4.5",
+          @["li", "pa", "pi'e", "re", "pi'e", "ci", "e", "li", "vo", "pi", "mu"]),
+        ("li -1.2.3%", @["li", "ni'u", "pa", "pi'e", "re", "pi'e", "ci", "ce'i"]),
+        ("mi ponse €1.2.3", @["mi", "ponse", "lo", "ronru'u", "be", "li", "pa", "pi'e", "re",
+          "pi'e", "ci", "be'o", "ku"]),
+        # le namcu pe la .europas. cu se tcidu ta'i lo namcu poi vasru ci pagbu
+        ("li 86.000.704", @["li", "bi", "xa", "pi'e", "no", "no", "no", "pi'e", "ze", "no", "vo"])]:
+      checkpoint text
+      check text.cmavoRead == some(cmavo)
+      check text.isSpanned  # le flalu pe lo stuzi
+    # le valsi cu vasru le stuzi pe denpa bu
+    check "li 1.2.3".widthsRead == some(@[2, 1, 1, 1, 1, 1])
+    # pa boi denpa bu po'o cu sinxa zo pi to `D1 a` pe `#991` toi
+    check "li 1.5".cmavoRead == some(@["li", "pa", "pi", "mu"])
+    check "li 18.10".cmavoRead == some(@["li", "pa", "bi", "pi", "pa", "no"])
+
+
+  test "Each text of digits, periods, commas and spaces after li reads as D1 a and D5 c read it":
+    # `Architect` jdice `D1 a` bu'u `#991` gi'e jdice `D5 c` bu'u `#1003`
     #   .i le flalu cu tcidu ro selci'a poi `MARKS_NUMBERED` cu zbasu ke'a
     #   .i `numberedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
     var
@@ -1067,7 +1109,7 @@ suite "Internal: Stream":
     while written.len > 0:
       var longer: seq[string]
       for text in written:
-        let (words, refused) = text.numberedRead
+        let (words, cmavo, refused) = text.numberedRead
         checkpoint "li " & text
         if refused.isSome:
           # slaka bu poi na mapti `D1 a` cu se to'e curmi bu'u le stuzi pe vo'a
@@ -1075,7 +1117,7 @@ suite "Internal: Stream":
           check refusal.isSome and refusal.get[1] == 3 + refused.get
         else:
           check ("li " & text).wordsRead == some(@["li"] & words)  # `CLL 18.2`
-          check ("li " & text).cmavoRead == some(@["li"] & words.mapIt(it.cmavoNumbered))
+          check ("li " & text).cmavoRead == some(@["li"] & cmavo)
         inc count
         if text.len < LENGTH_NUMBERED_MOST:
           for mark in MARKS_NUMBERED: longer.add text & mark

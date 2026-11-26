@@ -22,7 +22,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, sequtils, strutils, unittest]
 
-import ../../src/ricysoho/[grammar, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar, prose, selmaho, stream, tanru]
 import ../../src/ricysoho/lists/cmavo
 
 
@@ -67,6 +67,11 @@ func unitsRead(text: string): Option[seq[seq[string]]] =
   let reading = text.readText
   if not reading.is_read: return none(seq[seq[string]])
   some(reading.units.mapIt(it.words.mapIt(reading.occurrences[it].text)))
+
+
+func cmavoUnits(reading: ReadingText): seq[seq[string]] =
+  ## liste lo valsi poi le genturfa'i cu tcidu ro valsi pe ro genvla ta'i ke'a
+  reading.units.mapIt(it.words.mapIt($reading.occurrences[it].reading.tanru))
 
 
 func terminalsRead(text: string): Option[seq[Terminal]] =
@@ -308,6 +313,10 @@ const
   ]
     ## lo jufra poi ro namcu po'u `_` cu pagbu ke'a
   COUNT_NUMBERS_SIGNED = 104  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  NUMBERS_COMPOUND = [("1.2.3", "1 pi'e 2 pi'e 3"), ("192.168.0.1", "192 pi'e 168 pi'e 0 pi'e 1")]
+    ## lo namcu poi vasru su'o re boi denpa bu .e le valsi poi le namcu cu sinxa ke'a to `D5 c`
+    ##     pe `#1003` toi
+  COUNT_COMPOUND = 8  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
 
 
 
@@ -366,6 +375,23 @@ suite "Internal: Prose":
     # zo zo sitna le pamoi valsi pe le sinxa
     #   .i se ki'u bo le gerna cu to'e curmi le selci'a
     check not "zo ½ cu valsi".readText.is_read
+
+
+  test "Run of digits with two or more periods reads as its words and tree with pi'e written out":
+    # `Architect` jdice `D5 c` bu'u `#1003`
+    #   .i ro boi denpa bu pe le namcu cu sinxa zo pi'e
+    var count = 0
+    for (text, spelled) in NUMBERS_COMPOUND:
+      for frame in FRAMES_NUMBER:
+        let (a, b) = (frame.replace("_", text).readText, frame.replace("_", spelled).readText)
+        checkpoint frame.replace("_", text)
+        check a.is_read and b.is_read
+        if a.is_read and b.is_read:
+          check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
+          check a.tree.shape == b.tree.shape
+          check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
+        inc count
+    check count == COUNT_COMPOUND  # `IX.3`
 
 
   test "Words of each tree, in order, are words of text that erasure leaves":

@@ -490,7 +490,7 @@ func isSettledTyped(typed: string, at: int): bool =
   ##   .i lo kutle'u cu fendi
   ##   .i denpa bu poi zvati lo jbini be re lerfu pe `0` bi'o `9` cu na fendi
   ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `0` bi'o `9` cu na fendi
-  ##   .i ki'u bo lo lerfu poi ba se ciska cu jdice lo du'u xu kau ri sinxa zo pi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu jdice lo du'u xu kau ri sinxa zo pi .a zo pi'e
   ##   .i le fancu cu ciska le javni pe `D1 a` ji'a gi'e pilno no fancu pe `stream.nim` .e
   ##       `live.nim`
   let c = typed[at]
@@ -776,17 +776,20 @@ suite "Internal: Live text":
     check count >= COUNT_PARTED_LEAST  # `IX.3`
 
 
-  test "Decimal point and digit group read typed byte by byte or in pieces as read whole, and grow":
-    # `Architect` jdice `D1 a` bu'u `#991`
+  test "Point and digit group read typed byte by byte or in pieces as read whole, and grow":
+    # `Architect` jdice `D1 a` bu'u `#991` gi'e jdice `D5 c` bu'u `#1003`
     #   .i denpa bu poi romoi gi'e se lidne pa lerfu cu sinxa lo denpa
-    #   .i ba lo nu lo lerfu cu se ciska ba ke'a kei denpa bu cu sinxa zo pi
+    #   .i ba lo nu lo lerfu cu se ciska ba ke'a kei denpa bu cu sinxa zo pi .a zo pi'e
+    #   .i no jgena cu zvati ne'i lo porsi poi vasru su'o re boi denpa bu
+    #   .i se ki'u bo le mivyselci'a cu tcidu ro le porsi ta'i lo mulno
     #   .i ro selci'a cu se tcidu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi cu katna
     #   .i lo spisa poi vasru so'i lerfu cu se benji ca lo nu lo selci'a cu se jmina fi le papri
     var rng = initRand(SEED)
     for text in [
         "li 3.14 .i li 1,000", "mi viska 3. do", "li 1,000.5 du li 1,000 su'i pi 5",
         "li 3,14 du li ci", "mi fa'o 3.5 do", "mi fa'o 1,000.5 do", "zoi 5 2.5 5 5",
-        "mi viska li 3."]:
+        "mi viska li 3.", "li 1.2.3 .e li 192.168.0.1", "mi fa'o 1.2.3 do",
+        "li 1.2.3boi4.5 .i li 1,000.2.3", "mi ponse €1.2.3"]:
       for draw in 0 .. DRAWS_NUMBERED:
         let cuts = (if draw == 0: toSeq(1 ..< text.len) else: text.cutsRandom(rng, PIECE_MOST))
         checkpoint text & " cut at " & $cuts

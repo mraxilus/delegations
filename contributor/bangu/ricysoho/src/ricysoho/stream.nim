@@ -16,8 +16,8 @@
 ## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
 ##   .i lo kutle'u .e denpa bu cu fendi lo valsi
 ##   .i denpa bu cu sinxa lo denpa
-##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi gi'e na fendi to `isBoundary`
-##       toi
+##   .i ku'i denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi .a zo pi'e gi'e na fendi to
+##       `isBoundary` toi
 ##   .i slaka bu cu fendi lo slaka ne'i lo valsi
 ##   .i ku'i slaka bu poi se lidne pa lerfu cu sinxa zo ki'o gi'a se to'e curmi
 ##   .i lo brale'u cu sinxa lo slaka poi se basna
@@ -269,7 +269,16 @@ const
     ## lo cmavo pe `PA` poi ro lerfu pe `DIGITS_STREAM` cu sinxa ke'a to `CLL 18.2` toi
   WORD_DECIMAL = "pi"
     ## le cmavo poi denpa bu cu sinxa ke'a va'o lo nu zvati lo jbini be re lerfu
+    ##   .i ku'i `WORD_COMPOUND` cu basti va'o lo nu le porsi be lo lerfu cu vasru su'o re boi
+    ##       denpa bu
     ##   .i lo mupli po'u `CLL 18.6` cu pilno zo pi
+  WORD_COMPOUND = "pi'e"
+    ## le cmavo poi ro boi denpa bu pe lo porsi be lo lerfu cu sinxa ke'a va'o lo nu le porsi cu
+    ##     vasru su'o re boi denpa bu
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D5 c`
+    ##   .i zo pi'e cu fendi lo pagbu be lo namcu to `CLL 18.10` toi
+    ##   .i lo mupli po'u `CLL 18.74` .e `CLL 18.76` cu pilno zo pi'e ne'i lo namcu poi vasru ci
+    ##       pagbu
   WORD_GROUP = "ki'o"
     ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
     ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
@@ -628,7 +637,8 @@ func isBoundary*(text: string, at: int): bool =
   ## jdice lo du'u xu kau le lerfu poi zvati `at` cu fendi lo selci'avla
   ##   .i lo kutle'u cu fendi
   ##   .i denpa bu cu fendi va'o po'o lo nu na zvati lo jbini be re lerfu pe `DIGITS_STREAM`
-  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi to `D1 a` pe `#991` toi
+  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi .a zo pi'e to `D1 a` pe
+  ##       `#991` .e `D5 c` pe `#1003` toi
   let c = text[at]
   if c in Whitespace: return true
   if c != '.': return false
@@ -639,7 +649,7 @@ func isBoundary*(text: string, at: int): bool =
 func isBoundarySettled*(text: string, at: int): bool =
   ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
   ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `DIGITS_STREAM` cu na fendi
-  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi .a zo pi'e
   ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
   text.isBoundary(at) and
     not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in DIGITS_STREAM)
@@ -713,6 +723,9 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi poi le
   ##       genturfa'i cu tcidu ke'a ta'i zo ki'o
   ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
+  ##   .i ku'i va'o lo nu lo porsi be lo lerfu cu vasru su'o re boi denpa bu kei ro boi denpa bu pe
+  ##       le porsi cu sinxa zo pi'e to `runDigits` toi
+  ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D5 c`
   ##   .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi to `CLL 3.3` toi
   ##   .i `wordsLetters` tcidu ro drata pagbu
   ##
@@ -743,12 +756,27 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ## ni'o le pamoi valsi pe pa sinxa pe lo namcu cu vasru ro stuzi pe le sinxa
   ##   .i ro drata valsi pe le sinxa cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le
   ##       sinxa
+  func runDigits(at: int): tuple[finish: int, is_compound: bool] =
+    ## jarco le fanmo be le porsi poi krasi bu'u `at` ku'o .e lo du'u le porsi cu vasru su'o re boi
+    ##     denpa bu
+    ##   .i le porsi cu vasru lo lerfu pe `DIGITS_STREAM` .e denpa bu .e slaka bu poi zvati lo jbini
+    ##       be re lerfu pe `DIGITS_STREAM`
+    ##   .i le porsi cu fanmo pu `finish`
+    var (k, count) = (at, 0)
+    while k < finish and (text[k] in DIGITS_STREAM or (text[k] in {'.', ','} and
+        text[k - 1] in DIGITS_STREAM and k + 1 < finish and text[k + 1] in DIGITS_STREAM)):
+      if text[k] == '.': inc count
+      inc k
+    (k, count >= 2)
+
   var
     occurrences: seq[Occurrence]
     at = start
     opened = none(int)  # lo namcu pe le valsi poi krasi le namcu poi ca'o se tcidu
     opening = start  # le stuzi pe le pamoi lerfu pe le namcu
     signed = none(int)  # le jdini sinxa poi lidne le namcu
+    ending_digits = start  # le fanmo be le porsi be lo lerfu poi ca'o se tcidu
+    is_compound = false  # lo du'u le porsi cu vasru su'o re boi denpa bu
   template closed() =
     # fanmo le namcu
     #   .i jmina zo be'o .e zo ku va'o lo nu lo jdini sinxa cu lidne le namcu
@@ -757,6 +785,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   while at < finish:
     if text[at] in DIGITS_STREAM:
       if opened.isNone: (opened, opening) = (some(occurrences.len), at)
+      if at >= ending_digits: (ending_digits, is_compound) = runDigits(at)
       occurrences.add Occurrence(
         start: at, finish: at + 1, text: $text[at], stress: none(int),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
@@ -769,9 +798,9 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       var count = 0  # lo klani be lo lerfu poi slaka bu cu lidne ke'a
       while at + 1 + count < finish and text[at + 1 + count] in DIGITS_STREAM: inc count
       if text[at] == ',' and count != 3: return refuse(Refusal.Comma, at)
+      let word = (if text[at] == ',': WORD_GROUP elif is_compound: WORD_COMPOUND else: WORD_DECIMAL)
       occurrences.add Occurrence(
-        start: at, finish: at + 1, text: $text[at], stress: none(int),
-        reading: (if text[at] == '.': WORD_DECIMAL else: WORD_GROUP).readWord,
+        start: at, finish: at + 1, text: $text[at], stress: none(int), reading: word.readWord,
       )
       inc at
       continue
