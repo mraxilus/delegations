@@ -2,8 +2,15 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, unittest]
-import ../../src/[comments, kinds]
+import std/[options, random, sequtils, unittest]
+import ../../src/[claims_log, comments, kinds]
+
+
+const
+  SEED_TEXTS = 7  ## Seed of random texts that rows of log quote.
+  COUNT_TEXTS = 2_000  ## Rows of log written, one for each random text.
+  CHARS_TEXT = ['"', '\\', '\'', '#', ' ', 'a', '\t', '\n']
+    ## Characters each text draws from: those that open, close or escape string, and others.
 
 
 func texts(source: string, syntax: Syntax): seq[string] =
@@ -61,6 +68,18 @@ suite "Article VI":
       0  # escaped quote keeps string open
     check texts("q: \"a\\\\\" # yes\n", Syntax.HashSpaced) == @["yes"]  # escaped backslash
     check texts("p: 'C:\\' # yes\n", Syntax.HashSpaced) == @["yes"]  # single quotes escape none
+
+
+  test "VI.5 each row that writer of log writes holds no comment, whatever text it quotes":
+    var
+      rng = initRand(SEED_TEXTS)
+      commented: seq[string]  # Rows whose scan finds comment.
+    for _ in 1 .. COUNT_TEXTS:
+      var text = ""
+      for _ in 1 .. rng.rand(12): text.add rng.sample(CHARS_TEXT)
+      let row = lineClaim(Claim(kind: "reviewer", text: text, result: text))
+      if comments(row, Syntax.HashSpaced).len > 0: commented.add row
+    check commented.len == 0  # writer quotes each string, so no `#` stands outside quotes
 
 
   test "VI.5 gitignore leading hash only":
