@@ -135,6 +135,7 @@ The packed form of the doc comment was built on 2026-11-08, under Nim 2.4.0 on
 `linux amd64, 4 cores`. It passes the suites at the nine algebras, and its 388 tables equal those
 at pin. At cga6d it builds `import pga` in ×0.97 of the time at pin and ×0.81 of the peak memory,
 median of seven builds. In that run, pin takes about 9.8 s and 618 MiB, and the packed form 9.5 s
-and 501 MiB. On 2026-11-15 this proposal takes 21.6 s and 913 MiB there, and pin 10.2 s and
-615 MiB, median of three builds in turn. The evaluation is another run of one build for each side,
-so its seconds differ. So the packed form takes about half the time and memory of this one there.
+and 501 MiB. On 2026-11-15, at library commit `3d9696e`, this proposal takes 21.6 s and 913 MiB
+there, and that commit alone 10.2 s and 615 MiB, median of three builds in turn. The evaluation is
+another run of one build for each side, so its seconds differ. So the packed form takes about half
+the time and memory of this one there.

@@ -7,7 +7,7 @@ conformal algebra by its round weight norm, and any other element by √|𝐮 �
 with no sign of it. Here every element whose divisor is not 0 comes back with unit weight.
 
 **What it costs.** Conformal unitize is much slower than at pin. A rigid unitize costs one call
-more, ×1.07 to ×1.09 at rga4d. The test of a round object has edges at a huge sphere, a small
+more, ×1.08 to ×1.12 at rga4d. The test of a round object has edges at a huge sphere, a small
 sphere, a far plane, a far transversion and 32 bits.
 
 ## Problem
@@ -196,7 +196,7 @@ reading holds at a probability of about 0.8.
   sphere too, at a probability of 0.75 to 0.8.
 - **`inline`.** The guide of the language inlines a large body only where a measurement shows
   the gain (`STYLE.md`, section 2). No pair of runs at cga5d shows one, as Evidence states, so
-  `^∘` drops `inline`. At rga4d the call costs ×1.07 to ×1.09 on each unitize measurand, and
+  `^∘` drops `inline`. At rga4d the call costs ×1.08 to ×1.12 on each unitize measurand, and
   Open decisions holds that choice.
 
 ## Costs
@@ -205,7 +205,7 @@ reading holds at a probability of about 0.8.
   only where the round weight passes, and stops at a second grade. Most of the rest is calls and
   error checks, which the library's operators carry everywhere, and which the gap list holds as
   causes D02 and D05. The rigid branch is the rule at pin, and costs one call more, as the next
-  item gives: ×1.07 to ×1.09 at rga4d.
+  item gives: ×1.08 to ×1.12 at rga4d.
 - **One call.** Since `^∘` is not inline, each call to `unitize` or `normalizeWeight` calls it, in
   the rigid algebras too.
 - **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
@@ -298,7 +298,7 @@ kind is in hand.
 - Whether a grade test exists that no motor changes, and that keeps the results of this rule. The
   probability is about 0.6. That figure is an estimate, and nothing here measures it.
 - `^∘` without `inline`, as here, or with it. Without it, each rigid unitize at rga4d costs
-  ×1.07 to ×1.09. With it, each caller at cga5d can take in the 1 807 lines of C of `^∘`.
+  ×1.08 to ×1.12. With it, each caller at cga5d can take in the 1 411 lines of C of `^∘`.
 - The table of norm operators gives 𝐦 ÷ W(𝐦) for `^∘` in its column Lengyel, as here, or
   𝐦 ÷ ‖𝐦‖∘, as at pin. Lengyel gives no W(𝐦).
 
@@ -330,9 +330,9 @@ kind is in hand.
   point one unit along each axis and one unit back along the first. So no two of its points lie
   close, as the Architect ruled on 2026-10-16. Random points can lie close, and at cga3d two
   points 0.0037 apart sent a plane through and back to a flat weight of 0.999924. A run by hand on
-  2026-11-15 applied this change alone at pin, and the suites passed at cga3d to cga6d.
+  2026-11-15 applied this change alone at `3d9696e`, and the suites passed at cga3d to cga6d.
 - **Runs by hand.** A run on 2026-11-15 applied P07 and this change to a copy of the library at
-  pin. The suites passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
+  `3d9696e`. The suites passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 
 ## Evidence
 
@@ -449,8 +449,8 @@ between moved points in RGA, and the drift of a moved round point from radius 0 
 
 ### Speed
 
-At cga5d the adds of `^∘` rise from 7 to 38, its calls from 65 to 291, and its error checks from 1
-to 66. Its C grows from 284 to 1 807 lines. Six earlier evaluations of the inline form, on
+At cga5d the adds of `^∘` rise from 7 to 38, its calls from 1 to 163, and its error checks from 1
+to 66. Its C grows from 86 to 1 411 lines. Six earlier evaluations of the inline form, on
 2026-10-11 and 2026-10-12, gave 66.59 to 91.17 ns at cga5d, at ×6.98 to ×8.78 of pin. They ran from
 commit a712559b to commit 09e9579a. So the time of the change varies by up to about 40% between
 evaluations.
@@ -459,10 +459,10 @@ The form here, without `inline`, ran under Nim 2.4.0 on 2026-11-05 in 86.05 ns, 
 pin, so at ×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain
 of `inline` from noise.
 
-The evaluation of 2026-11-15 names its processor, a Xeon of family 6 model 207. There the median
-of the paired ratios is ×11.24, and the median times are 8.50 ns of pin and 100.13 ns of the form.
-Pin runs there in 0.82 of its time of 2026-11-05, and no stamp of 2026-11-05 names a processor. So
-the two ratios do not compare. At rga4d each unitize measurand reads ×1.03 to ×1.09 there, without
+The evaluation of 2026-11-26 names its processor, a Xeon of family 6 model 207. There the median
+of the paired ratios is ×10.29, and the median times are 8.86 ns of pin and 91.37 ns of the form.
+Pin runs there in 0.86 of its time of 2026-11-05, and no stamp of 2026-11-05 names a processor. So
+the two ratios do not compare. At rga4d each unitize measurand reads ×1.08 to ×1.12 there, without
 `inline`, and no function there changes.
 
 ### Lengyel's sources
