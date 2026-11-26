@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 0169748393797b91e1294a2d4533816f43d045f5 |
+| Pruned  | c35ccbd94b403a76121e3ddef5cb71e3f7b2b842 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -1657,9 +1657,8 @@ format, and each build turns it into binary. `CONTRIBUTOR.md`, Data, states the 
   edits to mend, each still on upstream `master` of 2026-10-21. A table inside a table crashed
   the reader, and a value equal to zero read back as the default of the schema. Found
   2026-10-25 on records of this repository, and replicated by the suites of commit `eded0523`.
-- Its runtime has no verifier, crashes on an enum value that its enum lacks, and does not
-  compile to JavaScript. Measured 2026-10-25 with Nim 2.2.12. A patched `flatc` would be ours
-  to keep (#761).
+- Its runtime has no verifier, crashes on an enum value that its enum lacks, and does not compile to
+  JavaScript. Measured 2026-10-25 with Nim 2.2.12. A patched `flatc` would be ours to keep (#761).
 - Rejected: Cap'n Proto. Its Nim library `capnp.nim` has had no commit since 2021-01-05, and its
   README says that it is not actively maintained. With its dependency `collections.nim`, it
   fails to compile, with 65 errors from `nim check`. Measured 2026-10-25 with Nim 2.2.12.
@@ -1733,9 +1732,8 @@ that file with `staticRead`. `STYLE.md` §4 gives the idiom.
   which `nim check` defines (`compiler/main.nim`, line 95). Measured 2026-11-05: unguarded, it
   read a stale file under `build/`, and failed where none stood. Guarded, it read nothing under
   `nim check`, and the fresh bytes under `nim c`.
-- Rejected: a verb of the project that `koch test` runs first, to encode each text format file
-  into `build/`. It changes `koch`, and a suite run by hand would read binary that no verb
-  renewed.
+- Rejected: a verb of the project that `koch test` runs first, to encode each text format file into
+  `build/`. It changes `koch`, and a suite run by hand would read binary that no verb renewed.
 - Cost: each machine that builds or tests a project with text format files needs `protoc`. The
   project declares `protobuf-compiler`, and the job `test` installs what a project declares.
 - Cost: `protoc` prints one value to a line. 1,000 doubles take 1,000 lines and 17,337 B as text,
@@ -1775,10 +1773,9 @@ never the layout of files. It refuses a renumbered enum value, and a deleted, re
 field or value. A field or value added under a new number passes. One deleted with its number
 and name reserved passes too. The shipped version is the schema at the tip of base.
 
-- Rule `FIELD_SAME_CARDINALITY` also refuses a field that gains or loses `optional`. The bytes
-  stay, but `optional` decides whether an absent field reads as zero or as absent. So each
-  older file changes meaning. `WIRE_JSON` alone passes both directions, measured 2026-10-25
-  with `buf` 1.75.0.
+- Rule `FIELD_SAME_CARDINALITY` also refuses a field that gains or loses `optional`. The bytes stay,
+  but `optional` decides whether an absent field reads as zero or as absent. So each older file
+  changes meaning. `WIRE_JSON` alone passes both directions, measured 2026-10-25 with `buf` 1.75.0.
 
 - The tip of base holds the newest version that anyone may have written files under, so the
   branch must still read it.
@@ -1925,12 +1922,11 @@ beside the section that each title comes from.
 - The role-line pattern, verified by hand through real `jq` 1.7 on 2026-09-24. The program was
   read from the workflow file, and it was run over fixture bodies. A marker before the role
   line passes, and an unfilled template, a missing role line and a null body are named.
-- The pattern for pull requests, verified by hand through `jq` 1.7 on 2026-11-15. The program
-  was read from the workflow file, and it was run over fixture bodies. A role line below the
-  block of Claude Code passes, and so does one below a block in other words, also with `\r\n`
-  line ends. A block over no role line, an unfilled template and a null body are named. A
-  pattern on the words of the harness names the block in other words, so this fixture tells the
-  two apart.
+- The pattern for pull requests, verified by hand through `jq` 1.7 on 2026-11-15. The program was
+  read from the workflow file, and it was run over fixture bodies. A role line below the block of
+  Claude Code passes, and so does one below a block in other words, also with `\r\n` line ends. A
+  block over no role line, an unfilled template and a null body are named. A pattern on the words of
+  the harness names the block in other words, so this fixture tells the two apart.
 - Cost: `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0, so that `gojq` agrees on that
   pattern is inferred. It holds no lookaround and no back-reference.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
@@ -1996,17 +1992,14 @@ project may pin a compiler commit that no release carries.
   `atlas --noexec rep` cloned and set the pinned commit, and `atlas changed` exited 0 (Atlas
   0.9.0, 2026-09-06).
 
-**A pin may name a commit as well as a version**, as forty lowercase hex characters, which is
-how `atlas.lock` records commits. A project needs one where its dependency spells operators,
-on its head, in a form that no release can lex. Only a lexer change on `devel` serves it.
-`isCommit` is tested before `isVersion`, because forty digits satisfy both, and the absurd
-version loses.
+**A pin may name a commit as well as a version**, as forty lowercase hex characters, which is how
+`atlas.lock` records commits. A project needs one where its dependency spells operators, on its
+head, in a form that no release can lex. Only a lexer change on `devel` serves it. `isCommit` is
+tested before `isVersion`, because forty digits satisfy both, and the absurd version loses.
 
-- Rejected: a bare `devel` label, a moving target that records nothing. Rejected: a dated
-  nightly, retained only for a window, so an old pin stops installing and the pin stops
-  being reproducible.
-- Cost: no action installs a compiler by commit, so it is built from source and cached by
-  commit.
+- Rejected: a bare `devel` label, a moving target that records nothing. Rejected: a dated nightly,
+  retained only for a window, so an old pin stops installing and the pin stops being reproducible.
+- Cost: no action installs a compiler by commit, so it is built from source and cached by commit.
 - Cost: `curator/audit` may not pin a commit, because every other job waits on the one that the
   setup action installs. `checkDriver` reports it.
 
@@ -2028,9 +2021,8 @@ ruling. The curator projects pin 2.4.0, the stable release, as the Architect ask
 - Verified by `nim r koch test` over `curator/knoller`, `curator/audit`, `curator/assayer` and
   `curator/probe` on 2.4.0, 2026-10-29: every suite passes.
 - Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
-  assigned gets an int register for it. To write `result = 0.0` first avoids it.
-  `dance_ontology` diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by
-  hand, 2026-10-29.
+  assigned gets an int register for it. To write `result = 0.0` first avoids it. `dance_ontology`
+  diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by hand, 2026-10-29.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
@@ -2052,10 +2044,9 @@ points hold here.
   `checkPin`, `checkDriver`, `checkKnoller` and `versionWorkflow`, with the constants of the
   driver and of the workflow. `missing` stays too, because it returns the `Finding` of audit, and
   knoller returns none.
-- Resolution lives in knoller, because the `knoller` command takes the compiler of a pin as
-  well. Audit imports knoller, and never the reverse (D3 of #548). Rejected: a copy in each
-  project. The umbrella of knoller exports everything, so a name in both makes each call
-  ambiguous.
+- Resolution lives in knoller, because the `knoller` command takes the compiler of a pin as well.
+  Audit imports knoller, and never the reverse (D3 of #548). Rejected: a copy in each project. The
+  umbrella of knoller exports everything, so a name in both makes each call ambiguous.
 - `checkPin` demands the form `nim == <pin>`, though knoller also reads `nim#<commit>` as a pin.
   The repository writes one form, which CONTRIBUTOR.md names and `.claude/hooks.sh` reads as
   text. Verified by `suites/test_toolchain.nim`.
@@ -2068,9 +2059,8 @@ points hold here.
   `PATH` and never fetches.
 - Verified by `suites/test_toolchain.nim` and `test_projects.nim` here, and by the suites
   `test_pins.nim` and `test_compilers.nim` of knoller. Verified by hand, 2026-09-06:
-  `curator/probe`, pinned to a release that nothing local served, fetched the tarball and ran.
-  One command over projects on two pins gave **0 findings**, and its log held no Atlas mismatch
-  warning.
+  `curator/probe`, pinned to a release that nothing local served, fetched the tarball and ran. One
+  command over projects on two pins gave **0 findings**, and its log held no Atlas mismatch warning.
 - A pin that nothing can serve is one finding, which names the pin and the cache it tried, and
   not a crash. Cost, unmeasured on the current pin: the time of a cold fetch.
 
@@ -2138,11 +2128,10 @@ before koch reads the exit of `atlas changed`.
 - Cost: koch parses the lock at each restore, beside `rep` and `changed`, which each parse it too.
   One parse of koch serves both demands.
 - Cost: one run of git for each item of each lock, at each restore. Over the eight warm checkouts of
-  `contributor/bangu/rictadni` in the clone at `3dad30abe`, `checkCheckouts` took 14.86 ms to
-  18.65 ms for each call. At `f846d7b76`, which reads no commit, it took 0.19 ms to 0.37 ms. Each
-  side ran fifteen rounds of ten calls, alternated, and `std/monotimes` timed them. The machine was
-  the four-core Intel Xeon 2.10 GHz container of Figures, with Nim 2.4.0 and git 2.43.0, on
-  2026-11-16.
+  `contributor/bangu/rictadni` in the clone at `3dad30abe`, `checkCheckouts` took 14.86 ms to 18.65
+  ms for each call. At `f846d7b76`, which reads no commit, it took 0.19 ms to 0.37 ms. Each side ran
+  fifteen rounds of ten calls, alternated, and `std/monotimes` timed them. The machine was the
+  four-core Intel Xeon 2.10 GHz container of Figures, with Nim 2.4.0 and git 2.43.0, on 2026-11-16.
 - Verified by `suites/test_dependencies.nim` over a project with and without the directory, and
   over a lock that is not JSON. It also holds a checkout at the commit of its lock, at another
   commit and at none, through real git.
@@ -2188,13 +2177,12 @@ stands.
   finding names the exit code of `atlas changed`.
 
 **`koch check` and the start hook name each lock whose commit lags `main` in a folder of this
-repository.** An item of `atlas.lock` names this repository where its address, with the
-query cut, is the address of this repository (`ADDRESS_REPOSITORY` in `lags.nim`). Its folder is
-the `subdir` of that query, which Atlas writes into the lock from the name override of
-`atlas.config`. The lag is the count of the commits of `main` that changed that folder outside its
-records, since the commit of the lock. Git gives it as
-`git rev-list --count <commit>..origin/main -- <folder>`, with an `:(exclude)` pathspec for each
-file of `FILES_PROJECT` in that folder.
+repository.** An item of `atlas.lock` names this repository where its address, with the query cut,
+is the address of this repository (`ADDRESS_REPOSITORY` in `lags.nim`). Its folder is the `subdir`
+of that query, which Atlas writes into the lock from the name override of `atlas.config`. The lag is
+the count of the commits of `main` that changed that folder outside its records, since the commit of
+the lock. Git gives it as `git rev-list --count <commit>..origin/main -- <folder>`, with an
+`:(exclude)` pathspec for each file of `FILES_PROJECT` in that folder.
 
 - A count of commits is the ruling of the Architect on D2 of #927. To leave out the records is the
   choice of the curator. A re-stamp writes the stamp row into the record of each project and no
@@ -2338,8 +2326,7 @@ So rules propagation compiles no project but a listed one, while every stamp is 
   refuses everywhere else.
 - Verified by `suites/test_plan.nim`: a README-only change plans `[]`, and a one-line source change
   plans that project alone. A change to `koch.nim` plans `curator/audit` alone. `--recent` plans
-  every project in a repository younger than its window, and nothing over a window without a
-  commit.
+  every project in a repository younger than its window, and nothing over a window without a commit.
 
 **A change inside a folder that another project imports selects that importer.** An importer
 compiles what it imports, so a change there can break it. The folder is the first one below the
@@ -2406,11 +2393,10 @@ to compile a project that nothing touched is runner time for no information.
 
 ## Project runner
 
-**`testament --nim:<absolute> pattern "tests/t*.nim"` in each project directory, serially,
-with the output streamed.** Koch holds the verb once, and no build file for each project
-exists. The compiler path is absolute, because testament resolves `--nim` against its working
-directory. A failure is a finding at the `tests` directory of the project, and it echoes the
-exit code.
+**`testament --nim:<absolute> pattern "tests/t*.nim"` in each project directory, serially, with the
+output streamed.** Koch holds the verb once, and no build file for each project exists. The compiler
+path is absolute, because testament resolves `--nim` against its working directory. A failure is a
+finding at the `tests` directory of the project, and it echoes the exit code.
 
 Each project carries a `Target`: its directory, and the `bin` of the toolchain that serves its
 pin. Tools come from that `bin` rather than from `PATH`, because two projects on two pins
@@ -4398,6 +4384,20 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 - Verified by `suites/test_claims_log.nim`, in scratch roots.
 - Cost: the log of the audit project holds the rows of the root curator too, each with its own
   project.
+
+**The log of the root curator holds the 372 claims of the effort study of #963.** They ran before
+the log merged, so D3 a of #964 (comment 7065645801) filled them once. A script in scratch read
+each reflection and each report of a resolver of the study. It wrote each row through
+`lineClaim`, as the delegate marked the claim, and again as the resolver did.
+
+- A row takes the tokens and the cost that its reflection used, and its outcome after the id of
+  its run. The key of a resolver row ends in `MARKER_RESOLVER`.
+- No row names a model, as no row of the log does, since this harness keeps model names out of
+  pushed files (#1025). Each run of the study used one model.
+- Verified by hand on 2026-11-26: `protoc` reads the 761 rows of the log, no key repeats, and
+  `koch figures` reads each row. By hand on 2026-11-21, each count of a batch agrees with its
+  result on #963. Each of 150 outcomes agrees with the usage of its row too.
+- Cost: 6 claims of the measurer take no resolver row, since its report marks none of them.
 
 **`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
 exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
