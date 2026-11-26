@@ -2934,10 +2934,9 @@ page of `0fdcfcfc`, the same check read 403 px off the middle, and the drag turn
 
 **An object is judged against its own scale, and never against an absolute tolerance.** One world
 unit is one astronomical unit. A join of two points a metre apart, one unit out, carries
-coefficients near 1e-12. The `TOLERANCE_ABS` of the library is an absolute 1e-9, so the library
-alone reads that line as no object. So `objects.classify` reads the grade of a scale-free copy,
-which `scaleFree` divides by its largest coefficient. A coefficient then counts where it is more
-than a billionth of the largest one.
+coefficients near 1e-12. The library's `TOLERANCE_ABS` is an absolute 1e-9, so the library alone
+reads that line as no object. So `objects.classify` reads the grade of a copy that `scaleFree`
+divides by its largest coefficient. A coefficient then counts over a billionth of the largest.
 
 **The copy is skipped where it changes nothing.** Where the weight `E4` is one or more and the
 library reads one grade, the largest coefficient is at least one. The threshold of the copy then
@@ -2945,9 +2944,11 @@ stands at or above that of the library. The copy then keeps a subset of the same
 largest among them, and reads the same grade. Every unit-weight point takes this path.
 
 **Horizon is weight against bulk.** `isHorizon` reads an object as horizon where its weight norm is
-no more than a billionth of its bulk norm. That is an object more than a billion units out.
-`boundary.position` weighs the weight of a point against its bulk in the same way, and
-`motors.turnAbout` refuses an axis by the same rule. The library does not change (Algebra boundary).
+at most a billionth of its bulk norm, past a billion units out. `boundary.position` weighs the
+weight of a point against its bulk in the same way, and `motors.turnAbout` refuses an axis by the
+same rule. The library does not change (Algebra boundary). Norms square to subnormals under 2^-511,
+and to infinity past 2^512. Where both are under 2^-450, or either is infinite, `isHorizon` reads a
+copy scaled exactly by 2^±600, and else pays two tests.
 
 **An assembled point is read by its weight alone.** `pointFrom` reads a point that a caller builds
 as a unit point plus weightless directions. Its weight is exactly one, and its bulk says only how
@@ -2996,8 +2997,7 @@ slid from, the result is zero. A sum is judged against its larger operand instea
 carries the rounding of where it stood, so the scale of that point keeps rounding far out at zero. A
 point met on its own line then joins with it to nothing, near the origin and two million units out.
 
-The drag and both apply pickers read it so. The marker judges an eye on its line against the line
-and the eye in the same way.
+The drag and both apply pickers read it so, and the marker judges an eye on its line against both.
 
 **`TOLERANCE_ROUNDING` is `2^(2·4)·ε`, about 5.7e-14**, the worst rounding of one product of two
 multivectors against its factors' scales. Within five units of the world origin, a point met on its
@@ -3005,8 +3005,8 @@ line joins it to about 2e-16 of its operands. Two million units out, at HD 22223
 point stands up to 2e-8 off the line, against a bound of 1.2e-7. Points a metre apart join, about
 either one, to 6.7e-12 of their operands. Measured on 2026-10-05 by a probe that is not kept.
 
-**The panel prints a term against the largest one.** `scene.formatMultivector` prints a term over a
-billionth of the largest coefficient. A metre-long line then prints its three terms, not `0 𝟏`.
+**The panel prints a term against the largest finite one.** `scene.formatMultivector` prints each
+over a billionth of it, and each infinite one. A metre-long line prints its three terms, not `0 𝟏`.
 
 **Rejected: an absolute tolerance of more places.** With `-d:pga.tolerance_places=12` the suite
 passes, but the floor only moves. The smallest coefficient of a metre join one unit out, beside the
@@ -3017,9 +3017,8 @@ with zero through `=~`. Measured on `f779cec8` on 2026-10-05, by a probe that is
 where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
 
 **Cost: storage far from the world origin still steps**, because each object is stored about the
-world origin, and that is all that is stored. A double steps by half a millimetre at 30 units, and
-by a metre at 60,000 units. Two million units out it steps by 17 to 35 m, as at HD 222237 b of the
-demo. Two points a metre apart there are stored as one.
+world origin alone. A double steps by 0.5 mm at 30 units, and by a metre at 60,000. Two million
+units out it steps 17 to 35 m, as at HD 222237 b. Points a metre apart there are stored as one.
 
 Rejected: an exact place stored with each object, because the origins of a calculation stay implicit
 in that calculation. A join holds a metre wherever storage holds one. It runs about the point it
@@ -3030,10 +3029,9 @@ of the gate, against `0d47eab3`, as the largest demo is placed. Release C held i
 JS on Node 22 read 26 to 30 ms, then 27 to 36 ms. The debug desktop's tessellation rose from 12.7 to
 14.5 ms, and its frame at p50 from 80 to 87 ms. The commit of the `Pruned` row keeps each pair.
 
-Both front-ends place every object in each frame (Render paths), and the desktop also asks
-`isHorizon` of each row of its objects list. That second norm of `isHorizon`, and the second pass of
-`formatMultivector`, are most of what the desktop frame gained. The list gives no frame figure for
-the page, so the cost to the frame of the page is unmeasured.
+Both front-ends place every object in each frame (Render paths), and the desktop asks `isHorizon` of
+each row of its objects list. That second norm, and the second pass of `formatMultivector`, are most
+of what the desktop frame gained. The cost to the page's frame is unmeasured.
 
 **Cost: three slides for each catalogue operation.** Measured on 2026-10-05 on one delegate in the
 lock of the gate: the median of 21 runs of 2,000 calls. Each pair is `7119f4cb`, then this design:
@@ -3053,6 +3051,7 @@ menu offers. The apply section calls it once a frame, and no path calls it for e
 - the catalogue's joins, meets and projections give what the library gives, near and far;
 - the catalogue runs about a local origin exactly the operations that commute with a slide;
 - a line a metre long prints the terms it carries, and no rounding beside them;
+- a value reads in the horizon or out of it alike at each scale, from 2^-1000 to 2^1000;
 - an eye standing on the line has no side to flank it from;
 - a line and a star drawn at a horizon of 4e9 land where the algebra puts them, and the star's
   anchor reads its place;
@@ -4248,14 +4247,14 @@ judges what `readFontFaces` reads (Font faces).
 
 ## Naming and number formatting
 
-Basis elements are named exactly as the `$` of the library names them: `𝟏`, `𝟙`, and a bold `𝐞` with
-subscript digits. `LUT_NAME_BY_BASIS` **derives** them from the enum, and a suite case holds each
-entry equal to what the library prints.
+`LUT_NAME_BY_BASIS` **derives** the names of basis elements from the enum: `𝟏`, `𝟙`, and a bold `𝐞`
+with subscript digits. A suite case holds each to what the `$` of the library prints.
 
 Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The desktop uses
 `snprintf("%.4g")` into a stack buffer. The browser uses `format.formatMagnitude`, in Nim, behind
 `nimFormatNumber`: a decimal exponent by `log10`, scaled digits, and **half-to-even** rounding. C
-rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`.
+rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`. Under
+1e-305 the digits scale by 1e308 first, since 10^309 is infinite.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
@@ -4266,10 +4265,11 @@ a live number that changes width is harder to read. Fixed char storage is read t
 `format.toText`, never `$toCstring`, which casts its *address* and reads empty on the JS backend.
 
 *Checked.* Verified by `suites.nim` on both backends: 17,001 values across 25 decades, including
-every exact eighth. There were zero disagreements against the `%.4g` of C, and zero between
-backends. The JS entry point pins the text of the tie cases. A C-only `magnitudesAgree` stays green
-while 330 of 7000 values differ between the front-ends, so the suite runs under `nim js`. The suite
-holds each word of no kind from subnormal values to 1e6, and at NaN and infinity (issue 970).
+every exact eighth, with zero disagreements against C or between backends. The JS entry point pins
+the text of the tie cases. A C-only `magnitudesAgree` stays green while 330 of 7000 values differ
+between the front-ends, so the suite runs under `nim js`. The suite holds each word of no kind from
+subnormal values to 1e6, and at NaN and infinity (issue 970). It holds each magnitude from 2^-1074
+to 1e-300 against C, and each coefficient not finite in print.
 
 ## Animation
 
