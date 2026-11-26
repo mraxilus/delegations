@@ -74,7 +74,7 @@ suite "Report":
     check "help" notin NAME_CUT.render(Form.Line)  # STYLE.md §3 gives line form no help
 
 
-  test "location holds only parts finding holds, each behind part before it (D3 a of #1002)":
+  test "location holds only parts finding holds, each behind part before it (D3 of #1002)":
     check Notice(rule: "tab", summary: "line holds tab").render(Form.Line) ==
       "tab: message=\"line holds tab\""
     check Notice(path: "a.nim", rule: "tab", summary: "line holds tab").render(Form.Line) ==
@@ -241,3 +241,22 @@ suite "Report":
     check quoting.toNotice.actual == some("x")
     check initReport("a.nim", 4, Rule.FenceHeld, "Fence holds.").toNotice(is_warning = true).
       render(Form.Line) == "a.nim:4: fence-held warning: message=\"fence holds\""
+
+
+  test "message of check of another tool reads as notice, under id its caller gives":
+    # Domain: check whose rule no `Rule` names, as each check of koch (D4 of #1002).
+    let words = initNotice(
+      "a.md", 3, "koch.sentence-words",
+      "Sentence holds at most 25 words (ASD-STE100); got `One two`.", help = "split it",
+    )
+    check words == Notice(
+      path: "a.md", line: 3, rule: "koch.sentence-words",
+      summary: "sentence holds at most 25 words (ASD-STE100)", actual: some("One two"),
+      help: "split it",
+    )  # article stays in summary, as koch cites it (D1 of #1002)
+    check initNotice("", 0, "koch.x", "Branch holds no commit.").brief == "branch holds no commit"
+    let tab = initReport("a.nim", 2, Rule.Tab, "Line holds tab; got `x`.", column = 5, span = 1)
+    check tab.toNotice(some("a\tb"), is_warning = true) == initNotice(
+      "a.nim", 2, "tab", "Line holds tab; got `x`.", column = 5, span = 1, source = some("a\tb"),
+      is_warning = true,
+    )  # report reads as its message does, under id of its rule
