@@ -92,6 +92,7 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TIME, 5, 12, 30, 15).unitClaim.get.name == "time"
     check initNumber("count of findings: 3, 6 and 11", 3, 6, 11, 9).unitClaim.isNone  # no label
     check initNumber("tool calls: 12, 30 and 60", 12, 30, 60, 20).unitClaim.isNone
+    check initNumber("Cost: $0.80, $1 and $2", 0.8, 1, 2, 1).unitClaim.isNone  # label, not `Count:`
 
 
   test "number inside its range scores as copy in Python of method of Metaculus gives it":
@@ -210,6 +211,7 @@ suite "numbers as Metaculus":
     check not curveStep(100, 0.5901).isCurveTaken
     check curveStep(100, 0.01 / COUNT_STEPS).isCurveTaken
     check not curveStep(100, 0.00004).isCurveTaken
+    check not curveStep(100, 0.0000499).isCurveTaken  # just under least step
     check not curveStep(100, -0.001).isCurveTaken  # falls
     check not curveStep(100, 1 / COUNT_STEPS)[0 ..< COUNT_STEPS].isCurveTaken  # place short
 
