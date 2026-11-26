@@ -7,7 +7,7 @@
 
 import std/[algorithm, json, math, os, sequtils, strutils, tempfiles, unittest]
 import ./fixtures
-import ../../src/[assets, font_stacks]
+import ../../src/[assets, findings, font_stacks]
 
 
 const
@@ -278,7 +278,7 @@ suite "Font faces judged":
     }
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
-    check "`index`: `p.note` draws `U+00E9`" in verdict[0].message
+    check "`index`: `p.note` draws `U+00E9`" in verdict[0].brief
     check verdict[0].path == "written.json"
 
 
@@ -289,7 +289,7 @@ suite "Font faces judged":
     found["control"] = foundControl()
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
-    check "`Noto Sans` at weight `700`, status `error`" in verdict[0].message
+    check "`Noto Sans` at weight `700`, status `error`" in verdict[0].brief
 
 
   test "run drawn in bold browser synthesises is finding, naming weight asked and found (#730)":
@@ -301,8 +301,8 @@ suite "Font faces judged":
     }
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
-    check "`index`: `div#ruler` asks `commit mono ui` for weight `600`" in verdict[0].message
-    check "font face of weight `400`" in verdict[0].message
+    check "`index`: `div#ruler` asks `commit mono ui` for weight `600`" in verdict[0].brief
+    check "font face of weight `400`" in verdict[0].brief
     check verdict[0].path == "written.json"
 
 
@@ -314,13 +314,13 @@ suite "Font faces judged":
   test "numeral control page lacks is finding naming place collector skips":
     let verdict = (%*{"control": foundControl(skipped = [0x4E09])}).toVerdict("written.json")
     check verdict.len == 1
-    check "`U+4E09` in `::before` uncollected" in verdict[0].message
+    check "`U+4E09` in `::before` uncollected" in verdict[0].brief
 
 
   test "written file without control page is finding":
     let verdict = (%*{"index": {"characters": [], "refused": []}}).toVerdict("written.json")
     check verdict.len == 1
-    check "page `control`" in verdict[0].message
+    check "page `control`" in verdict[0].brief
 
 
   test "control page is written into folder of font faces of project":
@@ -337,7 +337,7 @@ suite "Font faces judged":
     let missing = checkFontFaces(root, PROJECT)
     check missing.len == 1
     check missing[0].path == PROJECT / DIRECTORY_FONT_FACES / FILE_WRITTEN
-    check "got no file" in missing[0].message
+    check "got `no file`" in missing[0].brief
     check not fileExists(root / PROJECT / DIRECTORY_FONT_FACES / FILE_FOUND)
     removeDir(root)
 
@@ -360,7 +360,7 @@ suite "Font faces judged":
     writeFile(folder / FILE_WRITTEN, $written)
     let verdict = checkFontFaces(root, PROJECT)
     check verdict.len == 1
-    check "in SVG text uncollected" in verdict[0].message
+    check "in SVG text uncollected" in verdict[0].brief
     check verdict[0].path == PROJECT / DIRECTORY_FONT_FACES / FILE_WRITTEN
     removeDir(root)
 
@@ -381,7 +381,7 @@ suite "Font faces judged":
         of 2: skipped.add codepoint
         else: discard
       writeFile(folder / FILE_WRITTEN, $(%*{"control": control(skipped, dropped)}))
-      let messages = checkFontFaces(root, PROJECT).mapIt(it.message)
+      let messages = checkFontFaces(root, PROJECT).mapIt(it.brief)
       checkpoint "Skipped `" & skipped.mapIt(it.toHex(4)).join(" ") & "`, digit dropped at `" &
           dropped.mapIt(it.toHex(4)).join(" ") & "`."
       check messages.len == skipped.len + dropped.len  # one finding for each place at fault
@@ -407,7 +407,7 @@ suite "Font faces judged":
     writeFile(folder / FILE_WRITTEN, $(%*{"control": apart}))
     let verdict = checkFontFaces(root, PROJECT)
     check verdict.len == 1
-    check "`U+0033` in `::before` unwritten" in verdict[0].message
+    check "`U+0033` in `::before` unwritten" in verdict[0].brief
 
     # Pass place whose run holds whole string, whatever run of numeral alone stands beside it.
     var beside = control()
@@ -429,7 +429,7 @@ suite "Font faces judged":
     )
     let absent = checkFontFaces(root, PROJECT)
     check absent.len == 1
-    check "absent.ttf" in absent[0].message
+    check "absent.ttf" in absent[0].brief
     writeFile(folder / FILE_WRITTEN, """{"index": {"runs": [{"element": "p"}]}}""")
     check checkFontFaces(root, PROJECT).len == 1  # run without stack
     writeFile(folder / FILE_WRITTEN, "[]")

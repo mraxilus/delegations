@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, sets, strutils, unittest]
-import ../../src/[domains, english, layout]
+import ../../src/[domains, english, findings, layout]
 import ./fixtures
 
 
@@ -55,15 +55,15 @@ suite "Article VI.8":
     let sentence_long = "word ".repeat(WORDS_SENTENCE + 1) & "end."
     var found = checkEnglish("GUIDE.md", sentence_long)
     check found.len == 1
-    check found[0].message.startsWith("Sentence must hold at most")
+    check found[0].brief.startsWith("sentence must hold at most")
     let paragraph_long = "Stop. ".repeat(SENTENCES_PARAGRAPH + 1)
     found = checkEnglish("GUIDE.md", paragraph_long)
     check found.len == 1
-    check found[0].message.endsWith("got `" & $(SENTENCES_PARAGRAPH + 1) & "`.")
+    check found[0].brief.endsWith("got `" & $(SENTENCES_PARAGRAPH + 1) & "`")
     found = checkEnglish("GUIDE.md", "Ensure it passes.")
     check found.len == 1
-    check found[0].message == "Word is outside approved dictionary; write `make sure` " &
-      "(ASD-STE100); got `ensure`."
+    check found[0].brief == "word is outside approved dictionary; write `make sure` " &
+      "(ASD-STE100); got `ensure`"
 
 
   test "word matches whole, without case, and through punctuation":
@@ -125,9 +125,9 @@ suite "Article VI.8":
     # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818; lojban closes no
     #   sentence with stop, so its paragraph reads as one sentence past `WORDS_SENTENCE`. Domain:
     #   each record of listed project, each of project list leaves out in same domain, its index.
-    check findingsEnglish("x.md", PROSE_LOJBAN).mapIt(it.message) == @[
-      "Sentence must hold at most 25 words; split it (ASD-STE100); got " &
-        "`mi klama le zarci .i do klama le ...`.",
+    check findingsEnglish("x.md", PROSE_LOJBAN).mapIt(it.brief) == @[
+      "sentence must hold at most 25 words; split it (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`",
     ]  # what check reads in lojban
     for file in FILES_PROJECT:
       check not isGoverned(DIRECTORY_PARSER & "/" & file)  # listed project

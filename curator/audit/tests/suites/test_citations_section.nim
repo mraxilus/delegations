@@ -67,8 +67,8 @@ suite "Duty 1":
     let found = findingsTree(entry("GUIDE.md", GUIDE), entry("koch.nim", KOCH))
     check found.len == 1  # duty 1
     check found.len == 1 and found[0].path == "koch.nim" and found[0].line == 4  # its line
-    check found.len == 1 and found[0].message.endsWith("got `Independent changes`.")  # duty 1
-    check found.len == 1 and "`GUIDE.md`" in found[0].message  # names document lacking it
+    check found.len == 1 and found[0].brief.endsWith("got `Independent changes`")  # duty 1
+    check found.len == 1 and "`GUIDE.md`" in found[0].brief  # names document lacking it
     let mended = KOCH.replace("Independent changes", "Work for subagents")
     check findingsTree(entry("GUIDE.md", GUIDE), entry("koch.nim", mended)).len == 0  # duty 1
 
@@ -89,7 +89,7 @@ suite "Duty 1":
     check findingsTree(@[entry("GUIDE.md", GUIDE)] & @citations).len == 0  # duty 1
     let found = findingsTree(@[entry("GUIDE.md", renamed)] & @citations)
     check found.mapIt(it.path) == citations.mapIt(it.path)  # one finding at each citation
-    check found.allIt(it.message.endsWith("got `Work for subagents`."))  # duty 1
+    check found.allIt(it.brief.endsWith("got `Work for subagents`"))  # duty 1
     check found.mapIt(it.line) == @[3, 1, 1, 1, 1, 1]  # line citation stands on
 
 
@@ -106,7 +106,7 @@ suite "Duty 1":
         entry("GUIDE.md", guide), entry("GLOSSARY.md", glossary), entry(path, header)
       )
     check found.len == 1 and found[0].line == 3  # duty 1
-    check found.len == 1 and found[0].message.endsWith("got `Language`.")  # duty 1
+    check found.len == 1 and found[0].brief.endsWith("got `Language`")  # duty 1
     let mended = header.replace("GUIDE.md, Language", "GLOSSARY.md, Language")
     check findingsTree(
       entry("GUIDE.md", guide), entry("GLOSSARY.md", glossary), entry(path, mended)
@@ -134,8 +134,8 @@ suite "Duty 1":
       path = DIRECTORY_ALPHA & "/tools/build.nim"
       found = findingsTree(entry("CONTRIBUTOR.md", CONTRIBUTOR_NOW), entry(path, DRIVER))
     check found.len == 1 and found[0].path == path and found[0].line == 5  # duty 1
-    check found.len == 1 and found[0].message.endsWith("got `\"One command drives it\"`.")
-    check found.len == 1 and "`CONTRIBUTOR.md`" in found[0].message  # names document
+    check found.len == 1 and found[0].brief.endsWith("got `\"One command drives it\"`")
+    check found.len == 1 and "`CONTRIBUTOR.md`" in found[0].brief  # names document
     let before = CONTRIBUTOR_NOW & "\n- **One command drives it, and the runner runs that one.**\n"
     check findingsTree(entry("CONTRIBUTOR.md", before), entry(path, DRIVER)).len == 0  # held
 
@@ -202,7 +202,7 @@ suite "Duty 1":
     ]:
       let found = cite(section)
       check found.len == 1  # duty 1
-      check found.len == 1 and found[0].message.endsWith("got `" & section & "`.")  # value
+      check found.len == 1 and found[0].message.endsWith("got `" & section & "`.")  # as written
     check citeIn("# Guide\n\n```md\nKeep it short.\n```\n", "\"Keep it short\"")
       .len == 1  # quote that fence alone holds is example
 
@@ -233,7 +233,7 @@ suite "Duty 1":
   test "second section after `and` stands beside first":
     check cite("Work for subagents and Output contract").len == 0  # both stand
     let found = cite("Work for subagents and Figures")
-    check found.len == 1 and found[0].message.endsWith("got `Work for subagents and Figures`.")
+    check found.len == 1 and found[0].brief.endsWith("got `Work for subagents and Figures`")
     check cite("Work for subagents and the rest").len == 0  # prose after `and`
     let planned = "# Provenance\n\n## Planned turn\n\nTurn.\n\n## Figures\n\nTimes.\n"
     check citeIn(planned, "Planned turn and Figures").len == 0  # as dance_ontology cites
@@ -276,7 +276,7 @@ suite "Duty 1":
       ]
     check tree.citeFrom(source, "PROVENANCE.md, Figures").len == 0  # record of own project
     let found = tree.citeFrom(source, "PROVENANCE.md, Toolchain")
-    check found.len == 1 and ("`" & record & "`") in found[0].message  # names record resolved
+    check found.len == 1 and ("`" & record & "`") in found[0].brief  # names record resolved
     check tree.citeFrom(source, "GUIDE.md, Local rule").len == 0  # nearest folder wins
     check tree.citeFrom(source, "GUIDE.md, Work for subagents").len == 1  # root left unread
     check tree.citeFrom(DIRECTORY_ALPHA & "/tools/build.nim", "GUIDE.md, Work for subagents")

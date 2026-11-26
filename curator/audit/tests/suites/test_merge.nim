@@ -6,7 +6,7 @@
 import std/[options, os, strutils, tables, tempfiles, unittest]
 from std/posix import close, dup, dup2, STDOUT_FILENO
 import ../../../knoller/src/knoller
-import ../../src/[merge, tree]
+import ../../src/[findings, merge, tree]
 import ./fixtures
 
 
@@ -143,7 +143,7 @@ suite "Merge":
       folder = root / ".git" / DIRECTORY_MERGE
       found = writeMerge(root, "main").findings
     check found.len == 1 and sameFile(found[0].path, folder)
-    check found.len == 1 and "no worktree of its own" in found[0].message
+    check found.len == 1 and "no worktree of its own" in found[0].brief
     check readFile(folder / "notes.md") == "Kept.\n"
     check root.git("worktree list --porcelain").count("worktree ") == 1  # none added
 
@@ -201,8 +201,8 @@ suite "Merge":
     discard root.git("commit -q -am 'feat(audit): move checker on branch'")
     let found = writeMerge(root, "main").findings
     check found.len == 1 and found[0].path.len == 0 and found[0].line == 0
-    check found.len == 1 and "merge base" in found[0].message and "/sync" in found[0].message
-    check found.len == 1 and found[0].message.endsWith("got `koch.nim`.")
+    check found.len == 1 and "merge base" in found[0].brief and "/sync" in found[0].brief
+    check found.len == 1 and found[0].brief.endsWith("got `koch.nim`")
     check clean.directory.git("rev-parse HEAD") == head
 
 
@@ -273,7 +273,7 @@ suite "Merge":
     removeFile(toolchain / "run.log")
     let broken = runMerge(writeMerge(root, "main"), "curator/older", toolchains)
     check broken.code == 1 and broken.found.len == 1
-    check broken.found.len == 1 and "failed to build" in broken.found[0].message
+    check broken.found.len == 1 and "failed to build" in broken.found[0].brief
     check not fileExists(toolchain / "run.log")
 
 
@@ -383,7 +383,7 @@ suite "Merge":
     root.moveOnBase("koch.nim", "broken\n")
     let broken = judgeMerged(root, "main", "curator/older", toolchains)
     check broken.is_merged and broken.code == 1 and broken.findings.len == 1
-    check broken.findings.len == 1 and "failed to build" in broken.findings[0].message
+    check broken.findings.len == 1 and "failed to build" in broken.findings[0].brief
     check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
 
 
@@ -413,7 +413,7 @@ suite "Merge":
       root.moveOnBase("curator/audit/audit.nimble", "requires \"nim == 0.0.2\"\n")
       let unserved = judgeMerged(root, "main", "curator/older", toolchains)
       check unserved.is_merged and unserved.code == 1 and unserved.findings.len == 1
-      check unserved.findings.len == 1 and "No compiler serves" in unserved.findings[0].message
+      check unserved.findings.len == 1 and "no compiler serves" in unserved.findings[0].brief
       check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
       check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 1
 

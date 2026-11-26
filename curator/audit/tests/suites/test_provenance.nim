@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, sets, strutils, tables, unittest]
-import ../../src/provenance
+import ../../src/[findings, provenance]
 import ./fixtures
 
 
@@ -28,16 +28,16 @@ suite "Article VIII":
   test "VIII.6 missing field, bad date, stale stamp":
     let good = textProvenance("deadbeefdeadbeef")
     check checkProvenance("p", good, "deadbeefdeadbeef").len == 0  # complete header passes
-    check checkProvenance("p", "# x\n\nprose\n", "s").mapIt(it.message) ==
-      @["Header table `| Field | Value |` missing or empty."]  # no table
+    check checkProvenance("p", "# x\n\nprose\n", "s").mapIt(it.brief) ==
+      @["header table `| Field | Value |` missing or empty"]  # no table
     let unreviewed = good.replace("| Review | **Unreviewed.** |\n", "")
-    check checkProvenance("p", unreviewed, "deadbeefdeadbeef").mapIt(it.message) ==
-      @["Header lacks field; got `Review`."]  # review row required
+    check checkProvenance("p", unreviewed, "deadbeefdeadbeef").mapIt(it.brief) ==
+      @["header lacks field; got `Review`"]  # review row required
     check checkProvenance("p", good.replace("2026-01-01", "1 Jan 2026"), "deadbeefdeadbeef")
-      .mapIt(it.message) == @["Date must be `YYYY-MM-DD`; got `1 Jan 2026`."]  # ISO date
+      .mapIt(it.brief) == @["date must be `YYYY-MM-DD`; got `1 Jan 2026`"]  # ISO date
     let stale = checkProvenance("p", good, "0000000000000000")
-    check stale.len == 1 and stale[0].message.endsWith("got `deadbeefdeadbeef`.")  # stale
-    check "`0000000000000000`" in stale[0].message  # expected stamp named
+    check stale.len == 1 and stale[0].brief.endsWith("got `deadbeefdeadbeef`")  # stale
+    check "`0000000000000000`" in stale[0].brief  # expected stamp named
     check stale[0].is_propagation  # curator's in any project, never held
     check not checkProvenance("p", unreviewed, "deadbeefdeadbeef")[0].is_propagation  # project's
 
@@ -73,7 +73,7 @@ suite "Article VIII":
     let found = checkCitations("p/PROVENANCE.md", "Verified by `tgone.nim`.", "p/tests/", present)
     check found.len == 1
     check found[0].path == "p/PROVENANCE.md"
-    check found[0].message.endsWith("got `tgone.nim`.")  # Article IV.4 echoes value
+    check found[0].brief.endsWith("got `tgone.nim`")  # Article IV.4 echoes value
 
     # Citation naming another project's test does not resolve here.
     check checkCitations(

@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, sequtils, strutils, tempfiles, unittest]
-import ../../src/[dependencies, projects]
+import ../../src/[dependencies, findings, projects]
 import ./fixtures
 
 
@@ -55,8 +55,8 @@ suite "Dependencies":
     let root = createTempDir("delegations_", "_lock")
     defer: removeDir(root)
     root.writeInto("curator/probe/atlas.lock", TEXT_LOCK)
-    check checkCheckouts(root, "curator/probe").mapIt(it.message) ==
-      @["Checkout absent after restore; got `deps/replications.example.invalid`."]  # absent, once
+    check checkCheckouts(root, "curator/probe").mapIt(it.brief) ==
+      @["checkout absent after restore; got `deps/replications.example.invalid`"]  # absent, once
     let checkout = root / "curator/probe/deps/replications.example.invalid"
     createDir(checkout.parentDir)
     moveDir(repoTemp(), checkout)
@@ -76,16 +76,16 @@ suite "Dependencies":
       name: "knoller", directory: "dependencies/knoller", commit: COMMIT_LACKED
     )
     check checkCommitCheckout(LOCK, knoller, some(COMMIT_FOUND)).mapIt(
-      (it.path, it.line, it.message)
+      (it.path, it.line, it.brief)
     ) == @[(
       LOCK,
       0,
-      "Checkout stands at other commit than lock holds after restore; got `" & COMMIT_FOUND &
-        "` for `knoller` at `" & COMMIT_LACKED & "`.",
+      "checkout stands at other commit than lock holds after restore; got `" & COMMIT_FOUND &
+        "` for `knoller` at `" & COMMIT_LACKED & "`",
     )]  # case as found, both commits named
     check checkCommitCheckout(LOCK, knoller, some(COMMIT_LACKED)).len == 0  # at commit of lock
-    check checkCommitCheckout(LOCK, knoller, none(string)).mapIt(it.message) ==
-      @["Checkout holds no commit git reads after restore; got `dependencies/knoller`."]
+    check checkCommitCheckout(LOCK, knoller, none(string)).mapIt(it.brief) ==
+      @["checkout holds no commit git reads after restore; got `dependencies/knoller`"]
 
 
   test "restore reads commit of each checkout through git, never of repository holding it":
@@ -101,16 +101,16 @@ suite "Dependencies":
       commit_checkout = checkout.git("rev-parse HEAD").strip
       commit_root = root.git("rev-parse HEAD").strip
     root.writeInto("curator/probe/atlas.lock", textLock("knoller", COMMIT_LACKED))
-    check checkCheckouts(root, "curator/probe").mapIt(it.message) == @[
-      "Checkout stands at other commit than lock holds after restore; got `" &
-        commit_checkout & "` for `knoller` at `" & COMMIT_LACKED & "`.",
+    check checkCheckouts(root, "curator/probe").mapIt(it.brief) == @[
+      "checkout stands at other commit than lock holds after restore; got `" &
+        commit_checkout & "` for `knoller` at `" & COMMIT_LACKED & "`",
     ]  # other commit, read through git
     removeDir(checkout / ".git")
     root.writeInto("curator/probe/atlas.lock", textLock("knoller", commit_root))
-    let unread = @["Checkout holds no commit git reads after restore; got `deps/knoller`."]
-    check checkCheckouts(root, "curator/probe").mapIt(it.message) == unread  # plain directory
+    let unread = @["checkout holds no commit git reads after restore; got `deps/knoller`"]
+    check checkCheckouts(root, "curator/probe").mapIt(it.brief) == unread  # plain directory
     discard checkout.git("init -q -b main")
-    check checkCheckouts(root, "curator/probe").mapIt(it.message) == unread  # no commit yet
+    check checkCheckouts(root, "curator/probe").mapIt(it.brief) == unread  # no commit yet
 
 
   test "unreadable lock is finding, never crash":
@@ -143,7 +143,7 @@ suite "Dependencies":
     check found.len == 1
     check found[0].path == "p/p.nimble"  # file about to be overwritten, never lock
     check found[0].line == 6  # `requires` line of fixture
-    check found[0].message.endsWith("got `requires \"nim == " & PIN & "\"`.")
+    check found[0].brief.endsWith("got `requires \"nim == " & PIN & "\"`")
 
 
   test "stored nimble matching committed one is clean, and absent copy compares nothing":
@@ -169,11 +169,11 @@ suite "Dependencies":
     let lock = lockWith(TEXT_NIMBLE)  # Names `probe.nimble`.
     check checkNameNimble("probe/probe.nimble", "probe/atlas.lock", lock).len == 0  # matches
     let found = checkNameNimble("p/p.nimble", "p/atlas.lock", lock)
-    check found.mapIt((it.path, it.line, it.message)) == @[(
+    check found.mapIt((it.path, it.line, it.brief)) == @[(
       "p/atlas.lock",
       4,
-      "Lock names nimble copy after nimble file of project, or `atlas rep` writes second " &
-        "one beside it; regenerate lock; got `probe.nimble` for `p.nimble`.",
+      "lock names nimble copy after nimble file of project, or `atlas rep` writes second " &
+        "one beside it; regenerate lock; got `probe.nimble` for `p.nimble`",
     )]  # copy of other name, at its line
     check checkNameNimble("p/p.nimble", "p/atlas.lock", TEXT_LOCK).len == 0  # no copy, no name
     check checkNameNimble("p/p.nimble", "p/atlas.lock", "not json at all").len == 0  # once

@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/font_families
+import ../../src/[findings, font_families]
 
 
 const KEEPING = """
@@ -41,7 +41,7 @@ suite "Font families":
     let found = checkFontFamilies("mockups/wholecloth.html", linked)
     check found.len == 1
     check found[0].line == 1  # names line, so page opens at link
-    check found[0].message.endsWith("got `fonts.googleapis.com`.")
+    check found[0].brief.endsWith("got `fonts.googleapis.com`")
     for host in HOSTS:  # every host listed is reported, not first alone
       check checkFontFamilies(
         "p.html",
@@ -55,7 +55,7 @@ suite "Font families":
 """
     let found = checkFontFamilies("p.html", outside)
     check found.len >= 1
-    check found[0].message.endsWith("got `Fraunces`.")
+    check found[0].brief.endsWith("got `Fraunces`")
 
 
   test "system stack is reported too, since keyword resolves to whatever viewer has":
@@ -94,7 +94,7 @@ suite "Font families":
 """
     let found = checkFontFamilies("p.html", heading_sans)
     check found.len == 1
-    check found[0].message.endsWith("got `Noto Sans`.")
+    check found[0].brief.endsWith("got `Noto Sans`")
     # Serif heading passes, and so does non-heading element taking sans.
     check checkFontFamilies(
       "p.html",
@@ -151,7 +151,7 @@ suite "Font families":
     let found = checkFontFamilies("p.html", unligated)
     check found.len == 1
     check found[0].line == 0  # whole-file finding: property may go anywhere
-    check MONO in found[0].message
+    check MONO in found[0].brief
     # Either property satisfies it, since either can carry `calt`.
     for property in LIGATURES:
       check checkFontFamilies("p.html", unligated & "  code { " & property & ": x; }\n").len == 0
@@ -215,7 +215,7 @@ suite "Font families":
       "  body { font: 16px/1.6 ui-sans-serif; }\n  x { font-family: \"Noto Sans\"; }\n",
     )
     check found.len == 1
-    check found[0].message.endsWith("got `ui-sans-serif`.")
+    check found[0].brief.endsWith("got `ui-sans-serif`")
     # Shorthand naming admitted family passes, and heading rule reaches it too.
     check checkFontFamilies(
       "p.html",
@@ -226,7 +226,7 @@ suite "Font families":
       "  :root { --sans: \"Noto Sans\", serif; }\n  h1 { font: 2rem var(--sans); }\n",
     )
     check heading.len == 1
-    check heading[0].message.endsWith("got `Noto Sans`.")
+    check heading[0].brief.endsWith("got `Noto Sans`")
 
 
   test "stack that Nim joins with `&` across lines is read as one stack":
@@ -240,10 +240,10 @@ suite "Font families":
     let found = checkFontFamilies("design/parts.nim", joined)
     check found.len == 1
     check found[0].line == 1  # where joined declaration opens
-    check found[0].message.endsWith("got `ui-sans-serif`.")
+    check found[0].brief.endsWith("got `ui-sans-serif`")
     # Admitted family behind same join passes.
     check checkFontFamilies("p.nim", joined.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
     # Joining keeps every line where it stood, so finding below join keeps its line.
     check checkFontFamilies("p.nim", joined & "  y { font-family: Arial; }\n").anyIt(
-      it.line == 5 and it.message.endsWith("got `Arial`."),
+      it.line == 5 and it.brief.endsWith("got `Arial`"),
     )

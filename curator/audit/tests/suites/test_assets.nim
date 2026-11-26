@@ -10,7 +10,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc, strutils, tempfiles, unittest]
-import ../../src/[assets, font_files]
+import ../../src/[assets, findings, font_files]
 from ../../../knoller/src/knoller import DIRECTORY_CACHE
 
 
@@ -188,7 +188,7 @@ suite "Assets":
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
-    check found[0].message.endsWith("got `fraunces-latin-400-normal.woff2`.")
+    check found[0].brief.endsWith("got `fraunces-latin-400-normal.woff2`")
     check "assets.nim" in found[0].path  # names table to add row to
 
 

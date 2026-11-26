@@ -4,7 +4,7 @@
 
 import std/[sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[domains, layout]
+import ../../src/[domains, findings, layout]
 import ./fixtures
 
 
@@ -15,7 +15,7 @@ func paths(tree: Tree): seq[string] =
 
 func messages(tree: Tree): seq[string] =
   ## Read finding messages of tree.
-  tree.checkLayout.mapIt(it.message)
+  tree.checkLayout.mapIt(it.brief)
 
 
 
@@ -34,24 +34,24 @@ suite "Layout":
 
   test "root folders and domain folders hold README.md and folders only":
     check (treeGood() & @[entry("curator/stray.nim", "x\n")]).messages ==
-      @["Curator root holds README.md and project folders only; got `stray.nim`."]  # curator
+      @["curator root holds README.md and project folders only; got `stray.nim`"]  # curator
     check (treeGood() & @[entry("contributor/stray.nim", "x\n")]).messages ==
-      @["Contributor root holds README.md and domain folders only; got `stray.nim`."]  # root
+      @["contributor root holds README.md and domain folders only; got `stray.nim`"]  # root
     check (treeGood() & @[entry("contributor/ronri/stray.nim", "x\n")]).messages ==
-      @["Domain folder holds README.md and project folders only; got `stray.nim`."]  # domain
+      @["domain folder holds README.md and project folders only; got `stray.nim`"]  # domain
 
 
   test "unregistered domain is reported and never becomes project":
     let tree = treeGood() & @[entry("contributor/nowhere/alpha/README.md", "# x\n")]
-    check tree.messages == @["Domain folder outside registry; got `nowhere`."]  # named
+    check tree.messages == @["domain folder outside registry; got `nowhere`"]  # named
     check tree.directoriesProject ==
       @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # silent skip would hide project
 
 
   test "unregistered kind is finding naming registry, under curator too":
     let found = (treeGood() & @[entry("curator/audit/data.csv", "")]).checkLayout
-    check found.len == 1 and "curator/audit/src/kinds.nim" in found[0].message  # VI.5
-    check found[0].message.endsWith("got `data.csv`.")  # IV.4 echo value
+    check found.len == 1 and "curator/audit/src/kinds.nim" in found[0].brief  # VI.5
+    check found[0].brief.endsWith("got `data.csv`")  # IV.4 echo value
 
 
   test "Shell lives only where hooks live":
@@ -59,8 +59,8 @@ suite "Layout":
     check (treeGood() & @[entry(".githooks/pre-push", "#!/bin/sh\n")]).checkLayout.len == 0  # git
     let script = DIRECTORY_ALPHA & "/tools/run.sh"
     check (treeGood() & @[entry(script, "#!/bin/sh\n")]).messages ==
-      @["Shell is hook glue of curator, and lives only in `.claude/` or `.githooks/` " &
-        "(CONTRIBUTOR.md, The language is Nim); got `" & script & "`."]  # project script
+      @["shell is hook glue of curator, and lives only in `.claude/` or `.githooks/` " &
+        "(CONTRIBUTOR.md, The language is Nim); got `" & script & "`"]  # project script
 
 
   test "build output and vendored source stay untracked at any depth":
@@ -68,15 +68,15 @@ suite "Layout":
       let
         path = "contributor/ronri/alpha/" & directory & "/x.nim"
         found = (treeGood() & @[entry(path, "")]).checkLayout
-      check found.anyIt("Article XI.3" in it.message and it.path == path)
+      check found.anyIt("Article XI.3" in it.brief and it.path == path)
     let module = (treeGood() & @[entry("curator/audit/src/dependencies.nim", "")]).checkLayout
-    check not module.anyIt("XI.3" in it.message)  # file named so is no directory
+    check not module.anyIt("XI.3" in it.brief)  # file named so is no directory
 
 
   test "project folder names follow grammar under both roots":
     for directory in ["contributor/ronri/Beta", "curator/Beta"]:  # both roots
       let found = (treeGood() & entriesProject(directory, "x")).checkLayout
-      check found.len == 5 and found.allIt("`Beta`" in it.message)  # every file flagged
+      check found.len == 5 and found.allIt("`Beta`" in it.brief)  # every file flagged
 
 
   test "project shape is complete under both roots":
@@ -105,12 +105,12 @@ suite "Layout":
   test "nimble file is named after project and packages demand lock":
     let other = DIRECTORY_ALPHA & "/other.nimble"
     check (treeGood() & @[entry(other, TEXT_NIMBLE)]).messages ==
-      @["Nimble file not named after project; expected `" & DIRECTORY_ALPHA & "/alpha.nimble`."]
+      @["nimble file not named after project; expected `" & DIRECTORY_ALPHA & "/alpha.nimble`"]
     let
       nimble = DIRECTORY_ALPHA & "/alpha.nimble"
       requiring = treeGood().replaced(nimble, TEXT_NIMBLE & "requires \"malebolgia\"\n")
     check requiring.paths == @[DIRECTORY_ALPHA & "/atlas.lock"]  # lock demanded
-    check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
+    check requiring.messages[0].endsWith("got `malebolgia`")  # package named
     check (requiring & @[entry(DIRECTORY_ALPHA & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
 
@@ -129,7 +129,7 @@ suite "Layout":
 
   test "top-level glossary is required":
     check treeGood().without("GLOSSARY.md").paths == @["GLOSSARY.md"]  # required at root
-    check treeGood().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named
+    check treeGood().without("GLOSSARY.md").messages == @["top-level glossary missing"]  # named
 
 
   test "entry file stands at root, and CLAUDE.md imports it on line of its own, outside code":
@@ -139,7 +139,7 @@ suite "Layout":
     #   file missing, beside `CLAUDE.md` or without it.
     const
       absent = "`CLAUDE.md` imports entry file on line `@AGENTS.md` of its own, outside code, " &
-        "as Claude Code loads no import in code; got none."
+        "as Claude Code loads no import in code; got `none`"
       lacking = [
         "# Claude Code\n\nRead rules.\n",  # none
         "# Claude Code\n\n@README.md\n",  # other file
@@ -151,9 +151,9 @@ suite "Layout":
       check treeGood().replaced("CLAUDE.md", text).messages == @[absent]
     check treeGood().replaced("CLAUDE.md", "# Claude Code\n\n@AGENTS.md\n").checkLayout.len == 0
     check treeGood().without("CLAUDE.md").checkLayout.len == 0  # Claude Code reads entry itself
-    check treeGood().without("AGENTS.md").messages == @["Entry file missing."]
+    check treeGood().without("AGENTS.md").messages == @["entry file missing"]
     check treeGood().without("CLAUDE.md").without("AGENTS.md").messages ==
-      @["Entry file missing."]  # each harness reads it, Claude Code too
+      @["entry file missing"]  # each harness reads it, Claude Code too
 
 
   test "committed pages live in page directories only":
@@ -168,9 +168,9 @@ suite "Layout":
       check inside.checkLayout.len == 0  # page in its place, at any depth
     let stray = treeGood() & @[entry(DIRECTORY_ALPHA & "/design/stray.html", "<p>x</p>\n")]
     check stray.checkLayout.len == 1  # page elsewhere inside project
-    check "`pages/` or `mockups/`" in stray.checkLayout[0].message  # names both
+    check "`pages/` or `mockups/`" in stray.checkLayout[0].brief  # names both
     let orphan = treeGood() & @[entry(CONTRIBUTOR & "/ronri/README.html", "<p>x</p>\n")]
-    check orphan.checkLayout.anyIt("Page outside" in it.message)  # page outside any project
+    check orphan.checkLayout.anyIt("page outside" in it.brief)  # page outside any project
 
 
   test "README files are derived views":

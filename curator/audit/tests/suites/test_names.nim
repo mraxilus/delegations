@@ -34,7 +34,7 @@ func breaches(source: string, exempt: seq[string] = @[]): seq[string] =
     checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source) &
       checkGenerations("x.nim", source)
   )
-  (found & checkAcronyms("x.nim", source, exempt)).mapIt(it.message)
+  (found & checkAcronyms("x.nim", source, exempt)).mapIt(it.brief)
 
 
 
@@ -53,51 +53,52 @@ suite "Names":
   test "each rule of names prints its article where sentence ends, as koch prints it":
     for (source, message) in [
       ("proc f(dir_hint: int) = discard\n",
-        "Name coins abbreviation (V.6); got `dir_hint`."),
+        "name coins abbreviation (V.6); got `dir_hint`; expect `directory`"),
       ("func toJSON() = discard\n",
-        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
-          "spell it out; got `JSON` in `toJSON`."),
+        "acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
+          "spell it out; got `JSON` in `toJSON`"),
       ("proc getGrade() = discard\n",
-        "Action is imperative verb and property is bare noun (V.3); got `getGrade`."),
+        "action is imperative verb and property is bare noun (V.3); got `getGrade`"),
       ("func gradeOf(m: Multivector): Grade = m.grade\n",
-        "Routine closes with `Of` only where it spells generic type (V.3); got `gradeOf`."),
+        "routine closes with `Of` only where it spells generic type (V.3); got `gradeOf`"),
       ("proc constructSeeds(scene: var Scene) = discard\n",
-        "`construct…` names compile-time routine returning data structure (V.3); got " &
-        "`proc constructSeeds`."),
+        "`construct…` names compile-time routine returning data structure (V.3); got `proc " &
+          "constructSeeds`"),
       ("template defineKind(name: untyped) = discard\n",
-        "`define…` names macro (V.3); got `template defineKind`."),
+        "`define…` names macro (V.3); got `template defineKind`"),
       ("macro emitCatalogue(): untyped = discard\n",
-        "`emit…` names compile-time routine returning syntax tree, never macro (V.3); got " &
-        "`macro emitCatalogue`."),
+        "`emit…` names compile-time routine returning syntax tree, never macro (V.3); got `macro " &
+          "emitCatalogue`"),
       ("discard MESHES.emitObject(placed)\n",
-        "Call of `define…` or `emit…` is prefix call, as `emitFunc(name, docs)` (STYLE.md §5); " &
-        "got `MESHES.emitObject`."),
+        "call of `define…` or `emit…` is prefix call, as `emitFunc(name, docs)` (STYLE.md §5); " &
+          "got `MESHES.emitObject`"),
       ("const LUT_GRADE = 1\n",
-        "Lookup table reads `lut_<value>_by_<key>` (V.5); got `LUT_GRADE`."),
+        "lookup table reads `lut_<value>_by_<key>` (V.5); got `LUT_GRADE`"),
       ("func mixed(m: int): bool = true\n",
-        "Predicate `func` is `is…` in camel case (V.4); got `mixed`."),
+        "predicate `func` is `is…` in camel case (V.4); got `mixed`"),
       ("proc f(quiet: bool) = discard\n",
-        "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_` (V.4); got `quiet`."),
-      ("var 𝐧 = 2\n", "Notation holds over case only for immutable global (III.5); got `𝐧`."),
-      ("type basis_digits = int\n", "Type is `PascalCase` (V.1); got `basis_digits`."),
-      ("type Space = enum\n  base, Anti\n", "Member is `PascalCase` (V.11); got `base`."),
-      ("type Pair[Key, V] = object\n", "Placeholder is one capital letter (V.12); got `Key`."),
+        "boolean opens `is_`, `as_`, `should_`, `found_` or `has_` (V.4); got `quiet`"),
+      ("var 𝐧 = 2\n", "notation holds over case only for immutable global (III.5); got `𝐧`"),
+      ("type basis_digits = int\n", "type is `PascalCase` (V.1); got `basis_digits`"),
+      ("type Space = enum\n  base, Anti\n", "member is `PascalCase` (V.11); got `base`"),
+      ("type Pair[Key, V] = object\n", "placeholder is one capital letter (V.12); got `Key`"),
       ("type Algebra = int\nconst ALGEBRA = 1\n",
-        "Global never shares its word with type (V.10); got `ALGEBRA`."),
+        "global never shares its word with type (V.10); got `ALGEBRA`"),
       ("proc f(a: Basis) =\n  let flags_a = a.toFlags\n",
-        "Name holding `a` in another representation leads with `a` (V.2); got `flags_a`."),
+        "name holding `a` in another representation leads with `a` (V.2); got `flags_a`"),
       ("proc f(c: Basis) =\n  let flags_c = c.dual.toFlags\n",
-        "Name holding value in another representation leads with a name of its chain, `c` or " &
-        "`dual` (V.2); got `flags_c`."),
+        "name holding value in another representation leads with a name of its chain, `c` or " &
+          "`dual` (V.2); got `flags_c`"),
       ("type ProverOf* = proc (pin: string): Prover {.closure.}\n",
-        "Type closes with `Of` only where alias of its instance takes its bare name (V.13); got " &
-        "`ProverOf`."),
+        "type closes with `Of` only where alias of its instance takes its bare name (V.13); got " &
+          "`ProverOf`"),
       ("type\n  Mesh* = object\n  MeshSet* = object\n",
-        "Collection type takes plural of its member `Mesh` (V.6); got `MeshSet`."),
+        "collection type takes plural of its member `Mesh` (V.6); got `MeshSet`"),
       ("when isMainModule:\n  let verb = paramStr(1)\n",
-        "Entry block holds no binding (V.10); got `verb`."),
+        "entry block holds no binding (V.10); got `verb`; help: move code that binds into `proc " &
+          "main`"),
     ]:
-      check source.breaches == @[message]  # text koch prints
+      check source.breaches == @[message]  # short text of each, article in its summary
 
 
   test "exemptions are jargon, root glossary and glossary of path's own project":

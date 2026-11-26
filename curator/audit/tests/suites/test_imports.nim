@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[domains, imports, layout, projects, toolchain]
+import ../../src/[domains, findings, imports, layout, projects, toolchain]
 import ./fixtures
 
 
@@ -22,7 +22,7 @@ func found(tree: Tree): seq[(string, int)] =
 
 func reached(tree: Tree): seq[(string, int, string)] =
   ## Read path, line and message of each finding of check of driver.
-  tree.checkImportsDriver.mapIt((it.path, it.line, it.message))
+  tree.checkImportsDriver.mapIt((it.path, it.line, it.brief))
 
 
 
@@ -100,8 +100,8 @@ suite "Imports by path":
       ("curator/assayer/src/assayer/command.nim", 1),
     ]  # clone under `dependencies/` and own module are no other project
     let first = tree.checkImportsProject[0]
-    check first.message.endsWith("got `" & PARSER & "`.")  # project it reaches
-    check "atlas.lock" in first.message and "(CONTRIBUTOR.md, Dependencies)" in first.message
+    check first.brief.endsWith("got `" & PARSER & "`")  # project it reaches
+    check "atlas.lock" in first.brief and "(CONTRIBUTOR.md, Dependencies)" in first.brief
 
 
   test "import among projects of checker stands, and checker reaching any other is finding":
@@ -116,7 +116,7 @@ suite "Imports by path":
     ]
     check PROJECTS_CHECKER == [DIRECTORY_DRIVER, DIRECTORY_KNOLLER]
     check tree.found == @[(SOURCE_CHECKER & "/probing.nim", 1)]  # koch.nim is in no project
-    check tree.checkImportsProject[0].message.endsWith("got `" & PROBE & "`.")
+    check tree.checkImportsProject[0].brief.endsWith("got `" & PROBE & "`")
 
 
 
@@ -138,7 +138,7 @@ suite "Driver":
     check tree.reached.mapIt((it[0], it[1])) == @[(TAGGER & "/" & FILE_DRIVER, 3)]
     check tree.reached[0][2].endsWith(
       "got `../dependencies/lojban_parser/contributor/bangu/lojban_parser/tools/lists` in " &
-        "`tools/lists.nim`."
+        "`tools/lists.nim`"
     )  # module of clone, which tree lacks, and module of project that names it
     check "(CONTRIBUTOR.md, Dependencies)" in tree.reached[0][2]
     let fixed = tree.replaced(TAGGER & "/" & FILE_DRIVER, "import std/[os, osproc]\n")
@@ -181,7 +181,7 @@ suite "Driver":
       let tree = own.replaced(project & "/tools/verbs.nim", "import ../build/generated\n")
         .replaced(project & "/" & FILE_DRIVER, "import std/os\n" & source)
       check tree.reached.mapIt((it[0], it[1])) == @[(project & "/" & FILE_DRIVER, 2)]
-      check tree.reached[0][2].endsWith("got " & got & ".")
+      check tree.reached[0][2].endsWith("got " & got)
     check own.without(project & "/" & FILE_DRIVER).reached.len == 0  # project with no driver
 
 
@@ -195,8 +195,8 @@ suite "Driver":
       entry(project & "/tools/verbs.nim", "import ./lists\nimport npeg\n"),
     ]
     check tree.reached.mapIt((it[0], it[1])) == @[(project & "/" & FILE_DRIVER, 2)]
-    check tree.reached[0][2].endsWith("got `knoller` in `tools/lists.nim`.")  # first it names
+    check tree.reached[0][2].endsWith("got `knoller` in `tools/lists.nim`")  # first it names
     let deep = tree.replaced(project & "/" & FILE_DRIVER, "import std/os\nimport ./verbs\n")
     check deep.reached[0][2].endsWith(
-      "got `knoller` in `tools/lists.nim`."
+      "got `knoller` in `tools/lists.nim`"
     )  # module it names first is read before package it names second

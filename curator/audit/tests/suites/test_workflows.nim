@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils, unittest]
-import ../../src/workflows
+import ../../src/[findings, workflows]
 
 
 const READS_RUNS = """
@@ -28,9 +28,9 @@ suite "Workflows":
     let found = checkScopes(".github/workflows/watch.yml", READS_RUNS)
     check found.len == 1
     check found[0].path == ".github/workflows/watch.yml"
-    check "actions" in found[0].message
+    check "actions" in found[0].brief
     # Message names what it read, so reader is not left guessing which scopes were granted.
-    check "contents, issues" in found[0].message
+    check "contents, issues" in found[0].brief
 
 
   test "granting it clears the finding, and nothing else changes":
@@ -90,8 +90,8 @@ jobs:
 """
     let found = checkScopes(".github/workflows/sweep.yml", listing)
     check found.len == 1
-    check "pull-requests" in found[0].message
-    check "actions, issues" in found[0].message  # names what was granted
+    check "pull-requests" in found[0].brief
+    check "actions, issues" in found[0].brief  # names what was granted
     let granted = listing.replace("  issues: write\n", "  issues: write\n  pull-requests: read\n")
     check checkScopes(".github/workflows/sweep.yml", granted).len == 0
 
@@ -146,7 +146,7 @@ jobs:
       "on:\n  schedule:\n    - cron: '0 6 * * 1'\njobs:\n  a:\n    run: koch --recent\n"
     check weekly.daysCron == 7
     check checkWindow("check.yml", weekly, 7).len == 0
-    check "got `7` days against `1`" in checkWindow("check.yml", weekly, 1)[0].message
+    check "got `7` days against `1`" in checkWindow("check.yml", weekly, 1)[0].brief
     check weekly.replace("* * 1", "* * *").daysCron == 1
     check weekly.replace("* * 1", "* * 1-5").daysCron == 0  # shape untaught reads as 0
     check checkWindow("ledger.yml", weekly.replace("--recent", ""), 1).len == 0  # no window

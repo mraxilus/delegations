@@ -20,7 +20,7 @@ func module(body: string): string =
 
 func messages(path, source: string): seq[string] =
   ## Collect messages idioms check reports over source.
-  checkIdioms(path, source, nimble = NIMBLE).toFindings.mapIt(it.message)
+  checkIdioms(path, source, nimble = NIMBLE).toFindings.mapIt(it.brief)
 
 
 func fixed(source: string): Fix =
@@ -38,9 +38,9 @@ func isSettled(source: string): bool =
 suite "Idioms":
   test "module carries strictFuncs pragma before its imports":
     check messages("a.nim", module("import std/os\n")).len == 0
-    check "got none" in messages("a.nim", "## Do.\n\nimport std/os\n")[0]
+    check "got `none`" in messages("a.nim", "## Do.\n\nimport std/os\n")[0]
     let late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n"
-    check "got it after" in messages("a.nim", late)[0]
+    check "got `it after`" in messages("a.nim", late)[0]
 
 
   test "bracket import is alphabetised, standard library first and local modules last":
@@ -55,7 +55,7 @@ suite "Idioms":
   test "consecutive single bindings of one keyword share it, once per run":
     let run = module("proc f() =\n  let a = 1\n  let b = 2\n  let c = 3\n")
     check messages("a.nim", run) == @[
-      "Consecutive single bindings share one keyword (X.5); got `let` twice.",
+      "consecutive single bindings share one keyword (X.5); got `let` twice",
     ]  # one finding for run of three
     check messages("a.nim", module("proc f() =\n  let a = 1\n  var b = 2\n")).len == 0
     check messages("a.nim", module("proc f() =\n  let\n    a = 1\n    b = 2\n")).len == 0
@@ -65,7 +65,7 @@ suite "Idioms":
 
   test "used pragma carries comment naming its consumer":
     check messages("a.nim", module("func f() {.used.} = discard\n")) ==
-      @["`{.used.}` carries comment naming its consumer (STYLE.md §2); got none."]  # koch's text
+      @["`{.used.}` carries comment naming its consumer (STYLE.md §2); got `none`"]  # koch's text
     check messages("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
     check messages("a.nim", module("{.used.}\n")).len == 0  # module pragma, not symbol
 
@@ -74,7 +74,7 @@ suite "Idioms":
     let ordinary = module("{.push inline.}\nfunc f() = discard\n{.pop.}\n")
     check messages("a.nim", ordinary) == @[
       "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes (STYLE.md §2); " &
-        "got `{.push inline.}`.",
+        "got `{.push inline.}`",
     ]  # text koch prints
     let foreign = module("{.push importc, header: \"<x.h>\".}\nproc f()\n{.pop.}\n")
     check messages("a.nim", foreign).len == 0
@@ -89,7 +89,7 @@ suite "Idioms":
   test "suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
     check messages("tests/suites/test_x.nim", unseeded) ==
-      @["Suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got no seed."]
+      @["suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got `no seed`"]
     let seeded = unseeded.replace("let x", "randomize(0)\nlet x")
     check messages("tests/suites/test_x.nim", seeded).len == 0
     check messages("tests/suites/test_x.nim", unseeded.replace("rand(1)", "initRand(7)")).len == 0
@@ -100,7 +100,7 @@ suite "Idioms":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check messages("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
     check messages("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
-      @["Test stub carries testament header (STYLE.md §6); got none."]  # text koch prints
+      @["test stub carries testament header (STYLE.md §6); got `none`"]  # text koch prints
     let with_run = header.replace("nim c ", "nim c -r ") & module("")
     check "got `-r`" in messages("tests/test_x.nim", with_run)[0]
     let batched = header.replace("action: run", "action: run\nbatchable: false") & module("")
@@ -138,7 +138,7 @@ suite "Idioms":
       joined = "when compileOption(\"profiler\"): import std/nimprof\n"
       one = module(joined & "\nproc f() {.noSideEffect, inline.} = discard\n")
     check checkProfiler("a.nim", one).mapIt(it.line) == @[LINES_HEAD + 1]
-    check checkProfiler("a.nim", one)[0].message.endsWith("got `1` line.")
+    check checkProfiler("a.nim", one)[0].brief.endsWith("got `1` line")
     check fixed(one).source ==
       module(IMPORT_PROFILER & "\n\nproc f() {.inline, noSideEffect.} = discard\n")
     check fixed(one).fixed.mapIt((it.line, it.rule)) == @[
@@ -147,7 +147,7 @@ suite "Idioms":
     ]  # list fixed below split reports at its line as given
     check fixed(one).source.isSettled and checkProfiler("a.nim", fixed(one).source).len == 0
     let entry = module("import std/os\n\nwhen isMainModule:\n  echo 1\n")
-    check checkProfiler("a.nim", entry)[0].message.endsWith("got none.")
+    check checkProfiler("a.nim", entry)[0].brief.endsWith("got `none`")
     check fixed(entry).source ==
       module(IMPORT_PROFILER & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
     check fixed(entry).source.isSettled and checkProfiler("a.nim", fixed(entry).source).len == 0
@@ -173,7 +173,8 @@ suite "Idioms":
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check messages("tests/suites/test_x.nim", debug) == @[
-      "Test leaves no debug output (VIII.5); got `echo x`.",
+      "test leaves no debug output (VIII.5); got `echo x`; help: label report, or print under " &
+        "failing condition",
     ]  # text koch prints
     check messages("tests/suites/test_x.nim", module("test \"a\":\n  echo \"x: \", x\n")).len == 0
     let diagnostic = module("test \"a\":\n  if x > 1:\n    echo x\n")
@@ -210,7 +211,7 @@ suite "Idioms":
 }"""
     check checkTsconfig("tsconfig.json", all_set).len == 0
     let one_off = all_set.replace("\"strict\": true", "\"strict\": false")
-    check checkTsconfig("tsconfig.json", one_off).mapIt(it.message).anyIt("`strict`" in it)
+    check checkTsconfig("tsconfig.json", one_off).mapIt(it.brief).anyIt("`strict`" in it)
     check checkTsconfig("tsconfig.json", "{}").len == FLAGS_TYPESCRIPT.len
 
 
@@ -307,7 +308,7 @@ suite "Idiom fixes":
     let
       late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n\n\nlet a = 1\n"
       fix = fixed(late)
-    check "got it after" in messages("a.nim", late)[0]
+    check "got `it after`" in messages("a.nim", late)[0]
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\n\n\nlet a = 1\n"
     check fix.fixed.mapIt(it.line) == @[5]  # line check names
     check fix.source.isSettled
@@ -324,9 +325,9 @@ suite "Idiom fixes":
       apart =
         module("import std/strutils\nimport std/[os, algorithm]\nimport ./b\nimport ./a {.all.}\n")
       fix = fixed(apart)
-    check checkBracketsImport("a.nim", apart).toFindings.mapIt(it.message) == @[
-      "Imports of one directory share one bracket (X.5); got `std/` in `2` statements.",
-      "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
+    check checkBracketsImport("a.nim", apart).toFindings.mapIt(it.brief) == @[
+      "imports of one directory share one bracket (X.5); got `std/` in `2` statements",
+      "imports of one directory share one bracket (X.5); got `./` in `2` statements",
     ]
     check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
     check fix.fixed.filterIt(it.rule == Rule.BracketsImport).mapIt(it.line) ==
@@ -334,8 +335,8 @@ suite "Idiom fixes":
     check fix.source.isSettled
     check checkBracketsImport("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
-    check checkBracketsImport("a.nim", module("import std/[math]\n")).toFindings[0].message ==
-      "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."  # own rule
+    check checkBracketsImport("a.nim", module("import std/[math]\n")).toFindings[0].brief ==
+      "bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`"  # own rule
     check checkBracketsImport("a.nim", module("import std/[math]\n"))[0].rule ==
       Rule.BracketModule
     check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.BracketModule]
@@ -348,8 +349,8 @@ suite "Idiom fixes":
           "from std/os import walkDir, getEnv\n",
       )
       fix = fixed(lists)
-    check checkLists("a.nim", lists).mapIt(it.message.split("; ")[1]) == @[
-      "got `importc, header, bycopy`.", "got `b, a`.", "got `walkDir, getEnv`.",
+    check checkLists("a.nim", lists).mapIt(it.brief.split("; ")[1]) == @[
+      "got `importc, header, bycopy`", "got `b, a`", "got `walkDir, getEnv`",
     ]
     check fix.source == module("proc f() {.bycopy, header: \"a.h\", importc: \"f\".}\n" &
       "export a, b  # Why.\nfrom std/os import getEnv, walkDir\n")  # whole items, comment stays
