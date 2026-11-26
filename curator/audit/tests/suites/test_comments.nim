@@ -56,6 +56,13 @@ suite "Article VI":
     check texts("# top\n  # indented\n", Syntax.HashSpaced) == @["top", "indented"]  # line start
 
 
+  test "VI.5 hash after quote escaped in double quotes stays data, as in row of log (#1011)":
+    check texts("text: \"wait \\\"once #980 merges\\\"\"\n", Syntax.HashSpaced).len ==
+      0  # escaped quote keeps string open
+    check texts("q: \"a\\\\\" # yes\n", Syntax.HashSpaced) == @["yes"]  # escaped backslash
+    check texts("p: 'C:\\' # yes\n", Syntax.HashSpaced) == @["yes"]  # single quotes escape none
+
+
   test "VI.5 gitignore leading hash only":
     check texts("# note\nbin/ # not comment\n  # spaced\n", Syntax.HashLeading) ==
       @["note", "spaced"]  # first non-blank only
