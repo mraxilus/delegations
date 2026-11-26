@@ -101,7 +101,7 @@ Verbs:
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
   head           fetch deps, then project's own `head` verb, on project's own pin
-  releases       ask nim-lang.org for later Nim releases; exit 1 where driver's pin lags, 2 on fault
+  releases       ask nim-lang.org for later Nim releases; exit 1 where driver lags, 2 on failure
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
@@ -588,12 +588,12 @@ proc run(options: Options): int =
   of "releases":
     # Asks reach nim-lang.org, whose answer moves with no commit here, so `nim.yml` runs verb
     #   weekly and `check` never does; search and lines are `releases.nim`'s, offline in suite.
-    #   Fault of search exits 2, as usage error does, so `nim.yml` reads exit 1 as lag alone.
+    #   Failure of search exits 2, as usage error does, so `nim.yml` reads exit 1 as lag alone.
     if not options.isReadAll({Root}): return options.refused
-    let (lines, named, fault) = checkReleases(readPins(options.root), askRelease)
+    let (lines, named, failure) = checkReleases(readPins(options.root), askRelease)
     for line in lines: echo line
-    if fault.len > 0:
-      stderr.write "koch releases: " & fault & "\n"
+    if failure.len > 0:
+      stderr.write "koch releases: " & failure & "\n"
       return 2
     found = named
   of "fix":

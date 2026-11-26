@@ -138,7 +138,7 @@ suite "Search":
             $parts[0] & "." & $(parts[1] + 2) & ".0",
             $(parts[0] + 1) & ".0.0",
           ].filterIt(it in served)
-        check search.fault == ""
+        check search.failure == ""
         check search.latest == series & "." & $patches[^1]
         check search.newer == newer
         inc count
@@ -179,7 +179,7 @@ suite "Search":
     # Domain: host that moved its tarballs, which would read each later release as missing.
     let (search, asked) = searchLogged("2.4.2", ["2.4.4"], [])
     check asked == @["2.4.2"]
-    check "pin itself" in search.fault and search.fault.endsWith("got `2.4.2`.")
+    check "pin itself" in search.failure and search.failure.endsWith("got `2.4.2`.")
     check search.latest == "2.4.2"
 
 
@@ -190,7 +190,7 @@ suite "Search":
     ]:
       let (search, asked) = searchLogged("2.4.2", ["2.4.2", "2.6.0"], [unread])
       check asked.len == asks and asked[^1] == unread  # nothing asked after it
-      check search.fault.endsWith("got `" & unread & "`.")
+      check search.failure.endsWith("got `" & unread & "`.")
       check search.newer.len == 0
 
 
@@ -205,14 +205,14 @@ suite "Search":
 
     let search = searchReleases("2.4.2", ask)
     check count == 1 + ASKS_SERIES_MAX  # pin, then each patch up to bound
-    check "answers for what it lacks" in search.fault
+    check "answers for what it lacks" in search.failure
 
 
-  test "pin of other shape than `X.Y.Z` is fault, and asks nothing":
+  test "pin of other shape than `X.Y.Z` is failure, and asks nothing":
     for pin in ["2.4", "2.4.2.1", "", "2.4.x", COMMIT]:
       let (search, asked) = searchLogged(pin, ["2.4.2"], [])
       check asked.len == 0
-      check search.fault.endsWith("got `" & pin & "`.")
+      check search.failure.endsWith("got `" & pin & "`.")
 
 
 
@@ -233,7 +233,7 @@ suite "Ask":
 suite "Verb":
   test "verb names latest release, and each pin below it, and finds nothing where driver holds it":
     # Case: pins of 2026-11-26, on host as read that day.
-    let (lines, found, fault) = checkReleases(
+    let (lines, found, failure) = checkReleases(
       [
         Pinned(path: PATH_DRIVER, pin: "2.4.2"),
         Pinned(path: PATH_KNOLLER, pin: "2.4.2"),
@@ -241,7 +241,7 @@ suite "Verb":
       ],
       hostServing(versionsServed()),
     )
-    check found.len == 0 and fault == ""
+    check found.len == 0 and failure == ""
     check lines == @[
       "Latest release of Nim 2.4 that nim-lang.org serves: `2.4.2`.",
       "Pins that lag it; each moves with its project, and fails nothing (GUIDE.md, Toolchain):",
@@ -250,11 +250,11 @@ suite "Verb":
 
 
   test "driver that lags latest release of its series is one finding, naming both":
-    let (lines, found, fault) = checkReleases(
+    let (lines, found, failure) = checkReleases(
       [Pinned(path: PATH_DRIVER, pin: "2.4.2"), Pinned(path: PATH_RICTADNI, pin: "2.4.0")],
       hostServing(versionsServed() & "2.4.4"),
     )
-    check found.len == 1 and fault == ""
+    check found.len == 1 and failure == ""
     check found[0].path == PATH_DRIVER
     check "CURATOR.md, duty 8" in found[0].message
     check found[0].message.endsWith("got `2.4.2` against `2.4.4`.")
@@ -265,27 +265,27 @@ suite "Verb":
 
 
   test "newer series alone is note, and finding of none":
-    let (lines, found, fault) = checkReleases(
+    let (lines, found, failure) = checkReleases(
       [Pinned(path: PATH_DRIVER, pin: "2.4.2")],
       hostServing(versionsServed() & @["2.6.0", "3.0.0"]),
     )
-    check found.len == 0 and fault == ""  # exit stays 0
+    check found.len == 0 and failure == ""  # exit stays 0
     check lines.len == 3  # latest, then one note for each series; no pin lags
     check lines[1].startsWith("Nim `2.6.0` opens newer series;")
     check lines[2].startsWith("Nim `3.0.0` opens newer series;")
     check lines[1 .. ^1].allIt("waits on Architect" in it)
 
 
-  test "search that cannot stand is fault rather than finding, so issue names lag alone":
+  test "search that cannot stand is failure rather than finding, so issue names lag alone":
     # Domain: host of no tarball at all, host answering neither way.
     let driver = [Pinned(path: PATH_DRIVER, pin: "2.4.2")]
     for ask in [
       hostServing([]),
       proc(version: string): Presence = Presence.Unread,
     ]:
-      let (lines, found, fault) = checkReleases(driver, ask)
+      let (lines, found, failure) = checkReleases(driver, ask)
       check lines.len == 0 and found.len == 0
-      check fault.endsWith("got `2.4.2`.")
+      check failure.endsWith("got `2.4.2`.")
 
 
   test "driver of no release pin is finding, and asks nothing":
@@ -296,6 +296,6 @@ suite "Verb":
       inc count
       Presence.Published
 
-    let (lines, found, fault) = checkReleases([Pinned(path: PATH_RICTADNI, pin: "2.4.0")], ask)
-    check lines.len == 0 and count == 0 and fault == ""
+    let (lines, found, failure) = checkReleases([Pinned(path: PATH_RICTADNI, pin: "2.4.0")], ask)
+    check lines.len == 0 and count == 0 and failure == ""
     check found.len == 1 and found[0].message.startsWith("Driver pins no release")

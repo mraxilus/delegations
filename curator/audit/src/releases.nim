@@ -22,8 +22,8 @@
 ##   Exit 1 where pin of `curator/audit` lags latest release of its series, else 0; `nim.yml`
 ##     reads it weekly, and keeps one issue open while it is 1.
 ##   Search that cannot stand exits 2, as usage error does: job goes red and `watch.yml` reports
-##     it, so issue of `nim.yml` names lag alone, and fault of one week never overwrites it.
-##   Ask answering neither 200 nor 404 is such fault, as check lacking its tool reports finding
+##     it, so issue of `nim.yml` names lag alone, and failure of one week never overwrites it.
+##   Ask answering neither 200 nor 404 is such failure, as check lacking its tool reports finding
 ##     rather than skip (CURATOR.md, duty 8): read as missing, it would exit 0 for work never done.
 ##
 ##   Rejected: list of tags of `nim-lang/Nim`, which names release by its tag rather than by
@@ -55,13 +55,13 @@ const
   PLATFORM_ASK = PLATFORMS[0][2]  ## Tarball platform each ask names, first knoller fetches for.
   WHY_UNREAD = "nim-lang.org answered neither " & STATUS_SERVED & " nor " & STATUS_ABSENT &
     ", so search stops"
-    ## Fault of ask answering neither way, which search cannot read past.
+    ## Failure of ask answering neither way, which search cannot read past.
   WHY_UNSERVED = "nim-lang.org holds no tarball of pin itself, so it would read each later " &
     "release as missing"
-    ## Fault of host that moved its tarballs, or never held pin.
+    ## Failure of host that moved its tarballs, or never held pin.
   WHY_UNBOUNDED = "nim-lang.org reads each of " & $ASKS_SERIES_MAX & " patches after pin as " &
     "published, which no series holds, so it answers for what it lacks"
-    ## Fault of host answering published for each address, as captive page does.
+    ## Failure of host answering published for each address, as captive page does.
 
 
 type
@@ -73,7 +73,7 @@ type
   Search* = object  ## Define what asks read of releases after pin.
     latest*: string  ## Latest release of series of pin; pin itself where none is later.
     newer*: seq[string]  ## First release of each newer series host serves, oldest first.
-    fault*: string  ## Why search cannot stand, naming version asked; empty where it stands.
+    failure*: string  ## Why search cannot stand, naming version asked; empty where it stands.
 
   Pinned* = object  ## Define release pin of one project, as its nimble file names it.
     path*: string  ## Nimble file, repository-relative.
@@ -162,22 +162,22 @@ func searchReleases*(
 ): Search {.effectsOf: ask.} =
   ## Read latest release of series of pin `X.Y.Z`, and first release of each newer series, from
   ##   what `ask` says of each version.
-  ##   Fault names version whose answer leaves search unsound, and search then holds pin alone,
+  ##   Failure names version whose answer leaves search unsound, and search then holds pin alone,
   ##     so no reading of half search stands.
-  func faulted(why, asked: string): Search =
-    ## Construct search holding pin alone, and fault naming version asked.
-    Search(latest: pin, fault: why & "; got `" & asked & "`.")
+  func fail(why, asked: string): Search =
+    ## Construct search holding pin alone, and failure naming version asked.
+    Search(latest: pin, failure: why & "; got `" & asked & "`.")
 
   if not pin.isVersion or pin.partsVersion.len != 3:
-    return faulted("Search reads pin as `X.Y.Z` alone", pin)
+    return fail("Search reads pin as `X.Y.Z` alone", pin)
   let parts = pin.partsVersion
   result.latest = pin
 
   # Hold search to host that serves pin itself, since one that does not reads each as missing.
   case ask(pin)
   of Presence.Published: discard
-  of Presence.Missing: return faulted(WHY_UNSERVED, pin)
-  of Presence.Unread: return faulted(WHY_UNREAD, pin)
+  of Presence.Missing: return fail(WHY_UNSERVED, pin)
+  of Presence.Unread: return fail(WHY_UNREAD, pin)
 
   # Walk patches of series until two in row read missing.
   var misses = 0
@@ -190,8 +190,8 @@ func searchReleases*(
     of Presence.Missing:
       inc misses
       if misses == MISSES_SERIES: break
-    of Presence.Unread: return faulted(WHY_UNREAD, asked)
-  if misses < MISSES_SERIES: return faulted(WHY_UNBOUNDED, pin)
+    of Presence.Unread: return fail(WHY_UNREAD, asked)
+  if misses < MISSES_SERIES: return fail(WHY_UNBOUNDED, pin)
 
   # Ask first release of each newer series.
   for asked in [
@@ -202,14 +202,14 @@ func searchReleases*(
     case ask(asked)
     of Presence.Published: result.newer.add asked
     of Presence.Missing: discard
-    of Presence.Unread: return faulted(WHY_UNREAD, asked)
+    of Presence.Unread: return fail(WHY_UNREAD, asked)
 
 
 func checkReleases*(
   pins: openArray[Pinned], ask: proc(version: string): Presence
-): tuple[lines: seq[string], found: seq[Finding], fault: string] {.effectsOf: ask.} =
+): tuple[lines: seq[string], found: seq[Finding], failure: string] {.effectsOf: ask.} =
   ## Read latest release of series of pin of `curator/audit`, and each newer series, through
-  ##   `ask`; return lines verb prints, finding where that pin lags its series, and fault of
+  ##   `ask`; return lines verb prints, finding where that pin lags its series, and failure of
   ##   search that cannot stand, which prints no line and finds nothing.
   let
     path_driver = DIRECTORY_DRIVER.pathNimble
@@ -220,8 +220,8 @@ func checkReleases*(
     )
     return
   let search = searchReleases(driver.get, ask)
-  if search.fault.len > 0:
-    result.fault = search.fault
+  if search.failure.len > 0:
+    result.failure = search.failure
     return
 
   # Name latest release of series, each pin below it, then each newer series.

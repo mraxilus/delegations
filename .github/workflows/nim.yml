@@ -12,8 +12,8 @@
 #   says what is, and gains comment only where finding changed: subscriber hears of new release
 #   once. Run where verb exits 0 closes open issue, so next lag opens fresh one.
 #   Finding is not red run: exit 1 is what issue is for, and job stays green. Any other exit,
-#   such as fault of search or usage error, turns job red, as failure to set up or post does,
-#   and `watch.yml` reads that. So issue names lag alone, and fault of one week never edits it.
+#   such as failure of search or usage error, turns job red, as failure to set up or post does,
+#   and `watch.yml` reads that. So issue names lag alone, and failure of one week never edits it.
 #   Koch builds in step of its own, so compile failure turns job red rather than opening issue,
 #   and finding holds output of verb alone.
 #   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
@@ -81,7 +81,7 @@ jobs:
           today="$(date -u +%F)"
           at="**Run [$NUMBER]($URL)** on $today, at \`${SHA:0:7}\`."
 
-          # Exit other than 0 and 1 is fault of run rather than finding, so job goes red.
+          # Exit other than 0 and 1 is failure of run rather than finding, so job goes red.
           if [ "$CODE" != 0 ] && [ "$CODE" != 1 ]; then
             echo "Verb exited $CODE, which names neither clean run nor finding."
             exit 1
