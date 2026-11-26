@@ -36,7 +36,10 @@ suite "Article VIII":
     check checkProvenance("p", good.replace("2026-01-01", "1 Jan 2026"), "deadbeefdeadbeef")
       .mapIt(it.brief) == @["date must be `YYYY-MM-DD`; got `1 Jan 2026`"]  # ISO date
     let stale = checkProvenance("p", good, "0000000000000000")
-    check stale.len == 1 and stale[0].brief.endsWith("got `deadbeefdeadbeef`")  # stale
+    check stale.len == 1 and stale[0].brief.endsWith(
+      "got `deadbeefdeadbeef`; expect `0000000000000000`; help: re-audit project, then set row " &
+        "to stamp expected",
+    )  # stale
     check "`0000000000000000`" in stale[0].brief  # expected stamp named
     check stale[0].is_propagation  # curator's in any project, never held
     check not checkProvenance("p", unreviewed, "deadbeefdeadbeef")[0].is_propagation  # project's
@@ -73,7 +76,10 @@ suite "Article VIII":
     let found = checkCitations("p/PROVENANCE.md", "Verified by `tgone.nim`.", "p/tests/", present)
     check found.len == 1
     check found[0].path == "p/PROVENANCE.md"
-    check found[0].brief.endsWith("got `tgone.nim`")  # Article IV.4 echoes value
+    check found[0].brief.endsWith(
+      "got `tgone.nim`; help: write verification that can be repeated, or name tool and date " &
+        "instead",
+    )  # Article IV.4 echoes value
 
     # Citation naming another project's test does not resolve here.
     check checkCitations(

@@ -18,6 +18,8 @@ const
     ## Credit line of block Claude Code writes above role line, as it writes it.
   TEMPLATE_PULL = staticRead("../../../../.github/pull_request_template.md")
     ## Template of pull request body, as tree holds it.
+  EXPECT_ROLE = "; expect `**Role:** curator`"
+    ## Expected value that finding of role line gives on branch of curator.
 
 
 
@@ -50,7 +52,7 @@ suite "Role":
       ["curator"],
     )
     check wrong.len == 1
-    check wrong[0].brief.endsWith("got `**Role:** curator/probe`")  # line below block echoed
+    check wrong[0].brief.endsWith("got `**Role:** curator/probe`" & EXPECT_ROLE)  # line echoed
 
 
   test "block of listed harness is passed only whole, once and in order":
@@ -94,28 +96,28 @@ suite "Role":
     #   finding quotes block, so curator adds its entry.
     let lone = checkRole("curator/mend-it", "<!-- note -->\n**Role:** curator\n", ["curator"])
     check lone.len == 1
-    check lone[0].brief.endsWith("got `<!-- note -->` above `**Role:** curator`")
+    check lone[0].brief.endsWith("got `<!-- note -->` above `**Role:** curator`" & EXPECT_ROLE)
     let stray = MARKER & "\n" & CREDIT & "\nStray line.\n\n**Role:** curator\n"
     check checkRole("curator/mend-it", stray, ["curator"])[0].brief.endsWith(
       "got `" & MARKER.shortened & "`, `" & CREDIT.shortened & "`, `Stray line.` above " &
-        "`**Role:** curator`",
+        "`**Role:** curator`" & EXPECT_ROLE,
     )  # whole block quoted, each line cut
     check LINES_QUOTED == 4  # twice block of Claude Code, marker then credit
     var many = ""
     for i in 0 .. LINES_QUOTED: many.add "line " & $i & "\n"
     let quoted = checkRole("curator/mend-it", many & "**Role:** curator\n", ["curator"])
     check quoted[0].brief.endsWith(
-      "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`",
+      "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`" & EXPECT_ROLE,
     )
     check "`line " & $LINES_QUOTED & "`" notin quoted[0].brief  # quote cut at bound
     var exact = ""  # as many lines above role line as quote holds
     for i in 0..<LINES_QUOTED: exact.add "line " & $i & "\n"
     let whole = checkRole("curator/mend-it", exact & "**Role:** curator\n", ["curator"])
     check whole[0].brief.endsWith(
-      "got `line 0`, `line 1`, `line 2`, `line 3` above `**Role:** curator`",
+      "got `line 0`, `line 1`, `line 2`, `line 3` above `**Role:** curator`" & EXPECT_ROLE,
     )  # quote reaches bound, and shows no cut
     let fenced = checkRole("curator/mend-it", "## What\n\n```md\n**Role:** curator\n```\n", [])
-    check fenced[0].brief.endsWith("got `## What`")  # role line in fence is example only
+    check fenced[0].brief.endsWith("got `## What`" & EXPECT_ROLE)  # role line in fence: example
 
 
   test "echoed opening is cut, since body may open with whole paragraph":
@@ -124,7 +126,7 @@ suite "Role":
     let long = "x".repeat(ECHO_MAX + 1).shortened
     check long.runeLen == ECHO_MAX + 1 and long.endsWith("…")  # cut marked
     check checkRole("curator/mend-it", "y".repeat(200), ["curator"])[0].brief.endsWith(
-      "got `" & "y".repeat(ECHO_MAX) & "…`",
+      "got `" & "y".repeat(ECHO_MAX) & "…`" & EXPECT_ROLE,
     )
 
 
@@ -143,7 +145,7 @@ suite "Role":
     let bare = checkRole("curator/mend-it", "## Intent\n\nText.\n", ["curator"])
     check bare.len == 1
     check bare[0].path.len == 0  # branch-level, no file to open
-    check bare[0].brief.endsWith("got `## Intent`")  # no role line, so opening alone
+    check bare[0].brief.endsWith("got `## Intent`" & EXPECT_ROLE)  # no role line: opening alone
     check checkRole(
       "curator/mend-it", "**Role:** <!-- curator, or contributor -->\n", ["curator"]
     ).len == 1  # template opened and left unfilled
@@ -303,7 +305,8 @@ suite "Role":
     check checkBodyPull(full).len == 0
     check checkBodyPull(full & "x").mapIt(it.brief) == @[
       "pull request body shows at most 2500 characters while each fold is closed, with each " &
-        "link counted by its text; fold long output in `<details>`; got `2501`",
+        "link counted by its text; got `2501`; expect `at most 2500`; help: fold long output in " &
+        "`<details>`",
     ]
     for body in [
       full.replace("The suites pass.", "The [suites](https://github.com/o/r/actions/runs/1) pass."),

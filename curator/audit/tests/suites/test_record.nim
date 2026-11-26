@@ -62,7 +62,7 @@ suite "Article VIII":
     check found[0].brief.endsWith("write `## Design`")
     let title = textProvenance("d") & "\nProvenance\n===\n\nWhat is.\n"
     check messages(title) ==
-      @["heading is underlined, which no reader here sees; write `# Provenance`"]
+      @["heading is underlined, which no reader here sees; help: write `# Provenance`"]
     check messages(textProvenance("d") & "\nText.\n\n---\n\nMore.\n").len == 0  # rule after blank
     check messages(textProvenance("d") & "\n| a | b |\n|---|---|\n").len == 0  # table rule
 
@@ -76,8 +76,9 @@ suite "Article VIII":
       long = textProvenance("d") & body
       found = checkRecord("p", long)
     check found.len == 1
-    check found[0].brief.startsWith("record over " & $LINES_RECORD & " lines; prune to log")
-    check found[0].brief.endsWith("got `" & $(long.count('\n')) & "`")  # as wc -l counts
+    check found[0].brief == "record over " & $LINES_RECORD & " lines (provenance guide); got `" &
+      $(long.count('\n')) & "`; expect `at most " & $LINES_RECORD & "`; help: prune to log and " &
+      "set `Pruned` row"  # count as wc -l counts
     check messages(textProvenance("d") & "line\n".repeat(LINES_SECTION - 10)).len == 0
 
 
@@ -87,8 +88,9 @@ suite "Article VIII":
       found = checkSections("p", wide)
     check found.len == 1
     check found[0].brief ==
-      "section over " & $LINES_SECTION & " lines; prune to log or split it (provenance " &
-        "guide); got `" & $(LINES_SECTION + 1) & "`"
+      "section over " & $LINES_SECTION & " lines (provenance guide); got `" &
+        $(LINES_SECTION + 1) & "`; expect `at most " & $LINES_SECTION & "`; help: prune to log " &
+        "or split it"
     check found[0].line == wide.splitLines.find("## Body sim") + 1  # heading, not overflow
     # Same body, split in two, passes: ceiling is on section and not on record.
     let split = textProvenance("d") & "\n## One\n" & "line\n".repeat(LINES_SECTION - 1) &
@@ -113,8 +115,8 @@ suite "Article VIII":
   test "count written as number in prose goes stale, and is finding":
     # Count goes stale by next commit and nothing reads it again (provenance guide).
     check checkCounts("p/PROVENANCE.md", "Suite holds 12 suites.\n").mapIt(it.brief) ==
-      @["count is never number in prose; name command that counts (provenance guide); got " &
-        "`12 suites`"]
+      @["count is never number in prose (provenance guide); got `12 suites`; help: name command " &
+        "that counts"]
     check checkCounts("p/PROVENANCE.md", "Run `koch test`; it lists suites.\n").len == 0
     check checkCounts("p/PROVENANCE.md", "Command prints `12 files`.\n").len == 0  # code span
     check checkCounts("p/PROVENANCE.md", "```text\n12 files\n```\n").len == 0  # fenced output

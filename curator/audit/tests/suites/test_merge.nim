@@ -202,7 +202,9 @@ suite "Merge":
     let found = writeMerge(root, "main").findings
     check found.len == 1 and found[0].path.len == 0 and found[0].line == 0
     check found.len == 1 and "merge base" in found[0].brief and "/sync" in found[0].brief
-    check found.len == 1 and found[0].brief.endsWith("got `koch.nim`")
+    check found.len == 1 and found[0].brief.endsWith(
+      "got `koch.nim`; help: merge base, resolve each conflict, then check again, as /sync says",
+    )
     check clean.directory.git("rev-parse HEAD") == head
 
 

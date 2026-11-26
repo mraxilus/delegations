@@ -13,6 +13,8 @@ const
   PARSER = CONTRIBUTOR & "/bangu/lojban_parser"  ## Folder of parser as found there.
   PROBE = CURATOR & "/probe"  ## Curator project outside checker.
   SOURCE_CHECKER = DIRECTORY_DRIVER & "/src"  ## Folder of check sources, inside checker.
+  HELP = "; help: require it as package that `atlas.lock` pins"
+    ## Help that finding of import of other project gives beside its sentence.
 
 
 func found(tree: Tree): seq[(string, int)] =
@@ -100,7 +102,7 @@ suite "Imports by path":
       ("curator/assayer/src/assayer/command.nim", 1),
     ]  # clone under `dependencies/` and own module are no other project
     let first = tree.checkImportsProject[0]
-    check first.brief.endsWith("got `" & PARSER & "`")  # project it reaches
+    check first.brief.endsWith("got `" & PARSER & "`" & HELP)  # project it reaches
     check "atlas.lock" in first.brief and "(CONTRIBUTOR.md, Dependencies)" in first.brief
 
 
@@ -116,7 +118,7 @@ suite "Imports by path":
     ]
     check PROJECTS_CHECKER == [DIRECTORY_DRIVER, DIRECTORY_KNOLLER]
     check tree.found == @[(SOURCE_CHECKER & "/probing.nim", 1)]  # koch.nim is in no project
-    check tree.checkImportsProject[0].brief.endsWith("got `" & PROBE & "`")
+    check tree.checkImportsProject[0].brief.endsWith("got `" & PROBE & "`" & HELP)
 
 
 

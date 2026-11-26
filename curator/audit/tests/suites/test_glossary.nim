@@ -87,7 +87,7 @@ suite "Glossary":
     check wordsPeopleIn("assets, agents").len == 1  # plural read as its word
     let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
-    check found[0].brief.endsWith("got `owner`")
+    check found[0].brief.endsWith("got `owner`; help: write agreed term")
 
 
   test "import line of Claude Code names file, so people check reads no word of it":

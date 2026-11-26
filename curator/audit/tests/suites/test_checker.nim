@@ -79,7 +79,7 @@ suite "Checker":
     check checkExportsDead(["m.nim"], [dead], ["check gone() == 1\n"]).len == 0
     let found = checkExportsDead(["m.nim"], [dead], [])
     check found[0].path == "m.nim"
-    check found[0].brief.endsWith("got `gone`")
+    check found[0].brief.endsWith("got `gone`; help: drop its `*`, or delete it")
 
 
   test "dead export drops its `*` where own module calls it, and stays where nothing does":
@@ -102,7 +102,7 @@ suite "Checker":
     let alone = ["curator/audit/src/form.nim"]
     check checkSuites(alone).len == 1
     check checkSuites(alone)[0].brief.endsWith(
-      "`curator/audit/tests/suites/test_form.nim`; got `nothing`",
+      "got `nothing`; help: write `curator/audit/tests/suites/test_form.nim`",
     )
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only
     check moduleCheck("curator/audit/src/form.nim") == "form"
@@ -219,5 +219,5 @@ when isMainModule:
     let stale = checkMentions("GUIDE.md", "a\n" & run.replace("tree", "gone"), ["ci", "tree"])
     check stale.len == 1  # verb koch does not dispatch
     check stale[0].path == "GUIDE.md" and stale[0].line == 2
-    check stale[0].brief.endsWith("got `gone`")
+    check stale[0].brief.endsWith("got `gone`; help: write one `./koch` lists")
     check checkMentions("GUIDE.md", run, ["ci", "tree"]).len == 0  # dispatched verb passes

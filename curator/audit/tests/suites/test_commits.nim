@@ -32,7 +32,7 @@ suite "Article XI":
     check at_limit.runeLen == SUBJECT_MAX  # fixture sits on limit
     check checkCommits("contributor/ronri/alpha/work", [at_limit]).len == 0  # at limit
     check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"]).mapIt(it.brief) ==
-      @["commit subject exceeds 100 characters; got `101`"]  # one over
+      @["commit subject exceeds 100 characters; got `101`; expect `at most 100`"]  # one over
     let wide = "feat(alpha): a" & "∧".repeat(SUBJECT_MAX - 14)
     check checkCommits("contributor/ronri/alpha/work", [wide]).len == 0  # runes, not bytes
     check checkCommits("claude/setup", ["x".repeat(SUBJECT_MAX + 1)]).len ==

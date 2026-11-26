@@ -51,7 +51,9 @@ suite "Layout":
   test "unregistered kind is finding naming registry, under curator too":
     let found = (treeGood() & @[entry("curator/audit/data.csv", "")]).checkLayout
     check found.len == 1 and "curator/audit/src/kinds.nim" in found[0].brief  # VI.5
-    check found[0].brief.endsWith("got `data.csv`")  # IV.4 echo value
+    check found[0].brief.endsWith(
+      "got `data.csv`; help: register it in `curator/audit/src/kinds.nim`",
+    )  # IV.4 echo value
 
 
   test "Shell lives only where hooks live":
@@ -105,12 +107,12 @@ suite "Layout":
   test "nimble file is named after project and packages demand lock":
     let other = DIRECTORY_ALPHA & "/other.nimble"
     check (treeGood() & @[entry(other, TEXT_NIMBLE)]).messages ==
-      @["nimble file not named after project; expected `" & DIRECTORY_ALPHA & "/alpha.nimble`"]
+      @["nimble file not named after project; expect `" & DIRECTORY_ALPHA & "/alpha.nimble`"]
     let
       nimble = DIRECTORY_ALPHA & "/alpha.nimble"
       requiring = treeGood().replaced(nimble, TEXT_NIMBLE & "requires \"malebolgia\"\n")
     check requiring.paths == @[DIRECTORY_ALPHA & "/atlas.lock"]  # lock demanded
-    check requiring.messages[0].endsWith("got `malebolgia`")  # package named
+    check requiring.messages[0].endsWith("got `malebolgia`; help: run `atlas pin`")  # package named
     check (requiring & @[entry(DIRECTORY_ALPHA & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
 

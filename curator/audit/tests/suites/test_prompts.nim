@@ -26,7 +26,9 @@ suite "Duty 10":
       prompt = "# P\n\nRule.\n\n```\nissue 25\n```\n\nSince issue 25, rule.\n"
       found = checkPrompt("AGENTS.md", prompt)
     check found.mapIt(it.line) == @[9]  # fenced example passes, prose line named
-    check found[0].brief.endsWith("got `issue 25`")
+    check found[0].brief.endsWith(
+      "got `issue 25`; help: state rule and its cost here, and leave incident to record or log",
+    )
 
 
   test "every file that opens delegate is prompt, entry file and coordinator's too":
@@ -38,8 +40,8 @@ suite "Duty 10":
     #   it prints empty list, and nothing else sees it. Domain: each role file, pinned, so list
     #   that drops one fails here; heading absent, cut to its first words, and quoted in fence
     #   alone; and entry file, which holds no reading order of role.
-    let absent = "reading order of role that `start` prints is absent; restore its heading, " &
-      "or rename `HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`"
+    let absent = "reading order of role that `start` prints is absent; got `" & HEADING_READ &
+      "`; help: restore its heading, or rename `HEADING_READ` in `prompts.nim`"
     check @PATHS_ROLE == @["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]  # each role file
     for path in PATHS_ROLE:
       check checkPrompt(path, "# Role\n\nDuties.\n").mapIt(it.brief) == @[absent]
@@ -54,6 +56,6 @@ suite "Duty 10":
       long = "# P\n\n" & "x".repeat(BYTES_PROMPT)
       found = checkPrompt("AGENTS.md", long)
     check found.len == 1
-    check found[0].brief == "prompt over " & $BYTES_PROMPT & " bytes; prune before adding " &
-      "(duty 10); got `" & $long.len & "`"
+    check found[0].brief == "prompt over " & $BYTES_PROMPT & " bytes (duty 10); got `" &
+      $long.len & "`; expect `at most " & $BYTES_PROMPT & "`; help: prune before adding"
     check checkPrompt("AGENTS.md", "x".repeat(BYTES_PROMPT)).len == 0  # at ceiling

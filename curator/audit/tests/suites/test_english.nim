@@ -59,11 +59,14 @@ suite "Article VI.8":
     let paragraph_long = "Stop. ".repeat(SENTENCES_PARAGRAPH + 1)
     found = checkEnglish("GUIDE.md", paragraph_long)
     check found.len == 1
-    check found[0].brief.endsWith("got `" & $(SENTENCES_PARAGRAPH + 1) & "`")
+    check found[0].brief.endsWith(
+      "got `" & $(SENTENCES_PARAGRAPH + 1) & "`; expect `at most " & $SENTENCES_PARAGRAPH &
+        "`; help: split it",
+    )
     found = checkEnglish("GUIDE.md", "Ensure it passes.")
     check found.len == 1
-    check found[0].brief == "word is outside approved dictionary; write `make sure` " &
-      "(ASD-STE100); got `ensure`"
+    check found[0].brief ==
+      "word is outside approved dictionary (ASD-STE100); got `ensure`; expect `make sure`"
 
 
   test "word matches whole, without case, and through punctuation":
@@ -126,8 +129,8 @@ suite "Article VI.8":
     #   sentence with stop, so its paragraph reads as one sentence past `WORDS_SENTENCE`. Domain:
     #   each record of listed project, each of project list leaves out in same domain, its index.
     check findingsEnglish("x.md", PROSE_LOJBAN).mapIt(it.brief) == @[
-      "sentence must hold at most 25 words; split it (ASD-STE100); got " &
-        "`mi klama le zarci .i do klama le ...`",
+      "sentence must hold at most 25 words (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`; help: split it",
     ]  # what check reads in lojban
     for file in FILES_PROJECT:
       check not isGoverned(DIRECTORY_PARSER & "/" & file)  # listed project

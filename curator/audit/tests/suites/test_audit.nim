@@ -89,10 +89,15 @@ suite "Audit":
       good = treeGood()
       renamed = TEXT_RULES[4] & TEXT_PROCESS[4].replace("## Output contract", "## Output contracts")
       found = good.replaced("GUIDE.md", renamed).auditTree.filterIt(it.path == "GUIDE.md")
-    check found.len == 1 and found[0].brief.endsWith("got `## Output contract`")
+    check found.len == 1 and found[0].brief.endsWith(
+      "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
+        "`SECTIONS_PROCESS` in `provenance.nim`",
+    )
     check found.len == 1 and found[0].line == 0  # whole document
-    check good.without("GUIDE.md").auditTree
-      .anyIt(it.path == "GUIDE.md" and it.brief.endsWith("got `## Output contract`"))
+    check good.without("GUIDE.md").auditTree.anyIt(it.path == "GUIDE.md" and it.brief.endsWith(
+      "got `## Output contract`; help: restore its heading, or rename or drop its row of " &
+        "`SECTIONS_PROCESS` in `provenance.nim`",
+    ))
 
 
   test "citation of section its document lacks reaches umbrella, at its line (duty 1)":
@@ -104,7 +109,9 @@ suite "Audit":
     check good.replaced("koch.nim", cited).auditTree.len == 0  # guide of fixture holds it
     let found = good.replaced("koch.nim", stale).auditTree
     check found.len == 1 and found[0].path == "koch.nim" and found[0].line == 1  # duty 1
-    check found.len == 1 and found[0].brief.endsWith("got `Independent changes`")
+    check found.len == 1 and found[0].brief.endsWith(
+      "got `Independent changes`; help: cite heading or bold rule it holds, or quote its text",
+    )
 
 
   test "import by path into other project, and package of driver, reach umbrella (D1 of #927)":
@@ -187,8 +194,8 @@ suite "Audit":
     ]:
       check tree.auditTree.mapIt((it.path, it.brief)) == @[(
         path,
-        "acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
-          "spell it out; got `XML` in `toXML`",
+        "acronym stays only where glossary lists it (V.9); got `XML` in `toXML`; help: propose " &
+          "it with /propose-term, or spell it out",
       )]
     let unlisted = treeGood().with(entry(module, STRICT_FUNCS & "\n\n" & source))
     check unlisted.auditTree.mapIt(it.brief).filterIt("acronym" in it).len == 3  # none listed
@@ -212,8 +219,8 @@ suite "Audit":
     check treeGood().replaced(DIRECTORY_ALPHA & "/README.md", readme).auditTree.mapIt(
       it.brief,
     ) == @[
-      "sentence must hold at most 25 words; split it (ASD-STE100); got " &
-        "`mi klama le zarci .i do klama le ...`",
+      "sentence must hold at most 25 words (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`; help: split it",
     ]  # project list leaves out
     let unreviewed = textProvenance(stamp(TEXT_RULES)).replace("| Review | **Unreviewed.** |\n", "")
     for (file, content, message) in [
@@ -246,8 +253,8 @@ suite "Audit":
     let gone = treeGood().filterIt(not it.path.startsWith(DIRECTORY_PARSER & "/"))
     check gone.auditTree.mapIt((it.path, it.brief)) == @[(
       PATH_PROSE_OWN,
-      "project keeping its own prose (VI.5, VI.8) is one tree holds; remove its entry, or name " &
-        "project where it moved; got `" & DIRECTORY_PARSER & "`",
+      "project keeping its own prose (VI.5, VI.8) is one tree holds; got `" & DIRECTORY_PARSER &
+        "`; help: remove its entry, or name project where it moved",
     )]
     check treeGood().auditTree.len == 0  # present
 

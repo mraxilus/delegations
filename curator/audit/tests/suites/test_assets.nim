@@ -188,7 +188,10 @@ suite "Assets":
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
-    check found[0].brief.endsWith("got `fraunces-latin-400-normal.woff2`")
+    check found[0].brief.endsWith(
+      "got `fraunces-latin-400-normal.woff2`; help: add row naming its address and digest, or " &
+        "ask for one it declares",
+    )
     check "assets.nim" in found[0].path  # names table to add row to
 
 

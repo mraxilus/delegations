@@ -143,7 +143,9 @@ suite "Dependencies":
     check found.len == 1
     check found[0].path == "p/p.nimble"  # file about to be overwritten, never lock
     check found[0].line == 6  # `requires` line of fixture
-    check found[0].brief.endsWith("got `requires \"nim == " & PIN & "\"`")
+    check found[0].brief.endsWith(
+      "got `requires \"nim == " & PIN & "\"`; help: regenerate lock, or make its stored copy match",
+    )
 
 
   test "stored nimble matching committed one is clean, and absent copy compares nothing":
@@ -173,7 +175,7 @@ suite "Dependencies":
       "p/atlas.lock",
       4,
       "lock names nimble copy after nimble file of project, or `atlas rep` writes second " &
-        "one beside it; regenerate lock; got `probe.nimble` for `p.nimble`",
+        "one beside it; got `probe.nimble`; expect `p.nimble`; help: regenerate lock",
     )]  # copy of other name, at its line
     check checkNameNimble("p/p.nimble", "p/atlas.lock", TEXT_LOCK).len == 0  # no copy, no name
     check checkNameNimble("p/p.nimble", "p/atlas.lock", "not json at all").len == 0  # once
