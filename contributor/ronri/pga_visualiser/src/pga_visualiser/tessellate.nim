@@ -482,10 +482,10 @@ proc addLattice*(
 ) =
   ## Append lattice on finite `plane`, on frame `axes` its placement holds; see twin above.
   ##   For frame's walk of selection, which read plane as placed: frame is not spanned
-  ##   again, and plane is known finite.
+  ##   again.
   ##   Support is read here, since placement holds disc's centre, which creation anchor
-  ##   can move off it.
-  let anchor_world = positionAnchor(plane, is_horizon = false)
+  ##   can move off it. Anchor tests horizon only where plane passes through origin.
+  let anchor_world = positionAnchor(plane)
   if anchor_world.isNone: return
   let
     anchor = anchor_world.get.toView(scale.origin)
@@ -533,8 +533,9 @@ func placeUntimed(placed: var Placement, geometry: Multivector, anchor_override:
   ##   point or line.
   ##   Plane whose support or frame algebra cannot give lands on `PlaneEverywhere`, what
   ##   infinite plane is: sky.
-  ##   Tests horizon at most once, and hands answer to every read that asks it; suite holds
-  ##   each exit to one test and to answers reads standing alone give.
+  ##   Tests horizon at most once, inside `boundary.readLineInto` or `readPlaneInto`, which
+  ##   hand answer to each read; suite holds each exit to one test and to answers reads
+  ##   standing alone give.
   ##   Written field by field, never assigned whole: frame places every object, and
   ##   `Placement` or `Option` built and assigned is copy on JS backend (read in emitted JS).
   ##     Coordinates go one by one (`euclid.setTo`), so `placed` shares no storage with any
@@ -549,51 +550,46 @@ func placeUntimed(placed: var Placement, geometry: Multivector, anchor_override:
     if geometry.positionInto(placed.at):
       placed.kind = Case.PointAt
       return
-    let heading = directionHorizon(geometry, is_horizon = geometry.isHorizon)
+    let heading = directionHorizon(geometry)
     if heading.isSome:
       placed.kind = Case.PointToward
       placed.toward.setTo(heading.get)
       return
   of Kind.Line:
-    # Test horizon once, and hand answer to each read.
-    let
-      is_horizon = geometry.isHorizon
-      anchor = positionAnchor(geometry, is_horizon = is_horizon)
-      axis = direction(geometry, is_horizon = is_horizon)
-    if anchor.isSome and axis.isSome:
+    # Read tests horizon once, and writes each answer that holds.
+    var normal: Direction
+    case geometry.readLineInto(placed.at, placed.toward, normal)
+    of ReadingLine.Through:
       placed.kind = Case.LineThrough
-      placed.at.setTo(anchor.get)
-      placed.toward.setTo(axis.get)
       return
-    let normal = directionNormalHorizon(geometry, is_horizon = is_horizon)
-    if normal.isSome:
+    of ReadingLine.Across:
       # Span great circle's plane at origin.
       #   Which plane depends on line, not eye, so circle is centred on eye when drawn
       #   rather than when placed.
-      let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
+      let spanned = spanPerpendicular(ORIGIN_WORLD, normal)
       if spanned.isSome:
         placed.kind = Case.LineAcross
         placed.axes.axis_first.setTo(spanned.get[0])
         placed.axes.axis_second.setTo(spanned.get[1])
-        placed.axes.normal.setTo(normal.get)
+        placed.axes.normal.setTo(normal)
         return
+    of ReadingLine.Nothing: discard
   of Kind.Plane:
-    # Test horizon once, and read support once: frame spans about it, and override moves
-    #   only disc's centre.
+    # Read tests horizon once, and reads support once: frame spans about it, and override
+    #   moves only disc's centre.
     #   Sky where support, normal or span is none, as where frame itself gave none.
-    let
-      is_horizon = geometry.isHorizon
-      support = positionAnchor(geometry, is_horizon = is_horizon)
-      normal = directionNormal(geometry, is_horizon = is_horizon)
-    if support.isNone or normal.isNone:
+    var
+      support: Position
+      normal: Direction
+    if not geometry.readPlaneInto(support, normal):
       placed.kind = Case.PlaneEverywhere
       return
-    let axes = frame(support.get, normal.get)
+    let axes = frame(support, normal)
     if axes.isNone:
       placed.kind = Case.PlaneEverywhere
       return
     placed.kind = Case.PlaneOn
-    placed.at.setTo(if anchor_override.isSome: anchor_override.get else: support.get)
+    placed.at.setTo(if anchor_override.isSome: anchor_override.get else: support)
     placed.axes.axis_first.setTo(axes.get.axis_first)
     placed.axes.axis_second.setTo(axes.get.axis_second)
     placed.axes.normal.setTo(axes.get.normal)
