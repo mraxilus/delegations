@@ -514,35 +514,58 @@ tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 20
 each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
 costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
-**Sonnet 5.5 at effort `low` keeps most tags of the default, and Haiku 5.5 does not.** On
-2026-11-26, a live grid sent the same 10 texts to each configuration, one request for each. The
-texts are short notes, a recipe, an email, a commit message, a news paragraph, a lojban sentence,
-a poem and a technical paragraph. The tenth is the article of Wikipedia on Alice's Adventures in
-Wonderland, by URL, which the tool cuts at 64 KiB. The default, Opus 5.5 at effort `medium`, gives
-the reference gismu.
+**Sonnet 5.5 keeps almost as many tags of the default as a second run of the default keeps.**
+Haiku 5.5 keeps fewer, and at effort `low` only about half. On 2026-11-26, a live grid sent the
+same 10 texts to each configuration, through `binaries/suggester` built at `ed9fe6f`. The texts
+are these:
 
-| Configuration | Recall of 5 | Recall of 10 | Unrelated gismu | Answers cut short | Cost of 10 |
-|---|---|---|---|---|---|
-| Opus 5.5, `medium` | reference | reference | 0 | 2 | $0.270 |
-| Opus 5.5, `low` | 39 of 40 | 74 of 79 | 0 | 2 | $0.279 |
-| Sonnet 5.5, `low` | 37 of 40 | 64 of 79 | about 5 | 0 | $0.143 |
-| Haiku 5.5, `medium` | 31 of 40 | 49 of 79 | about 22 | 0 | $0.009 |
-| Haiku 5.5, `low` | 23 of 40 | 38 of 79 | about 70 | 0 | $0.008 |
+- two short notes, a garden plan and a list of chores;
+- a recipe, an email, a commit message and a news paragraph;
+- a lojban sentence, a poem and a technical paragraph on TCP;
+- the article of Wikipedia on Alice's Adventures in Wonderland, revision 1384221564, by URL.
 
-Recall counts each of the first 5 or 10 gismu of the reference that a configuration also gives.
-It reads only the 8 texts where the reference kept 9 gismu or more. An unrelated gismu has no
-sense in its text, as `sanli`, stand, for the paragraph on TCP. The delegate marked each one by
-hand. A cost takes the list price of 2026-11-26 and a cold cache, and the page by URL is about
-half of it.
+The tool cuts that article at 64 KiB. Each request ran with `RICTADNI_MODEL` and
+`RICTADNI_EFFORT` set, and recorded its exchange by `--record:`, one directory for each sample.
+The tree keeps neither the texts nor the exchange files.
 
-An answer cut short ends at an element of five letters that is no gismu, such as `samtc` or
-`tevec`. Each looks like the start of a lujvo, and the answer has no element after it. So that
-answer kept 1 to 9 gismu, where the answers not cut short kept 9 to 26 for the same text. Sonnet
-gave no such element in 10 answers, and Haiku none in 20. Verified by hand with
-`binaries/suggester`, each request recorded by `--record:`, on 2026-11-26.
+| Model, effort | Samples | Recall of 5 | Recall of 10 | Unrelated | Placeholder ends | Cost of 10 |
+|---|---|---|---|---|---|---|
+| Opus 5.5, `medium` | 3 | 249 of 260 | 467 of 514 | 0 of 446 | 4 of 30 | $0.270 to $0.284 |
+| Opus 5.5, `low` | 1 | 128 of 130 | 242 of 257 | 0 of 152 | 2 of 10 | $0.276 |
+| Sonnet 5.5, `medium` | 3 | 366 of 390 | 656 of 771 | 12 of 527 | 0 of 30 | $0.146 |
+| Sonnet 5.5, `low` | 3 | 357 of 390 | 633 of 771 | 12 of 506 | 0 of 30 | $0.143 to $0.145 |
+| Haiku 5.5, `medium` | 1 | 100 of 130 | 156 of 257 | 18 of 132 | 0 of 10 | $0.009 |
+| Haiku 5.5, `low` | 1 | 72 of 130 | 120 of 257 | 65 of 164 | 0 of 10 | $0.008 |
 
-Cost: each configuration has one sample for each text, so the spread of each figure is unmeasured.
-The mark of an unrelated gismu is the judgement of one reader.
+Each answer of the default that ends on no placeholder and keeps 9 gismu or more is a reference,
+26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample also gives.
+The default reads only references of its other samples, so its row is the floor of the noise.
+Recall of 5 for each sample of Sonnet at `low` falls between 0.90 and 0.93.
+
+A gismu is related where a sample of the default gives it for the same text. Of the rest, the
+delegate marked a gismu unrelated where no sense of its keyword fits a thing of the text. An
+example is `sanli`, stand, for the paragraph on TCP. The marks are the judgement of one reader on
+2026-11-26, and the tree does not keep their list.
+
+A placeholder end is an answer whose last element is five letters that no word reads, such as
+`samtc` or `tevec`. Its gloss is `x` or `placeholder`, and the model ends the answer there. So that
+answer kept 1 to 9 gismu, where the other answers for the same text kept 9 to 26. The answers of
+Opus also gave `nolra`, glossed queen, which the reader drops as unlisted.
+
+Each cost takes the list price of 2026-11-26 for each million tokens:
+
+- Opus 5.5: $4 for input, $20 for output and $0.20 for a cache read.
+- Sonnet 5.5: $2 for input, $10 for output and $0.10 for a cache read.
+- Haiku 5.5: $0.10 for input and $0.50 for output. Its cache read is assumed at $0.01.
+- A cache write of 5 minutes costs 1.25 times the input price.
+
+Each cost assumes a cold cache. Most samples read the system text from the cache that an earlier
+sample wrote. For those, the cost turns one read into one write, so it is calculated, not billed.
+The page by URL makes 39% to 48% of the cost of a sample. Verified by hand with
+`binaries/suggester` on 2026-11-26.
+
+Three samples of each text show the spread of three configurations alone. The other configurations
+have one sample, so their spread is unmeasured.
 
 ## Transport
 
@@ -1040,10 +1063,11 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   follow the documented shapes, and three replies of 401 to requests without a key, from
   2026-10-28. The record does not name the service of each reply of 401. A run under
   `--record:` into its own directory records one once a key of OpenRouter exists.
-- **The hits of the cache.** No run measured how often a request reads the system text from the
-  cache.
-- **The spread of each configuration.** The grid of Suggestion sent one request for each text
-  and configuration. So it does not show how far a second request of the same text can differ.
+- **The hits of the cache.** In the grid of Live replies, 115 of 120 requests read the system
+  text from the cache. Those requests came within minutes of each other. No run measured the hits
+  of requests that come hours apart.
+- **The spread of Opus at `low` and of Haiku.** The grid of Live replies sent one request for
+  each text to these configurations. So it does not show how far a second request can differ.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
