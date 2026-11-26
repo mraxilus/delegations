@@ -185,5 +185,5 @@ read each word through `ricyso'o`.
 `suggester` works on recorded replies. On 2026-10-31, it read a live page,
 `https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. On
 2026-11-26, it read one live reply of the Messages API through the proxy of a cloud sandbox. A
-text of 124 bytes gave 14 gismu, and the replay of that recording gave the same 14. Nothing here
+text of 125 bytes gave 14 gismu, and the replay of that recording gave the same 14. Nothing here
 has been read line by line by a human.

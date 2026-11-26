@@ -450,7 +450,7 @@ reply.
 
 **One live reply of `claude` reads as its documented shape.** One request under `--record:`
 reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
-`end_turn`. The tool kept 14 gismu for a text of 124 bytes, and `tagger tag` and `tagger find`
+`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
 read them back. The replay of that recording, with no key and no network, gave the same 14 gismu.
 The request took 56 input tokens, 12,977 tokens of cache write and 288 output tokens, about $0.071
 at list price. Verified by hand with `binaries/suggester` on 2026-11-26.
