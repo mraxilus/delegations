@@ -312,7 +312,7 @@ const
     "li _ cu barda", "mi ponse _ lo plise", "lo _moi cu klama", "mi ponse lo rupnu be li _ be'o ku",
   ]
     ## lo jufra poi ro namcu po'u `_` cu pagbu ke'a
-  COUNT_NUMBERS_SIGNED = 104  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  COUNT_NUMBERS_SIGNED = 136  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
   NUMBERS_COMPOUND = [("1.2.3", "1 pi'e 2 pi'e 3"), ("192.168.0.1", "192 pi'e 168 pi'e 0 pi'e 1")]
     ## lo namcu poi vasru su'o re boi denpa bu .e le valsi poi le namcu cu sinxa ke'a to `D5 c`
     ##     pe `#1003` toi
@@ -337,6 +337,7 @@ suite "Internal: Prose":
             if a.is_read and b.is_read:
               check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
               check a.tree.shape == b.tree.shape
+              check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
             inc count
     check count == COUNT_AMOUNTS  # `IX.3`
     # lo jdini klani cu sumti gi'e na selbri
@@ -362,6 +363,13 @@ suite "Internal: Prose":
       pairs.add (number & "%", number & " ce'i", @FRAMES_NUMBER)  # `CLL 18.3`
     for (sign, words) in CONSTANTS_PROSE: pairs.add (sign, words, @FRAMES_NUMBER)
     pairs.add ("-5%", "ni'u 5 ce'i", @FRAMES_NUMBER)
+    # lo sinxa poi pencu lo drata sinxa pe le namcu cu se tcidu to `D7 c` toi
+    pairs.add ("-∞", "ni'u ci'i", @FRAMES_NUMBER)
+    pairs.add ("~½", "ji'i pa fi'u re", @FRAMES_NUMBER)
+    for (text, spelled) in [
+        ("-$5", "lo rupnu be li ni'u 5 be'o ku"), ("$-5", "lo rupnu be li ni'u 5 be'o ku"),
+        ("€½", "lo ronru'u be li pa fi'u re be'o ku"), ("5%€", "lo ronru'u be li 5 ce'i be'o ku")]:
+      pairs.add (text, spelled, @FRAMES_PROSE)
     for (text, spelled, frames) in pairs:
       for frame in frames:
         let (a, b) = (frame.replace("_", text).readText, frame.replace("_", spelled).readText)
@@ -370,6 +378,7 @@ suite "Internal: Prose":
         if a.is_read and b.is_read:
           check a.units.mapIt($it.terminal) == b.units.mapIt($it.terminal)
           check a.tree.shape == b.tree.shape
+          check a.cmavoUnits == b.cmavoUnits  # le valsi pe ro genvla cu mintu
         inc count
     check count == COUNT_NUMBERS_SIGNED  # `IX.3`
     # zo zo sitna le pamoi valsi pe le sinxa
