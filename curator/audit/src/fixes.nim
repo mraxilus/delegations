@@ -199,7 +199,17 @@ func namesProjects(
     result[project] = namesPackage(sources, libraries.getOrDefault(project))
 
 
-func renames(
+func namesEntries*(
+  tree: Tree, entries: openArray[Entry], libraries = initTable[string, seq[string]]()
+): Table[string, NamesPackage] =
+  ## Read names of each project entries name, as `namesProjects` reads them over whole tree,
+  ##   since names of project read its own files alone; fixer of entry reads names of its own
+  ##   project alone, so other project asks none.
+  let nimbles = entries.mapIt(it.path.nimbleProject).deduplicate
+  tree.filterIt(it.path.nimbleProject in nimbles).namesProjects(libraries)
+
+
+func renames*(
   tree: Tree,
   entries: openArray[Entry],
   locked: openArray[string],
@@ -248,17 +258,19 @@ func renames(
 
 
 func queriesSemantic*(
-  tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
+  tree: Tree,
+  entries: openArray[Entry],
+  locked: openArray[string],
+  renamed: openArray[(Rename, string)],
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
   ##   §5), and every site of each name rename of abbreviation (V.6), case (V.1, V.11) or cut
-  ##   (V.2) would write, across its scope; cut reads names of project from tree, as library adds
-  ##   no axis value or word. File fix leaves as written, and rename refused already, ask
-  ##   nothing; one query holds all one file is asked.
+  ##   (V.2) would write, across its scope, as `renamed` holds them (`renames`). File fix leaves
+  ##   as written, and rename refused already, ask nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
-  for (rename, refusal) in renames(tree, entries, locked, tree.namesProjects):
+  for (rename, refusal) in renamed:
     if refusal.len == 0: asked.add rename.queries(tree.scopeRename(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
@@ -270,6 +282,14 @@ func queriesSemantic*(
       if site notin result[k].sites: result[k].sites.add site
     for name in query.names:
       if name notin result[k].names: result[k].names.add name
+
+
+func queriesSemantic*(
+  tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
+): seq[Query] =
+  ## Build what fixers of entries ask semantic pass, as full form does, each rename read from
+  ##   names of each project of tree; cut reads them so, as library adds no axis value or word.
+  queriesSemantic(tree, entries, locked, renames(tree, entries, locked, tree.namesProjects))
 
 
 proc checkConversions*(
@@ -329,21 +349,23 @@ proc readFacts*(
 
 func initContext*(
   tree: Tree,
-  entries: openArray[Entry] = [],
-  answers: openArray[Answer] = [],
-  locked: openArray[string] = [],
-  uses = initTable[string, Uses](),
-  pures = initTable[string, Pures](),
-  libraries = initTable[string, seq[string]](),
+  entries: openArray[Entry],
+  answers: openArray[Answer],
+  locked: openArray[string],
+  uses: Table[string, Uses],
+  pures: Table[string, Pures],
+  names: Table[string, NamesPackage],
+  renamed: openArray[(Rename, string)],
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
-  ##   of each abbreviation, case and cut in entries, refused where it would write file entries
-  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
-  ##   defaults of its configurations, and names of its modules (`namesProjects`), aliases of
-  ##   library it builds on among them, as `libraries` holds its modules by nimble file.
-  ##   Use of each private symbol and `{.all.}` of each file, and each `proc` compiler checks as
-  ##   `func` there, as `uses` and `pures` hold them by path (`readFacts`), pass through.
+  ##   of each abbreviation, case and cut in entries, as `renamed` holds them (`renames`), refused
+  ##   where it would write file entries leave out; and, by project, each file declaring
+  ##   `formatValue`, constants its modules export and defaults of its configurations.
+  ##   Names of modules of each project, aliases of library it builds on among them, pass
+  ##   through as `names` holds them by nimble file; so do use of each private symbol and
+  ##   `{.all.}` of each file, and each `proc` compiler checks as `func` there, as `uses` and
+  ##   `pures` hold them by path (`readFacts`).
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -359,12 +381,12 @@ func initContext*(
   for project, sources in modules:
     result.configurations[project] = readConfigurations(sources)
     result.constants[project] = sources.mapIt(it.constantsExported).concat
-  result.names = tree.namesProjects(libraries)
+  result.names = names
   result.uses = uses
   result.pures = pures
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for (rename, refusal) in renames(tree, entries, locked, result.names):
+  for (rename, refusal) in renamed:
     if refusal.len > 0:
       result.plans.add Plan(rename: rename, refusal: refusal)
       continue
@@ -377,6 +399,24 @@ func initContext*(
       if path notin named or path in locked:
         plan.refusal = "it would write `" & path & "`, which this fix leaves alone"
     result.plans.add plan
+
+
+func initContext*(
+  tree: Tree,
+  entries: openArray[Entry] = [],
+  answers: openArray[Answer] = [],
+  locked: openArray[string] = [],
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
+  libraries = initTable[string, seq[string]](),
+): Context =
+  ## Read what tree and semantic pass tell fixers, as full form does, names of each project read
+  ##   from tree, aliases of library it builds on among them, as `libraries` holds its modules by
+  ##   nimble file (`namesProjects`), and renames of entries read from those names.
+  let
+    names = tree.namesProjects(libraries)
+    renamed = renames(tree, entries, locked, names)
+  initContext(tree, entries, answers, locked, uses, pures, names, renamed)
 
 
 func warnUnsettled*(path: string, fix: Fix): seq[Finding] =

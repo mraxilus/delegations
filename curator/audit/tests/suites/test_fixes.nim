@@ -896,6 +896,34 @@ suite "Fixes":
     ]  # joined rename takes rule of case, as knoller names it
 
 
+  test "names read once for projects entries name ask and write what names of whole tree do":
+    # Case held: `koch fix` read names of every project twice, once for semantic pass and once for
+    #   context, though fixer of file reads names of its own project alone (profile of #1001).
+    #   Domain: project entry lies in, and other project, which declares word cut would read.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      words = entry(DIRECTORY_AUDIT & "/src/a.nim", head & "func scalar*(): int = 1\n  ## One.\n")
+      glued = entry(DIRECTORY_AUDIT & "/src/b.nim", head & "const ANTISCALAR* = 2  ## Two.\n")
+      other = entry("curator/probe/src/c.nim", head & "func basis*(): int = 2\n  ## Two.\n")
+      tree = @[words, glued, other]
+      names = tree.namesEntries([glued])
+      renamed = tree.renames([glued], [], names)
+    check tree.namesEntries(tree).len == 2 and names.len == 1  # project of entry alone
+    check names == tree[0..1].namesEntries([glued])  # other project changes none
+    check queriesSemantic(tree, [glued], [], renamed) == queriesSemantic(tree, [glued])
+    check queriesSemantic(tree, [glued], [], renamed).mapIt(it.names) == @[@["SCALAR_ANTI"]]
+    var answers = @[Answer(path: glued.path)]
+    answers[0].symbols[(5, 6)] =
+      Symbol(kind: "skConst", name: "b.ANTISCALAR", file: "/r/" & glued.path, line: 5, column: 6)
+    answers[0].globals["SCALAR_ANTI"] = @[]
+    let
+      once = initContext(tree, [glued], answers, [], initTable[string, Uses](),
+        initTable[string, Pures](), names, renamed)
+      plan = fixEntries(BRANCH_CURATOR, [glued], context = once)
+    check plan.written.mapIt(it.content) == @[glued.content.replace("ANTISCALAR", "SCALAR_ANTI")]
+    check plan == fixEntries(BRANCH_CURATOR, [glued], context = initContext(tree, [glued], answers))
+
+
   test "cut rename keeps word that glossary of project lists, as case rename of audit keeps it":
     # Case of critic of wiring: no case held which words cut rename keeps, so cut taking jargon
     #   alone passed suite; glossary of project lists `tmp`, which V.6 spells out elsewhere.
