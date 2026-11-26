@@ -24,6 +24,7 @@ const
     ## Text of number of count, as row of #1022 gives it, with its label.
   TEXT_TIME = "Time: time to its report, in minutes: 5, 12 and 30"
     ## Text of number of time, as sample of `GUIDE.md` gives it.
+  COUNT_STEPS = 200  ## Steps of curve, one for each inner bucket of Metaculus.
 
 
 func isNear(value, expected: float): bool =
@@ -48,6 +49,14 @@ func initNumber(
 func isNearNumber(score: Option[float], expected: float): bool =
   ## Whether score of number is some, within `TOLERANCE_NUMBER` of expected one.
   score.isSome and abs(score.get - expected) <= TOLERANCE_NUMBER
+
+
+func curveStep(at: int, step: float): seq[float] =
+  ## Curve of `COUNT_STEPS + 1` places from 0 to 1, whose step after place `at` is `step`, and each
+  ##   other step even.
+  let other = (1 - step) / float(COUNT_STEPS - 1)
+  result.add 0
+  for i in 0 ..< COUNT_STEPS: result.add result[^1] + (if i == at: step else: other)
 
 
 
@@ -147,6 +156,30 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 1.0).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.0).scoreNumber.isNone
     check initClaim(0.7, State.Hit).scoreNumber.isNone
+
+
+  test "number whose curve Metaculus refuses takes none, and its score ends":
+    # Case as found: review of #1012 found that time of 10, 11 and 12 minutes at 90% never ended.
+    #   Each point of curve takes mean slope of its two sides (`hydrateQuantiles`), so narrow
+    #   percentiles make curve that rises above 1 and falls; floor then holds masses under 0, and
+    #   search of scale under cap never reaches 1. Metaculus refuses such curve first
+    #   (`validateUserQuantileData`); copy in Python finds each step that falls.
+    check initNumber(TEXT_TIME, 10, 11, 12, 11, confidence = 0.9).scoreNumber.isNone  # 195 fall
+    check initNumber(TEXT_COUNT, 10, 11, 12, 11, confidence = 0.9).scoreNumber.isNone  # 196 fall
+    check initNumber(TEXT_TOKENS, 3e6, 3.3e6, 3.6e6, 3.3e6, confidence = 0.9).scoreNumber.isNone
+    check initNumber(TEXT_TIME, 10, 12, 15, 12, confidence = 0.9).scoreNumber.isNone  # 191 fall
+
+
+  test "curve that Metaculus takes holds 201 places, each step rounded from 0.01 / 200 to 0.59":
+    # `validateUserQuantileData` of Metaculus: step rounds to 10 places, then 1% of mass spread
+    #   even over buckets is least step, and 0.59 most step of continuous question.
+    check curveStep(100, 1 / COUNT_STEPS).isCurveTaken  # even
+    check curveStep(100, 0.59).isCurveTaken
+    check not curveStep(100, 0.5901).isCurveTaken
+    check curveStep(100, 0.01 / COUNT_STEPS).isCurveTaken
+    check not curveStep(100, 0.00004).isCurveTaken
+    check not curveStep(100, -0.001).isCurveTaken  # falls
+    check not curveStep(100, 1 / COUNT_STEPS)[0 ..< COUNT_STEPS].isCurveTaken  # place short
 
 
   test "figures count numbers that take score, with their mean score, apart from bands":
