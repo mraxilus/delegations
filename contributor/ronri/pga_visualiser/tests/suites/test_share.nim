@@ -120,6 +120,25 @@ suite "Share":
     check initRingShare[CountsShare]().pooled(0).percent(Owner.Pga) == 0.0
 
 
+  test "an empty bucket of the ring is an empty value, and no mark in the range of its second":
+    # Fault: fresh ring marked each bucket's second -1, sentinel in range of `int`, where empty
+    #   bucket's zero counts already add nothing to any pool (Article IV.4).
+    # Domain: fresh ring against default value of its type, for both counts it pools, and its
+    #   pool at each second of first two windows, before and after one sample at second 0.
+    check initRingShare[CountsShare]() == default(RingShare[CountsShare])
+    check initRingShare[CountsCrossing]() == default(RingShare[CountsCrossing])
+    var ring = initRingShare[CountsShare]()
+    for second in 0 ..< 2 * SECONDS_SHARE:
+      checkpoint $second
+      check ring.pooled(second) == default(CountsShare)
+    let sample = [Owner.Rest: 1, Owner.Pga: 2, Owner.Algebra: 0, Owner.Boundary: 0,
+      Owner.Euclidean: 0]
+    ring.add(0, sample)
+    for second in 0 ..< 2 * SECONDS_SHARE:
+      checkpoint $second
+      check ring.pooled(second) == (if second < SECONDS_SHARE: sample else: default(CountsShare))
+
+
   test "a second before the start has no bucket, so the ring refuses it by its type":
     # Fault: negative second indexed ring below its first bucket and stopped, or, as multiple of
     #   `SECONDS_SHARE`, wrote into one in silence. `pooled` read -1 as ring's own mark of empty
