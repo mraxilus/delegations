@@ -33,10 +33,9 @@ suite "Picking":
     for i in 0..<min(8, OBJECTS_MAX div 5):
       for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i]]:
         picked.toggle scene.addObject(m, "o" & $scene.bound, inkCycled(scene.bound))
-    var whole = newSeq[Placement](OBJECTS_MAX)
     for handle in 0..<scene.bound:
-      whole[handle] = toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    check whole.isWhole and not whole[0 ..< scene.bound].isWhole
+      PLACEMENTS[handle] = toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template whole: untyped = PLACEMENTS
 
     func isSame(a, b: Placement): bool =
       ## Compare two placements field by field, each position and direction to rounding.
@@ -49,11 +48,12 @@ suite "Picking":
       a.isSome == b.isSome and (a.isNone or a.get =~ b.get)
 
     # Whole form reads placement handed it, by handle.
-    var swapped = whole
-    swap(swapped[0], swapped[1])
-    check placementAt(swapped, scene, 0).isSame(whole[1])
+    let second = whole[1]
+    swap(whole[0], whole[1])
+    check placementAt(whole, scene, 0).isSame(second)
+    swap(whole[0], whole[1])
     for handle in 0..<scene.bound:
-      check placementAt(whole, scene, handle).isSame(placementAt([], scene, handle))
+      check placementAt(whole, scene, handle).isSame(placementAt(PlacementsNone(), scene, handle))
       check isBackdropUnder(scene, handle, scale, width_pick, height_pick, whole) ==
           isBackdropUnder(scene, handle, scale, width_pick, height_pick)
     for x in countup(20, width_pick, 60):

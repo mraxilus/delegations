@@ -430,9 +430,9 @@ suite "Mesh":
       discard scene.addObject(
         (camera.eyeWorld + axes.forward - 0.2 * axes.axis_up).toMultivector, "near", Ink.Jade
       )
-    var placed = newSeq[Placement](scene.bound)
     for handle in 0..<scene.bound:
-      placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     let (eye, frame) = camera.moveOriginView
     camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let
@@ -505,10 +505,10 @@ suite "Mesh":
         "line",
         Ink.Rose,
       )
+      PLACEMENTS[0] = placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0))
       let
-        placed = [placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0))]
         (eye, frame) = camera.moveOriginView
-        reach = reachNear(placed, scene, camera.originView, eye, frame.forward)
+        reach = reachNear(PLACEMENTS, scene, camera.originView, eye, frame.forward)
         base_view = base.toView(camera.originView)
         distance_eye = norm(cross(base_view - eye, way))
       check abs(reach - distance_eye) <= 1.0e-9 * max(1.0, distance_eye)
@@ -551,10 +551,9 @@ suite "Mesh":
     )
     # Point 600,000 units out stands horizon about 567,000 out, as field of orrery does.
     discard scene.addObject(Position(x: 0.0, y: 6.0e5, z: 0.0).toMultivector, "far", Ink.Cobalt)
-    var placed = [
-      placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0)),
-      placeObject(scene.geometryAt(1), scene.anchorOverrideAt(1)),
-    ]
+    for handle in 0..1:
+      PLACEMENTS[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template placed: untyped = PLACEMENTS
     for distance in distances_orbit:
       for out_to in outs_orbit:
         var camera = cameraAround(body, distance, out_to)

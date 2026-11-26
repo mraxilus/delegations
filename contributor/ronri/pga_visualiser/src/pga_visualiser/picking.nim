@@ -169,6 +169,19 @@ type
     depth_best: float  ## Winner's depth along sight axis; `Inf` where nothing won.
     hiders: Hiders  ## Drawn discs cursor lay inside, gathered as walk went.
 
+  PlacementsWhole* = array[OBJECTS_MAX, Placement]  ## Define frame's placements, by handle.
+    ## Whole by its type: each handle below scene's bound has its entry, so walk to bound
+    ##   never reads past end.
+    ## Each front-end holds two, for this frame and frame before; see `main.turnFrame` and
+    ##   `bridge.PLACEMENTS_FRAME`.
+
+  PlacementsNone* = object  ## Define no frame's placements: reader places what it reads.
+    ## For caller holding no frame, as storyboard's capture and suite case do.
+
+  PlacementsHeld* = PlacementsWhole | PlacementsNone
+    ## Define what caller holds of frame's placements, so that type selects reader's form.
+    ##   Each reader branches on it with `when`, so no test of value at runtime selects form.
+
   AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
     floor_reach*: float  ## How near wheel may come to `at`.
@@ -549,7 +562,7 @@ proc pickWalk(
   view_projection: Matrix4;
   width, height: int;
   cursor: ScreenPosition;
-  placed: openArray[Placement];
+  placed: PlacementsHeld;
   hiders_known: Hiders;
   is_points_only: bool;
   rank: Rank;
@@ -616,9 +629,9 @@ proc pickWalk(
         is_under_best = is_under
         handle_best = some(handle)
 
-  # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
-  let is_placement_given = placed.len >= OBJECTS_MAX
-  var placement_here: Placement  # Filled per handle only where caller brought none.
+  # Type of `placed` says whether caller brought frame's placements; see `PlacementsHeld`.
+  when placed is PlacementsNone:
+    var placement_here: Placement  # Filled per handle, since caller brought none.
 
   # Walk by handle to `bound`, not to capacity.
   #   Runs per pointer move, and pool walked to capacity tests every empty handle to rank
@@ -627,13 +640,15 @@ proc pickWalk(
   #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    if not is_placement_given:
-      placement_here = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
     #   `Placement` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
-    template place: untyped = (if is_placement_given: placed[handle] else: placement_here)
+    when placed is PlacementsWhole:
+      template place: untyped = placed[handle]
+    else:
+      placement_here = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      template place: untyped = placement_here
     template geometry: untyped = scene.geometryAt(handle)
 
     case place.kind
@@ -821,7 +836,7 @@ proc pickAt*(
   view_projection: Matrix4;
   width, height: int;
   cursor: ScreenPosition;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
   rank = Rank.Pointer;
   reach_eye = RADIUS_CROWD_TOUCH;
 ): PickReport =
@@ -830,13 +845,12 @@ proc pickAt*(
   ##   `rank` of `Rank.Eye` takes object nearest eye within `reach_eye` instead, for zoom.
   ##   `placed` is frame's own placements, where caller has them.
   ##     `tessellate.placeObject` already answers what object is and where, and
-  ##     front-end holding frame's answers (`bridge.PLACEMENTS`, `main.PLACEMENTS`) hands
-  ##     them over instead of having walk ask again.
+  ##     front-end holding frame's answers (`bridge.PLACEMENTS_FRAME`, `main.PLACEMENTS`)
+  ##     hands them over instead of having walk ask again.
   ##     Pick then ranks *what was drawn*, off frame's one derivation, and runs no placing
   ##     side of its own.
   ##   Pass nothing and every handle is placed here instead: caller holding no frame's
-  ##   placements, and every suite case. Partial array is treated as none: frame's
-  ##   placements are whole answer or not one.
+  ##   placements, as suite case can. Type of `placed` selects form; see `PlacementsHeld`.
   ##   None where nothing visible falls within its shape's pick radius.
   ##   Every drawn shape is pickable, horizon or not, ranked point, finite line, horizon
   ##   line, finite plane, horizon plane.
@@ -898,7 +912,7 @@ proc pickNearest*(
   view_projection: Matrix4;
   width, height: int;
   cursor: ScreenPosition;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
   rank = Rank.Pointer;
   reach_eye = RADIUS_CROWD_TOUCH;
 ): Option[int] =
@@ -965,16 +979,15 @@ func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float 
       (scale.tangentHalfView * hypot(float(width), float(height)))
 
 
-func isWhole*(placed: openArray[Placement]): bool = placed.len >= OBJECTS_MAX
-  ## Report whether caller handed frame's placements whole, by handle.
-  ##   Partial array is none: frame's placements are whole answer or not one.
-
-
-func placementAt*(placed: openArray[Placement], scene: Scene, handle: int): Placement =
-  ## Read handle's placement: frame's where caller handed them whole, else placed here.
+func placementAt*(placed: PlacementsWhole, scene: Scene, handle: int): Placement =
+  ## Read handle's placement from frame's placements.
   ##   Copy of one, for reader of one handle; walk of many reads frame's in place.
-  if placed.isWhole: placed[handle]
-  else: toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+  placed[handle]
+
+
+func placementAt*(placed: PlacementsNone, scene: Scene, handle: int): Placement =
+  ## Place handle here, for caller holding no frame's placements.
+  toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
 
 
 func isBackdropPlaced(
@@ -1001,7 +1014,7 @@ func isBackdropUnder*(
   handle: int;
   scale: DrawExtent;
   width, height: int;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ): bool =
   ## Report whether hovered object is backdrop: horizon plane, plane nearly filling view, or
   ## point filling it.
@@ -1012,15 +1025,16 @@ func isBackdropUnder*(
   ##   disc; see `mesh.radiusDrawnAt`.
   ##   `placed` is frame's placements, where caller has them, read in place; pass nothing and
   ##   object is placed here.
-  if placed.isWhole:
-    return isBackdropPlaced(placed[handle], scene.radiusAt(handle), scale, width, height)
-  isBackdropPlaced(
-    toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
-    scene.radiusAt(handle),
-    scale,
-    width,
-    height,
-  )
+  when placed is PlacementsWhole:
+    isBackdropPlaced(placed[handle], scene.radiusAt(handle), scale, width, height)
+  else:
+    isBackdropPlaced(
+      toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
+      scene.radiusAt(handle),
+      scale,
+      width,
+      height,
+    )
 
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
@@ -1035,7 +1049,7 @@ func positionUnderPointerOn*(
   scale: DrawExtent;
   width, height: int;
   cursor: ScreenPosition;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ): Option[Position] =
   ## Solve where one object stands under `cursor`, about view origin.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
@@ -1047,18 +1061,19 @@ func positionUnderPointerOn*(
   let
     frame_camera = camera.frame
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
-  if placed.isWhole:
-    return positionOnObjectUnder(
+  when placed is PlacementsWhole:
+    positionOnObjectUnder(
       placed[handle], scene.geometryAt(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
     )
-  positionOnObjectUnder(
-    toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
-    scene.geometryAt(handle),
-    ray,
-    scale.plane_eye,
-    scale.eye_point,
-    scale.origin,
-  )
+  else:
+    positionOnObjectUnder(
+      toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
+      scene.geometryAt(handle),
+      ray,
+      scale.plane_eye,
+      scale.eye_point,
+      scale.origin,
+    )
 
 
 proc anchorZoomAt*(
@@ -1068,7 +1083,7 @@ proc anchorZoomAt*(
   view_projection: Matrix4;
   width, height: int;
   cursor: ScreenPosition;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
   is_banded = true;
   reach_eye = RADIUS_CROWD_TOUCH;
 ): Option[AnchorZoom] =

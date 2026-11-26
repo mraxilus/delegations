@@ -138,7 +138,7 @@ var SCRATCH*: DrawScratch
 # Frame's placements, whole by handle, as each front-end holds its block of them.
 #   Too large for stack frame, as `MESHES_SCENE` is. Each case writes handles its scene holds,
 #   and every reader walks to scene's bound, never past it.
-var PLACEMENTS*: array[OBJECTS_MAX, Placement]
+var PLACEMENTS*: PlacementsWhole
 
 
 func `=~`*[F: SomeFloat](a, b: F): bool =

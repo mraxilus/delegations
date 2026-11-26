@@ -135,7 +135,7 @@ func reachOfPlacement(placed: Placement, radius: float): float =
   else: 0.0
 
 
-proc placeEvery*(placed: var openArray[Placement], scene: Scene) =
+proc placeEvery*(placed: var PlacementsWhole, scene: Scene) =
   ## Place every live handle through algebra, into `placed` by handle.
   ##   Each frame's first step, on both front-ends: placing side runs for whole scene, still
   ##   or moving, and every walk of that frame reads answer (reach, cull, emission, pick).
@@ -145,7 +145,7 @@ proc placeEvery*(placed: var openArray[Placement], scene: Scene) =
       placed[handle].placeInto(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
 
 
-proc placeStamped*(placed: var openArray[Placement], scene: Scene, revision: int) =
+proc placeStamped*(placed: var PlacementsWhole, scene: Scene, revision: int) =
   ## Place handles whose placing inputs changed after `revision`, into `placed` by handle.
   ##   For reader landing between two frames, after edit frame has not placed: one handle
   ##   per edit, every handle after restore; see `scene.revisionPlacingAt`.
@@ -155,7 +155,7 @@ proc placeStamped*(placed: var openArray[Placement], scene: Scene, revision: int
       placed[handle].placeInto(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
 
 
-func reachFar*(placed: openArray[Placement], scene: Scene): float =
+func reachFar*(placed: PlacementsWhole, scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
   ##   For `camera.distanceFar`, from frame's own placements; both front-ends, every frame.
   ##   Sibling of `reachFar(scene)`, which places for itself.
@@ -166,7 +166,7 @@ func reachFar*(placed: openArray[Placement], scene: Scene): float =
 
 
 func reachNear*(
-  placed: openArray[Placement]; scene: Scene; origin, eye: Position; forward: Direction
+  placed: PlacementsWhole; scene: Scene; origin, eye: Position; forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye.
   ##   For `Camera.reach_near`, from frame's own placements.
@@ -237,7 +237,10 @@ proc reachFar*(scene: Scene): float =
 
 
 func aimFor*(
-  scene: Scene, picked: Selection, staged: Option[Preview], placed: openArray[Placement] = []
+  scene: Scene,
+  picked: Selection,
+  staged: Option[Preview],
+  placed: PlacementsHeld = PlacementsNone(),
 ): Option[CameraAim] =
   ## Resolve what camera is asked to bring into view, or none where nothing is.
   ##   Pure function of geometry: see `CameraAim`, whose worth is that caller re-offering
@@ -246,13 +249,13 @@ func aimFor*(
   ##   from there in place, classified and anchored once in frame.
   ##     Pass nothing and each is placed here instead, as for staged geometry, no handle.
   result = none(CameraAim)
-  if not placed.isWhole:
+  when placed is PlacementsNone:
     for (m, anchor) in watched(scene, picked, staged):
       result = result.aimIncluding(m, anchor)
-    return
-  if staged.isSome: result = result.aimIncluding(staged.get.geometry, staged.get.anchor)
-  for handle in handlesWatched(scene, picked, staged):
-    result = result.aimIncluding(placed[handle])
+  else:
+    if staged.isSome: result = result.aimIncluding(staged.get.geometry, staged.get.anchor)
+    for handle in handlesWatched(scene, picked, staged):
+      result = result.aimIncluding(placed[handle])
 
 
 func isShownAll*(
@@ -548,7 +551,7 @@ func stanceFitted*(
   scene: Scene,
   picked: Selection,
   scale: DrawExtent,
-  placed: openArray[Placement] = [],
+  placed: PlacementsHeld = PlacementsNone(),
 ): CameraStance =
   ## Carry `stance` back out to fit of point picked alone where it lands nearer: ruling of #535.
   ##   Selection never starts nearer than its fit. Far star picked from list then draws as
@@ -590,7 +593,7 @@ func holdFilled*(
   picked: Selection;
   scale: DrawExtent;
   width, height: int;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Carry eye back out until point picked alone fills frame, and no further in.
   ##   Nearer shows nothing more of it: its sphere already reaches every corner, as
@@ -625,7 +628,7 @@ func offerAim*(
   now, duration: float;
   pointer: var Option[PointerPick];
   is_moving_camera = false;
-  placed: openArray[Placement] = [];
+  placed: PlacementsHeld = PlacementsNone();
 ) =
   ## Offer camera whatever is being worked on to look at.
   ##   One call both front-ends and storyboard make, once per frame.
@@ -782,7 +785,7 @@ proc addLatticesPicked*(
   scale: DrawExtent,
   scene: Scene,
   picked: Selection,
-  placed: openArray[Placement] = [],
+  placed: PlacementsHeld = PlacementsNone(),
 ) =
   ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
   ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.
@@ -793,12 +796,12 @@ proc addLatticesPicked*(
   for position in 0..<picked.len:
     let handle = picked.at(position)
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    if placed.isWhole:
+    when placed is PlacementsWhole:
       if placed[handle].kind != Case.PlaneOn: continue
       meshes.addLattice(
         scratch, scale.extentFurniture, scale, scene.geometryAt(handle), placed[handle].axes
       )
-      continue
-    let m = scene.geometryAt(handle)
-    if classify(m) != some(Kind.Plane) or isHorizon(m): continue
-    meshes.addLattice(scratch, scale.extentFurniture, scale, m)
+    else:
+      let m = scene.geometryAt(handle)
+      if classify(m) != some(Kind.Plane) or isHorizon(m): continue
+      meshes.addLattice(scratch, scale.extentFurniture, scale, m)
