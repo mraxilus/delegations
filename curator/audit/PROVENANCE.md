@@ -3132,7 +3132,7 @@ fence warning of each entry take those of its project. The record of `curator/kn
 reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
 
 - The names come from `namesPackage` of knoller, once for each project that an entry lies in
-  (`namesEntries`), with the aliases of the library that it builds on (`## Facts of the compiler`).
+  (`namesEntries`). The aliases of its library join them (`## Facts of the compiler`).
 - The renames come from those names once, for the queries of the semantic pass and the context. A
   library adds no axis value and no word, so a cut rename asks the pass for each site, as a case
   rename does. It joins the case rename of its declaration into one rename, whose rule is that of
@@ -3308,9 +3308,9 @@ tree matched each report of the two outputs by rule, path and line.
   it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
   proves nothing of, and each tool prints it once.
 - Cost: over the files of `curator/knoller` at `2d496af8`, `koch fix --dry-run` takes 65.4 s built
-  there, and 34.9 s built at `8a7b2f61`, which fixes each entry on the pool and reads the names and
-  the renames once (the profile on #1001). Each figure is the median of three alternating runs of a
-  debug build, on 4 cores at 2.10 GHz, 2026-11-26. Both builds print the same 2,560 lines.
+  there, and 34.9 s built at `8a7b2f61`. That build fixes each entry on the pool, and reads the
+  names and the renames once (the profile on #1001). Each figure is the median of three alternating
+  runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-26. Both builds print the same 2,560 lines.
 - Cost: with no checkout of a lock, each project prints the same text with both builds. Their
   times sum to 763.1 s and 475.6 s.
 
