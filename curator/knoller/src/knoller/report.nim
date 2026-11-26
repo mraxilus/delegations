@@ -234,6 +234,22 @@ func render*(notices: openArray[Notice], form: Form, is_colored = false): string
   notices.mapIt(it.render(form, is_colored)).join(gap)
 
 
+func spanned(value: string): string =
+  ## Wrap value in backticks as code span, so empty value shows; value holding code span of its
+  ##   own prints bare, as text around code.
+  if '`' in value: value else: "`" & value & "`"
+
+
+func brief*(notice: Notice): string =
+  ## Read short text of each part finding holds, as test of each check compares it (ruling D3 of
+  ##   #1002, option `c`): summary, then actual after `; got`, value after `; expect` and text
+  ##   after `; help:`, each where held. Rule and location stand apart, so text reads as message.
+  result = notice.summary
+  if notice.actual.isSome: result.add "; got " & notice.actual.get.spanned
+  if notice.expected.isSome: result.add "; expect " & notice.expected.get.spanned
+  if notice.help.len > 0: result.add "; help: " & notice.help
+
+
 func formOutput*(is_terminal: bool, forced = none(Form)): Form =
   ## Pick form of output: one flag forces where given, else terminal form at terminal, and line
   ##   form in pipe or log.

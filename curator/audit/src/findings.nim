@@ -130,30 +130,8 @@ func finding*(
 func toFinding*(report: Report): Finding =
   ## Render report of knoller as finding, citing article of its rule: rewrite as rule and
   ##   article, i.e. `expression spacing (X.9)`; check's message with article where sentence
-  ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``.
-
-  func sentenceEnd(message: string): int =
-    ## Find offset where sentence of message ends: first `; got ` outside code span, else its
-    ##   closing `.`, else its end.
-
-    func backticksAt(at: int): int =
-      ## Count backticks of run opening at offset of message.
-      while at + result < message.len and message[at+result] == '`': inc result
-
-    var k = 0
-    while k < message.len:
-      let run = backticksAt(k)
-      if run > 0:
-        # Skip code span to next run of as many backticks; run none closes is plain text.
-        var close = k + run
-        while close < message.len and backticksAt(close) != run:
-          close += max(1, backticksAt(close))
-        k = if close < message.len: close + run else: k + run
-      elif message.continuesWith("; got ", k): return k
-      else: inc k
-    if message.endsWith('.'): message.high else: message.len
-
-  # Cite article after rule of rewrite, or where sentence of check's message ends.
+  ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``. Knoller finds where
+  ##   sentence ends (`sentenceEnd`), as renderer cuts message there too.
   let article = " (" & CITATIONS[report.rule] & ")"
   if report.message.len == 0: return finding(report.path, report.line, $report.rule & article)
   let at = report.message.sentenceEnd

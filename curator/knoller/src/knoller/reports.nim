@@ -54,8 +54,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, tables]
-import ./rules
+import std/[algorithm, options, sequtils, strutils, tables]
+import ./[report, rules]
 
 export rules
 
@@ -66,6 +66,10 @@ type
     line*: int  ## One-based line; `0` when report concerns whole file.
     rule*: Rule  ## Rule rewritten or broken.
     message*: string  ## Finding's statement, ending with echoed value; empty for rewrite.
+    expected*: Option[string]  ## Value rule asks for, beside sentence; none where check gives none.
+    help*: string  ## What reader does about finding; empty where check gives none.
+    column*: int  ## One-based column, in runes; `0` where check names none.
+    span*: int  ## Runes finding covers from column; `0` where check names none.
 
   Fix* = object  ## Define source fixer returns, with one report per rewrite.
     source*: string  ## Text after fix; input itself where nothing broke rule.
@@ -141,11 +145,105 @@ const
     ## Extension of file of each dialect.
   HEADER_TESTAMENT* = "discard \"\"\""
     ## Opening of stub's testament header, which stands before module's header docs.
+  PREFIX_GOT = "; got "  ## Text that ends sentence of message, before value it echoes.
 
 
-func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
+func initReport*(
+  path: string,
+  line: int,
+  rule: Rule,
+  message = "",
+  expected = none(string),
+  help = "",
+  column = 0,
+  span = 0,
+): Report =
   ## Construct report: rewrite where message is empty, finding of check otherwise.
-  Report(path: path, line: line, rule: rule, message: message)
+  Report(
+    path: path,
+    line: line,
+    rule: rule,
+    message: message,
+    expected: expected,
+    help: help,
+    column: column,
+    span: span,
+  )
+
+
+func sentenceEnd*(message: string): int =
+  ## Find offset where sentence of message ends: first `; got ` outside code span, else its
+  ##   closing `.`, else its end. Code span runs to next run of as many backticks, so sentence
+  ##   quoting ``…; got `{value}`.`` ends after quote.
+
+  func backticksAt(at: int): int =
+    ## Count backticks of run opening at offset of message.
+    while at + result < message.len and message[at+result] == '`': inc result
+
+  var k = 0
+  while k < message.len:
+    let run = backticksAt(k)
+    if run > 0:
+      # Skip code span to next run of as many backticks; run none closes is plain text.
+      var close = k + run
+      while close < message.len and backticksAt(close) != run:
+        close += max(1, backticksAt(close))
+      k = if close < message.len: close + run else: k + run
+    elif message.continuesWith(PREFIX_GOT, k): return k
+    else: inc k
+  if message.endsWith('.'): message.high else: message.len
+
+
+func lowercased(sentence: string): string =
+  ## Lowercase first letter of sentence, where its first word is no word in capitals, as `CRLF`.
+  if sentence.len > 1 and sentence[0] in {'A' .. 'Z'} and sentence[1] notin {'A' .. 'Z'}:
+    sentence[0].toLowerAscii & sentence[1 .. ^1]
+  else: sentence
+
+
+func unspanned(value: string): string =
+  ## Drop code span that value stands in whole, as `` `x` `` reads `x`, and `` `` `` reads empty;
+  ##   value holding other text stays as written.
+  if value == "``": return ""
+  var run = 0
+  while run < value.len and value[run] == '`': inc run
+  if run == 0 or value.len <= 2 * run or not value.endsWith('`'.repeat(run)) or
+      value[^(run + 1)] == '`':
+    return value
+  let inner = value[run ..< value.len - run]
+  if '`'.repeat(run) in inner: return value
+  if run > 1 and inner.len > 1 and inner[0] == ' ' and inner[^1] == ' ': inner[1 .. ^2] else: inner
+
+
+func toNotice*(report: Report, source = none(string), is_warning = false): Notice =
+  ## Read report as finding renderer prints (STYLE.md §3): id of its rule; summary, sentence of
+  ##   its message with first letter lowercase; actual, value after `; got `, out of code span it
+  ##   stands in whole; text of its line where caller read it.
+  let
+    at = report.message.sentenceEnd
+    rest = report.message[at .. ^1]
+  var actual = none(string)
+  if rest.startsWith(PREFIX_GOT):
+    let value = rest[PREFIX_GOT.len .. ^1]
+    actual = some((if value.endsWith('.'): value[0 ..< ^1] else: value).unspanned)
+  Notice(
+    path: report.path,
+    line: report.line,
+    column: report.column,
+    span: report.span,
+    rule: report.rule.id,
+    summary: report.message[0 ..< at].lowercased,
+    actual: actual,
+    expected: report.expected,
+    help: report.help,
+    source: source,
+    is_warning: is_warning,
+  )
+
+
+func brief*(report: Report): string =
+  ## Read short text of parts of report, as test of each check compares it.
+  report.toNotice.brief
 
 
 func partPackage(path, nimble: string): seq[string] =
