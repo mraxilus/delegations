@@ -477,6 +477,24 @@ suite "Scene":
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
+  test "a multivector prints each coefficient that is not finite, and each term beside it":
+    # Fault: infinite coefficient set floor of what prints at infinity, so `-inf 𝐞₁ + 1 𝐞₄`
+    #   printed `0 𝟏` (repository issue 970). NaN never set floor, and printed.
+    # Domain: each value that is not finite, at each basis element, beside 2 on another.
+    for b in Basis:
+      let other = if b == Basis.E4: Basis.E1 else: Basis.E4
+      for (value, word) in [(Inf, "inf "), (-Inf, "inf "), (NaN, "nan ")]:
+        let
+          term = word & LUT_NAME_BY_BASIS[b]
+          beside = "2 " & LUT_NAME_BY_BASIS[other]
+          expected =
+            if b < other: (if value < 0.0: " - " else: "") & term & " + " & beside
+            else: beside & (if value < 0.0: " - " else: " + ") & term
+          text = formatMultivectorString(initElement(b, value) + initElement(other, 2.0))
+        checkpoint &"{b} at {value}"
+        check text == expected
+
+
   test "a value of no kind is named for what it is, and mixed grade only where it is mixed":
     # Fault: zero, scalar and antiscalar each read "mixed grade, nothing to draw", so dot of
     #   two points said it gave mixed grade (repository issue 970).
