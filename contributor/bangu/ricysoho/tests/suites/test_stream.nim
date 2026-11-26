@@ -228,8 +228,8 @@ func isSigned(text: string, at: int): bool =
   ##   .ija le ralju pagbu cu du pa sinxa pe `CONSTANTS_RULED`
   ##   .i pa sinxa pe `PREFIXES_RULED` cu ka'e lidne le ralju pagbu
   ##   .i ji'a lo jdini sinxa cu ka'e zvati lo jbini be le sinxa .e le ralju pagbu
-  ##   .i lo jdini sinxa cu ponse le namcu va'o lo nu ke'a zvati le namcu .a lidne le namcu .a se
-  ##       lidne le namcu
+  ##   .i lo jdini sinxa cu ponse le namcu va'o lo nu le jdini sinxa cu zvati le namcu gi'a lidne le
+  ##       namcu gi'a se lidne le namcu
   ##   .i le fancu cu jdice fi lo selci'a poi se tcidu po'o
   func isInner(i: int): bool =
     ## jdice lo du'u le lerfu po'u `i` cu pagbu le namcu
@@ -1004,7 +1004,7 @@ func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused:
         (not isSign(k - 1) or isPiece(k - 1, ["-", "−", "€"])) and
         (not isSign(k + 1) or isPiece(k + 1, ["€"]))
     of "€":
-      # lo namcu poi le sinxa cu pencu ke'a ja zvati ke'a
+      # lo namcu poi le sinxa cu pencu ke'a gi'a zvati ke'a
       var touched: seq[int]
       for n, span in numbers:
         if span.b == k - 1 or span.a == k + 1 or k in span: touched.add n
