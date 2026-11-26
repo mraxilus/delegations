@@ -93,6 +93,39 @@ so a new rule without a citation does not compile there.
   `curator/audit` holds it, article included, through the real check of each message that `koch`
   prints.
 
+## Renderer
+
+**Each finding prints in one of two forms, through `knoller/report`.** The terminal form serves a
+reader at a terminal, and the line form serves a pipe or a log (STYLE.md §3). A finding is a
+`Notice` that holds only the parts that its check knows (D3 a of #1002). So its location shows the
+path, the line and the column, each only behind the part before it. The renderer is pure. The
+caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
+
+- The terminal form prints the location and the rule, the summary, the source line with a marker,
+  `actual` and `expect`, and `help`. A blank line stands between two blocks, and a block shows
+  only where the finding holds its parts.
+- The source line shows only where the finding holds its line and the text of that line. The
+  marker shows only where it holds a column too.
+- A source line over 80 runes shows a window of 80 runes around the span, and `…` marks each
+  edge that the window cuts. A finding of width names a line of hundreds of runes, which a
+  terminal would wrap.
+- Column and span count runes, as the width of a line counts them. A control character of the
+  source line prints as its control picture, as `␉`, so the marker stays under its rune.
+- The terminal form quotes a value that is empty, or whose edge or control character would hide
+  it. So each value stays visible, as Article IV.4 asks.
+- The line form reads `path:line:column: rule: actual="…" expect="…" message="…"`. Each value is
+  quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+- Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
+  as no-color.org reads it, and `formOutput` takes the form that a flag forces.
+- Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
+  draws them, and each case above.
+- Cost: the line form carries no `help`, since STYLE.md §3 gives it none. A reader of a log
+  loses it.
+- Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
+  emoji, shifts the marker to the right of its span.
+- Cost: no report of knoller and no finding of koch prints through the renderer, so each tool
+  still prints its own form.
+
 ## Chain
 
 **One chain runs every fixer in one order until the source settles.** `formatted` reads the
