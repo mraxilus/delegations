@@ -120,6 +120,17 @@ suite "Share":
     check initRingShare[CountsShare]().pooled(0).percent(Owner.Pga) == 0.0
 
 
+  test "a second before the start has no bucket, so the ring refuses it by its type":
+    # Fault: negative second indexed ring at negative bucket and stopped, and second -1 read as
+    #   ring's own mark of empty bucket (repository issue 970).
+    var ring = initRingShare[CountsShare]()
+    let second_before = -1
+    expect RangeDefect:
+      ring.add(second_before, default(CountsShare))
+    expect RangeDefect:
+      discard ring.pooled(second_before)
+
+
   test "each value that crosses the boundary counts once, each way, while the tally is open":
     # One drain is one frame, and frame counts only while tally is open.
     discard drainCrossings()
