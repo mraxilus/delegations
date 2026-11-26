@@ -383,6 +383,10 @@ suite "Log of claims":
     expect ValueError: discard claimLine("claims { } text: \"a\" }")  # text after closing brace
     expect ValueError: discard claimLine("claims { number { number { low: 1 } } }")  # in block
     expect ValueError: discard claimLine("claims { text \"a\" }")  # no colon after name
+    # Rows whose one fault is block in block, and name with no colon, so no other check refuses
+    #   them: each reads as claim where its check is gone.
+    expect ValueError: discard claimLine("claims { number { number { low: 1 } }")
+    expect ValueError: discard claimLine("claims { confidence 0.7 }")
     expect ValueError: discard claimLine("claims { text: \"\\x\" }")  # escape cut short
     expect ValueError: discard claimLine("claims { text: \"\\x0\" }")
 
