@@ -56,6 +56,83 @@ func roundHalfToEven(value: float): float =
   else: whole + 1.0
 
 
+func digitsExact(value: float, exponent: var int): seq[int] =
+  ## Write each decimal digit of `|value|` exactly, most significant first, and decimal
+  ##   exponent of first digit into `exponent`.
+  ##   Whole mantissa times power of two is read off by halving and doubling, each exact.
+  ##     Power is then carried into limbs of base 10^4 by 2^13 or 5^6 at time: each product
+  ##     stands under 2^28, which either backend holds exactly.
+  ##   Up to 767 digits, for subnormal value: so taken only where `formatMagnitude` cannot
+  ##     tell side of tie from its product.
+  var
+    mantissa = abs(value)
+    power = 0
+  while mantissa >= 9007199254740992.0:
+    mantissa *= 0.5
+    inc power
+  while mantissa != floor(mantissa):
+    mantissa *= 2.0
+    dec power
+  var limbs: seq[int]  # Least significant first.
+  while mantissa > 0.0:
+    let limb = mantissa mod 10000.0
+    limbs.add int(limb)
+    mantissa = (mantissa - limb) / 10000.0
+
+  func multiply(limbs: var seq[int], factor: int) =
+    ## Multiply whole number that `limbs` hold by `factor`, under 2^15.
+    var carry = 0
+    for limb in limbs.mitems:
+      let product = limb * factor + carry
+      limb = product mod 10000
+      carry = product div 10000
+    while carry > 0:
+      limbs.add carry mod 10000
+      carry = carry div 10000
+
+  # Value is `m · 2^power`, which is `m · 5^-power · 10^power` where power is negative.
+  let (chunk, factor_chunk, base) = if power >= 0: (13, 8192, 2) else: (6, 15625, 5)
+  var count = abs(power)
+  while count >= chunk:
+    limbs.multiply(factor_chunk)
+    count -= chunk
+  if count > 0: limbs.multiply(base ^ count)
+  for i in countdown(limbs.high, 0):
+    let text = if i == limbs.high: $limbs[i] else: align($limbs[i], 4, '0')
+    for ch in text: result.add(ord(ch) - ord('0'))
+  exponent = result.len - 1 - (if power < 0: -power else: 0)
+
+
+func roundedExact(value: float, exponent: var int): float =
+  ## Round `|value|` to `DIGITS_SIGNIFICANT` digits off its exact decimal digits, as whole
+  ##   number, breaking exact half toward even; write exponent of first digit into `exponent`.
+  ##   Rule C's formatter rounds by, read exactly where product of value and power of ten
+  ##     cannot say which side of tie value stands on (repository issue 1053).
+  let digits = digitsExact(value, exponent)
+  var whole = 0
+  for i in 0..<DIGITS_SIGNIFICANT:
+    whole = 10 * whole + (if i < digits.len: digits[i] else: 0)
+  let next = if digits.len > DIGITS_SIGNIFICANT: digits[DIGITS_SIGNIFICANT] else: 0
+  var is_past_half = next > 5
+  if next == 5:
+    for i in (DIGITS_SIGNIFICANT + 1)..<digits.len:
+      if digits[i] != 0:
+        is_past_half = true
+        break
+  if is_past_half or (next == 5 and whole mod 2 == 1): inc whole
+  if whole == 10 ^ DIGITS_SIGNIFICANT:
+    whole = 10 ^ (DIGITS_SIGNIFICANT - 1)
+    inc exponent
+  float(whole)
+
+
+const BAND_TIE = 1.0 / 1099511627776.0
+  ## Bound, as fraction of product, within which `formatMagnitude` reads side of tie off
+  ##   exact digits: `2^-40`.
+  ##   Product carries few ulps of error, from `pow` and up to three roundings: band holds
+  ##     2^12 of them, so value outside it rounds off product to same digits.
+
+
 func formatMagnitude*(value: float): string =
   ## Format `value` to `DIGITS_SIGNIFICANT` significant digits without C runtime.
   ##   Same reading `appendMagnitude`'s `%.4g` gives; for browser build, which has no
@@ -102,15 +179,35 @@ func formatMagnitude*(value: float): string =
     elif shift >= 0: abs(value) * pow(10.0, float(shift))
     else: abs(value) / pow(10.0, float(-shift))
 
-  var scaled = roundHalfToEven(scaledTo(value, exponent))
+  func isNearTie(product, scaled: float): bool =
+    ## Report whether `product` stands within `BAND_TIE` of half beside `scaled`, its rounding.
+    let
+      offset = product - scaled
+      band = BAND_TIE * product
+    offset >= 0.5 - band or offset <= band - 0.5
+
+  var
+    product = scaledTo(value, exponent)
+    scaled = roundHalfToEven(product)
+    is_ambiguous = isNearTie(product, scaled)
 
   # Follow carry into another digit, 9999.6 to 10000, with exponent text is written around.
-  if scaled >= pow(10.0, float(DIGITS_SIGNIFICANT)):
-    exponent += 1
-    scaled = roundHalfToEven(scaledTo(value, exponent))
-  elif scaled < pow(10.0, float(DIGITS_SIGNIFICANT - 1)):
-    exponent -= 1
-    scaled = roundHalfToEven(scaledTo(value, exponent))
+  #   Band is read before carry too: tie at 9999.5 stands at 999.95 past it, where no band
+  #   test sees it.
+  if not is_ambiguous:
+    if scaled >= pow(10.0, float(DIGITS_SIGNIFICANT)):
+      exponent += 1
+      product = scaledTo(value, exponent)
+      scaled = roundHalfToEven(product)
+      is_ambiguous = isNearTie(product, scaled)
+    elif scaled < pow(10.0, float(DIGITS_SIGNIFICANT - 1)):
+      exponent -= 1
+      product = scaledTo(value, exponent)
+      scaled = roundHalfToEven(product)
+      is_ambiguous = isNearTie(product, scaled)
+
+  # Product within `BAND_TIE` of tie reads its side, and its exponent, off exact digits.
+  if is_ambiguous: scaled = roundedExact(value, exponent)
 
   let digits = $int(scaled)
   if exponent < -4 or exponent >= DIGITS_SIGNIFICANT:
