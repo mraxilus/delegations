@@ -3361,7 +3361,7 @@ of knoller, under Content fixes.
   So each project reads with the grammar of its own pin. 2.2.12 lexes as names the glyph
   operators that 2.4.0 lexes as operators.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
-  one line `warning: needless-parentheses: <message>`, and the exit code stays.
+  one warning of rule `needless-parentheses`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
   once held. So each round fixes again only the entries that asked, and the scope check reads all
   parts joined.

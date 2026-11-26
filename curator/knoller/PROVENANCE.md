@@ -132,7 +132,10 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   loses it.
 - Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
   emoji, shifts the marker to the right of its span.
-- Cost: no finding of koch prints through the renderer yet, so koch still prints its own form.
+- Each verb of koch that reports prints each finding and warning through the renderer too. A
+  finding of a report of knoller keeps the id of its rule there.
+- Cost: no check of koch gives the id of its rule yet, so its findings print with no rule.
+- Cost: each hook of koch prints the message of each finding alone, outside the renderer.
 
 ## Chain
 
