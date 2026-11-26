@@ -413,7 +413,9 @@ Cost: the text goes with each request, and the cache helps only within its lifet
 bytes by one command on 2026-11-19:
 `nim r --hints:off --path:src --eval:'import rictadni/suggestions; echo PROMPT_SYSTEM.len'`.
 The list with cmavo gave 24,918 bytes at `bf9c82d8` on 2026-10-31, by the same command with the
-module `lojban_tagger/suggestions`.
+module `lojban_tagger/suggestions`. On `claude`, at its default model and effort `medium`, one
+live reply on 2026-11-26 shows 12,977 tokens written to the cache. They count the whole prefix up
+to the mark on the system text, so they include what the API adds for the schema.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
 never close the element. The URL in the element keeps its scheme, host, port and path, so no user
@@ -444,7 +446,19 @@ under 0.1 ms in release (Figures).
   body is a project choice, because no OpenAI reference of Chat Completions was read.
 
 The settings come from the environment on each run, as the index path does for `tagger`.
-Verified by `suites/test_suggestions.nim`, against documented shapes alone.
+Verified by `suites/test_suggestions.nim` against documented shapes. One live reply of `claude`
+agrees (below).
+
+**One live reply of `claude` reads as its documented shape.** One request under `--record:`
+reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
+`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
+read them back. The replay of that exchange file, with no key and no network, gave the same 14
+gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
+
+Cost: the request went to the default model of `claude` at effort `medium`. It took 56 input
+tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
+each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
+costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
 **JSON appears only on the wire of each service, which forces it.** An exchange file holds those
 bytes unchanged. The rule of data keeps JSON on the wire of an outside service that speaks it alone
@@ -990,11 +1004,12 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
-- **Live replies.** No run read a reply of 2xx from a service. The readers follow the documented
-  shapes, and three replies of 401 to requests without a key, from 2026-10-28. A run under
-  `--record:` into its own directory records live replies once a key exists.
-- **The cost of the system text.** Its count of tokens and the hits of the cache are
-  unmeasured. So is the quality of the answers at effort `low` against `medium`.
+- **Live replies of `openrouter`.** No run read a reply of 2xx from OpenRouter. The readers
+  follow the documented shapes, and three replies of 401 to requests without a key, from
+  2026-10-28. The record does not name the service of each reply of 401. A run under
+  `--record:` into its own directory records one once a key of OpenRouter exists.
+- **The hits of the cache.** No run measured how often a request reads the system text from the
+  cache. The quality of the answers at effort `low` against `medium` is unmeasured too.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
