@@ -215,29 +215,56 @@ func unspanned(value: string): string =
   if run > 1 and inner.len > 1 and inner[0] == ' ' and inner[^1] == ' ': inner[1 .. ^2] else: inner
 
 
-func toNotice*(report: Report, source = none(string), is_warning = false): Notice =
-  ## Read report as finding renderer prints (STYLE.md §3): id of its rule; summary, sentence of
-  ##   its message with first letter lowercase; actual, value after `; got `, out of code span it
-  ##   stands in whole; text of its line where caller read it.
+func initNotice*(
+  path: string,
+  line: int,
+  rule, message: string,
+  expected = none(string),
+  help = "",
+  column = 0,
+  span = 0,
+  source = none(string),
+  is_warning = false,
+): Notice =
+  ## Read message of check as finding renderer prints (STYLE.md §3), under id of rule caller
+  ##   gives: summary, sentence of message with first letter lowercase; actual, value after
+  ##   `; got `, out of code span it stands in whole; text of its line where caller read it.
+  ##   Check of any tool whose message reads `<sentence>; got <value>.` reads so, as of koch.
   let
-    at = report.message.sentenceEnd
-    rest = report.message[at .. ^1]
+    at = message.sentenceEnd
+    rest = message[at .. ^1]
   var actual = none(string)
   if rest.startsWith(PREFIX_GOT):
     let value = rest[PREFIX_GOT.len .. ^1]
     actual = some((if value.endsWith('.'): value[0 ..< ^1] else: value).unspanned)
   Notice(
-    path: report.path,
-    line: report.line,
-    column: report.column,
-    span: report.span,
-    rule: report.rule.id,
-    summary: report.message[0 ..< at].lowercased,
+    path: path,
+    line: line,
+    column: column,
+    span: span,
+    rule: rule,
+    summary: message[0 ..< at].lowercased,
     actual: actual,
-    expected: report.expected,
-    help: report.help,
+    expected: expected,
+    help: help,
     source: source,
     is_warning: is_warning,
+  )
+
+
+func toNotice*(report: Report, source = none(string), is_warning = false): Notice =
+  ## Read report as finding renderer prints, under id of its rule (`initNotice`).
+  initNotice(
+    report.path,
+    report.line,
+    report.rule.id,
+    report.message,
+    report.expected,
+    report.help,
+    report.column,
+    report.span,
+    source,
+    is_warning,
   )
 
 
