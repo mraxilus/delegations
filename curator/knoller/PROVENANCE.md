@@ -115,6 +115,8 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   it. So each value stays visible, as Article IV.4 asks.
 - The line form reads `path:line:column: rule: actual="…" expect="…" message="…"`. Each value is
   quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+- A warning prints in both forms, with `warning` after its rule, as the command line of knoller
+  marks it (D2 a of #1002). A rewrite is no finding, so its caller keeps its one line.
 - Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
   as no-color.org reads it, and `formOutput` takes the form that a flag forces.
 - Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
