@@ -154,7 +154,8 @@ Verified by `suites/test_kinds.nim`, which holds both rows, and by `suites/test_
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
 - Configuration: `#`, unless `\#`.
-- YAML and protobuf text format: `#` at line start, or after whitespace, outside quotes.
+- YAML and protobuf text format: `#` at line start, or after whitespace, outside quotes. Inside
+  double quotes, a backslash escapes the next character, as both formats read it.
 - Ignore files: a leading `#` only.
 - TypeScript and protobuf schemas: `//`, `/* */`, the string forms, and doc stars stripped.
 - Markup: `<!-- -->`, which may span lines.
@@ -165,8 +166,9 @@ Whitespace runs collapse, so texts compare stably.
 - Cost, assumed: a TypeScript regex literal that holds `//` opens a false comment.
 - Cost: the markup scanner reads `<!-- -->` only, so comments inside `<script>` and `<style>`
   stay unread. Markup inside a Nim string has the same blind spot.
-- Verified by `suites/test_comments.nim` across the syntaxes, including the testament header string
-  and markup comments that span lines.
+- Cost: no escape counts inside single quotes, as in YAML, so `\'` ends a protobuf text string.
+- Verified by `suites/test_comments.nim` across the syntaxes, including the testament header string,
+  markup comments that span lines, and a quote escaped inside double quotes.
 
 ## Prose
 
@@ -301,9 +303,9 @@ break at, prose always does, and minified markup is one run far past the bound.
 
 **Knoller holds these rules, and the audit runs them on every kind.** They read text alone, so
 knoller holds one copy of them (`checkForm` there), and its record gives them under Form. The
-audit keeps the exemptions from width that name files of this repository: `LICENSE.md`, and each
-`atlas.lock`. Each finding prints its article where its sentence ends, as `Line holds tab (X.1).`
-does.
+audit keeps the exemptions from width that name files of this repository: `LICENSE.md`, each
+`atlas.lock` and each `claims.txtpb` (X.1). A log keeps one row to a line, for `union`. Each
+finding prints its article where its sentence ends, as `Line holds tab (X.1).` does.
 
 - Each `atlas.lock` takes no width rule, as the Architect ruled (D1 a of #821). Atlas copies each
   line of the nimble file into the lock as a JSON string, behind six spaces, with each quote
@@ -313,8 +315,8 @@ does.
 - Rejected: a copy for Nim in knoller beside a copy for each other kind here. The rule would stand
   twice, and the two copies would drift.
 - Verified by `suites/test_form.nim`: each message prints as koch prints it, in Nim, Markdown,
-  YAML, HTML, SVG and cfg. `LICENSE.md` and each `atlas.lock` take no width rule, and a file
-  whose name only ends in `atlas.lock` still does.
+  YAML, HTML, SVG and cfg. `LICENSE.md`, each `atlas.lock` and each `claims.txtpb` take no width
+  rule, but a file whose name only ends in either of the last two still does.
 
 **The static pass holds X.2 exactly, as knoller reads it and `koch fix` writes it.** Lines split
 on LF only, so a CR survives. The syntax of a Nim banner marks its tier: `#[ Title ]#` is the
@@ -343,10 +345,8 @@ own two. The audit runs `checkBanners` of knoller on each kind of Nim syntax.
   longest token is 179 runes audit clean. A generated drawing of 1,407 characters does not.
 
 **A generated npm lockfile passes the width rule.** Verified by hand with npm 12, 2026-09-06: a
-generated `package-lock.json` of 93 lines, longest 117 runes, audits with 0 findings. Each long
-line carries one `sha512-` digest of 95 runes, and fits without it, so the unbreakable-token
-rule passes it. So the shape holds at any lockfile size, and the width rule needs no exemption
-beside `LICENSE.md`.
+`package-lock.json` of 93 lines, longest 117 runes, audits with 0 findings. Each long line holds
+one `sha512-` digest of 95 runes, and fits without it, so the rule passes any such lockfile.
 
 **The static pass reads no gap of a trailing comment yet.** The check and its fixer are in the
 record of knoller, under Form. Only Nim syntax is read, so a trailing comment in TypeScript, C,
