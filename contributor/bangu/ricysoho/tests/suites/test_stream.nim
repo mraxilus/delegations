@@ -936,8 +936,8 @@ func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: O
 
 
 func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
-  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D2 a` .e `D3 a` .e `D4 b` .e `D6 b` .e `D7 c` pe
-  ##     `#1003` gi'e dunda lo cmavo .a le stuzi pe le sinxa poi se to'e curmi
+  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D2 a` .e `D3 a` .e `D4 b` .e `D6 b` .e `D7 c`
+  ##     .e `D9 b` pe `#1003` gi'e dunda lo cmavo .a le stuzi pe le sinxa poi se to'e curmi
   ##   .i ro pagbu cu cmima `MARKS_PREFIXED`
   ##   .i le ralju pagbu be pa namcu cu porsi lo lerfu po'u `1` gi'e ka'e se lidne zoi gy. % .gy.
   ##   .ija le ralju pagbu cu du zoi gy. π .gy. .a zoi gy. ½ .gy.
@@ -951,7 +951,7 @@ func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused:
   ##   .i zoi gy. π .gy. .e zoi gy. ½ .gy. cu se tcidu va'o lo nu no lerfu po'u `1` cu pencu le
   ##       sinxa kei .e lo nu ro sinxa poi pencu le sinxa cu pagbu le namcu
   ##   .i lo jdini sinxa cu se tcidu va'o lo nu le sinxa cu pencu pa namcu po'o poi ponse no drata
-  ##       jdini sinxa
+  ##       jdini sinxa gi'e na vasru zoi gy. % .gy.
   ##   .i lo jdini klani cu vasru ro sinxa pe le namcu
   ##   .i ro lerfu po'u `a` cu du pa valsi
   ##   .i lo drata sinxa cu se to'e curmi
@@ -1009,7 +1009,9 @@ func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused:
       var touched: seq[int]
       for n, span in numbers:
         if span.b == k - 1 or span.a == k + 1 or k in span: touched.add n
-      is_read = touched.len == 1 and touched[0] notin owned
+      # le namcu cu na vasru zoi gy. % .gy. to `D9 b` toi
+      is_read = touched.len == 1 and touched[0] notin owned and
+        pieces[numbers[touched[0]].b] != "%"
       owned.add touched
     else: discard
     if not is_read: return (result.words, some(starts[k]))
@@ -1326,16 +1328,13 @@ suite "Internal: Stream":
   test "Amount opens before the sign of its number":
     # `Architect` jdice `D2 a` bu'u `#1003` to le jdini klani cu vasru le namcu toi
     #   .i lo sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` toi
-    let
-      amount = @["lo", "ronru'u", "be", "li", "ni'u", "mu", "be'o", "ku"]
-      percent = @["lo", "ronru'u", "be", "li", "mu", "ce'i", "be'o", "ku"]
+    let amount = @["lo", "ronru'u", "be", "li", "ni'u", "mu", "be'o", "ku"]
     for (text, cmavo) in [
         ("-5€", amount), ("−5€", amount),
         ("mi ponse ~5¥", @["mi", "ponse", "lo", "ponjo", "ja", "jungo", "rupnu", "be", "li", "ji'i",
           "mu", "be'o", "ku"]),
-        ("€5%", percent),
         # le jdini sinxa cu pencu lo sinxa pe le namcu to `D7 c` toi
-        ("€-5", amount), ("-€5", amount), ("5%€", percent),
+        ("€-5", amount), ("-€5", amount),
         ("$-5", @["lo", "rupnu", "be", "li", "ni'u", "mu", "be'o", "ku"])]:
       checkpoint text
       check text.cmavoRead == some(cmavo)
@@ -1350,16 +1349,24 @@ suite "Internal: Stream":
     #   .i ro namcu cu ponse su'e pa jdini sinxa to `D2 a` toi
     #   .i ji'a le jdini sinxa poi pencu lo sinxa pe lo namcu cu pencu le namcu to `D7 c` toi
     for (text, at) in [
-        ("5€-5", 1), ("5%€5", 2), ("€5%€5", 5), ("-€-5", 0), ("€-€5", 4), ("-5€€", 5),
-        ("€-", 0)]:
+        ("5€-5", 1), ("5%€5", 2), ("-€-5", 0), ("€-€5", 4), ("-5€€", 5), ("€-", 0)]:
       checkpoint text
       check text.refusalSigned == some((at, text.character(at)))
+    # lo jdini sinxa poi le namcu pe ke'a cu vasru zoi gy. % .gy. cu se to'e curmi to `D9 b` toi
+    #   .i le stuzi pe le jdini sinxa cu se to'e curmi
+    for (text, at) in [
+        ("€5%", 0), ("$5%", 0), ("5%€", 2), ("-5%€", 3), ("-€5%", 1), ("€-5%", 0),
+        ("€5%€5", 0)]:
+      checkpoint text
+      check text.refusalSigned == some((at, text.character(at)))
+    # lo jdini klani be li 0.05 cu se ciska ta'i lo lerfu po'o
+    check "$0.05".cmavoRead ==
+        some(@["lo", "rupnu", "be", "li", "no", "pi", "no", "mu", "be'o", "ku"])
     # lo kutle'u cu fendi re namcu
     check "5€ -5".cmavoRead ==
         some(@["lo", "ronru'u", "be", "li", "mu", "be'o", "ku", "ni'u", "mu"])
     check "5% €5".cmavoRead ==
         some(@["mu", "ce'i", "lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
-    check "€5% €5".cmavoRead == some(percent & @["lo", "ronru'u", "be", "li", "mu", "be'o", "ku"])
 
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":

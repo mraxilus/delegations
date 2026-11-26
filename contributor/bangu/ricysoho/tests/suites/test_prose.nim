@@ -312,7 +312,7 @@ const
     "li _ cu barda", "mi ponse _ lo plise", "lo _moi cu klama", "mi ponse lo rupnu be li _ be'o ku",
   ]
     ## lo jufra poi ro namcu po'u `_` cu pagbu ke'a
-  COUNT_NUMBERS_SIGNED = 148  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
+  COUNT_NUMBERS_SIGNED = 142  ## lo te kancu be lo jufra poi le flalu cu tcidu ke'a
   NUMBERS_COMPOUND = [("1.2.3", "1 pi'e 2 pi'e 3"), ("192.168.0.1", "192 pi'e 168 pi'e 0 pi'e 1")]
     ## lo namcu poi vasru su'o re boi denpa bu .e le valsi poi le namcu cu sinxa ke'a to `D5 c`
     ##     pe `#1003` toi
@@ -368,7 +368,7 @@ suite "Internal: Prose":
     pairs.add ("~½", "ji'i pa fi'u re", @FRAMES_NUMBER)
     for (text, spelled) in [
         ("-$5", "lo rupnu be li ni'u 5 be'o ku"), ("$-5", "lo rupnu be li ni'u 5 be'o ku"),
-        ("€½", "lo ronru'u be li pa fi'u re be'o ku"), ("5%€", "lo ronru'u be li 5 ce'i be'o ku")]:
+        ("€½", "lo ronru'u be li pa fi'u re be'o ku")]:
       pairs.add (text, spelled, @FRAMES_PROSE)
     # lo kutle'u cu fendi le jdini klani .e le drata namcu to `D8` pe `#1003` toi
     #   .i le namcu pe zoi gy. 5% €5 .gy. cu klani le jdini klani
@@ -390,6 +390,8 @@ suite "Internal: Prose":
     # zo zo sitna le pamoi valsi pe le sinxa
     #   .i se ki'u bo le gerna cu to'e curmi le selci'a
     check not "zo ½ cu valsi".readText.is_read
+    # lo jdini sinxa poi le namcu pe ke'a cu vasru zoi gy. % .gy. cu se to'e curmi to `D9 b` toi
+    check "mi ponse $5%".refusalRead == some((RefusalText.Stream, 9))
     # le gerna cu to'e curmi le drata namcu poi no valsi cu dunda lo stuzi ke'a
     check "mi ponse 5€ -5".refusalRead == some((RefusalText.Grammar, 16))
 
