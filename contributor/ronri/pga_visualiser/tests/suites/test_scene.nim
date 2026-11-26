@@ -477,6 +477,36 @@ suite "Scene":
           check formatMagnitude(signed) == storage.toText
 
 
+  test "a magnitude within an ulp of a tie of four digits rounds as C rounds it":
+    # Fault: product of value and power of ten rounded to exactly .5, so side of tie that
+    #   value stood on was lost: `2.3335` read `2.334`, where C reads `2.333` (repository
+    #   issue 1053).
+    # Domain: tie `d.ddd5` of each 101st mantissa from 9999 down to 1000, at each seventh
+    #   decade from 1e-323 to 1e304, with double each side of it, of each sign, against C's
+    #   `%.4g`. Text pinned for eight, which page runs too: two stand nearest any tie, under
+    #   1e-22 of it, one is exact tie, and one stands under tie that carry to 1e-10 hides.
+    check formatMagnitude(2.3335) == "2.333"
+    check formatMagnitude(-2.3335) == "-2.333"
+    check formatMagnitude(0.0031905) == "0.003191"
+    check formatMagnitude(8.7065e-311) == "8.707e-311"
+    check formatMagnitude(4.3495e-273) == "4.35e-273"
+    check formatMagnitude(3.9815e37) == "3.981e+37"
+    check formatMagnitude(9999.5) == "1e+04"
+    check formatMagnitude(9.9995e-11) == "9.999e-11"
+    when not defined(js):
+      for mantissa in countdown(9999, 1000, 101):
+        for decade in countup(-323, 304, 7):
+          let tie = parseFloat(&"{mantissa}5e{decade - 4}")
+          for near in [cast[float](cast[uint64](tie) - 1), tie, cast[float](cast[uint64](tie) + 1)]:
+            for signed in [near, -near]:
+              var
+                storage: array[64, char]
+                cursor = 0
+              appendMagnitude(storage, cursor, signed)
+              checkpoint &"{signed}"
+              check formatMagnitude(signed) == storage.toText
+
+
   test "multivectors print every term they carry, and nothing else":
     # Significant digits, not fixed decimal places: whole number reads as one, and.
     #   coefficient keeps only digits it actually carries. Basis elements are named
