@@ -1035,7 +1035,7 @@ suite "Internal: Stream":
     #     lerfu
 
 
-  test "Period between two digits reads as pi, and comma before three digits as ki'o":
+  test "Period between two digits reads as pi in run with one period, comma before three as ki'o":
     # `Architect` jdice `D1 a` bu'u `#991`
     #   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` cu pilno zo pi .e zo ki'o ne'i lo namcu
     for (text, words, cmavo) in [
@@ -1077,7 +1077,7 @@ suite "Internal: Stream":
           @["li", "pa", "so", "re", "pi'e", "pa", "xa", "bi", "pi'e", "no", "pi'e", "pa"]),
         ("li 1,000.2.3", @["li", "pa", "ki'o", "no", "no", "no", "pi'e", "re", "pi'e", "ci"]),
         # slaka bu cu pagbu le porsi
-        #   .i se ki'u bo pa namcu cu vasru su'e pa boi zo pi
+        #   .i se ki'u bo pa porsi cu vasru su'e pa boi zo pi
         ("li 1.2,000.3", @["li", "pa", "pi'e", "re", "ki'o", "no", "no", "no", "pi'e", "ci"]),
         # ro porsi pe pa selci'avla cu se tcidu ne'i vo'a
         ("li 1.2.3boi4.5",
