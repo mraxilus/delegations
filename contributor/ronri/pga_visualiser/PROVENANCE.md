@@ -552,8 +552,8 @@ read each count the same. A count under its baseline passes, and the baseline is
 the marker reports the copy sites in the functions that its span reaches: 50 sites in 84 functions.
 The check of the lattice reports those that only the lattice reaches: 12 sites in 16 functions.
 
-| Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
-|-------|----------|--------------------|----------------------------|
+| Count | Baseline, `7ef9f4d` | Repair, 2026-10-22 | With its fault, 2026-10-22 |
+|-------|---------------------|--------------------|----------------------------|
 | Copies of a marker and its pulse, over 5 objects | 15,883 | 15,883 | 16,523 |
 | Calls of a marker and its pulse, over 5 objects | 48,644 | 48,642 | 79,810 |
 | Calls that the lattice adds to 9 moving frames | 3,531,425 | 4,817,506 | 8,893,698 |
@@ -584,7 +584,7 @@ count returned to its reading at `3d9696e`.
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
 as the table gives, and the counts of the other span did not move. Assumed: that each fault still
-reads over the baselines of 2026-11-26.
+reads over the baselines of 2026-11-26, since each stand-in only adds work, and the band is zero.
 
 ## Browser front-end
 
