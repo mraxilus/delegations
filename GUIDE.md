@@ -110,12 +110,14 @@ reflection below says what it cost.
 ### When to start one
 
 - **Do a single task yourself.** Where two independent tasks wait, start one subagent, and do the
-  other task yourself while it runs. A subagent costs its prompt, its prediction, its critic, its
-  resolver and its reflection, and you wait while it runs alone.
+  other task yourself while it runs. A subagent costs its prompt, its prediction and its
+  reflection, and after some kinds a critic and a resolver. You wait while it runs alone.
 - **Where three or more independent tasks wait, do what suits them best.** Give any of them to
   subagents, and do the others yourself.
-- **A check is the one exception.** Start a `critic`, a `resolver` or a `reviewer` even where no
-  other task waits, since a fresh read finds what the writer misses.
+- **Weigh each subagent against its likely gain before you start it.** A subagent costs its run
+  and the steps after it, from the one allowance that every delegate shares. Start one for larger
+  work, or where a fresh read likely finds what you would miss. Do small or minor work yourself,
+  and check it yourself.
 - **Give a subagent read-only work, or a change that is independent and well defined.**
   Read-only work is a search, a reproduction, a measurement or a read of sources. Two changes
   are independent when neither one changes code or a test that the other one reads or writes.
@@ -233,15 +235,18 @@ Then the subagent runs, and these steps follow:
   `No prediction` under `Predicted`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
-- **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
-  Its prompt holds the first prompt, the report, and the paths of the evidence, but never your
-  prediction. It checks each claim against the evidence, and never does the work again. Scale
-  it to the stakes: it samples a survey, and it runs the checks of a build again. No critic
-  checks a critic.
-- **The resolver marks every prediction, after the critic.** Its prompt holds each claim with
-  its resolution criterion and with no percentage, the report, and the report of the critic.
-- **Write the reflection when the critic reports**, before any sign-off or working line. Give
-  the subagent and the critic each a line. Each line holds the tokens summed over its requests,
+- **A critic runs after a builder, an investigator or a measurer, whose reports others build on,
+  before your reflection.** After any other kind, check the report against its evidence yourself.
+  The critic is a fresh subagent too. Its prompt holds the first prompt, the report, and the paths
+  of the evidence, but never your prediction. It checks each claim against the evidence, and
+  never does the work again. It runs the checks of a build again, and no critic checks a critic.
+- **A resolver marks each prediction whose subagent a critic checked, after the critic.** Its
+  prompt holds each claim with its resolution criterion and with no percentage, the report, and
+  the report of the critic. Where no critic ran, you mark each claim, and the log names you as its
+  marker.
+- **Write the reflection when the critic reports, or when the report comes where no critic
+  follows**, before any sign-off or working line. Give the subagent a line, and the critic one
+  where it ran. Each line holds the tokens summed over its requests,
   the cost at list price, the calls and the time. The tokens of a request are its input, cache
   write, cache read and output tokens. Each request counts once, by its `requestId`.
 - **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
@@ -291,8 +296,8 @@ Then the subagent runs, and these steps follow:
 
 - Judgement: the race to save one shared key leads the findings (70%). Resolution criterion:
   it is the first finding of the report.
-- Judgement: no test is weakened (85%). Resolution criterion: the critic finds no assertion
-  that the diff removes or loosens.
+- Judgement: no test is weakened (85%). Resolution criterion: the diff removes or loosens no
+  assertion.
 - Judgement: it names the lock of the store as a second risk (60%). Resolution criterion: the
   report names the lock in a finding.
 - Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
@@ -310,13 +315,11 @@ Then the subagent runs, and these steps follow:
 
 **Subagent:** reviewer of the diff of `curator/asset-fetch`, 170,000 tokens and $1.10 at list
 price, 57 calls, 15 min.
-**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min. It held five claims of the
-report and failed one.
 
 | State | Confidence | Predicted | Result |
 | --- | --- | --- | --- |
 | ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
-| ✅ | 85% | no test is weakened | none is (the critic read each test of the diff) |
+| ✅ | 85% | no test is weakened | none is: each assertion of the diff stands |
 | ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
 | ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
 | ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |

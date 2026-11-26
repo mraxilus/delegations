@@ -50,10 +50,10 @@ Two reads before any other work, one list to carry, and work to hand off.
 `GUIDE.md` holds the rest, under "The queue and the shared allowance".
 
 **Do a single task yourself.** Where two independent tasks wait, start one subagent, and do the
-other yourself while it runs. Where three or more wait, do what suits them best. A `critic`, a
-`resolver` or a `reviewer` starts even alone, since a fresh read finds what the writer misses.
-Each subagent starts fresh, a critic checks its report, and you predict each one and reflect on
-its result. `GUIDE.md`, Work for subagents, gives the test, the prompt and the steps.
+other yourself while it runs. Where three or more wait, do what suits them best. Weigh each
+subagent against its likely gain, and do small or minor work yourself. Each subagent starts
+fresh, and you predict each one and reflect on its result. `GUIDE.md`, Work for subagents, gives
+the test, the prompt, and the kinds that a critic checks.
 
 ## Carry the unchecked list in the open
 
