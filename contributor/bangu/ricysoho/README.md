@@ -43,6 +43,7 @@ ni'o le genturfa'i cu tcidu lo jdini sinxa poi pencu pa namcu ta'i lo jdini klan
   .i zoi gy. ¢ .gy. sinxa zo fepni
   .i zoi gy. ¥ .gy. sinxa lo'u ponjo ja jungo rupnu le'u
   .i le genturfa'i cu to'e curmi lo jdini sinxa poi pencu no namcu .a re namcu mu'u zoi gy. 5 € .gy.
+      .e zoi gy. 5€-5 .gy. to `D3 a` .e `D8 a` pe `#1003` toi
   .i lo jdini sinxa poi pencu lo sinxa pe pa namcu cu pencu le namcu mu'u zoi gy. -$5 .gy. .e
       zoi gy. $-5 .gy. noi sinxa lo'u lo rupnu be li ni'u mu be'o ku le'u to `D7 c` pe `#1003` toi
 
