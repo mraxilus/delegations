@@ -71,7 +71,7 @@ operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set o
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
 Verified by the evaluation of P13 on 2026-11-26. Each transform counts `⟇⟇~∘` at a motor type: 82
-multiplies at rga4d, and 23 at rga3d.
+multiplies and 110 adds and subtractions at rga4d, and 23 and 16 at rga3d.
 
 ## Reference
 
