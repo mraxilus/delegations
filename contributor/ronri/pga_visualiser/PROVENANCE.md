@@ -1298,7 +1298,8 @@ only while the gate is open. Both open it while the diagnostics section is shown
 
 **The counts pool in the ring of the PGA share.** `share.RingShare` takes any array of counts, so
 both figures keep one window and one rule. A frame drained while the gate was shut counts nothing,
-so a mean never takes in frames that nobody read.
+so a mean never takes in frames that nobody read. The ring takes a `Natural` second, since no bucket
+holds a second before the start.
 
 **Values alone, in `boundary` alone.** A motor counts as one value, as a direction does, though it
 carries 8 coefficients against 3. Plain numbers are not counted, such as the depths and distances
@@ -3783,8 +3784,7 @@ stands the pivot at the reach of the point that the last zoom took. Rejected:
 - the nearest object ahead, which far out in the orrery is a star off to the side;
 - the object shown nearest at any depth, which can be a star a thousand times deeper.
 
-With a selection, a finger on empty space holds the point on the orbit's sphere, as a left drag
-does.
+With a selection, a finger on empty space holds the point on the orbit's sphere, like a left drag.
 
 **Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
 zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom out
