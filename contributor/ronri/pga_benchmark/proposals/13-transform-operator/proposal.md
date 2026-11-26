@@ -9,9 +9,9 @@ bases that the table reaches. A full operator takes the three steps of pin, what
 **What it is for.** At pin a transform spells three steps, two antiproducts and an antireverse,
 which is gap cause D08. With this proposal the transform by a motor type is one function. At
 rga4d it spends 82 multiplies and 110 adds and subtractions, where the chain spends 384 and 352.
-Each transform there then runs at ×0.26 of pin. A typed point or plane, and each typed object at
-rga3d, spends the multiplies and adds of Lengyel's code. A typed line spends one multiply and 13
-adds more.
+Each transform there then runs at ×0.26 of pin. A typed point or plane, and the typed point and
+line at rga3d, spend the multiplies and adds of Lengyel's code. A typed line spends one multiply
+and 13 adds more.
 
 **What it costs.** Each pair of types builds its table when a program first calls it, so
 `import pga` builds none. At cga6d a full multivector by a motor type adds about 4 s to the build
@@ -21,7 +21,7 @@ multiplies.
 ## Problem
 
 The library has no operator for a transform. So the catalogue spells each transform by motor as
-`((n ⟇ m) ⟇ (~∘ n))`, and the gap list names the five transform measurands under D08. Each step
+`((n ⟇ m) ⟇ (~∘ n))`. The gap list names the five transform measurands under D08. Each step
 writes a whole multivector, and the next step reads it. Each antiproduct reads every pair of
 bases, though a motor holds the antieven bases alone.
 
@@ -44,22 +44,23 @@ runtime baselines.
   So a motor transforms a vector to a vector, and a full multivector to a full one.
 - **Full operator.** `Multivector` is the instance of `MultivectorOf` over every basis. So a full
   𝐧 takes a function of its own, generic in 𝐦 alone, which Nim picks over the form of two types.
-  It spells the three steps of pin for each type of 𝐦, as the Architect ruled (D1 b). A table
-  over every pair spends 204 multiplies and 607 adds at rga4d, which is more adds than the chain.
-  Code that needs speed types both the object and the operator.
+  It spells the three steps of pin for each type of 𝐦, as the Architect ruled (D1 b on #990). A
+  table over every pair spends 204 multiplies and 607 adds at rga4d, which is more adds than the
+  chain. Code that needs speed types both the object and the operator.
 - **Body.** A macro names the product of each pair once. A cross pair reads one of its bases
   doubled. The macro doubles the basis that most cross pairs hold, then the next, until each cross
   pair holds a doubled basis. So a motor doubles four bases at rga4d, where the first basis of
   each pair gave seven. Then the macro writes each coefficient of the result as a sum over the
-  bases of 𝐦, through `emitBasis` and `emitSum` of P04. The operator carries `inline` and
-  `noinit`, as each form of P04 does. It stands in the typed section of `pga/operators.nim`, and
-  edits no table of `pga/cayleys.nim`.
+  bases of 𝐦, through `emitBasis` and `emitSum` of P04.
+- **Place.** The operator carries `inline` and `noinit`, as each form of P04 does. It stands in
+  the typed section of `pga/operators.nim`, and edits no table of `pga/cayleys.nim`.
 - **Entries.** In a coefficient, the factor of a basis of 𝐦 is an entry, a signed sum of products
   of pairs. Where several coefficients read one entry, up to its sign, the macro names it once. So
   the rotation that moves both the direction and the moment of a line is computed once, as
   Lengyel computes his matrix R once. The macro finds equal entries term by term, among the
-  entries of one first pair. So its loops walk terms, pairs or the entries of one first pair, and
-  the table of a full 𝐦 by a motor type builds at cga6d inside the loop bound of the compiler.
+  entries of one first pair. So its loops walk terms, pairs or the entries of one first pair.
+  The table of a full 𝐦 by a motor type then builds at cga6d inside the loop bound of the
+  compiler.
 - **Symbol.** The compound operators of `pga.nim` join their steps outer first, as `∨∧★` stands
   for 𝐧 ∨ (𝐦 ∧ 𝐧★). So `⟇⟇~∘` stands for 𝐧 ⟇ (𝐦 ⟇ 𝐧̰), as the Architect ruled on 2026-11-15.
   Nim 2.4.0 reads `⟇`, `~` and `∘` as characters of one operator.
@@ -85,7 +86,7 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 |--------|-------------|
 | Antieven pairs for any 𝐧 | A reflection operator transforms each multivector to zero (D49 f) |
 | Every pair for full operands | 204 multiplies and 607 adds at rga4d, more adds than the chain |
-| Table for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator (D1 b) |
+| Table for a typed 𝐦 by a full 𝐧 | Code that needs speed types its operator (D1 b on #990) |
 | Chain as one function | Closes D08, but spends what the chain spends |
 | A pair counted twice | 72 adds more at rga4d, one for each of 76 reads of a cross pair, less 4 |
 | First basis of each pair doubled | Seven doubled bases at rga4d: 3 adds more per typed object |
@@ -115,18 +116,17 @@ Three decisions wait on [the gap of the table to Lengyel
 (#1015)](https://github.com/mraxilus/delegations/issues/1015):
 
 - **D1.** The rule that doubles the basis of most cross pairs moves how gcc packs products into
-  vectors. So two pairs run at ×1.04 of the old rule: a circle by a motor at cga4d, and a grade-4
-  object by a flector at rga5d. Shared entries alone keep none of the gains on Lengyel's
-  transforms. So the choice is to accept the two pairs (a), or to keep the old rule until a cover
-  that keeps the packing is found (b).
+  vectors. So two pairs run at ×1.04 of the old rule. They are a circle by a motor at cga4d, and
+  a grade-4 object by a flector at rga5d. Shared entries alone keep none of the gains on
+  Lengyel's transforms. So the choice is to accept the two pairs (a), or to keep the old rule
+  until a cover keeps the packing (b).
 - **D2.** An entry summed as a balanced tree brings the point and the plane to ×0.98 of Lengyel's
   time. It moves the line to ×1.22 from ×1.18. So the choice is sums in order (a), as now, or
   balanced sums (b).
 - **D3.** The line at rga4d spends 13 adds more than Lengyel's, and runs at ×1.18 of his time.
   His form computes the moment through quaternion 𝐤, which the table cannot read off. A form
-  by hand for one object is what the ruling on #1015 keeps out. So the choice is to close #1015
-  with the gap recorded here (a), or to keep it open for a rule that reads part of the table as
-  the chain (b).
+  by hand for one object is what the ruling on #1015 keeps out. So #1015 closes with the gap
+  recorded here (a). Or it stays open for a rule that reads part of the table as the chain (b).
 
 The Architect ruled D48 a, D49 f and D50 a on
 [the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
