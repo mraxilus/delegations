@@ -374,5 +374,5 @@ type  ## Define type definitions for algebraic distinctions.
 ```
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # `e1`, i.e. `Basis.E1.initElement(1)`
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # `e1`, i.e. `initElement(Basis.E1, 1)`
 ```

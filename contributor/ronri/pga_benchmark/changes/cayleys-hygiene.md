@@ -83,7 +83,7 @@ in `constructProductGeometric`. After P01, its edit quotes those two lines of P0
         ),
       ),
     ),
-  )
+  )  ## TODO: Document.
 ```
 
 ```nim
@@ -156,7 +156,7 @@ in `constructProductGeometric`. After P01, its edit quotes those two lines of P0
         ),
       ),
     ),
-  )
+  )  ## TODO: Document.
 ```
 
 ## Edit `pga/cayleys.nim`

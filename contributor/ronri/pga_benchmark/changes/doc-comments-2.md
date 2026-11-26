@@ -114,7 +114,7 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  Chiral*[T] = object
+  Chiral*[T] = object  ## TODO: Document.
 ```
 
 ```nim
@@ -125,11 +125,11 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-      flat*, round*: T
+      round*: T  ## TODO: Document.
 ```
 
 ```nim
-      flat*, round*: T  ## Under rigid metric only `round` exists, and nothing is round.
+      round*: T  ## Under rigid metric only `round` exists, and nothing is round.
 ```
 
 ## Edit `pga/cayleys.nim`
