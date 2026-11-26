@@ -450,7 +450,8 @@ suite "Merge":
       proc(): int = judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace)
     )
     check drifted.code == 1 and runs_in_place == 1
-    check "GUIDE.md: Base changed sections" in drifted.output
+    check "GUIDE.md: actual=\"`# Guide`, `## Toolchain`\" message=\"base changed sections" in
+      drifted.output  # line form, as output is no terminal
     check "1 finding(s)." in drifted.output and "Merge with base not judged" in drifted.output
     discard root.git("merge -q --no-edit main")
     check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 7  # holds base

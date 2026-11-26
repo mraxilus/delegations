@@ -48,7 +48,7 @@ proc fixEvery(
   locked: openArray[string],
   context: Context,
   provers: ProversPin,
-): tuple[fix: Fixed, failures: seq[string]] =
+): tuple[fix: Fixed, failures: seq[Finding]] =
   ## Fix every entry again each round of asking: reference that loop of `fixProven`, fixing
   ##   entries that asked alone, is held equal to (Article IX.2).
   var known = context
@@ -56,8 +56,8 @@ proc fixEvery(
   for ask in 1..ASKS_MAX:
     if result.fix.asked.len == 0: break
     for failure in known.answered(tree, result.fix.asked, provers):
-      let line = Rule.ParenthesesNeedless.id & ": " & failure
-      if line notin result.failures: result.failures.add line
+      let warning = finding("", 0, failure, rule = Rule.ParenthesesNeedless.id)
+      if warning notin result.failures: result.failures.add warning
     result.fix = fixEntries(branch, entries, locked, known)
 
 
@@ -965,17 +965,16 @@ suite "Fixes":
           Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
     let (fix, failures) = fixProven(BRANCH_CURATOR, tree, [tree[^1]], [], initContext(tree), broken)
     check fix.written.len == 0 and fix.fixed.len == 0
-    check failures == @["needless-parentheses: Compiler failed; got `x`."]  # driver pin asked
+    check failures.mapIt((it.rule, it.brief)) ==
+      @[("needless-parentheses", "compiler failed; got `x`")]  # driver pin asked
     let unpinned = treeGood().without(DIRECTORY_AUDIT & "/audit.nimble").with(
       entry("koch2.nim", GROUPED),
     )
     let alone =
       fixProven(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], initContext(unpinned), broken)
     check alone.fix.written.len == 0
-    check alone.failures == @[
-      "needless-parentheses: Parser proved no removal, since project pins no compiler; got " &
-        "`koch2.nim`.",
-    ]
+    check alone.failures.mapIt(it.brief) ==
+      @["parser proved no removal, since project pins no compiler; got `koch2.nim`"]
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":

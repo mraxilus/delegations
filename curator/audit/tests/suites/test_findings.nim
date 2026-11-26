@@ -1,12 +1,14 @@
 ## Replicate finding record of `findings.nim` header: its order, how it renders, and how
 ##   report of knoller renders as finding, article where sentence of its message ends.
+##   Each finding prints through renderer of knoller in form asked, summary keeping its article
+##     (D1 of #1002), and its short text is what each suite compares (D3 of #1002).
 ##   Every check reports through these, so they are held here, not only through checks.
 ##   Messages of knoller's checks name no article, so each text koch prints with article is held
 ##     here, through real check, rather than in suites of knoller.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, unittest]
+import std/[algorithm, options, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
 import ../../src/findings
 
@@ -17,6 +19,55 @@ suite "Findings":
     check finding("a/b.nim", 3, "Broke.").render == "a/b.nim:3: Broke."
     check finding("a/b.nim", 0, "Broke.").render == "a/b.nim: Broke."  # whole file
     check finding("", 0, "Broke.").render == "Broke."  # branch-level, no file to open
+
+
+  test "finding carries rule, expected value, help, column and span, each where check gives it":
+    let bare = finding("a.md", 3, "Broke.")
+    check bare.rule.len == 0 and bare.expected.isNone and bare.help.len == 0  # none given
+    check bare.column == 0 and bare.span == 0
+    let full = finding(
+      "a.md", 3, "Broke; got `x`.", rule = "koch.x", expected = some("y"), help = "mend it",
+      column = 2, span = 1,
+    )
+    check (full.rule, full.expected, full.help, full.column, full.span) ==
+      ("koch.x", some("y"), "mend it", 2, 1)
+
+
+  test "finding reads as notice, summary keeping its article, as both forms print it":
+    let words = finding(
+      "a.md", 3, "Sentence holds at most 25 words (ASD-STE100); got `One two`.", rule = "koch.x",
+      help = "split it",
+    )
+    check words.toNotice(some("One two three.")) == Notice(
+      path: "a.md", line: 3, rule: "koch.x", summary: "sentence holds at most 25 words " &
+        "(ASD-STE100)", actual: some("One two"), help: "split it", source: some("One two three."),
+    )  # article stays in summary (D1 of #1002)
+    check words.brief ==
+      "sentence holds at most 25 words (ASD-STE100); got `One two`; help: split it"
+    check finding("", 0, "Branch holds no commit.").brief == "branch holds no commit"
+
+
+  test "findings render sorted in form asked, each with its line where caller holds its file":
+    let
+      found = @[
+        finding("b.md", 2, "Late; got `y`.", rule = "koch.y"),
+        finding("a.md", 1, "Early (X.1); got `x`.", rule = "koch.x"),
+      ]
+      sources = {"a.md": "first line\nsecond\n"}.toTable
+    check found.rendered(Form.Line) == @[
+      "a.md:1: koch.x: actual=\"x\" message=\"early (X.1)\"",
+      "b.md:2: koch.y: actual=\"y\" message=\"late\"",
+    ]  # pipe or log: one line each, sorted
+    check found.rendered(Form.Terminal, sources = sources) == @[
+      "",
+      "a.md:1  koch.x\n\n  early (X.1)\n\n     1 │ first line\n\n  actual  x",
+      "",
+      "b.md:2  koch.y\n\n  late\n\n  actual  y",
+    ]  # terminal: blank line before each, and line shown where caller holds its file
+    check found.rendered(Form.Line, is_warning = true)[0] ==
+      "a.md:1: koch.x warning: actual=\"x\" message=\"early (X.1)\""
+    check not found.rendered(Form.Terminal).anyIt("\e[" in it)  # no color unasked
+    check found.rendered(Form.Terminal, is_colored = true)[1].startsWith("\e[36ma.md:1\e[0m")
 
 
   test "finding is no propagation unless check says so":
@@ -48,7 +99,7 @@ suite "Findings":
 
   test "rewrite of knoller renders as its rule and article, as koch fix prints it":
     check initReport("a.nim", 3, Rule.SpacingExpression).toFinding ==
-      finding("a.nim", 3, "expression spacing (X.9)")
+      finding("a.nim", 3, "expression spacing (X.9)", rule = "expression-spacing")
     let rendered = [
       (Rule.WhitespaceTrailing, "trailing whitespace (VIII.5)"),
       (Rule.TabInString, "tab in string (X.1)"),
@@ -75,12 +126,26 @@ suite "Findings":
       found = initReport("a.nim", 2, Rule.CommentTrailing, "Comment gap; got `1`.")
       bare = initReport("a.nim", 0, Rule.FileEnding, "File ends in one newline.")
       quoting = initReport("a.nim", 1, Rule.ValueMessage, "Ends as ``a; got `b`.``; got `c`.")
-    check found.toFinding == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
+    check found.toFinding ==
+      finding("a.nim", 2, "Comment gap (X.9); got `1`.", rule = "trailing-comment")
     check not found.toFinding.is_propagation  # whoever owns path fixes it
     check bare.toFinding.message == "File ends in one newline (VIII.5)."  # sentence echoes none
     check quoting.toFinding.message == "Ends as ``a; got `b`.`` (IV.4); got `c`."  # span quotes
     let reports = @[found, initReport("b.nim", 0, Rule.FileEnding)]
     check reports.toFindings.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
+
+
+  test "report of knoller renders as finding under id of its rule, with value, help and place":
+    let width = initReport(
+      "a.nim", 7, Rule.LineWidth, "Line exceeds 100 characters; got `120`.",
+      expected = some("at most 100"), help = "break line", column = 101, span = 20,
+    )
+    check width.toFinding == finding(
+      "a.nim", 7, "Line exceeds 100 characters (X.1); got `120`.", rule = "line-width",
+      expected = some("at most 100"), help = "break line", column = 101, span = 20,
+    )
+    check width.toFinding.brief == "line exceeds 100 characters (X.1); got `120`; expect " &
+      "`at most 100`; help: break line"  # short text of D3 of #1002, article in summary
 
 
   test "value quoting `; got ` inside code span leaves article where sentence ends":
