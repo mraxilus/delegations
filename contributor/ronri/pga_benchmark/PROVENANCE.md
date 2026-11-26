@@ -70,7 +70,7 @@ expression compiles against the library. The set of symbols equals the set of ex
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
-Verified by the evaluation of P13 on 2026-11-20. Each transform counts `⟇⟇~∘` at a motor type: 82
+Verified by the evaluation of P13 on 2026-11-26. Each transform counts `⟇⟇~∘` at a motor type: 82
 multiplies at rga4d, and 23 at rga3d.
 
 ## Reference
@@ -1678,8 +1678,11 @@ micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
 unrolled at no cost. At the pin `7ef9f4d` the library works this way, and its attitude and
-carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each coefficient, so
-they fill nothing. The cost that stays is what the hand-written norms pay.
+carrier are generated. Its hand-written `-` carries `noinit` and writes each coefficient, so it
+fills nothing. Its `+` of two multivectors carries `noinit` too, yet its C fills the result with
+zeros before the loop writes it, 128 bytes at rga4d, as the static baselines read. The cause of
+that fill is not isolated, and P14 writes a `+` with no fill. The cost that stays is what the
+hand-written norms pay, and that fill.
 
 The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
@@ -1726,8 +1729,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   `wedge` at cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in the
   history of `evaluations/cayley-derivation.json`, at `c2e80da3` and `78d5c3d5`. The stamps at
   `08a1c416` name a Xeon of family 6 model 173, where pin ran it in 48.49 ns. The stamps now name
-  model 207, where it runs in 65.19 ns. Nothing records the processor of 2026-11-05 or 2026-11-14.
-- The baselines and each evaluation but those of P02 and P06 ran on 2026-11-15 on one processor,
+  model 207, where it runs in 66.13 ns. Nothing records the processor of 2026-11-05 or 2026-11-14.
+- The baselines and each evaluation but those of P02 and P06 ran on 2026-11-26 on one processor,
   a Xeon of family 6 model 207. The stamps of P02 and P06 name no processor, which leaves their
   machine unknown. So a time of P02 or P06 compares with another time only where the times of pin
   agree.
