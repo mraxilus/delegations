@@ -176,6 +176,20 @@ suite "Objects":
       check directionHorizon(attitude).isSome
 
 
+  test "a value reads in the horizon or out of it alike at each scale":
+    # Fault: norms of point at scale 1e-300 squared each coefficient to zero, so it read as
+    #   horizon point (repository issue 970). Scale past 2^512 squared them to infinity.
+    # Domain: point, line and plane of each sample, and their attitudes in horizon, each at
+    #   each power of two from 2^-1000 to 2^1000 by 100, which keeps every coefficient normal.
+    check not isHorizon(1.0e-300 * POINTS[0])
+    for i in 0..<SAMPLES:
+      for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i]]:
+        let expected = isHorizon(m)
+        for exponent in countup(-1000, 1000, 100):
+          checkpoint &"sample {i}, scale 2^{exponent}"
+          check isHorizon(pow(2.0, float(exponent)) * m) == expected
+
+
   test "the incidence vocabulary answers what the classical forms answer, sign included":
     # Classical forms live HERE, in test, and algebra lives in `objects.nim`.
     #   -- holding two equal is project's purpose, and it is also what pins every
