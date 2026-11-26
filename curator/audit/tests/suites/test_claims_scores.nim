@@ -203,6 +203,16 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TIME, 10, 12, 15, 12, confidence = 0.9).scoreNumber.isNone  # 191 fall
 
 
+  test "number whose curve is NaN at some place takes none, as server of Metaculus refuses it":
+    # Case as found: second review of #1012 found score of NaN, which spoils each mean of its group.
+    #   Percentile whose place lies under 1 / 200 takes two points at places 0 and 1 / 200
+    #   (`hydrateQuantiles`), so place 0 holds two points, and curve there is 0 / 0. Server of
+    #   Metaculus refuses such curve, since `inbound_pmf >= min_diff` fails for NaN.
+    check initNumber(TEXT_TIME, 0.103, 5, 30, 4, confidence = 0.9).scoreNumber.isNone
+    check initNumber(TEXT_COST, 0.0102, 0.40, 2, 0.5, confidence = 0.9).scoreNumber.isNone
+    check not curveStep(100, NaN).isCurveTaken
+
+
   test "curve that Metaculus takes holds 201 places, each step rounded from 0.01 / 200 to 0.59":
     # `validateUserQuantileData` of Metaculus: step rounds to 10 places, then 1% of mass spread
     #   even over buckets is least step, and 0.59 most step of continuous question.
