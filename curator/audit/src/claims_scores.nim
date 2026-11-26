@@ -275,12 +275,13 @@ func curveNumber(number: Number, unit: Unit, confidence: float): seq[float] =
 
 func isCurveTaken*(curve: openArray[float]): bool =
   ## Whether Metaculus takes curve as forecast: `COUNT_BUCKETS + 1` places, and each step, rounded
-  ##   to 10 places, from `STEP_LEAST` to `STEP_MOST` (`validateUserQuantileData`). Each mass of
-  ##   floor of such curve lies above 0, so search of scale under cap ends.
+  ##   to 10 places, from `STEP_LEAST` to `STEP_MOST` (`validateUserQuantileData`). Step of NaN
+  ##   fails too, as server refuses it (`questions/serializers/common.py`). Each mass of floor of
+  ##   such curve lies above 0, so search of scale under cap ends.
   if curve.len != COUNT_BUCKETS + 1: return false
   for i in 1..curve.high:
     let step = floor((curve[i] - curve[i-1]) * DIGITS_ROUND + 0.5) / DIGITS_ROUND
-    if step < STEP_LEAST or step > STEP_MOST: return false
+    if not (STEP_LEAST <= step and step <= STEP_MOST): return false  # NaN fails each comparison
   true
 
 
