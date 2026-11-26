@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | a90d4bebd82e88cade329671593cd14f3fbab101 |
+| Pruned  | 0169748393797b91e1294a2d4533816f43d045f5 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -1577,11 +1577,10 @@ fetch that fails.
 - No step makes the path. A restore makes it. The log of `drive` shows that the restore runs
   `tar -xf -P -C`, and in a probe on 2026-11-17 that made a missing path. Where the restore
   misses, the suite writes the store itself.
-- Rejected: the key of `drive` in each `test` job. The first job to finish takes each new key. So
-  a job that fetched nothing would save it without the new rows. On the runner, 2026-11-16,
-  `test` of `curator/assayer` took 30 s, where `drive` of ricyso'o took 105 s. Each `test` job
-  would also restore 122,461,885 B, in about 2.6 s, as `drive` of ricyso'o did on the runner that
-  day.
+- Rejected: the key of `drive` in each `test` job. The first job to finish takes each new key. So a
+  job that fetched nothing would save it without the new rows. On the runner, 2026-11-16, `test` of
+  `curator/assayer` took 30 s, where `drive` of ricyso'o took 105 s. Each `test` job would also
+  restore 122,461,885 B, in about 2.6 s, as `drive` of ricyso'o did on the runner that day.
 - Rejected: `actions/cache/restore` of the entry of `drive`. That entry holds what the first
   `drive` job to save had fetched, which need not be every row that the suite reads. So the suite
   would fetch the rest on each run.
@@ -1632,10 +1631,9 @@ it under `build/`, so the store holds its bytes alone, and trusts them as it tru
 least two contributor projects use it, and each of them is named. A later refactor can then
 tell a common project nobody needs from one everybody does.
 
-The store is the only thing in the repository that clears that bar. Compilers, Atlas checkouts
-and npm are pinned for each project deliberately, and a tree with one inhabitant is a rename
-with a migration attached. So the published contract above serves, and the tree waits for a
-second case.
+The store is the only thing in the repository that clears that bar. Compilers, Atlas checkouts and
+npm are pinned for each project deliberately, and a tree with one inhabitant is a rename with a
+migration attached. So the published contract above serves, and the tree waits for a second case.
 
 **If it is ever built, the curator writes it and contributors only read it.** A shared tree
 that a contributor may write is a scope boundary the branch grammar cannot check.
@@ -1894,10 +1892,9 @@ is the failure it exists to catch.
 - Verified by hand through a stub for `gh`, recorded 2026-09-12. `gh` is not installed here,
   and a scheduled workflow runs only from the default branch. A draft, a green head and a head
   whose run is still `in_progress` are skipped, and a red head is named.
-- The list asks for 200 merged pull requests, newest first, because the window of 14 days
-  must fit inside it. Fourteen days held under a hundred merges, counted by
-  `git log --first-parent --merges` on 2026-09-24. Rejected: a limit of 60, which the same
-  count showed to end inside the window.
+- The list asks for 200 merged pull requests, newest first, because the window of 14 days must fit
+  inside it. Fourteen days held under a hundred merges, counted by `git log --first-parent --merges`
+  on 2026-09-24. Rejected: a limit of 60, which the same count showed to end inside the window.
 - A merged pull request that names an issue still open is named with its base. One outside the
   window is not. A body that opens `**Role:**` and one that opens
   `Role:` unbolded both pass, while a null body and a missing label are named. A red `ledger`
@@ -4459,8 +4456,11 @@ run. The unit of a number fixes its range, as `GUIDE.md` gives it. Its confidenc
 between its outer two percentiles, so it places them. They are the 5th and 95th at 90%, and the
 10th and 90th at 80% (comment 7191274618). A number takes no baseline score, and no band.
 
-- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart, at 80%
-  and 90%. By hand on 2026-11-26, seven mutants of the steps each fail it.
+- Time and a count take their ranges by D5 a and D1 a of #964 (comment 7193361977). A count is
+  named by its label `Count:`, and runs from a closed bound at 0, on the logarithm of the count
+  plus one. An outcome beyond a closed bound takes no score.
+- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart, for
+  each unit at 80% and 90%. By hand on 2026-11-26, eleven mutants of the steps each fail it.
 - Rejected: the log score on the logarithm with no range, whose level no other site shares.
 - Cost: a number of another unit takes no score until code fixes its range.
 

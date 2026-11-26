@@ -218,9 +218,10 @@ Each claim follows these rules for forecasting:
   scores by the log score of the distribution of its percentiles, with a floor, as Metaculus
   scores it. The track record is a calibration curve with its 90% credible band.
 - **A number names its unit at the start of its text, after its label: `tokens`, `cost` or
-  `time`.** The range of `tokens` is 10,000 to 1,000,000,000, and that of `cost` is $0.01 to
-  $1,000. Each range is on the logarithm, and its bounds are open. Time counts in minutes, and
-  takes no score until it has a range, as does each other unit.
+  `time`.** A count takes the label `Count:` instead. The range of `tokens` is 10,000 to
+  1,000,000,000, that of `cost` $0.01 to $1,000, and that of `time` 0.1 to 10,000 minutes. Each
+  is on the logarithm, with open bounds. A count runs from 0, a closed bound, to 100,000, on the
+  logarithm of the count plus one. A number of another unit takes no score.
 - **The table has no column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
