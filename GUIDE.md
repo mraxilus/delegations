@@ -202,8 +202,8 @@ Each claim follows these rules for forecasting:
 - **Each claim stands on the side that you believe, from 51% to 98%.**
 - **Each claim has a resolution criterion.** A reader can resolve it from the report, the critic
   and the tree alone.
-- **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
-  confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
+- **A number is three percentiles: the 5th, the 50th and the 95th.** In the table, its
+  confidence is 90%, the mass between its 5th and 95th percentiles. Its state is ✅ where the
   result falls between them, and a result on either percentile counts as inside. Its cell under
   `Result` opens with the value, as `170,000, inside`, since the log of claims reads that number.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
@@ -251,7 +251,7 @@ Then the subagent runs, and these steps follow:
   claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
   neither stands, it ends before one final full stop of its bullet.
 - **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
-  confidence. It ends at its percentiles, which open with the words `, as the 10th`. A
+  confidence. It ends at its percentiles, which open with the words `, as the 5th`. A
   percentage in brackets in its text, as `(10% cached)`, stays in the claim.
 - **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
   letters, plain or in italics, bold or both. So `. **Resolution criterion:**` and
@@ -287,8 +287,8 @@ Then the subagent runs, and these steps follow:
   that the diff removes or loosens.
 - Judgement: it names the lock of the store as a second risk (60%). Resolution criterion: the
   report names the lock in a finding.
-- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
-  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
+  95th percentiles. Resolution criterion: the sum of the usage of its requests.
 
 **Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
 ```
@@ -306,7 +306,7 @@ report and failed one.
 | ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
 | ✅ | 85% | no test is weakened | none is (the critic read each test of the diff) |
 | ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
-| ✅ | 80% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
+| ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.

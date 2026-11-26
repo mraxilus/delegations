@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 2f1308a4a1eae24d43f3f1718ba70fbe4870774e |
+| Pruned  | a90d4bebd82e88cade329671593cd14f3fbab101 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -1331,9 +1331,8 @@ may open with a whole paragraph, and the finding is read in a log.
   of its runs, because half live under half an hour.
 - Rejected: `opened` dropped from the trigger. The check then says nothing to a delegate who
   opened a pull request wrongly, which is the reason it exists.
-- A missing role label takes one finding, which names the job `label` as what adds it. The
-  finding stays red, because a green run on an empty list would let a pull request merge with no
-  label.
+- A missing role label takes one finding, which names the job `label` as what adds it. The finding
+  stays red, because a green run on an empty list would let a pull request merge with no label.
 - Cost: an issue carries no branch, so which label it needs stays a judgement, and stays the
   ledger's. A comment is unreachable, and that is what remains of the first carried rule.
 - Cost: the labels are searched for the expected string rather than compared whole. A role
@@ -1405,10 +1404,9 @@ summary of one to three sentences, then its points. At most `CHARACTERS_BODY` ch
 while each fold is closed, and a link counts by its text. So the Architect skims the whole of
 what merges at the gate, and evidence costs no room.
 
-`checkBodyPull` in `role.nim` holds the form. `check-role` calls it at each event, and the
-`body` hook calls it at each create and each update of a pull request. So the rule lives once,
-and the hook and the runner agree. The hook holds no rule of its own (section Hooks on tool
-calls).
+`checkBodyPull` in `role.nim` holds the form. `check-role` calls it at each event, and the `body`
+hook calls it at each create and each update of a pull request. So the rule lives once, and the hook
+and the runner agree. The hook holds no rule of its own (section Hooks on tool calls).
 
 - Cost: no suite drives `koch check-role`, so no suite reads its call of `checkBodyPull`. The
   runner and the hand check of #449 below hold it.
@@ -1480,10 +1478,9 @@ that the shape is settled for all time.
   every weight, and the three files of Commit Mono map one set. A font face whose bytes move splits
   from its constant.
 - **`font_files.nim` reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import
-  decodes Brotli, and a codec is an external concern (Article II.8). A machine without the
-  library fails each read of `woff2` by name, and every other suite still runs. Rejected:
-  `fc-query` as the reader, which adds fontconfig to every machine and reads its charset rather
-  than the `cmap`.
+  decodes Brotli, and a codec is an external concern (Article II.8). A machine without the library
+  fails each read of `woff2` by name, and every other suite still runs. Rejected: `fc-query` as the
+  reader, which adds fontconfig to every machine and reads its charset rather than the `cmap`.
 - Cost: the test fetches each font face that the store lacks. Measured on 2026-11-17 in the cloud
   container of Claude Code, at `32b589292`. Each range holds three runs, from the start of the
   suite to its exit. Into an empty store, it fetched 5,670,612 bytes in 3.8 to 5.0 s, and warm it
@@ -1526,19 +1523,17 @@ a copy from two different font faces.
   page that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchLanding` reads the bytes that it fetched through
   `digest` of knoller, so the parse that the suites of knoller test also guards the store.
-- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
-  fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
-  Three whole font faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
-  fetches nothing.
+- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch fetch-assets`
+  on 2026-10-04, in the cloud container of Claude Code, into an empty store. Three whole font faces,
+  2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and fetches nothing.
 - Verified by a break of it, on 2026-09-10. A font face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
 - Cost: the store grows and nothing prunes it. A font face is less than 1 MB, where a fetched
   compiler is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins
   the repository has ever held, and not the bytes.
-- Cost: an upstream that moves bytes under one address fails every project at once, rather
-  than one. That is the same failure that a digest exists to make loud, and it is louder
-  shared.
+- Cost: an upstream that moves bytes under one address fails every project at once, rather than one.
+  That is the same failure that a digest exists to make loud, and it is louder shared.
 - **The Nim tarball is deliberately not here.** It is fetched and checksummed too, but its
   digest comes from the sidecar of upstream at fetch time, rather than from this table. It is
   stored *unpacked by pin*, because the rest of koch resolves toolchains by pin. The trust
@@ -4213,9 +4208,8 @@ read. It is the form of the samples of `GUIDE.md`, where each claim is a bullet 
   `suites/test_hooks.nim`.
 
 **A claim with percentiles ends at them, and no percentage in brackets ends it** (comment
-7023048202). Its percentiles state its confidence, the mass between its 10th and 90th
-percentiles. So a percentage in brackets in its text, as `(10% cached)` or `2 (4%)`, stays in
-the claim.
+7023048202). Its percentiles state its confidence, the mass between its outer two percentiles.
+So a percentage in brackets in its text, as `(10% cached)` or `2 (4%)`, stays in the claim.
 
 - Choice: the percentiles end a claim only where they are the first mark of its bullet. The
   reason: where the resolution criterion comes first, the percentiles belong to the criterion.
@@ -4233,8 +4227,9 @@ confidence stays in the claim. Where no percentage stands there, the claim ends 
   digits alone would narrow that.
 - Choice: other text in brackets is no percentage, as `(70 %)`, `(about 70%)` or `(.5%)`. The
   guide writes a confidence as `(70%)`, and a looser read would end a claim at a figure of its text.
-- Choice: the words `, as the 10th` open percentiles, because the samples of `GUIDE.md` write them
-  so. No comment names these words.
+- Choice: the words `, as the 5th` open percentiles, as the samples of `GUIDE.md` write them at
+  90% (comment 7191274618). The words `, as the 10th` still open them, since a block written at
+  80% ends there.
 - The words `. Resolution criterion` of the samples open a criterion plain, or in italics, bold
   or both, as `. *Resolution criterion:*` (comment 7027197745). Up to three marks of emphasis
   stand between the full stop and the words.
@@ -4289,7 +4284,8 @@ form that opens no claim. It holds `No prediction` with and without a block, and
   a mark twice in a bullet. It holds a decimal percentage, and text in brackets that is none. It
   holds the probes M1, M2 and M6 of the critic of the build of D5 b, as each was found.
 - For the percentiles: probe F11 of the critic of the claim build, and the example of the ruling.
-  It holds a percentage after them, a criterion before them, and `, As the 10th`, which opens none.
+  It holds a percentage after them, a criterion before them, and both sets of words. It holds
+  `, As the 10th` too, which opens none.
 - For the criterion: probes F02, F03 and F07. It holds each case of its words, plain and in each
   form of italics, bold or both, as the bullets that `marks` counts. It holds two forms in one
   bullet, each form left out, and a claim that quotes the words.
@@ -4449,18 +4445,22 @@ unmarked takes none.
 
 - Each band of confidence, 51% to 60% and on in steps of 10 to 98%, gives its count and share of
   hits. Its credible band is the 5th and 95th percentiles of `Beta(hits + 1, misses + 1)`.
+- A claim under 50% counts as its other side, at one minus its confidence, with its hit and miss
+  swapped. D3 c of #964 rules it (comment 7191274618), and its baseline score stays the same.
 - The mass of Beta is the continued fraction of Numerical Recipes, 3rd edition, 6.4.
 - Verified by `suites/test_claims_scores.nim`, against a binomial sum in exact rationals. By hand
   on 2026-11-21, four mutants of the module each fail it.
-- Cost: the bands stay until D3 of #964 (comment 7189682360) is ruled.
+- Rejected: the bins and the band of a perfect forecaster of Metaculus. Its bins of 0.05 hold 2 to
+  6 claims of a kind, where that band runs from 0 to 1.
 
 **A number scores as Metaculus scores a continuous question, as D2 a of #964 rules (comment
 7189788889).** Each step copies the source of Metaculus at `8e413fb`, which was read and never
-run. The unit of a number fixes its range, as `GUIDE.md` gives it. A number takes no baseline
-score, and no band.
+run. The unit of a number fixes its range, as `GUIDE.md` gives it. Its confidence is the mass
+between its outer two percentiles, so it places them. They are the 5th and 95th at 90%, and the
+10th and 90th at 80% (comment 7191274618). A number takes no baseline score, and no band.
 
-- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart. By
-  hand on 2026-11-26, seven mutants of the steps each fail it.
+- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart, at 80%
+  and 90%. By hand on 2026-11-26, seven mutants of the steps each fail it.
 - Rejected: the log score on the logarithm with no range, whose level no other site shares.
 - Cost: a number of another unit takes no score until code fixes its range.
 
