@@ -477,6 +477,51 @@ suite "Scene":
           check formatMagnitude(signed) == storage.toText
 
 
+  test "a magnitude within an ulp of a tie of four digits rounds as C rounds it":
+    # Fault: product of value and power of ten rounded to exactly .5, so side of tie that
+    #   value stood on was lost: `2.3335` read `2.334`, where C reads `2.333` (repository
+    #   issue 1053).
+    # Domain: tie `d.ddd5` of each 101st mantissa from 9999 down to 1000, at each seventh
+    #   decade from 1e-323 to 1e300, of each sign, against C's `%.4g`. Beside each tie: double
+    #   on each side, and value 2^-41 and 2^-39 of it on each side, inside margin and out.
+    #   Text pinned for eight, which page runs too: two stand nearest any tie, within 1.1e-22
+    #   of it, one is exact tie, and one stands under tie that carry to 1e-10 hides.
+    const
+      step_mantissa = 101
+      step_decade = 7
+      count_values = 90 * 90 * 7 * 2
+        ## Count values compared: 90 mantissas, 90 decades, seven beside each tie, two signs.
+    check formatMagnitude(2.3335) == "2.333"
+    check formatMagnitude(-2.3335) == "-2.333"
+    check formatMagnitude(0.0031905) == "0.003191"
+    check formatMagnitude(8.7065e-311) == "8.707e-311"
+    check formatMagnitude(4.3495e-273) == "4.35e-273"
+    check formatMagnitude(4.6345e-42) == "4.635e-42"
+    check formatMagnitude(9999.5) == "1e+04"
+    check formatMagnitude(9.9995e-11) == "9.999e-11"
+    when not defined(js):
+      var count = 0
+      for mantissa in countdown(9999, 1000, step_mantissa):
+        for decade in countup(-323, 304, step_decade):
+          let
+            tie = parseFloat(&"{mantissa}5e{decade - 4}")
+            bits = cast[uint64](tie)
+            (inside, outside) = (pow(2.0, -41.0), pow(2.0, -39.0))
+          for near in [
+            cast[float](bits - 1), tie, cast[float](bits + 1), tie * (1.0 - inside),
+            tie * (1.0 + inside), tie * (1.0 - outside), tie * (1.0 + outside),
+          ]:
+            for signed in [near, -near]:
+              var
+                storage: array[64, char]
+                cursor = 0
+              appendMagnitude(storage, cursor, signed)
+              checkpoint &"{signed}"
+              check formatMagnitude(signed) == storage.toText
+              inc count
+      check count == count_values
+
+
   test "multivectors print every term they carry, and nothing else":
     # Significant digits, not fixed decimal places: whole number reads as one, and.
     #   coefficient keeps only digits it actually carries. Basis elements are named
