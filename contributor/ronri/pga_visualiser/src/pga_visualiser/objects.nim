@@ -216,12 +216,11 @@ const
     ##   Largest coefficient under `2^1024` goes under `2^424`, whose square stays finite.
 
 
-template weightNorm(m: Multivector): float = abs((|∘m)[Basis.scalarAnti])
-  ## Read weight norm of `m` as number, inline: page calls nothing more for it.
-
-
-template bulkNorm(m: Multivector): float = abs((|∙m)[Basis.scalar])
-  ## Read bulk norm of `m` as number, inline: page calls nothing more for it.
+func isWeightNegligible(m: Multivector): bool =
+  ## Report whether weight norm of `m` stands at or under `TOLERANCE_ABS` of its bulk norm.
+  ##   For copy that `isHorizon` scales alone: page never reaches it, so its call costs page
+  ##     nothing, where object in normal range reads both norms inline.
+  abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
 
 
 func isHorizon*(m: Multivector): bool =
@@ -238,14 +237,11 @@ func isHorizon*(m: Multivector): bool =
   {.cast(noSideEffect).}:
     if IS_COUNTING_HORIZONS and m.isSameCoefficients(MULTIVECTOR_WATCHED): inc COUNT_HORIZONS
   let
-    weight = m.weightNorm
-    bulk = m.bulkNorm
-  if weight == Inf or bulk == Inf:
-    let dropped = SCALE_HORIZON_DOWN * m
-    return dropped.weightNorm <= TOLERANCE_ABS * dropped.bulkNorm
+    weight = abs((|∘m)[Basis.scalarAnti])
+    bulk = abs((|∙m)[Basis.scalar])
+  if weight == Inf or bulk == Inf: return isWeightNegligible(SCALE_HORIZON_DOWN * m)
   if weight < NORM_LEAST_EXACT and bulk < NORM_LEAST_EXACT:
-    let lifted = SCALE_HORIZON_UP * m
-    return lifted.weightNorm <= TOLERANCE_ABS * lifted.bulkNorm
+    return isWeightNegligible(SCALE_HORIZON_UP * m)
   weight <= TOLERANCE_ABS * bulk
 
 
