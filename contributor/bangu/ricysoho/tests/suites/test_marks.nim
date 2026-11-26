@@ -138,6 +138,7 @@ const
     "mi html ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
     "mi ponse €5 .e $6", "lo jdima cu du 86,000,704.75€", "mi ponse ci ¥5 .i 50¢ cu cmalu",
     "5 € .i 5€6 .i mi ponse £5", "li -5% .e li ½", "mi ponse ~5€ .e li π", "li 2π .i li 5-3",
+    "li -∞ .i mi ponse -$5 .e €½ .i 5€-5",
   ]
     ## lo selci'a poi selfi'i fi le flalu pe lo gacri
     ##   .i le selci'a cu vasru slaka bu .e lo brale'u .e lo nu sitna poi vasru lo sinxa ku'o .e lo
