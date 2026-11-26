@@ -1340,7 +1340,7 @@ suite "Internal: Stream":
     #   .i ro namcu cu ponse su'e pa jdini sinxa to `D2 a` toi
     #   .i ji'a le jdini sinxa poi pencu lo sinxa pe lo namcu cu pencu le namcu to `D7 c` toi
     for (text, at) in [
-        ("5€-5", 1), ("5%€5", 2), ("€5%€5", 5), ("-€-5", 0), ("€-€5", 4), ("-5€€", 2),
+        ("5€-5", 1), ("5%€5", 2), ("€5%€5", 5), ("-€-5", 0), ("€-€5", 4), ("-5€€", 5),
         ("€-", 0)]:
       checkpoint text
       check text.refusalSigned == some((at, text.character(at)))
