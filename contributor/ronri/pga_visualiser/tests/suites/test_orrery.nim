@@ -43,6 +43,18 @@ when OBJECTS_MAX >= countObjects(SCALE_ORRERY_DEFAULT):
       abs(a - b) <= parts * max(abs(a), abs(b))
 
 
+    test "a turn that cannot turn, or reads no direction back, fails and names its value":
+      # Fault: turn about axis with no direction, or by motor that carries nothing into
+      #   horizon, kept direction in silence (repository issue 970).
+      let toward = Direction(x: 0.6, y: 0.8, z: 0.0)
+      check turnedAbout(toward, Direction(x: 0, y: 0, z: 1), 0.5 * PI) =~
+          Direction(x: -0.8, y: 0.6, z: 0.0)
+      expect AssertionDefect:
+        discard turnedAbout(toward, Direction(x: 0, y: 0, z: 0), 1.0)
+      expect AssertionDefect:
+        discard turnedBy(toward, Multivector())
+
+
     test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
       #   large for room left instead of stopping on it, which is only reason three

@@ -42,6 +42,26 @@ type
 
 
 
+#[ Parts ]#
+
+template bases*[B: static Bases](t: typedesc[MultivectorOf[B]]): Bases =
+  ## Read bases library's form `t` holds, as `Multivector2` holds six of bivector.
+  ##   Read off form rather than listed, so routine reading part of multivector names
+  ##     bases library itself names for that part.
+  B
+
+
+func isWithin*(m: Multivector, bases: Bases): bool =
+  ## Report whether every coefficient of `m` outside `bases` is zero.
+  ##   For routine that reads part `bases` names alone: what it would drop must be nothing.
+  ##   Exact rather than to tolerance: product of values holding no such part writes zero
+  ##     there exactly, since each of its terms multiplies by zero. NaN there is part.
+  for b in Basis:
+    if b notin bases and m[b] != 0.0: return false
+  true
+
+
+
 #[ Scale ]#
 
 const TOLERANCE_ROUNDING* = 2.0.pow(float(2 * DIMENSIONS - 52))

@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | d99abdcc1d9a849b |
+| Rules   | c1257a30b6557c6e |
 | Pruned  | 6ed293192c184658e451559ebaee8bca91602836 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -430,9 +430,8 @@ limit of time as a fallback, which a loaded machine meets with no page fault. Ve
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.** Runners
 and delegates meet it, and each fault that a bound pins reads over it. A fault reads as `pins.ts`
 recorded it on a delegate on 2026-09-07, under the figure that the check took then. A bound whose
-fault reads inside the spread of unchanged code is a budget, and pins no fault (Article VII.12). The
-bounds of the marker and of the moving grid are budgets, and a count pins each fault (Counts of the
-machine).
+fault reads inside the spread of unchanged code is a budget, and pins no fault (VII.12). The bounds
+of the marker and the moving grid are budgets, and a count pins each fault (Counts of the machine).
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
@@ -507,10 +506,9 @@ frame set off then reaches the page first, in the same order on every machine.
 
 **A touch is waited on until the page holds the fingers where the harness put them.** The protocol
 answers before the page sees a touch move, which the browser holds for its next real frame. Without
-the wait, the same pinch zoomed to 8.41 in four fresh pages and to 7.62 in the fifth. `touchAt` asks
-the page where it holds each finger, and time moves only when the answer matches. It compares places
-and not counts, because two fingers put down together arrive as two starts. The mouse of Playwright
-waits already.
+the wait, the same pinch zoomed to 8.41 in four fresh pages and 7.62 in the fifth. `touchAt` asks
+where the page holds each finger, and time moves only when the answer matches. It compares places,
+not counts, as two fingers put down together arrive as two starts. Playwright's mouse waits already.
 
 **A move inside the touch slop of the browser never arrives, so that wait ends after three real
 rendering steps.** A move of 3, 8 or 14 px from where the finger went down was dropped, and one of
@@ -543,10 +541,9 @@ turns the camera at 300. The lattice adds the difference of the two builds, and 
 records that the frame hands to the upload.
 
 **The counted build is named, and the check refuses a baseline from another build.** The baseline
-names Chromium 153.0.8010.12, which Playwright 1.63.0 pins, its engine flags, and the Nim release
-that the nimble file requires. A run on another build fails, and names the build that it ran. The
-counted build is not the build that ships, which runs the optimiser. So a count is evidence for the
-interpreter alone (IX.6).
+names Chromium 153.0.8010.12, which Playwright 1.63.0 pins, its engine flags, and the Nim release of
+the nimble file. A run on another build fails, and names its build. The counted build is not the
+shipped one, which runs the optimiser. So a count is evidence for the interpreter alone (IX.6).
 
 **The band of each count is zero.** The counted code calls nothing that selects its code by
 processor, and every input is held, the clock among them. Six runs in fresh browsers on 2026-11-15
@@ -554,8 +551,7 @@ read each count the same. A count under its baseline passes, and the baseline is
 
 **A static count stands beside each count of the machine, because it names the line.** The check of
 the marker reports the copy sites in the functions that its span reaches: 50 sites in 84 functions.
-The check of the lattice reports those in the functions that only the lattice reaches: 11 sites in
-15 functions.
+The check of the lattice reports those that only the lattice reaches: 11 sites in 15 functions.
 
 | Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
 |-------|----------|--------------------|----------------------------|
@@ -579,15 +575,17 @@ of the lattice pin no named fault, so each says that it pins the work that a cha
 
 **A move of the library pin is counted at both pins, and each count that grows is traced to its
 cause.** The baselines are counted at the pin, so a count that grows on a move fails the drive. At
-`3d9696e`, the copies grew for one cause, the generic `+` of the library (Dependencies and
-vendoring). That fix belongs in the library (Article II.8). Verified by `counted.ts` in a scratch
-copy of the library, 2026-10-22: a `+` that adds the packed slots in order copies nothing more.
+`3d9696e`, the copies grew for one cause, the generic `+` of the library, whose fix belongs there
+(Dependencies and vendoring, II.8). Verified by `counted.ts` in a scratch copy of the library,
+2026-10-22: a `+` that adds the packed slots in order copies nothing more. At `7ef9f4d`, no count
+grew, and the calls of the lattice fell 27%, since a read of the whole multivector indexes its basis
+at once. Verified by a break on purpose, 2026-11-26: with that read undone in the library, each
+count returned to its reading at `3d9696e`.
 
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
 as the table gives, and the counts of the other span did not move. Assumed: that each fault still
-reads over the baselines of 2026-11-15, which differ from its repair by at most 11 calls and 4
-copies.
+reads over the baselines of 2026-11-15, within 11 calls and 4 copies of its repair.
 
 ## Browser front-end
 
@@ -617,8 +615,7 @@ Verified by driven check: `driveContextPaths` draws the opening scene through We
 WebGL1, and through WebGL1 without `EXT_frag_depth`. A stand-in browser refuses what each path
 lacks, on a page of its own. Once the picture stands still, WebGL2 and WebGL1 with the extension
 draw it the same to the pixel, and WebGL1 without it draws its own. Verified by a break on purpose:
-on `main`, which asks for WebGL1 alone, the first of these fails. **Unverified**: the Architect's
-phone.
+on `main`, which asks for WebGL1 alone, the first fails. **Unverified**: the Architect's phone.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
@@ -892,8 +889,7 @@ drive` picks the set of font faces that declare the weight asked, as the engine 
 the page does not ship ends the search (Article X.8).
 
 Rejected: the three stacks read from the text of the shell, which pass an element that takes a stack
-of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a layout
-box now.
+of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out now.
 
 **The control page proves the collector on each run.** `koch drive` writes
 `build/font-faces/control.html` before the drive, and the drive reads it with the same collector, as
@@ -1901,9 +1897,8 @@ The dolly slides the eye and names the new distance to the pivot, and the pivot 
 `repivotToDepth` is one assignment, and `travelToward` needs no pivot arithmetic.
 
 The reference stance puts the eye at the world origin, with `RIGHT_REFERENCE` at +y, `UP_REFERENCE`
-at +z and `FORWARD_REFERENCE` at −x. Rejected: the reference triple of OpenGL, which puts a fixed
-120 degree turn in every construction for no gain. `initMatrixView` reads the axes, and never the
-motor.
+at +z and `FORWARD_REFERENCE` at −x. Rejected: OpenGL's reference triple, which puts a fixed 120
+degree turn in every construction for no gain. `initMatrixView` reads the axes, and never the motor.
 
 **An eye and a pivot name a stance, and no angle does.** `motorFacing` builds the motion as three
 motions, and the first two turn about lines through the reference eye, so neither moves it:
@@ -2020,9 +2015,9 @@ elapsed time, so a hold covers the same ground at 60 Hz and 144 Hz. The dolly co
 
 **The panel holds the motor as the value.** Both front-ends show all sixteen coefficients of
 `Camera.motor`, in the grid that objects use, and each can be typed. `motorRigid` settles what is
-typed on the rigid motion it names. Odd grades drop, and the even part passes through the `unitize`,
-`log` and `exp` of the library. `unitize` alone leaves a slide that the turn does not allow, which
-carries the eye off an orthonormal frame.
+typed on the rigid motion it names. Odd grades drop, and the even part passes through `log`, which
+unitizes it, and `exp`. `unitize` alone leaves a slide that the turn does not allow, which carries
+the eye off an orthonormal frame.
 
 Only the changed coefficient is written into the live motor. On the desktop, each field holds a
 double, and never rounds to the four digits that it shows.
@@ -2390,9 +2385,8 @@ Rejected: the turntable about world up and the level axis for the orbit. Near th
 lies along the sight, so a drag spun the picture about the middle and the point held slipped.
 Rejected: the 0.008 radians for each pixel of the window about the camera's axes, since both
 front-ends drag alike by the ruling of the Architect. Rejected: the roll put back after each turn
-about the camera's own axes, which leaves the sight sunk. On a 390 by 844 page in Chromium on
-2026-09-24, over 2,000 turns, a free-aim turn took 0.45 to 0.48 ms. The trackball's turn is
-unmeasured.
+about the camera's own axes, which sinks the sight. On a 390 by 844 page in Chromium on 2026-09-24,
+over 2,000 turns, a free-aim turn took 0.45 to 0.48 ms. The trackball's turn is unmeasured.
 
 **`turnsCarrying` holds what a free-aim drag took.** It pitches about the level axis until one
 direction has the height of the other, then yaws about world up until their bearings meet. Of the
@@ -2518,9 +2512,8 @@ cut. The drawn line stands 0.466 px off exact either way, and the written depth 
 
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
 crosses the wire for each segment, or sixteen with the `fog` flag, where six CPU vertices cost 42
-floats. An instanced draw expands it: GL 3.3 core on the desktop, WebGL2 core on the page, and
-`ANGLE_instanced_arrays` on WebGL1. Each vertex derives the across as `cross(head − tail, eye −
-tail)`.
+floats. An instanced draw expands it: `ANGLE_instanced_arrays` on WebGL1, WebGL2 core on the page,
+and GL 3.3 core on the desktop. Each vertex derives the across as `cross(head − tail, eye − tail)`.
 
 **Chain of custody.** The GLSL ships, and `mesh.expandRibbon` is its reference in Nim,
 sibling-marked with both shader sources. The suite holds the reference to the algebra. The near clip
@@ -2755,7 +2748,7 @@ each object. In each run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4
 
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
-makes one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
+makes one. **`sight` reads the stance once for each event**, off one lift.
 
 **The geometry of the camera goes through the algebra, and what only sizes or clips the picture does
 not.** The pitch of a finger carries its direction through the motor of `turnAbout`. The level axis
@@ -2984,8 +2977,7 @@ of the first finite operand, its support, and else the world origin.
 A slide back adds `t × d` to a small moment, and cancels nothing, so the rounding is `ε` of the
 distance slid. That is 33 µm one unit out, and about a millimetre thirty units out. Each slide keeps
 only the grades that its multivector occupies. A rigid slide keeps every grade, so a coefficient on
-another grade is rounding of the sandwich. A join a metre across one unit out reads that rounding as
-a mixed grade.
+another is rounding of the sandwich. A join a metre across one unit out reads it as a mixed grade.
 
 Measured on 2026-10-05 by a probe that is not kept, over 2,000 random pairs one unit out, beside the
 earth of the demo. The line held both points within 47 µm, where about the world origin it stood 182
@@ -3115,12 +3107,26 @@ reads one with a negative antiscalar through its negation. The half-angle then s
 zero, and a full turn names no axis to return. So `exp(log(Q))` is the same motion as `Q`, and the
 same coefficients only where `Q` turns by less than a half turn.
 
-**Normalisation is the library's `unitize`.** The weight norm of a unit motor reads 1, for a turn, a
-slide and a screw alike. Nothing here normalises: a finding against `unitize` is the library's.
+**Normalisation is the library's `unitize`, and `log` reads a motor at any weight through it**,
+since a multiple of a motor names one motion. `log` fails where `unitize` leaves the weight off one:
+zero, or a weight whose square leaves the doubles. A finding against `unitize` is the library's.
 
-**The stance of the camera is the one caller.** `Camera.motor` is a motor, and `camera.nim` builds
-it with `turnAbout` and `motorSliding`, composes it with `wedgeDotAnti`, and reads every direction
-back with `carried`. Nothing else in the tree names a motor.
+**Each routine that reads part of a value fails on any other part.** `exp` reads a bivector, `log`
+and `toMotor` the even grades, and `motorSliding` a weightless point, by the bases of a form of the
+library. Each keeps the whole `Multivector`, as IV.8 allows, and fails at once on another part
+(IV.4). The test is exact, as a product of values with no other part writes zero there. Rejected: a
+narrower form as the parameter, since the operators of the library take the whole `Multivector`.
+
+**A carry takes its antireverse itself**, so no caller hands in one that disagrees with its motor.
+Rejected: a type that holds both. Each build of it copies the motor on the page, and a still frame
+copied 4,886 times, over its bound of 4,876. Cost: these tests and each carry's antireverse add 537
+calls to a still frame with a point picked, and 1,095 with the plane. `unitize` in `log` adds 103 of
+those calls, and 2 copies, as frames after a pick ease. Verified by `counted.ts` and a break on
+purpose, 2026-11-26: with it undone, the frames copy 4,856 and 10,014 times.
+
+**The stance of the camera is the main caller.** `camera.nim` builds `Camera.motor` with `turnAbout`
+and `motorSliding`, composes it with `wedgeDotAnti`, and reads it back with `carried`. The orrery
+turns by two constant motors, and the catalogue slides operands through `motorSliding`.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -3130,6 +3136,7 @@ back with `carried`. Nothing else in the tree names a motor.
 - a horizon line, which names no axis and turns nothing;
 - a slide that carries every point by one offset, in two terms and no more;
 - `exp(log(Q))` against `Q`, and unit weight, over 64 screws, each seventh far below `ANGLE_SERIES`;
+- `exp`, `log`, a slide and `toMotor` against a part outside theirs, and `log` at six weights;
 - both series of the half-angle against twenty terms of each, to a trillionth, up to `π`;
 - the identity, the inverse through `~∘`, and the grade that survives a sandwich;
 - the distance and the weight that a rigid motion keeps;
@@ -3597,7 +3604,7 @@ under the pinned heading, rather than at the own edge of the scroller, which the
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is drawable
 where the sum is 4 or less. `∨` adds antigrades and is drawable where the sum is 4 or more. The
-table covers every ordered pair of point, line and plane in general position. Points lie off the
+table covers every ordered pair of point, line and plane in general position. Points lie on the
 moment curve `(t, t², t³)`, where "no three collinear and no four coplanar" is a Vandermonde
 theorem.
 
@@ -3670,10 +3677,9 @@ leaves its result selected, and a menu over each new object would sit in the way
 The listener for a tap outside excludes the canvas, the drawer and the chip row.
 
 *Checked.* Verified by `suites.nim`: every cell of the drag table, and the at-most-one property,
-exhaustively. It holds the click rule, the dwell restarting on movement, and the anchor of the
-preview equal to that of the created object. It holds the ink cycle stepping on release and not on
-click, and the crowd count and the refusal. It holds the re-pivot rules under the wheel and over
-sky.
+exhaustively. It holds the click rule, the dwell restarting on motion, and the anchor of the preview
+equal to that of the created object. It holds the ink cycle stepping on release and not on click,
+and the crowd count and the refusal. It holds the re-pivot rules under the wheel and over sky.
 
 Verified by driven checks:
 
@@ -4062,8 +4068,8 @@ direction of the star. Each body is its node turned by its phase about the norma
 origin, which faces against its line, so only a meet of two is read.
 
 **The turns that every star shares are built once, at compile time.** `TURN_ECLIPTIC` and the
-quarter turn about world up are constants, with their antireverses, so a star pays one sandwich and
-one point. A ring is spanned only for a star with a planet. Rejected: the closed forms, the cross
+quarter turn about world up are constants, so a star pays one sandwich, its antireverse and one
+point. A ring is spanned only for a star with a planet. Rejected: the closed forms, the cross
 products and the sums of sines that placed the same objects outside the algebra. Over every object
 of the three sizes, each coefficient matches them within 1.0e-14 of its object's largest.
 
@@ -4501,9 +4507,8 @@ small object up close comes in to it, and one behind does not.
 **A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
 that a pointer pick of the dot comes in to. The wheel over empty sky can bring the eye 9.4e-8 from
 the pivot with no visible change. Without this floor, a star picked from the list keeps that
-distance, and draws about 20 px across. `stanceFitted` dollies the destination of the frame rule out
-to the fit, once, as a new goal lands. A distance past the fit stays, and so does a stance set after
-the pick.
+distance, and draws about 20 px across. `stanceFitted` dollies the goal of the frame rule out to the
+fit, once, as it lands. A distance past the fit stays, and so does a stance set after the pick.
 
 A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
 the reach of the dot, so the eye never moves further off than the dot stands. A group and a plane
@@ -4720,9 +4725,8 @@ blur, when the tab is hidden, and when a panel widget takes the keyboard (`gui.w
 Tab reaches nothing on the desktop.
 
 **A camera move is not a hover.** `isMovingCamera` is the own drag flag of each front-end, plus
-`keys_held` through `motionFor`. The movement raises it, not the press, or a click reads a
-suppressed hover. **Focus is its own state** (`index_focus`), pruned by liveness and drawn as the
-hover marker.
+`keys_held` through `motionFor`. Movement raises it, not the press, or a click reads a suppressed
+hover. **Focus is its own state** (`index_focus`), pruned by liveness and drawn as the hover marker.
 
 *Checked.* Verified by `--drive-keys`: focus walked, enter selected, and azimuth, elevation and
 distance each moved by exactly their own constant.
@@ -4740,8 +4744,7 @@ front-end. On the desktop, W under alt moved 3.05 units, and the key printed Z r
 
 The page holds each key for half a second of its clock, which spans 30 frames or 31, as the clock
 falls against the frame. The last frame of the speed ramp travels about 6% of the hold, so the check
-allows a tenth between the two rates. The desktop steps its clock by whole frames, and reads them
-equal.
+allows a tenth between the two rates. The desktop steps by whole frames, and reads them equal.
 
 Verified by browser drive: real key events, and Tab from the canvas moving to the next control and
 back. A blur mid-hold moves the pivot 0.0000 further, and `[]-+` typed into a label reaches it.
@@ -4811,13 +4814,13 @@ it, because koch restores the lock before each verb that compiles the code of a 
 Architect is to take the latest pga. Where the latest does not work, pin the most recent commit that
 does, record which and why, and move forward when it works again. Every pull request states which
 commit of pga it builds against, and whether that is head. The pin stands at
-`3d9696edbaaa5dca655c3024174bd46fd156d7c6`, which was the head of the library on 2026-10-22.
+`7ef9f4dbfaaad9c229feee3787e16f25b612ab63`, which was the head of the library on 2026-11-24.
 
-**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At
-`3d9696e`, the generic `+` copies its constant set of bases at each call on the JS backend. So the
-lattice adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off,
-2026-10-22). A product takes only the full multivector, so the project reads a plane whole where
-three bases serve.
+**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At the
+pin, the generic `+` copies its constant set of bases at each call on the JS backend. So the lattice
+adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off, 2026-10-22,
+and at `7ef9f4d` on 2026-11-26). A product takes only the full multivector, so the project reads a
+plane whole where three bases serve.
 
 The patches of D3 on the library-head pull request (#702), and of D1 on issue 734, fix both. Both
 apply to `3d9696e`. With both, a scratch copy that placed planes through typed products took the
@@ -4865,8 +4868,7 @@ is the definition that the operator table of the library gives. `scene`, `tessel
 generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
 the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
 ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
-suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
-calls.
+suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each call.
 
 **The pin prints its multivector aliases while it compiles, through `expandMacros`.** That adds
 about ten lines to each build log, and changes nothing that is built.
@@ -4883,13 +4885,12 @@ commit of the lock to the requirement of the nimble file.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
 backend, on JS, and at reduced capacities. Verified: in a worktree with no `dependencies/`, `koch
-fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are byte-identical
-afterwards.
+fetch-deps` clones and checks out `7ef9f4d`. The nimble file and the lock stay byte-identical.
 
 Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
-Verified by runs of the verb on 2026-10-22 and 2026-11-15: it exits 0 at the pin. With the lock set
-to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1
-and names the pin. On 2026-11-03, with a remote whose head holds both patches, it names that head.
+Verified by runs of the verb on 2026-10-22, 2026-11-15 and 2026-11-26: it exits 0 at the pin. With
+the lock set to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks,
+it exits 1 and names the pin. On 2026-11-03, it named the head of a remote that held both patches.
 
 Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
 knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
@@ -4898,9 +4899,8 @@ latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads
 operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
 `koch test`: every suite passes on C, on JS and at reduced capacities.
 
-Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
-lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
-2.4.0.
+Verified on a project copy: `atlas pin` writes `"items": {}`, and changes nothing else in the lock,
+`nimVersion` included. It warns `broken nimble file: nim` for a commit pin, and nothing for 2.4.0.
 
 ## Comparison mockups
 

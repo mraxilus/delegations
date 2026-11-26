@@ -598,51 +598,49 @@ func reachTaken*(camera: Camera): float =
   norm(camera.eye.toWorld(camera.origin_view) - camera.point_taken)
 
 
-func eyeCarried(motion, motion_reversed: Multivector): Position =
-  ## Carry reference stance's own eye through lifted motion and its antireverse.
-  let placed = position(EYE_REFERENCE.toMultivector.carried(motion, motion_reversed))
-  # Fall back to reference eye only in name.
-  #   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
-  if placed.isSome: placed.get else: EYE_REFERENCE
+func eyeCarried(motion: Multivector): Position =
+  ## Carry reference stance's own eye through lifted motion.
+  ##   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
+  ##     Refusal names motion that is no unit motor, internal impossibility, so it fails here.
+  let placed = position(EYE_REFERENCE.toMultivector.carried(motion))
+  doAssert placed.isSome,
+    "Camera motion must carry reference eye to place; got none for motor `" & $motion & "`."
+  placed.get
 
 
-func borne(motion, motion_reversed: Multivector; d: Direction): Direction =
+func borne(motion: Multivector; d: Direction): Direction =
   ## Carry reference direction through lifted motion, and read back weightless result.
-  d.toMultivector.carried(motion, motion_reversed).directionFrom
+  d.toMultivector.carried(motion).directionFrom
 
 
-func frameCarried(motion, motion_reversed: Multivector): FrameCamera =
-  ## Carry reference stance's three axes through lifted motion and its antireverse.
+func frameCarried(motion: Multivector): FrameCamera =
+  ## Carry reference stance's three axes through lifted motion.
   ##   Motor is rigid, so three carried directions stay orthonormal and stay weightless:
   ##   no join to refuse, no antidual sign to pin, and no clamp to keep them defined.
   FrameCamera(
-    axis_right: borne(motion, motion_reversed, RIGHT_REFERENCE),
-    axis_up: borne(motion, motion_reversed, UP_REFERENCE),
-    forward: borne(motion, motion_reversed, FORWARD_REFERENCE),
+    axis_right: borne(motion, RIGHT_REFERENCE),
+    axis_up: borne(motion, UP_REFERENCE),
+    forward: borne(motion, FORWARD_REFERENCE),
   )
 
 
 func eye*(camera: Camera): Position =
   ## Place eye about view origin, by carrying reference stance's own eye through motion.
   ##   Held equal to eye `initCamera` names by suite case.
-  let motion = camera.motor.toMultivector
-  eyeCarried(motion, ~∘motion)
+  eyeCarried(camera.motor.toMultivector)
 
 
 func frame*(camera: Camera): FrameCamera =
   ## Derive camera's orthonormal axes by carrying reference stance's three through motion.
-  let motion = camera.motor.toMultivector
-  frameCarried(motion, ~∘motion)
+  frameCarried(camera.motor.toMultivector)
 
 
 func sight*(camera: Camera): (Position, FrameCamera) =
-  ## Read eye and frame together, off one lift of motor and one antireverse.
-  ##   Caller wanting both reads this rather than `eye` and `frame`, which lift motor and
-  ##   take its antireverse once each. Per event on finger's and mouse's turn.
-  let
-    motion = camera.motor.toMultivector
-    motion_reversed = ~∘motion
-  (eyeCarried(motion, motion_reversed), frameCarried(motion, motion_reversed))
+  ## Read eye and frame together, off one lift of motor.
+  ##   Caller wanting both reads this rather than `eye` and `frame`, which lift motor once
+  ##   each. Per event on finger's and mouse's turn.
+  let motion = camera.motor.toMultivector
+  (eyeCarried(motion), frameCarried(motion))
 
 
 func pivot*(camera: Camera): Position =
@@ -651,10 +649,7 @@ func pivot*(camera: Camera): Position =
   ##   Carries eye and forward alone: other two axes do not place it.
   let
     motion = camera.motor.toMultivector
-    motion_reversed = ~∘motion
-    (eye, forward) = (
-      eyeCarried(motion, motion_reversed), borne(motion, motion_reversed, FORWARD_REFERENCE)
-    )
+    (eye, forward) = (eyeCarried(motion), borne(motion, FORWARD_REFERENCE))
   Position(
     x: eye.x + camera.depth_pivot * forward.x,
     y: eye.y + camera.depth_pivot * forward.y,
@@ -1058,19 +1053,16 @@ func moveOriginView*(camera: var Camera): (Position, FrameCamera) =
   ##   `driveStanceReadOnce`).
   let
     motion = camera.motor.toMultivector
-    motion_reversed = ~∘motion
-    eye = eyeCarried(motion, motion_reversed)
+    eye = eyeCarried(motion)
     origin = camera.origin_view
     moved = eye.toWorld(origin)
     step = moved - origin
   if step.x == 0.0 and step.y == 0.0 and step.z == 0.0:
-    return (eye, frameCarried(motion, motion_reversed))
-  let
-    slid = wedgeDotAnti(motorSliding(toMultivector(-step)), motion)
-    slid_reversed = ~∘slid
+    return (eye, frameCarried(motion))
+  let slid = wedgeDotAnti(motorSliding(toMultivector(-step)), motion)
   camera.motor = slid.toMotor
   camera.origin_view = moved
-  (eyeCarried(slid, slid_reversed), frameCarried(slid, slid_reversed))
+  (eyeCarried(slid), frameCarried(slid))
 
 
 func rebasedTo(stance: CameraStance, origin: Position): CameraStance =
@@ -1549,16 +1541,18 @@ func placed*(camera: Camera, stance: CameraStance): Camera =
 
 func motorRigid*(m: Multivector): Option[Motor] =
   ## Read rigid motion `m` names, for coefficients reader types into panel.
-  ##   Odd grades name no rigid motion, and drop. Even part is unitized, then carried
-  ##   through `log` and `exp`, whose round trip lands on unit motor meeting rigid
-  ##   condition whatever was typed: its turn, and slide consistent with that turn.
+  ##   Odd grades name no rigid motion, and drop: even part is read by bases of library's
+  ##   `MultivectorEven`. It is carried through `log`, which unitizes it, and `exp`, whose
+  ##   round trip lands on unit motor meeting rigid condition whatever was typed: its turn,
+  ##   and slide consistent with that turn.
   ##     `unitize` alone leaves slide that turn does not allow, which carries eye off
   ##     orthonormal frame rather than moving it.
-  ##   Library's own `unitize`, `log` and `exp` throughout; nothing here normalises.
+  ##   Library's own `unitize`, which `log` takes; nothing here normalises.
   ##   None where even part carries no weight, i.e. names no motion at all.
-  let even = m.toMotor.toMultivector
+  var even: Multivector
+  for b in MultivectorEven.bases: even[b] = m[b]
   if normWeight(even)[Basis.scalarAnti] <= TOLERANCE_ABS: return
-  some(exp(log(unitize(even))).toMotor)
+  some(exp(log(even)).toMotor)
 
 
 func placedAtMotor*(camera: Camera, motor: Motor): Camera =

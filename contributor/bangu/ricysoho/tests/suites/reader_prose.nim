@@ -181,7 +181,8 @@ const
     ## lo cmavo pe `PA` poi ka'e zvati lo jbini be re lerfu pe pa namcu
     ##   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` .e `CLL 18.74` cu pilno le cmavo
   MARKS_INSIDE = [".", ","]
-    ## lo sinxa poi zvati lo jbini be re lerfu pe pa namcu gi'e se tcidu ta'i zo pi .a zo ki'o
+    ## lo sinxa poi zvati lo jbini be re lerfu pe pa namcu gi'e se tcidu ta'i zo pi .a zo pi'e .a
+    ##     zo ki'o
   CMAVO_BEFORE = ["ni'u", "ma'u", "ji'i", "pi"]
     ## lo cmavo pe `PA` poi ka'e zvati lo jbini be zo li .e lo namcu
   WORDS_NUMBERED = ["li", "me'o"]
