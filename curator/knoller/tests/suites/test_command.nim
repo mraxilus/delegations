@@ -836,10 +836,10 @@ suite "Command line":
     check pins.len == 0  # neither pin is trusted, as nimble refuses such directory
     check outcome.written.len == 0 and outcome.code == 0
     check outcome.lines == @[
-      "needless-parentheses warning: actual=\"" & root / "p" & "\" message=\"parser proved " &
+      "needless-parentheses warning: actual=" & quoted(root / "p") & " message=\"parser proved " &
         "no removal, since directory holds several nimble files, so no pin is trusted\"",
       "0 to fix.",
-    ]
+    ]  # path quoted as line form quotes it, so each `\` of path on Windows reads escaped
 
 
   test "nimble file of no exact pin, and file with no nimble file above, take `nim` on PATH":
