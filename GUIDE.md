@@ -196,6 +196,12 @@ return it confirmed.
   never give a subagent the path of a live transcript. A subagent can read both.
 - **Write from what you know, and read nothing new for the prediction.** Predict each judgement
   that the subagent will make, and the work that it will do, with its form.
+- **Make at most five judgements, the ones that matter most to the outcome.** A judgement is a
+  claim of yes or no. Make more only where the outcome needs them, since each one takes a row to
+  read and to resolve.
+- **Each prediction also gives three numbers: the tokens, the cost and the time of the
+  subagent.** They stand beside the judgements, and never count against the five, so that each
+  delegate learns to estimate them.
 
 Each claim follows these rules for forecasting:
 
@@ -211,9 +217,10 @@ Each claim follows these rules for forecasting:
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
   scores by the log score of the distribution of its percentiles, with a floor, as Metaculus
   scores it. The track record is a calibration curve with its 90% credible band.
-- **A number names its unit at the start of its text, after its label: `tokens` or `cost`.** The
-  range of `tokens` is 10,000 to 1,000,000,000, and that of `cost` is $0.01 to $1,000. Each
-  range is on the logarithm, and its bounds are open. A number of another unit takes no score.
+- **A number names its unit at the start of its text, after its label: `tokens`, `cost` or
+  `time`.** The range of `tokens` is 10,000 to 1,000,000,000, and that of `cost` is $0.01 to
+  $1,000. Each range is on the logarithm, and its bounds are open. Time counts in minutes, and
+  takes no score until it has a range, as does each other unit.
 - **The table has no column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
@@ -289,6 +296,10 @@ Then the subagent runs, and these steps follow:
   report names the lock in a finding.
 - Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
   95th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the cost on the line `**Subagent:**` of the reflection.
+- Time: time to its report, in minutes: 5, 12 and 30, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the minutes on the line `**Subagent:**` of the reflection.
 
 **Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
 ```
@@ -307,6 +318,8 @@ report and failed one.
 | ✅ | 85% | no test is weakened | none is (the critic read each test of the diff) |
 | ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
 | ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
+| ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |
+| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.
