@@ -2831,21 +2831,21 @@ notice, which the renderer cuts into summary and actual (Renderer, in the record
   `--form` forces either one, and `koch check` passes it on to the koch of the merge.
 - Each hook prints each finding in the line form, help last (`toLine`), as ruling 7197275206 on
   #1002 asks. So a refusal, the stop reason and the start context keep its remedy.
-- Verified by `suites/test_findings.nim`, `suites/test_checks.nim` and `suites/test_hooks.nim`.
+- Verified by `suites/test_findings.nim`, `suites/test_merge.nim` and `suites/test_hooks.nim`.
 
 **A check gives its remedy as help, and its expected value apart from its sentence.** The article
 of the rule stays in the sentence (D1 a of #1002). An expected value stands apart only where it is
 of the kind of the actual, as in knoller: `101` against `at most 100`. A form or a pattern stays
-in its sentence, as `name-case` of knoller keeps its case.
+in its sentence, as `name-case` of knoller keeps its case. An absence gives no actual, since
+Article IV.4 never takes an in-range value for it, so no `none` reads as a value.
 
 - Rejected: an expected value for each sentence that says "must", where a pattern stands twice.
-- Cost: a limit stands twice, in the sentence and in the expected value, as in the line width.
+- Cost: a limit or a pin stands twice, in the sentence and in the expected value.
 
 **Each suite compares the short text of a finding, and one test of each check holds its id.** The
 short text holds no rule (D3 c of #1002), so one assertion in the suite of each check names its id.
 A check whose tool no suite runs builds its finding where a suite reaches, as `unfetched` does.
-Verified by hand with a search of the suites, 2026-11-26: each id of `checks.nim` stands in one.
-Cost: a new check holds its test of id by reading alone.
+Verified by `suites/test_checks.nim`: each id of `checks.nim` stands in a suite.
 
 ## Fixes
 
@@ -4792,8 +4792,8 @@ and test, which is what the order of `koch check` rests on.
 
 - Cost: on that machine and date, `nim r koch test curator/audit` took 14.7 s warm, and 22.9 s
   at its first run. So the static pass costs about as much as the suites of the checker itself.
-- The suites of `dance_ontology` and `pga_visualiser`, and each driven check, took minutes on
-  2026-09-24. Assumed: they still take minutes, so the static pass is cheap next to them.
+- Assumed: the suites of `dance_ontology` and `pga_visualiser`, and each driven check, take
+  minutes, so the static pass is cheap next to them.
 - The dead-export rule reads each source once. Rejected: a scan of every source for each export,
   which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
   pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.

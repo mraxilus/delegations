@@ -123,6 +123,8 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
 - Each suite compares the short text of a finding (`brief`), as D3 c of #1002 rules. It holds the
   summary, then the actual after `; got`, the expected value after `; expect` and the help after
   `; help:`, each where held. The rule stands apart, so the text reads as the message.
+- A sentence that names an absence ends without `; got `, so the notice holds no actual. Article
+  IV.4 never takes an in-range value for an absence, and `none` would read as one.
 - The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
   value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
   Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
