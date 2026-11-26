@@ -579,15 +579,17 @@ of the lattice pin no named fault, so each says that it pins the work that a cha
 
 **A move of the library pin is counted at both pins, and each count that grows is traced to its
 cause.** The baselines are counted at the pin, so a count that grows on a move fails the drive. At
-`3d9696e`, the copies grew for one cause, the generic `+` of the library (Dependencies and
-vendoring). That fix belongs in the library (Article II.8). Verified by `counted.ts` in a scratch
-copy of the library, 2026-10-22: a `+` that adds the packed slots in order copies nothing more.
+`3d9696e`, the copies grew for one cause, the generic `+` of the library, whose fix belongs there
+(Dependencies and vendoring, II.8). Verified by `counted.ts` in a scratch copy of the library,
+2026-10-22: a `+` that adds the packed slots in order copies nothing more. At `7ef9f4d`, no count
+grew, and the calls of the lattice fell 27%, since a read of the whole multivector indexes its basis
+at once. Verified by a break on purpose, 2026-11-26: with that read undone in the library, each
+count returned to its reading at `3d9696e`.
 
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
 as the table gives, and the counts of the other span did not move. Assumed: that each fault still
-reads over the baselines of 2026-11-15, which differ from its repair by at most 11 calls and 4
-copies.
+reads over the baselines of 2026-11-15, within 11 calls and 4 copies of its repair.
 
 ## Browser front-end
 
@@ -4811,13 +4813,13 @@ it, because koch restores the lock before each verb that compiles the code of a 
 Architect is to take the latest pga. Where the latest does not work, pin the most recent commit that
 does, record which and why, and move forward when it works again. Every pull request states which
 commit of pga it builds against, and whether that is head. The pin stands at
-`3d9696edbaaa5dca655c3024174bd46fd156d7c6`, which was the head of the library on 2026-10-22.
+`7ef9f4dbfaaad9c229feee3787e16f25b612ab63`, which was the head of the library on 2026-11-24.
 
-**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At
-`3d9696e`, the generic `+` copies its constant set of bases at each call on the JS backend. So the
-lattice adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off,
-2026-10-22). A product takes only the full multivector, so the project reads a plane whole where
-three bases serve.
+**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At the
+pin, the generic `+` copies its constant set of bases at each call on the JS backend. So the lattice
+adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off, 2026-10-22,
+and at `7ef9f4d` on 2026-11-26). A product takes only the full multivector, so the project reads a
+plane whole where three bases serve.
 
 The patches of D3 on the library-head pull request (#702), and of D1 on issue 734, fix both. Both
 apply to `3d9696e`. With both, a scratch copy that placed planes through typed products took the
@@ -4865,8 +4867,7 @@ is the definition that the operator table of the library gives. `scene`, `tessel
 generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
 the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
 ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
-suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
-calls.
+suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each call.
 
 **The pin prints its multivector aliases while it compiles, through `expandMacros`.** That adds
 about ten lines to each build log, and changes nothing that is built.
@@ -4883,13 +4884,12 @@ commit of the lock to the requirement of the nimble file.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
 backend, on JS, and at reduced capacities. Verified: in a worktree with no `dependencies/`, `koch
-fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are byte-identical
-afterwards.
+fetch-deps` clones and checks out `7ef9f4d`. The nimble file and the lock stay byte-identical.
 
 Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
-Verified by runs of the verb on 2026-10-22 and 2026-11-15: it exits 0 at the pin. With the lock set
-to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1
-and names the pin. On 2026-11-03, with a remote whose head holds both patches, it names that head.
+Verified by runs of the verb on 2026-10-22, 2026-11-15 and 2026-11-26: it exits 0 at the pin. With
+the lock set to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks,
+it exits 1 and names the pin. On 2026-11-03, it named the head of a remote that held both patches.
 
 Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
 knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
