@@ -72,6 +72,7 @@ import ./curator/audit/src/[
   merge,
   plan,
   projects,
+  releases,
   role,
   schemas,
   scope,
@@ -373,6 +374,9 @@ proc runHook(root, event, input: string): int =
     # Commits of lock that lag `main` read what fetch brought, or what checkout held before.
     try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
+    # Nim pins that lag pin of driver read checkout as it stands; read that fails names none.
+    try: notices.add noticesPin(readPins(root))
+    except CatchableError: discard
     # Past figures of each kind come from logs of tree; log that reads no row names its fault.
     let rates = root.ratesTree
     # Record branch works on is read where it exists; new project has none until it writes one.
@@ -443,6 +447,8 @@ proc checkInPlace(options: Options; branch, base: string): int =
   held.reportHeld
   # Commit of lock that lags `main` is named, and fails nothing (D2 of #927); start prints same.
   for line in noticesLag(readLags(options.root, "origin/" & MAIN), "origin/" & MAIN): echo line
+  # Nim pin that lags pin of driver is named, and fails nothing (GUIDE.md, Toolchain); start too.
+  for line in noticesPin(readPins(options.root)): echo line
   if own.len > 0:
     own.report
     echo "Types, suites and drive not run; fix findings above, then run again."
