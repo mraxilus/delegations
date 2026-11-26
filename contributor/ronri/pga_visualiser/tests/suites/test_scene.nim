@@ -482,22 +482,35 @@ suite "Scene":
     #   value stood on was lost: `2.3335` read `2.334`, where C reads `2.333` (repository
     #   issue 1053).
     # Domain: tie `d.ddd5` of each 101st mantissa from 9999 down to 1000, at each seventh
-    #   decade from 1e-323 to 1e304, with double each side of it, of each sign, against C's
-    #   `%.4g`. Text pinned for eight, which page runs too: two stand nearest any tie, under
-    #   1e-22 of it, one is exact tie, and one stands under tie that carry to 1e-10 hides.
+    #   decade from 1e-323 to 1e300, of each sign, against C's `%.4g`. Beside each tie: double
+    #   on each side, and value 2^-41 and 2^-39 of it on each side, inside margin and out.
+    #   Text pinned for eight, which page runs too: two stand nearest any tie, within 1.1e-22
+    #   of it, one is exact tie, and one stands under tie that carry to 1e-10 hides.
+    const
+      STEP_MANTISSA = 101
+      STEP_DECADE = 7
+      COUNT_VALUES = 90 * 90 * 7 * 2
+        ## Count values compared: 90 mantissas, 90 decades, seven beside each tie, two signs.
     check formatMagnitude(2.3335) == "2.333"
     check formatMagnitude(-2.3335) == "-2.333"
     check formatMagnitude(0.0031905) == "0.003191"
     check formatMagnitude(8.7065e-311) == "8.707e-311"
     check formatMagnitude(4.3495e-273) == "4.35e-273"
-    check formatMagnitude(3.9815e37) == "3.981e+37"
+    check formatMagnitude(4.6345e-42) == "4.635e-42"
     check formatMagnitude(9999.5) == "1e+04"
     check formatMagnitude(9.9995e-11) == "9.999e-11"
     when not defined(js):
-      for mantissa in countdown(9999, 1000, 101):
-        for decade in countup(-323, 304, 7):
-          let tie = parseFloat(&"{mantissa}5e{decade - 4}")
-          for near in [cast[float](cast[uint64](tie) - 1), tie, cast[float](cast[uint64](tie) + 1)]:
+      var count = 0
+      for mantissa in countdown(9999, 1000, STEP_MANTISSA):
+        for decade in countup(-323, 304, STEP_DECADE):
+          let
+            tie = parseFloat(&"{mantissa}5e{decade - 4}")
+            bits = cast[uint64](tie)
+            (inside, outside) = (pow(2.0, -41.0), pow(2.0, -39.0))
+          for near in [
+            cast[float](bits - 1), tie, cast[float](bits + 1), tie * (1.0 - inside),
+            tie * (1.0 + inside), tie * (1.0 - outside), tie * (1.0 + outside),
+          ]:
             for signed in [near, -near]:
               var
                 storage: array[64, char]
@@ -505,6 +518,8 @@ suite "Scene":
               appendMagnitude(storage, cursor, signed)
               checkpoint &"{signed}"
               check formatMagnitude(signed) == storage.toText
+              inc count
+      check count == COUNT_VALUES
 
 
   test "multivectors print every term they carry, and nothing else":
