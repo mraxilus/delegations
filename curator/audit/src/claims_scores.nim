@@ -3,7 +3,9 @@
 ##     confidence of hit and one minus it of miss; claim annulled, waiting or unmarked takes none,
 ##     and so does confidence outside 0 to 1, which no cell gives.
 ##   Number scores as Metaculus scores continuous question, from its source at `8e413fb`, as `D2 a`
-##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band.
+##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band. Each step
+##     copies step of source, and their join is choice (comment 7189682360): curve of form of
+##     percentiles takes floor that Metaculus puts on slider alone.
 ##   Unit opens text of number, as `tokens`, or labels it, as `Count:`, and fixes range on
 ##     logarithm above zero point, with each bound open or closed: curve runs straight between
 ##     percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor of 1% of even
