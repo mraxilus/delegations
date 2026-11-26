@@ -157,7 +157,7 @@ func scanHash(source: string): seq[Comment] =
 
 
 func scanHashSpaced(source: string): seq[Comment] =
-  ## Scan YAML or protobuf text: `#` opens comment at line start or after space, outside quotes.
+  ## Scan YAML or protobuf text: `#` opens comment at line start or after whitespace, unquoted.
   ##   Backslash inside double quotes escapes next character, as both formats read it, so
   ##     `\"` keeps string open; inside single quotes it escapes none, as YAML reads it.
   var scan = Scan(line: 1)
