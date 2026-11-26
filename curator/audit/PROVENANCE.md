@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | ed0a06b0579bbc10 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | d4f7e2b1ae89bcfbaa3039567daf24801d0c8507 |
+| Pruned  | 30f7b8175167235fc2a49882b8e55661f63bec3e |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2047,6 +2047,37 @@ the series only when the Architect asks.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
+**Nothing fails while a pin lags, and two mechanisms name the lag.** Each project keeps up with the
+patch releases of its series (GUIDE.md, Toolchain), and its bump is its own (CURATOR.md, duty 8).
+
+- `koch check` and the start hook name each release pin below the pin of `curator/audit`
+  (`noticesPin`), from nimble files, with no network. A commit pin takes no line. Versions
+  compare number by number, since text reads `2.4.10` below `2.4.2`. Cost: a branch that forked
+  before the curators moved learns of the lag at `koch check`, which judges the merge with `main`.
+- `koch releases` sends a HEAD request for the `linux_x64` tarball that koch fetches, so a release
+  counts once koch can serve it. 200 reads as published, 404 as missing, and else as unread.
+- In the series of `X.Y.Z`, it asks each patch from `Z + 1` until two in a row are missing. From
+  1.6 to 2.4, each series leaves out one patch number at most (HEAD of patches 0 to 24,
+  2026-11-26). Cost: a later gap of two would read as the end of the series, and exit 0.
+- It prints each of `X.(Y + 1).0`, `X.(Y + 2).0` and `(X + 1).0.0` that exists as a note that
+  waits on the Architect. It exits 1 where the pin of `curator/audit` lags its series.
+- A search that cannot stand exits 2, as a usage error does. It cannot stand on an unread answer,
+  a pin that the host does not serve, or 50 patches in a row published. Read as missing, it would
+  close the issue for work never done. The longest series, 1.6, ends at 1.6.20.
+- Rejected: the tags of `nim-lang/Nim`, which name a tag and not the tarball of koch. Cost: six
+  asks where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
+- Verified by `suites/test_releases.nim` over a fake host, 2026-11-26: each of 32 mutants of
+  `releases.nim` fails it. By hand, `koch releases` names 2.4.2 and exits 0 in 2.54 s, and exits 2
+  through a proxy that answers nothing. `nim r koch hook start` names each contributor pin.
+
+**The `nim` workflow runs the verb each Monday, as the Architect asked, and keeps one issue open
+while it exits 1.** As in `head.yml`, the issue is labelled `curator`, edited to the latest run, and
+commented where the output changed. Exit 0 closes it, and any other exit turns the job red.
+
+- Cost: a pin may lag a release for a week, and a project that moves its pin while the issue is
+  open adds a comment. Verified by hand against a stub `gh`, GNU bash 5.2, 2026-11-26. A lag opens
+  the issue, the same lag adds no comment and a new one does, 0 closes it, and 2 posts nothing.
+
 **Koch runs each project on the compiler of its pin, and knoller serves that compiler.** Koch
 imports the resolution of knoller: `PATH` where that already serves, then
 `~/.cache/knoller/nim/<pin>/bin`, then a fetch. `$KNOLLER_NIM_DIR` moves the cache. The record
@@ -3869,10 +3900,9 @@ nothing, and a sign-off quoted in a fence.
 
 **A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
 Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
-works, and the reads at the start see none of it. `stop` takes the
-role from the role line of the sign-off. The coordinator reads `architect` instead, since no
-item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
-can close a turn that posted nothing.
+works, and the reads at the start see none of it. `stop` takes the role from the role line of the
+sign-off. The coordinator reads `architect` instead, since no item carries its role. The check reads
+every turn, as the check of `#N` does, because a sign-off can close a turn that posted nothing.
 
 - A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
   whose `state` is not closed. That tool returns both states where none is given. A shell read
@@ -3915,11 +3945,10 @@ group comes back inside that span alone.
   `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
   on a wake, the span opens at each wake. A row of work outside a pull request can then drop with
   no finding.
-- Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
-  that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
-  others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
-  summaries of compactions, texts of skills, restarts, reminders, interrupts, an image and a
-  command.
+- Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user` that
+  hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The others carry
+  another kind or none. They are wakes, reports of subagents, refusals of hooks, summaries of
+  compactions, texts of skills, restarts, reminders, interrupts, an image and a command.
 - The group of a pull request comes back, with as many items, until a first-parent subject of
   `origin/main` names its merge. The subject ends with `(#N)` or opens with `Merge pull request
   #N`. Each merge here is a merge commit, so git answers at no cost to the shared allowance.
@@ -3978,11 +4007,10 @@ where that base sits in that span, and only groups of pull requests elsewhere.
 **`stop` holds some of the steps for each subagent of a kind, at the end of each model turn.**
 `GUIDE.md`, Prediction, critic and reflection, gives the steps, as the Architect ruled them in
 comments on #962 and #969. `checkBlocks` holds these: a prediction before each call, a reflection
-after each report of a critic, and a quote in each cell of a reflection. It reads every model
-turn, whether or not it pushed or posted, because the turn of a prediction writes nothing.
-Section Quotes of claims gives the quote, and reading holds each other step. Section Runs of the
-block check gives the runs that verify both sections, on small transcripts and on a frozen copy
-of a real one.
+after each report of a critic, and a quote in each cell of a reflection. It reads every model turn,
+whether or not it pushed or posted, because the turn of a prediction writes nothing. Section Quotes
+of claims gives the quote, and reading holds each other step. Section Runs of the block check gives
+the runs that verify both sections, on small transcripts and on a frozen copy of a real one.
 
 **A model turn ends where the model stops.** It ends at an `assistant` entry whose `stop_reason`
 is a string other than `tool_use`. The harness writes each item of a message as an entry of its
@@ -3999,12 +4027,11 @@ closes the current turn, and each entry after it stays in that turn.
   entries of one message. It also holds an entry with no reason, and one whose reason is `null`.
 
 **A kind is the `name:` of the front matter of each `*.md` template under `.claude/agents/`.**
-`readKinds` reads the templates at each stop, so a template that is added is a kind at once, and
-no list in code goes stale. A missing folder gives no kinds, and an indented `name:` line belongs
-to an inner map, so it names none. A type that no template names, as `web-fetch`, is tool use,
-and takes no step. The read lives in `hooks.nim`, as `readPrompt` does, because no suite runs
-`main` of koch. Verified by `suites/test_hooks.nim`, over a scratch root and over the templates
-of this repository.
+`readKinds` reads the templates at each stop, so a template that is added is a kind at once, and no
+list in code goes stale. A missing folder gives no kinds, and an indented `name:` line belongs to an
+inner map, so it names none. A type that no template names, as `web-fetch`, is tool use, and takes
+no step. The read lives in `hooks.nim`, as `readPrompt` does, because no suite runs `main` of koch.
+Verified by `suites/test_hooks.nim`, over a scratch root and over the templates of this repository.
 
 **A block is a heading line `## Prediction` or `## Reflection` in an `assistant` item of type
 `text`, outside a fence.** The heading is that text exactly, after strip. The block runs to the
@@ -4036,12 +4063,11 @@ kind, names no kind.
   holds another word first, a plural, several other marks, and another label.
 
 **A call of a kind takes a block that names its kind, of an earlier model turn, where no subagent
-starts between them.** The hook looks back from the turn before the call, past each turn that
-starts no subagent, at any count of turns (comment 7014974932). A turn that starts a subagent
-ends the turns that the hook looks back over, and its blocks are no evidence (`D2 a` of comment
-6982373798). Of the free blocks there that name its kind, the call takes the block of the nearest
-turn (comment 7017187857). Inside that turn, it takes the earliest (comments 7017187857 and
-7027197745).
+starts between them.** The hook looks back from the turn before the call, past each turn that starts
+no subagent, at any count of turns (comment 7014974932). A turn that starts a subagent ends the
+turns that the hook looks back over, and its blocks are no evidence (`D2 a` of comment 6982373798).
+Of the free blocks there that name its kind, the call takes the block of the nearest turn (comment
+7017187857). Inside that turn, it takes the earliest (comments 7017187857 and 7027197745).
 
 - A call of any type ends those turns, tool use as `web-fetch` too. A block serves only where no
   subagent starts between it and its call (comment 7014974932). Comment 6974524232 calls
@@ -4075,9 +4101,8 @@ block, and its result is no report. `usesRejected` reads it, and `toSubagents` d
 before it reads that entry as a report. A call that launched names its subagent, so it keeps its
 effect, also with `is_error`.
 
-- Assumed: the harness writes such a result only for a call that it rejects, so the call starts
-  no subagent. Probe Q5 gives the shape, and the frozen copy holds no `Agent` result with
-  `is_error`.
+- Assumed: the harness writes such a result only for a call that it rejects, so the call starts no
+  subagent. Probe Q5 gives the shape, and the frozen copy holds no `Agent` result with `is_error`.
 - Cost: a call that starts a subagent and then fails with such a result is skipped too.
 - Choice: `agentId` is read from `toolUseResult`, as for the report of a critic, and `is_error`
   from the item of the result, as `true` alone. A text, an empty id or no field names none.
@@ -4178,18 +4203,16 @@ read. It is the form of the samples of `GUIDE.md`, where each claim is a bullet 
   breaks the claim only at a marker or at a number of value 1, as `1.` or `01.`, with text after
   it. So a wrap that opens with `2. ` stays in its claim. Rejected: each number at each indent,
   which cuts such a wrap. Rejected: the text `1` alone, which keeps `01. c` in its claim.
-- Verified by hand with pandoc 3.1.3 of GFM, on 2026-11-19, for each form at each indent up to
-  six columns. On 2026-11-20, pandoc gives the verdict of the law for each of its cases, which
-  the test counts as `lines`.
-  Verified by `suites/test_hooks.nim`, for each form at each indent up to five columns, a tab as
-  four. The law runs under a claim on one line, and under one that wraps once. It holds probes
-  F08 and F09 of the critic of the claim build.
+- Verified by hand with pandoc 3.1.3 of GFM, on 2026-11-19, for each form at each indent up to six
+  columns. On 2026-11-20, pandoc gives the verdict of the law for each of its cases, which the test
+  counts as `lines`. Verified by `suites/test_hooks.nim`, for each form at each indent up to five
+  columns, a tab as four. The law runs under a claim on one line, and under one that wraps once. It
+  holds probes F08 and F09 of the critic of the claim build.
 - Cost: from an indent of six columns, Markdown reads such a line as text of the claim. Yet it
   ends the claim there, as a bullet at any indent does. Verified by `suites/test_hooks.nim`.
 - Cost: an indent of one to three spaces, `1.`, or a tab after the marker opens no claim.
   Markdown shows each as an item of a list, yet a cell quotes nothing of that bullet.
-- Cost: a bullet that is no claim, as a question, reads as one. Verified by
-  `suites/test_hooks.nim`.
+- Cost: a bullet that is no claim, as a question, reads as one. Verified by `suites/test_hooks.nim`.
 
 **A claim with percentiles ends at them, and no percentage in brackets ends it** (comment
 7023048202). Its percentiles state its confidence, the mass between its outer two percentiles.
@@ -4256,11 +4279,10 @@ a cell that copies a claim with `\|` passes. Two backslashes before a pipe read 
   exception to a whole claim, and no comment says whether it collapses. So the collapse is a
   choice, which reads it as each other cell.
 
-**Verified by `suites/test_hooks.nim`.** It holds each refusal, whitespace, `\|`, the first table,
-a separator row, and a reflection below the sign-off. It holds each claim with and without its
-label, and refuses each other run of its words. It holds each mark, a wrap, each marker, and each
-form that opens no claim. It holds `No prediction` with and without a block, and the samples of
-`GUIDE.md`.
+**Verified by `suites/test_hooks.nim`.** It holds each refusal, whitespace, `\|`, the first table, a
+separator row, and a reflection below the sign-off. It holds each claim with and without its label,
+and refuses each other run of its words. It holds each mark, a wrap, each marker, and each form that
+opens no claim. It holds `No prediction` with and without a block, and the samples of `GUIDE.md`.
 
 - For the end at a full stop: a bullet with no mark, with no final full stop, with one, and with
   two. It also holds a full stop before a mark, and entry 882.
@@ -4311,12 +4333,11 @@ transcript, so another copy gives its own figures.
   No claim of a `## Prediction` block opens with a bold label or a label of other marks. No claim
   holds `\|` or percentiles, and no item stands right under a claim. One claim holds
   `resolution criterion` with no full stop before it, so it ends nothing.
-- A tool that includes `hooks.nim` at `ff2fa434` runs `toSubagents`, `kindNamed`, `blocksTaken`
-  and `claims` over the copy, and gives the same output at `7a912117`. Entries count from 1. The
-  8 blocks name `reviewer` and `builder` in entry 370, then `critic`, `builder`, `builder`,
-  `critic`, `builder` and `researcher`. Only the last, in entry 817, serves a call, the call of
-  `researcher` in entry 821. They hold 55 claims, 51 with a label, which `claims` reads as 106
-  forms of a cell.
+- A tool that includes `hooks.nim` at `ff2fa434` runs `toSubagents`, `kindNamed`, `blocksTaken` and
+  `claims` over the copy, and gives the same output at `7a912117`. Entries count from 1. The 8
+  blocks name `reviewer` and `builder` in entry 370, then `critic`, `builder`, `builder`, `critic`,
+  `builder` and `researcher`. Only the last, in entry 817, serves a call, the call of `researcher`
+  in entry 821. They hold 55 claims, 51 with a label, which `claims` reads as 106 forms of a cell.
 - A replay runs `koch hook stop` at each of the 54 stops that the entries `stop_hook_summary` mark.
   It reads the copy up to the last `assistant` entry before the stop, from a checkout on
   `curator/subagent-blocks`. It sets `stop_hook_active` in each reply to a refusal of `stop`.
@@ -4392,10 +4413,9 @@ hook needs no library and no `protoc` at each stop, and one row stays one line, 
 needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 as it is. It
 writes the marker that a claim names, and the delegate where the claim names none.
 
-- `protoc --encode` reads each line against the schema, and refuses a misspelt field. Then the
-  suite compares each field that `protoc --decode` prints. Verified by
-  `suites/test_claims_log.nim`, and by hand on 2026-11-20: a field name misspelt in `lineClaim`
-  fails that test.
+- `protoc --encode` reads each line against the schema, and refuses a misspelt field. Then the suite
+  compares each field that `protoc --decode` prints. Verified by `suites/test_claims_log.nim`, and
+  by hand on 2026-11-20: a field name misspelt in `lineClaim` fails that test.
 - `tools/build.nim` declares `protobuf-compiler` through its verb `system`, so the runner installs
   `protoc` for the suite. Cost: each other machine that runs the suite needs it too.
 - Rejected: bytes, then `protoc --decode`, as Data asks. By hand on 2026-11-21, `protoc` 3.21.12
@@ -4472,12 +4492,11 @@ over a tree of its own, and by `suites/test_hooks.nim` for the lines that `start
 
 ## Skills
 
-**A skill holds the moment of an act, and points at the section of the charter that binds the
-act.** Claude Code loads `.claude/skills/<name>/SKILL.md` when a person types `/<name>`, or
-when the model judges that the description of the skill fits the turn. A rule that holds by
-reading alone then reaches the delegate at the moment that it applies. Each step lives in one
-place, as the Architect ruled on #870. So a skill keeps its moment, its pointers, and only the
-steps that no section holds.
+**A skill holds the moment of an act, and points at the section of the charter that binds the act.**
+Claude Code loads `.claude/skills/<name>/SKILL.md` when a person types `/<name>`, or when the model
+judges that the description of the skill fits the turn. A rule that holds by reading alone then
+reaches the delegate at the moment that it applies. Each step lives in one place, as the Architect
+ruled on #870. So a skill keeps its moment, its pointers, and only the steps that no section holds.
 
 | Skill | Moment | Steps that no section holds |
 | --- | --- | --- |
@@ -4503,8 +4522,7 @@ is a hint, and it refuses nothing.
   It takes no line, since the Architect asked nothing in it.
 - `stop` names `sign-off` where it refuses a message that holds a sign-off.
 - `start` names `sync` in its drift line, and `triage` under the carried list.
-- `edit` names `propose-term` after a write to a glossary, and `record` after a write to a
-  record.
+- `edit` names `propose-term` after a write to a glossary, and `record` after a write to a record.
 - The drift finding names `sync`, and the finding of an acronym names `propose-term`.
 - koch names `enact` in the heading of the findings that it holds.
 - Rejected: a word of `prompt` for `move`. The words `move` and `rename` name many acts that move
@@ -4531,20 +4549,19 @@ is a hint, and it refuses nothing.
 ## Watching main
 
 **A red `main` opens its own issue, because a duty to remember to look fails in silence.**
-`watch.yml` reads each finished run of `check`, `ledger` and `head` on `main`. It opens an issue
-labelled `curator` when the run concludes failure. That issue lands in the queue that CURATOR.md
-asks every delegate to read first, so no new rule exists. An existing rule produces an issue
-that the rule already asks the next delegate to read.
+`watch.yml` reads each finished run of `check`, `ledger`, `head` and `nim` on `main`. It opens an
+issue labelled `curator` when the run concludes failure. That issue lands in the queue that
+CURATOR.md asks every delegate to read first, so no new rule exists. An existing rule produces an
+issue that the rule already asks the next delegate to read.
 
 It is a separate workflow, because a run cannot watch its own outcome. `workflow_run` fires
 only from the copy on the default branch, so it cannot be driven from a branch at all. That is
 why it also takes `workflow_dispatch`, which names the run to read.
 
 There is one issue for each workflow rather than one for each red run. A watcher that opened an
-issue for each run trains its reader to skim, which is the failure it exists to prevent. The
-marker in the body is what makes a later red comment on the first. Open issues are read
-directly rather than searched, because a cold search index would produce exactly the duplicate
-being avoided.
+issue for each run trains its reader to skim, which is the failure it exists to prevent. The marker
+in the body is what makes a later red comment on the first. Open issues are read directly rather
+than searched, because a cold search index would produce exactly the duplicate being avoided.
 
 **Only a red run of `main` itself is reported, and two of them never race.**
 
@@ -4579,12 +4596,11 @@ because to take the default of the repository is somebody's decision rather than
 the marks are text, so a step that reaches the same endpoint by another spelling goes unseen.
 That is a floor rather than a ceiling, and the module says so.
 
-A workflow may hand `gh` a token other than the run token, a stored secret or one minted in a
-step. That token reaches by its own grant, which no block sets, so the `gh` marks are skipped
-and a checkout still wants `contents`. The `draft` workflow is the case: GitHub refuses
-`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic
-token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
-token.
+A workflow may hand `gh` a token other than the run token, a stored secret or one minted in a step.
+That token reaches by its own grant, which no block sets, so the `gh` marks are skipped and a
+checkout still wants `contents`. The `draft` workflow is the case: GitHub refuses
+`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic token
+converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run token.
 
 **The weekly window is named twice, as the cron of `check.yml` and as `DAYS_RECENT`.** So a
 workflow that passes `--recent` runs on a cron whose interval is that constant. The interval is
@@ -4603,9 +4619,8 @@ a new shape is taught to `daysCron` first.
 
 ## Continuous integration
 
-**`check.yml` runs a fixed set of jobs, and a gate stands for the ones whose names vary.**
-Each job carries the name of the koch verb that it runs, so a red job names the command to run
-locally.
+**`check.yml` runs a fixed set of jobs, and a gate stands for the ones whose names vary.** Each job
+carries the name of the koch verb that it runs, so a red job names the command to run locally.
 
 `list-projects` emits the matrices, and `check-files` runs the static pass. `test` is one matrix
 job for each listed project, on its own pin. `drive` is a second matrix over the subset that
@@ -4613,13 +4628,12 @@ carries that verb, and `check-types` is one plain job on the compiler of koch. `
 `check-commits` and `check-drift` run only on pull requests, with full history. `summarize` is a
 gate that reads the rest.
 
-The gate exists because matrix job names vary with the change, and can never be required
-checks. The required checks are `summarize`, `check-scope`, `check-commits` and `check-role`
-(CURATOR.md, "Repository settings the Architect applies"). Every job added to `check.yml` is
-named in the `needs` of the gate, or it is a required check by name. `check-scope` and
-`check-commits` take the second way. A job that is
-neither is a red check that cannot block a merge. That
-mistake is easy to make and impossible to see afterwards.
+The gate exists because matrix job names vary with the change, and can never be required checks. The
+required checks are `summarize`, `check-scope`, `check-commits` and `check-role` (CURATOR.md,
+"Repository settings the Architect applies"). Every job added to `check.yml` is named in the `needs`
+of the gate, or it is a required check by name. `check-scope` and `check-commits` take the second
+way. A job that is neither is a red check that cannot block a merge. That mistake is easy to make
+and impossible to see afterwards.
 
 - Cost: a rename of a required check makes the Architect reconfigure branch protection in the
   same step. The names follow the verbs anyway, because a job named after its verb tells a
@@ -4630,20 +4644,18 @@ mistake is easy to make and impossible to see afterwards.
   the workspace, and `.gitignore` lists `.nim_runtime/`.
 - Rejected: a toolchain inside the checkout. The audit reads untracked files, so it reads that
   toolchain as source, with a finding on each file that breaks a rule.
-- `check.yml` declares `permissions: contents: read`, because checkout is the only use of the
-  token and nothing in it writes. The caches take their own runtime token, and no step calls
-  `gh`. Cost: a step that later reaches the API needs its scope named, which `workflows.nim`
-  reports for the steps that it can read. Verified on the runner, 2026-09-24, for every job
-  but `test` and `drive`. A change that touched no project code skipped those two, so the grant
-  is unverified for them.
+- `check.yml` declares `permissions: contents: read`, because checkout is the only use of the token
+  and nothing in it writes. The caches take their own runtime token, and no step calls `gh`. Cost: a
+  step that later reaches the API needs its scope named, which `workflows.nim` reports for the steps
+  that it can read. Verified on the runner, 2026-09-24, for every job but `test` and `drive`. A
+  change that touched no project code skipped those two, so the grant is unverified for them.
 - Verified on the runner, recorded 2026-09-08: a record-only change emits `[]`, `test` is
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
 
-**`check-schemas` holds each folder of schemas that the change touched.** It runs on pull
-requests and on pushes to `main`, each against its own base. The weekly run skips it, because
-that run names no base. `koch` fetches `buf` only where a folder needs it. The gate reads its
-verdict.
+**`check-schemas` holds each folder of schemas that the change touched.** It runs on pull requests
+and on pushes to `main`, each against its own base. The weekly run skips it, because that run names
+no base. `koch` fetches `buf` only where a folder needs it. The gate reads its verdict.
 
 **`test-windows` runs the suites of knoller on Windows, whenever `list-projects` names knoller.**
 Knoller runs on Windows and koch does not. So the job compiles and runs the suite file itself,
@@ -4713,16 +4725,14 @@ the runner rather than by a curator who reads.
 - A routine opens with any keyword of a routine, `method` among them (`ROUTINES`). Verified by
   `suites/test_checker.nim`: an exported routine of each keyword reads, and its `*` drops where
   its own module calls it.
-- A line that opens inside a multi-line string literal is data, and declares no routine. A
-  module may quote Nim source in such a literal, and a collector that reads lines alone takes
-  that source for routines. `linesQuoted` marks such lines from the tokens of knoller, for the
-  collector and for the fixer of dead exports. Verified by `suites/test_checker.nim`, for each
-  keyword.
+- A line that opens inside a multi-line string literal is data, and declares no routine. A module
+  may quote Nim source in such a literal, and a collector that reads lines alone takes that source
+  for routines. `linesQuoted` marks such lines from the tokens of knoller, for the collector and for
+  the fixer of dead exports. Verified by `suites/test_checker.nim`, for each keyword.
 - **Missing suite**: a check module without `tests/suites/test_<module>.nim`.
-- **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches,
-  the verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists
-  one verb to a line under `Verbs:`, verb first, so the read takes the first word of each
-  indented line.
+- **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches, the
+  verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists one verb
+  to a line under `Verbs:`, verb first, so the read takes the first word of each indented line.
 - Verbs are read from the command dispatch alone, bounded between `case options.command` and
   its `else`. The option parser cases over labels a few lines above. Without that bound,
   `root`, `all`, `branch` and `recent` would read as verbs. Cost: only the first label of a
@@ -4732,17 +4742,15 @@ the runner rather than by a curator who reads.
   `case key`, and the read stops at the first line that is not a branch. Usage is read from
   its mark to the close of the string, so header prose that names an option is not usage.
   Cost: a branch of the option parser that spans two lines hides the option under it.
-- **Stale mention**: `koch <verb>` written as a command, where koch dispatches no such verb.
-  A command is `nim r koch <verb>`, `./koch <verb>`, or a code span that opens with
-  `koch <verb>`, so prose that names koch itself passes. Contributor code is not read,
-  because a curator cannot write it, and its records are. A rename of a verb is complete when
-  the static pass is clean.
+- **Stale mention**: `koch <verb>` written as a command, where koch dispatches no such verb. A
+  command is `nim r koch <verb>`, `./koch <verb>`, or a code span that opens with `koch <verb>`, so
+  prose that names koch itself passes. Contributor code is not read, because a curator cannot write
+  it, and its records are. A rename of a verb is complete when the static pass is clean.
 - Rejected: a count of whitespace words, which reports a live routine as dead. Rejected: a
   flag on an export that only tests use, which is how every pure rule here is covered, and
   would need an exemption list.
-- Rejected: a warning rather than a finding, because a warning that nobody must act on is read
-  by nobody. Rejected: one suite for each module in contributor projects, which group tests by
-  subject.
+- Rejected: a warning rather than a finding, because a warning that nobody must act on is read by
+  nobody. Rejected: one suite for each module in contributor projects, which group tests by subject.
 - Costs: a routine named in a comment is not dead, so prose that mentions a retired routine
   hides it. That is paid to keep the rule free of false findings. An exported operator is
   skipped, because it is spelled at call sites rather than named. The other columns of the
@@ -4780,11 +4788,10 @@ and test, which is what the order of `koch check` rests on.
   pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
 
 **The check of citations costs about half a second of the static pass.** Warm
-`nim r koch check-files` took 12.63 s, 12.82 s and 13.14 s at `9445bbdc7`, which holds the
-check. It took 12.16 s, 12.04 s and 11.86 s at `c2e80da35`, before the check. The runs of the
-two commits alternated, from separate worktrees, each with a cache of its own. All of it was on
-2026-11-14, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container, timed with
-`date +%s.%N`.
+`nim r koch check-files` took 12.63 s, 12.82 s and 13.14 s at `9445bbdc7`, which holds the check. It
+took 12.16 s, 12.04 s and 11.86 s at `c2e80da35`, before the check. The runs of the two commits
+alternated, from separate worktrees, each with a cache of its own. All of it was on 2026-11-14, with
+Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container, timed with `date +%s.%N`.
 
 - Another build ran on the same machine at the same time, at a load average near 0.9. Each set
   spreads over 0.3 s to 0.5 s, so the gap of 0.78 s between the medians holds that noise too.
@@ -4843,10 +4850,9 @@ Joined, `nim r koch test curator/audit` took 3.8 s to 4.2 s warm, against 31.9 s
 These two are the pair for scoping. A change to records alone costs the static pass, and a
 change to one project adds the suites of that project. An unscoped run pays every project.
 
-**Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `test` jobs
-started within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s
-rather than the 189 s of their sum. The saving is the sum minus the slowest, so it grows as
-projects arrive.
+**Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `test` jobs started
+within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s rather than the 189
+s of their sum. The saving is the sum minus the slowest, so it grows as projects arrive.
 
 Cost from the same run: matrix jobs cannot start until `list-projects` reports. That puts 16 s
 between the start of the run and the first `test` job. That is a floor on every run, and the
@@ -4858,8 +4864,7 @@ thirds of that is the deliberate wall-clock windows of the harness, which a fast
 not shorten. On the runner the job is 5 m 31 s on the same checks, recorded 2026-09-08. The gap
 is apt install, a restore of a 2.4 GB compiler from cache, and a slower core.
 
-A figure from one machine predicts the figure of another only where what differs has been
-measured.
+A figure from one machine predicts the figure of another only where what differs has been measured.
 
 | Step of the `drive` job | Wall |
 |--------------------------|------|
@@ -4895,8 +4900,7 @@ SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of 
 - The product is also what makes it safe. A cmake build tree carried over from a configure
   that found no X11 goes on reporting `SDL not configured with OpenGL/GLX support` after the
   headers arrive. Verified by hand on a container, recorded 2026-09-10.
-- A product caches. A build tree remembers what it decided about a machine that has since
-  changed.
+- A product caches. A build tree remembers what it decided about a machine that has since changed.
 - The key holds the project directory and the hash of the `tools/build.nim` of the project,
   with `restore-keys: sdl3-<os>-<project>-`. That file carries `COMMIT_SDL3` and `SYSTEM`, so
   a moved pin or a changed package list misses the exact key. The partial key then restores
@@ -4904,19 +4908,17 @@ SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of 
 - Rejected: the exact key alone. The file carries everything else that a project driver
   carries, so it changes often, and the exact key misses on each change. A key has to be
   specific enough to be correct and stable enough to hit.
-- Rejected: a key without the project directory. Its restore key then matched the prefix of
-  another project. So a driven project that builds no SDL3 restored one, and saved it again
-  under its own key. The path is made before the step, so such a project saves an empty entry
-  rather than a warning about an absent path. Unverified on the runner until a `drive` job
-  runs with this key.
+- Rejected: a key without the project directory. Its restore key then matched the prefix of another
+  project. So a driven project that builds no SDL3 restored one, and saved it again under its own
+  key. The path is made before the step, so such a project saves an empty entry rather than a
+  warning about an absent path. Unverified on the runner until a `drive` job runs with this key.
 - Verified on the runner, 2026-09-12. The job restored from a key other than the one it saved
   under, and printed `Kept SDL3 3.2.30, already reported by pkg-config`. The SDL3 phase ran in
   about 20 ms, against 55.8 s built, at a restore cost of about 1 s.
 - No whole-job pair is quoted. The jobs on either side ran different driven checks, so the
   difference of their totals is not a saving.
-- Cost: most runs stop exercising the SDL3 build. Every cache here trades that. The pin is a
-  commit rather than a mutable tag, so what the cache hides is a rebuild, and not an upstream
-  that moved.
+- Cost: most runs stop exercising the SDL3 build. Every cache here trades that. The pin is a commit
+  rather than a mutable tag, so what the cache hides is a rebuild, and not an upstream that moved.
 
 **`nimcache` is not cached on the runner.** A cache of it can skip Nim compilation alone: at
 most about 16 s of a 357 s `drive` job. The steps that dominate such a job are the ones it
@@ -4954,9 +4956,8 @@ one repository: `create_pull_request`, `actions_list`, `add_issue_comment` and `
 went through. `update_pull_request`, `issue_write` and `list_issues` were refused. Calls on
 pull requests sat on both sides, so the subject of a call does not say which meter it takes.
 
-- A GraphQL call shows itself by cursor pagination, an `after` and an `endCursor` from a
-  `pageInfo`. A refused mutation fails at *"failed to get issue ID"*, which is the node lookup
-  before the write.
+- A GraphQL call shows itself by cursor pagination, an `after` and an `endCursor` from a `pageInfo`.
+  A refused mutation fails at *"failed to get issue ID"*, which is the node lookup before the write.
 - One tool can sit on both meters. `pull_request_read` pages its review-comment method by
   cursor, and its other methods by `page` and `perPage`.
 - The draft toggle is on the GraphQL meter, because the refused `update_pull_request` passed
@@ -4994,7 +4995,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
   `design/README.md`, `simulation/README.md` and `simulation/verdicts.md` of `dance_ontology`
   added to `PATHS_ENGLISH`, `nim r koch check-files` reported 5 findings, all in `verdicts.md`.
   Until a widening lands, that prose holds Article VI.8 by reading alone.
-- Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and
-  terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
-  the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
-  the merge.
+- Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and terms
+  as words that a name may take (`exemptions`), so it acts as a rule of content. Neither the stamp
+  nor drift reads it, so a standard that `main` drops reaches no older branch before the merge.
