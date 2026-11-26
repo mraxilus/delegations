@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d99abdcc1d9a849b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 0c9703245256594725239a770bbf31cde1566620 |
+| Pruned  | 2f1308a4a1eae24d43f3f1718ba70fbe4870774e |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -373,10 +373,9 @@ subagents live in the first, and git's own hooks in the second.
 
 - Rejected: an early return under `curator/`, which drops an unknown head in silence, so a
   misplaced project leaves the audit.
-- Rejected: domain READMEs that list projects, which forces a contributor to edit outside
-  their scope. Rejected: a theme line for root READMEs, which is a fabricated authority.
-  Rejected: an inference of mock-up from generated, which makes the distinction an accident of
-  formatting.
+- Rejected: domain READMEs that list projects, which forces a contributor to edit outside their
+  scope. Rejected: a theme line for root READMEs, which is a fabricated authority. Rejected: an
+  inference of mock-up from generated, which makes the distinction an accident of formatting.
 - Cost: empty directories are invisible to git, so `tests/` must hold a file.
 - No tracked path lies under `build/`, `dependencies/` or `node_modules/` at any depth (XI.3).
   The ignore file keeps them out, so this catches a forced add. A file that only bears such a
@@ -396,9 +395,8 @@ A suite alone cannot hold it, because a change to `CLAUDE.md` alone selects no s
   2026-11-15: import parsing skips code spans and fenced code blocks.
 - A tree without `CLAUDE.md` passes. Assumed: Claude Code then reads `AGENTS.md` itself, as its
   documentation said when read on 2026-11-14. It still advises the import, which loads once.
-- Verified by `suites/test_layout.nim`: an import that is missing, of another file, in a code
-  span, in a fence and indented. Also an entry file that is missing, with `CLAUDE.md` and
-  without it.
+- Verified by `suites/test_layout.nim`: an import that is missing, of another file, in a code span,
+  in a fence and indented. Also an entry file that is missing, with `CLAUDE.md` and without it.
 
 **Only one check reads substance, and it reads a narrow slice.** `checkCitations` resolves
 every claim that opens `Verified by` and names a backticked `.nim` file in the `PROVENANCE.md`
@@ -466,13 +464,11 @@ each row to a rules document and a `## ` heading.
   Verified by `suites/test_checker.nim`, for the reader of Glossary process as found.
 
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `rewriteRowRules`
-rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what
-the check then reads. A provenance file already current is not touched, and each path that
-moved is printed. So duty 1 takes one verb for the rows, and no hand edit (CURATOR.md, duty
-1).
+rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what the
+check then reads. A provenance file already current is not touched, and each path that moved is
+printed. So duty 1 takes one verb for the rows, and no hand edit (CURATOR.md, duty 1).
 
-- Rejected: a write of the whole header back, which would reformat a table that its writer
-  padded.
+- Rejected: a write of the whole header back, which would reformat a table that its writer padded.
 - Verified by `suites/test_provenance.nim`. The new stamp lands, and the padding and every other
   byte stay. A second write is a no-op, and an absent row leaves the source untouched. Only the
   first `Rules` row moves.
@@ -549,17 +545,15 @@ because the format creates entries lazily. Verified by `suites/test_glossary.nim
 **A standards entry reads `- **Name**, owner and edition: symbols`, and the root holds what two
 projects share.** The check demands the bold name, a comma after it and a colon after that, and
 never reads whether the edition is true. Across glossaries, a standard that a project repeats from
-the root is a finding at the project. So is one that two projects both list, at the later place,
-and the finding names the root as its home. The match is on the bold name, so a standard written
-two ways passes, as a paraphrase passes the duplicates check. Verified by
-`suites/test_glossary.nim`.
+the root is a finding at the project. So is one that two projects both list, at the later place, and
+the finding names the root as its home. The match is on the bold name, so a standard written two
+ways passes, as a paraphrase passes the duplicates check. Verified by `suites/test_glossary.nim`.
 
-**The people words that the glossary avoids are held out of the root Markdown files and the
-Markdown under `curator/`.** `WORDS_PEOPLE` is the avoid list under Architect, Delegate,
-Curator, Contributor and Role, cut to the words for people. It is read whole and without case,
-plural included, outside code spans, fences and tables. A glossary is exempt, because it lists
-the words it avoids. An import line of Claude Code, `@` and a path alone on a line, is skipped
-too, because it holds no prose.
+**The people words that the glossary avoids are held out of the root Markdown files and the Markdown
+under `curator/`.** `WORDS_PEOPLE` is the avoid list under Architect, Delegate, Curator, Contributor
+and Role, cut to the words for people. It is read whole and without case, plural included, outside
+code spans, fences and tables. A glossary is exempt, because it lists the words it avoids. An import
+line of Claude Code, `@` and a path alone on a line, is skipped too, because it holds no prose.
 
 - Rejected: the full avoid list, which holds build, rules and version, plain words everywhere.
 - `identity` is left out, as the word of algebra in `curator/probe`.
@@ -586,13 +580,12 @@ not. Code spans and fences pass, which keeps the carried-list example legal.
 - Verified by `suites/test_prompts.nim`.
 
 **The entry file is a prompt, and each role file holds its reading order under one heading.**
-`PATHS_PROMPT` lists `AGENTS.md` beside the three role files, because each harness reads it at
-each start. Each role file holds `## Read first, in this order`, and the entry file sends each
-role to that section. The start hook prints it from `CURATOR.md` for a curator branch, and from
+`PATHS_PROMPT` lists `AGENTS.md` beside the three role files, because each harness reads it at each
+start. Each role file holds `## Read first, in this order`, and the entry file sends each role to
+that section. The start hook prints it from `CURATOR.md` for a curator branch, and from
 `CONTRIBUTOR.md` for a contributor branch (Hooks on tool calls). A role file that lacks it is a
-finding, since its delegate would find no list, and nothing else would see it.
-`SECTIONS_PROCESS` names that heading in `CONTRIBUTOR.md` alone, because it lists rules
-documents only.
+finding, since its delegate would find no list, and nothing else would see it. `SECTIONS_PROCESS`
+names that heading in `CONTRIBUTOR.md` alone, because it lists rules documents only.
 
 - The start hook prints no section of `COORDINATOR.md`. The coordinator holds no branch, so it
   gets no reading order from the hook until its trial, as the Architect ruled on #891. The entry
@@ -607,8 +600,7 @@ place, and it names its first. That holds within one Markdown file, and across t
 code, table rows and headings are left out, and whitespace is collapsed before the comparison.
 Two copies of one rule drift.
 
-- Cost: a paragraph reworded by one word passes. The check catches a copy, and never a
-  paraphrase.
+- Cost: a paragraph reworded by one word passes. The check catches a copy, and never a paraphrase.
 - Verified by `suites/test_duplicates.nim`.
 
 ## Citations of sections
@@ -677,9 +669,8 @@ first. A line end reads as a space, and it ends a citation after a whole name.
   a rename of that heading stays unseen.
 - Cost: the check does not read a name with its headings in brackets after it. `CURATOR.md`
   cites `CONTRIBUTOR.md` for its commit types in that form.
-- Cost: first words pass, so a rename that keeps the first words of a heading keeps its
-  citations. A quote passes on any text of its document, so a rule that moves to another
-  section keeps its quote.
+- Cost: first words pass, so a rename that keeps the first words of a heading keeps its citations. A
+  quote passes on any text of its document, so a rule that moves to another section keeps its quote.
 - Verified by `suites/test_citations_section.nim`, for Markdown and for each kind of comment.
 
 **An article as VI.5, `duty N`, `section N` and `§N` name no heading, so the check skips them.**
@@ -698,12 +689,11 @@ the checker is exempt, because it names the families as data and carries fixture
 that links a font host is a finding, because the viewer then fetches the font face instead of
 receiving it.
 
-The first family of every stack is Noto Serif, Noto Sans or Commit Mono, subset aliases
-included. The fallbacks after it are free, because the shipped font face is what the viewer gets. A
-selector whose subject is `h1` to `h6` sets the serif, with one level of `var()` resolved from
-the page's own custom properties. A selector that styles something inside a heading is not
-styling the heading. A source that names Commit Mono enables `calt`, where its functional
-ligatures live.
+The first family of every stack is Noto Serif, Noto Sans or Commit Mono, subset aliases included.
+The fallbacks after it are free, because the shipped font face is what the viewer gets. A selector
+whose subject is `h1` to `h6` sets the serif, with one level of `var()` resolved from the page's own
+custom properties. A selector that styles something inside a heading is not styling the heading. A
+source that names Commit Mono enables `calt`, where its functional ligatures live.
 
 - **Nim literals that `&` carries across a line end are joined first.** A stack whose first
   family opens the next literal is then read whole. The joined text lands on the first line,
@@ -740,15 +730,13 @@ viewer may lack.
 - **A character that a comment alone holds is set aside, line by line**, because it never
   reaches a page. The comments come from `comments.nim`, so the blind spots of that module are
   the blind spots of this check.
-- **A reference counts as the character that it names.** `&name;` resolves for each name that
-  HTML 4.01 defined, to the codepoint that the WHATWG standard gives, which is what a browser
-  draws. `&lang;` and `&rang;` are the two names where those differ. `&#n;` and `&#xh;` resolve
-  too.
+- **A reference counts as the character that it names.** `&name;` resolves for each name that HTML
+  4.01 defined, to the codepoint that the WHATWG standard gives, which is what a browser draws.
+  `&lang;` and `&rang;` are the two names where those differ. `&#n;` and `&#xh;` resolve too.
 - A name outside that table is unread rather than reported, because `&` opens no reference in
   most code here. C and C++ read no reference at all, because `&name;` takes an address there.
-- **A finding names the file, the line, the codepoint and the spelling**, as in
-  ``got `U+21C4` for `&#8644;` ``. A line gets one finding for each codepoint, however often it
-  spells it.
+- **A finding names the file, the line, the codepoint and the spelling**, as in ``got `U+21C4` for
+  `&#8644;` ``. A line gets one finding for each codepoint, however often it spells it.
 - **A project that names no store font face is skipped.** Nothing tells its page apart from a tool
   that prints text beyond ASCII. Cost: a page that ships no font face at all is unseen here.
 - **The checker's own project is exempt**, as the font families check exempts it, because
@@ -775,12 +763,11 @@ holds an uncovered character, in a comment or not, has its comments scanned.
 ## Font stacks
 
 **`koch drive` judges the font faces of each page that a project builds.** Before it runs the
-`drive` verb of a project, it writes a control page into `build/font-faces/` of that project.
-The project's collector reads each page and the control page, and writes what the browser
-computed into `written.json`. Once the verb passes, `koch drive` resolves each character down
-the font stack of its element, against the font faces that the page ships. It writes
-`found.json` beside that file, and gives the verdict. The Architect ruled this shape on
-repository issue 671.
+`drive` verb of a project, it writes a control page into `build/font-faces/` of that project. The
+project's collector reads each page and the control page, and writes what the browser computed into
+`written.json`. Once the verb passes, `koch drive` resolves each character down the font stack of
+its element, against the font faces that the page ships. It writes `found.json` beside that file,
+and gives the verdict. The Architect ruled this shape on repository issue 671.
 
 - **The verdict is the curator's.** A collector that misses a kind of text passes a page, and so
   does a judge that lets a finding through. Nothing outside the project would see either.
@@ -933,30 +920,26 @@ and the move is visible in review, so the cost is disorder rather than damage.
   is a lock whose one edit is that line. A lock moved with a second edit is not.
 
 **Domain folders are ASCII slugs, and the accent lives in the display name.** The folder is
-`sincopa` and the name is `síncopa`, the split that `comma_games` and `comma, games` use too.
-Git quotes a non-ASCII path by default, so `git ls-files` piped into any shell tool fails on
-it. An ASCII folder needs no `core.quotepath off` instruction for any delegate. macOS stores
-such a name as NFD, so the same folder has different bytes there. A `static` assertion in
-`domains.nim` holds every folder to `isNameProject`, and fails the build rather than the suite
-(Article IV.4).
+`sincopa` and the name is `síncopa`, the split that `comma_games` and `comma, games` use too. Git
+quotes a non-ASCII path by default, so `git ls-files` piped into any shell tool fails on it. An
+ASCII folder needs no `core.quotepath off` instruction for any delegate. macOS stores such a name as
+NFD, so the same folder has different bytes there. A `static` assertion in `domains.nim` holds every
+folder to `isNameProject`, and fails the build rather than the suite (Article IV.4).
 
-Cost: a path written with the accented folder name does not parse, so an old link to one
-breaks.
+Cost: a path written with the accented folder name does not parse, so an old link to one breaks.
 
-**A finding inside a project blocks a branch of the role that owns that project, and no other
-branch that leaves its line alone.** The Architect ruled so (D1 a of #871), since a project at
-rest would otherwise keep a check that reddens it waiting without end. So such a check lands
-once the rest of the tree is clean, and each project clears its findings when it next moves.
-`koch check` on the hook and `check-files` on the runner read the same split, from the branch
-name and the lines that the branch changed. Each lists what it holds under one heading, and
-blocks on the rest.
+**A finding inside a project blocks a branch of the role that owns that project, and no other branch
+that leaves its line alone.** The Architect ruled so (D1 a of #871), since a project at rest would
+otherwise keep a check that reddens it waiting without end. So such a check lands once the rest of
+the tree is clean, and each project clears its findings when it next moves. `koch check` on the hook
+and `check-files` on the runner read the same split, from the branch name and the lines that the
+branch changed. Each lists what it holds under one heading, and blocks on the rest.
 
-Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`,
-records included. A branch owns each project whose code it may write. So the root curator owns
-each curator project, a curator of one project owns that one, and a contributor owns its own.
-`main` holds each project, because some branch holds each one, and a branch that passes must
-merge into a `main` that passes. The indexes above a project and the root files are the
-curator's, so they block each branch.
+Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`, records
+included. A branch owns each project whose code it may write. So the root curator owns each curator
+project, a curator of one project owns that one, and a contributor owns its own. `main` holds each
+project, because some branch holds each one, and a branch that passes must merge into a `main` that
+passes. The indexes above a project and the root files are the curator's, so they block each branch.
 
 Two flags block in any project, and each is set where its finding is made. A finding that a
 rules change leaves for the curator carries the propagation flag. A path outside the scope of the
@@ -972,9 +955,8 @@ clears. So it blocks wherever it lies, as `check-scope` does on the runner.
   for each project, and a list to keep true.
 - Rejected: `main` holds the contributor projects alone. A branch of one curator project holds
   the others, so a check from it would merge green and leave `main` red.
-- Rejected: push past the hook with `--no-verify`, once for each branch. Every merge of the
-  base after that first push needs a second one. The `bash` hook refuses `--no-verify` on a
-  push.
+- Rejected: push past the hook with `--no-verify`, once for each branch. Every merge of the base
+  after that first push needs a second one. The `bash` hook refuses `--no-verify` on a push.
 - Rejected: match the stale stamp by its message. The flag sits where the finding is made, so
   a reworded message cannot move it into the held set.
 - Cost: `main` can carry findings in a project at rest. koch lists them as held, and the review
@@ -1066,12 +1048,11 @@ the tree checks out the merge ref, so the checker of `main` judges there. `koch 
 the same merge, with the koch of that merge (Merge with base). So a branch that predates a change
 of the checker alone meets the checker of its base, on the runner and on the delegate.
 
-- Rejected: drift of each path of the checker. It sends each open branch to merge `main` for
-  parity alone. Measured on 2026-11-15 over the merges to `main` that
-  `git log --first-parent --merges --since=2026-10-02T00:00:00Z --format=%H c2e80da35` lists.
-  Each merge was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329
-  merges changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35
-  both.
+- Rejected: drift of each path of the checker. It sends each open branch to merge `main` for parity
+  alone. Measured on 2026-11-15 over the merges to `main` that
+  `git log --first-parent --merges --since=2026-10-02T00:00:00Z --format=%H c2e80da35` lists. Each
+  merge was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329 merges
+  changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35 both.
 - The merges of `main` into a branch are what
   `git rev-list --merges --since=2026-10-02T00:00:00Z c2e80da35` lists, off that first-parent
   chain, with a second parent on it. Of those 258, 62 took changes of the checker alone, by the
@@ -1081,12 +1062,11 @@ of the checker alone meets the checker of its base, on the runner and on the del
 - Cost: `check-drift` runs the `base.nim` of each branch. So a branch that predates this rule
   reports drift of the checker until it merges `main` once.
 
-**The finding names each section that changed, and the command that shows the change.** Each
-charter document that the base changed is one finding at its path, in the one form of a
-finding. It names each changed `##` section by its heading line, in the order that the base
-holds them, then each section that the base dropped. It gives
-`git diff <fork>..<base> -- <document>`, so the delegate reads the change itself. The code of
-the stamp is one finding more, which names its path.
+**The finding names each section that changed, and the command that shows the change.** Each charter
+document that the base changed is one finding at its path, in the one form of a finding. It names
+each changed `##` section by its heading line, in the order that the base holds them, then each
+section that the base dropped. It gives `git diff <fork>..<base> -- <document>`, so the delegate
+reads the change itself. The code of the stamp is one finding more, which names its path.
 
 - The finding asks to re-audit and re-stamp only where the stamped text of that document moved
   (`textStamped`). A change of process alone asks to read the change and merge.
@@ -1098,10 +1078,8 @@ the stamp is one finding more, which names its path.
   a governing path. Cost: two reads of git for each rules document there.
 - The start hook prints each finding under one line of its own (Hooks on tool calls). So a
   delegate reads the same lines at the start, at resume and after a compaction.
-- Rejected: one finding for all paths. It names no section, and asks for a new stamp after any
-  edit.
-- Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks
-  reference).
+- Rejected: one finding for all paths. It names no section, and asks for a new stamp after any edit.
+- Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks reference).
 
 On the runner the job checks out the branch head, and never the merge ref that a pull request
 offers. The first parent of that ref is the tip of the base. So what it gained over the base is
@@ -1114,9 +1092,8 @@ on the same merge ref is what holds a stale stamp there.
 - Cost: a merge of a change of the charter reddens every open pull request until each one
   merges the base. An edit of process does so too, because the Architect chose a fresh reading
   over a new step for the delegate (#843).
-- Cost, the honest limit: this reads at pull request time, and never at merge time. So a
-  branch green at ten can merge at five past, after another one lands. Only a merge queue
-  closes that.
+- Cost, the honest limit: this reads at pull request time, and never at merge time. So a branch
+  green at ten can merge at five past, after another one lands. Only a merge queue closes that.
 - Verified by `suites/test_base.nim`, for the case as found: a branch older than an edit of
   GUIDE.md, Output contract. The suite also holds its domain, and drives `readDrift` through
   real git on a throwaway repository. There a branch older than a change of the checker alone
@@ -1160,9 +1137,8 @@ hook, drift, the name of the branch and the hooks read the checkout itself (`mer
 **The koch of the merge builds beside the second tree, with a cache of its own.** Its binary, its
 key and its `nimcache` sit at `koch-merge-build` in the git dir. The key is the object ids of the
 sources of koch in the merge, on the paths that `.claude/hooks.sh` keys. So a warm run builds
-nothing, and a change of the checker on the base builds once. The compiler is the one that the
-pin of `curator/audit` in the merge names, as `NIM_VERSION` of the merge builds koch on the
-runner.
+nothing, and a change of the checker on the base builds once. The compiler is the one that the pin
+of `curator/audit` in the merge names, as `NIM_VERSION` of the merge builds koch on the runner.
 
 - Rejected: `nim r` of the merge. It turns each exit of koch into 1, and prints a line of its own,
   so a failed build reads as findings. Here a failed build is one finding. Verified by hand on
@@ -1173,18 +1149,16 @@ runner.
   judges in place, and merges nothing again. It fetches nothing, since `check` fetches only where
   its base is `origin/main`.
 
-**A dirty checkout, and one that holds the base, are judged in place.** `readTree` reads
-uncommitted and untracked files, which a merge of commits misses. So a dirty checkout is judged
-on the branch, with its own checker, and records no mark. A checkout that holds the base is its
-own merge.
+**A dirty checkout, and one that holds the base, are judged in place.** `readTree` reads uncommitted
+and untracked files, which a merge of commits misses. So a dirty checkout is judged on the branch,
+with its own checker, and records no mark. A checkout that holds the base is its own merge.
 
 A detached HEAD records no mark on either path, since no branch holds its tree. The second tree
 is detached, so its own run records none. The checkout records the tree of the branch where the
 merge passes, as `judgeMerged` decides.
 
-- Cost: a conflict blocks each push, since no mark is written. Assumed from GitHub
-  documentation: GitHub runs no `pull_request` workflow on a conflicting pull request, so the
-  runner agrees.
+- Cost: a conflict blocks each push, since no mark is written. Assumed from GitHub documentation:
+  GitHub runs no `pull_request` workflow on a conflicting pull request, so the runner agrees.
 - Cost: the second tree holds one more checkout and what the suites restore there. Measured with
   `du` on 2026-11-15, on the four-core Intel Xeon 2.10 GHz container, after one `koch check` of a
   branch that changes `curator/audit`. The second tree held 99 MB: the checkout, and 79 MB that
@@ -1208,10 +1182,9 @@ merge passes, as `judgeMerged` decides.
   holds a conflict, a dirty checkout, a checkout that holds the base, a worktree, and a tree that
   stays. A stub compiler holds the build, its pin, its cache and each path of its key.
 - Verified by `suites/test_merge.nim` for `judgeMerged`, the path that `koch check` takes. Drift
-  comes first, and a failed run of the koch of the merge records no mark. A passed run records
-  the tree of the branch, and a detached HEAD records none. A failed build, and a pin that no
-  compiler serves, each give one finding, exit 1 and no mark. A deleted second tree is added
-  again.
+  comes first, and a failed run of the koch of the merge records no mark. A passed run records the
+  tree of the branch, and a detached HEAD records none. A failed build, and a pin that no compiler
+  serves, each give one finding, exit 1 and no mark. A deleted second tree is added again.
 - Verified by `suites/test_merge.nim` for `judgeCheckout`, which chooses between the second tree
   and the path in place. It holds `recordMark`, the mark of a run in place, too. `koch.nim` calls
   the first, and its path in place calls the second.
@@ -4436,7 +4409,8 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 **`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
 exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
 hook needs no library and no `protoc` at each stop, and one row stays one line, as `union`
-needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 as it is.
+needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 as it is. It
+writes the marker that a claim names, and the delegate where the claim names none.
 
 - `protoc --encode` reads each line against the schema, and refuses a misspelt field. Then the
   suite compares each field that `protoc --decode` prints. Verified by
@@ -4456,19 +4430,45 @@ needs. `lineClaim` escapes each `\`, `"` and control character, and keeps UTF-8 
 - Cost: whether the merge of GitHub applies `union` is unmeasured. A branch that it refuses
   merges `main` in its own checkout, where git applies it.
 
+**`claimLine` reads each row back by hand, as D1 a of #964 rules (comment 7189788889).** It
+reads each field by its name, undoes each escape of `lineClaim`, and refuses a field that the
+schema lacks. A row that names no marker reads as marked by the delegate. `claimsTree` joins
+each log that the tree holds, in the order of its path.
+
+- Verified by `suites/test_claims_log.nim`: `protoc` and the reader read the same value of each
+  field of the same rows. The reader knows each field of the schema, and no other.
+- Rejected: `protoc --encode`, then `protobuf_serialization`, at each start of each delegate. It
+  would be the first dependency of the audit project.
+
 ## Scores of claims
 
 **`claims_scores.nim` scores each claim as Metaculus does, and gives the figures of each group
-(#964).** The baseline score of a claim is `100 × (ln p − ln 0.5) / ln 2`. Here `p` is the
-confidence for a hit, and one minus it for a miss. A claim annulled, waiting or unmarked takes
-none, and a number scores at 0.8 by its state, the confidence that `GUIDE.md` gives it.
+(#964).** The baseline score of a claim of yes or no is `100 × (ln p − ln 0.5) / ln 2`. Here
+`p` is the confidence for a hit, and one minus it for a miss. A claim annulled, waiting or
+unmarked takes none.
 
 - Each band of confidence, 51% to 60% and on in steps of 10 to 98%, gives its count and share of
   hits. Its credible band is the 5th and 95th percentiles of `Beta(hits + 1, misses + 1)`.
 - The mass of Beta is the continued fraction of Numerical Recipes, 3rd edition, 6.4.
 - Verified by `suites/test_claims_scores.nim`, against a binomial sum in exact rationals. By hand
   on 2026-11-21, four mutants of the module each fail it.
-- Cost: no verb reads a log until D1 and D2 of #964 (comment 7063613809) are ruled.
+- Cost: the bands stay until D3 of #964 (comment 7189682360) is ruled.
+
+**A number scores as Metaculus scores a continuous question, as D2 a of #964 rules (comment
+7189788889).** Each step copies the source of Metaculus at `8e413fb`, which was read and never
+run. The unit of a number fixes its range, as `GUIDE.md` gives it. A number takes no baseline
+score, and no band.
+
+- Verified by `suites/test_claims_scores.nim`, against a copy by hand in Python, run apart. By
+  hand on 2026-11-26, seven mutants of the steps each fail it.
+- Rejected: the log score on the logarithm with no range, whose level no other site shares.
+- Cost: a number of another unit takes no score until code fixes its range.
+
+**`koch figures` prints the figures of the logs of the tree, and `start` a base rate of each
+kind.** The verb keeps the marks of the delegate and of the resolver apart, so that they
+compare. It groups them by the fields that it names. The base rate reads the marks of the
+delegate alone, one for each claim. Verified by `suites/test_hooks.nim`, and by
+`suites/test_claims_scores.nim`.
 
 ## Skills
 

@@ -209,8 +209,11 @@ Each claim follows these rules for forecasting:
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
-  scores by the log score of the distribution of its percentiles, with a floor. The track record
-  is a calibration curve with its 90% credible band.
+  scores by the log score of the distribution of its percentiles, with a floor, as Metaculus
+  scores it. The track record is a calibration curve with its 90% credible band.
+- **A number names its unit at the start of its text, after its label: `tokens` or `cost`.** The
+  range of `tokens` is 10,000 to 1,000,000,000, and that of `cost` is $0.01 to $1,000. Each
+  range is on the logarithm, and its bounds are open. A number of another unit takes no score.
 - **The table has no column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
