@@ -1052,18 +1052,20 @@ ni'o se to'e cuxna fa lo nu lo sinxa poi pencu lo drata sinxa cu se to'e curmi k
     zoi gy. -∞ .gy. cu ciska pa namcu to `D7 a` toi
   .i ji'a se to'e cuxna fa lo nu lo jdini sinxa cu pencu lo lerfu po'o ki'u lo nu zoi gy. -$5 .gy.
       cu ciska pa jdini klani to `D7 b` toi
-  .i ji'a se to'e cuxna fa lo nu lo jdini sinxa cu pagbu le namcu poi lo lerfu pe ke'a cu pencu le
-      jdini sinxa ki'u lo nu da'i le genturfa'i cu tcidu re jdini klani fi zoi gy. 5€-10€ .gy. to
-      `D8 b` toi
+  .i ji'a se to'e cuxna fa lo nu le jdini klani cu vasru le namcu po'o poi lo lerfu pe ke'a cu
+      pencu le jdini sinxa ki'u lo nu da'i le genturfa'i cu tcidu lo jdini klani be li ni'u 10 fi
+      zoi gy. 5€-10€ .gy. to `D8 b` toi
 
 ni'o jdima fa lo nu le genturfa'i cu to'e curmi zoi gy. 5€-5 .gy. .e zoi gy. 5%€5 .gy. .e
-    zoi gy. €5%€5 .gy.
+    zoi gy. €5%€5 .gy. .e zoi gy. π€5 .gy.
   .i ku'i lo kutle'u cu fendi re namcu
-  .i se ki'u bo zoi gy. 5€ -5 .gy. .e zoi gy. 5% €5 .gy. .e zoi gy. €5% €5 .gy. cu se tcidu ta'i
-      lo jdini klani .e lo namcu Verified by `suites/test_stream.nim`.
-  .i ku'i lo jufra cu nitcu lo valsi poi dunda lo stuzi le drata namcu
+  .i se ki'u bo le genturfa'i cu tcidu ro pagbu pe zoi gy. 5€ -5 .gy. .e zoi gy. 5% €5 .gy. .e
+      zoi gy. €5% €5 .gy. ta'i lo namcu .a lo jdini klani Verified by `suites/test_stream.nim`.
+  .i ku'i lo jufra cu nitcu lo valsi poi dunda lo stuzi le drata namcu pe zoi gy. 5€ -5 .gy.
   .i se ki'u bo le gerna cu to'e curmi zoi gy. mi ponse 5€ -5 .gy. gi'e tcidu
       zoi gy. mi ponse 5€ .e li -5 .gy. Verified by `suites/test_prose.nim`.
+  .i ji'a le namcu pe zoi gy. 5% €5 .gy. cu klani le jdini klani ne'i lo jufra
+      Verified by `suites/test_prose.nim`.
 
 ni'o **le cipra cu tcidu ro selci'a poi vasru su'e mu pagbu po'u `1` .a `a` .a lo kutle'u .a
     zoi gy. - .gy. .a zoi gy. − .gy. .a zoi gy. % .gy. .a zoi gy. π .gy. .a zoi gy. ½ .gy. .a
