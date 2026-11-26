@@ -9,7 +9,9 @@
 ##     percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor of 1% of even
 ##     spread, least mass beyond each open bound and cap of 0.2 for each of 200 buckets
 ##     (`standardizeCdf`), and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome
-##     (`score_math.py`); outcome beyond closed bound takes none.
+##     (`score_math.py`); outcome beyond closed bound takes none, and so does curve whose step
+##     lies under 0.01 / 200 or above 0.59, as form of percentiles refuses it
+##     (`validateUserQuantileData`).
 ##   Confidence of number is mass between its outer two percentiles, so it places them: 5th and
 ##     95th at 0.9, as Architect asks on #964 (comment 7191274618), and 10th and 90th at 0.8 of
 ##     earlier row.
