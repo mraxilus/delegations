@@ -766,7 +766,7 @@ beside the library, five alternating runs at four algebras. They ran on `linux a
 Xeon of family 6 model 207, on 2026-11-26. The median general measurand runs ×1.00 its dense form
 at each algebra, since most library operators are already one generated table. The compound
 operations are not. They run ×2.1 to ×4.4 their dense forms, from the antisupport at rga3d to the
-center at cga4d.
+centre at cga4d.
 
 The grade selection runs ×1.1 to ×2.2, and the antigrade selection ×2.5 to ×3.4. The norms run
 ×0.97 to ×1.23. Sum, difference and negation run ×0.63 to ×1.01, and the unitizes and
@@ -1525,6 +1525,17 @@ comment, and folds its body. A definition is a routine, a member of a section, a
 or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
 context, kind and name, same head first. Lines in no definition follow as other lines.
 
+**An edit that no longer fits the library at pin still shows its code.** A whole-file replacement
+whose digest the file at pin lacks stands against that file. Its tally reads "digest moved", and a
+note names both digests, so a reader knows that its diff holds each change of the pin since too. A
+quote that the file at pin lacks shows as written, with no line numbers, under its count. `drive`
+names each misfit of an active proposal, and none of a frozen one, which applies at no pin. So a
+deferred or an implemented proposal keeps its code on its page as the pin moves. Rejected: a diff
+against the file that the digest names, since each build that `koch check` runs would then need the
+history of the library, and not the pinned checkout alone.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Edits`.
+
 **The marginalia tab shows each edit as a diff of lines, open, under a list of the files it
 touches.** Each line carries its number in the file as the edit finds it. The earlier edits apply
 first.
@@ -1680,9 +1691,10 @@ Each function that a Cayley table can express moves to generation, and so gets i
 unrolled at no cost. At the pin `7ef9f4d` the library works this way, and its attitude and
 carrier are generated. Its hand-written `-` carries `noinit` and writes each coefficient, so it
 fills nothing. Its `+` of two multivectors carries `noinit` too, yet its C fills the result with
-zeros before the loop writes it, 128 bytes at rga4d, as the static baselines read. The cause of
-that fill is not isolated, and P14 writes a `+` with no fill. The cost that stays is what the
-hand-written norms pay, and that fill.
+zeros before the loop writes it, 128 bytes at rga4d, and P14 writes a `+` with no fill. The cost
+that stays is the fill of the other hand-written functions, as `fills_zero` in the static
+baselines reads. At rga4d the norms, the normalizations, the four projections, the grade
+selections and the supports fill, and at cga4d the compound operations fill too.
 
 The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
@@ -1725,11 +1737,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- One machine name can hold more than one processor. Under `linux amd64, 4 cores`, pin ran
-  `wedge` at cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in the
-  history of `evaluations/cayley-derivation.json`, at `c2e80da3` and `78d5c3d5`. The stamps at
-  `08a1c416` name a Xeon of family 6 model 173, where pin ran it in 48.49 ns. The stamps now name
-  model 207, where it runs in 66.13 ns. Nothing records the processor of 2026-11-05 or 2026-11-14.
+- One machine name can hold more than one processor. Under `linux amd64, 4 cores`, pin `3d9696e`
+  ran `wedge` at cga5d in 48.49 ns on a Xeon of family 6 model 173, as the stamps at `08a1c416`
+  name. It ran it in 65.19 ns on model 207, as the stamps at `748033ef` name. Pin `7ef9f4d` runs
+  it in 66.13 ns on model 207. A stamp from before the ruling of 2026-11-15 names no processor.
 - The baselines and each evaluation but those of P02 and P06 ran on 2026-11-26 on one processor,
   a Xeon of family 6 model 207. The stamps of P02 and P06 name no processor, which leaves their
   machine unknown. So a time of P02 or P06 compares with another time only where the times of pin
@@ -1766,6 +1777,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 - When Nimony has a release, whether to port the library again at that release, or to update P99,
   `nimony-port`. Its open decisions also name 20 optional changes of its review, and 15 defects of
   Nimony that wait to be reported.
+- Why the C of `+` of two multivectors at `7ef9f4d` fills its result with zeros, although its
+  source carries `noinit`.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
