@@ -119,6 +119,7 @@ func checkWindow*(path, workflow: string; days: int): seq[Finding] =
       path,
       0,
       Check.WindowRecent,
-      "Schedule and `DAYS_RECENT` name one window; change both together (CURATOR.md, duty 9); " &
-        "got `" & $read & "` days against `" & $days & "`.",
+      "Schedule and `DAYS_RECENT` name one window (CURATOR.md, duty 9); got `" & $read &
+        "` days against `" & $days & "`.",
+      help = "change both together",
     )

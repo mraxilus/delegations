@@ -137,6 +137,7 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
         0,
         Check.WidthSubject,
         "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
+        expected = some("at most " & $SUBJECT_MAX),
       )
 
 

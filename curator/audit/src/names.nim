@@ -61,6 +61,6 @@ func checkAcronyms*(path, source: string; exempt: openArray[string]): seq[Findin
         path,
         d.line,
         Check.Acronym,
-        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
-          "spell it out; got `" & a & "` in `" & d.name & "`.",
+        "Acronym stays only where glossary lists it (V.9); got `" & a & "` in `" & d.name & "`.",
+        help = "propose it with /propose-term, or spell it out",
       )

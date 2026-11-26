@@ -136,8 +136,9 @@ proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding
     path_nimble,
     line,
     Check.NimbleLock,
-    "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
-      "regenerate lock, or make its stored copy match; got `" & held & "`.",
+    "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; got `" &
+      held & "`.",
+    help = "regenerate lock, or make its stored copy match",
   )
 
 
@@ -168,7 +169,9 @@ proc checkNameNimble*(path_nimble, path_lock, lock: string): seq[Finding] =
     line,
     Check.NameLock,
     "Lock names nimble copy after nimble file of project, or `atlas rep` writes second one " &
-      "beside it; regenerate lock; got `" & named & "` for `" & expected & "`.",
+      "beside it; got `" & named & "`.",
+    expected = some(expected),
+    help = "regenerate lock",
   )
 
 
@@ -267,8 +270,8 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
     return @[finding(
       target.directory & "/" & MANIFEST_NODE, 0,
       Check.RestoreNode,
-      "Type check needs npm on `PATH`; install node, or drop this project's manifest; " &
-        "got nothing.",
+      "Type check needs npm on `PATH`; got nothing.",
+      help = "install node, or drop this project's manifest",
     )]
   let code = runIn(root / target.directory, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
   if code != 0:

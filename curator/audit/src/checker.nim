@@ -36,7 +36,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, tables]
+import std/[algorithm, options, sequtils, strutils, tables]
 import ../../knoller/src/knoller
 import ./[findings, markdown, toolchain]
 
@@ -155,8 +155,8 @@ func checkExportsDead*(paths, sources, suites: openArray[string]): seq[Finding] 
       path,
       0,
       Check.ExportDead,
-      "Routine is exported and named by no other module and no suite; drop its `*`, or " &
-        "delete it; got `" & name & "`.",
+      "Routine is exported and named by no other module and no suite; got `" & name & "`.",
+      help = "drop its `*`, or delete it",
     )
 
 
@@ -208,7 +208,8 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
         path,
         0,
         Check.SuiteCheck,
-        "Check module needs suite; write `" & suite & "`; got nothing.",
+        "Check module needs suite; got nothing.",
+        help = "write `" & suite & "`",
       )
 
 
@@ -300,8 +301,9 @@ func checkOptions*(koch: string): seq[Finding] =
       PATH_KOCH,
       0,
       Check.OptionsUsage,
-      "Usage text must print every option parser takes, and no other; expected `" &
-        parsed.join(", ") & "`; got `" & printed.join(", ") & "`.",
+      "Usage text must print every option parser takes, and no other; got `" &
+        printed.join(", ") & "`.",
+      expected = some(parsed.join(", ")),
     )
 
 
@@ -339,8 +341,9 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
       PATH_CURATOR,
       0,
       Check.TableVerbs,
-      "Checks table must row every verb koch dispatches, and no other; expected `" &
-        dispatched.join(", ") & "`; got `" & curator.verbsTable.join(", ") & "`.",
+      "Checks table must row every verb koch dispatches, and no other; got `" &
+        curator.verbsTable.join(", ") & "`.",
+      expected = some(dispatched.join(", ")),
     )
 
 
@@ -377,5 +380,6 @@ func checkMentions*(path, source: string; verbs: openArray[string]): seq[Finding
       path,
       line,
       Check.MentionVerb,
-      "Mention names verb koch does not dispatch; write one `./koch` lists; got `" & verb & "`.",
+      "Mention names verb koch does not dispatch; got `" & verb & "`.",
+      help = "write one `./koch` lists",
     )

@@ -46,8 +46,8 @@ func checkPathsMachine*(path, source: string): seq[Finding] =
           path,
           i + 1,
           Check.PathMachine,
-          "Source names path of one machine; take location from environment " &
-            "(CONTRIBUTOR.md, System); got `" & prefix & "`.",
+          "Source names path of one machine (CONTRIBUTOR.md, System); got `" & prefix & "`.",
+          help = "take location from environment",
         )
 
 

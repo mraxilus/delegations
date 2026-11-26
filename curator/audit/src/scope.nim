@@ -61,8 +61,9 @@ func checkPropagation(path: string): seq[Finding] =
     path,
     0,
     Check.FilesContributor,
-    "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
-      "rule or check and let contributor apply it; got `" & path & "`.",
+    "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; got `" & path &
+      "`.",
+    help = "change rule or check and let contributor apply it",
     is_scope = true,
   )
 

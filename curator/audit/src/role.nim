@@ -165,6 +165,7 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
       Check.LineRole,
       "Pull request must open with `" & KEY_ROLE & " " & expected &
         "`, which its branch names; got " & body.openingQuoted & ".",
+      expected = some(KEY_ROLE & " " & expected),
     )
   if expected notin labels:
     result.add finding(
@@ -203,6 +204,7 @@ func checkTitle*(branch, title: string): seq[Finding] =
       0,
       Check.WidthTitle,
       "Pull request title exceeds " & $SUBJECT_MAX & " characters; got `" & $title.runeLen & "`.",
+      expected = some("at most " & $SUBJECT_MAX),
     )
 
 
@@ -365,6 +367,7 @@ func checkBodyPull*(body: string): seq[Finding] =
       0,
       Check.LengthBody,
       "Pull request body shows at most " & $CHARACTERS_BODY & " characters while each fold " &
-        "is closed, with each link counted by its text; fold long output in `<details>`; got `" &
-        $shown & "`.",
+        "is closed, with each link counted by its text; got `" & $shown & "`.",
+      expected = some("at most " & $CHARACTERS_BODY),
+      help = "fold long output in `<details>`",
     )

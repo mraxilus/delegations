@@ -35,7 +35,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, sets, strutils, tables]
+import std/[options, sequtils, sets, strutils, tables]
 import ./[findings, markdown]
 
 
@@ -114,8 +114,9 @@ func checkSectionsProcess*(path, source: string): seq[Finding] =
         path,
         0,
         Check.SectionProcess,
-        "Section of process that stamp leaves out is absent; restore its heading, or rename " &
-          "or drop its row of `SECTIONS_PROCESS` in `provenance.nim`; got `" & heading & "`.",
+        "Section of process that stamp leaves out is absent; got `" & heading & "`.",
+        help = "restore its heading, or rename or drop its row of `SECTIONS_PROCESS` in " &
+          "`provenance.nim`",
       )
 
 
@@ -174,8 +175,8 @@ func checkCitations*(path, source, prefix_tests: string; paths: HashSet[string])
         path,
         0,
         Check.TestCited,
-        "Claim cites test that is absent; write verification that can be repeated, or name " &
-          "tool and date instead; got `" & name & "`.",
+        "Claim cites test that is absent; got `" & name & "`.",
+        help = "write verification that can be repeated, or name tool and date instead",
       )
 
 
@@ -204,7 +205,8 @@ func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
       path,
       0,
       Check.StampStale,
-      "Rules stamp stale; re-audit project, then set `" & stamp_expected & "`; got `" &
-        fields["Rules"] & "`.",
+      "Rules stamp stale; got `" & fields["Rules"] & "`.",
+      expected = some(stamp_expected),
+      help = "re-audit project, then set row to stamp expected",
       is_propagation = true,
     )

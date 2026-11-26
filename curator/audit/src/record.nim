@@ -20,7 +20,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, tables]
+import std/[options, strutils, tables]
 import ./[findings, markdown, provenance]
 
 
@@ -105,7 +105,8 @@ func checkHeadings(path, source: string): seq[Finding] =
           path,
           i + 1,
           Check.HeadingsRecord,
-          "Heading is underlined, which no reader here sees; write `" & mark & s & "`.",
+          "Heading is underlined, which no reader here sees.",
+          help = "write `" & mark & s & "`",
         )
   if open_at > 0 and open_at != last_at:
     result.add finding(
@@ -124,8 +125,9 @@ func checkLength(path, source: string): seq[Finding] =
       path,
       0,
       Check.LengthRecord,
-      "Record over " & $LINES_RECORD & " lines; prune to log and set `" & PRUNED &
-        "` row (provenance guide); got `" & $count & "`.",
+      "Record over " & $LINES_RECORD & " lines (provenance guide); got `" & $count & "`.",
+      expected = some("at most " & $LINES_RECORD),
+      help = "prune to log and set `" & PRUNED & "` row",
     )
 
 
@@ -146,8 +148,9 @@ func checkSections*(path, source: string): seq[Finding] =
         path,
         start + 1,
         Check.LengthSection,
-        "Section over " & $LINES_SECTION & " lines; prune to log or split it (provenance " &
-          "guide); got `" & $count & "`.",
+        "Section over " & $LINES_SECTION & " lines (provenance guide); got `" & $count & "`.",
+        expected = some("at most " & $LINES_SECTION),
+        help = "prune to log or split it",
       )
 
 
@@ -192,8 +195,9 @@ func checkCounts*(path, source: string): seq[Finding] =
           path,
           i + 1,
           Check.CountProse,
-          "Count is never number in prose; name command that counts (provenance guide); got `" &
-            words[k] & " " & next & "`.",
+          "Count is never number in prose (provenance guide); got `" & words[k] & " " & next &
+            "`.",
+          help = "name command that counts",
         )
 
 

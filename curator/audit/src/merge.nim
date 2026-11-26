@@ -119,9 +119,9 @@ proc writeMerge*(root, base: string): Merge =
       "",
       0,
       Check.ConflictMerge,
-      "Branch conflicts with base, so no merge of them can be judged; merge base, resolve " &
-        "each conflict, then check again, as /sync says; got `" & fields[1 .. ^1].join(", ") &
-        "`.",
+      "Branch conflicts with base, so no merge of them can be judged; got `" &
+        fields[1 .. ^1].join(", ") & "`.",
+      help = "merge base, resolve each conflict, then check again, as /sync says",
     )
     return
   if code != 0: raise newException(IOError, "git failed; got `" & failure.strip & "`.")
@@ -145,8 +145,8 @@ proc writeMerge*(root, base: string): Merge =
       result.directory,
       0,
       Check.TreeSecond,
-      "Second tree is no worktree of its own; remove it, then check again; got `" &
-        result.directory & "`.",
+      "Second tree is no worktree of its own; got `" & result.directory & "`.",
+      help = "remove it, then check again",
     )
 
 
@@ -199,8 +199,9 @@ proc runMerge*(
         PATH_KOCH,
         0,
         Check.BuildMerge,
-        "Koch of merge with base failed to build, as compiler says above; merge base, then " &
-          "fix what breaks it; got exit `" & $code & "`.",
+        "Koch of merge with base failed to build, as compiler says above; got exit `" & $code &
+          "`.",
+        help = "merge base, then fix what breaks it",
       )])
     moveFile(building, binary)
     writeFile(binary & ".key", key)

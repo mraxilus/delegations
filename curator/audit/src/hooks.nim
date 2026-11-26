@@ -625,7 +625,8 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
         "",
         0,
         Check.MainCommit,
-        "Never commit to `main`; push to branch inside grammar (AGENTS.md); got `" & branch & "`.",
+        "Never commit to `main` (AGENTS.md); got `" & branch & "`.",
+        help = "push to branch inside grammar",
       )
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
@@ -917,8 +918,9 @@ func checkClosing(body: string): seq[Finding] =
       0,
       Check.KeywordClosing,
       "Body holds closing keyword before issue only on line of its own, as `Closes " & issue &
-        "`, since GitHub closes issue whatever sentence says; drop keyword, or put issue " &
-        "first, as `" & issue & " stays open`; got `" & phrase.splitWhitespace.join(" ") & "`.",
+        "`, since GitHub closes issue whatever sentence says; got `" &
+        phrase.splitWhitespace.join(" ") & "`.",
+      help = "drop keyword, or put issue first, as `" & issue & " stays open`",
     )
 
 
@@ -935,6 +937,7 @@ func checkBody*(
         0,
         Check.RolePost,
         "Post must open with `" & expected & "`; got " & body.openingQuoted & ".",
+        expected = some(expected),
       )
   if tool in TOOLS_PULL or tool == "mcp__github__issue_write": result.add checkClosing(body)
   result.add findingsEnglish("post", body)
@@ -968,9 +971,10 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
         "",
         0,
         Check.BodyPost,
-        "Hook reads `gh api` post before shell expands it; write body to file in earlier call, " &
-          "name it as `-F body=@<path>`, and write title and labels literally; got `" &
-          request.expansion.shortened & "`.",
+        "Hook reads `gh api` post before shell expands it; got `" & request.expansion.shortened &
+          "`.",
+        help = "write body to file in earlier call, name it as `-F body=@<path>`, and write " &
+          "title and labels literally",
       )
       continue
     var (title, body, labels) = (request.title, request.body, request.labels)
@@ -981,7 +985,8 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
           0,
           Check.BodyPost,
           "Hook reads `gh api` post before command runs, so body from shell variable or stdin " &
-            "is unread; name file by literal path; got `" & request.path & "`.",
+            "is unread; got `" & request.path & "`.",
+          help = "name file by literal path",
         )
         continue
       if not request.path.fileExists:
@@ -990,7 +995,8 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
           0,
           Check.BodyPost,
           "Hook reads `gh api` post before command runs, so it cannot read file command itself " &
-            "writes; write file in earlier call; got missing `" & request.path & "`.",
+            "writes; got missing `" & request.path & "`.",
+          help = "write file in earlier call",
         )
         continue
       body = readFile(request.path)
@@ -1596,6 +1602,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
         0,
         Check.Signoff,
         "Sign-off role must be `" & parsed.get.nameRole & "`; got `" & text_role & "`.",
+        expected = some(parsed.get.nameRole),
       )
     elif rest_role[text_role.len .. ^1] != tail:
       result.add finding(
@@ -1840,9 +1847,9 @@ func checkNumbersBare*(message: string): seq[Finding] =
           "",
           0,
           Check.NumberBare,
-          "Message names `" & number & "` bare before any link to it; give first mention as " &
-            "one link of short description and number, as `[the ledger fix (#456)](address)`, " &
-            "then number alone (GUIDE.md, Output contract).",
+          "Message names `" & number & "` bare before any link to it (GUIDE.md, Output contract).",
+          help = "give first mention as one link of short description and number, as " &
+            "`[the ledger fix (#456)](address)`, then number alone",
         )
     for (_, number) in linked: named.add number
 
@@ -1858,9 +1865,9 @@ func checkLinksReference*(message: string): seq[Finding] =
         "",
         0,
         Check.LinkReference,
-        "Message gives link `[" & label & "]` by reference; write each link inline, as " &
-          "`[the ledger fix (#456)](address)`, since Claude Code shows reference link as raw " &
-          "text where its address stands below it (GUIDE.md, Output contract).",
+        "Message gives link `[" & label & "]` by reference, and Claude Code shows reference " &
+          "link as raw text where its address stands below it (GUIDE.md, Output contract).",
+        help = "write each link inline, as `[the ledger fix (#456)](address)`",
       )]
 
 
@@ -1941,9 +1948,9 @@ func checkReferencesBare*(message: string): seq[Finding] =
           "",
           0,
           Check.ReferenceBare,
-          "Message cites `" & reference & "` with no description; cite each article and duty " &
-            "first by short description and its reference, as `expression spacing (X.9)`, " &
-            "then reference alone (GUIDE.md, Output contract).",
+          "Message cites `" & reference & "` with no description (GUIDE.md, Output contract).",
+          help = "cite each article and duty first by short description and its reference, as " &
+            "`expression spacing (X.9)`, then reference alone",
         )
       i = after
 

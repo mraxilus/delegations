@@ -190,8 +190,9 @@ func checkImportsProject*(tree: Tree): seq[Finding] =
         e.path,
         one.line,
         Check.ImportProject,
-        "Import by path reaches into other project; require it as package that `atlas.lock` " &
-          "pins (CONTRIBUTOR.md, Dependencies); got `" & imported & "`.",
+        "Import by path reaches into other project (CONTRIBUTOR.md, Dependencies); got `" &
+          imported & "`.",
+        help = "require it as package that `atlas.lock` pins",
       )
 
 

@@ -188,7 +188,8 @@ func checkEntry(e: Entry): seq[Finding] =
       e.path,
       0,
       Check.KindFile,
-      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext & "`.",
+      "File kind unread by checker; got `" & base & ext & "`.",
+      help = "register it in `" & KINDS_PATH & "`",
     )
   if parts.len == 1:
     if parts[0] notin FILES_ROOT:
@@ -239,7 +240,8 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
       directory & "/" & DIRECTORY_TESTS,
       0,
       Check.FilesProject,
-      "Project tests missing; add at least one file under `tests/`.",
+      "Project tests missing.",
+      help = "add at least one file under `tests/`",
     )
 
   # Demand exactly one nimble file, named after project, and lock when it requires packages.
@@ -253,7 +255,8 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
         e.path,
         0,
         Check.FilesProject,
-        "Nimble file not named after project; expected `" & nimble & "`.",
+        "Nimble file not named after project.",
+        expected = some(nimble),
       )
   if nimble in paths:
     result.add checkPin(nimble, tree[paths[nimble]].content)
@@ -265,7 +268,8 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
         lock,
         0,
         Check.LockMissing,
-        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") & "`.",
+        "Lock missing for required packages; got `" & required.join(", ") & "`.",
+        help = "run `atlas pin`",
       )
 
 

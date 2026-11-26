@@ -192,6 +192,6 @@ func checkWordsPeople*(path, source: string): seq[Finding] =
         path,
         i + 1,
         Check.WordPeople,
-        "Glossary avoids this word for people; write agreed term (GLOSSARY.md); got `" &
-          word & "`.",
+        "Glossary avoids this word for people (GLOSSARY.md); got `" & word & "`.",
+        help = "write agreed term",
       )

@@ -104,6 +104,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
       Check.VersionDriver,
       "Driver version must equal `" & DIRECTORY_DRIVER & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
+      expected = some(pin),
     )
 
 

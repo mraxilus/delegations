@@ -290,8 +290,8 @@ func unknown*(file: string): seq[Finding] =
   @[finding(
     "curator/audit/src/assets.nim", 0,
     Check.AssetUnknown,
-    "Store declares no such asset; add row naming its address and digest, or ask for one " &
-      "it declares; got `" & file & "`.",
+    "Store declares no such asset; got `" & file & "`.",
+    help = "add row naming its address and digest, or ask for one it declares",
   )]
 
 

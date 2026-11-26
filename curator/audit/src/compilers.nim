@@ -14,6 +14,6 @@ func missing*(directory, pin, bin: string): seq[Finding] =
   @[finding(
     directory, 0,
     Check.CompilerMissing,
-    "No compiler serves project pin, and fetching one failed; install it under `" & bin &
-    "`, or make network reachable, then run again; got `" & pin & "`.",
+    "No compiler serves project pin, and fetching one failed; got `" & pin & "`.",
+    help = "install it under `" & bin & "`, or make network reachable, then run again",
   )]
