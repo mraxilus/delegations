@@ -4,10 +4,12 @@
 ##     and so does confidence outside 0 to 1, which no cell gives.
 ##   Number scores as Metaculus scores continuous question, from its source at `8e413fb`, as `D2 a`
 ##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band.
-##   Unit opens text of number, as `tokens`, and fixes range on logarithm with both bounds open:
-##     its curve runs straight between percentiles at 201 places (`generateQuantileContinuousCdf`),
-##     takes floor of 1% of even spread and cap of 0.2 for each of 200 buckets (`standardizeCdf`),
-##     and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome (`score_math.py`).
+##   Unit opens text of number, as `tokens`, or labels it, as `Count:`, and fixes range on
+##     logarithm above zero point, with each bound open or closed: curve runs straight between
+##     percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor of 1% of even
+##     spread, least mass beyond each open bound and cap of 0.2 for each of 200 buckets
+##     (`standardizeCdf`), and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome
+##     (`score_math.py`); outcome beyond closed bound takes none.
 ##   Confidence of number is mass between its outer two percentiles, so it places them: 5th and
 ##     95th at 0.9, as Architect asks on #964 (comment 7191274618), and 10th and 90th at 0.8 of
 ##     earlier row.
@@ -58,9 +60,13 @@ type
     bands*: seq[Band]  ## Bands of confidence that hold claims, from lowest.
 
   Unit* = object  ## Define unit of number, and range code fixes for it, as writer of question does.
-    name*: string  ## Word that opens text of number in unit, as `tokens`.
-    low*: float  ## Lower bound of range, open.
-    high*: float  ## Upper bound of range, open.
+    name*: string  ## Word that opens text of number in unit, as `tokens`, or that labels it.
+    low*: float  ## Lower bound of range.
+    high*: float  ## Upper bound of range.
+    zero*: float  ## Zero point of logarithm, below lower bound, as Metaculus fixes it.
+    is_open_low*: bool  ## Whether value may fall below lower bound.
+    is_open_high*: bool  ## Whether value may rise above upper bound.
+    is_label*: bool  ## Whether name labels text, as `Count:`, rather than opening it.
 
   Point = object  ## Define point that curve of forecast passes through.
     percent: float  ## Percent of mass at or below place.
@@ -90,11 +96,15 @@ const
   NAMES_FIELD: array[Field, string] = ["delegate", "model", "effort", "project", "kind", "marker"]
     ## Name of each field, as verb `figures` reads it.
   UNITS* = [
-    Unit(name: "tokens", low: 1e4, high: 1e9),
-    Unit(name: "cost", low: 0.01, high: 1000),
-  ]  ## Range of each unit, on logarithm with both bounds open (`D2 a` of #964).
+    Unit(name: "tokens", low: 1e4, high: 1e9, is_open_low: true, is_open_high: true),
+    Unit(name: "cost", low: 0.01, high: 1000, is_open_low: true, is_open_high: true),
+    Unit(name: "time", low: 0.1, high: 1e4, is_open_low: true, is_open_high: true),
+    Unit(name: "count", low: 0, high: 1e5, zero: -1, is_open_high: true, is_label: true),
+  ]
+    ## Range of each unit, on logarithm: tokens and cost with both bounds open (`D2 a` of #964),
+    ##   time in minutes likewise (`D5 a`), and count from closed bound at 0, on logarithm of count
+    ##   plus one (`D1 a`, comment 7193361977).
   COUNT_BUCKETS = 200  ## Inner buckets of curve, as `DEFAULT_INBOUND_OUTCOME_COUNT` of Metaculus.
-  SHARE_FORECAST = 0.988  ## Share of forecast in curve with both bounds open (`standardizeCdf`).
   SHARE_EVEN = 0.01  ## Share of even spread that floor mixes into curve (`standardizeCdf`).
   MASS_OPEN = 0.001  ## Least mass beyond each open bound (`standardizeCdf`).
   CAP_BUCKET = 0.2  ## Most mass of inner bucket (`standardizeCdf`).
@@ -104,7 +114,6 @@ const
   DIGITS_ROUND = 1e10  ## Places of curve kept, as `standardizeCdf` rounds to 10.
   EPSILON_BUCKET = 1e-10  ## Nudge below edge of bucket (`unscaled_location_to_bucket_index`).
   BASELINE_OUTSIDE = 0.05  ## Baseline mass of bucket beyond range (`score_math.py`).
-  COUNT_OPEN = 2  ## Open bounds of each range of `UNITS`.
   DIVISOR_NUMBER = 2.0  ## Divisor of score of continuous question (`score_math.py`, line 103).
 
 
@@ -173,22 +182,30 @@ func percentileBeta*(mass, a, b: float): float =
 
 
 func unitClaim*(claim: Claim): Option[Unit] =
-  ## Unit of `UNITS` whose name opens text of claim, past its label; none where none does.
+  ## Unit of `UNITS` whose name labels text of claim, as `Count:`, or opens it, past its label;
+  ##   none where none does.
   let
     text = claim.text.toLowerAscii
     colon = text.find(": ")
+  for unit in UNITS:
+    if unit.is_label and text.startsWith(unit.name & ": "): return some(unit)
   for opening in [text, (if colon >= 0: text[colon+2 .. ^1] else: "")]:
     for unit in UNITS:
-      if opening.startsWith(unit.name & " "): return some(unit)
+      if not unit.is_label and opening.startsWith(unit.name & " "): return some(unit)
   none(Unit)
 
 
+func countOpen(unit: Unit): int =
+  ## Open bounds of range of unit, from 0 to 2.
+  ord(unit.is_open_low) + ord(unit.is_open_high)
+
+
 func place(value: float, unit: Unit): float =
-  ## Place of value in range of unit, on logarithm, by formula of Metaculus for zero point 0, whose
-  ##   rounding decides where place meets one of curve (`nominalLocationToCdfLocation`): below 0
-  ##   or above 1 beyond range, and -1 for value of no logarithm.
-  if value <= 0: return -1
-  let ratio = unit.high / unit.low
+  ## Place of value in range of unit, on logarithm above its zero point, by formula of Metaculus,
+  ##   whose rounding decides where place meets one of curve (`nominalLocationToCdfLocation`):
+  ##   below 0 or above 1 beyond range, and -1 for value at or below zero point.
+  if value <= unit.zero: return -1
+  let ratio = (unit.high - unit.zero) / (unit.low - unit.zero)
   (ln((value - unit.low) * (ratio - 1) + (unit.high - unit.low)) - ln(unit.high - unit.low)) /
       ln(ratio)
 
@@ -260,12 +277,16 @@ func massesCurve(curve: openArray[float]): seq[float] =
   result.add 1 - curve[^1]
 
 
-func flooredCurve(curve: openArray[float]): seq[float] =
-  ## Curve with floor of Metaculus for both bounds open: 1% of even spread mixed in, least mass
-  ##   beyond each bound, and inner buckets held under cap by search of scale (`standardizeCdf`).
+func flooredCurve(curve: openArray[float], unit: Unit): seq[float] =
+  ## Curve with floor of Metaculus for bounds of unit: 1% of even spread mixed in, least mass beyond
+  ##   each open bound and none beyond closed one, and inner buckets held under cap by search of
+  ##   scale (`standardizeCdf`).
+  let
+    share = 1 - SHARE_EVEN - MASS_OPEN * float(unit.countOpen)  # Share of forecast in curve.
+    below = (if unit.is_open_low: MASS_OPEN else: 0)  # Least mass below lower bound.
   var mixed: seq[float]
   for i, mass in curve:
-    mixed.add SHARE_FORECAST * mass + SHARE_EVEN * float(i) / float(curve.high) + MASS_OPEN
+    mixed.add share * mass + SHARE_EVEN * float(i) / float(curve.high) + below
   let masses = mixed.massesCurve
   var
     low = 1.0
@@ -298,8 +319,8 @@ func bucketPlace(at: float): int =
 func scoreNumber*(claim: Claim): Option[float] =
   ## Score of number as Metaculus scores continuous question, `100 × ln(m / b) / 2`: `m` is mass of
   ##   bucket of outcome, and `b` even share of inner mass, or 0.05 beyond range; none for claim of
-  ##   no number, outcome, unit or mark, of confidence outside 0 to 1, or whose percentiles do not
-  ##   rise.
+  ##   no number, outcome, unit or mark, of confidence outside 0 to 1, whose percentiles do not
+  ##   rise, or whose outcome lies beyond closed bound.
   if claim.number.isNone or claim.state notin {State.Hit, State.Miss}: return none(float)
   if claim.confidence <= 0 or claim.confidence >= 1: return none(float)
   let
@@ -310,10 +331,13 @@ func scoreNumber*(claim: Claim): Option[float] =
   let curve = number.curveNumber(unit.get, claim.confidence)
   if curve.len != COUNT_BUCKETS + 1: return none(float)
   let
-    masses = curve.flooredCurve.massesCurve
+    masses = curve.flooredCurve(unit.get).massesCurve
     bucket = number.outcome.get.place(unit.get).bucketPlace
-    baseline = (if bucket == 0 or bucket == COUNT_BUCKETS + 1: BASELINE_OUTSIDE
-      else: (1 - BASELINE_OUTSIDE * float(COUNT_OPEN)) / float(COUNT_BUCKETS))
+  if (bucket == 0 and not unit.get.is_open_low) or
+      (bucket == COUNT_BUCKETS + 1 and not unit.get.is_open_high):
+    return none(float)
+  let baseline = (if bucket == 0 or bucket == COUNT_BUCKETS + 1: BASELINE_OUTSIDE
+    else: (1 - BASELINE_OUTSIDE * float(unit.get.countOpen)) / float(COUNT_BUCKETS))
   some(SCALE_SCORE * ln(masses[bucket] / baseline) / DIVISOR_NUMBER)
 
 

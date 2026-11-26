@@ -20,6 +20,10 @@ const
     ## Text of number of tokens, as claim of run i01 of effort study gives it.
   TEXT_COST = "cost at list price: $0.15, $0.45 and $1.20"
     ## Text of number of cost, as claim of run r14 of effort study gives it.
+  TEXT_COUNT = "Count: findings that the report ranks: 3, 6 and 11"
+    ## Text of number of count, as row of #1022 gives it, with its label.
+  TEXT_TIME = "Time: time to its report, in minutes: 5, 12 and 30"
+    ## Text of number of time, as sample of `GUIDE.md` gives it.
 
 
 func isNear(value, expected: float): bool =
@@ -74,6 +78,10 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TOKENS, 1, 2, 3, 2).unitClaim.get.name == "tokens"
     check initNumber("Work: " & TEXT_COST, 1, 2, 3, 2).unitClaim.get.name == "cost"
     check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).unitClaim.isNone
+    check initNumber(TEXT_COUNT, 3, 6, 11, 9).unitClaim.get.name == "count"
+    check initNumber(TEXT_TIME, 5, 12, 30, 15).unitClaim.get.name == "time"
+    check initNumber("count of findings: 3, 6 and 11", 3, 6, 11, 9).unitClaim.isNone  # no label
+    check initNumber("tool calls: 12, 30 and 60", 12, 30, 60, 20).unitClaim.isNone
 
 
   test "number inside its range scores as copy in Python of method of Metaculus gives it":
@@ -100,6 +108,27 @@ suite "numbers as Metaculus":
       .isNearNumber(-70.90607341215642)  # r14: below 5th, bucket 40
     check initNumber(TEXT_COST, 0.15, 0.45, 1.20, 0.45, confidence = 0.9).scoreNumber
       .isNearNumber(85.22672609795858)  # at median, bucket 67
+
+
+  test "count and time score as copy in Python gives them, count from its closed bound at 0":
+    # `D1 a` and `D5 a` of #964 (comment 7193361977): count labelled `Count:` runs from 0, closed,
+    #   to 100,000 on logarithm of count plus one; time runs from 0.1 to 10,000 minutes, open.
+    check initNumber(TEXT_COUNT, 3, 6, 11, 9).scoreNumber
+      .isNearNumber(109.80688015840268)  # row of #1022 at 80%: bucket 40
+    check initNumber(TEXT_COUNT, 3, 6, 11, 9, confidence = 0.9).scoreNumber
+      .isNearNumber(115.69333770066828)
+    check initNumber("Count: templates of knoller: 70, 105 and 150", 70, 105, 150, 106).scoreNumber
+      .isNearNumber(127.34129186071168)  # row of #1022 at 80%: bucket 82
+    check initNumber("Count: false findings: 1, 2 and 4", 1, 2, 4, 0, confidence = 0.9).scoreNumber
+      .isNearNumber(-7.905426669289086)  # outcome on closed bound: bucket 1
+    check initNumber("Count: false findings: 1, 2 and 4", 1, 2, 4, 2e5, confidence = 0.9)
+      .scoreNumber.isNearNumber(100 * ln(0.001 / 0.05) / 2)  # above open bound
+    check initNumber("Count: false findings: 1, 2 and 4", 1, 2, 4, -0.5, confidence = 0.9)
+      .scoreNumber.isNone  # below closed bound
+    check initNumber(TEXT_TIME, 5, 12, 30, 15, confidence = 0.9).scoreNumber
+      .isNearNumber(91.44706784063854)  # sample of `GUIDE.md`: bucket 88
+    check initNumber(TEXT_TIME, 5, 12, 30, 45, confidence = 0.9).scoreNumber
+      .isNearNumber(-119.30398759005796)  # above 95th: bucket 107
 
 
   test "outcome beyond either open bound keeps mass 0.001, and scores 100 × ln(0.001 / 0.05) / 2":
