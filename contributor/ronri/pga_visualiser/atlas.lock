@@ -3,7 +3,7 @@
     "replications.mraxilus.gitlab.com": {
       "dir": "$deps/replications.mraxilus.gitlab.com",
       "url": "https://gitlab.com/mraxilus/replications",
-      "commit": "3d9696edbaaa5dca655c3024174bd46fd156d7c6",
+      "commit": "7ef9f4dbfaaad9c229feee3787e16f25b612ab63",
       "version": ""
     }
   },
@@ -45,7 +45,7 @@
       "#   characters that library's head spells its operators with (Nim pull request 26074);",
       "#   see PROVENANCE.md, Dependencies and vendoring.",
       "requires \"nim == 2.4.0\"",
-      "requires \"https://gitlab.com/mraxilus/replications#3d9696e\"",
+      "requires \"https://gitlab.com/mraxilus/replications#7ef9f4d\"",
       ""
     ]
   },
