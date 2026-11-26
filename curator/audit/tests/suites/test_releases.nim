@@ -208,6 +208,15 @@ suite "Search":
     check "answers for what it lacks" in search.failure
 
 
+  test "host that never leaves out two patches in row is caught at bound too":
+    # Domain: host answering published for every other patch, so series never ends.
+    # Case: review of #1050; mutant reading bound as `misses == 0` passed where last patch missed.
+    var served = @["2.4.2"]
+    for patch in countup(3, 2 + ASKS_SERIES_MAX, 2): served.add "2.4." & $patch
+    let search = searchReleases("2.4.2", hostServing(served))
+    check "answers for what it lacks" in search.failure
+
+
   test "pin of other shape than `X.Y.Z` is failure, and asks nothing":
     for pin in ["2.4", "2.4.2.1", "", "2.4.x", COMMIT]:
       let (search, asked) = searchLogged(pin, ["2.4.2"], [])
@@ -262,6 +271,17 @@ suite "Verb":
     check lines[2 .. ^1] == @[
       "  " & PATH_DRIVER & ": pins `2.4.2`.", "  " & PATH_RICTADNI & ": pins `2.4.0`."
     ]
+
+
+  test "driver that lags its series beside newer series is still one finding":
+    # Case: review of #1050; mutant reading lag only where no newer series opens survived suite.
+    let (lines, found, failure) = checkReleases(
+      [Pinned(path: PATH_DRIVER, pin: "2.4.2")],
+      hostServing(versionsServed() & @["2.4.4", "2.6.0"]),
+    )
+    check found.len == 1 and failure == ""  # exit stays 1, so issue stays open
+    check found[0].message.endsWith("got `2.4.2` against `2.4.4`.")
+    check lines[^1].startsWith("Nim `2.6.0` opens newer series;")
 
 
   test "newer series alone is note, and finding of none":
