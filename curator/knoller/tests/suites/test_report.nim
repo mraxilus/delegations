@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils, unittest]
-import ../../src/knoller/report
+import ../../src/knoller/[report, reports, rules]
 
 
 const
@@ -206,3 +206,38 @@ suite "Report":
     check not isColored(is_terminal = true, no_color = "1")
     check not isColored(is_terminal = true, no_color = "0")  # any text, as no-color.org reads it
     check not isColored(is_terminal = false, no_color = "")
+
+
+  test "short text holds each part finding holds, as test of each check compares it (`D3 c`)":
+    check NAME_CUT.brief == "name puts `anti` after the word it qualifies; got `antiscalar`; " &
+      "expect `scalar_anti`; help: rename it by hand, since `scalar_anti` would hide " &
+      "`scalarAnti` of line 313"
+    check Notice(rule: "r", summary: "s").brief == "s"  # no value, no help
+    check Notice(rule: "r", summary: "s", actual: some("")).brief == "s; got ``"  # empty shows
+    check Notice(rule: "r", summary: "s", actual: some("it below `x`")).brief ==
+      "s; got it below `x`"  # value holding code span of its own prints bare
+
+
+  test "report reads as notice: sentence lowercase as summary, value after `; got ` as actual":
+    let width = initReport(
+      "a.nim", 3, Rule.LineWidth, "Line exceeds 100 characters; got `101`.",
+      expected = some("at most 100"),
+    )
+    check width.toNotice == Notice(
+      path: "a.nim", line: 3, rule: "line-width", summary: "line exceeds 100 characters",
+      actual: some("101"), expected: some("at most 100"),
+    )
+    check width.brief == "line exceeds 100 characters; got `101`; expect `at most 100`"
+    check initReport("a.nim", 0, Rule.FileEnding, "File is empty.").brief == "file is empty"
+    check initReport("a.nim", 1, Rule.LineEnding, "Line ends with CR; got CRLF.").toNotice.actual ==
+      some("CRLF")  # value echoed bare stays as written
+    check initReport("a.nim", 1, Rule.Tab, "Line holds tab; got ``.").toNotice.actual == some("")
+    check initReport("a.nim", 1, Rule.Tab, "CRLF ends line.").toNotice.summary ==
+      "CRLF ends line"  # word in capitals keeps its case
+    let quoting = initReport(
+      "a.nim", 2, Rule.ValueMessage, "Message reads ``…; got `{v}`.``; got `x`."
+    )
+    check quoting.toNotice.summary == "message reads ``…; got `{v}`.``"  # quote holds its `; got `
+    check quoting.toNotice.actual == some("x")
+    check initReport("a.nim", 4, Rule.FenceHeld, "Fence holds.").toNotice(is_warning = true).
+      render(Form.Line) == "a.nim:4: fence-held warning: message=\"fence holds\""
