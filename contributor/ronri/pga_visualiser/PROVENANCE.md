@@ -3807,7 +3807,7 @@ lifts, so a third finger lifting back to two takes no old grip.
 
 *Checked.* Verified by `suites.nim`:
 
-- two fingers on points at two depths hold both within 0.05 px through a spread, slide and twist;
+- two fingers on points at two depths hold both within 0.05 px in a spread, a slide and a twist;
 - the slop there costs its own share of the gap and the angle, and no more;
 - two fingers carried together, wobbling 10 px and 0.15 inside the slop, slide, and neither zoom nor
   roll;
@@ -4250,11 +4250,11 @@ Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The deskt
 rounds half to even and Nim's `round` does not: 1012.5 reads `1012` in C, `1013` from `round`. Under
 1e-305 the value scales by 1e308 first, since 10^309 is infinite.
 
-**A product near a tie reads its side off exact digits.** There `format.roundedExact` writes each
-decimal digit of the value, up to 767, and rounds half to even as C does. Each value outside a band
-of 2^-40 keeps the fast path. Rejected: products of doubled precision, whose bound rests on a proof
-that no test holds. Verified by a probe that is not kept, on 2026-11-26: 16,956,000 values at and
-beside each tie read as C reads them. The suite seeds ties at each seventh decade.
+**A product near a tie reads its side off exact digits.** Within a margin of 2^-40 of the product,
+`roundedExact` rounds the digits of `digitsExact` half to even, as C does. A near tie costs a `seq`
+of up to 767 digits, and no other value pays more. Rejected: doubled precision, which needs a proof
+of its bound. Verified by `test_scene.nim`, and by a probe that is not kept, on 2026-11-26, in C
+against glibc: 16,956,000 values near each tie from 1e-323 to 1e304, 25,110 in node against Python.
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector, and its kind, through one writer each
