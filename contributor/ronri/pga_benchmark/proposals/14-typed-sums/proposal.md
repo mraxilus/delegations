@@ -143,5 +143,6 @@ alone is 21.
 | Negation alone | rga4d | ×1.27, ×1.27 | ×1.00, ×1.00 |
 | Sum and difference alone | rga4d | ×1.20, ×1.20 | ×1.00, ×1.00 |
 
-The same line for each basis read ×1.13 of pin for negation at cga5d on 2026-11-15, on a host of the
-same model. So the size of the cost of the spill varies with the host, and the spill does not.
+The same line for each basis read ×1.13 of pin `3d9696e` for negation at cga5d on 2026-11-15, on a
+host of the same model. So the size of the cost of the spill varies with the host, and the spill
+does not.

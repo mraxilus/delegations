@@ -456,13 +456,13 @@ commit a712559b to commit 09e9579a. So the time of the change varies by up to ab
 evaluations.
 
 The form here, without `inline`, ran under Nim 2.4.0 on 2026-11-05 in 86.05 ns, against 10.35 ns of
-pin, so at ×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain
-of `inline` from noise.
+pin `3d9696e`, so at ×8.15. That ratio lies inside their range, so no pair of runs at cga5d
+separates a gain of `inline` from noise.
 
 The evaluation of 2026-11-26 names its processor, a Xeon of family 6 model 207. There the median
-of the paired ratios is ×10.29, and the median times are 8.86 ns of pin and 91.37 ns of the form.
-Pin runs there in 0.86 of its time of 2026-11-05, and no stamp of 2026-11-05 names a processor. So
-the two ratios do not compare. At rga4d each unitize measurand reads ×1.08 to ×1.12 there, without
+of the paired ratios is ×10.29, and the median times are 8.86 ns of pin `7ef9f4d` and 91.37 ns of
+the form. The two runs differ in their pin, and no stamp of 2026-11-05 names a processor. So the
+two ratios do not compare. At rga4d each unitize measurand reads ×1.08 to ×1.12 there, without
 `inline`, and no function there changes.
 
 ### Lengyel's sources

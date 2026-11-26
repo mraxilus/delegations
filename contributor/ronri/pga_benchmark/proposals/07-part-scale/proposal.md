@@ -94,15 +94,15 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 ## Costs
 
 - **Time.** The runs under Time took library commit `3d9696e`. Pin `7ef9f4d` reads a coefficient of
-  a whole multivector by a basis known only at run time with no call, so both rules probably run
-  faster there, and their ratios can move. A pair that differs reads the scale of its first part in
-  both objects before it stops. So it takes 6 to 12 ns, against 2 to 3 ns under the rule of pin.
-  `grade` reads the scale of each part, and in a conformal algebra it also scans for the largest
-  coefficient. So it takes up to 1.3 times as long at rga4d, and 1.5 to 3.5 times as long at cga4d
-  and cga5d. `m =~ s` builds the scalar multivector of s and compares it part by part. At pin it
-  compares each coefficient with s or with zero, with no scale of a part. At rga4d at 64 bits
-  `m =~ 0` takes 1.7 times as long, and in each other build it takes ×0.88 to ×1.05 of the time of
-  pin. An equal pair takes about a quarter of the time of pin.
+  a whole multivector by a basis known only at run time with no call. So both rules probably run
+  faster there, and their ratios can move, but no run measures that. A pair that differs reads the
+  scale of its first part in both objects before it stops. So it takes 6 to 12 ns, against
+  2 to 3 ns under the rule of pin. `grade` reads the scale of each part, and in a conformal algebra
+  it also scans for the largest coefficient. So it takes up to 1.3 times as long at rga4d, and 1.5
+  to 3.5 times as long at cga4d and cga5d. `m =~ s` builds the scalar multivector of s and
+  compares it part by part. At pin it compares each coefficient with s or with zero, with no scale
+  of a part. At rga4d at 64 bits `m =~ 0` takes 1.7 times as long, and in each other build it takes
+  ×0.88 to ×1.05 of the time of pin. An equal pair takes about a quarter of the time of pin.
 - **Typed objects.** These costs fall on the types of the library at pin. A typed object knows its
   grade from its type when it compiles, so `grade` would cost nothing there under either rule. It
   knows its parts too. So the scale of a part is the largest of its own few coefficients, as three
