@@ -173,8 +173,7 @@ suite "Idioms":
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check messages("tests/suites/test_x.nim", debug) == @[
-      "Test leaves no debug output; label report, or print under failing condition (VIII.5); " &
-        "got `echo x`.",
+      "Test leaves no debug output (VIII.5); got `echo x`.",
     ]  # text koch prints
     check messages("tests/suites/test_x.nim", module("test \"a\":\n  echo \"x: \", x\n")).len == 0
     let diagnostic = module("test \"a\":\n  if x > 1:\n    echo x\n")

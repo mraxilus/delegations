@@ -160,8 +160,7 @@ suite "Audit":
       check tree.auditTree.filterIt(it.path == path).mapIt(it.message).sorted == found.sorted
     let script = treeGood().with(entry(DIRECTORY_ALPHA & "/tests/helpers.nims", "echo x\n"))
     check script.auditTree.mapIt(it.message) == @[
-      "Test leaves no debug output; label report, or print under failing condition (VIII.5); " &
-        "got `echo x`.",
+      "Test leaves no debug output (VIII.5); got `echo x`.",
     ]  # test rules of any Nim code read script under `tests/` too
 
 

@@ -53,7 +53,7 @@ suite "Names":
   test "each rule of names prints its article where sentence ends, as koch prints it":
     for (source, message) in [
       ("proc f(dir_hint: int) = discard\n",
-        "Name coins abbreviation; write `directory` (V.6); got `dir_hint`."),
+        "Name coins abbreviation (V.6); got `dir_hint`."),
       ("func toJSON() = discard\n",
         "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
           "spell it out; got `JSON` in `toJSON`."),
@@ -95,8 +95,7 @@ suite "Names":
       ("type\n  Mesh* = object\n  MeshSet* = object\n",
         "Collection type takes plural of its member `Mesh` (V.6); got `MeshSet`."),
       ("when isMainModule:\n  let verb = paramStr(1)\n",
-        "Entry block holds no binding; move code that binds into `proc main` (V.10); got " &
-        "`verb`."),
+        "Entry block holds no binding (V.10); got `verb`."),
     ]:
       check source.breaches == @[message]  # text koch prints
 
