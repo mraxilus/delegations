@@ -384,6 +384,11 @@ suite "Internal: Prose":
     # zo zo sitna le pamoi valsi pe le sinxa
     #   .i se ki'u bo le gerna cu to'e curmi le selci'a
     check not "zo ½ cu valsi".readText.is_read
+    # lo kutle'u cu fendi le jdini klani .e le drata namcu to `D8 a` toi
+    #   .i ku'i lo jufra cu nitcu lo valsi poi dunda lo stuzi le drata namcu
+    let parted = "mi ponse 5€ -5".readText
+    check not parted.is_read and parted.refusal == RefusalText.Grammar
+    check "mi ponse 5€ .e li -5".readText.is_read
 
 
   test "Run of digits with two or more periods reads as its words and tree with pi'e written out":
