@@ -13,6 +13,7 @@ func missing*(directory, pin, bin: string): seq[Finding] =
   ## Report pin no compiler serves, naming cache koch tried, so remedy is visible.
   @[finding(
     directory, 0,
+    Check.CompilerMissing,
     "No compiler serves project pin, and fetching one failed; install it under `" & bin &
     "`, or make network reachable, then run again; got `" & pin & "`.",
   )]

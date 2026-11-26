@@ -289,6 +289,7 @@ func unknown*(file: string): seq[Finding] =
   ## Report asset no row declares, naming file asked for.
   @[finding(
     "curator/audit/src/assets.nim", 0,
+    Check.AssetUnknown,
     "Store declares no such asset; add row naming its address and digest, or ask for one " &
       "it declares; got `" & file & "`.",
   )]

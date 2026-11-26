@@ -268,6 +268,7 @@ func findingsEnglish*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         b.line,
+        Check.LengthParagraph,
         "Paragraph must hold at most " & $SENTENCES_PARAGRAPH &
           " sentences; split it (ASD-STE100); got `" & $found.len & "`.",
       )
@@ -276,6 +277,7 @@ func findingsEnglish*(path, source: string): seq[Finding] =
         result.add finding(
           path,
           b.line,
+          Check.LengthSentence,
           "Sentence must hold at most " & $WORDS_SENTENCE &
             " words; split it (ASD-STE100); got `" & s.opening & "`.",
         )
@@ -285,6 +287,7 @@ func findingsEnglish*(path, source: string): seq[Finding] =
         result.add finding(
           path,
           b.line,
+          Check.WordApproved,
           "Word is outside approved dictionary; write `" & approved &
             "` (ASD-STE100); got `" & word & "`.",
         )

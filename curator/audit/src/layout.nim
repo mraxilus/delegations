@@ -130,6 +130,7 @@ func checkEntryIndex(path, child, holder, member: string): seq[Finding] =
     result.add finding(
       path,
       0,
+      Check.IndexEntry,
       holder & " holds README.md and " & member & " folders only; got `" & child & "`.",
     )
 
@@ -137,7 +138,12 @@ func checkEntryIndex(path, child, holder, member: string): seq[Finding] =
 func checkNameProject(path, name: string): seq[Finding] =
   ## Report project folder name outside grammar.
   if not name.isNameProject:
-    result.add finding(path, 0, "Project folder must match `[a-z][a-z0-9_]*`; got `" & name & "`.")
+    result.add finding(
+      path,
+      0,
+      Check.NameProject,
+      "Project folder must match `[a-z][a-z0-9_]*`; got `" & name & "`.",
+    )
 
 
 func checkPage(path: string, parts: seq[string]): seq[Finding] =
@@ -148,6 +154,7 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
   result.add finding(
     path,
     0,
+    Check.PlacePage,
     "Page outside `" & DIRECTORIES_PAGE.join("/` or `") & "/`; generated markup belongs under " &
       "`build/`; got `" & path & "`.",
   )
@@ -161,6 +168,7 @@ func checkEntry(e: Entry): seq[Finding] =
       result.add finding(
         e.path,
         0,
+        Check.BuildTracked,
         "Build output and vendored source stay untracked (Article XI.3); got `" & directory & "/`.",
       )
       break
@@ -170,6 +178,7 @@ func checkEntry(e: Entry): seq[Finding] =
     result.add finding(
       e.path,
       0,
+      Check.PlaceShell,
       "Shell is hook glue of curator, and lives only in `" & DIRECTORIES_SHELL.join("/` or `") &
         "/` (CONTRIBUTOR.md, The language is Nim); got `" & e.path & "`.",
     )
@@ -178,11 +187,17 @@ func checkEntry(e: Entry): seq[Finding] =
     result.add finding(
       e.path,
       0,
+      Check.KindFile,
       "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext & "`.",
     )
   if parts.len == 1:
     if parts[0] notin FILES_ROOT:
-      result.add finding(e.path, 0, "Root file outside layout; got `" & parts[0] & "`.")
+      result.add finding(
+        e.path,
+        0,
+        Check.LayoutRoot,
+        "Root file outside layout; got `" & parts[0] & "`.",
+      )
     return
   let head = parts[0]
   if head in DIRECTORIES_ROOT: return
@@ -194,37 +209,50 @@ func checkEntry(e: Entry): seq[Finding] =
     if parts.len == 2:
       result.add checkEntryIndex(e.path, parts[1], "Contributor root", "domain")
     elif parts[1].findDomain.isNone:
-      result.add finding(e.path, 0, "Domain folder outside registry; got `" & parts[1] & "`.")
+      result.add finding(
+        e.path,
+        0,
+        Check.RegistryDomain,
+        "Domain folder outside registry; got `" & parts[1] & "`.",
+      )
     elif parts.len == 3:
       result.add checkEntryIndex(e.path, parts[2], "Domain folder", "project")
     else:
       result.add checkNameProject(e.path, parts[2])
     return
-  result.add finding(e.path, 0, "Root directory outside layout; got `" & head & "`.")
+  result.add finding(
+    e.path,
+    0,
+    Check.LayoutRoot,
+    "Root directory outside layout; got `" & head & "`.",
+  )
 
 
 func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq[Finding] =
   ## Report missing project files, missing tests, nimble file faults, missing lock.
   for file in FILES_PROJECT:
     let path = directory & "/" & file
-    if path notin paths: result.add finding(path, 0, "Project file missing.")
+    if path notin paths: result.add finding(path, 0, Check.FilesProject, "Project file missing.")
   let prefix_tests = directory & "/" & DIRECTORY_TESTS & "/"
   if not tree.anyIt(it.path.startsWith(prefix_tests)):
     result.add finding(
       directory & "/" & DIRECTORY_TESTS,
       0,
+      Check.FilesProject,
       "Project tests missing; add at least one file under `tests/`.",
     )
 
   # Demand exactly one nimble file, named after project, and lock when it requires packages.
   let nimble = directory.pathNimble
-  if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
+  if nimble notin paths:
+    result.add finding(nimble, 0, Check.FilesProject, "Project nimble file missing.")
   for e in tree:
     let is_nimble = e.path.endsWith(EXTENSIONS[Dialect.Package])
     if e.path.directoryParent == directory and is_nimble and e.path != nimble:
       result.add finding(
         e.path,
         0,
+        Check.FilesProject,
         "Nimble file not named after project; expected `" & nimble & "`.",
       )
   if nimble in paths:
@@ -236,6 +264,7 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
       result.add finding(
         lock,
         0,
+        Check.LockMissing,
         "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") & "`.",
       )
 
@@ -243,25 +272,32 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
 func checkViewsRoot(tree: Tree, paths: Table[string, int]): seq[Finding] =
   ## Report top-level glossary missing, and root folder READMEs missing or misnamed.
   if "GLOSSARY.md" notin paths:
-    result.add finding("GLOSSARY.md", 0, "Top-level glossary missing.")
+    result.add finding("GLOSSARY.md", 0, Check.ViewsRoot, "Top-level glossary missing.")
   for root in ROOTS:
     let path = root & "/" & FILE_README
     if path notin paths:
-      result.add finding(path, 0, "Root folder README missing.")
+      result.add finding(path, 0, Check.ViewsRoot, "Root folder README missing.")
       continue
     if tree[paths[path]].content.firstNonBlank != "# " & root:
-      result.add finding(path, 1, "Root folder README must open with `# " & root & "`.")
+      result.add finding(
+        path,
+        1,
+        Check.ViewsRoot,
+        "Root folder README must open with `# " & root & "`.",
+      )
 
 
 func checkFileEntry(tree: Tree, paths: Table[string, int]): seq[Finding] =
   ## Report entry file missing, and `FILE_CLAUDE` that imports it on no line of its own, outside
   ##   code; line is read whole, so import indented as Markdown code counts as none.
-  if FILE_ENTRY notin paths: result.add finding(FILE_ENTRY, 0, "Entry file missing.")
+  if FILE_ENTRY notin paths:
+    result.add finding(FILE_ENTRY, 0, Check.FileEntry, "Entry file missing.")
   if FILE_CLAUDE notin paths: return
   if IMPORT_ENTRY notin tree[paths[FILE_CLAUDE]].content.fencedOut.splitLines:
     result.add finding(
       FILE_CLAUDE,
       0,
+      Check.FileEntry,
       "`" & FILE_CLAUDE & "` imports entry file on line `" & IMPORT_ENTRY & "` of its own, " &
         "outside code, as Claude Code loads no import in code; got none.",
     )
@@ -276,18 +312,29 @@ func checkViewsDomain(tree: Tree, paths: Table[string, int]): seq[Finding] =
         result.add finding(
           FILE_README,
           0,
+          Check.ViewsDomain,
           "Domain table lacks row `| " & d.folder & " | " & d.name & " | " & d.theme & " |`.",
         )
   for d in DOMAINS:
     let path = CONTRIBUTOR & "/" & d.folder & "/" & FILE_README
     if path notin paths:
-      result.add finding(path, 0, "Domain README missing.")
+      result.add finding(path, 0, Check.ViewsDomain, "Domain README missing.")
       continue
     let content = tree[paths[path]].content
     if content.firstNonBlank != "# " & d.name:
-      result.add finding(path, 1, "Domain README must open with `# " & d.name & "`.")
+      result.add finding(
+        path,
+        1,
+        Check.ViewsDomain,
+        "Domain README must open with `# " & d.name & "`.",
+      )
     if d.theme notin content.splitLines:
-      result.add finding(path, 0, "Domain README lacks theme line `" & d.theme & "`.")
+      result.add finding(
+        path,
+        0,
+        Check.ViewsDomain,
+        "Domain README lacks theme line `" & d.theme & "`.",
+      )
 
 
 func checkLayout*(tree: Tree): seq[Finding] =

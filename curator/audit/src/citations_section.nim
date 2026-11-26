@@ -517,6 +517,7 @@ func checkCitationsSection*(tree: Tree): seq[Finding] =
         result.add finding(
           e.path,
           unit.lineAt(citation.at),
+          Check.SectionCited,
           "Cited section is absent from `" & path.get & "`; cite heading or bold rule it " &
             "holds, or quote its text; got `" & lacking.get.replace('\n', ' ') & "`.",
         )

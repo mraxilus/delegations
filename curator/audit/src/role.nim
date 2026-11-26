@@ -162,6 +162,7 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.LineRole,
       "Pull request must open with `" & KEY_ROLE & " " & expected &
         "`, which its branch names; got " & body.openingQuoted & ".",
     )
@@ -169,6 +170,7 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.LabelRole,
       "Pull request must carry label `" & expected & "`, which job `label` of `role.yml` adds " &
         "from its branch; got `" & labels.join(", ") & "`.",
     )
@@ -184,6 +186,7 @@ func checkTitle*(branch, title: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.TitlePull,
       "Pull request title must match `type(scope): lowercase summary` without final period, " &
         "since merge commit takes it as subject; got `" & title.shortened & "`.",
     )
@@ -191,12 +194,14 @@ func checkTitle*(branch, title: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.ScopeTitle,
       "Pull request title scope must be `" & scope.get & "`; got `" & title.shortened & "`.",
     )
   if title.runeLen > SUBJECT_MAX:
     result.add finding(
       "",
       0,
+      Check.WidthTitle,
       "Pull request title exceeds " & $SUBJECT_MAX & " characters; got `" & $title.runeLen & "`.",
     )
 
@@ -326,6 +331,7 @@ func checkSummary(part: Section): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.SummarySection,
       "Section `" & part.heading & "` opens with summary of one to three sentences, then its " &
         "points; got " & got & ".",
     )
@@ -346,6 +352,7 @@ func checkBodyPull*(body: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.HeadingsBody,
       "Pull request body holds " & named & " and `" & HEADINGS_PULL[^1] & "`, once each and " &
         "in that order; got " & got & ".",
     )
@@ -356,6 +363,7 @@ func checkBodyPull*(body: string): seq[Finding] =
     result.add finding(
       "",
       0,
+      Check.LengthBody,
       "Pull request body shows at most " & $CHARACTERS_BODY & " characters while each fold " &
         "is closed, with each link counted by its text; fold long output in `<details>`; got `" &
         $shown & "`.",

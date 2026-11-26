@@ -125,7 +125,7 @@ proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding
   try:
     stored = lock.nimbleLock
   except CatchableError as e:
-    return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
+    return @[finding(path_lock, 0, Check.LockUnreadable, UNREADABLE & e.msg & "`.")]
   if stored.isNone: return
   let line = differenceFirst(stored.get, nimble)
   if line == 0: return
@@ -135,6 +135,7 @@ proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding
   result.add finding(
     path_nimble,
     line,
+    Check.NimbleLock,
     "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
       "regenerate lock, or make its stored copy match; got `" & held & "`.",
   )
@@ -165,6 +166,7 @@ proc checkNameNimble*(path_nimble, path_lock, lock: string): seq[Finding] =
   result.add finding(
     path_lock,
     line,
+    Check.NameLock,
     "Lock names nimble copy after nimble file of project, or `atlas rep` writes second one " &
       "beside it; regenerate lock; got `" & named & "` for `" & expected & "`.",
   )
@@ -179,12 +181,14 @@ func checkCommitCheckout*(
     return @[finding(
       path_lock,
       0,
+      Check.CommitCheckout,
       "Checkout holds no commit git reads after restore; got `" & checkout.directory & "`.",
     )]
   if commit_found.get == checkout.commit: return
   result.add finding(
     path_lock,
     0,
+    Check.CommitCheckout,
     "Checkout stands at other commit than lock holds after restore; got `" & commit_found.get &
       "` for `" & checkout.name & "` at `" & checkout.commit & "`.",
   )
@@ -213,12 +217,15 @@ proc checkCheckouts*(root, directory: string): seq[Finding] =
   try:
     checkouts = readFile(root / path_lock).checkoutsLock(directory_deps)
   except CatchableError as e:
-    return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
+    return @[finding(path_lock, 0, Check.LockUnreadable, UNREADABLE & e.msg & "`.")]
   for checkout in checkouts:
     let path = root / directory / checkout.directory
     if not dirExists(path):
       result.add finding(
-        path_lock, 0, "Checkout absent after restore; got `" & checkout.directory & "`."
+        path_lock,
+        0,
+        Check.CheckoutMissing,
+        "Checkout absent after restore; got `" & checkout.directory & "`."
       )
       continue
     result.add checkCommitCheckout(path_lock, checkout, path.readHead)
@@ -237,6 +244,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
     result.add finding(
       target.directory & "/" & FILE_LOCK,
       0,
+      Check.RestoreDependency,
       "Checkouts differ from lock; got exit `" & $code & "`.",
     )
 
@@ -258,6 +266,7 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
   if findExe("npm").len == 0:
     return @[finding(
       target.directory & "/" & MANIFEST_NODE, 0,
+      Check.RestoreNode,
       "Type check needs npm on `PATH`; install node, or drop this project's manifest; " &
         "got nothing.",
     )]
@@ -266,5 +275,6 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
     result.add finding(
       target.directory & "/" & LOCK_NODE,
       0,
+      Check.RestoreNode,
       "Node restore failed; got exit `" & $code & "`.",
     )

@@ -701,6 +701,7 @@ proc run(options: Options): int =
       if path.len == 0:
         found.add(if file.digestDeclared.len == 0: unknown(file) else: @[finding(
           "curator/audit/src/assets.nim", 0,
+          Check.FetchAsset,
           "Asset is declared but could not be fetched or checked; got `" & file & "`.",
         )])
       else: echo path

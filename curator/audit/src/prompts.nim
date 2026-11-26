@@ -75,6 +75,7 @@ func checkDiary(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
+        Check.IncidentPrompt,
         "Prompt names incident; state rule and its cost here, and leave incident to record " &
           "or log (duty 10); got `" & found & "`.",
       )
@@ -85,6 +86,7 @@ func checkSizePrompt(path, source: string): seq[Finding] =
   if source.len > BYTES_PROMPT:
     result.add finding(
       path, 0,
+      Check.SizePrompt,
       "Prompt over " & $BYTES_PROMPT & " bytes; prune before adding (duty 10); got `" &
         $source.len & "`.",
     )
@@ -99,6 +101,7 @@ func checkHeadingRead(path, source: string): seq[Finding] =
   result.add finding(
     path,
     0,
+    Check.HeadingRead,
     "Reading order of role that `start` prints is absent; restore its heading, or rename " &
       "`HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`.",
   )

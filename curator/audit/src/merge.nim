@@ -118,6 +118,7 @@ proc writeMerge*(root, base: string): Merge =
     result.findings.add finding(
       "",
       0,
+      Check.ConflictMerge,
       "Branch conflicts with base, so no merge of them can be judged; merge base, resolve " &
         "each conflict, then check again, as /sync says; got `" & fields[1 .. ^1].join(", ") &
         "`.",
@@ -143,6 +144,7 @@ proc writeMerge*(root, base: string): Merge =
     result.findings.add finding(
       result.directory,
       0,
+      Check.TreeSecond,
       "Second tree is no worktree of its own; remove it, then check again; got `" &
         result.directory & "`.",
     )
@@ -196,6 +198,7 @@ proc runMerge*(
       return (1, @[finding(
         PATH_KOCH,
         0,
+        Check.BuildMerge,
         "Koch of merge with base failed to build, as compiler says above; merge base, then " &
           "fix what breaks it; got exit `" & $code & "`.",
       )])

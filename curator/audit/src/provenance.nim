@@ -113,6 +113,7 @@ func checkSectionsProcess*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         0,
+        Check.SectionProcess,
         "Section of process that stamp leaves out is absent; restore its heading, or rename " &
           "or drop its row of `SECTIONS_PROCESS` in `provenance.nim`; got `" & heading & "`.",
       )
@@ -172,6 +173,7 @@ func checkCitations*(path, source, prefix_tests: string; paths: HashSet[string])
       result.add finding(
         path,
         0,
+        Check.TestCited,
         "Claim cites test that is absent; write verification that can be repeated, or name " &
           "tool and date instead; got `" & name & "`.",
       )
@@ -181,16 +183,27 @@ func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
   ## Report missing header fields, malformed date, and stale rules stamp.
   let fields = source.fieldsHeader
   if fields.len == 0:
-    return @[finding(path, 0, "Header table `| Field | Value |` missing or empty.")]
+    return @[finding(
+      path,
+      0,
+      Check.HeaderProvenance,
+      "Header table `| Field | Value |` missing or empty.",
+    )]
   for f in FIELDS:
     if f notin fields or fields[f].len == 0:
-      result.add finding(path, 0, "Header lacks field; got `" & f & "`.")
+      result.add finding(path, 0, Check.HeaderProvenance, "Header lacks field; got `" & f & "`.")
   if "Date" in fields and not fields["Date"].isDateIso:
-    result.add finding(path, 0, "Date must be `YYYY-MM-DD`; got `" & fields["Date"] & "`.")
+    result.add finding(
+      path,
+      0,
+      Check.HeaderProvenance,
+      "Date must be `YYYY-MM-DD`; got `" & fields["Date"] & "`.",
+    )
   if "Rules" in fields and fields["Rules"] != stamp_expected:
     result.add finding(
       path,
       0,
+      Check.StampStale,
       "Rules stamp stale; re-audit project, then set `" & stamp_expected & "`; got `" &
         fields["Rules"] & "`.",
       is_propagation = true,

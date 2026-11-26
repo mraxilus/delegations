@@ -154,7 +154,12 @@ func entriesNamed*(
       if seen.containsOrIncl(e.path): continue
       result.entries.add e
     if not found_file:
-      result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
+      result.unknown.add finding(
+        path,
+        0,
+        Check.NameUnknown,
+        "Name matches no file git lists; got `" & name & "`.",
+      )
 
 
 func isKindNim(e: Entry): bool =
@@ -477,6 +482,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add finding(
       e.path,
       0,
+      Check.NimbleLocked,
       "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
@@ -527,6 +533,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
         ") stays for hand, since rename to `" &
         plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
         "`.",
+      rule = plan.rename.rule.id,
     )
   let entry = e.content.blockEntry
   if entry.refusal.len > 0:
@@ -535,11 +542,13 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
       entry.bindings[0][0],
       "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
         entry.refusal & "; got `" & entry.bindings[0][1] & "`.",
+      rule = Rule.BlockEntry.id,
     )
   if e.path in context.answers and context.answers[e.path].reason.len > 0:
     result.left.add finding(
       e.path,
       0,
+      Check.BackendCompile,
       "File compiles on no backend of its pin, so fixers resting on semantic pass leave it; " &
         "got `" & context.answers[e.path].reason & "`.",
     )

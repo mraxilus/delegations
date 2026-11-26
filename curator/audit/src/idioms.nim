@@ -45,6 +45,7 @@ func checkPathsMachine*(path, source: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
+          Check.PathMachine,
           "Source names path of one machine; take location from environment " &
             "(CONTRIBUTOR.md, System); got `" & prefix & "`.",
         )
@@ -66,5 +67,6 @@ func checkTsconfig*(path, config: string): seq[Finding] =
       result.add finding(
         path,
         0,
+        Check.ConfigTypescript,
         "`tsconfig.json` sets `" & flag & "` to `true` (CONTRIBUTOR.md, TypeScript); got none.",
       )

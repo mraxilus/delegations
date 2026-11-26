@@ -31,6 +31,9 @@
 
 import std/[algorithm, options, sequtils, strutils, tables]
 import ../../knoller/src/knoller
+import ./checks
+
+export checks
 
 
 type Finding* = object  ## Define one rule violation located at path and line.
@@ -153,6 +156,33 @@ func finding*(
     span: span,
     is_propagation: is_propagation,
     is_scope: is_scope,
+  )
+
+
+func finding*(
+  path: string,
+  line: int,
+  check: Check,
+  message: string,
+  expected = none(string),
+  help = "",
+  column = 0,
+  span = 0,
+  is_propagation = false,
+  is_scope = false,
+): Finding =
+  ## Construct finding of check of koch, under its id (D4 of #1002).
+  finding(
+    path,
+    line,
+    message,
+    is_propagation,
+    is_scope,
+    check.id,
+    expected,
+    help,
+    column,
+    span,
   )
 
 
