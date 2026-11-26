@@ -234,6 +234,16 @@ proc checkCheckouts*(root, directory: string): seq[Finding] =
     result.add checkCommitCheckout(path_lock, checkout, path.readHead)
 
 
+func differing*(directory: string, code: int): seq[Finding] =
+  ## Report checkouts of project that `atlas changed` finds apart from lock, by its exit code.
+  @[finding(
+    directory & "/" & FILE_LOCK,
+    0,
+    Check.RestoreDependency,
+    "Checkouts differ from lock; got exit `" & $code & "`.",
+  )]
+
+
 proc restoreDependencies(root: string, target: Target): seq[Finding] =
   ## Restore project's checkouts from lock through Atlas, judged by each checkout, then `changed`.
   ##   Atlas comes from same toolchain as compiler, since it records compiler it ran under
@@ -243,13 +253,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
   discard runIn(root / target.directory, atlas, ["--noexec", "rep"], target.bin)
   result = checkCheckouts(root, target.directory)
   let code = runIn(root / target.directory, atlas, ["changed"], target.bin)
-  if code != 0:
-    result.add finding(
-      target.directory & "/" & FILE_LOCK,
-      0,
-      Check.RestoreDependency,
-      "Checkouts differ from lock; got exit `" & $code & "`.",
-    )
+  if code != 0: result.add differing(target.directory, code)
 
 
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =

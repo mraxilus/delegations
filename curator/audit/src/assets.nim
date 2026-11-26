@@ -295,6 +295,15 @@ func unknown*(file: string): seq[Finding] =
   )]
 
 
+func unfetched*(file: string): seq[Finding] =
+  ## Report asset row declares that store could not fetch or check, naming file asked for.
+  @[finding(
+    "curator/audit/src/assets.nim", 0,
+    Check.FetchAsset,
+    "Asset is declared but could not be fetched or checked; got `" & file & "`.",
+  )]
+
+
 func causeCurl*(said: string, code: int): string =
   ## Read cause of failed fetch from what curl printed: its non-empty lines, stripped and joined
   ##   by one space, else `curl exited <code>`.

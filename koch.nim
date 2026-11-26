@@ -716,11 +716,7 @@ proc run(options: Options): int =
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
-        found.add(if file.digestDeclared.len == 0: unknown(file) else: @[finding(
-          "curator/audit/src/assets.nim", 0,
-          Check.FetchAsset,
-          "Asset is declared but could not be fetched or checked; got `" & file & "`.",
-        )])
+        found.add(if file.digestDeclared.len == 0: unknown(file) else: unfetched(file))
       else: echo path
     if found.len == 0: return 0
   of "list-packages":
