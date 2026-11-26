@@ -514,18 +514,30 @@ tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 20
 each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
 costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
-**Sonnet 5.5 keeps almost as many tags of the default as a second run of the default keeps.**
+**Sonnet 5.5 keeps almost as many gismu of the default as a second run of the default keeps.**
 Haiku 5.5 keeps fewer, and at effort `low` only about half. On 2026-11-26, a live grid sent the
 same 10 texts to each configuration, through `binaries/suggester` built at `ed9fe6f`. The texts
 are these:
 
-- two short notes, a garden plan and a list of chores;
-- a recipe, an email, a commit message and a news paragraph;
-- a lojban sentence, a poem and a technical paragraph on TCP;
-- the article of Wikipedia on Alice's Adventures in Wonderland, revision 1384221564, by URL.
+- a garden plan;
+- a list of chores;
+- a recipe;
+- an email;
+- a commit message;
+- a news paragraph;
+- a lojban sentence;
+- a poem;
+- a technical paragraph on TCP;
+- the article of Wikipedia on Alice's Adventures in Wonderland, revision 1384221564.
 
-The tool cuts that article at 64 KiB. Each request ran with `RICTADNI_MODEL` and
-`RICTADNI_EFFORT` set, and recorded its exchange by `--record:`, one directory for each sample.
+The tool cuts that article at 64 KiB. Each request set `RICTADNI_MODEL` and `RICTADNI_EFFORT`, and
+recorded its exchange into one directory for each sample:
+
+```sh
+binaries/suggester --record:<directory> - < <text>
+binaries/suggester --record:<directory> "<url of the article>"
+```
+
 The tree keeps neither the texts nor the exchange files.
 
 | Model, effort | Samples | Recall of 5 | Recall of 10 | Unrelated | Placeholder ends | Cost of 10 |
@@ -537,20 +549,28 @@ The tree keeps neither the texts nor the exchange files.
 | Haiku 5.5, `medium` | 1 | 100 of 130 | 156 of 257 | 18 of 132 | 0 of 10 | $0.009 |
 | Haiku 5.5, `low` | 1 | 72 of 130 | 120 of 257 | 65 of 164 | 0 of 10 | $0.008 |
 
-Each answer of the default that ends on no placeholder and keeps 9 gismu or more is a reference,
+Each answer of the default that has no placeholder end and keeps 9 gismu or more is a reference,
 26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample also gives.
-The default reads only references of its other samples, so its row is the floor of the noise.
-Recall of 5 for each sample of Sonnet at `low` falls between 0.90 and 0.93.
+The default reads only the references of its other samples. So its row shows how well two runs
+of the default agree, which is the most that another configuration can expect.
 
-A gismu is related where a sample of the default gives it for the same text. Of the rest, the
-delegate marked a gismu unrelated where no sense of its keyword fits a thing of the text. An
-example is `sanli`, stand, for the paragraph on TCP. The marks are the judgement of one reader on
-2026-11-26, and the tree does not keep their list.
+Recall of 5 for each sample falls in these ranges:
 
-A placeholder end is an answer whose last element is five letters that no word reads, such as
-`samtc` or `tevec`. Its gloss is `x` or `placeholder`, and the model ends the answer there. So that
-answer kept 1 to 9 gismu, where the other answers for the same text kept 9 to 26. The answers of
-Opus also gave `nolra`, glossed queen, which the reader drops as unlisted.
+- Opus at `medium`: 0.91 to 0.99.
+- Sonnet at `medium`: 0.90 to 0.96.
+- Sonnet at `low`: 0.90 to 0.93.
+
+A gismu is related where another sample of the default gives it for the same text. So a sample of
+the default is marked against its other samples alone. Of the rest, the delegate marked a gismu
+unrelated where its keyword fits no thing of the text. An example is `sanli`, stand, for the
+paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader knew the
+configuration of each gismu, and the tree does not keep the list of marks.
+
+A placeholder end is an answer whose last element does not have the form of a gismu or a lujvo,
+such as `samtc` or `tevec`. Its gloss is `x` or `placeholder`, and the model ends the answer there.
+These answers kept 1 to 9 gismu, where the other answers for the same text kept 9 to 26. Two
+answers of Opus at `medium` for the article also end on `nolra`, glossed queen. It has the form of
+a gismu, and the reader drops it as unlisted, so those answers count as references.
 
 Each cost takes the list price of 2026-11-26 for each million tokens:
 
@@ -560,12 +580,14 @@ Each cost takes the list price of 2026-11-26 for each million tokens:
 - A cache write of 5 minutes costs 1.25 times the input price.
 
 Each cost assumes a cold cache. Most samples read the system text from the cache that an earlier
-sample wrote. For those, the cost turns one read into one write, so it is calculated, not billed.
-The page by URL makes 39% to 48% of the cost of a sample. Verified by hand with
-`binaries/suggester` on 2026-11-26.
+sample wrote. For those, the calculation counts one read as one write, so the figure is calculated
+and not billed. The article makes 39% to 48% of the cost of a sample.
 
-Three samples of each text show the spread of three configurations alone. The other configurations
-have one sample, so their spread is unmeasured.
+A script outside the tree read the reports and the usage of the exchange files. It computed each
+recall, each count and each cost by the rules above. Verified by hand with `binaries/suggester`
+on 2026-11-26.
+
+Opus at `low` and Haiku have one sample of each text, so their spread is unmeasured.
 
 ## Transport
 
