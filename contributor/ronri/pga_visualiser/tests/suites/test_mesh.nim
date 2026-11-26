@@ -201,6 +201,23 @@ suite "Mesh":
     MESHES_SCENE.clearMeshes
 
 
+  test "a ring of no segments has no angles, so its type refuses it":
+    # Fault: ring stepped zero ways round circle divided by zero, and gave NaN for each entry.
+    #   Negative count stepped it round backwards (repository issue 970).
+    # Domain: each count from -4 to 0 is refused. Each count from 1 to 4 closes its ring at its
+    #   own entry, and each entry stands on unit circle.
+    for segments in -4..0:
+      checkpoint $segments
+      expect RangeDefect:
+        discard unitRing[5](segments)
+    for segments in 1..4:
+      checkpoint $segments
+      let ring = unitRing[5](segments)
+      check ring[segments].cos_angle =~ 1.0 and ring[segments].sin_angle =~ 0.0
+      for entry in ring:
+        check entry.cos_angle * entry.cos_angle + entry.sin_angle * entry.sin_angle =~ 1.0
+
+
   test "clearing drops every vertex and every record":
     MESHES_SCENE.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
     MESHES_SCENE.addSegment(ORIGIN, PLACES[0], Ink.Jade.colour, WIDTH_LINE_OBJECT)

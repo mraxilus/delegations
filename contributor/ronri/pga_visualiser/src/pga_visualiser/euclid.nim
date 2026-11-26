@@ -196,9 +196,10 @@ func positionOnLineNearest*(support: Position; toward: Direction; place: Positio
   support + (dot(place - support, toward) / length_squared) * toward
 
 
-func unitRing*[N: static int](segments: int): array[N, RingAngle] =
+func unitRing*[N: static int](segments: Positive): array[N, RingAngle] =
   ## Resolve `N` entries of ring stepped `segments` ways round circle.
   ##   Entry `i` sits at angle `2*PI*i/segments`.
+  ##   `Positive`, since ring of no segments has no step: its angles would divide by zero.
   ##   One generator for every fixed ring project walks.
   ##     Plane rim and horizon line's great circle (`mesh.UNIT_CIRCLE_RIM`, one entry past
   ##     wrap so closing segment lands on value `cos(2*PI)` takes), plane's marker loop,
