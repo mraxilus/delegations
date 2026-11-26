@@ -117,7 +117,8 @@ Three decisions wait on [the gap of the table to Lengyel
 
 - **D1.** The rule that doubles the basis of most cross pairs moves how gcc packs products into
   vectors. So two pairs run at ×1.04 of the old rule. They are a circle by a motor at cga4d, and
-  a grade-4 object by a flector at rga5d. Shared entries alone keep none of the gains on
+  a grade-4 object by a flector at rga5d. The timed loop moves a pair by up to ×1.08 with no
+  change of C, so part of each may be the loop. Shared entries alone keep none of the gains on
   Lengyel's transforms. So the choice is to accept the two pairs (a), or to keep the old rule
   until a cover keeps the packing (b).
 - **D2.** An entry summed as a balanced tree brings the point and the plane to ×0.98 of Lengyel's
@@ -192,8 +193,13 @@ Lengyel's code in the same run. Before the two rules, these ratios read ×1.07 t
 ×1.05 to ×1.14, ×1.03 and ×1.02.
 
 The same loop timed 76 pairs of types at the nine algebras, against the emitter before the two
-rules. Their median reads ×0.98, and a full multivector by a flector at cga6d reads ×0.74. Two
-pairs read ×1.04 in five or six of six runs (D1).
+rules. Each pair builds at the default loop bound. Their median reads ×1.00, and a full
+multivector by a flector at cga6d reads ×0.74.
+
+In six runs, three pairs read slower. A grade-1 object by a flector at rga2d reads ×1.08, though
+its C equals that of the old emitter. So this loop moves a pair by up to ×1.08 with no change of
+C. A circle by a motor at cga4d reads ×1.04 in either order of the two timed functions. A grade-4
+object by a flector at rga5d reads ×1.03 to ×1.04 (D1).
 
 The counts of the chain, of the other algebras and of the forms that lost come from scripts that
 read the tables of pin. The build of one call is the median of four builds of a program with the
