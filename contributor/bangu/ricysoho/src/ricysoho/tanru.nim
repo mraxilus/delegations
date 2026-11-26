@@ -205,6 +205,7 @@ type
       ##       pe pa sinxa po'o to `D2 a` toi
       ##   .i `Architect` jdice lo stuzi pe lo sinxa poi lidne lo namcu ku'o bu'u `#1003` ta'i
       ##       `D4 b`
+      ##   .i ji'a `Architect` jdice lo stuzi pe lo drata sinxa pe lo namcu bu'u `#1003` ta'i `D6 b`
       ##   .i le tcila cu du le sinxa
 
   Reading* = object  ## lo jalge be lo nu tcidu lo selci'a ta'i pa valsi

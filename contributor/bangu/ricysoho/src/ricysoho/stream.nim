@@ -290,12 +290,12 @@ const
   LUT_CMAVO_BY_SUFFIX = [("%", "ce'i")]
     ## lo sinxa poi se lidne lo namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
     ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
-    ##   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
+    ##   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
     ##   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
   LUT_CMAVO_BY_CONSTANT = [("π", @["pai"]), ("∞", @["ci'i"]), ("½", @["pa", "fi'u", "re"])]
     ## lo sinxa poi sinxa pa namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
     ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
-    ##   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
+    ##   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
     ##   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
   SIGNS_STREAM = block:
     ## ro sinxa poi le genturfa'i cu tcidu ke'a
@@ -735,7 +735,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##       `0` bi'o `9` cu lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
   ##   .i lo sinxa pe `LUT_CMAVO_BY_CONSTANT` cu du pa namcu gi'e se tcidu va'o lo nu no lerfu pe
   ##       `0` bi'o `9` .e no sinxa cu pencu le sinxa
-  ##   .i le stuzi pe le re klesi be lo sinxa cu denpa `D6` pe `#1003`
+  ##   .i `Architect` jdice le stuzi pe le re klesi be lo sinxa bu'u `#1003` ta'i `D6 b`
   ##   .i ki'u bo bu'u lo drata stuzi le valsi cu sinxa lo drata namcu .a no namcu to `CLL 18.4` toi
   ##   .i lo drata sinxa cu se to'e curmi
   ##   .i lo jdini klani cu vasru ro sinxa pe le namcu to `CLL 18.3` toi

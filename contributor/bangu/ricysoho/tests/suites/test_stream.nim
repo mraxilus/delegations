@@ -922,8 +922,8 @@ func signedRead(pieces: openArray[string]): tuple[words: seq[string], refused: O
 
 
 func prefixedRead(pieces: openArray[string]): tuple[words: seq[string], refused: Option[int]] =
-  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D4 b` .e `D2 a` .e `D3 a` pe `#1003` ge'u .e lo
-  ##     stuzi poi `D6 b` .e `D7 a` cu stidi ke'a
+  ## tcidu le selci'a poi `pieces` zbasu ke'a ja'i `D4 b` .e `D6 b` .e `D2 a` .e `D3 a` pe `#1003`
+  ##     ge'u .e lo stuzi poi `D7 a` cu stidi ke'a
   ##   .i dunda lo cmavo .a le stuzi pe le sinxa poi se to'e curmi
   ##   .i ro pagbu cu cmima `MARKS_PREFIXED`
   ##   .i zoi gy. - .gy. .e zoi gy. − .gy. cu se tcidu va'o lo nu lo lerfu po'u `1` cu se lidne le
@@ -1194,7 +1194,7 @@ suite "Internal: Stream":
 
   test "Percent sign reads as ce'i right after a digit, where no digit follows":
     # `Architect` jdice zo ce'i bu'u `#1003` ta'i `D4 b`
-    #   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
+    #   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
     #   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
     for (text, cmavo) in [
         ("li 35%", @["li", "ci", "mu", "ce'i"]),
@@ -1215,7 +1215,7 @@ suite "Internal: Stream":
 
   test "Constant sign reads as its words where no digit or other sign touches it":
     # `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
-    #   .i le stuzi pe le sinxa cu denpa `D6` pe `#1003`
+    #   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
     #   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
     for (sign, words) in CONSTANTS_RULED:
       for (text, cmavo) in [
@@ -1267,7 +1267,8 @@ suite "Internal: Stream":
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
     # `Architect` jdice `D4 b` .e `D2 a` .e `D3 a` bu'u `#1003`
-    #   .i le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ½ .gy. cu denpa `D6`
+    #   .i `Architect` jdice le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ½ .gy. ta'i
+    #       `D6 b`
     #   .i lo sinxa poi pencu lo drata sinxa cu denpa `D7`
     #   .i le flalu cu tcidu ro selci'a poi `MARKS_PREFIXED` cu zbasu ke'a
     #   .i `prefixedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
