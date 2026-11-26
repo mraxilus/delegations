@@ -467,8 +467,8 @@ func checkTests(
         path,
         i + 1,
         Rule.OutputDebug,
-        "Test leaves no debug output; label report, or print under failing condition; got `" &
-          c.strip & "`.",
+        "Test leaves no debug output; got `" & c.strip & "`.",
+        help = "label report, or print under failing condition",
       )
 
 

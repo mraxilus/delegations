@@ -97,7 +97,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
+import std/[algorithm, options, sequtils, strutils]
 from std/unicode import isLower, isUpper, Rune, runes
 import ./[declared, entry, reports, rules, tokens, views]
 
@@ -444,7 +444,8 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         path,
         d.line,
         Rule.Abbreviation,
-        "Name coins abbreviation; write `" & full & "`; got `" & d.name & "`.",
+        "Name coins abbreviation; got `" & d.name & "`.",
+        expected = some(full),
       )
     if d.kind == KindName.Routine and parts.len > 1 and parts[0] in VERBS_BANNED:
       result.add initReport(

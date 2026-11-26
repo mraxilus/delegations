@@ -41,7 +41,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, unicode]
+import std/[algorithm, options, sequtils, strutils, unicode]
 import ./[reports, tokens, views]
 
 
@@ -52,6 +52,9 @@ const
     ##   Font and data URLs run to few hundred characters; minified markup runs to thousands,
     ##   and belongs under `build/`, never committed.
   GAP_COMMENT* = 2  ## Spaces before trailing comment's marker (Article X.9).
+  HELP_WIDTH = "break line by hand, or fence block of fixed shape between `#!fix off` and " &
+    "`#!fix on`"
+    ## What reader does about line too wide for any break to fix.
   WHITESPACE_TRAILING = {' ', '\t', '\r'}
     ## Characters line never ends with (VIII.5); CR among them, so CRLF ending is one.
   LUT_BLANKS_BY_TIER: array[1 .. 2, int] = [3, 2]
@@ -129,6 +132,8 @@ func checkForm*(path, source: string): seq[Report] =
         i + 1,
         Rule.LineWidth,
         "Line exceeds " & $LINE_MAX & " characters; got `" & $line.runeLen & "`.",
+        expected = some("at most " & $LINE_MAX),
+        help = HELP_WIDTH,
       )
 
 
@@ -158,6 +163,7 @@ func checkComments*(path, source: string): seq[Report] =
       gap.line + 1,
       Rule.CommentTrailing,
       "Trailing comment takes two spaces before its marker; got `" & $gap.spaces & "`.",
+      expected = some($GAP_COMMENT),
     )
 
 
