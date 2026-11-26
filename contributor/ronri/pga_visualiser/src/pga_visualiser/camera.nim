@@ -600,10 +600,12 @@ func reachTaken*(camera: Camera): float =
 
 func eyeCarried(motion, motion_reversed: Multivector): Position =
   ## Carry reference stance's own eye through lifted motion and its antireverse.
+  ##   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
+  ##     Refusal names motion that is no unit motor, internal impossibility, so it fails here.
   let placed = position(EYE_REFERENCE.toMultivector.carried(motion, motion_reversed))
-  # Fall back to reference eye only in name.
-  #   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
-  if placed.isSome: placed.get else: EYE_REFERENCE
+  doAssert placed.isSome,
+    "Camera motion must carry reference eye to place; got none for motor `" & $motion & "`."
+  placed.get
 
 
 func borne(motion, motion_reversed: Multivector; d: Direction): Direction =
