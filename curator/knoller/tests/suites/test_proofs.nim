@@ -1,6 +1,6 @@
 ## Replicate proof of `proofs.nim` header: probe run by compiler answers which candidate groups
 ##   go, alone and together, and compiler that does not run answers none, with reason.
-##   Parser is real here: compiler building this suite, 2.4.0 in knoller's job, so verdicts of
+##   Parser is real here: compiler building this suite, at pin in knoller's job, so verdicts of
 ##     ASCII cases that `stubs.nim` gives other suites are held to parser itself.
 
 {.experimental: "strictFuncs".}
