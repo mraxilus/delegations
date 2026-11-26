@@ -40,6 +40,18 @@ ni'o le genturfa'i cu tcidu lo jdini sinxa poi pencu pa namcu ta'i lo jdini klan
   .i zoi gy. ¥ .gy. sinxa lo'u ponjo ja jungo rupnu le'u
   .i le genturfa'i cu to'e curmi lo jdini sinxa poi pencu no namcu .a re namcu mu'u zoi gy. 5 € .gy.
 
+ni'o le genturfa'i cu tcidu lo sinxa pe lo namcu ta'i lo cmavo pe `PA` to `D4 b` .e `D6 b` pe
+    `#1003` toi
+  .i zoi gy. + .gy. .e zoi gy. - .gy. .e zoi gy. ~ .gy. cu sinxa zo ma'u .e zo ni'u .e zo ji'i va'o
+      lo nu lo lerfu pe `0` bi'o `9` cu se lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu
+      lidne le sinxa
+  .i zoi gy. % .gy. sinxa zo ce'i va'o lo nu lo lerfu pe `0` bi'o `9` cu lidne le sinxa kei .e lo
+      nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
+  .i zoi gy. π .gy. .e zoi gy. ∞ .gy. .e zoi gy. ½ .gy. cu sinxa zo pai .e zo ci'i .e lo'u pa fi'u
+      re le'u va'o lo nu no lerfu pe `0` bi'o `9` .e no sinxa cu pencu le sinxa
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li ni'u mu pi mu ce'i le'u fi zoi gy. li -5.5% .gy.
+  .i le genturfa'i cu to'e curmi lo drata stuzi mu'u zoi gy. 5-3 .gy. .e zoi gy. 2π .gy.
+
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
 

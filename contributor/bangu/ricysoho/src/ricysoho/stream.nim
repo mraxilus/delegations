@@ -185,14 +185,17 @@ type
       ##   .i le stuzi cu fanmo le valsi
       ##   .i va'o lo nu zo zoi .a zo la'o sitna lo selci'a kei le stuzi cu se lidne le selci'a
       ##   .i slaka bu poi zvati lo jbini be re valsi pe pa selci'avla cu zvati no le re valsi
-      ##   .i va'o lo nu lo jdini sinxa cu sinxa le valsi kei le stuzi cu du `start` to `inferred`
-      ##       toi
+      ##   .i va'o lo nu le valsi cu vasru no stuzi kei le stuzi cu du `start` to `inferred` toi
+      ##   .i ro valsi pe lo jdini sinxa .e ro na'e pamoi valsi pe lo sinxa pe lo namcu cu vasru no
+      ##       stuzi
     text*: string
       ## lo lerfu pe le valsi ta'i lo raltai
       ##   .i ro lerfu cu cmalu
       ##   .i slaka bu cu se vimcu to `CLL 3.3` toi
-      ##   .i va'o lo nu lo jdini sinxa cu sinxa le valsi kei le lerfu cu du le valsi gi'e na se
-      ##       ciska ne'i le selci'a
+      ##   .i va'o lo nu le valsi cu vasru no stuzi kei le lerfu cu du le valsi gi'e na se ciska
+      ##       ne'i le selci'a
+      ##   .i va'o lo nu le valsi cu pamoi lo valsi pe lo sinxa pe lo namcu kei le lerfu cu du le
+      ##       sinxa
     pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
       ## le slaka karsna poi lo brale'u cu sinxa lo nu basna be ke'a
@@ -280,6 +283,29 @@ const
     ##   .i ro drata sinxa cu sinxa lo rupnu pe su'o re gugde
     ##   .i se ki'u bo lo valsi pe `$` .e `£` .e `¢` cu cusku no gugde
     ##   .i lo valsi pe `¥` cu cusku le re gugde poi pilno le sinxa
+  LUT_CMAVO_BY_PREFIX = [("+", "ma'u"), ("-", "ni'u"), ("−", "ni'u"), ("~", "ji'i")]
+    ## lo sinxa poi lidne lo namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D4 b`
+    ##   .i le sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` .e `CLL 18.9` toi
+  LUT_CMAVO_BY_SUFFIX = [("%", "ce'i")]
+    ## lo sinxa poi se lidne lo namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    ##   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
+    ##   .i lo mupli po'u `CLL 18.10` cu pilno zo ce'i ba lo namcu
+  LUT_CMAVO_BY_CONSTANT = [("π", @["pai"]), ("∞", @["ci'i"]), ("½", @["pa", "fi'u", "re"])]
+    ## lo sinxa poi sinxa pa namcu .e le cmavo pe `PA` poi le sinxa cu sinxa ke'a
+    ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
+    ##   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
+    ##   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
+  SIGNS_STREAM = block:
+    ## ro sinxa poi le genturfa'i cu tcidu ke'a
+    ##   .i ro le sinxa cu fendi lo selci'avla
+    var signs: seq[string]
+    for (sign, _) in LUT_WORDS_BY_SIGN: signs.add sign
+    for (sign, _) in LUT_CMAVO_BY_PREFIX: signs.add sign
+    for (sign, _) in LUT_CMAVO_BY_SUFFIX: signs.add sign
+    for (sign, _) in LUT_CMAVO_BY_CONSTANT: signs.add sign
+    signs
   WORDS_AMOUNT_OPENING = ["lo"]  ## le valsi poi krasi lo klani be lo jdini
   WORDS_AMOUNT_LINKING = ["be", "li"]  ## le valsi poi lidne le namcu
   WORDS_AMOUNT_CLOSING = ["be'o", "ku"]
@@ -621,7 +647,7 @@ func isBoundarySettled*(text: string, at: int): bool =
 
 func wordsLetters(text: string, start, finish: int): ReadingStream =
   ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
-  ##   .i le selci'avla cu vasru no lerfu pe `DIGITS_STREAM`
+  ##   .i le selci'avla cu vasru no lerfu pe `DIGITS_STREAM` gi'e vasru no sinxa pe `SIGNS_STREAM`
   ##   .i lo denpa na seljdi
   ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a
   ##   .i le pagbu cu sinxa ja lerfu ja ve fendi
@@ -645,12 +671,26 @@ func wordsLetters(text: string, start, finish: int): ReadingStream =
   ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
-func signAt(text: string, at: int): Option[int] =
-  ## dunda lo namcu pe le jdini sinxa pe `LUT_WORDS_BY_SIGN` poi cfari bu'u `at`
-  ##   .i dunda no da va'o lo nu no jdini sinxa cu cfari bu'u `at`
-  for k in 0 ..< LUT_WORDS_BY_SIGN.len:
-    if text.continuesWith(LUT_WORDS_BY_SIGN[k][0], at): return some(k)
+func signAt[T](lut: openArray[(string, T)], text: string, at: int): Option[int] =
+  ## dunda lo namcu pe le sinxa pe `lut` poi cfari bu'u `at`
+  ##   .i dunda no da va'o lo nu no sinxa pe `lut` cu cfari bu'u `at`
+  for k in 0 ..< lut.len:
+    if text.continuesWith(lut[k][0], at): return some(k)
   none(int)
+
+
+func isSignAt(text: string, at: int): bool =
+  ## jdice lo du'u pa sinxa pe `SIGNS_STREAM` cu cfari bu'u `at`
+  SIGNS_STREAM.anyIt(text.continuesWith(it, at))
+
+
+func occurrenceSigned(sign, word: string, at: int): Occurrence =
+  ## zbasu le valsi poi le sinxa po'u `sign` cu sinxa ke'a gi'e cfari bu'u `at`
+  ##   .i le valsi cu vasru ro stuzi pe le sinxa
+  ##   .i le lerfu pe le valsi cu du le sinxa
+  Occurrence(
+    start: at, finish: at + sign.len, text: sign, stress: none(int), reading: word.readWord,
+  )
 
 
 func inferred(words: openArray[string], at: int): seq[Occurrence] =
@@ -687,6 +727,22 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ## ni'o ro valsi pe le jdini klani cu vasru no stuzi
   ##   .i ro stuzi pe le sinxa cu zvati no valsi
   ##   .i se ki'u bo le porsi be lo valsi cu mintu le porsi be lo stuzi
+  ##
+  ## ni'o lo sinxa pe `LUT_CMAVO_BY_PREFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu pe
+  ##     `0` bi'o `9` cu se lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu lidne le sinxa
+  ##   .i `Architect` jdice le valsi pe ro sinxa .e le stuzi pe le sinxa bu'u `#1003` ta'i `D4 b`
+  ##   .i lo sinxa pe `LUT_CMAVO_BY_SUFFIX` cu pagbu lo namcu gi'e se tcidu va'o lo nu lo lerfu pe
+  ##       `0` bi'o `9` cu lidne le sinxa kei .e lo nu no lerfu pe `0` bi'o `9` cu se lidne le sinxa
+  ##   .i lo sinxa pe `LUT_CMAVO_BY_CONSTANT` cu du pa namcu gi'e se tcidu va'o lo nu no lerfu pe
+  ##       `0` bi'o `9` .e no sinxa cu pencu le sinxa
+  ##   .i `Architect` jdice le stuzi pe le re klesi be lo sinxa bu'u `#1003` ta'i `D6 b`
+  ##   .i ki'u bo bu'u lo drata stuzi le valsi cu sinxa lo drata namcu .a no namcu to `CLL 18.4` toi
+  ##   .i lo drata sinxa cu se to'e curmi
+  ##   .i lo jdini klani cu vasru ro sinxa pe le namcu to `CLL 18.3` toi
+  ##
+  ## ni'o le pamoi valsi pe pa sinxa pe lo namcu cu vasru ro stuzi pe le sinxa
+  ##   .i ro drata valsi pe le sinxa cu vasru no stuzi gi'e cfari bu'u le stuzi poi se lidne le
+  ##       sinxa
   var
     occurrences: seq[Occurrence]
     at = start
@@ -719,15 +775,53 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       )
       inc at
       continue
-    let sign = text.signAt(at)
+    let
+      is_digit_before = at > start and text[at - 1] in DIGITS_STREAM
+      prefix = LUT_CMAVO_BY_PREFIX.signAt(text, at)
+      suffix = LUT_CMAVO_BY_SUFFIX.signAt(text, at)
+      constant = LUT_CMAVO_BY_CONSTANT.signAt(text, at)
+    if prefix.isSome:
+      let (sign, word) = LUT_CMAVO_BY_PREFIX[prefix.get]
+      # lo lerfu pe `0` bi'o `9` cu se lidne le sinxa
+      #   .ije no lerfu pe `0` bi'o `9` cu lidne le sinxa to `D4 b` toi
+      if is_digit_before or not (at + sign.len < finish and text[at + sign.len] in DIGITS_STREAM):
+        return refuse(Refusal.Sign, at, sign)
+      closed()
+      (opened, opening) = (some(occurrences.len), at)
+      occurrences.add sign.occurrenceSigned(word, at)
+      at += sign.len
+      continue
+    if suffix.isSome:
+      let (sign, word) = LUT_CMAVO_BY_SUFFIX[suffix.get]
+      # lo lerfu pe `0` bi'o `9` cu lidne le sinxa
+      #   .ije no lerfu pe `0` bi'o `9` cu se lidne le sinxa
+      if not is_digit_before or (at + sign.len < finish and text[at + sign.len] in DIGITS_STREAM):
+        return refuse(Refusal.Sign, at, sign)
+      occurrences.add sign.occurrenceSigned(word, at)
+      at += sign.len
+      continue
+    if constant.isSome:
+      let
+        (sign, words) = LUT_CMAVO_BY_CONSTANT[constant.get]
+        after = at + sign.len  # le stuzi poi se lidne le sinxa
+      # no lerfu pe `0` bi'o `9` .e no sinxa cu pencu le sinxa
+      if is_digit_before or SIGNS_STREAM.anyIt(at - it.len >= start and
+          text.continuesWith(it, at - it.len)) or
+          (after < finish and (text[after] in DIGITS_STREAM or text.isSignAt(after))):
+        return refuse(Refusal.Sign, at, sign)
+      occurrences.add sign.occurrenceSigned(words[0], at)
+      occurrences.add words[1 .. ^1].inferred(after)
+      at = after
+      continue
+    let sign = LUT_WORDS_BY_SIGN.signAt(text, at)
     if sign.isSome:
       let
         size = LUT_WORDS_BY_SIGN[sign.get][0].len
-        is_after = opened.isSome
+        is_after = opened.isSome and is_digit_before
         is_before = at + size < finish and text[at + size] in DIGITS_STREAM
       # le sinxa cu pencu pa namcu po'o to `D3 a` toi
       #   .i ro namcu cu ponse su'e pa sinxa to `D2 a` toi
-      if is_after == is_before or signed.isSome:
+      if is_after == is_before or (is_after and signed.isSome):
         return refuse(Refusal.Sign, at, text.character(at))
       let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign.get][1] & @WORDS_AMOUNT_LINKING
       if is_after:
@@ -735,13 +829,15 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
         occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
         (opened, signed) = (none(int), none(int))
       else:
+        # le namcu poi fanmo pu le sinxa cu fanmo mu'u le namcu pe zoi gy. €1%€1 .gy.
+        closed()
         occurrences.add words.inferred(at + size)
         signed = sign
       at += size
       continue
     closed()
     let first = at
-    while at < finish and text[at] notin DIGITS_STREAM and text.signAt(at).isNone: inc at
+    while at < finish and text[at] notin DIGITS_STREAM and not text.isSignAt(at): inc at
     let letters = text.wordsLetters(first, at)
     if not letters.is_read: return letters
     occurrences.add letters.occurrences
