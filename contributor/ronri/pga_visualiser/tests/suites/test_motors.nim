@@ -96,6 +96,30 @@ suite "Motors":
       check exp(log(screw)) =~ screw
 
 
+  test "exp reads a bivector alone, and log a motor at any weight; each fails on another part":
+    # Fault: `exp` dropped every part outside bivector, and `log` read motor at other weight as
+    #   unit one, both in silence (repository issue 970).
+    for i in 0..<COUNT_GENERAL:
+      let
+        screw = turnAbout(LINES[i], 0.6 + 0.1 * float(i)).get
+        line = log(screw)
+      # Motor at any weight, negation included, names one motion, so its logarithm is one line.
+      for weight in [-3.0, 0.5, 2.0, 7.0, 1.0e-100, 1.0e100]:
+        check exp(log(weight * screw)) =~ screw
+      expect AssertionDefect:
+        discard exp(line + 1.0.e1)
+      expect AssertionDefect:
+        discard exp(line + 1.0.e1234)
+      expect AssertionDefect:
+        discard log(screw + 1.0.e1)
+    # Value with no weight names no motion, so it has no logarithm.
+    expect AssertionDefect:
+      discard log(0.5.e23 + 0.1.e31)
+    # Weight whose square underflows reads as none to `unitize`, so it fails too.
+    expect AssertionDefect:
+      discard log(1.0e-200 * MOTOR_IDENTITY)
+
+
   test "both series of the half-angle hold their reference to a trillionth, at every angle":
     # Fault: closed form of second series, taken from crossing at 1e-4, lost about `3ε/a²` of
     #   its digits there, so two arms of `scales` disagreed by 2e-8 (repository issue 970).
@@ -133,14 +157,19 @@ suite "Motors":
         check grade(m.carried(turn)) == grade(m)
 
 
-  test "a carry through an antireverse held aside is the sandwich":
-    # Caller carrying several operands through one motor takes `~∘𝐐` once and hands it in.
+  test "a carry is the sandwich that the named products spell":
+    # Carry spells sandwich with operators, and takes `~∘𝐐` itself.
     #   Named sandwich is reference it is held to.
     for i in 0..<COUNT_GENERAL:
       let turn = turnAbout(LINES[i], 0.5 + 0.1 * float(i)).get
       for m in [POINTS[i], LINES[i], PLANES[i]]:
-        check m.carried(turn, reverseAnti(turn)) =~
-            wedgeDotAnti(wedgeDotAnti(turn, m), reverseAnti(turn))
+        check m.carried(turn) =~ wedgeDotAnti(wedgeDotAnti(turn, m), reverseAnti(turn))
+
+
+  test "a carry takes its motor alone, and takes the antireverse itself":
+    # Fault: carry took antireverse from caller, and nothing held it to its motor (repository
+    #   issue 970).
+    check not compiles(1.0.e4.carried(MOTOR_IDENTITY, Multivector()))
 
 
   test "a motor is rigid: it keeps every distance and every weight":
