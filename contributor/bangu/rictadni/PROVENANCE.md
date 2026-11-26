@@ -514,10 +514,12 @@ tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 20
 each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
 costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
-**Sonnet 5.5 keeps almost as many gismu of the default as a second run of the default keeps.**
-Haiku 5.5 keeps fewer, and at effort `low` only about half. On 2026-11-26, a live grid sent the
-same 10 texts to each configuration, through `binaries/suggester` built at `ed9fe6f`. The texts
-are these:
+**Sonnet 5.5 at effort `xhigh` keeps as many gismu of the default as the default keeps again.**
+It costs about two thirds of the default. Sonnet at lower efforts keeps almost as many, and gives
+more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
+
+On 2026-11-26, a live grid sent the same 10 texts to each configuration, through
+`binaries/suggester` built at `ed9fe6f`. The texts are these:
 
 - a garden plan;
 - a list of chores;
@@ -544,6 +546,8 @@ The tree keeps neither the texts nor the exchange files.
 |---|---|---|---|---|---|---|
 | Opus 5.5, `medium` | 3 | 249 of 260 | 467 of 514 | 0 of 446 | 4 of 30 | $0.270 to $0.284 |
 | Opus 5.5, `low` | 1 | 128 of 130 | 242 of 257 | 0 of 152 | 2 of 10 | $0.276 |
+| Sonnet 5.5, `xhigh` | 3 | 382 of 390 | 703 of 771 | 1 of 530 | 0 of 30 | $0.181 to $0.187 |
+| Sonnet 5.5, `high` | 3 | 362 of 390 | 660 of 771 | 18 of 551 | 0 of 30 | $0.149 |
 | Sonnet 5.5, `medium` | 3 | 366 of 390 | 656 of 771 | 12 of 527 | 0 of 30 | $0.146 |
 | Sonnet 5.5, `low` | 3 | 357 of 390 | 633 of 771 | 12 of 506 | 0 of 30 | $0.143 to $0.145 |
 | Haiku 5.5, `medium` | 1 | 100 of 130 | 156 of 257 | 18 of 132 | 0 of 10 | $0.009 |
@@ -557,6 +561,8 @@ of the default agree, which is the most that another configuration can expect.
 Recall of 5 for each sample falls in these ranges:
 
 - Opus at `medium`: 0.91 to 0.99.
+- Sonnet at `xhigh`: 0.97 to 0.98.
+- Sonnet at `high`: 0.91 to 0.95.
 - Sonnet at `medium`: 0.90 to 0.96.
 - Sonnet at `low`: 0.90 to 0.93.
 
@@ -565,6 +571,9 @@ the default is marked against its other samples alone. Of the rest, the delegate
 unrelated where its keyword fits no thing of the text. An example is `sanli`, stand, for the
 paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader knew the
 configuration of each gismu, and the tree does not keep the list of marks.
+
+Sonnet at `high` gave three gismu with a placeholder gloss, such as `xasli`, glossed unused
+placeholder. The reader marked each one unrelated.
 
 A placeholder end is an answer whose last element does not have the form of a gismu or a lujvo,
 such as `samtc` or `tevec`. Its gloss is `x` or `placeholder`, and the model ends the answer there.
@@ -582,6 +591,8 @@ Each cost takes the list price of 2026-11-26 for each million tokens:
 Each cost assumes a cold cache. Most samples read the system text from the cache that an earlier
 sample wrote. For those, the calculation counts one read as one write, so the figure is calculated
 and not billed. The article makes 39% to 48% of the cost of a sample.
+Sonnet at `xhigh` alone spent thinking tokens, 10,240 over its 30 answers, and each other
+configuration spent none. The time of each answer is unmeasured.
 
 A script outside the tree read the reports and the usage of the exchange files. It computed each
 recall, each count and each cost by the rules above. Verified by hand with `binaries/suggester`
