@@ -744,6 +744,8 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##   .i `Architect` jdice di'u bu'u `#1003` ta'i `D7 c`
   ##   .i ji'a zoi gy. 5€-5 .gy. cu se to'e curmi ki'u lo nu le jdini sinxa cu pencu re namcu to
   ##       `D8 a` pe `#1003` toi
+  ##   .i ji'a lo jdini sinxa poi le namcu pe ke'a cu vasru zoi gy. % .gy. cu se to'e curmi mu'u
+  ##       zoi gy. $5% .gy. to `D9 b` pe `#1003` toi
   ##
   ## ni'o ro valsi pe le jdini klani cu vasru no stuzi
   ##   .i ro stuzi pe le sinxa cu zvati no valsi
@@ -801,6 +803,22 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       currency = LUT_WORDS_BY_SIGN.signAt(text, next)
     isCoreAt(next) or
       (currency.isSome and isCoreAt(next + LUT_WORDS_BY_SIGN[currency.get][0].len))
+
+  func isPercentAt(at: int): bool =
+    ## jdice lo du'u zoi gy. % .gy. cu fanmo le namcu poi cfari bu'u `at`
+    ##   .i le namcu cu ka'e cfari ta'i lo sinxa pe `LUT_CMAVO_BY_PREFIX` .e lo jdini sinxa
+    ##   .i no lerfu pe `DIGITS_STREAM` cu se lidne zoi gy. % .gy. to `D6 b` toi
+    var k = at
+    let prefix = LUT_CMAVO_BY_PREFIX.signAt(text, k)
+    if prefix.isSome: k += LUT_CMAVO_BY_PREFIX[prefix.get][0].len
+    let currency = LUT_WORDS_BY_SIGN.signAt(text, k)
+    if currency.isSome: k += LUT_WORDS_BY_SIGN[currency.get][0].len
+    if k >= finish or text[k] notin DIGITS_STREAM: return false
+    k = runDigits(k).finish
+    let suffix = LUT_CMAVO_BY_SUFFIX.signAt(text, k)
+    if suffix.isNone: return false
+    let after = k + LUT_CMAVO_BY_SUFFIX[suffix.get][0].len
+    not (after < finish and text[after] in DIGITS_STREAM)
 
   func isBefore(signs: openArray[string], at: int): bool =
     ## jdice lo du'u pa sinxa pe `signs` cu fanmo bu'u `at`
@@ -860,6 +878,9 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       # ro namcu cu ponse su'e pa jdini sinxa to `D2 a` toi
       if is_inner and signed.isSome:
         return refuse(Refusal.Sign, next, LUT_WORDS_BY_SIGN[currency.get][0])
+      # le namcu pe le jdini sinxa cu na vasru zoi gy. % .gy. to `D9 b` toi
+      if is_inner and isPercentAt(next + size):
+        return refuse(Refusal.Sign, next, LUT_WORDS_BY_SIGN[currency.get][0])
       # le jdini klani poi le jdini sinxa cu krasi ke'a cu vasru le sinxa
       if not (signed.isSome and opened.isNone): closed()
       if is_inner:
@@ -906,6 +927,10 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       #   .i ji'a le sinxa poi pencu lo sinxa pe pa namcu cu pencu le namcu to `D7 c` toi
       #   .i ro namcu cu ponse su'e pa sinxa to `D2 a` toi
       if is_after == is_before or (is_after and signed.isSome):
+        return refuse(Refusal.Sign, at, text.character(at))
+      # le namcu pe le sinxa cu na vasru zoi gy. % .gy. to `D9 b` toi
+      if (is_after and LUT_CMAVO_BY_SUFFIX.mapIt(it[0]).isBefore(at)) or
+          (is_before and isPercentAt(at + size)):
         return refuse(Refusal.Sign, at, text.character(at))
       let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign.get][1] & @WORDS_AMOUNT_LINKING
       if is_after:
