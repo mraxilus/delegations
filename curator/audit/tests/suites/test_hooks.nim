@@ -3536,7 +3536,7 @@ suite "Hooks":
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
     # Delegate copies form from samples, so sample reflection quotes sample prediction, which
-    #   call takes, as section reads as committed.
+    #   call takes, as section reads as committed; reviewer takes no critic (`D3 a` of #1024).
     const guide = staticRead("../../../../GUIDE.md")
     func sample(heading: string): string =
       ## Read text of sample in fence that opens with heading; empty where guide holds none.
@@ -3547,7 +3547,6 @@ suite "Hooks":
     let transcript = lineUser("Review the diff.", "human") & lineSaid(sample(HEADING_PREDICTION)) &
       lineUser("<task-notification>timer</task-notification>", "task-notification") &
       linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
-      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
       lineSaid(sample(HEADING_REFLECTION))
     check transcript.parseTurn.subagents.predictions.len == 1
     check blocksHeld(transcript).len == 0
