@@ -256,9 +256,10 @@ proc branch(checkout: string): string =
 
 
 proc refuse(found: seq[Finding], code: int): int =
-  ## Print findings to stderr for hook host, and return code; zero findings return 0.
+  ## Print findings to stderr for hook host, each in line form, help last (ruling 7197275206 of
+  ##   #1002), and return code; zero findings return 0.
   if found.len == 0: return 0
-  for f in found: stderr.write f.message & "\n"
+  for f in found: stderr.write f.toLine & "\n"
   code
 
 

@@ -238,6 +238,11 @@ func toNotice*(f: Finding, source = none(string), is_warning = false): Notice =
   )
 
 
+func toLine*(f: Finding): string =
+  ## Render finding in line form, help last, as each hook prints it (ruling 7197275206 of #1002).
+  f.toNotice.render(Form.Line)
+
+
 func brief*(f: Finding): string =
   ## Read short text of parts of finding, as each suite compares it (D3 of #1002).
   f.toNotice.brief

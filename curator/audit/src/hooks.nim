@@ -19,6 +19,8 @@
 ##     `start` prints role, read order, each finding of drift, headings of record branch works
 ##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
 ##     git hooks.
+##   Each finding hook names prints in line form of renderer, help last (`toLine`), so reader of
+##     hook, model or person, gets remedy too (ruling 7197275206 of #1002).
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -2458,12 +2460,12 @@ func reasonStop*(
     parts.add "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a " &
       "diff of each error alone: one `diff` block, each wrong phrase after `-`, that phrase " &
       "mended after `+`. Message stands above it, so never send it, a line of it, or its " &
-      "sign-off again:\n" & found.mapIt(it.message).join("\n")
+      "sign-off again:\n" & found.mapIt(it.toLine).join("\n")
   if unread.len > 0:
     parts.add "Read queue before this sign-off stands (GUIDE.md, Output contract): list open " &
       "issues that line below names, take first what waits there, and reply with one line " &
-      "naming it, and no diff:\n" & unread.mapIt(it.message).join("\n")
-  if blocks.len > 0: parts.add LINE_BLOCKS & "\n" & blocks.mapIt(it.message).join("\n")
+      "naming it, and no diff:\n" & unread.mapIt(it.toLine).join("\n")
+  if blocks.len > 0: parts.add LINE_BLOCKS & "\n" & blocks.mapIt(it.toLine).join("\n")
   if has_signoff: parts.add LINE_SIGNOFF
   parts.join("\n")
 
@@ -2632,7 +2634,7 @@ func contextStart*(
   if drift.len > 0:
     lines.add "Base changed charter or code of stamp since this branch forked; read each " &
       "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
-    for f in drift: lines.add "  " & f.render
+    for f in drift: lines.add "  " & f.toLine
   for line in lags: lines.add line
   if rates.len > 0:
     lines.add "Past figures of each kind, from logs of claims (GUIDE.md, Prediction, critic and " &
@@ -2705,11 +2707,11 @@ func contextFindings*(path: string, held, own: openArray[Finding]): string =
   if own.len > 0:
     parts.add "koch check-files reports " & $own.len & " finding(s) in `" & path &
       "`; fix before push:"
-    parts.add own.mapIt(it.path & ":" & $it.line & ": " & it.message)
+    parts.add own.mapIt(it.toLine)
   if held.len > 0:
     parts.add "koch check-files holds " & $held.len & " finding(s) in `" & path &
       "` for its project, which clears them in its next pull request (CURATOR.md, duty 3):"
-    parts.add held.mapIt(it.path & ":" & $it.line & ": " & it.message)
+    parts.add held.mapIt(it.toLine)
   parts.join("\n")
 
 
