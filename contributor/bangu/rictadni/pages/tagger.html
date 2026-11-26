@@ -1,0 +1,251 @@
+<!-- Tag page of rictadni: paste text, get gismu that person might search it by.
+       Script comes from `app/page.nim`, compiled to JavaScript: same prompt and reader as
+       `suggester` (II.9).
+       Placeholders `@EMBED:<file>@` take font faces of store, and `@SCRIPT@` takes script;
+       build replaces each before page ships.
+       No doctype, html, head or body: provider of page wraps it. -->
+<title>rictadni tags</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face { font-family: "Noto Sans"; font-weight: 400;
+  src: url(@EMBED:NotoSans-Regular.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Sans"; font-weight: 600;
+  src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Serif"; font-weight: 600;
+  src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Commit Mono"; font-weight: 400;
+  src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
+
+/* One column: text in, then gismu as tiles of five letters, then report. */
+:root {
+  font-variant-ligatures: common-ligatures contextual;
+  --bg: #f3f5f2; --surface: #ffffff; --ink: #18211c; --muted: #56635b; --rule: #cfd8d1;
+  --accent: #2f6b4f; --accent-wash: #e3efe8; --fail: #a3321f; --fail-wash: #f8e6e2;
+  --serif: "Noto Serif", serif;
+  --sans: "Noto Sans", sans-serif;
+  --mono: "Commit Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121814; --surface: #1a221d; --ink: #e5ece7; --muted: #9aa89f; --rule: #2e3a33;
+    --accent: #7cc4a0; --accent-wash: #1f3329; --fail: #f08a74; --fail-wash: #3a211b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121814; --surface: #1a221d; --ink: #e5ece7; --muted: #9aa89f; --rule: #2e3a33;
+  --accent: #7cc4a0; --accent-wash: #1f3329; --fail: #f08a74; --fail-wash: #3a211b;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+main { max-width: 44rem; margin: 0 auto; display: grid; gap: 28px; }
+main > *, form, .row > * { min-width: 0; }
+h1 { font: 600 2rem/1.2 var(--serif); margin: 0; text-wrap: balance; }
+h2 { font: 600 0.85rem/1.2 var(--serif); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 10px; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 38rem; }
+label { font-weight: 600; display: block; margin-bottom: 8px; }
+textarea {
+  width: 100%; box-sizing: border-box; min-height: 9rem; resize: vertical; font: inherit;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 12px;
+}
+textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
+button {
+  font: 600 1rem/1 var(--sans); padding: 12px 20px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+}
+button.quiet { background: transparent; color: var(--accent); }
+button:disabled { opacity: 0.55; cursor: progress; }
+.status { color: var(--muted); font-size: 0.9rem; }
+.status.fail { color: var(--fail); }
+.tiles { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.tile {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 8px 12px; min-width: 0; display: grid; gap: 2px;
+}
+.tile b { font: 400 1.15rem/1.2 var(--mono); letter-spacing: 0.06em; color: var(--accent); }
+.tile span { font-size: 0.8rem; color: var(--muted); }
+.example { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+.command {
+  font: 400 0.85rem/1.5 var(--mono); background: var(--accent-wash); border-radius: 6px;
+  padding: 10px 12px; overflow-x: auto; white-space: pre; margin: 0;
+}
+pre.report {
+  font: 400 0.8rem/1.5 var(--mono); background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 12px; margin: 0; overflow-x: auto; white-space: pre;
+}
+.notes { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .tile { animation: rise 180ms ease-out both; }
+  @keyframes rise { from { opacity: 0.4; transform: translateY(3px); } }
+}
+</style>
+
+<main>
+  <header>
+    <h1>rictadni tags</h1>
+    <p class="lede">Paste any text. Claude reads it and suggests the gismu, the five-letter root
+      words of lojban, that a person might search by to find it again. Each gismu is checked
+      against the gismu list before it shows.</p>
+  </header>
+
+  <section>
+    <form id="form">
+      <label for="text">Text</label>
+      <textarea id="text" name="text" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="suggest" type="submit">Suggest tags</button>
+        <span id="status" class="status" role="status">Asks Opus 5.5 at effort high, through
+          your own Claude usage.</span>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="gismu-heading">
+    <h2 id="gismu-heading">Gismu</h2>
+    <ul id="tiles" class="tiles"></ul>
+    <p id="example" class="example">Example: the answer of Sonnet 5.5 at effort xhigh for the
+      text above, from the live grid of 2026-11-26.</p>
+  </section>
+
+  <section aria-labelledby="command-heading">
+    <h2 id="command-heading">Tag it</h2>
+    <pre id="command" class="command"></pre>
+    <div class="row">
+      <button id="copy" class="quiet" type="button">Copy command</button>
+      <span id="copied" class="status" role="status"></span>
+    </div>
+  </section>
+
+  <section aria-labelledby="report-heading">
+    <h2 id="report-heading">Report</h2>
+    <pre id="report" class="report"></pre>
+  </section>
+
+  <section class="notes">
+    <p>The page builds its request and reads the answer with the same code as
+      <code>suggester</code>, compiled to JavaScript. A gismu the list lacks, a cmavo, a lujvo or
+      a repeat drops alone, and the report names it.</p>
+    <p>This page asks Opus 5.5 at effort high, where <code>suggester</code> asks Sonnet 5.5 at
+      effort xhigh with a schema. The page has no schema, so its tags are unmeasured.</p>
+  </section>
+</main>
+
+<script>@SCRIPT@</script>
+<script>
+// Drive page: ask `sample` of runtime, read answer with reader compiled from Nim.
+const MODEL = "claude-opus-5-5";
+const TEXT_EXAMPLE = "The plan for the spring garden: plant the roses near the fence, " +
+  "water them each morning, and record how tall each one grows.";
+const EXAMPLE = [
+  ["purdi", "garden"], ["rozgu", "roses to be planted"], ["spati", "planting, plants"],
+  ["platu", "the plan for the garden"], ["vensa", "spring season"],
+  ["djacu", "watering the roses"], ["banro", "growth of the plants"],
+  ["cerni", "morning watering"], ["vreji", "recording the growth"], ["xrula", "flowers"],
+  ["galtu", "height, tall"], ["jibni", "near the fence"], ["merli", "measuring height"],
+];
+const $ = (id) => document.getElementById(id);
+
+function show(pairs, report) {
+  // Render tiles, command and report from pairs of gismu and gloss.
+  const tiles = $("tiles");
+  tiles.replaceChildren();
+  for (const [gismu, gloss] of pairs) {
+    const item = document.createElement("li");
+    item.className = "tile";
+    const word = document.createElement("b");
+    word.textContent = gismu;
+    const note = document.createElement("span");
+    note.textContent = gloss;
+    item.append(word, note);
+    tiles.append(item);
+  }
+  const words = pairs.map((p) => p[0]).join(" ");
+  $("command").textContent = pairs.length ? "tagger tag notes/text.md " + words : "";
+  $("report").textContent = report;
+}
+
+function pairsFrom(report) {
+  // Read gismu and gloss of each kept line of report.
+  const found = [];
+  for (const m of report.matchAll(/^Service suggests `([a-z]{5})`, glossed `([^`]*)`\.$/gm)) {
+    found.push([m[1], m[2]]);
+  }
+  return found;
+}
+
+function setStatus(text, isFail) {
+  $("status").textContent = text;
+  $("status").className = isFail ? "status fail" : "status";
+}
+
+async function suggest(event) {
+  // Ask Claude once for text, then check each element with reader of Nim.
+  event.preventDefault();
+  const text = $("text").value;
+  if (!text.trim()) { setStatus("Paste a text first.", true); return; }
+  const sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+  if (!sample) {
+    setStatus("This view cannot ask Claude. Open the page on claude.ai, signed in.", true);
+    return;
+  }
+  $("suggest").disabled = true;
+  setStatus("Asking Claude…", false);
+  try {
+    const result = await sample(rictadniPrompt(text), {
+      model: MODEL, modelTier: "complex", effort: "high",
+    });
+    const answer = result.text;
+    const start = answer.indexOf("{");
+    const json = start < 0 ? answer : answer.slice(start, answer.lastIndexOf("}") + 1);
+    const model = result.modelApplied || "the tier that answered";
+    const report = rictadniReport(text, json, model);
+    show(pairsFrom(report), report);
+    $("example").hidden = true;
+    const kept = rictadniGismu(json, model).split("\n").filter(Boolean).length;
+    setStatus(kept ? "Kept " + kept + " gismu." : "Claude gave no gismu of the list.", !kept);
+  } catch (error) {
+    const code = error && error.code;
+    const message =
+      code === "not_granted" ? "The page may not ask Claude for you. Allow it to try again." :
+      code === "rate_limited" ?
+        "Claude is busy or your usage limit is reached. Wait, then try again." :
+      "Claude gave no answer: " + (error && error.message ? error.message : String(error));
+    setStatus(message, true);
+  } finally {
+    $("suggest").disabled = false;
+  }
+}
+
+async function copyCommand() {
+  // Copy command of tagger, or select it where clipboard is refused.
+  const text = $("command").textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    $("copied").textContent = "Copied.";
+  } catch (error) {
+    const range = document.createRange();
+    range.selectNodeContents($("command"));
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    $("copied").textContent = "Selected. Copy it with your keyboard.";
+  }
+}
+
+const lines = EXAMPLE.map(([g, l]) => "Service suggests `" + g + "`, glossed `" + l + "`.");
+$("text").value = TEXT_EXAMPLE;
+show(EXAMPLE, lines.join("\n"));
+$("form").addEventListener("submit", suggest);
+$("copy").addEventListener("click", copyCommand);
+</script>

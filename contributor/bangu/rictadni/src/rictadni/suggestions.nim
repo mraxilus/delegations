@@ -407,6 +407,9 @@ func constructPattern(): string {.compileTime.} =
 const
   PROMPT_SYSTEM* = constructPrompt()  ## System text: same bytes on every request, so it caches.
   PATTERN_GISMU = constructPattern()  ## Pattern of gismu of each tag, from `LETTERS` (II.1).
+  SHAPE_ANSWER_WORDS = "Reply with only the JSON object, and no other text: " &
+      "{\"tags\": [{\"gismu\": \"five letters\", \"gloss\": \"short English gloss\"}]}."
+    ## Shape of answer in words, for service that takes no schema; reader drops what breaks it.
 
 
 
@@ -991,13 +994,22 @@ func escapeMarkup(text: string): string =
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
-func toElement(passage: Passage): string =
+func toElement*(passage: Passage): string =
   ## Render user turn: passage inside one element, `&`, `<`, `>` and `"` escaped, so passage can
   ##   never close element or forge attribute.
   result = "<passage"
   if passage.url.len > 0: result.add " url=\"" & passage.url.escapeMarkup & "\""
   result.add " cut=\"" & $(passage.is_cut or passage.is_page_cut) & "\">\n"
   result.add passage.text.escapeMarkup & "\n</passage>"
+
+
+func toPromptAlone*(passage: Passage): string =
+  ## Render one user turn for service with no system role and no schema, i.e. `sample` of page.
+  ##   System text first, then passage element, then shape of answer in words, since no schema
+  ##   holds it; reader still checks each element (`readAnswer`).
+  ##   Cost: system text goes uncached with each call, and pattern of five letters is asked, not
+  ##     held, so more elements can drop.
+  PROMPT_SYSTEM & "\n\n" & passage.toElement & "\n\n" & SHAPE_ANSWER_WORDS
 
 
 func toSchema(): JsonNode =
@@ -1186,7 +1198,7 @@ func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Verdic
   )
 
 
-func readAnswer(text, model: string): Answer =
+func readAnswer*(text, model: string): Answer =
   ## Read answer of schema: first `COUNT_TAGS_MAX` tags in order, each through `readTagAnswer`;
   ##   elements past cap counted, never read; model made printable.
   ##   Element refused is dropped alone, naming its position, so rest of answer is kept.
