@@ -316,8 +316,9 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 #   Carved first from frame arena at each turn, so frame before stays readable; see
 #   `turnFrame`. Frame arenas' capacity counts it.
 var
-  PLACEMENTS = ARENAS_FRAME.current.push[:Placement](OBJECTS_MAX)
+  PLACEMENTS = ARENAS_FRAME.current.push[:PlacementsWhole](1)
     ## Hold this frame's placements, by handle, in frame arena this frame carves.
+    ##   One block, whole by its type; read through `placements`.
     ##   Between two frames still last frame's, which is what event handler reads.
     ##   Carved here once before first frame, so handler before it reads zeroed block: kind
     ##   `Nothing` for every handle.
@@ -333,10 +334,10 @@ var
     ##   Moves with camera as well as with scene, so it is read once for each frame.
 
 
-template placements: untyped = PLACEMENTS.toOpenArray(0, OBJECTS_MAX - 1)
+template placements: untyped = PLACEMENTS[0]
   ## Read this frame's placements whole, by handle; between two frames, last frame's.
 
-template placementsPrevious: untyped = PLACEMENTS_PREVIOUS.toOpenArray(0, OBJECTS_MAX - 1)
+template placementsPrevious: untyped = PLACEMENTS_PREVIOUS[0]
   ## Read frame before's placements whole, by handle, for what reckons across two frames.
   ##   Handle dead or newly born in that frame holds nothing meaningful there.
 
@@ -348,7 +349,7 @@ proc turnFrame() =
   ##   loop and storyboard's capture alike.
   PLACEMENTS_PREVIOUS = PLACEMENTS
   ARENAS_FRAME.swap()
-  PLACEMENTS = ARENAS_FRAME.current.push[:Placement](OBJECTS_MAX)
+  PLACEMENTS = ARENAS_FRAME.current.push[:PlacementsWhole](1)
 
 
 proc placeScene(scene: Scene) =
@@ -598,7 +599,7 @@ func offerCameraAim(
   now: float;
   width, height: int;
   is_moving_camera: bool;
-  placed: openArray[Placement];
+  placed: PlacementsWhole;
 ) =
   ## Offer camera whatever is being worked on to frame, from one rule.
   ##   Rule is `framing.offerAim`, shared with browser.
@@ -1136,7 +1137,7 @@ func anchorOfSelection(
   view_projection: Matrix4;
   width, height: int;
   scale: DrawExtent;
-  placed: openArray[Placement];
+  placed: PlacementsWhole;
 ): Option[tuple[x, y: cfloat]] =
   ## Say where most recently picked object sits on screen, for selection menu to follow.
   ##   Most recent rather than middle of them all, which would jump as membership changes.

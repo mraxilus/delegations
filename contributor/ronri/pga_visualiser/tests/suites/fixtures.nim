@@ -135,6 +135,11 @@ var MESHES_SCENE*: Meshes
 #   browser; suite has neither, and one shared array is same shape as both.
 var SCRATCH*: DrawScratch
 
+# Frame's placements, whole by handle, as each front-end holds its block of them.
+#   Too large for stack frame, as `MESHES_SCENE` is. Each case writes handles its scene holds,
+#   and every reader walks to scene's bound, never past it.
+var PLACEMENTS*: PlacementsWhole
+
 
 func `=~`*[F: SomeFloat](a, b: F): bool =
   ## Compare approximate equality between scalars.

@@ -33,10 +33,9 @@ suite "Picking":
     for i in 0..<min(8, OBJECTS_MAX div 5):
       for m in [POINTS[i], LINES[i], PLANES[i], ⊖LINES[i], ⊖PLANES[i]]:
         picked.toggle scene.addObject(m, "o" & $scene.bound, inkCycled(scene.bound))
-    var whole = newSeq[Placement](OBJECTS_MAX)
     for handle in 0..<scene.bound:
-      whole[handle] = toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    check whole.isWhole and not whole[0 ..< scene.bound].isWhole
+      PLACEMENTS[handle] = toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    template whole: untyped = PLACEMENTS
 
     func isSame(a, b: Placement): bool =
       ## Compare two placements field by field, each position and direction to rounding.
@@ -49,11 +48,12 @@ suite "Picking":
       a.isSome == b.isSome and (a.isNone or a.get =~ b.get)
 
     # Whole form reads placement handed it, by handle.
-    var swapped = whole
-    swap(swapped[0], swapped[1])
-    check placementAt(swapped, scene, 0).isSame(whole[1])
+    let second = whole[1]
+    swap(whole[0], whole[1])
+    check placementAt(whole, scene, 0).isSame(second)
+    swap(whole[0], whole[1])
     for handle in 0..<scene.bound:
-      check placementAt(whole, scene, handle).isSame(placementAt([], scene, handle))
+      check placementAt(whole, scene, handle).isSame(placementAt(PlacementsNone(), scene, handle))
       check isBackdropUnder(scene, handle, scale, width_pick, height_pick, whole) ==
           isBackdropUnder(scene, handle, scale, width_pick, height_pick)
     for x in countup(20, width_pick, 60):
@@ -75,6 +75,82 @@ suite "Picking":
     MESHES_SCENE.clearMeshes
     MESHES_SCENE.addLatticesPicked(SCRATCH, scale, scene, picked)
     check count_whole > 0 and count_whole == MESHES_SCENE.ribbons.count
+
+
+  test "a reader takes a frame's placements whole by their type, and no other array":
+    # Fault: readers took any array of placements. Walk indexed short one past its end and
+    #   stopped, and its length chose whether reader read it or placed each object again
+    #   (repository issue 970).
+    # Domain: short sequence, short array, and sequence of whole length, read in place for its
+    #   length alone. Frame's own block is control: every reader takes it.
+    let
+      camera = cameraFacingOrigin()
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+      (eye, forward) = (camera.eye, camera.frame.forward)
+    var
+      scene = initScene()
+      picked: Selection
+      (moved, tween, pointer) = (camera, CameraTween(), none(PointerPick))
+      interaction: Interaction
+      (short_sequence, whole_sequence) = (newSeq[Placement](1), newSeq[Placement](OBJECTS_MAX))
+      short_array: array[1, Placement]
+    for i in 0..1:
+      picked.toggle scene.addObject(POINTS[i], "o" & $i, inkCycled(i))
+    check picked.len == 2
+
+    template checkTaken(held: untyped; is_taken: bool) =
+      ## Check that each reader of frame's placements takes `held` exactly where `is_taken`.
+      check compiles(held.placeEvery(scene)) == is_taken
+      check compiles(held.placeStamped(scene, 0)) == is_taken
+      check compiles(reachFar(held, scene)) == is_taken
+      check compiles(reachNear(held, scene, camera.originView, eye, forward)) == is_taken
+      check compiles(placementAt(held, scene, 1)) == is_taken
+      check compiles(isBackdropUnder(scene, 1, scale, width_pick, height_pick, held)) == is_taken
+      check compiles(
+        pickAt(scene, camera, scale, view_projection, width_pick, height_pick, centre, held)
+      ) == is_taken
+      check compiles(
+        pickNearest(scene, camera, scale, view_projection, width_pick, height_pick, centre, held)
+      ) == is_taken
+      check compiles(
+        positionUnderPointerOn(scene, 1, camera, scale, width_pick, height_pick, centre, held)
+      ) == is_taken
+      check compiles(
+        anchorZoomAt(scene, camera, scale, view_projection, width_pick, height_pick, centre, held)
+      ) == is_taken
+      check compiles(aimFor(scene, picked, none(Preview), held)) == is_taken
+      check compiles(camera.stance.stanceFitted(camera, scene, picked, scale, held)) == is_taken
+      check compiles(
+        moved.holdFilled(scene, picked, scale, width_pick, height_pick, held)
+      ) == is_taken
+      check compiles(tween.offerAim(
+        moved, scene, picked, none(Preview), scale, width_pick, height_pick, 0.0, 0.35, pointer,
+        placed = held,
+      )) == is_taken
+      check compiles(MESHES_SCENE.addLatticesPicked(SCRATCH, scale, scene, picked, held)) ==
+          is_taken
+      check compiles(interaction.updateHover(
+        scene, camera, scale, view_projection, width_pick, height_pick, held
+      )) == is_taken
+      check compiles(
+        moved.dollyAbout(scene, 0.5, scale, view_projection, width_pick, height_pick, held)
+      ) == is_taken
+      check compiles(moved.dollyAt(
+        scene, 0.5, scale, view_projection, width_pick, height_pick, centre, true, held
+      )) == is_taken
+      check compiles(interaction.dollyAtCursor(
+        moved, scene, 0.5, scale, view_projection, width_pick, height_pick, true, held
+      )) == is_taken
+      check compiles(gripFingers(
+        camera, scene, scale, view_projection, width_pick, height_pick, [centre, centre], true,
+        held,
+      )) == is_taken
+
+    checkTaken(PLACEMENTS, true)
+    checkTaken(short_sequence, false)
+    checkTaken(short_array, false)
+    checkTaken(whole_sequence, false)
 
 
   test "a zoom with a selection anchors only near the depth looked at, and free flight at any":
