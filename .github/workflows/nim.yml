@@ -87,6 +87,13 @@ jobs:
             exit 1
           fi
 
+          # Dispatch from other branch reads pins of that branch, so it prints verdict and edits no
+          #   issue; check above still turns its job red.
+          if [ "${GITHUB_REF:-}" != refs/heads/main ]; then
+            echo "Run on ${GITHUB_REF:-no ref} edits no issue, since issue holds verdict of main."
+            exit 0
+          fi
+
           # Read open issues rather than search: search indexing lags, and duplicate opened
           #   because index was cold is exactly noise this avoids.
           existing="$(gh issue list --repo "$REPO" --label curator --state open \
