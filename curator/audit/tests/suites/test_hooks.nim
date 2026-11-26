@@ -781,7 +781,7 @@ suite "Hooks":
     check "each wrong phrase after `-`, that phrase mended after `+`" in reason
     check "never send it, a line of it, or its sign-off again" in reason
     check reason.splitLines.len == 3  # reason line, then one line for each finding
-    check "got neither" in reason.splitLines[1]
+    check reason.splitLines[1].startsWith("koch.turn-end: actual=\"neither\" ")  # line form
 
 
   test "stop hook asks for read of unread queue, and no diff for it (#742)":
@@ -1343,13 +1343,18 @@ suite "Hooks":
       drift = finding(
         "GUIDE.md",
         0,
+        Check.Drift,
         "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
           "contract`.",
       )
-      stamp = finding("", 0, "Branch predates code of stamp on base; got `provenance.nim`.")
+      stamp = finding(
+        "", 0, Check.Drift, "Branch predates code of stamp on base; got `provenance.nim`."
+      )
       drifted = contextStart("curator/x", "", "", "## List", "", @[drift, stamp])
-    check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
-    check "\n  Branch predates code of stamp on base; got `provenance.nim`.\n" in drifted  # each
+    check "\n  GUIDE.md: koch.drift: actual=\"## Output contract\" message=\"base changed " &
+      "sections" in drifted  # line form, as each hook prints finding
+    check "\n  koch.drift: actual=\"provenance.nim\" message=\"branch predates code of stamp on " &
+      "base\"\n" in drifted  # each
     check "re-stamp" notin drifted
     # Drift names charter and code of stamp alone, since checker reaches branch through merge
     #   `koch check` judges (#893).
@@ -1783,11 +1788,11 @@ suite "Hooks":
       held = finding(path, 5, "Held.")
     check contextFindings(path, [held], [own]).splitLines == @[
       "koch check-files reports 1 finding(s) in `" & path & "`; fix before push:",
-      path & ":3: Own.",
+      path & ":3: message=\"own\"",
       "koch check-files holds 1 finding(s) in `" & path & "` for its project, which clears " &
         "them in its next pull request (CURATOR.md, duty 3):",
-      path & ":5: Held.",
-    ]
+      path & ":5: message=\"held\"",
+    ]  # each finding in line form, as each hook prints it
     check "fix before push" notin contextFindings(path, [held], [])
     check contextFindings(path, [], []).len == 0
 
@@ -2506,7 +2511,7 @@ suite "Hooks":
         checkNumbersBare("See #12.\n"), checkSignoffRead(PLAIN, []), has_signoff = true,
         blocks = blocks,
       )
-    check alone.splitLines == @[LINE_BLOCKS, "Call of `builder`."]
+    check alone.splitLines == @[LINE_BLOCKS, "message=\"call of `builder`\""]  # line form
     check "Reply with a diff" notin alone and "write no block for it" in alone
     check every.startsWith("Mend message") and every.find("Read queue") < every.find(LINE_BLOCKS)
     check every.splitLines[^1] == LINE_SIGNOFF

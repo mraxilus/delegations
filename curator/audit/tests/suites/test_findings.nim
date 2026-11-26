@@ -70,6 +70,13 @@ suite "Findings":
     check found.rendered(Form.Terminal, is_colored = true)[1].startsWith("\e[36ma.md:1\e[0m")
 
 
+  test "finding reads as its line form, help last, as each hook prints it (ruling 7197275206)":
+    check finding("a.md", 0, Check.SuiteCheck, "Check module needs suite; got nothing.",
+      help = "write `test_a.nim`").toLine == "a.md: koch.check-suite: actual=\"nothing\" " &
+        "message=\"check module needs suite\" help=\"write `test_a.nim`\""
+    check finding("", 0, "Fault of tool.").toLine == "message=\"fault of tool\""  # no rule, no path
+
+
   test "finding is no propagation unless check says so":
     check not finding("a/b.nim", 3, "Broke.").is_propagation  # default: whoever owns path
     check finding("a/b.nim", 3, "Broke.", is_propagation = true).is_propagation
