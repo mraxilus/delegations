@@ -92,6 +92,7 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TIME, 5, 12, 30, 15).unitClaim.get.name == "time"
     check initNumber("count of findings: 3, 6 and 11", 3, 6, 11, 9).unitClaim.isNone  # no label
     check initNumber("tool calls: 12, 30 and 60", 12, 30, 60, 20).unitClaim.isNone
+    check initNumber("Cost: $0.80, $1 and $2", 0.8, 1, 2, 1).unitClaim.isNone  # label, not `Count:`
 
 
   test "number inside its range scores as copy in Python of method of Metaculus gives it":
@@ -185,6 +186,8 @@ suite "numbers as Metaculus":
     check initNumber("false findings: 0, 1 and 3", 0, 1, 3, 1).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, State.Annulled).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 3e6, 3e6, 7e6, 1101421).scoreNumber.isNone
+    # 5th above range drops out of curve, so check of rising percentiles alone refuses it.
+    check initNumber(TEXT_TOKENS, 2e9, 3e6, 7e6, 4e6, confidence = 0.9).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 1.0).scoreNumber.isNone
     check initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421, confidence = 0.0).scoreNumber.isNone
     check initClaim(0.7, State.Hit).scoreNumber.isNone
@@ -202,6 +205,16 @@ suite "numbers as Metaculus":
     check initNumber(TEXT_TIME, 10, 12, 15, 12, confidence = 0.9).scoreNumber.isNone  # 191 fall
 
 
+  test "number whose curve is NaN at some place takes none, as server of Metaculus refuses it":
+    # Case as found: second review of #1012 found score of NaN, which spoils each mean of its group.
+    #   Percentile whose place lies under 1 / 200 takes two points at places 0 and 1 / 200
+    #   (`hydrateQuantiles`), so place 0 holds two points, and curve there is 0 / 0. Server of
+    #   Metaculus refuses such curve, since `inbound_pmf >= min_diff` fails for NaN.
+    check initNumber(TEXT_TIME, 0.103, 5, 30, 4, confidence = 0.9).scoreNumber.isNone
+    check initNumber(TEXT_COST, 0.0102, 0.40, 2, 0.5, confidence = 0.9).scoreNumber.isNone
+    check not curveStep(100, NaN).isCurveTaken
+
+
   test "curve that Metaculus takes holds 201 places, each step rounded from 0.01 / 200 to 0.59":
     # `validateUserQuantileData` of Metaculus: step rounds to 10 places, then 1% of mass spread
     #   even over buckets is least step, and 0.59 most step of continuous question.
@@ -210,6 +223,7 @@ suite "numbers as Metaculus":
     check not curveStep(100, 0.5901).isCurveTaken
     check curveStep(100, 0.01 / COUNT_STEPS).isCurveTaken
     check not curveStep(100, 0.00004).isCurveTaken
+    check not curveStep(100, 0.0000499).isCurveTaken  # just under least step
     check not curveStep(100, -0.001).isCurveTaken  # falls
     check not curveStep(100, 1 / COUNT_STEPS)[0 ..< COUNT_STEPS].isCurveTaken  # place short
 
