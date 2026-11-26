@@ -60,9 +60,9 @@ suite "Camera":
   test "a motion that carries the reference eye to no place fails, and names its motor":
     # Fault: motion that is no unit motor fell back to reference eye in silence (repository
     #   issue 970).
-    check eyeCarried(MOTOR_IDENTITY, ~∘MOTOR_IDENTITY) =~ EYE_REFERENCE
+    check eyeCarried(MOTOR_IDENTITY) =~ EYE_REFERENCE
     expect AssertionDefect:
-      discard eyeCarried(Multivector(), Multivector())
+      discard eyeCarried(Multivector())
 
 
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":

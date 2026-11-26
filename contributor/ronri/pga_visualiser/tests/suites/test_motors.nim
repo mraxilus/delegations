@@ -157,14 +157,13 @@ suite "Motors":
         check grade(m.carried(turn)) == grade(m)
 
 
-  test "a carry through an antireverse held aside is the sandwich":
-    # Caller carrying several operands through one motor takes `~∘𝐐` once and hands it in.
+  test "a carry is the sandwich that the named products spell":
+    # Carry spells sandwich with operators, and takes `~∘𝐐` itself.
     #   Named sandwich is reference it is held to.
     for i in 0..<COUNT_GENERAL:
       let turn = turnAbout(LINES[i], 0.5 + 0.1 * float(i)).get
       for m in [POINTS[i], LINES[i], PLANES[i]]:
-        check m.carried(turn, reverseAnti(turn)) =~
-            wedgeDotAnti(wedgeDotAnti(turn, m), reverseAnti(turn))
+        check m.carried(turn) =~ wedgeDotAnti(wedgeDotAnti(turn, m), reverseAnti(turn))
 
 
   test "a carry takes its motor alone, and takes the antireverse itself":

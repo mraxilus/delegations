@@ -52,7 +52,7 @@ when OBJECTS_MAX >= countObjects(SCALE_ORRERY_DEFAULT):
       expect AssertionDefect:
         discard turnedAbout(toward, Direction(x: 0, y: 0, z: 0), 1.0)
       expect AssertionDefect:
-        discard turnedBy(toward, Multivector(), Multivector())
+        discard turnedBy(toward, Multivector())
 
 
     test "every size fills its own target exactly, and the largest leaves two handles":
