@@ -1356,7 +1356,7 @@ suite "Internal: Stream":
     #   .i le stuzi pe le jdini sinxa cu se to'e curmi
     for (text, at) in [
         ("€5%", 0), ("$5%", 0), ("5%€", 2), ("-5%€", 3), ("-€5%", 1), ("€-5%", 0),
-        ("€5%€5", 0)]:
+        ("€5%€5", 0), ("€5.5%", 0), ("€1,000%", 0), ("€5,00%", 0)]:
       checkpoint text
       check text.refusalSigned == some((at, text.character(at)))
     # lo jdini klani be li 0.05 cu se ciska ta'i lo lerfu po'o
@@ -1370,7 +1370,7 @@ suite "Internal: Stream":
 
 
   test "Each text of digits, letters, number signs and spaces reads as prefixedRead reads it":
-    # `Architect` jdice `D4 b` .e `D2 a` .e `D3 a` bu'u `#1003`
+    # `Architect` jdice `D4 b` .e `D2 a` .e `D3 a` .e `D9 b` bu'u `#1003`
     #   .i `Architect` jdice le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ½ .gy. ta'i
     #       `D6 b`
     #   .i `Architect` jdice `D7 c` bu'u `#1003` to lo sinxa cu ka'e pencu lo drata sinxa pe le
