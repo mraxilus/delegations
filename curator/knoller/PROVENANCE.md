@@ -113,6 +113,16 @@ caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
   source line prints as its control picture, as `␉`, so the marker stays under its rune.
 - The terminal form quotes a value that is empty, or whose edge or control character would hide
   it. So each value stays visible, as Article IV.4 asks.
+- A message cuts at its first `; got ` outside a code span, and a code span runs to the next run
+  of as many backticks (`sentenceEnd`). So a sentence that quotes ``…; got `{value}`.`` ends after
+  the quote. The sentence is the summary, with its first letter lowercase (`initNotice`). The
+  value after `; got ` is the actual, out of the code span that it stands in whole.
+- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
+  the value. The sentence then runs to its closing period. No message of knoller holds such a
+  backtick, and reading holds that.
+- Each suite compares the short text of a finding (`brief`), as D3 c of #1002 rules. It holds the
+  summary, then the actual after `; got`, the expected value after `; expect` and the help after
+  `; help:`, each where held. The rule stands apart, so the text reads as the message.
 - The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
   value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
   Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
