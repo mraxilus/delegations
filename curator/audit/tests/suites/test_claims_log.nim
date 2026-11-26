@@ -222,7 +222,7 @@ suite "Log of claims":
     check first.delegate == DELEGATE
     check first.project == PROJECT
     check (first.kind, first.call) == ("reviewer", "toolu_reviewer")
-    check first.model == MODEL
+    check first.model == ""  # `D1 b` of #1025: row names no model
     check first.effort == "medium"  # input of call, ahead of template
     check first.confidence == 0.7
     check first.state == State.Hit
@@ -286,7 +286,7 @@ suite "Log of claims":
     check (claims[0].call, claims[0].effort) == ("toolu_r2", "high")
 
 
-  test "model is result's, else input's, of call":
+  test "row names no model, whatever result or input of call names (`D1 b` of #1025)":
     let
       text = lineUser("Review the diff.", "human") &
         lineSaid(PREDICTION_REVIEWER) & lineUser("timer", "task-notification") &
@@ -294,8 +294,9 @@ suite "Log of claims":
         lineHandback("reviewer") & lineSaid(REFLECTION_RACE, UUID)
       claims = text.claimsRead
     check claims.len == 1
-    check claims[0].model == "opus"
+    check claims[0].model == ""  # input names `opus`, and result names none
     check claims[0].effort == ""  # neither call nor template of reviewer names one
+    check transcript().claimsRead.allIt(it.model == "")  # each result names `MODEL`
 
 
   test "missed prediction, cell quoting no claim, row with no marker, and earlier turn give none":
@@ -308,8 +309,8 @@ suite "Log of claims":
   test "line writes each field in order of schema, escaped, and leaves out each default":
     let claim = transcript().claimsRead[0]
     check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
-      "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" model: " &
-      "\"model-a\" effort: \"medium\" text: \"the race leads the findings\" " &
+      "\"contributor/bangu/rictadni\" kind: \"reviewer\" call: \"toolu_reviewer\" " &
+      "effort: \"medium\" text: \"the race leads the findings\" " &
       "confidence: 0.7 state: STATE_HIT marker: MARKER_DELEGATE tokens: 170000 cost: 1.1 " &
       "address: \"s1/u9/1\" key: \"s1/toolu_reviewer/1/STATE_HIT\" result: " &
       "\"it leads, as \\\"high\\\" | first\" }"
@@ -335,7 +336,7 @@ suite "Log of claims":
     check decoded.count("claims {") == claims.len
     for field in [  # as `protoc` prints each field it read, by name, from first row and others
       "date: \"2026-11-20\"", "delegate: \"s1\"", "project: \"contributor/bangu/rictadni\"",
-      "kind: \"reviewer\"", "call: \"toolu_reviewer\"", "model: \"model-a\"",
+      "kind: \"reviewer\"", "call: \"toolu_reviewer\"",
       "effort: \"medium\"", "text: \"the race leads the findings\"", "confidence: 0.7",
       "state: STATE_HIT", "marker: MARKER_DELEGATE", "tokens: 170000", "cost: 1.1",
       "address: \"s1/u9/1\"", "key: \"s1/toolu_reviewer/1/STATE_HIT\"",

@@ -5,8 +5,9 @@
 ##     wherever it stands in turn, below sign-off too, since its marks hold there.
 ##   Claim takes latest call before reflection whose block holds it, of kind line `**Subagent:**`
 ##     of reflection names, else of any kind, so claim of block of critic takes call of critic.
-##   Kind is `subagent_type` of call; model is `resolvedModel` of its result, else its input
-##     `model`; effort is input `effort`, else `effort:` of its template (`readEfforts`).
+##   Kind is `subagent_type` of call, and effort is input `effort`, else `effort:` of its template
+##     (`readEfforts`); model stays empty, as `D1 b` of #1025 rules, since harness keeps name of
+##     model out of each file it pushes.
 ##   State is marker opening cell under `State`, and confidence is percentage of cell under
 ##     `Confidence`. Tokens and cost are first `<n> tokens` and `$<x>` of line `**Subagent:**`;
 ##     call of critic that line does not name reads line `**Critic:**`.
@@ -59,7 +60,7 @@ type
     project*: string  ## Role string of branch that writes row, as `curator/audit`.
     kind*: string  ## Kind of call claim takes.
     call*: string  ## Id of tool use of that call.
-    model*: string  ## Model of that call.
+    model*: string  ## Model of that call; `stop` leaves it empty (`D1 b` of #1025).
     effort*: string  ## Effort of that call, else of template of its kind.
     text*: string  ## Claim, as cell under `Predicted` quotes it.
     confidence*: float  ## Percentage of cell under `Confidence`, as fraction.
@@ -256,7 +257,6 @@ func claimsTurn*(
         project: project,
         kind: call.kind,
         call: call.id,
-        model: call.model,
         effort: (if call.effort.len > 0: call.effort else: efforts.getOrDefault(call.kind)),
         text: quoted,
         confidence: row[1].confidenceCell,
