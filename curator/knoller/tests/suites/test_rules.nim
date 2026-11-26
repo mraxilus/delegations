@@ -34,6 +34,12 @@ suite "Rules":
     check Rule.FenceHeld.id == "fence-held"
 
 
+  test "slug reads any name as id of rule reads it, so caller names checks of its own so":
+    check slug("commit subject width") == "commit-subject-width"
+    check slug("  Sign-off rows!") == "sign-off-rows"  # case, edges and runs fold
+    check slug("").len == 0
+
+
   test "every rule has id of its own, so output names one rule":
     var ids: seq[string]
     for rule in Rule: ids.add rule.id
