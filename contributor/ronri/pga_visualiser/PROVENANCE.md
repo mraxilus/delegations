@@ -545,7 +545,7 @@ the nimble file. A run on another build fails, and names its build. The counted 
 shipped one, which runs the optimiser. So a count is evidence for the interpreter alone (IX.6).
 
 **The band of each count is zero.** The counted code calls nothing that selects its code by
-processor, and every input is held, the clock among them. Six runs in fresh browsers on 2026-11-15
+processor, and every input is held, the clock among them. Three runs in fresh browsers on 2026-11-26
 read each count the same. A count under its baseline passes, and the baseline is then counted again.
 
 **A static count stands beside each count of the machine, because it names the line.** The check of
@@ -554,9 +554,9 @@ The check of the lattice reports those that only the lattice reaches: 12 sites i
 
 | Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
 |-------|----------|--------------------|----------------------------|
-| Copies of a marker and its pulse, over 5 objects | 15,887 | 15,883 | 16,523 |
-| Calls of a marker and its pulse, over 5 objects | 48,653 | 48,642 | 79,810 |
-| Calls that the lattice adds to 9 moving frames | 4,817,497 | 4,817,506 | 8,893,698 |
+| Copies of a marker and its pulse, over 5 objects | 15,883 | 15,883 | 16,523 |
+| Calls of a marker and its pulse, over 5 objects | 48,644 | 48,642 | 79,810 |
+| Calls that the lattice adds to 9 moving frames | 3,531,425 | 4,817,506 | 8,893,698 |
 | Bytes that the lattice adds to those frames | 219,136 | 219,136 | 219,136 |
 
 **Each fault is stood in for by hand, and its count reads over its repair.** Neither fault was
@@ -584,7 +584,7 @@ count returned to its reading at `3d9696e`.
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
 as the table gives, and the counts of the other span did not move. Assumed: that each fault still
-reads over the baselines of 2026-11-15, within 11 calls and 4 copies of its repair.
+reads over the baselines of 2026-11-26.
 
 ## Browser front-end
 
@@ -3123,7 +3123,7 @@ narrower form as the parameter, since the operators of the library take the whol
 
 **A carry takes its antireverse itself**, so no caller hands in one that disagrees with its motor.
 Rejected: a type that holds both. Each build of it copies the motor on the page, and a still frame
-copied 4,886 times, over its bound of 4,876. Cost: these tests and each carry's antireverse add 537
+copied 4,886 times, over its bound of 4,858. Cost: these tests and each carry's antireverse add 537
 calls to a still frame with a point picked, and 1,095 with the plane. `unitize` in `log` adds 103 of
 those calls, and 2 copies, as frames after a pick ease. Verified by `counted.ts` and a break on
 purpose, 2026-11-26: with it undone, the frames copy 4,856 and 10,014 times.
