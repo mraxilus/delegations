@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c1257a30b6557c6e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | c35ccbd94b403a76121e3ddef5cb71e3f7b2b842 |
+| Pruned  | 8712e4d86744aa37030b20476fdb867f56c7dad6 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -3114,9 +3114,8 @@ exports (rule 12). The third is the names of its modules (rules 8, 9 and 15). Th
 fence warning of each entry take those of its project. The record of `curator/knoller` gives the
 reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
 
-- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that
-  the project builds on join them, from the modules that `readFacts` reads (`## Facts of the
-  compiler`).
+- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that the
+  project builds on join them, from the modules that `readFacts` reads (`## Facts of the compiler`).
 - The queries of the semantic pass read the names of the tree alone, since a library adds no axis
   value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
   the case rename of its declaration into one rename, whose rule is that of the case.
@@ -4449,14 +4448,15 @@ and the 10th and 90th at 80% (comment 7191274618). A number takes no baseline sc
   of the slider, which Metaculus puts on the slider alone.
 - A curve that the form refuses takes no score. `validateUserQuantileData` refuses each step
   under 0.01 / 200 or above 0.59. Narrow percentiles make a curve that falls, and the search of
-  the floor never ends on such a curve. The checks of the server have no copy, since the floor
-  gives each open bound 0.001 and caps each bucket at 0.2.
+  the floor never ends on such a curve. A curve that is NaN at a place fails too, as the server
+  refuses it. A percentile just above the lower bound makes one. The other checks of the server
+  have no copy, since the floor gives each open bound 0.001 and caps each bucket at 0.2.
 - Time and a count take their ranges by D5 a and D1 a of #964 (comment 7193361977). A count is
   named by its label `Count:`, and scores on the logarithm of the count plus one. It runs from a
   closed bound at 0 to an open bound at 100,000. D1 a names 0 alone as closed, so 100,000 stays
   open, as each bound of the other units is. An outcome beyond a closed bound takes no score.
 - Verified by `suites/test_claims_scores.nim`, against two copies by hand in Python, made and run
-  apart, for each unit at 80% and 90%. By hand on 2026-11-26, 29 of 32 mutants of the steps, the
+  apart, for each unit at 80% and 90%. By hand on 2026-11-26, 32 of 35 mutants of the steps, the
   reader and the verb each fail a suite. The other three pass. The first and last points of
   `hydrateQuantiles` lie on places, so its branch for them never runs. No case gives a sum of
   exactly 1 in the search, or a place of exactly 1.
