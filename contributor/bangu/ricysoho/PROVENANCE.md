@@ -906,7 +906,7 @@ ni'o **zoi gy. + .gy. sinxa zo ma'u
 ni'o **zoi gy. % .gy. sinxa zo ce'i
   .i le sinxa cu se tcidu va'o lo nu lo lerfu pe `0` bi'o `9` cu lidne le sinxa kei .e lo nu no
       lerfu pe `0` bi'o `9` cu se lidne le sinxa**
-  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b`
+  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b` gi'e jdice le stuzi ta'i `D6 b`
   .i lo mupli po'u `CLL 18.10` du lo'u ci mu ce'i le'u
   .i le genturfa'i cu tcidu lo'u li ci mu ce'i le'u fi zoi gy. li 35% .gy.
       Verified by `suites/test_stream.nim`.
@@ -917,7 +917,7 @@ ni'o **zoi gy. π .gy. sinxa zo pai
   .i le sinxa cu se tcidu va'o lo nu no lerfu pe `0` bi'o `9` .e no sinxa cu pencu le sinxa**
   .i le genturfa'i cu tcidu lo'u li pa fi'u re le'u fi zoi gy. li ½ .gy.
       Verified by `suites/test_stream.nim`.
-  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b`
+  .i `Architect` jdice le valsi bu'u `#1003` ta'i `D4 b` gi'e jdice le stuzi ta'i `D6 b`
   .i lo mupli po'u `CLL 18.18` du zo pai
   .i lo mupli po'u `CLL 18.15` du lo'u ma'u ci'i le'u
   .i lo mupli po'u `CLL 18.7` du lo'u re fi'u ze le'u
@@ -932,7 +932,7 @@ ni'o **lo drata stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ∞ .gy. .
   .i da'i zoi gy. ∞0 .gy. cu sinxa lo'u ci'i no le'u noi `CLL 18.4` cu cusku lo du'u ke'a sinxa
       zoi gy. ℵ0 .gy.
   .i da'i zoi gy. 2π .gy. .e zoi gy. 5%5 .gy. cu sinxa no namcu to `CLL 18.4` toi
-  .i `Architect` na jdice le stuzi to `D6` pe `#1003` toi
+  .i `Architect` jdice le stuzi bu'u `#1003` ta'i `D6 b`
   .i ku'i lo kutle'u .e denpa bu poi na zvati lo jbini be re lerfu cu na fendi lo namcu to
       `CLL 18.6` toi
   .i se ki'u bo zoi gy. li 3 ½ .gy. .e zoi gy. li 5.π .gy. .e zoi gy. li 5% 5 .gy. cu se tcidu ta'i
@@ -4848,10 +4848,6 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
-- ny.mai **le stuzi pe zoi gy. % .gy. .e zoi gy. π .gy. .e zoi gy. ∞ .gy. .e zoi gy. ½ .gy.**
-  .i le genturfa'i cu tcidu le sinxa bu'u lo stuzi po'o poi le valsi cu sinxa le namcu pe le
-      sinxa bu'u ke'a
-  .i `D6` pe `#1003` cu denpa lo nu `Architect` cu jdice
 - ny.mai **lo sinxa pe lo namcu poi pencu lo drata sinxa**
   .i le genturfa'i cu to'e curmi zoi gy. -∞ .gy. .e zoi gy. -$5 .gy. .e zoi gy. $½ .gy.
       Verified by `suites/test_stream.nim`.
