@@ -120,8 +120,8 @@ a mistyped flag never sends a paid request. Put `--` before a text that holds su
 |---|---|---|
 | `RICTADNI_SERVICE` | `claude` | `claude`, `openrouter`, or `chat` for another server |
 | `RICTADNI_ENDPOINT` | the URL of the service | `chat` needs one |
-| `RICTADNI_MODEL` | `claude-opus-5-5`, or `anthropic/claude-opus-5.5` | `chat` needs one |
-| `RICTADNI_EFFORT` | `medium`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `RICTADNI_MODEL` | `claude-sonnet-5-5`, or `anthropic/claude-sonnet-5.5` | `chat` needs one |
+| `RICTADNI_EFFORT` | `xhigh`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
 | `RICTADNI_API_KEY` | none | The key, read first |
 | `RICTADNI_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
 

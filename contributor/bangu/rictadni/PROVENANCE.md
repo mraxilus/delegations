@@ -413,8 +413,8 @@ Cost: the text goes with each request, and the cache helps only within its lifet
 bytes by one command on 2026-11-19:
 `nim r --hints:off --path:src --eval:'import rictadni/suggestions; echo PROMPT_SYSTEM.len'`.
 The list with cmavo gave 24,918 bytes at `bf9c82d8` on 2026-10-31, by the same command with the
-module `lojban_tagger/suggestions`. On `claude`, at its default model and effort `medium`, one
-live reply on 2026-11-26 shows 12,977 tokens written to the cache. They count the whole prefix up
+module `lojban_tagger/suggestions`. On `claude`, with Opus 5.5 at effort `medium`, one live
+reply on 2026-11-26 shows 12,977 tokens written to the cache. They count the whole prefix up
 to the mark on the system text, so they include what the API adds for the schema.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
@@ -444,6 +444,15 @@ under 0.1 ms in release (Figures).
 - `openrouter` speaks Chat Completions with the routing and cache fields of OpenRouter.
 - `chat` speaks Chat Completions with standard fields alone, for any compatible server. Its
   body is a project choice, because no OpenAI reference of Chat Completions was read.
+
+**`claude` and `openrouter` ask Sonnet 5.5 at effort `xhigh` where the environment names none.**
+The Architect ruled it on #1047, from the grid of Live replies. It keeps as many gismu of Opus 5.5
+at `medium` as Opus keeps again, at about two thirds of its cost. `LUT_MODEL_BY_SERVICE` and
+`EFFORT_DEFAULT` of `suggestions.nim` hold it.
+
+Cost: Sonnet at `xhigh` spends thinking tokens, so an answer
+likely takes longer, which is unmeasured. Sonnet at `max` reached the limit of 16,000 output
+tokens on the article of the grid. Sonnet at `xhigh` stayed under it in 30 answers.
 
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim` against documented shapes. One live reply of `claude`
@@ -509,14 +518,14 @@ reached the Messages API through the proxy of a cloud sandbox, and the service a
 read them back. The replay of that exchange file, with no key and no network, gave the same 14
 gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
 
-Cost: the request went to the default model of `claude` at effort `medium`. It took 56 input
+Cost: the request went to Opus 5.5 at effort `medium`. It took 56 input
 tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
 each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
 costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
-**Sonnet 5.5 at effort `xhigh` keeps as many gismu of the default as the default keeps again.**
-It costs about two thirds of the default. Sonnet at lower efforts keeps almost as many, and gives
-more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
+**Sonnet 5.5 at effort `xhigh` keeps as many gismu of Opus 5.5 at `medium` as Opus keeps again.**
+It costs about two thirds of Opus at `medium`. Sonnet at lower efforts keeps almost as many, and
+gives more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
 
 On 2026-11-26, a live grid sent the same 10 texts to each configuration, through
 `binaries/suggester` built at `ed9fe6f`. The texts are these:
@@ -555,10 +564,11 @@ The tree keeps neither the texts nor the exchange files.
 | Haiku 5.5, `medium` | 1 | 100 of 130 | 156 of 257 | 18 of 132 | 0 of 10 | $0.009 |
 | Haiku 5.5, `low` | 1 | 72 of 130 | 120 of 257 | 65 of 164 | 0 of 10 | $0.008 |
 
-Each answer of the default that has no placeholder end and keeps 9 gismu or more is a reference,
-26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample also gives.
-The default reads only the references of its other samples. So its row shows how well two runs
-of the default agree, which is the most that another configuration can expect.
+Each answer of Opus at `medium` that has no placeholder end and keeps 9 gismu or more is a
+reference, 26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample
+also gives.
+Opus at `medium` reads only the references of its other samples. So its row shows how well two
+runs of it agree, which is the most that another configuration can expect.
 
 Recall of 5 for each sample falls in these ranges:
 
@@ -570,11 +580,11 @@ Recall of 5 for each sample falls in these ranges:
 - Sonnet at `medium`: 0.90 to 0.96.
 - Sonnet at `low`: 0.90 to 0.93.
 
-A gismu is related where another sample of the default gives it for the same text. So a sample of
-the default is marked against its other samples alone. Of the rest, the delegate marked a gismu
-unrelated where its keyword fits no thing of the text. An example is `sanli`, stand, for the
-paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader knew the
-configuration of each gismu, and the tree does not keep the list of marks.
+A gismu is related where another sample of Opus at `medium` gives it for the same text. So a
+sample of Opus at `medium` is marked against its other samples alone. Of the rest, the delegate
+marked a gismu unrelated where its keyword fits no thing of the text. An example is `sanli`, stand,
+for the paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader
+knew the configuration of each gismu, and the tree does not keep the list of marks.
 
 **Sonnet at `max` keeps no gismu for the article.** In each of its 3 samples, the answer for the
 article reached the limit of 16,000 output tokens, and the tool exits 1 with `max_tokens`. Over the
