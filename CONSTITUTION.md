@@ -538,8 +538,8 @@ suite "Chapter 2":
 ## Article X: Form of the source
 
 1. Two-space indent. No tabs. Lines of at most 100 characters, counted in characters and not
-   in bytes. Each log of claims, `claims.txtpb`, keeps one row to a line at any width, so that a
-   merge joins logs line by line. Where the formatter would destroy a hand-shaped block, fence
+   in bytes. This limit does not apply to a log of claims, `claims.txtpb`, which keeps one row to
+   a line for git's `union` merge. Where the formatter would destroy a hand-shaped block, fence
    the block between a line `#!fix off` and a line `#!fix on`.
 2. A section banner is a distinct comment form, at most two tiers deep, and its syntax marks
    the tier. Its title is an English noun phrase in Title Case, qualifier then head, singular
