@@ -219,7 +219,7 @@ suite "Static check":
     # Case: review of #1069; each form passed, since line opening `/*` or `*` was skipped whole,
     #   quote of regular expression opened string, and `${}` read as text of template.
     #   Domain: comment before import on its line and on line above, line opening `*` in code,
-    #   regular expression holding quote, `${}` on one line and on line below.
+    #   regular expression holding quote, `${}` on one line, on line below, and holding braces.
     for (text, line) in [
       ("/* note */ import x from 'lodash';", 1),
       ("/* a\n b */ import x from 'lodash';", 2),
@@ -227,6 +227,7 @@ suite "Static check":
       ("s.replace(/\"/g, ''); import x from 'lodash';", 1),
       ("const t = `${await import('lodash')}`;", 1),
       ("const t = `a\nb ${require('lodash')}`;", 2),
+      ("const t = `${ f({a: 1}) + require('lodash') }`;", 1),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
@@ -302,7 +303,8 @@ suite "Static check":
   test "page script names its source in each form that HTML and SVG allow":
     # Case: review of #1069; each form below but first gave no finding, and `data-src` gave one.
     #   Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href` and `xlink:href`
-    #   of SVG; then attribute that only ends in `src`, and tag that only opens with `script`.
+    #   of SVG, `>` inside quote; then attribute that only ends in `src`, and tag that only opens
+    #   with `script`.
     for tag in [
       "<script src=\"https://cdn.example/a.js\"></script>",
       "<script\n  src=\"https://cdn.example/a.js\"></script>",
@@ -311,6 +313,7 @@ suite "Static check":
       "<SCRIPT SRC=\"https://cdn.example/a.js\"></SCRIPT>",
       "<script href=\"https://cdn.example/a.js\"/>",
       "<script xlink:href='//cdn.example/a.js'/>",
+      "<script data-note=\"a>b\" src=\"https://cdn.example/a.js\"></script>",
     ]:
       let found = checkPage(PATH_PAGE, "\n" & tag)
       check found.len == 1 and found[0].line == 2
