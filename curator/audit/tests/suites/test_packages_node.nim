@@ -32,15 +32,17 @@ const
     ## Each statement naming module, with `S` standing for its specifier.
   LINES_NOT_IMPORT = [
     "const letters = Array.from('lodash');", "const from = 'lodash';",
-    "// import x from 'lodash';", " * import 'lodash';", "/* require('lodash') */",
+    "// import x from 'lodash';", "/**\n * import 'lodash';\n */", "/* require('lodash') */",
     "imported('lodash');", "fromage('lodash');", "const source = 'import';",
     "report('a corner of empty sky stands to start from', false, 'every corner hovers');",
     "draw(); // import x from 'lodash';", "const said = \"it reads from 'lodash'\";",
     "reimport('lodash');", "const said = 'it\\'s from \"lodash\"';",
+    "$from('rxjs-like');", "this.#require('lodash');", "const v = from('lodash');",
+    "go(); /* see import('lodash') */", "const t = `\nimport x from 'lodash'\n`;",
   ]
     ## Lines that hold word of import beside quote, and name no module; line of `report` as found
     ##   at line 223 of `chrome.ts` of `pga_visualiser`, 2026-11-27, where `from` inside string
-    ##   read next quote as specifier.
+    ##   read next quote as specifier; last five as review of #1069 found them refused.
   MANIFEST_FOUND = """{
   "private": true,
   "devDependencies": {
@@ -212,6 +214,22 @@ suite "Static check":
         check found[0].message.endsWith("got `" & specifier & "`.")
         inc count
     check count == FORMS_IMPORT.len * (SPECIFIERS_PASSING.len + SPECIFIERS_REFUSED.len)
+
+  test "import in code after comment, regular expression or into template reads at its line":
+    # Case: review of #1069; each form passed, since line opening `/*` or `*` was skipped whole,
+    #   quote of regular expression opened string, and `${}` read as text of template.
+    #   Domain: comment before import on its line and on line above, line opening `*` in code,
+    #   regular expression holding quote, `${}` on one line and on line below.
+    for (text, line) in [
+      ("/* note */ import x from 'lodash';", 1),
+      ("/* a\n b */ import x from 'lodash';", 2),
+      ("const a = b\n  * require('lodash');", 2),
+      ("s.replace(/\"/g, ''); import x from 'lodash';", 1),
+      ("const t = `${await import('lodash')}`;", 1),
+      ("const t = `a\nb ${require('lodash')}`;", 2),
+    ]:
+      let found = checkScript(PATH_SCRIPT, text)
+      check found.len == 1 and found[0].line == line
 
   test "line that holds word of import beside quote names no module":
     # Domain: member call, binding, comment, word that holds keyword, keyword as text.
