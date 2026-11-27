@@ -3,9 +3,10 @@
 #   Each project keeps its npm packages up to date, security fixes first (CONTRIBUTOR.md,
 #   TypeScript and Node). `koch advisories` reads lock alone through `npm audit`, and exits 1
 #   where npm names package of lock, and 2 where answer cannot stand (`packages_node.nim`).
-#   Package behind latest release prints line that fails nothing, so issue holds it beside
-#   advisory. Verdict varies with npm rather than with code, so it never runs where merge waits,
-#   as `head.yml` holds for `head` and `nim.yml` for Nim releases.
+#   Package behind latest release prints line that fails nothing, which run log keeps and issue
+#   leaves out, so new release of tool never comments. Verdict varies with npm rather than with
+#   code, so it never runs where merge waits, as `head.yml` holds for `head` and `nim.yml` for
+#   Nim releases.
 #
 #   One issue per project, never one per run. Open issue carrying project's marker is edited to
 #   latest run, so it always says what is, and gains comment only where finding changed:
@@ -13,8 +14,8 @@
 #   advisory opens fresh one.
 #   Finding is not red run: exit 1 is what issue is for, and job stays green. Any other exit,
 #   such as failure of search or usage error, turns job red, as failure to set up or post does,
-#   and `watch.yml` reads that. So issue names advisory alone, and failure of one week never
-#   edits it.
+#   and `watch.yml` reads that. So does exit 1 with no count of findings, which crash of koch
+#   gives. So issue names advisory alone, and failure of one week never edits it.
 #   Koch builds in step of its own, so compile failure turns job red rather than opening issue,
 #   and finding holds output of verb alone.
 #   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
@@ -118,6 +119,14 @@ jobs:
             exit 1
           fi
 
+          # Exit 1 is advisory only beside count of findings that koch prints last. Crash of koch
+          #   exits 1 too, with trace and no count, so it turns job red rather than opening issue.
+          counted='^[1-9][0-9]* finding\(s\)\.$'
+          if [ "$CODE" = 1 ] && ! grep -Eq "$counted" "$RUNNER_TEMP/advisories.txt"; then
+            echo "Verb exited 1 with no count of findings, so koch failed rather than found."
+            exit 1
+          fi
+
           # Dispatch from other branch reads locks of that branch, so it prints verdict and edits
           #   no issue; check above still turns its job red.
           if [ "${GITHUB_REF:-}" != refs/heads/main ]; then
@@ -142,7 +151,11 @@ jobs:
             exit 0
           fi
 
-          finding="$(tail -c 20000 "$RUNNER_TEMP/advisories.txt")"
+          # Lines of tools behind latest release stay out of issue, so new release of tool never
+          #   reads as change of finding; run log keeps them.
+          finding="$(awk '/^Dev dependencies behind latest release/ {skip = 1; next}
+            skip && /^  / {next} {skip = 0; print}' "$RUNNER_TEMP/advisories.txt" \
+            | tail -c 20000)"
 
           # Paragraphs appended rather than written as heredoc: issue body renders each newline
           #   as line break, so paragraph wrapped to width here would break mid-sentence there.

@@ -13,7 +13,8 @@
 #   once. Run where verb exits 0 closes open issue, so next lag opens fresh one.
 #   Finding is not red run: exit 1 is what issue is for, and job stays green. Any other exit,
 #   such as failure of search or usage error, turns job red, as failure to set up or post does,
-#   and `watch.yml` reads that. So issue names lag alone, and failure of one week never edits it.
+#   and `watch.yml` reads that. So does exit 1 with no count of findings, which crash of koch
+#   gives. So issue names lag alone, and failure of one week never edits it.
 #   Koch builds in step of its own, so compile failure turns job red rather than opening issue,
 #   and finding holds output of verb alone.
 #   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
@@ -86,6 +87,14 @@ jobs:
           # Exit other than 0 and 1 is failure of run rather than finding, so job goes red.
           if [ "$CODE" != 0 ] && [ "$CODE" != 1 ]; then
             echo "Verb exited $CODE, which names neither clean run nor finding."
+            exit 1
+          fi
+
+          # Exit 1 is lag only beside count of findings that koch prints last. Crash of koch exits
+          #   1 too, with trace and no count, so it turns job red rather than opening issue.
+          counted='^[1-9][0-9]* finding\(s\)\.$'
+          if [ "$CODE" = 1 ] && ! grep -Eq "$counted" "$RUNNER_TEMP/releases.txt"; then
+            echo "Verb exited 1 with no count of findings, so koch failed rather than found."
             exit 1
           fi
 
