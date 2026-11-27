@@ -150,10 +150,10 @@ The gap list reads the baseline of each algebra.
     ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
     ##   7017902016, 7018501890 and 7022872980 of #969 give it; record states it, since GUIDE.md
     ##   states tables alone (#1028).
-  REFUSAL_NO_TABLE = "reflection holds table of claims: table of judgements or estimates whose " &
-    "header has column `#` (GUIDE.md, Prediction, critic and reflection), or table whose header " &
-    "has column `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md, Quotes " &
-    "of claims)"
+  REFUSAL_NO_TABLE = "reflection holds table of claims: table whose header holds `#`, " &
+    "`Judgement` or `Estimate @ 90%`, in form of judgements or estimates (GUIDE.md, Prediction, " &
+    "critic and reflection), or table whose header holds `Predicted`, as block of bullets takes " &
+    "it (curator/audit/PROVENANCE.md, Quotes of claims)"
     ## Finding of reflection with no table of claims: each form cites text that states it.
   REFUSAL_OUTCOME_BULLETS = "cell under `Result` of number of bullets marked ✅ or ⬜ opens with " &
     "its value, bare in unit its text names, with no scale for cost or time, or with mark of " &
@@ -2815,7 +2815,7 @@ suite "Hooks":
 
     # Reflection quotes nothing with no table, no row, or empty cell; record states table of
     #   bullets, since GUIDE.md states tables alone (#1028).
-    const bullets = "column `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md"
+    const bullets = "holds `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md"
     check reflected("No table.").anyIt(bullets in it)
     check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |").anyIt(bullets in it)
     check reflected(header).anyIt("got none under `| State | Confidence | Predicted |" in it)
@@ -3897,7 +3897,8 @@ suite "Hooks":
     # Case as found: bullet at position 1 and row 1 of table of one block took one key of log,
     #   so `appendClaims` dropped one row. Domain: bullet of each marker before, between and
     #   after tables, with number of claim of table or none, and two bullets.
-    const rule = "block of tables holds no bullet beside them (GUIDE.md, Prediction, critic and " &
+    const rule = "block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` " &
+      "or `Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
       "reflection); got `"
     let found = PREDICTION_TABLES.replace("**Judgements.**",
       "- Work: four to eight findings (60%).\n\n**Judgements.**")
@@ -4059,6 +4060,54 @@ suite "Hooks":
         if not order.nextPermutation: break
     check heldReflection(PREDICTION_TABLES, whole & "\n| Test | Result |\n| --- | --- |\n" &
       "| suites | pass |\n").len == 0
+
+
+  test "table of claims is one whose header holds column GUIDE.md names for block or reflection":
+    # Case as found (finding 4 of critic of mends, #1028): reflection that adds `| # | Cause |` was
+    #   refused, though GUIDE.md named no table of claims by `#`, and `| Claim | Resolution
+    #   criterion | Met |` was refused by rule that names no `Resolution criterion`. Domain: each
+    #   column of each form, and column of none, with other column, added to block and reflection.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      block_naming = ["#", "Judgement", "Estimate @ 90%", "Resolution criterion"]
+      reflection_naming = ["#", "Judgement", "Estimate @ 90%"]
+      form_block = "table of block whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+        "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
+        "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      form_reflection = "table of reflection whose header holds `#`, `Judgement` or " &
+        "`Estimate @ 90%` holds each column of one form: `#`, `State`, `%`, `Judgement` and " &
+        "`Result`, or `#`, `State`, `Estimate @ 90%` and `Result` (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
+    check "**A table of a block is a table of claims where its header holds `#`, `Judgement`, " &
+      "`Estimate @ 90%` or `Resolution criterion`.** A table of a reflection is one where its " &
+      "header holds `#`, `Judgement` or `Estimate @ 90%`." in guide.collapsed
+    let whole = REFLECTION_TABLES_POSTED.mended
+    check heldReflection(PREDICTION_TABLES, whole & "\n| # | Cause |\n| --- | --- |\n| 5 | The " &
+      "critic read the evidence. |\n") == @[form_reflection & "| # | Cause |`"]  # case as found
+    check heldReflection(PREDICTION_TABLES, whole & "\n| Claim | Resolution criterion | Met |\n" &
+      "| --- | --- | --- |\n| 5 | The report names such a claim. | yes |\n").len == 0
+    var count = 0
+    for column in ["#", "Judgement", "Estimate @ 90%", "Resolution criterion", "%", "State",
+        "Result", "5th", "Cause"]:
+      let
+        table = "| " & column & " | Note |\n| --- | --- |\n| 5 | A note. |\n"
+        in_block = heldBlock(PREDICTION_TABLES.replace("**Working:**", table & "\n**Working:**"))
+        in_reflection = heldReflection(PREDICTION_TABLES, whole & "\n" & table)
+      check in_block == (if column in block_naming: @[form_block & "| " & column & " | Note |`"]
+        else: @[])
+      check in_reflection == (if column in reflection_naming:
+        @[form_reflection & "| " & column & " | Note |`"] else: @[])
+      count += int(column in block_naming) + int(column in reflection_naming)
+    check count == 4 + 3
+
+    # Each refusal that turns on table of claims names each column that makes one there.
+    for (refusal, naming) in [(form_block, @block_naming), (form_reflection, @reflection_naming),
+        (REFUSAL_NO_TABLE, @reflection_naming), (heldBlock(PREDICTION_TABLES.replace(
+        "**Working:**", "- a (60%).\n\n**Working:**"))[0], @block_naming)]:
+      let named = refusal[0 ..< refusal.find("(GUIDE.md")]
+      check naming.allIt("`" & it & "`" in named)
+      check ("`Resolution criterion`" in named) == ("Resolution criterion" in naming)
 
 
   test "result of estimate hit or missed opens with its value in unit of its cells (#1028)":
