@@ -14,7 +14,7 @@ import ../../src/[claims_log, commits, hooks, sums_exact]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   KINDS = ["critic", "resolver", "reviewer"]  ## Kinds templates of scratch root name.
   DELEGATE = "s1"  ## `sessionId` of each entry of reflection.
   UUID = "u9"  ## `uuid` of entry of reflection.

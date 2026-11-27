@@ -79,7 +79,7 @@ import ./[
 
 
 
-type
+type  # TODO: Document.
 
   Context* = object
     ## Define what whole tree and semantic pass tell fixer of one file that its text cannot:

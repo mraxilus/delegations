@@ -110,7 +110,7 @@ from ./toolchain import DIRECTORY_DRIVER
 from ./tree import checkoutAt, fieldsGit, textAt
 
 
-type
+type  # TODO: Document.
   Part {.pure.} = enum  ## Define one part of sign-off block, in order block holds them.
     Role, Context, Work, Summary, State, Decisions, Next
 
@@ -206,7 +206,7 @@ type
     labels*: seq[string]  ## Each field `labels[]`, in order.
 
 
-const
+const  # TODO: Document.
   TOOLS_EDIT* = ["Edit", "Write", "MultiEdit", "NotebookEdit"]
     ## Tools that write file; `path` runs before them and `edit` after.
   TOOLS_PULL* = ["mcp__github__create_pull_request", "mcp__github__update_pull_request"]

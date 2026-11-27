@@ -7,7 +7,7 @@ import ../../src/[assets, coverage, findings, layout]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   FONT_FACE = "@font-face { src: url(NotoSans-Regular.ttf); }"
     ## Page line naming one store font face, Noto Sans, which maps no arrow.
   MATH = "@font-face { src: url(NotoSansMath-Regular.ttf); }"

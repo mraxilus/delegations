@@ -7,7 +7,7 @@ import std/[os, sequtils, sets, strutils, unittest]
 import ../../src/assayer/[headers, plans]
 
 
-const
+const  # TODO: Document.
   COMPILER = "/opt/nim/bin/nim"  ## Compiler every run of suite takes.
   COMPILER_SPACED = "/opt/my nim/bin/nim"  ## Compiler whose path shell must read quoted.
   NODE = "/usr/bin/node"  ## Node.js every JavaScript run of suite takes.

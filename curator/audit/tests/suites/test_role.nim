@@ -10,7 +10,7 @@ import ../../src/[findings, markdown, role {.all.}]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   MARKER = "<!-- ccr-projects-attribution: {\"github_login\":\"octocat\"} -->"
     ## Marker line of block Claude Code writes above role line, as it writes it.
   CREDIT =

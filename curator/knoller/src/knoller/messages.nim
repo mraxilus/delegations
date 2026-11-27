@@ -48,7 +48,7 @@ from std/unicode import runeLen
 import ./[declared, form, precedence, reports, tokens]
 
 
-type
+type  # TODO: Document.
   Value = object  ## Define one value message echoes: where it stands, text it lacks.
     line: int  ## Zero-based line value stands on.
     first: int  ## Byte offset where value starts in source.
@@ -75,7 +75,7 @@ type
     text: string  ## One literal concatenation joins into; empty where it stays for hand.
 
 
-const
+const  # TODO: Document.
   MARKER = "; got "  ## Text message's tail follows.
   QUOTE_LONG = "\"\"\""  ## Delimiter of long literal.
   KEYWORDS_ENDING = [

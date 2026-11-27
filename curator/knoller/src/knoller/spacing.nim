@@ -73,7 +73,7 @@ import std/[algorithm, sequtils, sets, strutils, unicode]
 import ./[form, precedence, reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   Placement {.pure.} = enum  ## Define which rule of X.9 gap falls under, which decides its spaces.
     Binary  ## Around binary operator: one space each side.
     Ending  ## Before binary operator ending its line, range among them: one.
@@ -104,7 +104,7 @@ type
     got: string  ## Breach with its neighbours, as written.
 
 
-const
+const  # TODO: Document.
   OPERATORS_KEYWORD = [
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]

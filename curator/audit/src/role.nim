@@ -49,7 +49,7 @@ import std/[options, sequtils, strutils, unicode]
 import ./[commits, domains, english, findings, markdown]
 
 
-type
+type  # TODO: Document.
   Shape = tuple[opening, closing: string]
     ## Define shape of one line harness writes above role line, known by its two ends alone.
 
@@ -58,7 +58,7 @@ type
     shapes {.requiresInit.}: seq[Shape]  ## Shape of each line of block, in order.
 
 
-const
+const  # TODO: Document.
   KEY_ROLE* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
   COMMENT_OPEN = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
   COMMENT_CLOSE = "-->"  ## Closing of HTML comment.

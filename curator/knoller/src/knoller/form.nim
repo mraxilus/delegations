@@ -45,7 +45,7 @@ import std/[algorithm, options, sequtils, strutils, unicode]
 import ./[reports, tokens, views]
 
 
-const
+const  # TODO: Document.
   LINE_MAX* = 100  ## Widest line allowed, in runes (Article X.1).
   TOKEN_MAX* = 400
     ## Longest unbreakable token exemption covers, in runes.
@@ -63,7 +63,7 @@ const
   QUOTE_LONG = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
 
 
-type
+type  # TODO: Document.
   Gap = object
     ## Define space before one trailing comment: line, marker index, spaces before marker.
     line: int  ## Zero-based line in source split on newline.

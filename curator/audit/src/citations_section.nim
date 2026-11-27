@@ -49,7 +49,7 @@ import std/[algorithm, options, sequtils, strutils, tables]
 import ./[comments, findings, kinds, layout, markdown]
 
 
-type
+type  # TODO: Document.
   KindToken {.pure.} = enum  ## Define what one token of text is.
     Word  ## Run of letters and digits; apostrophe, hyphen, stop or slash between two joins it.
     Mark  ## Character of punctuation, alone.
@@ -83,7 +83,7 @@ type
     rest: int  ## Offset of section after comma.
 
 
-const
+const  # TODO: Document.
   EXTENSION_MARKDOWN = ".md"  ## Extension of document citation names.
   ARTICLES = ["a", "an", "the"]  ## Words comparison leaves out, as telegraphic comment does.
   MARKUP = {'`', '*'}  ## Marks of code span and emphasis, which comparison passes over.

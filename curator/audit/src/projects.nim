@@ -24,7 +24,7 @@ from ../../knoller/src/knoller import NIM
 import ./[findings, font_stacks]
 
 
-const
+const  # TODO: Document.
   FILE_DRIVER* = "tools/build.nim"  ## Build driver project carries, holding verbs koch has none of.
   VERB_TYPES* = "types"
     ## Verb type-checking project's own scripts, deriving what they read first, and

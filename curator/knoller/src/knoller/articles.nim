@@ -26,7 +26,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[claims, outlines, reports, tokens]
 
 
-const
+const  # TODO: Document.
   ARTICLES* = ["a", "an", "the"]  ## Words telegraphic prose omits.
   PUNCTUATION = {
     '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', '\'', '*', '<', '>',

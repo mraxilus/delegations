@@ -40,7 +40,7 @@ import ../../knoller/src/knoller
 import ./[domains, findings]
 
 
-type
+type  # TODO: Document.
   Subject* = object  ## Define parsed commit subject.
     kind*: string  ## Commit type, member of `TYPES`.
     scope*: string  ## Project name or `curator`.
@@ -52,7 +52,7 @@ type
     paths*: seq[string]  ## Paths commit touches.
 
 
-const
+const  # TODO: Document.
   TYPES* = [
     "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test",
   ]

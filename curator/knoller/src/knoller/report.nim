@@ -30,7 +30,7 @@
 import std/[options, sequtils, strutils, unicode]
 
 
-type
+type  # TODO: Document.
   Form* {.pure.} = enum  ## Define form finding prints in (STYLE.md §3).
     Terminal  ## Blocks over several lines, for reader at terminal; colored where caller asks.
     Line  ## One line, for pipe or log, each value quoted.
@@ -49,7 +49,7 @@ type
     is_warning*: bool  ## Finding warns rather than breaks rule, so `warning` follows its rule.
 
 
-const
+const  # TODO: Document.
   COLOR_LOCATION = "\e[36m"  ## Cyan, of location.
   COLOR_RULE = "\e[2m"  ## Dim, of rule.
   COLOR_SUMMARY = "\e[1m"  ## Bold, of summary.

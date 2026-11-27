@@ -15,7 +15,7 @@ import ../../src/knoller/[chain, command, proofs, reports]
 import ./sources
 
 
-const
+const  # TODO: Document.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, at pin, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =

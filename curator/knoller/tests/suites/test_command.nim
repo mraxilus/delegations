@@ -16,7 +16,7 @@ from ../../src/knoller/command {.all.} import
 import ./stubs
 
 
-const
+const  # TODO: Document.
   DIRTY = "let X = a+b ## Sum.\nproc f(a: int; b: string) = discard\n  ## Do.\n"
     ## Nim source breaking spacing, doc gap and separators, and lacking `strictFuncs`.
   CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  ## Sum.\n"  ## Nim source fix leaves.

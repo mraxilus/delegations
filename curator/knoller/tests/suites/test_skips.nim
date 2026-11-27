@@ -10,7 +10,7 @@ import std/[sequtils, unittest]
 import ../../src/knoller/[reports, skips]
 
 
-const
+const  # TODO: Document.
   EQUATION_87 =
     "  test \"Equation 2.87-89\":\n    when IS_RIGID:\n" &
     "      for 𝐦, _, _ in sampleMultivectors():\n" &

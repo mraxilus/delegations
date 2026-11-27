@@ -13,7 +13,7 @@
 import std/[os, sequtils, strutils, unittest]
 
 
-const
+const  # TODO: Document.
   DIRECTORY_SOURCE = currentSourcePath().parentDir.parentDir.parentDir / "src"
     ## Package sources every import stays inside.
   KEYWORDS_IMPORT = ["import ", "include ", "from "]  ## Words opening import statement.

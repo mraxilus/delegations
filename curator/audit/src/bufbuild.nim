@@ -20,7 +20,7 @@
 import std/[options, os, osproc, strutils]
 
 
-const
+const  # TODO: Document.
   KEY_BUFBUILD* = "KOCH_BUF_DIR"  ## Environment name overriding where binaries are stored.
   DIRECTORY_BUFBUILD* = ".cache/koch/buf"
     ## Default store, under home and outside checkout, in koch's own directory.

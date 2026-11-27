@@ -20,7 +20,7 @@ when compileOption("profiler"):
 import std/os
 
 
-const
+const  # TODO: Document.
   USAGE = "Usage: nim r tools/build.nim system\n"  ## Text printed on usage error.
   SYSTEM = [
     ("protobuf-compiler", "`protoc`, which `test_claims_log` reads each line of log of claims " &

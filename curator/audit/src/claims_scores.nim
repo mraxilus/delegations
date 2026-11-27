@@ -40,7 +40,7 @@ import std/[algorithm, math, options, sequtils, strformat, strutils, tables]
 import ./[claims_log, sums_exact]
 
 
-type
+type  # TODO: Document.
   Field* {.pure.} = enum  ## Define field of claim that groups claims (#964).
     Delegate  ## `sessionId` of delegate whose reflection gives claim.
     Model  ## Model of call claim takes.
@@ -85,7 +85,7 @@ type
     claims*: seq[Claim]  ## Claims of group, in order of log.
     tallies*: seq[Tally]  ## Tallies of prior of group, in order of tree.
 
-const
+const  # TODO: Document.
   CONFIDENCE_EVEN = 0.5  ## Confidence of coin, against which baseline score counts.
   SCALE_SCORE = 100.0  ## Points of baseline score for each bit above coin (#964).
   BANDS_PERCENT = [(51, 60), (61, 70), (71, 80), (81, 90), (91, 98)]

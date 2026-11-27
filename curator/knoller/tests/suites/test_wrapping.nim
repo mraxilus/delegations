@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[reports, tokens, wrapping]
 
 
-const
+const  # TODO: Document.
   EXAMPLE_PARAMETERS_LINE =
     "func filterFactors(\n" &
     "  cayley: var Cayley1D, factors: seq[Basis], as_exclusions = false\n" &

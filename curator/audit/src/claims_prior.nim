@@ -55,7 +55,7 @@ import ./[checks, claims_log, claims_scores, findings, tree]
 from ./provenance import isDateIso
 
 
-const
+const  # TODO: Document.
   ROWS_LOG* = 5000
     ## Rows log of claims may hold before its role rolls it, as `D3 a` of #1049 rules.
     ##   About 3 MB at 606 bytes of row, mean of log of audit project on #1049.

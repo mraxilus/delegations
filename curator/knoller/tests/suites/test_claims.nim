@@ -12,7 +12,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[chain, claims, reports, tokens]
 
 
-const
+const  # TODO: Document.
   BORROWS =
     "# Borrow necessary functions for using distinct types (i.e. for added type safety).\n" &
     "#   Ideally Nim would have feature to auto borrow everything, but prevent interop.\n" &

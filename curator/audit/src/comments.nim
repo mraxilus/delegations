@@ -19,7 +19,7 @@ import std/strutils
 import ./kinds
 
 
-type
+type  # TODO: Document.
   Comment* = object  ## Define comment text found on one line, markers stripped.
     line*: int  ## One-based line of text.
     text*: string  ## Comment text, markers removed, whitespace collapsed to single spaces.

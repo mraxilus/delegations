@@ -16,7 +16,7 @@ import ../../src/knoller/[chain {.all.}, fences, idioms, reports, tokens]
 import ./stubs
 
 
-const
+const  # TODO: Document.
   LAYOUT =
     "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\nimport std/strutils\n\n\n" &
     "#[ Section ]#\n\n" &

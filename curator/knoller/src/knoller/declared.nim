@@ -41,7 +41,7 @@ import std/[sequtils, strutils]
 import ./views
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ROUTINE = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
   KEYWORDS_BINDING = ["let", "var", "const"]  ## Keywords opening binding, single or section.
@@ -61,7 +61,7 @@ const
     ##     (`idioms.nim`), and `curator/audit` renames no name they mark, nor `entry.nim` moves it.
 
 
-type
+type  # TODO: Document.
   KindName* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter, Member, Placeholder
 

@@ -24,7 +24,7 @@ import std/strutils
 import ./[comments, findings, kinds]
 
 
-const
+const  # TODO: Document.
   MARKER* = "not Nim because"  ## Phrase header of gated file must carry, followed by its reason.
   GAP_MAX = 2  ## Widest line step keeping header run whole; `2` admits one blank line.
 

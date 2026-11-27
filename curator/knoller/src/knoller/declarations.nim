@@ -113,7 +113,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[declared, form, reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   ShapeWrite {.pure.} = enum  ## Define how fixer writes doc of declaration.
     Join  ## Doc joins declaration's first line.
     Below  ## Doc takes own line below line `at`, one level in.
@@ -231,7 +231,7 @@ type
     got: string  ## Parameter as written.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_SECTION = ["const", "let", "type", "var"]
     ## Keywords opening section whose lines declare.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]

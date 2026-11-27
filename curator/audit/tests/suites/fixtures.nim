@@ -26,7 +26,7 @@ func textProvenance*(stamp: string): string =
     "| Rules | " & stamp & " |\n| Review | **Unreviewed.** |\n"
 
 
-const
+const  # TODO: Document.
   TEXT_GLOSSARY* = "# Fixture\n\nFixture glossary.\n\n## Standards\n\n## Language\n\n" &
     "**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.

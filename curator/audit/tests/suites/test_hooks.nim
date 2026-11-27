@@ -7,7 +7,7 @@ import ../../src/[findings, hooks, lags, tree]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   BRANCH = "contributor/ronri/pga_benchmark/gap-list"
   ROLE = "**Role:** contributor/ronri/pga_benchmark"
   SIGNOFF = """
