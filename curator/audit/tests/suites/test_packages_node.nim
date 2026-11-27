@@ -449,12 +449,15 @@ suite "Static check":
     #   reads inside later value, so each address after it passed. So did script under prefix
     #   other than none, and `srcdoc` of frame, which browser decodes and loads in origin of page.
     #   Domain: quote in name and in bare value, for script and base; quote after vertical tab,
-    #   which HTML reads as no space, so its value is bare; then each prefix, and `srcdoc`.
+    #   which HTML reads as no space, so its value is bare; `/` that ends name; then each prefix,
+    #   and `srcdoc`.
     for page in [
       "<script a\"b x=\"> \" src=\"https://cdn.example/a.js\"></script>",
       "<script x=a'b y='> ' src=https://cdn.example/a.js></script>",
       "<base x=a\"b y=\"> \" href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
       "<script x=\v\" y=\"> \" src=\"https://cdn.example/a.js\"></script>",
+      "<script x=a\"=\" y=\">\" src=\"https://cdn.example/a.js\"></script>",
+      "<script x/src=\"https://cdn.example/a.js\"></script>",
       "<s:script xmlns:s=\"http://www.w3.org/2000/svg\" href=\"https://cdn.example/a.js\"/>",
       "<SVG:SCRIPT HREF=\"https://cdn.example/a.js\"/>",
       "<x:base href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
@@ -463,10 +466,13 @@ suite "Static check":
     ]:
       check checkPage(PATH_PAGE, page).len == 1
     # Domain: comment of plain path, which takes same rule, `>` in quoted value, frame of path,
-    #   and tag whose name only ends with `script`.
+    #   tag whose name only ends with `script`, and vertical tab that opens name, as `\vsrc`, which
+    #   browser reads as name, so `src` before it stays empty.
     for page in [
       "<!-- <script src=\"a.js\"></script> -->", "<script x=\"a>b\" src=\"a.js\"></script>",
       "<iframe src=\"a.html\"></iframe>", "<noscript src=\"https://cdn.example/a.js\">",
+      "<script \vsrc=\"https://cdn.example/a.js\"></script>",
+      "<script src \v=\"https://cdn.example/a.js\"></script>",
     ]:
       check checkPage(PATH_PAGE, page).len == 0
 
