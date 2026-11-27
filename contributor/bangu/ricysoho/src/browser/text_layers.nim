@@ -797,6 +797,7 @@ var
   IS_COMPOSING = false  ## lo nu basti cu ca'o fasnu
   COMPOSED: Option[(int, int)]  ## le cuxna ca lo nu le nu basti cu cfari
   GOAL_X = -1.0  ## le stuzi pe le korbi ca lo nu le cuxna cu muvdu gapru ja cnita
+  GOAL_AT = -1  ## le stuzi poi le romoi nu muvdu gapru ja cnita cu punji le cuxna bu'u ke'a
   ANSWERS = 0  ## lo klani be lo se tcidu poi le gunka cu dunda ke'a
   WORKER: JsObject  ## le gunka to `null` va'o lo nu le papri cu ponse no gunka toi
   IS_BUSY = false
@@ -1024,7 +1025,7 @@ proc moved(event: JsObject): bool =
   elif name == "ArrowUp" or name == "ArrowDown":
     is_vertical = true
     let (lines, k, x) = rows()
-    if GOAL_X < 0: GOAL_X = x
+    if GOAL_X < 0 or f != GOAL_AT: GOAL_X = x
     let n = k + (if name == "ArrowUp": -1 else: 1)
     if n < 0: goal = last(0)
     elif n >= lines.len: goal = first(text.lengthUnits)
@@ -1034,6 +1035,7 @@ proc moved(event: JsObject): bool =
         if abs(left - GOAL_X) < best: (goal, best) = (place, abs(left - GOAL_X))
   else: return false
   if not is_vertical: GOAL_X = -1
+  GOAL_AT = if is_vertical: goal.offset else: -1
   if is_extending: sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset, goal.node, goal.at)
   else: sel.setBaseAndExtent(goal.node, goal.at, goal.node, goal.at)
   true
