@@ -19,6 +19,8 @@
 #   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
 #   it, so nobody reads it as delegate having judged anything. Label is `curator`, since move of
 #   curator pins is curator work.
+#   Issue step has copies in `head.yml` and `npm.yml` (Article II.9); fix to one is finished
+#   when all three are checked.
 #   `concurrency` holds one run at time, so two runs cannot both find no issue and open two.
 #   `permissions` block is whole grant: `contents: read` for checkout, `issues: write` for
 #   `gh issue`, and `actions: read` since run's own link spells `/actions/`, which
