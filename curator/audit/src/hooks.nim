@@ -69,9 +69,10 @@
 ##     without its label, or `No prediction`. Block of tables, as `D1 a` of #1028 rules
 ##     (comment 7218520265), gives each claim number, text, confidence or rising percentiles,
 ##     and criterion, at stop of its own turn; each table of claims holds its form whole, each
-##     numbered criterion names claim no other names, and no bullet stands beside tables. Each
-##     row of reflection names claim by number and quotes it whole, in table that holds its form
-##     whole, and result of number opens with value in its unit. Model turn ends where model
+##     criterion names by digits alone claim no other names, and no bullet stands beside tables.
+##     Each row of reflection names claim by number and quotes it whole, in table that holds its
+##     form whole, result of number opens with value in its unit, and line `**Subagent:**` gives
+##     tokens and cost, each as cell reads value (`figuresLine`). Model turn ends where model
 ##     stops, never at `user` entry, so block checks read model turns, and every other check
 ##     reads turn since message of person. Kinds are read from templates at each stop
 ##     (`readKinds`). `Agent` call whose result has `is_error` and no `agentId` is skipped
@@ -95,8 +96,9 @@
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
-##   Cost: hook never reads figures of header of reflection, run of resolver, or rules of
-##     forecasting but rise of percentiles of estimate, so reading holds those.
+##   Cost: hook never reads figures of line `**Critic:**`, presence of line `**Subagent:**`, run
+##     of resolver, or rules of forecasting but rise of percentiles of estimate, so reading holds
+##     those.
 ##   Cost: block in turn after call it names still serves later call of its own kind; block in
 ##     turn of that call serves none. Block of later turn replaces block of its kind of earlier
 ##     turn, while inside one turn call takes earliest (7027197745); so of blocks for two
@@ -2854,7 +2856,10 @@ func findingsPrediction*(text: string): seq[Finding] =
   ##   one unit, claim whose number takes no criterion, row of criteria whose `#` holds no number,
   ##   or names no claim or claim that other row names, and bullet beside tables (7200557915).
   ##   Bullet beside tables is refused (choice): GUIDE.md writes tables alone, and position of
-  ##     bullet and number of row take one key of log, so log keeps one of two such rows.
+  ##     bullet and number of row take one key of log, so log keeps one of two such rows. Bullet
+  ##     under `**Basis:**`, or in sentence above table, is refused too: reader of bullets reads
+  ##     each bullet as claim, one with no mark too (7017902016), so no rule tells list of basis
+  ##     from claim that row of reflection may quote by its position.
   ##   Table of claims holds column of `COLUMNS_NAMING_BLOCK`; one that holds no form whole takes
   ##     that finding, since its rows read as none (choice).
   ##   Row with no number takes that finding alone, since others name it by its number. Bullets

@@ -19,8 +19,8 @@
 ##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
 ##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
 ##     end it, takes last three numbers of its text, unit its text names (`unitText`), and value
-##     that opens its cell under `Result`, bare in that unit or marked in it; so one claim in
-##     either form gives same row but its text.
+##     that opens its cell under `Result`, bare in that unit or marked in it (`outcomeBullets`),
+##     which hook reads too; so one claim in either form gives same row but its text.
 ##   Date, delegate and address come from entry of reflection: `timestamp`, `sessionId`, `uuid`.
 ##   Key is delegate, id of call, number or position of claim in its block, and state:
 ##     reflection written again adds no row, and later mark of claim that waits adds one
