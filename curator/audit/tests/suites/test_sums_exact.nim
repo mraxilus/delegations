@@ -1,7 +1,8 @@
 ## Replicate exact sum of floats: rounding once to nearest float, as `math.fsum` of CPython rounds,
 ##   sum that takes no order, partials that share no bit, and each special value (#1049).
 ##   Each expected exact sum is case of `test_fsum` of `Lib/test/test_math.py` of CPython, whose
-##     `math.fsum` rounds partials as `toFloat` does; Python 3 here gives each to last bit.
+##     `math.fsum` rounds exact sum once, half to even, as `toFloat` does; Python 3 here gives each
+##     to last bit.
 ##   Each special value takes policy of `sums_exact.nim` (Article IV.8): each pair against sum of
 ##     two floats in hardware, which rounds their exact sum once; each triple in each order; and
 ##     each sum past largest float against exact rationals of Python 3.13.18, computed apart on
