@@ -1,7 +1,7 @@
 ## Hold each case that review of PGA library and delegate reports found, end to end: source as
 ##   found, comment naming where it came from, run through whole chain as `koch fix` runs it
 ##   (`formatted`), to exact output; second run writes nothing.
-##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
+##   Parser of compiler building this suite, at pin, proves needless parentheses in each case,
 ##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
 ##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller,
@@ -16,7 +16,7 @@ import ./sources
 
 
 const
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, at pin, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =
     HEAD &
@@ -626,9 +626,10 @@ suite "Regressions":
       # rule 2: lines 121, 122, 123 and 127 of `pga/algebra.nim`
 
 
-  test "14. nuance under tag stands two spaces past sentence after tag (#443)":
-    holds PRIMITIVES, PRIMITIVES.replace("\n#   ", "\n#         ")
-      # rule 3: lines 4 to 10 of `pga/multivectors.nim` gain six spaces, two past `Represent`
+  test "14. nuance under tag stands two spaces past where tag starts (#1020)":
+    holds PRIMITIVES.replace("\n#   ", "\n#         "), PRIMITIVES
+      # lines 4 to 10 of `pga/multivectors.nim`, six spaces past tag as rule 3 of #443 read it,
+      #   move back to where library writes them
 
 
   test "15. paragraph of routine that comments stage takes placeholder (#443)":
@@ -680,18 +681,20 @@ suite "Regressions":
     let
       outcome = outcome([("pga/a.nim", CUTS)], [], is_check = true,
         nimbles = {"pga/a.nim": "pga.nimble"}.toTable)
-      left = outcome.lines.filterIt("name-cut left" in it or "conversion-prefix left" in it)
+      left = outcome.lines.filterIt("name-cut: " in it or "conversion-prefix: " in it)
     check left == @[
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_basis`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `left` last; got `left_name`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
-        "`right_basis`.",
-      "pga/a.nim:8: name-cut left: Name opens with head, axis value `right` last; got " &
-        "`right_name`.",
-      "pga/a.nim:26: name-cut left: Property leads name, value it belongs to last; got " &
-        "`m_norm_bulk`.",
-      "pga/a.nim:28: conversion-prefix left: Routine takes one call form on plain first " &
-        "argument across package, where `2` calls take dot; got `initElement(Basis.origin)`.",
-      "pga/a.nim:34: name-cut left: Property leads name, value it belongs to last; got " &
-        "`𝐦_grade`.",
+      "pga/a.nim:8: name-cut: actual=\"left_basis\" message=\"name opens with head, axis value " &
+        "`left` last\"",
+      "pga/a.nim:8: name-cut: actual=\"left_name\" message=\"name opens with head, axis value " &
+        "`left` last\"",
+      "pga/a.nim:8: name-cut: actual=\"right_basis\" message=\"name opens with head, axis " &
+        "value `right` last\"",
+      "pga/a.nim:8: name-cut: actual=\"right_name\" message=\"name opens with head, axis value " &
+        "`right` last\"",
+      "pga/a.nim:26: name-cut: actual=\"m_norm_bulk\" message=\"property leads name, value it " &
+        "belongs to last\"",
+      "pga/a.nim:28: conversion-prefix: actual=\"initElement(Basis.origin)\" message=\"routine " &
+        "takes one call form on plain first argument across package, where `2` calls take dot\"",
+      "pga/a.nim:34: name-cut: actual=\"𝐦_grade\" message=\"property leads name, value it " &
+        "belongs to last\"",
     ]  # rule 8 renames through semantic pass (`test_packages.nim`); rule 15 writes no form

@@ -9,8 +9,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strutils, tempfiles, unittest]
-import ../../src/[assets, font_files]
+import std/[os, osproc, sequtils, strutils, tempfiles, unittest]
+import ../../src/[assets, findings, font_files]
 from ../../../knoller/src/knoller import DIRECTORY_CACHE
 
 
@@ -188,8 +188,20 @@ suite "Assets":
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
-    check found[0].message.endsWith("got `fraunces-latin-400-normal.woff2`.")
+    check found[0].brief.endsWith(
+      "got `fraunces-latin-400-normal.woff2`; help: add row naming its address and digest, or " &
+        "ask for one it declares",
+    )
+    check found.anyIt(it.rule == "koch.unknown-asset")
     check "assets.nim" in found[0].path  # names table to add row to
+
+
+  test "asset declared that store could not fetch or check is finding naming what was asked for":
+    check unfetched("fraunces-latin-400-normal.woff2").mapIt((it.rule, it.brief)) == @[(
+      "koch.asset-fetch",
+      "asset is declared but could not be fetched or checked; got " &
+        "`fraunces-latin-400-normal.woff2`",
+    )]
 
 
   test "declaration publishes every row, so no consumer parses this source":

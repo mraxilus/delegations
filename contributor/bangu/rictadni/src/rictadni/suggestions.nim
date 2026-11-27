@@ -138,9 +138,9 @@ type
 
   Effort* {.pure.} = enum  ## Define how long model thinks before it answers; cost grows with it.
     Low = "low"  ## Least thinking, least cost.
-    Medium = "medium"  ## Default of `claude-opus-5-5`.
-    High = "high"  ## More thinking than default.
-    Xhigh = "xhigh"  ## More thinking than `high`.
+    Medium = "medium"  ## Default of `claude-opus-5-5` itself.
+    High = "high"  ## More thinking than `medium`; default of `claude-sonnet-5-5` itself.
+    Xhigh = "xhigh"  ## More thinking than `high`; default of this tool, as D1 on #1047 ruled.
     Max = "max"  ## Most thinking, most cost.
 
   Settings* = object  ## Define what one run asks of service.
@@ -249,13 +249,13 @@ const
   BYTES_PASSAGE_MAX* = 65_536  ## Most bytes of text model reads, i.e. 64 KiB; cut is reported.
   BYTES_PAGE_MAX* = 4_194_304  ## Most bytes of page read, i.e. 4 MiB; rest unread, and reported.
   BYTES_REPLY_MAX* = 1_048_576  ## Most bytes of service reply read, i.e. 1 MiB; more is malformed.
-  EFFORT_DEFAULT* = Effort.Medium  ## Effort of `claude` and `openrouter` where none is named.
+  EFFORT_DEFAULT* = Effort.Xhigh  ## Effort of `claude` and `openrouter` where none is named.
   LUT_ENDPOINT_BY_SERVICE*: array[Service, string] = [
     "https://api.anthropic.com/v1/messages", "https://openrouter.ai/api/v1/chat/completions", "",
   ]
     ## Endpoint of each service; `chat` has none, so environment names it.
   LUT_MODEL_BY_SERVICE*: array[Service, string] =
-    ["claude-opus-5-5", "anthropic/claude-opus-5.5", ""]
+    ["claude-sonnet-5-5", "anthropic/claude-sonnet-5.5", ""]
     ## Model of each service; `chat` has none, so environment names it.
   MODELS_FALLBACK_NONE = ["claude-haiku-5-5"]
     ## Models of Claude with no server-side fallback, so body asks fallback of every other one.
@@ -407,6 +407,9 @@ func constructPattern(): string {.compileTime.} =
 const
   PROMPT_SYSTEM* = constructPrompt()  ## System text: same bytes on every request, so it caches.
   PATTERN_GISMU = constructPattern()  ## Pattern of gismu of each tag, from `LETTERS` (II.1).
+  SHAPE_ANSWER_WORDS = "Reply with only the JSON object, and no other text: " &
+      "{\"tags\": [{\"gismu\": \"five letters\", \"gloss\": \"short English gloss\"}]}."
+    ## Shape of answer in words, for service that takes no schema; reader drops what breaks it.
 
 
 
@@ -986,18 +989,28 @@ func readPage*(url: string, reply: Reply): Paged =
 
 #[ Requests ]#
 
-func escapeMarkup(text: string): string =
-  ## Escape `&`, `<`, `>` and `"` as character references, so text can close no element.
+func escapeMarkup*(text: string): string =
+  ## Escape `&`, `<`, `>` and `"` as character references, so text can close no element; page
+  ##   that `suggester --serve` fills, and page build, escape with it too.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
-func toElement(passage: Passage): string =
+func toElement*(passage: Passage): string =
   ## Render user turn: passage inside one element, `&`, `<`, `>` and `"` escaped, so passage can
   ##   never close element or forge attribute.
   result = "<passage"
   if passage.url.len > 0: result.add " url=\"" & passage.url.escapeMarkup & "\""
   result.add " cut=\"" & $(passage.is_cut or passage.is_page_cut) & "\">\n"
   result.add passage.text.escapeMarkup & "\n</passage>"
+
+
+func toPromptAlone*(passage: Passage): string =
+  ## Render one user turn for service with no system role and no schema, i.e. `sample` of page.
+  ##   System text first, then passage element, then shape of answer in words, since no schema
+  ##   holds it; reader still checks each element (`readAnswer`).
+  ##   Cost: system text goes uncached with each call, and pattern of five letters is asked, not
+  ##     held, so more elements can drop.
+  PROMPT_SYSTEM & "\n\n" & passage.toElement & "\n\n" & SHAPE_ANSWER_WORDS
 
 
 func toSchema(): JsonNode =
@@ -1186,7 +1199,7 @@ func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Verdic
   )
 
 
-func readAnswer(text, model: string): Answer =
+func readAnswer*(text, model: string): Answer =
   ## Read answer of schema: first `COUNT_TAGS_MAX` tags in order, each through `readTagAnswer`;
   ##   elements past cap counted, never read; model made printable.
   ##   Element refused is dropped alone, naming its position, so rest of answer is kept.

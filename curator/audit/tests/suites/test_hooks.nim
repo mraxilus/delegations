@@ -143,7 +143,7 @@ The gap list reads the baseline of each algebra.
 - **Cause of each miss:** the diff was smaller than the delegate read.
 """
     ## Block that answers report of critic, each cell under `Predicted` quoting `PREDICTION`.
-  RULE_CELL = "Cell under `Predicted` is one whole claim of `## Prediction` block that call " &
+  RULE_CELL = "cell under `Predicted` is one whole claim of `## Prediction` block that call " &
     "took, up to its confidence, percentiles or resolution criterion, or before final full " &
     "stop of bullet with none, with or without its label of one word that opens with capital, " &
     "or `No prediction` (GUIDE.md, Prediction, critic and reflection)"
@@ -153,7 +153,7 @@ The gap list reads the baseline of each algebra.
 
 func messages(found: seq[Finding]): seq[string] =
   ## Read messages of findings.
-  found.mapIt(it.message)
+  found.mapIt(it.brief)
 
 
 func closing(text: string): seq[string] =
@@ -165,7 +165,7 @@ func closing(text: string): seq[string] =
 
 func citedBare(message: string): seq[string] =
   ## Read reference each finding of `checkReferencesBare` names, in order.
-  checkReferencesBare(message).mapIt(it.message.split('`')[1])
+  checkReferencesBare(message).mapIt(it.brief.split('`')[1])
 
 
 func lineUser(text: string, kind = ""): string =
@@ -255,23 +255,28 @@ proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[strin
   transcript.parseTurn.subagents.checkBlocks(kinds).messages
 
 
+proc rulesHeld(transcript: string, kinds: openArray[string] = KINDS): seq[string] =
+  ## Read id of each finding `checkBlocks` gives transcript at stop, for kinds.
+  transcript.parseTurn.subagents.checkBlocks(kinds).mapIt(it.rule)
+
+
 func refusalCell(cell: string): string =
   ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
   ##   `No prediction`, as rules of D5 b, 7017902016 and 7018501890 of #969 state it.
-  RULE_CELL & "; got `" & cell & "`."
+  RULE_CELL & "; got `" & cell & "`"
 
 
 func refusalEmpty(row: int): string =
   ## Write finding of empty cell under `Predicted` in row, which states rule as `refusalCell`
   ##   does, so it names `No prediction` as form of miss.
-  RULE_CELL & "; got empty cell in row `" & $row & "`."
+  RULE_CELL & "; got empty cell in row `" & $row & "`"
 
 
 func refusalCall(kind, description: string, hint = ""): string =
   ## Write finding of call of kind that took no block, with hint after its description.
-  "Call of subagent of kind takes `## Prediction` block of model turn before its own, and " &
+  "call of subagent of kind takes `## Prediction` block of model turn before its own, and " &
     "after each earlier turn that starts subagent (GUIDE.md, Prediction, critic and " &
-    "reflection); got none for `" & kind & "` call `" & description & "`" & hint & "."
+    "reflection); got none for `" & kind & "` call `" & description & "`" & hint
 
 
 func hintNamed(named: string): string =
@@ -360,7 +365,7 @@ suite "Hooks":
       other = repoTemp()
       scratch = createTempDir("delegations_", "_links")
       constitution = root / "CONSTITUTION.md"
-      refusals_scope = @["Path outside branch scope `contributor/ronri/pga_benchmark/`."]
+      refusals_scope = @["path outside branch scope `contributor/ronri/pga_benchmark/`"]
     defer: removeDir(root)
     defer: removeDir(other)
     defer: removeDir(scratch)
@@ -522,6 +527,7 @@ suite "Hooks":
       refusal_stayed  # its own text, one line from old text of moved lock
     check refused(root, branch, nimble, "Edit", edit_version) ==
       checkPathEdit(branch, nimble).messages
+    check checkPathEdit(branch, nimble).anyIt(it.rule == "koch.contributor-files")
     for other in ["contributor/bangu/lojban_tagger/move", "curator/audit/move"]:
       let refusal_other = checkPathEdit(other, lock).messages
       check refusal_other.len == 1
@@ -541,14 +547,17 @@ suite "Hooks":
 
 
   test "bash refusals":
-    check checkBash("main", "git commit -m x", false).messages[0].contains("Never commit to `main`")
+    check checkBash("main", "git commit -m x", false).messages[0].contains("never commit to `main`")
+    check checkBash("main", "git commit -m x", false)[0].rule == "koch.commit-to-main"
     check checkBash("claude/tool-named", "git push -u origin claude/tool-named", false).len == 1
     check checkBash(BRANCH, "git push -u origin " & BRANCH, false).len == 0
     check checkBash(BRANCH, "git push --force", false).messages[0].contains("XI.2")
+    check checkBash(BRANCH, "git push --force", false)[0].rule == "koch.history-rewrite"
     check checkBash(BRANCH, "git push -f origin x", false).len == 1
     check checkBash(BRANCH, "git push --no-verify -u origin x", false).messages[0].contains(
       "duty 3",
     )  # pre-push hook skipped
+    check checkBash(BRANCH, "git push --no-verify -u origin x", false)[0].rule == "koch.push-verify"
     check checkBash(BRANCH, "git commit --no-verify -m x", false).len == 0  # push alone
     check checkBash(BRANCH, "git commit --amend --no-edit", true).len == 1  # pushed head
     check checkBash(BRANCH, "git commit --amend --no-edit", false).len == 0  # local head
@@ -589,10 +598,13 @@ suite "Hooks":
       .len == 0  # no branch holds coordinator, so none is compared
     let no_role = "Hello.\n" & foot
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", no_role, [], false)
-      .messages[0] == "Post must open with `" & ROLE & "`; got `Hello.`."  # opening alone
+      .messages[0] == "post must open with `" & ROLE & "`; got `Hello.`; expect `" & ROLE & "`"
     let noted = "<!-- note -->\n" & ROLE & "\n\nOne short claim.\n"
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", noted, [], false).messages ==
-      @["Post must open with `" & ROLE & "`; got `<!-- note -->` above `" & ROLE & "`."]
+      @["post must open with `" & ROLE & "`; got `<!-- note -->` above `" & ROLE & "`; expect `" &
+        ROLE & "`"]
+    check checkBody("mcp__github__add_issue_comment", BRANCH, "", noted, [], false)[0].rule ==
+      "koch.post-role"
     let long = ROLE & "\n\n" & "word ".repeat(26).strip & ".\n" & foot
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", long, [], false)
       .messages.anyIt("25 words" in it)
@@ -605,6 +617,8 @@ suite "Hooks":
       true,
     ).messages
     check issue.anyIt("claim" in it) and issue.anyIt("role label" in it)
+    check checkBody("mcp__github__issue_write", BRANCH, "fix(x): do thing", good, ["bug"], true)
+      .mapIt(it.rule) == @["koch.issue-title", "koch.issue-label"]
     check checkBody("mcp__github__issue_write", BRANCH, "A claim", good, ["curator"], true).len == 0
     check checkBody("mcp__github__issue_write", BRANCH, "Any title", good, ["curator"], false)
       .len == 0  # update reads neither title nor labels
@@ -638,9 +652,11 @@ suite "Hooks":
       let is_create = tool == "mcp__github__create_pull_request"
       check checkBody(tool, BRANCH, "t", form, [], is_create).len == 0
       check checkBody(tool, BRANCH, "t", old, [], is_create).messages
-        .mapIt(it.startsWith("Pull request body holds `## What`")) == @[true]
+        .mapIt(it.startsWith("pull request body holds `## What`")) == @[true]
       check checkBody(tool, BRANCH, "t", form.replace("One point.", "It fixes #12."), [], is_create)
-        .messages.mapIt(it.startsWith("Body holds closing keyword")) == @[true]
+        .messages.mapIt(it.startsWith("body holds closing keyword")) == @[true]
+      check checkBody(tool, BRANCH, "t", form.replace("One point.", "It fixes #12."), [], is_create)
+        .mapIt(it.rule) == @["koch.closing-keyword"]
 
 
   test "example of #845 is refused on two rules alone, which form keeps (#845)":
@@ -654,11 +670,11 @@ suite "Hooks":
       [],
       true,
     ).messages == @[
-      "Body holds closing keyword before issue only on line of its own, as `Closes #783`, " &
-        "since GitHub closes issue whatever sentence says; drop keyword, or put issue first, " &
-        "as `#783 stays open`; got `Closes #783`.",
-      "Sentence must hold at most 25 words; split it (ASD-STE100); got `Machine counts under " &
-        "valgrind and gcc 13.3.0, on ...`.",
+      "body holds closing keyword before issue only on line of its own, as `Closes #783`, " &
+        "since GitHub closes issue whatever sentence says; got `Closes #783`; help: drop " &
+        "keyword, or put issue first, as `#783 stays open`",
+      "sentence must hold at most 25 words (ASD-STE100); got `Machine counts under valgrind " &
+        "and gcc 13.3.0, on ...`; help: split it",
     ]
 
 
@@ -694,14 +710,15 @@ suite "Hooks":
     check checkSignoff(SIGNOFF, BRANCH).messages == newSeq[string]()
     check checkSignoff(PLAIN, BRANCH).messages == newSeq[string]()  # no decision
     check checkSignoff("Done.\n", BRANCH).messages[0].contains("holds no")
+    check checkSignoff("Done.\n", BRANCH)[0].rule == "koch.sign-off"
     check checkSignoff(SIGNOFF & "\n## After\n", BRANCH)
-      .messages.anyIt("Nothing follows sign-off" in it)  # heading rule, not Next step rule
+      .messages.anyIt("nothing follows sign-off" in it)  # heading rule, not Next step rule
     check checkSignoff(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
       .messages.anyIt("lacks `**Summary:**`" in it)
     check checkSignoff(SIGNOFF.replace("**Role:** contributor/ronri", "**Role:** curator"), BRANCH)
       .messages.anyIt("role must be" in it)
     check checkSignoff(SIGNOFF & "\nTrailing.\n", BRANCH)
-      .messages.anyIt("Nothing follows Next step" in it)
+      .messages.anyIt("nothing follows Next step" in it)
 
 
   test "sign-off parts come in order Architect set":
@@ -728,7 +745,7 @@ suite "Hooks":
     check checkSignoff(SIGNOFF.replace(state, ""), BRANCH)
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
-      .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
+      .messages.anyIt("state is one of" in it and "got `stuck`" in it)  # word, not branch
     let spaced = checkSignoff(SIGNOFF.replace("**State:** blocked,", "**State:** blocked"), BRANCH)
       .messages
     check spaced.len == 1 and "state line gives state word" in spaced[0]  # word ends at space too
@@ -781,7 +798,7 @@ suite "Hooks":
     check "each wrong phrase after `-`, that phrase mended after `+`" in reason
     check "never send it, a line of it, or its sign-off again" in reason
     check reason.splitLines.len == 3  # reason line, then one line for each finding
-    check "got neither" in reason.splitLines[1]
+    check reason.splitLines[1].startsWith("koch.turn-end: message=\"turn that pushed")  # line form
 
 
   test "stop hook asks for read of unread queue, and no diff for it (#742)":
@@ -806,7 +823,9 @@ suite "Hooks":
       role = "contributor/ronri/pga_benchmark, branch `gap-list`"
     let curator = PLAIN.replace(role, "curator, at main")
     check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])
-      .messages.anyIt("labelled `curator`" in it and "got none" in it)
+      .messages.anyIt("labelled `curator`" in it)
+    check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])[0].rule ==
+      "koch.issue-read"
 
     # Tool read counts where it names role label or none, and asks for more than closed issues.
     check checkSignoffRead(curator, [Call(name: list, labels: @["curator"], state: "open")])
@@ -860,11 +879,11 @@ suite "Hooks":
     const working = "Pushed.\n\n**Working:** run 890 of `check`, whose result wakes me.\n"
     check checkEndTurn(SIGNOFF, BRANCH, is_writing = true).len == 0
     check checkEndTurn(working, BRANCH, is_writing = true).len == 0
-    check checkEndTurn("Pushed.\n", BRANCH, is_writing = true).messages.anyIt("got neither" in it)
+    check checkEndTurn("Pushed.\n", BRANCH, is_writing = true).messages.anyIt("turn that" in it)
     check checkEndTurn("Pushed.\n\n**Working:**\n", BRANCH, is_writing = true)
-      .messages.anyIt("got neither" in it)  # names nothing
+      .messages.anyIt("turn that" in it)  # names nothing
     check checkEndTurn(working & "\nMore.\n", BRANCH, is_writing = true)
-      .messages.anyIt("got neither" in it)  # working line is last
+      .messages.anyIt("turn that" in it)  # working line is last
     check checkEndTurn(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH, is_writing = true)
       .messages.anyIt("lacks `**Summary:**`" in it)  # sign-off read in full
     let working_state = PLAIN.replace("**State:** done", "**State:** working")
@@ -883,7 +902,8 @@ suite "Hooks":
     # Sign-off in fence is quoted example, so message holds none, and no read follows it.
     let quoted = "The form:\n\n```md\n" & gist & "```\n"
     check checkEndTurn(quoted, BRANCH, is_writing = false).len == 0
-    check checkEndTurn(quoted, BRANCH, is_writing = true).messages.anyIt("got neither" in it)
+    check checkEndTurn(quoted, BRANCH, is_writing = true).messages.anyIt("turn that" in it)
+    check checkEndTurn(quoted, BRANCH, is_writing = true).anyIt(it.rule == "koch.turn-end")
     check checkEndTurn(quoted & "\n" & SIGNOFF, BRANCH, is_writing = true).len == 0  # real one
     check checkSignoffRead(quoted, []).len == 0
 
@@ -894,6 +914,7 @@ suite "Hooks":
       "[the fixers (#441)][#441].\n\n[#457]: https://x/457\n[#441]: https://x/441\n"
     check checkNumbersBare(linked).len == 0
     check checkNumbersBare("Merged #463.\n").messages.anyIt("`#463` bare before any link" in it)
+    check checkNumbersBare("Merged #463.\n").anyIt(it.rule == "koch.bare-number")
     check checkNumbersBare("[the ledger fix (#456)](https://x/456) merged, so #456 closes.\n")
       .len == 0  # after its link, number alone
     check checkNumbersBare("Merged #456.\n\n[The ledger fix (#456)](https://x/456) holds.\n")
@@ -913,6 +934,8 @@ suite "Hooks":
     check checkLinksReference("[the ledger fix (#456)](https://x/456) merged.\n").len == 0
     check checkLinksReference("[the fixers (#441)][#441].\n\n[#441]: https://x/441\n")
       .messages.anyIt("`[#441]` by reference" in it)
+    check checkLinksReference("[the fixers (#441)][#441].\n\n[#441]: https://x/441\n")[0].rule ==
+      "koch.reference-link"
     check checkLinksReference("```\n[#441]: https://x/441\n```\n").len == 0  # code
     check checkLinksReference("[#1]: https://x/1\n[#2]: https://x/2\n").len == 1  # once
 
@@ -922,10 +945,11 @@ suite "Hooks":
     #   contract). Each passing form stands beside bare `V.2`, so stub reporting nothing fails it
     #   as stub reporting every reference does.
     check checkReferencesBare("X.9 says so.\n").messages == @[
-      "Message cites `X.9` with no description; cite each article and duty first by short " &
-        "description and its reference, as `expression spacing (X.9)`, then reference alone " &
-        "(GUIDE.md, Output contract).",
+      "message cites `X.9` with no description (GUIDE.md, Output contract); help: cite each " &
+        "article and duty first by short description and its reference, as " &
+        "`expression spacing (X.9)`, then reference alone",
     ]
+    check checkReferencesBare("X.9 says so.\n").anyIt(it.rule == "koch.bare-reference")
     check citedBare("It holds under V.2 here.\n") == @["V.2"]
     check citedBare("Then duty 3 waits.\n") == @["duty 3"]
     check citedBare("(X.9) opens the line.\n") == @["X.9"]
@@ -955,7 +979,7 @@ suite "Hooks":
     check checkSignoff(SIGNOFF.replace("- Where: #310\n", ""), BRANCH)
       .messages.anyIt("lacks `Where:`" in it)
     check checkSignoff(SIGNOFF.replace("- Class: fact", "- Class: urgent"), BRANCH)
-      .messages.anyIt("Class is" in it)
+      .messages.anyIt("class is" in it)
     const others = "- Class: blocks this delegate and "
     check checkSignoff(
       SIGNOFF.replace("- Class: blocks this delegate", others & "the visualiser"),
@@ -978,7 +1002,7 @@ suite "Hooks":
     check checkSignoff(SIGNOFF.replace("a. Keep:", "a. Keep the tests."), BRANCH)
       .messages.anyIt("`<letter>. <label>: <consequence>`" in it)  # no colon closes label
     check checkSignoff(SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
-      .messages.anyIt("Recommends names letter" in it)
+      .messages.anyIt("recommends names letter" in it)
     let period = SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **a**. Keep,")
     check checkSignoff(period, BRANCH).len == 0  # letter closed by period
     check checkSignoff(SIGNOFF.replace("- Recommends: **a**, because", "- Because"), BRANCH)
@@ -987,6 +1011,7 @@ suite "Hooks":
       .messages.anyIt("ends with `?`" in it)
     let asks = SIGNOFF.replace("- Where: #331\n", "- Where: #331\n- Options:\n  - a. Buy: x.\n")
     check checkSignoff(asks, BRANCH).messages.anyIt("offers no option" in it)  # fact asks nothing
+    check checkSignoff(asks, BRANCH).anyIt(it.rule == "koch.decision")
     let picks = SIGNOFF.replace("- Where: #331\n", "- Where: #331\n- Recommends: a\n")
     check checkSignoff(picks, BRANCH).messages.anyIt("picks no option" in it)
 
@@ -1008,7 +1033,7 @@ suite "Hooks":
     check checkSignoff(SIGNOFF.replace("**a. Keep:**", "**a. Keep the tests.**"), BRANCH)
       .messages.anyIt("`<letter>. <label>: <consequence>`" in it)
     check checkSignoff(SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
-      .messages.anyIt("Recommends names letter" in it and "got `c`" in it)
+      .messages.anyIt("recommends names letter" in it and "got `c`" in it)
 
 
   test "sign-off rows name who acts":
@@ -1074,6 +1099,7 @@ suite "Hooks":
       .messages.anyIt("one group for each pull request; got `#331` twice" in it)
     let bare = SIGNOFF.replace(group, group[group.find("| Item |") .. ^1])
     check checkSignoff(bare, BRANCH).messages.anyIt("follows bold line of its group" in it)
+    check checkSignoff(bare, BRANCH).anyIt(it.rule == "koch.sign-off-groups")
 
     # Row holds two cells, and its first opens with state, number and claim.
     const row = "| ✅ 2. Gap list reads each baseline | `koch check` green |"
@@ -1081,6 +1107,10 @@ suite "Hooks":
       SIGNOFF.replace(row, "| ✅ 2. Gap list reads each baseline | `src/` | `koch check` green |"),
       BRANCH,
     ).messages.anyIt("holds two cells" in it and "got `3`" in it)
+    check checkSignoff(
+      SIGNOFF.replace(row, "| ✅ 2. Gap list reads each baseline | `src/` | `koch check` green |"),
+      BRANCH,
+    ).anyIt(it.rule == "koch.sign-off-rows")
     for first in ["✅ Gap list reads", "✅ 2 Gap list reads", "✅ 2. "]:
       check checkSignoff(SIGNOFF.replace("✅ 2. Gap list reads each baseline", first), BRANCH)
         .messages.anyIt("opens first cell with state, number and claim" in it)
@@ -1118,6 +1148,8 @@ suite "Hooks":
       .messages.anyIt("names each carried rule" in it and "got none for `3`" in it)
     check checkSignoff(SIGNOFF.replace("carried 3,", "carried 9,"), BRANCH)
       .messages.anyIt("names rule 1 to 6; got `9`" in it)
+    check checkSignoff(SIGNOFF.replace("carried 3,", "carried 9,"), BRANCH)
+      .anyIt(it.rule == "koch.carried-rules")
 
     # Rule may stand beside two items, and never beside one and in ➖ row too.
     check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| carried 5, green |"), BRANCH)
@@ -1181,6 +1213,7 @@ suite "Hooks":
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
+    check checkPush("abc", "def").anyIt(it.rule == "koch.push-check")
     check pathMark("/repo", ".git") == "/repo/.git/koch-check"
     check pathMark("/repo/wt", "/repo/.git/worktrees/wt") ==
       "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
@@ -1206,6 +1239,7 @@ suite "Hooks":
     # Git joins lines before first blank line into subject, so line under subject is subject too.
     let joined = "feat(pga_benchmark): add gaps\nGaps read baseline of each algebra.\n"
     check checkMessage(BRANCH, joined, [], []).messages.anyIt("add gaps Gaps read" in it)
+    check checkMessage(BRANCH, joined, [], []).anyIt(it.rule == "koch.commit-subject")
     # `--amend` runs hook while old head is still among earlier subjects.
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n", ["Old bad subject."], []).len == 0
     # Same bad subject written again is still new finding: one earlier copy cancels one.
@@ -1286,13 +1320,14 @@ suite "Hooks":
     # Hook runs before command: shell variable, stdin and file command writes are unread.
     const post = "gh api repos/o/r/issues/7/comments "
     check checkPosts(BRANCH, post & "-F body=@$DIR/x.md", "/w").messages == @[
-      "Hook reads `gh api` post before command runs, so body from shell variable or stdin is " &
-        "unread; name file by literal path; got `/w/$DIR/x.md`.",
+      "hook reads `gh api` post before command runs, so body from shell variable or stdin is " &
+        "unread; got `/w/$DIR/x.md`; help: name file by literal path",
     ]
+    check checkPosts(BRANCH, post & "-F body=@$DIR/x.md", "/w").anyIt(it.rule == "koch.post-body")
     check checkPosts(BRANCH, post & "-F body=@`pwd`/x.md", "/w")
       .messages.anyIt("literal path" in it)  # backtick
     check checkPosts(BRANCH, post & "-F body=@- <<'EOF'\nText.\nEOF", "/w")
-      .messages.anyIt("literal path; got `-`" in it)  # stdin
+      .messages.anyIt("got `-`; help: name file by literal path" in it)  # stdin
     check checkPosts(BRANCH, "cd \"$W\" && " & post & "-F body=@x.md", "/w")
       .messages.anyIt("literal path" in it)  # directory unknown
     check checkPosts(BRANCH, post & "--input -", "/w").messages.anyIt("literal path" in it)
@@ -1302,8 +1337,8 @@ suite "Hooks":
     defer: removeDir(directory)
     let missing = directory / "absent.md"
     check checkPosts(BRANCH, post & "-F body=@" & missing, "/w").messages == @[
-      "Hook reads `gh api` post before command runs, so it cannot read file command itself " &
-        "writes; write file in earlier call; got missing `" & missing & "`.",
+      "hook reads `gh api` post before command runs, so it cannot read file command itself " &
+        "writes; got missing `" & missing & "`; help: write file in earlier call",
     ]
     check checkPosts(BRANCH, "gh api repos/o/r/issues/7/labels -f 'labels[]=$L'", "/w").len == 0
 
@@ -1343,13 +1378,18 @@ suite "Hooks":
       drift = finding(
         "GUIDE.md",
         0,
+        Check.Drift,
         "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
           "contract`.",
       )
-      stamp = finding("", 0, "Branch predates code of stamp on base; got `provenance.nim`.")
+      stamp = finding(
+        "", 0, Check.Drift, "Branch predates code of stamp on base; got `provenance.nim`."
+      )
       drifted = contextStart("curator/x", "", "", "## List", "", @[drift, stamp])
-    check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
-    check "\n  Branch predates code of stamp on base; got `provenance.nim`.\n" in drifted  # each
+    check "\n  GUIDE.md: koch.drift: actual=\"## Output contract\" message=\"base changed " &
+      "sections" in drifted  # line form, as each hook prints finding
+    check "\n  koch.drift: actual=\"provenance.nim\" message=\"branch predates code of stamp on " &
+      "base\"\n" in drifted  # each
     check "re-stamp" notin drifted
     # Drift names charter and code of stamp alone, since checker reaches branch through merge
     #   `koch check` judges (#893).
@@ -1584,6 +1624,7 @@ suite "Hooks":
     check checkSignoff(fewer, BRANCH).messages == newSeq[string]()  # shape holds alone
     check checkSignoffWindow(fewer, BRANCH, [SIGNOFF], [])
       .messages.anyIt("got `2` items in `Outside a pull request.`, which held `3`" in it)
+    check checkSignoffWindow(fewer, BRANCH, [SIGNOFF], []).anyIt(it.rule == "koch.kept-groups")
     let applied = SIGNOFF
       .replace("| ➖ 9. Not needed: page link | carried 4: no page changed |\n", "")
       .replace("carried 5, in the pull", "carried 4 and 5, in the pull")
@@ -1783,11 +1824,11 @@ suite "Hooks":
       held = finding(path, 5, "Held.")
     check contextFindings(path, [held], [own]).splitLines == @[
       "koch check-files reports 1 finding(s) in `" & path & "`; fix before push:",
-      path & ":3: Own.",
+      path & ":3: message=\"own\"",
       "koch check-files holds 1 finding(s) in `" & path & "` for its project, which clears " &
         "them in its next pull request (CURATOR.md, duty 3):",
-      path & ":5: Held.",
-    ]
+      path & ":5: message=\"held\"",
+    ]  # each finding in line form, as each hook prints it
     check "fix before push" notin contextFindings(path, [held], [])
     check contextFindings(path, [], []).len == 0
 
@@ -1904,17 +1945,19 @@ suite "Hooks":
 
     # Missing prediction names call, and asks for no block (6979936148).
     let missing = blocksHeld(asked & read & wake & linesAgent("builder", "Build it") & started)
-    check missing.len == 1 and missing[0].endsWith("got none for `builder` call `Build it`.")
+    check missing.len == 1 and missing[0].endsWith("got none for `builder` call `Build it`")
 
     # Block in turn of call, and block in thinking, each add their hint (`D3 a` of 6982373798).
     for before in [asked, asked & read & wake]:
       let inside = blocksHeld(before & lineSaid(PREDICTION, "tool_use") & linesAgent("builder") &
         started)
-      check inside.len == 1 and inside[0].endsWith("block stands in earlier turn.")
+      check inside.len == 1 and inside[0].endsWith("block stands in earlier turn")
+      check rulesHeld(before & lineSaid(PREDICTION, "tool_use") & linesAgent("builder") &
+        started) == @["koch.prediction"]
     for kind in ["thinking", "redacted_thinking"]:
       let thought = blocksHeld(asked & read & wake & lineThought(kind) & linesAgent("builder") &
         started)
-      check thought.len == 1 and thought[0].endsWith("reaches neither chat nor hook.")
+      check thought.len == 1 and thought[0].endsWith("reaches neither chat nor hook")
     check blocksHeld(asked & read & wake & lineThought() & lineSaid("Now.", "tool_use") &
       linesAgent("builder") & started).allIt("thinking" notin it)  # text before call
 
@@ -1922,9 +1965,9 @@ suite "Hooks":
     #   before call.
     for after in [lineSaid(PREDICTION, "tool_use"), lineThought()]:
       let late = blocksHeld(asked & read & wake & linesAgent("builder") & after & started)
-      check late == @["Call of subagent of kind takes `## Prediction` block of model turn before " &
+      check late == @["call of subagent of kind takes `## Prediction` block of model turn before " &
         "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
-        "critic and reflection); got none for `builder` call `Do the work`."]
+        "critic and reflection); got none for `builder` call `Do the work`"]
 
     # Block in turn that starts subagent of any type is no evidence, though it names kind of call;
     #   block two turns back is, since D1 c of #969 (test below).
@@ -2005,7 +2048,7 @@ suite "Hooks":
     #   Architect, between block and call.
     const
       header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
-      refused = "got none for `reviewer` call `Do the work`."
+      refused = "got none for `reviewer` call `Do the work`"
     let
       asked = lineUser("Review the diff.", "human")
       wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
@@ -2041,13 +2084,13 @@ suite "Hooks":
     for kind in ["builder", "web-fetch"]:
       for earlier in [lineSaid(predicted, "tool_use") & linesAgent(kind),
           linesAgent(kind) & lineSaid(predicted, "tool_use")]:
-        check blocksHeld(asked & earlier & started & waited & called) == @["Call of subagent of " &
+        check blocksHeld(asked & earlier & started & waited & called) == @["call of subagent of " &
           "kind takes `## Prediction` block of model turn before its own, and after each " &
           "earlier turn that starts subagent (GUIDE.md, Prediction, critic and reflection); " &
-          "got none for `reviewer` call `Do the work`."]
+          "got none for `reviewer` call `Do the work`"]
     let inside = blocksHeld(asked & lineSaid(predicted) & wake & linesAgent("web-fetch") &
       started & waited & wake & lineSaid(predicted, "tool_use") & linesAgent("reviewer") & started)
-    check inside.len == 1 and inside[0].endsWith("block stands in earlier turn.")
+    check inside.len == 1 and inside[0].endsWith("block stands in earlier turn")
 
     # Each call takes block of nearest of turns hook looks back over (7017187857): of n blocks,
     #   one in each turn, and m calls, blocks before last m are taken by no call.
@@ -2089,6 +2132,7 @@ suite "Hooks":
       .len == 0
     check blocksHeld(mended & lineSaid(REFLECTION)) ==
       @[refusalCell("four to eight findings, each with `file:line`")]
+    check rulesHeld(mended & lineSaid(REFLECTION)) == @["koch.reflection-table"]
 
 
   test "block serves only call of kind it names, nearest turn first (7017187857 of #969)":
@@ -2256,7 +2300,7 @@ suite "Hooks":
       answered("critic", error, %"Error.", is_foreground = true) & ran).len == 0
     check blocksHeld(build & read & wake &
       answered("critic", error, %*{"agentId": "a1"}, is_foreground = true) & ran).anyIt(
-      it.startsWith("Report of critic takes `## Reflection` block"))
+      it.startsWith("report of critic takes `## Reflection` block"))
 
     # Skip drops rejected call alone: call of its kind that launched before it keeps block it
     #   took, so reflection that quotes that block passes (break X3 of critic of last build,
@@ -2506,7 +2550,7 @@ suite "Hooks":
         checkNumbersBare("See #12.\n"), checkSignoffRead(PLAIN, []), has_signoff = true,
         blocks = blocks,
       )
-    check alone.splitLines == @[LINE_BLOCKS, "Call of `builder`."]
+    check alone.splitLines == @[LINE_BLOCKS, "message=\"call of `builder`\""]  # line form
     check "Reply with a diff" notin alone and "write no block for it" in alone
     check every.startsWith("Mend message") and every.find("Read queue") < every.find(LINE_BLOCKS)
     check every.splitLines[^1] == LINE_SIGNOFF
@@ -2527,9 +2571,9 @@ suite "Hooks":
       queued = lineUser("Next.", "human") & linesCall("ls") & lineQueued("critic")
     for shape in [report, linesForeground("critic", "false", "completed"), queued]:
       check blocksHeld(taken & shape & read) ==
-        @["Report of critic takes `## Reflection` block of its own after it, above any " &
+        @["report of critic takes `## Reflection` block of its own after it, above any " &
           "sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
-          "for report `1` of `1` in this turn."]
+          "for report `1` of `1` in this turn"]
       check blocksHeld(taken & shape & reflected).len == 0
 
     # Hand-back of other kind, entry that is no hand-back, launch notice and result of call in
@@ -2612,11 +2656,13 @@ suite "Hooks":
         lineUser("<task-notification>timer</task-notification>", "task-notification") &
         linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
         linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
-      missing = @["Report of critic takes `## Reflection` block of its own after it, above " &
+      missing = @["report of critic takes `## Reflection` block of its own after it, above " &
         "any sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
-        "for report `1` of `1` in this turn."]
+        "for report `1` of `1` in this turn"]
     check blocksHeld(taken & lineSaid("The critic held each claim.\n\n" & working & "\n" &
       REFLECTION)) == missing
+    check rulesHeld(taken & lineSaid("The critic held each claim.\n\n" & working & "\n" &
+      REFLECTION)) == @["koch.reflection"]
 
     # Heading counts where it stands above each sign-off and working line of last text: each
     #   order of reflection `R`, sign-off `S` and working line `W`, each of last two or not, and

@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, tables, unittest]
-import ../../src/knoller/[conversions, edits, rules, symbols]
+import ../../src/knoller/[conversions, edits, reports, rules, symbols]
 
 
 
@@ -26,7 +26,7 @@ suite "Style §5":
     check reports.mapIt(it.line) == @[2, 3, 5, 5, 6]
     check checkConversions("a.nim", source, answer).len == 5
     check checkConversions("a.nim", source, answer).allIt(it.rule == Rule.Conversion)
-    check checkConversions("a.nim", source, answer)[0].message.endsWith("got `x.float`.")
+    check checkConversions("a.nim", source, answer)[0].brief.endsWith("got `x.float`")
     check editsConversion("a.nim", source, answer, [2])[1].len == 4  # fenced line stays
     check editsConversion("a.nim", source, Answer(reason: "error"), [])[0].len == 0  # unresolved
 

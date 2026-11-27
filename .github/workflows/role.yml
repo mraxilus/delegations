@@ -63,7 +63,7 @@ permissions:
   pull-requests: read
 
 env:
-  NIM_VERSION: '2.4.0'
+  NIM_VERSION: '2.4.2'
 
 concurrency:
   group: role-${{ github.event.pull_request.number }}-${{ github.event.action }}

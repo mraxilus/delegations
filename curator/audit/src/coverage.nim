@@ -224,6 +224,7 @@ func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
       result.add finding(
         character.path,
         character.line,
+        Check.CoverageFont,
         "Character no font face project ships covers, so font face viewer may lack draws it " &
           "(Article X.8); got `" & character.codepoint.toNotation & "` for `" &
           character.spelling & "`.",

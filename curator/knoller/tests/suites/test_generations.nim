@@ -83,9 +83,9 @@ suite "Style §5":
   test "finding names rule, line and call as written, and rewrite its line":
     let found = checkGenerations("a.nim", "let a = 1\ndiscard MESHES.emitObject(placed)\n")
     check found.mapIt((it.line, it.rule)) == @[(2, Rule.CallGeneration)]
-    check found[0].message == "Call of `define…` or `emit…` is prefix call, as " &
-      "`emitFunc(name, docs)`; got `MESHES.emitObject`."
+    check found[0].brief == "call of `define…` or `emit…` is prefix call, as " &
+      "`emitFunc(name, docs)`; got `MESHES.emitObject`"
     check fixGenerations("a.nim", "\ndiscard MESHES.emitObject(placed)\n").fixed.mapIt(
       (it.line, it.rule)
     ) == @[(2, Rule.CallGeneration)]
-    check checkGenerations("a.nim", CALLS_HAND[0])[0].message.endsWith("got `.emitEnum`.")
+    check checkGenerations("a.nim", CALLS_HAND[0])[0].brief.endsWith("got `.emitEnum`")

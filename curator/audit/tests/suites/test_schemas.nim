@@ -92,14 +92,14 @@ suite "Schemas":
     ]  # renumbered, value deleted, field deleted, retyped, renamed, `optional` dropped or added
     for (edit, rule) in edits:
       let found = held(edit)
-      check found.anyIt(rule in it.message)  # `buf` names rule edit breaks
+      check found.anyIt(rule in it.brief)  # `buf` names rule edit breaks
       check found.allIt(it.path == FOLDER / NAME and it.line > 0)  # schema of branch, at line
-      check found.allIt(it.message.startsWith("Schema change breaks version base shipped"))
+      check found.allIt(it.brief.startsWith("schema change breaks version base shipped"))
 
 
   test "schema that does not compile is finding, never pass":
     let found = held(SHIPPED.replace("string label = 3;", "string label = 3"))
-    check found.len > 0 and found.allIt(it.message.startsWith("Schema does not compile"))
+    check found.len > 0 and found.allIt(it.brief.startsWith("schema does not compile"))
     check found.allIt(it.path == FOLDER / NAME and it.line > 0)
 
 
@@ -112,8 +112,11 @@ suite "Schemas":
     let found = findingsBreaking(output, FOLDER)
     check found.mapIt((it.path, it.line)) ==
       @[(FOLDER / NAME, 13), (FOLDER / NAME, 0), (FOLDER, 0)]  # branch, shipped, unread line
-    check "`m`" in found[0].message and "as base shipped it" in found[1].message
-    check "what is no finding" in found[2].message
+    check "`m`" in found[0].brief and "as base shipped it" in found[1].brief
+    check found.anyIt(it.rule == "koch.schema-tool")
+    check found.anyIt(it.rule == "koch.schema-compile")
+    check found.anyIt(it.rule == "koch.breaking-schema")
+    check "what is no finding" in found[2].brief
 
 
   test "check reads base at its tip and branch at HEAD, folder by folder":
@@ -140,7 +143,7 @@ suite "Schemas":
       "  optional double radius = 4;\n  bool shines = 5;\n"))
     discard root.git("commit -q -a -m 'feat(alpha): add shines'")
     discard root.git("checkout -q work")
-    check checkSchemas(root, "main").anyIt("name \"shines\"" in it.message)
+    check checkSchemas(root, "main").anyIt("name \"shines\"" in it.brief)
 
 
   test "new package of folder passes where each field holds, and break under it still fails":
@@ -149,7 +152,7 @@ suite "Schemas":
     let moved = SHIPPED.replace("package pga_visualiser.scene;", "package pga_visualiser.scenes;")
     check held(moved).len == 0  # package alone moves
     let retyped = held(moved.replace("optional double radius", "optional float radius"))
-    check retyped.anyIt("changed type from \"double\" to \"float\"" in it.message)
+    check retyped.anyIt("changed type from \"double\" to \"float\"" in it.brief)
     let timed = moved.replace("package pga_visualiser.scenes;\n",
       "package pga_visualiser.scenes;\n\nimport \"google/protobuf/timestamp.proto\";\n").replace(
       "  optional double radius = 4;\n",
@@ -164,7 +167,7 @@ suite "Schemas":
       moved = SHIPPED.replace("package pga_visualiser.scene;", "package pga_visualiser.scenes;")
       found = breakingFindings(binary.get, FOLDER, [(NAME, SHIPPED)],
         [("scenes.proto", moved.replace("  string label = 3;\n", ""))])
-    check found.anyIt("\"label\" on message \"Object\" was deleted" in it.message)
+    check found.anyIt("\"label\" on message \"Object\" was deleted" in it.brief)
     check breakingFindings(binary.get, FOLDER, [(NAME, SHIPPED)], [("scenes.proto", moved)])
       .len == 0
 
@@ -198,7 +201,7 @@ suite "Schemas":
       let found = held(shipped.replace("package pga_visualiser.scene;",
         "package pga_visualiser.scenes;"), shipped)
       check found.len == 1
-      check found.allIt("beside `Any`, `service` or `extend`" in it.message)
+      check found.allIt("beside `Any`, `service` or `extend`" in it.brief)
 
 
   test "folder whose packages split or merge, so no one package of base maps to one, is refused":
@@ -212,7 +215,8 @@ suite "Schemas":
         [(NAME, one), ("tour.proto", tour.replace("package two;", "package one;"))])
     for found in [split, merged]:
       check found.len == 1
-      check found.allIt("no one package of base maps to one of branch" in it.message)
+      check found.allIt("no one package of base maps to one of branch" in it.brief)
+      check found[0].rule == "koch.schema-package"
 
 
   test "package in each form that `buf` reads moves, so renamed schema holds each field":
@@ -234,7 +238,7 @@ suite "Schemas":
       check breakingFindings(binary, FOLDER, [(NAME, shipped)], [("other.proto", branch)]).len == 0
       let found = breakingFindings(binary, FOLDER, [(NAME, shipped)],
         [("other.proto", branch.replace(retype[0], retype[1]))])
-      check found.anyIt("changed type from \"double\" to \"float\"" in it.message)
+      check found.anyIt("changed type from \"double\" to \"float\"" in it.brief)
 
 
   test "package nested under moved one, or one that ends alike, keeps its name and each field":
@@ -255,7 +259,7 @@ suite "Schemas":
       [(NAME, moved), ("tour.proto", tour), ("far.proto", far)]).len == 0
     let found = breakingFindings(binary, FOLDER, shipped,
       [(NAME, moved), ("trip.proto", tour.replace("string s", "int32 s")), ("far.proto", far)])
-    check found.anyIt("changed type from \"string\" to \"int32\"" in it.message)
+    check found.anyIt("changed type from \"string\" to \"int32\"" in it.brief)
 
 
   test "name of type in each form of text moves, and `Any` in comment names none":

@@ -32,6 +32,8 @@ suite "Justification":
     let shim = "// Flatten overload set; " & MARKER & " importcpp cannot bind defaults.\n"
     check checkJustification("p/src/shim.cpp", shim, Kind.Cpp.rule).len == 0
     check checkJustification("p/src/shim.cpp", "// Flatten overloads.\n", Kind.Cpp.rule).len == 1
+    check checkJustification("p/src/shim.cpp", "// Flatten overloads.\n", Kind.Cpp.rule)[0].rule ==
+      "koch.language-justification"
     # Ungated kind carrying no marker passes, since nothing gates it.
     check checkJustification("p/src/main.nim", "## Run program.\n", Kind.Nim.rule).len == 0
 

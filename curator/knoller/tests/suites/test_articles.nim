@@ -43,15 +43,15 @@ suite "Article VI":
 
   test "VI.5 check names each line whose comments hold article, with articles found":
     let found = checkArticles("x.nim", "# fine\n# the trap\nlet a = 1  # an alias\n")
-    check found.mapIt((it.line, it.rule, it.message)) == @[
-      (2, Rule.ArticleInComment, "Comment holds article; got `the`."),
-      (3, Rule.ArticleInComment, "Comment holds article; got `an`."),
+    check found.mapIt((it.line, it.rule, it.brief)) == @[
+      (2, Rule.ArticleInComment, "comment holds article; got `the`"),
+      (3, Rule.ArticleInComment, "comment holds article; got `an`"),
     ]  # one finding to line, value echoed
-    check checkArticles("x.nim", "#[ A row ]# let b = 2  # the end\n").mapIt(it.message) ==
-      @["Comment holds article; got `a, the`."]  # comments of one line, one finding
+    check checkArticles("x.nim", "#[ A row ]# let b = 2  # the end\n").mapIt(it.brief) ==
+      @["comment holds article; got `a, the`"]  # comments of one line, one finding
     check checkArticles("x.nim", "let s = \"the row\"\n").len == 0  # string, never comment
-    check checkArticles("x.cfg", [(4, "Skip the header")]).mapIt((it.line, it.message)) ==
-      @[(4, "Comment holds article; got `the`.")]  # lines of other syntax, same words
+    check checkArticles("x.cfg", [(4, "Skip the header")]).mapIt((it.line, it.brief)) ==
+      @[(4, "comment holds article; got `the`")]  # lines of other syntax, same words
 
 
   test "VI.5 comment lines drop markers, hide hashes of literals, and nest blocks":

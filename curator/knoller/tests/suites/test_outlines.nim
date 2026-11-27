@@ -1,6 +1,6 @@
 ## Hold that each comment is hanging outline (Article VI.2), and doc holds one summary line
-##   (VI.1), as Architect ruled on rule 3 of #443: nuance stands two spaces past where its
-##   parent's sentence starts, past each leading tag such as `TODO:`, so summary may wrap so too.
+##   (VI.1): nuance stands two spaces past where text of its parent starts, its leading tag such
+##   as `TODO:` included, as Architect ruled on #1020, so summary may wrap so too.
 ##   Fix moves each line at wrong step with lines below it, and nothing second time.
 
 {.experimental: "strictFuncs".}
@@ -26,6 +26,9 @@ const
     "## TODO: Document.\n\n# TODO: Implement in-place options for unary operators.\n" &
     "#         Maybe best to use template for defining both at once?\n"
     ## Lines 1 to 4 of `pga/operators.nim` at `3d9696e`, nuance two spaces past `Implement`.
+  NESTED = "# TODO: Fit.\n#       Child.\n#         Grandchild.\n"
+    ## Child at column of `Fit.`, six spaces past where text of parent starts, and grandchild
+    ##   two spaces past child.
   GEONORM =
     "func `|`*(m: Multivector): MultivectorScalars {.inline.} =\n" &
     "  ## Get geometric norm of multivector as distance from origin.\n" &
@@ -85,61 +88,44 @@ func spellingsCode(source: string): seq[string] =
 
 
 suite "Outlines":
-  test "nuance stands two spaces past sentence of its parent, past its tag, and moves with it":
-    check checkOutlines("a.nim", PRIMITIVES).mapIt((it.line, it.rule, it.message)) == @[
-      (4, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
-      (5, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
-      (9, Rule.OutlineDoc, "Nuance indents two spaces past its parent's sentence; got `3` " &
-        "spaces after `#`, parent's sentence at `7`."),
-    ]  # lines 4, 5 and 9 of `pga/multivectors.nim`
-    check PRIMITIVES.fixed ==
-      "## Define fundamental geometric types of PGA.\n\n" &
-      "# TODO: Represent multivector primitives using more compact data types.\n" &
-      "#         E.g. Point, Line, Plane, Volume, Motor, Flector.\n" &
-      "#         At cost of additional meta-programming, this affords:\n" &
-      "#           - More optimization with SoA (how much more over SIMD of multivectors?),\n" &
-      "#           - Simpler reasoning about objects resulting from operations.\n" &
-      "#           - IDE support for recognizing resulting objects from operations.\n" &
-      "#         Perhaps base library should only contain full multivector operations for " &
-      "simplicity?\n" &
-      "#           I.e. to serve more as learning reference, optimising where necessary.\n" &
-      "# TODO: Implement SIMD cayley table based macros for operating on arrays of Multivectors.\n"
-        # bullets keep two spaces past their parent, as example of VIII writes them
-    check PRIMITIVES.fixed.isSettled  # second run writes nothing
-    check fixOutlines("a.nim", PRIMITIVES).fixed.mapIt(it.line) == @[4, 5, 9]
-    check UNARY.isSettled  # lines 3 and 4 of `pga/operators.nim`, as ruling quotes them
-    let geonorm = GEONORM.fixed.split('\n')
-    check checkOutlines("a.nim", GEONORM).mapIt(it.line) == @[9]
-    check geonorm[8 .. 12] == @[
-      "    #         From reading it should be, for objects which are:",
-      "    #           Flat - Geonorm is ratio between flat bulk and weight norms.",
-      "    #             I.e. distance form flat object to origin.",
-      "    #           Round - Geonorm is ration between round bulk and weight norms.",
-      "    #             I.e. distance from object to carrier geometry.",
-    ]  # lines 355 to 359 of `pga/operators.nim`; lowercase wrap of line 347 stays
+  test "nuance stands two spaces past text of its parent, its tag included, and moves with it":
+    check PRIMITIVES.isSettled  # lines 1 to 11 of `pga/multivectors.nim`, as library writes them
+    check GEONORM.isSettled  # lines 345 to 360 of `pga/operators.nim`
+    check checkOutlines("a.nim", UNARY).mapIt((it.line, it.rule, it.brief)) == @[
+      (4, Rule.OutlineDoc, "nuance indents two spaces past where its parent's text starts; " &
+        "got `9` spaces after `#`, parent's text at `1`"),
+    ]  # line 4 of `pga/operators.nim`, two spaces past `Implement`
+    check UNARY.fixed == UNARY.replace("#         Maybe", "#   Maybe")
+    check UNARY.fixed.isSettled  # second run writes nothing
+    check checkOutlines("a.nim", NESTED).mapIt((it.line, it.brief)) == @[
+      (2, "nuance indents two spaces past where its parent's text starts; got `7` spaces " &
+        "after `#`, parent's text at `1`"),
+    ]  # grandchild stands two spaces past child as written
+    check NESTED.fixed == "# TODO: Fit.\n#   Child.\n#     Grandchild.\n"  # grandchild moves too
+    check fixOutlines("a.nim", NESTED).fixed.mapIt(it.line) == @[2]
 
 
-  test "each leading capitalised word with colon is tag, and word of prose is none":
+  test "tag is text of its line, so nuance and second summary stand two spaces past tag":
     for kept in [
-      "# Cost: one fetch,\n#         paid once.\n",
-      "# Rejected: nimpretty,\n#             which sets one space.\n",
-      "## Note: returns range.\n##         Since int checks.\n",
-      "# TODO: Note: split,\n#               since it grows.\n",  # each leading tag
+      "# Cost: one fetch,\n#   paid once.\n",
+      "# Rejected: nimpretty,\n#   which sets one space.\n",
+      "## Note: returns range.\n##   Since int checks.\n",
+      "# TODO: Note: split,\n#   since it grows.\n",  # each leading tag
       "# E.g. point, line,\n#   plane.\n",  # no colon
-      "# Order of bootstrapping: types,\n#   then tables.\n",  # word before colon is no tag
-      "# TODO:mixed\n#   wrap.\n",  # tag takes space after colon
+      "# Order of bootstrapping: types,\n#   then tables.\n",  # word before colon
+      "# TODO:mixed\n#   wrap.\n",
     ]:
       check kept.isSettled
-    check "# Cost: one fetch,\n#   paid once.\n".fixed ==
-      "# Cost: one fetch,\n#         paid once.\n"  # two spaces past `one`, not past `Cost:`
+    check "# Cost: one fetch,\n#         paid once.\n".fixed ==
+      "# Cost: one fetch,\n#   paid once.\n"  # two spaces past where `Cost:` starts
+    check "## Cost: reads twice.\n## Second claim.\n".fixed ==
+      "## Cost: reads twice.\n##   Second claim.\n"  # second summary, past where `Cost:` starts
 
 
   test "nuance off its step moves there, in doc and comment, at any column":
-    check checkOutlines("a.nim", GRADE).mapIt(it.message) == @[
-      "Nuance indents two spaces past its parent's sentence; got `2` spaces after `##`, " &
-        "parent's sentence at `1`.",
+    check checkOutlines("a.nim", GRADE).mapIt(it.brief) == @[
+      "nuance indents two spaces past where its parent's text starts; got `2` spaces after " &
+        "`##`, parent's text at `1`",
     ]  # line 354 of `pga/algebra.nim`
     check GRADE.fixed == GRADE.replace("##  I.e.", "##   I.e.")
     let trailing = "type O = object\n  count*: int  ## Count of items,\n" &
@@ -152,16 +138,16 @@ suite "Outlines":
   test "doc holds one summary line: second moves under it, and summary run on stays for hand":
     let second = "proc f() =\n  ## Do one thing.\n  ## Do other thing.\n  ##   In parts.\n" &
       "  discard\n"
-    check checkOutlines("a.nim", second).mapIt((it.line, it.rule, it.message)) == @[
-      (3, Rule.SummaryDoc, "Doc holds one summary line, so next claim indents two spaces; " &
-        "got `Do other thing.`."),
+    check checkOutlines("a.nim", second).mapIt((it.line, it.rule, it.brief)) == @[
+      (3, Rule.SummaryDoc, "doc holds one summary line, so next claim indents two spaces; " &
+        "got `Do other thing.`"),
     ]
     check second.fixed == "proc f() =\n  ## Do one thing.\n  ##   Do other thing.\n" &
       "  ##     In parts.\n  discard\n"  # lines below it move with it
     let runs = "proc f() =\n  ## Do one thing and\n  ## other thing.\n  discard\n"
-    check checkOutlines("a.nim", runs).mapIt((it.line, it.rule, it.message)) == @[
-      (2, Rule.SummaryDoc, "Summary line of doc ends its sentence, or wraps two spaces " &
-        "deeper; got `Do one thing and`."),
+    check checkOutlines("a.nim", runs).mapIt((it.line, it.rule, it.brief)) == @[
+      (2, Rule.SummaryDoc, "summary line of doc ends its sentence, or wraps two spaces " &
+        "deeper; got `Do one thing and`"),
     ]
     check runs.fixed == runs  # hand alone knows where summary ends
     for kept in [
@@ -194,9 +180,9 @@ suite "Outlines":
 
 
   test "summary of generated doc ends in period, or wraps two spaces deeper to one that does":
-    check checkOutlines("a.nim", NORM).mapIt((it.line, it.rule, it.message)) == @[
-      (4, Rule.SummaryDoc, "Summary line of generated doc ends in period; got `Get round " &
-        "weight squared norm of multivector,`."),
+    check checkOutlines("a.nim", NORM).mapIt((it.line, it.rule, it.brief)) == @[
+      (4, Rule.SummaryDoc, "summary line of generated doc ends in period; got `Get round " &
+        "weight squared norm of multivector,`"),
     ]  # line 222 of `pga/operators.nim`
     check NORM.fixed == NORM  # string holds doc, so hand writes it
     for kept in [
@@ -209,7 +195,7 @@ suite "Outlines":
 
 
   test "move that would widen line past `LINE_MAX` stays for hand, report and all":
-    let wide = "# TODO: Fit.\n#   " & "w".repeat(94) & "\n"
+    let wide = "# Fit.\n#  " & "w".repeat(97) & "\n"  # move to step 3 gives 101 bytes
     check checkOutlines("a.nim", wide).mapIt(it.line) == @[2]
     check wide.fixed == wide
 

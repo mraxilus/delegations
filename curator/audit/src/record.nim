@@ -20,7 +20,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, tables]
+import std/[options, strutils, tables]
 import ./[findings, markdown, provenance]
 
 
@@ -82,11 +82,17 @@ func checkHeadings(path, source: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
+          Check.HeadingsRecord,
           "Section is headed by date; record describes what is and log holds when " &
             "(provenance guide); got `" & line & "`.",
         )
       if text in seen:
-        result.add finding(path, i + 1, "Heading appears twice; got `" & line & "`.")
+        result.add finding(
+          path,
+          i + 1,
+          Check.HeadingsRecord,
+          "Heading appears twice; got `" & line & "`.",
+        )
       seen.add text
       if line.startsWith("## "):
         last_at = i + 1
@@ -98,11 +104,14 @@ func checkHeadings(path, source: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
-          "Heading is underlined, which no reader here sees; write `" & mark & s & "`.",
+          Check.HeadingsRecord,
+          "Heading is underlined, which no reader here sees.",
+          help = "write `" & mark & s & "`",
         )
   if open_at > 0 and open_at != last_at:
     result.add finding(
       path, open_at,
+      Check.HeadingsRecord,
       "`## Open questions` must be last section (provenance guide); got section at line `" &
         $last_at & "` after it.",
     )
@@ -115,8 +124,10 @@ func checkLength(path, source: string): seq[Finding] =
     result.add finding(
       path,
       0,
-      "Record over " & $LINES_RECORD & " lines; prune to log and set `" & PRUNED &
-        "` row (provenance guide); got `" & $count & "`.",
+      Check.LengthRecord,
+      "Record over " & $LINES_RECORD & " lines (provenance guide); got `" & $count & "`.",
+      expected = some("at most " & $LINES_RECORD),
+      help = "prune to log and set `" & PRUNED & "` row",
     )
 
 
@@ -136,8 +147,10 @@ func checkSections*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         start + 1,
-        "Section over " & $LINES_SECTION & " lines; prune to log or split it (provenance " &
-          "guide); got `" & $count & "`.",
+        Check.LengthSection,
+        "Section over " & $LINES_SECTION & " lines (provenance guide); got `" & $count & "`.",
+        expected = some("at most " & $LINES_SECTION),
+        help = "prune to log or split it",
       )
 
 
@@ -159,6 +172,7 @@ func checkRowPruned(path, source: string): seq[Finding] =
     result.add finding(
       path,
       0,
+      Check.RowPruned,
       "`" & PRUNED & "` must name commit as 7 to 40 hex digits; got `" & value & "`.",
     )
 
@@ -180,8 +194,10 @@ func checkCounts*(path, source: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
-          "Count is never number in prose; name command that counts (provenance guide); got `" &
-            words[k] & " " & next & "`.",
+          Check.CountProse,
+          "Count is never number in prose (provenance guide); got `" & words[k] & " " & next &
+            "`.",
+          help = "name command that counts",
         )
 
 

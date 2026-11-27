@@ -13,20 +13,20 @@ import ../../src/knoller/[blanks, reports]
 
 const
   PATH = "pga/operators.nim"  ## Path of library module, outside `tests/`.
-  TWO = "Definition takes two blank lines before it; got `"
+  TWO = "definition takes two blank lines before it; got `"
     ## Message opening for definition no other bullet of X.2 names.
-  BLOCK = "Declaration block takes one blank line after another; got `"
+  BLOCK = "declaration block takes one blank line after another; got `"
     ## Message opening for declaration block after another.
-  DOC = "Documented one-line definition takes one blank line after another; got `"
+  DOC = "documented one-line definition takes one blank line after another; got `"
     ## Message opening for documented one-line definition.
   FAMILY =
-    "Declarative call stacks in its family, and one blank line separates two families; got `"
+    "declarative call stacks in its family, and one blank line separates two families; got `"
     ## Message opening for declarative call after another.
 
 
 func messages(source: string): seq[string] =
   ## Read each report of source as `line: message`.
-  checkDefinitions(PATH, source).mapIt($it.line & ": " & it.message)
+  checkDefinitions(PATH, source).mapIt($it.line & ": " & it.brief)
 
 
 func fixed(source: string): string =
@@ -48,7 +48,7 @@ suite "Definitions":
       "template `*`*(s: Coefficient, m: Multivector): Multivector =\n  s ∧ m\n\n\n\n" &
       "func constructProductGeometric(w: array[Order, Cayley2D]): Cayley2D {.compileTime.} =\n" &
       "  discard\n"
-    check breach.messages == @["4: " & TWO & "1`.", "9: " & TWO & "3`."]
+    check breach.messages == @["4: " & TWO & "1`", "9: " & TWO & "3`"]
     check breach.fixed == "template `∧`*(m: Multivector, s: Coefficient): Multivector =\n" &
       "  m * s\n\n\ntemplate `*`*(s: Coefficient, m: Multivector): Multivector =\n  s ∧ m\n\n\n" &
       "func constructProductGeometric(w: array[Order, Cayley2D]): Cayley2D {.compileTime.} =\n" &
@@ -64,15 +64,15 @@ suite "Definitions":
     let blocks = "type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)\n" &
       "const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))\n\n\n" &
       "const\n  A = 1\n  B = 2\n"
-    check blocks.messages == @["2: " & BLOCK & "0`.", "5: " & BLOCK & "2`."]
+    check blocks.messages == @["2: " & BLOCK & "0`", "5: " & BLOCK & "2`"]
     check blocks.fixed == "type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)\n" &
       "\nconst TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))\n\n" &
       "const\n  A = 1\n  B = 2\n"
     check blocks.fixed.isSettled
     check "let a = 1  ## One.\nlet b = 2  ## Two.\n".isSettled  # bindings share keyword (X.5)
-    check "let a = 1  ## One.\n# Why.\nlet b = 2  ## Two.\n".messages == @["3: " & BLOCK & "0`."]
+    check "let a = 1  ## One.\n# Why.\nlet b = 2  ## Two.\n".messages == @["3: " & BLOCK & "0`"]
     let routine = "proc fill() =\n  discard\n\nvar MULTIVECTORS: array[SAMPLES, Multivector]\n"
-    check routine.messages == @["4: " & TWO & "1`."]
+    check routine.messages == @["4: " & TWO & "1`"]
     check routine.fixed.isSettled
 
 
@@ -83,14 +83,14 @@ suite "Definitions":
       "  ## Alias (anti)scalar's (anti)grade index.\n\n\n" &
       "template high*[G: Grade | GradeAnti](t: typedesc[G]): G = G(DIMENSIONS)\n" &
       "  ## Alias (anti)antiscalar's (anti)grade index.\n"
-    check docs.messages == @["5: " & DOC & "2`."]
+    check docs.messages == @["5: " & DOC & "2`"]
     check docs.fixed == docs.replace("index.\n\n\ntemplate", "index.\n\ntemplate")
     let long = "func sign(): BasisSigned =\n  result.basis = BasisSigned(\n    basis: b,\n" &
       "  )\n\n\n" &
       "func toSigned(b: Basis): BasisSigned {.compileTime, noinit.} = BasisSigned(basis: b)\n" &
       "  ## Convert basis to signed basis assuming positive.\n\n\n" &
       "template isMixed*(m: Multivector): bool = m.grade.isNone  ## Mixed grade.\n"
-    check long.messages == @["7: " & DOC & "2`.", "11: " & DOC & "2`."]
+    check long.messages == @["7: " & DOC & "2`", "11: " & DOC & "2`"]
     check long.fixed == long.replace(")\n\n\nfunc", ")\n\nfunc").replace(
       "positive.\n\n\ntemplate", "positive.\n\ntemplate"
     )
@@ -109,10 +109,10 @@ suite "Definitions":
     let
       routine = "template foo*(x: int) = discard  ## Do.\n\n\nproc r*() =\n  ## Do.\n  discard\n"
       documented = routine & "\n\nfoo(1)  ## Count.\n"
-    check documented.messages == @["9: " & DOC & "2`."]
+    check documented.messages == @["9: " & DOC & "2`"]
     check documented.fixed == routine & "\nfoo(1)  ## Count.\n"
     check documented.fixed.isSettled
-    check (routine & "foo(1)  ## Count.\n").messages == @["7: " & DOC & "0`."]
+    check (routine & "foo(1)  ## Count.\n").messages == @["7: " & DOC & "0`"]
     for kept in [
       routine & "\n\nfoo(1)\n",  # no doc: call after routine takes up to two
       routine & "foo(1)\n",
@@ -128,7 +128,7 @@ suite "Definitions":
       "type Order = distinct range[0..DIMENSIONS]\n#func `<=`(a, b: Order): bool {.borrow.}\n" &
       "func `==`(a, b: Order): bool {.borrow.}\n" &
       "iterator items(t: typedesc[Order]): Order =\n  for i in 0..DIMENSIONS: yield Order(i)\n"
-    check unit.messages == @["4: " & TWO & "0`.", "5: " & TWO & "0`."]
+    check unit.messages == @["4: " & TWO & "0`", "5: " & TWO & "0`"]
     check unit.fixed == "## Define type definition for transwedge order.\n" &
       "type Order = distinct range[0..DIMENSIONS]\n\n\n#func `<=`(a, b: Order): bool {.borrow.}\n" &
       "func `==`(a, b: Order): bool {.borrow.}\n\n\n" &
@@ -151,7 +151,7 @@ suite "Definitions":
     let calls = "defineOperator(\n  symbols = \"⊖\",\n)\nwhen IS_CONFORMAL:\n" &
       "  defineOperator(\n    symbols = \"⊟\",\n  )\n\n\ndefineOperator(\n  symbols = \"⟑\",\n)\n" &
       "\ndefineOperator(symbols = \"∧\")\n"
-    check calls.messages == @["10: " & FAMILY & "2`."]
+    check calls.messages == @["10: " & FAMILY & "2`"]
     check calls.fixed == calls.replace("  )\n\n\ndefine", "  )\n\ndefine")
     check calls.fixed.isSettled
     let template_call = "template borrowOperationsGrade(T: typedesc) =\n" &
@@ -166,7 +166,7 @@ suite "Definitions":
       "# Borrow necessary functions for using distinct types.\n" &
       "#   Ideally Nim would auto borrow.\n" &
       "func `&`(a, b: BasisDigits): BasisDigits {.borrow, compileTime.}\n"
-    check commented.messages == @["6: " & TWO & "1`."]
+    check commented.messages == @["6: " & TWO & "1`"]
     check commented.fixed == commented.replace("selector.\n\n#", "selector.\n\n\n#")
     check commented.fixed.isSettled
     let free = "proc a() =\n  discard\n\n# Free comment, which names no definition.\n\n" &
@@ -182,8 +182,8 @@ suite "Definitions":
       "when IS_CONFORMAL:\n  func h(): int =\n    3\n  \n  func k(): int =\n    4\n" &
       "else:\n\n  func k(): int =\n    5\n\n  echo 1\n  func m() =\n    discard\n"
     check branches.messages == @[
-      "5: " & BLOCK & "0`.", "7: " & TWO & "0`.", "10: " & TWO & "1`.", "13: " & TWO & "1`.",
-      "17: " & TWO & "1`.",
+      "5: " & BLOCK & "0`", "7: " & TWO & "0`", "10: " & TWO & "1`", "13: " & TWO & "1`",
+      "17: " & TWO & "1`",
     ]
     check branches.fixed == "const\n  A = (\n    1\n  )\n\nwhen IS_CONFORMAL:\n" &
       "  const B = 2\n\n\n  func f(): int =\n    1\n\n\n  func g(): int =\n    2\n\n\n" &
@@ -196,7 +196,7 @@ suite "Definitions":
     # Case: `emitters.nim:9`, first routine after imports in module with no banner.
     let imports = "{.experimental: \"strictFuncs\".}\n\nimport std/macros\n\nimport ./algebra\n\n" &
       "func emitFunc*(name, docs: string): NimNode {.compileTime.} =\n  ## Emit AST.\n  discard\n"
-    check imports.messages == @["7: " & TWO & "1`."]
+    check imports.messages == @["7: " & TWO & "1`"]
     check imports.fixed == imports.replace("algebra\n\nfunc", "algebra\n\n\nfunc")
     check imports.fixed.isSettled
 
@@ -206,7 +206,7 @@ suite "Definitions":
     let imports = "{.experimental: \"strictFuncs\".}\n\nimport std/json\n\n\n" &
       "const DIGITS_SHORT = 7  ## Digits of commit finding names, as `git log --oneline` " &
       "prints.\n"
-    check imports.messages == @["6: " & DOC & "2`."]
+    check imports.messages == @["6: " & DOC & "2`"]
     check imports.fixed == imports.replace("json\n\n\nconst", "json\n\nconst")
     check imports.fixed.isSettled
     check "import std/json\n\nfunc d*(): int = 1  ## Count.\n".isSettled  # routine alike
@@ -223,11 +223,11 @@ suite "Definitions":
       "  func `|□`*(m: Multivector): MultivectorScalars =\n    discard\n\n\n" &
       "func `|`*(m: Multivector): MultivectorScalars =\n  discard\n"
     check second.messages ==
-      @["14: Sibling inside second-tier section takes one blank line before it; got `2`."]
+      @["14: sibling inside second-tier section takes one blank line before it; got `2`"]
     check second.fixed == second.replace("    discard\n\n\nfunc", "    discard\n\nfunc")
     check second.fixed.isSettled
     let first = second.replace("#[[ Norms ]]#", "#[ Norms ]#")
-    check first.messages == @["6: " & TWO & "1`.", "10: " & TWO & "1`."]
+    check first.messages == @["6: " & TWO & "1`", "10: " & TWO & "1`"]
     check first.fixed.isSettled
     let quoted = "const TEXT = \"\"\"\n#[[ Parts. ]]#\n\"\"\"  ## Text.\n\n\n" &
       "proc a*() =\n  ## Do.\n  discard\n\n\nproc b*() =\n  ## Do.\n  discard\n"
@@ -237,8 +237,8 @@ suite "Definitions":
   test "doc is `##` comment on head line or inside item, never `##` inside `#` comment":
     # Probe of reviewer: comment holding `##` read as doc, so one line passed after routine.
     let source = "proc r*() =\n  ## Do.\n  discard\n\nfunc b(): int = 1  # Not ## a doc.\n"
-    check source.messages == @["5: " & TWO & "1`."]
-    check source.replace("# Not ## a doc.", "## Count.").isSettled  # doc on head line
+    check source.messages == @["5: " & TWO & "1`"]
+    check source.replace("# Not ## a doc", "## Count").isSettled  # doc on head line
 
 
   test "each pair of forms takes count X.2 gives it, and second tier caps each bound at one":

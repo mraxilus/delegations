@@ -20,17 +20,31 @@
 ##   Cost: empty path marks branch-level findings (scope, commits) with no file to open.
 ##   Propagation flag marks finding that rules change leaves for curator wherever it lands,
 ##     such as stale stamp in contributor record; `scope.isHeld` never holds it.
+##   Finding prints through renderer of knoller (`report.nim`, STYLE.md §3), in form caller asks:
+##     message cut where its sentence ends, as each report of knoller is (`initNotice`), so
+##     summary keeps its article (D1 of #1002). Rule, expected value, help, column and span
+##     print where check gives them; report of knoller gives each of its own (`toFinding`).
+##     Short text of those parts is what each suite compares (`brief`, D3 of #1002).
+##   Rewrite is no finding, so `koch fix` prints it on one line of its own (`render`).
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
+import std/[algorithm, options, sequtils, strutils, tables]
 import ../../knoller/src/knoller
+import ./checks
+
+export checks
 
 
 type Finding* = object  ## Define one rule violation located at path and line.
   path*: string  ## Repository-relative path, `/` separated; empty for branch-level.
   line*: int  ## One-based line; `0` when finding concerns whole file.
+  rule*: string  ## Id of rule finding breaks; empty where check names none.
   message*: string  ## Telegraphic statement, ending with echoed value where one exists.
+  expected*: Option[string]  ## Value rule asks for, beside sentence; none where check gives none.
+  help*: string  ## What reader does about finding; empty where check gives none.
+  column*: int  ## One-based column, in runes; `0` where check names none.
+  span*: int  ## Runes finding covers from column; `0` where check names none.
   is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
   is_scope*: bool  ## Branch's own to fix wherever it lies: path outside its scope.
 
@@ -119,45 +133,81 @@ const CITATIONS*: array[Rule, string] = [
 
 
 func finding*(
-  path: string, line: int, message: string, is_propagation = false, is_scope = false
+  path: string,
+  line: int,
+  message: string,
+  is_propagation = false,
+  is_scope = false,
+  rule = "",
+  expected = none(string),
+  help = "",
+  column = 0,
+  span = 0,
 ): Finding =
   ## Construct finding.
   Finding(
-    path: path, line: line, message: message, is_propagation: is_propagation, is_scope: is_scope
+    path: path,
+    line: line,
+    rule: rule,
+    message: message,
+    expected: expected,
+    help: help,
+    column: column,
+    span: span,
+    is_propagation: is_propagation,
+    is_scope: is_scope,
+  )
+
+
+func finding*(
+  path: string,
+  line: int,
+  check: Check,
+  message: string,
+  expected = none(string),
+  help = "",
+  column = 0,
+  span = 0,
+  is_propagation = false,
+  is_scope = false,
+): Finding =
+  ## Construct finding of check of koch, under its id (D4 of #1002).
+  finding(
+    path,
+    line,
+    message,
+    is_propagation,
+    is_scope,
+    check.id,
+    expected,
+    help,
+    column,
+    span,
   )
 
 
 func toFinding*(report: Report): Finding =
   ## Render report of knoller as finding, citing article of its rule: rewrite as rule and
   ##   article, i.e. `expression spacing (X.9)`; check's message with article where sentence
-  ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``.
-
-  func sentenceEnd(message: string): int =
-    ## Find offset where sentence of message ends: first `; got ` outside code span, else its
-    ##   closing `.`, else its end.
-
-    func backticksAt(at: int): int =
-      ## Count backticks of run opening at offset of message.
-      while at + result < message.len and message[at+result] == '`': inc result
-
-    var k = 0
-    while k < message.len:
-      let run = backticksAt(k)
-      if run > 0:
-        # Skip code span to next run of as many backticks; run none closes is plain text.
-        var close = k + run
-        while close < message.len and backticksAt(close) != run:
-          close += max(1, backticksAt(close))
-        k = if close < message.len: close + run else: k + run
-      elif message.continuesWith("; got ", k): return k
-      else: inc k
-    if message.endsWith('.'): message.high else: message.len
-
-  # Cite article after rule of rewrite, or where sentence of check's message ends.
-  let article = " (" & CITATIONS[report.rule] & ")"
-  if report.message.len == 0: return finding(report.path, report.line, $report.rule & article)
-  let at = report.message.sentenceEnd
-  finding(report.path, report.line, report.message[0..<at] & article & report.message[at .. ^1])
+  ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``. Knoller finds where
+  ##   sentence ends (`sentenceEnd`), as renderer cuts message there too. Finding takes id of
+  ##   rule, and expected value, help, column and span of report.
+  let
+    article = " (" & CITATIONS[report.rule] & ")"
+    at = report.message.sentenceEnd
+    message =
+      if report.message.len == 0: $report.rule & article
+      else: report.message[0..<at] & article & report.message[at .. ^1]
+  finding(
+    report.path,
+    report.line,
+    message,
+    rule = report.rule.id,
+    expected = report.expected,
+    help = report.help,
+    column = report.column,
+    span = report.span,
+  )
 
 
 func toFindings*(reports: openArray[Report]): seq[Finding] =
@@ -173,13 +223,58 @@ func `<`*(a, b: Finding): bool =
 
 
 func render*(f: Finding): string =
-  ## Render finding as `path:line: message`; line omitted when `0`, path when empty.
+  ## Render finding as `path:line: message`, as rewrite prints; line omitted when `0`, path when
+  ##   empty.
   if f.path.len == 0: return f.message
   let location = if f.line == 0: f.path else: f.path & ":" & $f.line
   location & ": " & f.message
 
 
-proc report*(findings: seq[Finding]) =
-  ## Print findings sorted, one per line, then count.
-  for f in findings.sorted: echo f.render
+func toNotice*(f: Finding, source = none(string), is_warning = false): Notice =
+  ## Read finding as renderer prints it (STYLE.md §3), message cut where its sentence ends, so
+  ##   summary keeps article (D1 of #1002); text of its line where caller read it.
+  initNotice(
+    f.path, f.line, f.rule, f.message, f.expected, f.help, f.column, f.span, source, is_warning
+  )
+
+
+func toLine*(f: Finding): string =
+  ## Render finding in line form, help last, as each hook prints it (ruling 7197275206 of #1002).
+  f.toNotice.render(Form.Line)
+
+
+func brief*(f: Finding): string =
+  ## Read short text of parts of finding, as each suite compares it (D3 of #1002).
+  f.toNotice.brief
+
+
+func rendered*(
+  findings: openArray[Finding],
+  form: Form,
+  is_colored = false,
+  sources = initTable[string, string](),
+  is_warning = false,
+): seq[string] =
+  ## Render each finding, sorted, through renderer in form asked, with text of its line where
+  ##   `sources` holds its file by path; terminal form takes blank line before each finding.
+  for f in findings.sorted:
+    let
+      lines = sources.getOrDefault(f.path).split('\n')
+      source =
+        if f.line > 0 and f.line <= lines.len and f.path in sources: some(lines[f.line - 1])
+        else: none(string)
+    if form == Form.Terminal: result.add ""
+    result.add f.toNotice(source, is_warning).render(form, is_colored)
+
+
+proc report*(
+  findings: seq[Finding],
+  form = Form.Line,
+  is_colored = false,
+  sources = initTable[string, string](),
+) =
+  ## Print findings sorted, through renderer in form asked (`rendered`), then count; terminal
+  ##   form takes blank line before count where any finding printed.
+  for line in findings.rendered(form, is_colored, sources): echo line
+  if form == Form.Terminal and findings.len > 0: echo ""
   echo $findings.len & " finding(s)."

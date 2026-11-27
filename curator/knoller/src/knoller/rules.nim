@@ -54,7 +54,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   FormComment = "comment form"
     ## Claim of comment opens with capital and closes with period; each name stands in backticks.
-  OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's sentence starts.
+  OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's text starts.
   SummaryDoc = "doc summary"  ## Doc holds one summary line, whose sentence ends in period.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
   BracesInterpolation = "interpolation braces"
@@ -113,9 +113,15 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   FenceHeld = "fence held"  ## Fence keeps its lines as written; run warns of each fence.
 
 
-func id*(rule: Rule): string =
-  ## Read stable id of rule: its name in lowercase, each run of other characters one `-`.
-  for c in ($rule).toLowerAscii:
+func slug*(name: string): string =
+  ## Read slug of name: name in lowercase, each run of other characters one `-`, none at either
+  ##   end; caller naming checks of its own, as koch, reads its ids so.
+  for c in name.toLowerAscii:
     if c in {'a' .. 'z', '0' .. '9'}: result.add c
     elif result.len > 0 and result[^1] != '-': result.add '-'
   result.removeSuffix('-')
+
+
+func id*(rule: Rule): string =
+  ## Read stable id of rule: slug of its name.
+  slug($rule)

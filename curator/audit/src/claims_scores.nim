@@ -28,7 +28,7 @@
 ##     edition, 6.4), by modified Lentz method, and percentile from bisection on that mass.
 ##
 ##   Cost: each percentile takes `ITERATIONS_BISECTION` masses of up to `ITERATIONS_FRACTION`
-##           terms each.
+##     terms each.
 
 {.experimental: "strictFuncs".}
 

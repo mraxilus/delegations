@@ -146,9 +146,11 @@ func toggled(path, source: string): Fix =
 suite "Chain":
   test "every layout rule settles in one run, and second run writes nothing":
     let found = checkFormatting("a.nim", LAYOUT, Dialect.Module)
-    for rule in ["First-tier banner", "Binary operator", "Parameters take", "Signature", "Call",
-                 "share one bracket", "alphabetised", "`=` takes", "takes doc comment"]:
-      check found.anyIt(rule in it.message)  # each rule reported
+    for rule in ["first-tier banner", "binary operator takes one space",
+                 "parameters take `;` between groups", "signature stays on one line",
+                 "call stays on its line", "share one bracket", "alphabetised", "`=` takes",
+                 "takes doc comment"]:
+      check found.anyIt(rule in it.brief)  # each rule reported
     let fix = formatted("a.nim", LAYOUT, Dialect.Module)
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
         "\n\n\n#[ Section ]#\n\n" &
@@ -223,13 +225,13 @@ suite "Chain":
     let
       source = "let A = 1  ## One.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" &
         "let C = not A == B  ## Same.\nlet D = 3*4  ## Product.\n" & FENCE_ON & "\n"
-      unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
+      unfenced = source.replace(FENCE_OFF, "# Rows").replace(FENCE_ON, "# Rows")
       held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
-    check held[0].message == "Fence keeps its lines as written, and inside them " &
+    check held[0].brief == "fence keeps its lines as written, and inside them " &
       "not-over-binary breaks once at line 4, single-bindings once at line 3, " &
       "definition-blank-lines once at line 3 and expression-spacing 2 times from line 3" &
-      "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
+      "; got lines `2` to `6`"  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted == @[
       (3, Rule.LinesBlankDefinition), (3, Rule.SpacingExpression), (4, Rule.NotOverBinary),
       (5, Rule.SpacingExpression),
@@ -245,9 +247,9 @@ suite "Chain":
         # one blank line before each block, as X.2 asks
       held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[3, 9]  # one for each fence
-    check held[0].message.contains(" expression-spacing breaks once at line 4; got")  # 1 outside
-    check held[1].message == "Fence keeps its lines as written, and nothing inside breaks a " &
-      "rule; got lines `9` to `10`."
+    check held[0].brief.contains(" expression-spacing breaks once at line 4; got")  # 1 outside
+    check held[1].brief == "fence keeps its lines as written, and nothing inside breaks a " &
+      "rule; got lines `9` to `10`"
     check checkFenceHeld("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
@@ -255,11 +257,11 @@ suite "Chain":
     let source =
       FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1  ## One.\nlet B = 2  ## Two.\n" &
         "proc f(): int =\n  ## Do.\n  return result\n"
-    check checkFenceHeld("a.nim", source, Dialect.Module)[0].message.contains(
+    check checkFenceHeld("a.nim", source, Dialect.Module)[0].brief.contains(
       "inside them return-result breaks once at line 7, bracket-import once at line 2, " &
         "single-bindings once at line 3 and definition-blank-lines 2 times from line 3; got",
     )
-    check checkFenceHeld("a.nims", source, Dialect.Script)[0].message.contains(
+    check checkFenceHeld("a.nims", source, Dialect.Script)[0].brief.contains(
       "inside them return-result breaks once at line 7, single-bindings once at line 3 and " &
         "definition-blank-lines 2 times from line 3; got",
     )  # script keeps its imports
@@ -310,12 +312,12 @@ suite "Chain":
       check Rule.ArticleInComment in checkSource(path, source, dialect).mapIt(it.rule)
       let fenced = FENCE_OFF & "\n" & comment & "let A = 1+2  ## Sum.\n" & FENCE_ON & "\n"
       check checkFenceHeld(path, fenced, dialect, should_drop_articles = false).mapIt(
-        it.message,
+        it.brief,
       ) == @[
-        "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
-          "line 3; got lines `1` to `4`.",
+        "fence keeps its lines as written, and inside them expression-spacing breaks once at " &
+          "line 3; got lines `1` to `4`",
       ]  # fence counts no article
-      check checkFenceHeld(path, fenced, dialect)[0].message.contains(
+      check checkFenceHeld(path, fenced, dialect)[0].brief.contains(
         "inside them article-in-comment breaks once at line 2 and expression-spacing",
       )  # default counts it
 
@@ -331,8 +333,8 @@ suite "Chain":
       let
         read = checkSource(path, source, Dialect.Module, is_drive = true).mapIt(it.rule)
         unread = checkSource(path, source, Dialect.Module).mapIt(it.rule)
-        warning = checkFenceHeld(path, fenced, Dialect.Module, is_drive = true)[0].message
-        warning_bare = checkFenceHeld(path, fenced, Dialect.Module)[0].message
+        warning = checkFenceHeld(path, fenced, Dialect.Module, is_drive = true)[0].brief
+        warning_bare = checkFenceHeld(path, fenced, Dialect.Module)[0].brief
       check Rule.WaitFixed in read  # drive code, as caller says
       check Rule.WaitFixed notin unread  # none, as command line says
       check "fixed-wait breaks once at line 4" in warning  # fence counts it
@@ -480,10 +482,10 @@ suite "Repair that widens its line":
     let fix = formatted("a.nim", source, Dialect.Module, proofs)
     check fix.source == HEAD & "  let c = ☆m ∧ n + ■k\n" and fix.asked.len == 0  # all answered
     let fenced = HEAD & "  #!fix off\n  let c = ☆(m) ∧ n + ■(k)\n  #!fix on\n"
-    check checkFenceHeld("a.nim", fenced, Dialect.Module)[0].message.contains(
+    check checkFenceHeld("a.nim", fenced, Dialect.Module)[0].brief.contains(
       "nothing inside breaks",
     )
-    check checkFenceHeld("a.nim", fenced, Dialect.Module, fenced.proofsModule)[0].message.contains(
+    check checkFenceHeld("a.nim", fenced, Dialect.Module, fenced.proofsModule)[0].brief.contains(
       "needless-parentheses breaks 2 times from line 6",
     )  # answer for source as given counts its groups
 

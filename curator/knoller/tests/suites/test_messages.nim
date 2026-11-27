@@ -22,7 +22,7 @@ func isSettled(source: string): bool =
 suite "Article IV":
   test "IV.4 interpolated value after `got` takes backticks":
     let source = "doAssert x, &\"Turn ended off centre; got {manner}.\"\n"
-    check checkMessages("a.nim", source)[0].message.endsWith("got `{manner}`.")
+    check checkMessages("a.nim", source)[0].brief.endsWith("got `{manner}`")
     check source.fixed == "doAssert x, &\"Turn ended off centre; got `{manner}`.\"\n"
     check source.fixed.isSettled
     check "raise f(&\"Bad; got {a} against {b} for {c}.\")\n".fixed ==
@@ -33,9 +33,9 @@ suite "Article IV":
 
   test "IV.4 operand after `got` takes backtick at end of literal before, and start of one after":
     let source = "let m = \"Prompt over \" & $LIMIT & \" bytes; got \" & $count & \".\"\n"
-    check checkMessages("a.nim", source).mapIt(it.message) ==
-      @["Message ends echoing value in backticks, as ``…; got `{value}`.``; got " &
-        "`$count`."]  # value before tail is no echo
+    check checkMessages("a.nim", source).mapIt(it.brief) ==
+      @["message ends echoing value in backticks, as ``…; got `{value}`.``; got " &
+        "`$count`"]  # value before tail is no echo
     check source.fixed ==
       "let m = \"Prompt over \" & $LIMIT & \" bytes; got `\" & $count & \"`.\"\n"
     check source.fixed.isSettled

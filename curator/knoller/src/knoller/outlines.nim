@@ -4,13 +4,12 @@
 ##     any column (`scanComment` of `compiler/lexer.nim`); run of own-line `#` lines at one
 ##     column; or trailing `#` comment alone. Block comment, fence marker and shebang (`#!`) are
 ##     none.
-##   Step of line: spaces between its marker and its text. Sentence of line starts past its step,
-##     and past each leading tag, i.e. capitalised word with colon and space, as `TODO:`, `Cost:`
-##     or `Rejected:` (`tagged`), as Architect ruled on rule 3 of #443.
+##   Step of line: spaces between its marker and its text. Text of line starts past its step,
+##     leading tag as `TODO:`, `Cost:` or `Rejected:` included, as Architect ruled on #1020.
 ##   Parent of line: nearest line above it in its comment at smaller step. Nuance stands two spaces
-##     past where sentence of parent starts (VI.2), so line below `# TODO: Implement …` stands two
-##     spaces past `Implement`. Wrap of sentence stands so too, since ruling lets summary wrap two
-##     spaces deeper.
+##     past where text of parent starts (VI.2), so line below `# TODO: Implement …` stands two
+##     spaces past where `TODO:` starts. Wrap of sentence stands so too, since summary may wrap
+##     two spaces deeper.
 ##   Line holds no step where it is table row (`|`), diagram, or code between fences of three
 ##     backticks; blank line holds none. Diagram stands one item each side of each arrow `->`,
 ##     outside backticks (`isDiagram`), so arrow that prose quotes or writes marks none. `#`
@@ -24,11 +23,13 @@
 ##   Generated doc: string literal passed as argument `docs`, by name. Its first line is its
 ##     summary, which ends in period, or wraps two spaces deeper to line that does; else it stays
 ##     for hand, since fix of string changes its value.
-##   Fixer sets each line two spaces past its parent's sentence, as parent stands once moved, so
-##     lines below moved line move with it. Comment whose move would widen line past `LINE_MAX`
-##     stays for hand, whole. Checks and fixer share one reading (`outline`), so rule is written
-##     once (Article II.1), and `claims.nim` reads comments as `comments` gives them.
+##   Fixer sets each line two spaces past where text of its parent starts, as parent stands once
+##     moved, so lines below moved line move with it. Comment whose move would widen line past
+##     `LINE_MAX` stays for hand, whole. Checks and fixer share one reading (`outline`), so rule is
+##     written once (Article II.1), and `claims.nim` reads comments as `comments` gives them.
 ##
+##   Rejected: nuance past tag, as rule 3 of #443 read it, since nuance then hung off width of tag,
+##     and Architect wants one step under any line.
 ##   Cost: generated doc passed by place, not by name, is unread; so is its outline past summary.
 ##   Cost: line of table, diagram or code stays where its parent moves.
 
@@ -63,22 +64,8 @@ type
 
 const
   MARKS_CLOSING* = {'.', '?', '!'}  ## Characters closing sentence (VIII.2 asks question as one).
-  STEP_NUANCE = 2  ## Spaces nuance stands past sentence of its parent (VI.2).
+  STEP_NUANCE = 2  ## Spaces nuance stands past where text of its parent starts (VI.2).
   STEP_WRAP_GENERATED = 2  ## Spaces wrap of generated summary stands past it.
-
-
-func tagged*(text: string): int =
-  ## Count bytes of each leading tag of text with spaces after it: capitalised word, colon, space.
-  var k = 0
-  while k < text.len and text[k] in {'A' .. 'Z'}:
-    var j = k + 1
-    while j < text.len and text[j] in {'A' .. 'Z', 'a' .. 'z'}: inc j
-    if j >= text.len or text[j] != ':': break
-    var after = j + 1
-    while after < text.len and text[after] == ' ': inc after
-    if after == j + 1 or after >= text.len: break
-    k = after
-  k
 
 
 func isClosing(text: string): bool =
@@ -178,24 +165,23 @@ func outline(c: Comment): Outline =
         parent = j
         break
     if parent >= 0:
-      let
-        tag = c.lines[parent].text.tagged
-        start = c.lines[parent].step + tag
-      result.steps[i] = result.steps[parent] + tag + STEP_NUANCE
+      let start = c.lines[parent].step
+      result.steps[i] = result.steps[parent] + STEP_NUANCE
       if c.lines[i].step != start + STEP_NUANCE:
         result.found.add initReport(
           "",
           c.lines[i].line + 1,
           Rule.OutlineDoc,
-          "Nuance indents two spaces past its parent's sentence; got `" & $c.lines[i].step &
-            "` spaces after `" & marker & "`, parent's sentence at `" & $start & "`.",
+          "Nuance indents two spaces past where its parent's text starts; got `" &
+            $c.lines[i].step & "` spaces after `" & marker & "`, parent's text at `" & $start &
+            "`.",
         )
         result.fixable.add true
 
     # Line at summary step in first paragraph of doc: second summary, or summary run on.
     elif c.kind == KindComment.Doc and i > summary and is_first_paragraph:
       if c.lines[previous].text.isClosing:
-        result.steps[i] = result.steps[summary] + c.lines[summary].text.tagged + STEP_NUANCE
+        result.steps[i] = result.steps[summary] + STEP_NUANCE
         result.found.add initReport(
           "",
           c.lines[i].line + 1,

@@ -1,6 +1,6 @@
 ## Plan each run of test file: one compile for each backend under each configuration, each into
 ##   cache of its own, with command built as testament builds it (`prepareTestCmd` of
-##   `testament/testament.nim`, Nim 2.4.0).
+##   `testament/testament.nim`, same in Nim 2.4.0 and 2.4.2).
 ##   Command is template of header with `$target`, `$options`, `$file`, `$filedir` and `$nim`
 ##     replaced, and leading `nim ` replaced by compiler, as testament replaces each. Compiler is
 ##     quoted for shell, where testament writes it bare.

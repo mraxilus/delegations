@@ -39,20 +39,20 @@ const
     ## Lines 419 and 420 of `tests/suites.nim` at `3d9696e`: placeholder whose name gives reason.
   PATH = "tests/suites.nim"  ## Path under `tests` of package, where library holds its suite.
   NIMBLE = "pga.nimble"  ## Nimble file of package, at its root.
-  SKIP = "Skip carries its reason, so run shows why test skips; got `"
+  SKIP = "skip carries its reason, so run shows why test skips; got `"
     ## Opening of message of skip that gives no reason.
 
 
 func found(source: string): seq[(int, string)] =
   ## Read line and message of each report of skip reason in source, read as file of tests.
-  checkSkips(PATH, source, NIMBLE).mapIt((it.line, it.message))
+  checkSkips(PATH, source, NIMBLE).mapIt((it.line, it.brief))
 
 
 
 suite "Skips":
   test "skip with no reason reports, under configuration and in every configuration":
-    check EQUATION_87.found == @[(10, SKIP & "when IS_CONFORMAL: skip()`.")]  # library line 331
-    check EQUATION_445.found == @[(2, SKIP & "skip()`.")]  # line 432; law below it is no code
+    check EQUATION_87.found == @[(10, SKIP & "when IS_CONFORMAL: skip()`")]  # library line 331
+    check EQUATION_445.found == @[(2, SKIP & "skip()`")]  # line 432; law below it is no code
     check PLACEHOLDER.found.len == 0  # name opening with `TODO:` gives reason
 
 
@@ -79,8 +79,8 @@ suite "Skips":
 
   test "TODO inside test that runs is gap, and TODO that gives reason of skip is none":
     check GAP.found == @[
-      (5, "Gap in coverage is placeholder test that skips, so run shows it; got " &
-        "`# TODO: Find out how other parts should distribute (2.70b/c/d).`."),
+      (5, "gap in coverage is placeholder test that skips, so run shows it; got " &
+        "`# TODO: Find out how other parts should distribute (2.70b/c/d).`"),
     ]  # library line 288
     check "  test \"a\":\n    check b  # TODO: Widen.\n".found.len == 1  # trailing TODO too
     check "  test \"a\":\n    check b  # Name opening with `TODO:` passes.\n".found.len == 0
@@ -92,8 +92,8 @@ suite "Skips":
   test "test under bare `when` reports, and test under `when` with other branch passes":
     let gated = "when defined(js):\n  test \"a\":\n    check b\n"
     check gated.found == @[
-      (2, "Test that cannot run under configuration skips there, so run keeps it; got " &
-        "`test \"a\":` under `when defined(js):`."),
+      (2, "test that cannot run under configuration skips there, so run keeps it; got " &
+        "`test \"a\":` under `when defined(js):`"),
     ]
     check (gated & "else:\n  test \"a\":\n    skip()  # Needs browser.\n").found.len == 0
     check "when isMainModule:\n  test \"a\":\n    check b\n".found.len == 0  # entry of module
@@ -112,9 +112,9 @@ suite "Skips":
     let inside = "suite \"Share\":\n  test \"a\":\n    check b\n\n\n  when not defined(js):\n" &
       "    test \"a desktop frame is owned by the file its code is in\":\n      let paths = [1]\n"
     check inside.found == @[
-      (7, "Test that cannot run under configuration skips there, so run keeps it; got " &
+      (7, "test that cannot run under configuration skips there, so run keeps it; got " &
         "`test \"a desktop frame is owned by the file its code is in\":` under " &
-        "`when not defined(js):`."),
+        "`when not defined(js):`"),
     ]
     check ("when A:\n  suite \"S\":\n    test \"a\":\n      check b\n" &
       "    when B:\n      test \"c\":\n        check d\n").found.mapIt(it[0]) == @[6]

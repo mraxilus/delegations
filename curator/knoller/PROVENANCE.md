@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c1257a30b6557c6e |
+| Rules   | b1598c3ad3ce7dfd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -92,6 +92,60 @@ so a new rule without a citation does not compile there.
 - Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
   `curator/audit` holds it, article included, through the real check of each message that `koch`
   prints.
+
+## Renderer
+
+**Each finding prints in one of two forms, through `knoller/report`.** The terminal form serves a
+reader at a terminal, and the line form serves a pipe or a log (STYLE.md §3). A finding is a
+`Notice` that holds only the parts that its check knows (D3 a of #1002). So its location shows the
+path, the line and the column, each only behind the part before it. The renderer is pure. The
+caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
+
+- The terminal form prints the location and the rule, the summary, the source line with a marker,
+  `actual` and `expect`, and `help`. A blank line stands between two blocks, and a block shows
+  only where the finding holds its parts.
+- The source line shows only where the finding holds its line and the text of that line. The
+  marker shows only where it holds a column too.
+- A source line over 80 runes shows a window of 80 runes around the span, and `…` marks each
+  edge that the window cuts. A finding of width names a line of hundreds of runes, which a
+  terminal would wrap.
+- Column and span count runes, as the width of a line counts them. A control character of the
+  source line prints as its control picture, as `␉`, so the marker stays under its rune.
+- The terminal form quotes a value that is empty, or whose edge or control character would hide
+  it. So each value stays visible, as Article IV.4 asks.
+- A message cuts at its first `; got ` outside a code span, and a code span runs to the next run
+  of as many backticks (`sentenceEnd`). So a sentence that quotes ``…; got `{value}`.`` ends after
+  the quote. The sentence is the summary, with its first letter lowercase (`initNotice`). The
+  value after `; got ` is the actual, out of the code span that it stands in whole.
+- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
+  the value. The sentence then runs to its closing period. No message of knoller holds such a
+  backtick, and reading holds that.
+- Each suite compares the short text of a finding (`brief`), as D3 c of #1002 rules. It holds the
+  summary, then the actual after `; got`, the expected value after `; expect` and the help after
+  `; help:`, each where held. The rule stands apart, so the text reads as the message.
+- A sentence that names an absence ends without `; got `, so the notice holds no actual. Article
+  IV.4 never takes an in-range value for an absence, and `none` would read as one.
+- The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
+  value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+  Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
+- A warning prints in both forms, with `warning` after its rule, as the command line of knoller
+  marks it (D2 a of #1002). A rewrite is no finding, so its caller keeps its one line.
+- Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
+  as no-color.org reads it, and `formOutput` takes the form that a flag forces.
+- Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
+  draws them, and each case above.
+- The command line of knoller prints each finding that stays for the hand through the renderer,
+  and each warning too. Each shows the text of its line as given. A rewrite and an unsettled file
+  keep their one line, since a tool reads them. `--form` forces a form, and else `main` takes the
+  terminal form where stdout is a terminal. In the terminal form, a blank line stands before
+  each finding and before the count.
+- Verified by `suites/test_command.nim`: both forms of one run, the flag, and the line form of
+  each warning. The suites that read what a run prints hold the line form.
+- Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
+  emoji, shifts the marker to the right of its span.
+- Each verb of koch that reports prints each finding and warning through the renderer too, and
+  each hook prints each finding in the line form. A finding of a report of knoller keeps the id
+  of its rule there. Each check of koch takes an id `koch.<name>` (D4 a of #1002).
 
 ## Chain
 
@@ -282,6 +336,28 @@ static pass of `curator/audit` reads, on every line. So a finding that no fixer 
   left that `471007f` does not report.
 - Cost, measured on that run, two runs each. `rga_visualiser` took 34.3 s and 34.6 s, against
   32.7 s and 32.1 s. `curator` took 20.5 s and 19.8 s, against 19.1 s and 19.5 s.
+
+**The command line fixes each file on a pool of threads, one for each core (`pools.nim`).** The
+fix of a file reads its own file and what the run read, and nothing that the fix of another file
+writes. At `2d496af8`, one file waits for the one before it, and `koch fix` runs the same loop.
+There the fixes of all files take 26.6 s of the 65.0 s of `koch fix --dry-run curator/knoller`.
+Meanwhile three of the four cores wait (the profile on #1001).
+
+- `outcomeProven` gives each file to a thread of the pool, and each file that asked the parser
+  again, after its batch answers. The parts keep the order of the files, as one loop gives them.
+- A job holds the facts of its file, as a call of `part` for one file takes them (`JobPart`). The
+  proofs of its batch and the plans of the run stay in the caller. The job reads them through a
+  pointer, since a copy would hold each source asked. The caller changes the proofs only between
+  two runs of the pool.
+- `outcome` stays one loop, since a `func` starts no thread.
+- Verified by `suites/test_command.nim`, which holds `outcomeProven` equal to a loop that fixes
+  every file again in each round (`outcomeEvery`). Its files ask the parser, and some do not.
+  Verified by `suites/test_pools.nim`, for the order of the answers.
+- Verified by run of `knoller --check --form:line curator/knoller` over the tree at `2d496af8`,
+  2026-11-26. Knoller built there and at `8a7b2f61` prints the same 2,746 lines in each of three
+  runs, and the runs alternate between the two builds. The median falls from 62.1 s to 34.4 s.
+  Each build is the debug build that `nim c` makes, on 4 cores at 2.10 GHz, under a load of 1.42
+  to 2.25.
 
 **The command lists a directory through `runGit`, which reads stdout and stderr of git apart.**
 Git ends a warning on stderr in a newline, while the paths end in NUL. So one stream that carries
@@ -949,9 +1025,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   2026-11-20: each fails with knoller at `d6bc8979`, before those rules.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
-  A case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such
-  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29.
+- Each case asks the parser of the compiler that builds the suite, 2.4.2 in the job of knoller. A
+  case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such case,
+  verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29. 2.4.2 gives it
+  too, verified by the jobs of `check.yml` on the runner at `d4f7e2b1`, 2026-11-26.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
@@ -969,9 +1046,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
 operator. A `-` before a digit opens a number after a space or an opening bracket.
 
-- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0. It adds
+- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0 and 2.4.2. It adds
   `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the glyphs of 2.2.12, and commit `27763495` reads the same set as 2.4.0.
-  Verified by hand, 2026-10-29, in the source of each lexer.
+  Verified by hand, 2026-10-29, in the source of each lexer. `unicodeOprLen` of the lexer is the
+  same bytes in 2.4.2, verified by hand, 2026-11-26.
 - Cost: where code on a pin that reads fewer glyphs spells one of them in a name, the scan reads
   it otherwise than that compiler. No code on 2.2.12 did, verified by hand, 2026-10-29.
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
@@ -2191,11 +2269,13 @@ comment form reads its names alone (`## Claims`). Every other rule runs.
 
 ## Outlines
 
-**A nuance stands two spaces past where the sentence of its parent starts (VI.2).** The Architect
-ruled so on rule 3 of #443, in two decisions. A summary may wrap two spaces deeper, and the two
-spaces count past each leading tag. A tag is a capitalised word with a colon and a space, as
-`TODO:`, `Cost:` and `Rejected:` are (`tagged`). So a line below `# TODO: Implement …` stands two
-spaces past `Implement`.
+**A nuance stands two spaces past where the text of its parent starts (VI.2).** A tag such as
+`TODO:`, `Cost:` or `Rejected:` is text of its line. So a line below `# TODO: Implement …` stands
+two spaces past where `TODO:` starts, as the Architect ruled on #1020. A summary may wrap two
+spaces deeper.
+
+- Rejected: a nuance past each leading tag, as the ruling on tags of rule 3 of #443 read it. A
+  nuance then hung off the width of its tag, and the Architect wants one step under any line.
 
 - A comment is a doc as the lexer joins it: a `##` line and each next line that opens with `##`.
   That next line can stand at any column (`scanComment` of `compiler/lexer.nim` of 2.4.0). A
@@ -2210,19 +2290,26 @@ spaces past `Implement`.
   backticks. A bracket group alone above an arrow is a line of it too. So an arrow that prose
   quotes in backticks, or writes between measures, marks no diagram (`isDiagram`). Verified by
   `suites/test_outlines.nim`, with the diagram of `pga.nim` at `3d9696e`.
-- The fixer sets each line two spaces past the sentence of its parent, as the parent stands once
-  moved. So the lines below a moved line move with it. A comment whose move would widen a line
+- The fixer sets each line two spaces past where the text of its parent starts, as the parent stands
+  once moved. So the lines below a moved line move with it. A comment whose move would widen a line
   past `LINE_MAX` stays for hand, whole, and its reports stay.
 - Verified by `suites/test_outlines.nim`. Its cases quote `pga/multivectors.nim`,
   `pga/operators.nim`, `pga/algebra.nim` and `pga.nim` of the PGA library at `3d9696e`, and each
   case names its cut.
-- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
-  imports `knoller` and runs `checkOutlines` and `fixOutlines` alone on each file that
-  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 11 reports, and the fix moves 18
-  lines. Of those, 17 are the lines under tags that the ruling on the tags of rule 3 of #443
-  counts. The other is line 354 of `pga/algebra.nim`, a nuance one space short.
-- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 3,195
-  reports, and the fix moves 2,416 lines. No check of `koch check` reads them yet.
+- Verified by run of `knoller --check --form:line .` on the PGA library at `3d9696e`, 2026-11-27.
+  Knoller built at `8a7b2f61` gives 10 reports of this rule, and built at `4d7f3815` gives 2. The
+  9 that go are lines under tags, as the library writes them. Line 354 of `pga/algebra.nim` stays,
+  a nuance one space short. Line 4 of `pga/operators.nim` comes, since it stands two spaces past
+  `Implement`.
+- Verified by run of `knoller --check --form:line contributor curator koch.nim` over the
+  repository at `5cd47d47`, 2026-11-27. The two builds give 2,296 and 1,468 reports of this rule.
+  By path and line, 835 go and 7 come. The rules differ only in the width of a tag. So each line
+  that goes or comes stands under a tag.
+- The 7 that come stood in curator code, which now holds each of them two spaces past its tag.
+- Line 29 of `design/record.nim` of `dance_ontology` takes a report with both builds. The first
+  leaves it for hand, and the second fixes it. It stays for its contributor.
+- Each report of another rule is the same with both builds, in each run. No check of `koch check`
+  reads this rule yet.
 - Cost: a line of a table, a diagram or code stays where its parent moves.
 
 **A doc holds one summary line, and its sentence ends in a period (VI.1).** The first line of a
@@ -2230,8 +2317,8 @@ doc is its summary. One check reads both rules. Each reports under a rule of its
 cites an article of its own (D1 c of #563).
 
 - In the first paragraph of a doc, a line at the summary step after a line that closes a sentence
-  is a second summary. It moves two spaces past the sentence of the summary, with the lines below
-  it.
+  is a second summary. It moves two spaces past where the text of the summary starts, with the
+  lines below it.
 - After a line that runs on, the summary wraps at its own step. It stays for hand, since the hand
   alone knows where the sentence ends.
 - A paragraph after a blank `##` line can hold lines at the summary step. The header of a module
