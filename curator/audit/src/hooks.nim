@@ -66,12 +66,15 @@
 ##     kind, of model turn before its own and after each earlier turn that starts subagent,
 ##     nearest turn first; each report of critic takes `## Reflection` block after it; each
 ##     cell under `Predicted` of reflection is one whole claim of block call took, with or
-##     without its label, or `No prediction`. Model turn ends where model stops, never at
-##     `user` entry, so block checks read model turns, and every other check reads turn since
-##     message of person. Kinds are read from templates at each stop (`readKinds`). `Agent` call
-##     whose result has `is_error` and no `agentId` is skipped (7022770415). Assumed: harness
-##     writes such result only for call that it rejects; probe Q5 gives its shape, and frozen
-##     copy of transcript holds no `Agent` result with `is_error`.
+##     without its label, or `No prediction`. Block of tables, as `D1 a` of #1028 rules
+##     (comment 7218520265), gives each claim number, text, confidence or rising percentiles,
+##     and criterion, at stop of its own turn; each row of reflection names claim by number and
+##     quotes it whole, and result of estimate opens with its value. Model turn ends where model
+##     stops, never at `user` entry, so block checks read model turns, and every other check
+##     reads turn since message of person. Kinds are read from templates at each stop
+##     (`readKinds`). `Agent` call whose result has `is_error` and no `agentId` is skipped
+##     (7022770415). Assumed: harness writes such result only for call that it rejects; probe Q5
+##     gives its shape, and frozen copy of transcript holds no `Agent` result with `is_error`.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -90,8 +93,8 @@
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
-##   Cost: hook never reads state, confidence or figures of header of reflection, run of
-##     resolver, or rules of forecasting, so reading holds those.
+##   Cost: hook never reads figures of header of reflection, run of resolver, or rules of
+##     forecasting but rise of percentiles of estimate, so reading holds those.
 ##   Cost: block in turn after call it names still serves later call of its own kind; block in
 ##     turn of that call serves none. Block of later turn replaces block of its kind of earlier
 ##     turn, while inside one turn call takes earliest (7027197745); so of blocks for two
@@ -167,6 +170,55 @@ type
     uuid*: string  ## `uuid` of entry holding block; empty where entry gives none.
     timestamp*: string  ## `timestamp` of that entry, in ISO 8601; empty where it gives none.
     delegate*: string  ## `sessionId` of that entry, which names delegate; empty where none.
+
+  UnitNumber* {.pure.} = enum
+    ## Define unit of number, in order of enum `Unit` of `claims.proto`: what its cells mark, or
+    ##   what text of bullet names (7194411522).
+    Unspecified  ## No cell or text names unit.
+    Tokens  ## Tokens of subagent: bare cells of estimate whose text holds word `tokens`.
+    Cost  ## Dollars at list price: `$` before each cell.
+    Time  ## Minutes: `s`, `m` or `h` after each cell, read as minutes.
+    Count  ## Count of things: bare cells of estimate whose text holds no word `tokens`.
+
+  Value* = object  ## Define value that opens text of cell: amount, and unit its marks give.
+    amount*: float  ## Dollars, minutes or count, after scale of `k` or `M`.
+    unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `m` or `h`; `Unspecified` for bare.
+    stop*: int  ## Index after value in its text.
+
+  Estimate* = object  ## Define percentiles of estimate, in base unit its cells give.
+    low*: float  ## 5th percentile.
+    median*: float  ## 50th percentile.
+    high*: float  ## 95th percentile.
+    unit*: UnitNumber  ## Unit of its cells, never `Unspecified`.
+
+  Forecast* = object  ## Define one claim of `## Prediction` block, as row of reflection quotes it.
+    position*: int  ## Number under `#` of its row, else position from 1 of its bullet.
+    forms*: seq[string]  ## Text cell may quote: claim whole, and without label of its bullet.
+    is_row*: bool  ## Claim is row of table, so row of table with `#` names it by number too.
+    is_number*: bool  ## Claim is estimate, or bullet that percentiles end.
+    confidence*: Option[float]  ## Confidence row states: `%` of judgement, 90% of estimate.
+    estimate*: Option[Estimate]  ## Percentiles of estimate whose cells rise in one unit.
+
+  TableMarkdown = object  ## Define one pipe table of text: run of lines opening with `|`.
+    line: string  ## Header row, stripped, as finding names it.
+    header: seq[string]  ## Cells of header row.
+    rows: seq[seq[string]]  ## Cells of each row under header, rule under it dropped.
+
+  RowClaim = object  ## Define row of table of judgements or estimates of block, as cells give it.
+    cell_number: string  ## Cell under `#`.
+    text: string  ## Cell under `Judgement` or `Estimate @ 90%`, collapsed.
+    confidence: string  ## Cell under `%`; empty for estimate.
+    percentiles: array[3, string]  ## Cells under `5th`, `50th` and `95th`; empty for judgement.
+    is_estimate: bool  ## Row stands in table of estimates.
+
+  RowReflection* = object  ## Define row of table of claims of reflection, as check and log read it.
+    number*: Option[int]  ## Number under `#`; none where table or cell holds none.
+    is_numbered*: bool  ## Row stands in table with column `#`, so it names claim by number.
+    cell_number*: string  ## Cell under `#`; empty in table with column `Predicted`.
+    quoted*: string  ## Cell under `Predicted`, `Judgement` or `Estimate @ 90%`, collapsed.
+    state*: string  ## Cell under `State`, collapsed.
+    confidence*: string  ## Cell under `Confidence` or `%`, collapsed; empty for estimate.
+    result*: string  ## Cell under `Result`, collapsed.
 
   Subagents* = object  ## Define what transcript says about subagents, by model turn.
     turns*: int  ## Count of model turns; last one is current.
@@ -417,10 +469,63 @@ const
     "Prediction, critic and reflection)"
     ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
     ##   each names `No prediction` as form of miss (7015791554).
+  COLUMN_NUMBER* = "#"  ## Column of table of claims that numbers each claim (7200557915).
+  COLUMN_CONFIDENCE* = "%"  ## Column of confidence of judgement (7196051993).
+  COLUMN_JUDGEMENT* = "Judgement"  ## Column of text of judgement, in block and reflection.
+  COLUMN_ESTIMATE* = "Estimate @ 90%"
+    ## Column of text of estimate, in block and reflection, which names confidence of each
+    ##   estimate (7194411522).
+  COLUMNS_PERCENTILE* = ["5th", "50th", "95th"]  ## Columns of percentiles of estimate, in order.
+  COLUMN_CRITERION* = "Resolution criterion"  ## Column of table of criteria of block.
+  COLUMN_STATE* = "State"  ## Column of reflection whose marker gives state of claim.
+  COLUMN_CONFIDENCE_PREDICTED* = "Confidence"
+    ## Column of confidence of table with column `Predicted`, as block of bullets takes it.
+  COLUMN_RESULT* = "Result"  ## Column of reflection that gives result of claim.
+  CONFIDENCE_ESTIMATE* = 0.9  ## Confidence of estimate: mass between its 5th and 95th percentiles.
+  MARKERS_SCORED = ["✅", "⬜"]
+    ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
+  MARK_COST = '$'  ## Mark before value of cost, as `$2.50`.
+  MARK_GROUP = ','  ## Mark before each group of three digits of value, as `170,000`.
+  LENGTH_GROUP = 3  ## Digits of group after `MARK_GROUP`.
+  SCALES_VALUE = [('k', 3), ('M', 6)]
+    ## Mark after digits of value that scales it, with places it moves point: thousand and
+    ##   million (7194411522); case tells `M` of million from `m` of minutes.
+  MINUTES_TIME = [('s', 1.0 / 60), ('m', 1.0), ('h', 60.0)]
+    ## Mark after value of time, with minutes in one of it, as range of time is in minutes.
+  WORD_TOKENS = "tokens"
+    ## Word of estimate whose cells are bare that marks tokens; other bare cells mark count.
+  RULE_ROW = "Row of table of judgements or estimates of reflection names claim of `" &
+    HEADING_PREDICTION & "` block that call took by its number under `#`, and quotes that " &
+    "claim whole, or holds `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of row of table with column `#` states, empty or quoting no claim.
+  RULE_OUTCOME = "Cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
+    "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+    "(GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of result of estimate states, since log reads its outcome there.
+  RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
+    "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of row of block with no number, or number of other row, states.
+  RULE_TEXT = "Claim of table states its text under `Judgement` or `Estimate @ 90%` (GUIDE.md, " &
+    "Prediction, critic and reflection)"
+    ## Rule that finding of row of block with empty text states.
+  RULE_CONFIDENCE = "Judgement states its confidence alone under `%`, as `70%` or `62.5%` " &
+    "(GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of judgement with no percentage states.
+  RULE_ESTIMATE = "Estimate states its 5th, 50th and 95th percentiles under their columns, each " &
+    "cell one value, of one unit, each above one before: `$` for cost, `s`, `m` or `h` for " &
+    "time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
+    "(GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of estimate whose cells are no rising values of one unit states.
+  RULE_CRITERION = "Claim takes its resolution criterion in row of its number of table with " &
+    "column `" & COLUMN_CRITERION & "` (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of claim with no criterion states.
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
-    "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
-    "mend each cell under `Predicted` that is no whole claim of block that call took:"
+    "miss, with its cause, and write no block for it. Write each block of this turn that lacks " &
+    "part of claim again now, whole and mended, before its call. Write each missing reflection " &
+    "now, and mend each cell under `Predicted` that is no whole claim of block that call took, " &
+    "each row of table with `#` that quotes none, and each result of estimate that opens with " &
+    "no value:"
     ## Line opening part of refusal of `stop` that blocks of subagents take.
 
 
@@ -2179,7 +2284,7 @@ func checkPredictions(subagents: Subagents, kinds: openArray[string]): seq[Findi
     )
 
 
-func cellsRow*(line: string): seq[string] =
+func cellsRow(line: string): seq[string] =
   ## Read stripped cells of pipe-table row, `\|` read as `|`; none where line opens with no `|`.
   let s = line.strip
   if not s.startsWith("|"): return
@@ -2321,54 +2426,29 @@ func bulletsClaim(text: string): seq[string] =
   for bullet in result.mitems: bullet = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
 
 
-func claims*(text: string): seq[string] =
-  ## Read each claim of block text, with its label and without it, as reflection may quote it.
+func forecastsBullets(text: string): seq[Forecast] =
+  ## Read claim of each bullet of block text, as block before its tables writes it, by position
+  ##   from 1 of its bullet, with its label and without it, as reflection may quote it.
   ##   Claim is text of bullet `bulletsClaim` reads, up to where `stopClaim` reads: its
   ##     percentiles, its confidence, its resolution criterion, or final full stop of bullet.
   ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
   ##     claim reads whole (7018501890).
-  for text in text.bulletsClaim:
-    let claim = text[0 ..< text.stopClaim].strip
-    if claim.len == 0: continue
-    result.add claim
-    let label = claim.labelClaim
-    if label.len > 0 and claim.len > label.len: result.add claim[label.len .. ^1]
-
-
-func positionClaim*(text, claim: string): int =
-  ## Read position from 1 of first bullet of block text whose claim, with or without its label,
-  ##   is claim; 0 where none holds it.
+  ##   Claim is number where its percentiles end it, as `stopClaim` reads them (7023048202).
   for k, bullet in text.bulletsClaim:
     let
-      whole = bullet[0 ..< bullet.stopClaim].strip
-      label = whole.labelClaim
-    if claim == whole or (label.len > 0 and claim == whole[label.len .. ^1]): return k + 1
+      stop = bullet.stopClaim
+      claim = bullet[0 ..< stop].strip
+      label = claim.labelClaim
+    if claim.len == 0: continue
+    var forecast = Forecast(position: k + 1, forms: @[claim],
+      is_number: MARKS_PERCENTILES.anyIt bullet.continuesWith(it, stop))
+    if label.len > 0 and claim.len > label.len: forecast.forms.add claim[label.len .. ^1]
+    result.add forecast
 
 
-func isNumber*(text, claim: string): bool =
-  ## Decide whether claim, with or without its label, is number of block text: claim of bullet
-  ##   whose percentiles end it, as `stopClaim` reads them (7023048202).
-  let position = text.positionClaim(claim)
-  if position == 0: return false
-  let bullet = text.bulletsClaim[position - 1]
-  MARKS_PERCENTILES.anyIt bullet.continuesWith(it, bullet.stopClaim)
-
-
-func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
-  ## Report reflection whose first table with column `Predicted` is missing or holds no row, and
-  ##   each cell under that column that is empty, or is neither claim of block call took nor
-  ##   `No prediction`.
-  ##   Table is run of lines opening with `|`, header first; text is fenced out already.
-  ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
-  ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
-  ##     so it names `No prediction`, which row of missed prediction holds.
-  ##   Cell equals one claim of block call took, with or without its label (7016134603), run
-  ##     that opens with capital, plain or in form of bold of `FORMS_LABEL` (7022872980,
-  ##     7027197745), each run of whitespace read as one space. Fragment of claim, claim with
-  ##     other label before it, claim with its confidence (7018501890), or claim with no mark
-  ##     that keeps final full stop of its bullet (7017902016) is none.
-  ##   Cell `No prediction` passes too, in that case of letters alone: it counts missing
-  ##     prediction in row of its own, with cause of miss under `Result` (7015791554).
+func tablesMarkdown(text: string): seq[TableMarkdown] =
+  ## Read each pipe table of text, in order: run of lines opening with `|`, header first, and
+  ##   rule under header dropped; text is fenced out already, and line above table reads as none.
   let lines = text.splitLines
   var i = 0
   while i < lines.len:
@@ -2377,38 +2457,340 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
       continue
     var stop = i
     while stop < lines.len and lines[stop].strip.startsWith("|"): inc stop
-    let column = lines[i].cellsRow.find(COLUMN_PREDICTED)
-    if column < 0:
-      i = stop
+    result.add TableMarkdown(line: lines[i].strip, header: lines[i].cellsRow,
+      rows: lines[i + 1 ..< stop].mapIt(it.cellsRow).filterIt(not it.isRowSeparator))
+    i = stop
+
+
+func cellAt(row: openArray[string], column: int): string =
+  ## Read cell of row under column, collapsed; empty where header lacks column, as `find` gives
+  ##   -1, or row is short.
+  if column >= 0 and column < row.len: row[column].collapsed else: ""
+
+
+func numberCell(cell: string): Option[int] =
+  ## Read whole number from 1 that cell holds alone, in at most `DIGITS_NUMBER` digits; none
+  ##   otherwise, so `#1`, `1.` and `0` name no claim.
+  if cell.len == 0 or cell.len > DIGITS_NUMBER or not cell.allCharsInSet(Digits): return
+  let number = cell.parseInt
+  if number >= 1: some(number) else: none(int)
+
+
+func percentageCell(cell: string): Option[float] =
+  ## Read confidence that cell holds alone, as fraction: digits, point and digits where it has
+  ##   decimal part, then `%`, as `70%` or `62.5%`; none otherwise.
+  var i = 0
+  while i < cell.len and cell[i] in Digits: inc i
+  if i == 0: return
+  if i + 1 < cell.len and cell[i] == POINT_DECIMAL and cell[i + 1] in Digits:
+    i += 2
+    while i < cell.len and cell[i] in Digits: inc i
+  if i + 1 != cell.len or cell[i] != '%': return
+  some(cell[0 ..< i].parseFloat / 100)
+
+
+func valueAt*(text: string, at = 0): Option[Value] =
+  ## Read value that opens at `at` of text, as cell of estimate writes it (7194411522): `$` of
+  ##   cost, digits with each group of three after comma and decimal part, `k` or `M` that scales
+  ##   it, then `s`, `m` or `h` of time; none where no digit opens it after any `$`, both marks
+  ##   of cost and time stand, or letter or digit follows it.
+  ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
+  ##     `39,100,000` does; time reads in minutes, since range of time is in minutes.
+  var
+    i = at
+    unit = UnitNumber.Unspecified
+  if i < text.len and text[i] == MARK_COST:
+    unit = UnitNumber.Cost
+    inc i
+  let start = i
+  while i < text.len and text[i] in Digits: inc i
+  if i == start: return
+  var whole = text[start ..< i]
+  while i + LENGTH_GROUP < text.len and text[i] == MARK_GROUP and
+      text[i + 1 .. i + LENGTH_GROUP].allCharsInSet(Digits) and
+      (i + LENGTH_GROUP + 1 == text.len or text[i + LENGTH_GROUP + 1] notin Digits):
+    whole.add text[i + 1 .. i + LENGTH_GROUP]
+    i += LENGTH_GROUP + 1
+  var fraction = ""
+  if i + 1 < text.len and text[i] == POINT_DECIMAL and text[i + 1] in Digits:
+    inc i
+    while i < text.len and text[i] in Digits:
+      fraction.add text[i]
+      inc i
+
+  # Move point by places of scale, so digits parse once and round once.
+  for (mark, places) in SCALES_VALUE:
+    if i < text.len and text[i] == mark:
+      let moved = min(places, fraction.len)
+      whole.add fraction[0 ..< moved] & '0'.repeat(places - moved)
+      fraction = fraction[moved .. ^1]
+      inc i
+      break
+  var amount = (whole & (if fraction.len > 0: "." & fraction else: "")).parseFloat
+
+  # Read mark of time, which value of cost refuses, and refuse value that runs on.
+  for (mark, minutes) in MINUTES_TIME:
+    if i < text.len and text[i] == mark:
+      if unit == UnitNumber.Cost: return
+      unit = UnitNumber.Time
+      amount *= minutes
+      inc i
+      break
+  if i < text.len and text[i] in Letters + Digits: return
+  some(Value(amount: amount, unit: unit, stop: i))
+
+
+func unitEstimate(text: string, values: openArray[Value]): Option[UnitNumber] =
+  ## Read unit of estimate of text whose cells give values (7194411522): unit of their marks
+  ##   where each gives same, `Tokens` where each is bare and text holds word `tokens` in any
+  ##   case, `Count` where each is bare and it holds none; none where marks differ.
+  if values.anyIt(it.unit != values[0].unit): return
+  if values[0].unit != UnitNumber.Unspecified: return some(values[0].unit)
+  let lower = text.toLowerAscii
+  var at = lower.find(WORD_TOKENS)
+  while at >= 0:
+    let stop = at + WORD_TOKENS.len
+    if (at == 0 or lower[at - 1] notin Letters) and
+        (stop == lower.len or lower[stop] notin Letters):
+      return some(UnitNumber.Tokens)
+    at = lower.find(WORD_TOKENS, at + 1)
+  some(UnitNumber.Count)
+
+
+func estimateCells(text: string, cells: array[3, string]): Option[Estimate] =
+  ## Read estimate of text from cells of its 5th, 50th and 95th percentiles: each one whole value
+  ##   (`valueAt`), of one unit (`unitEstimate`), each above one before; none otherwise, since
+  ##   number whose percentiles do not rise takes no score.
+  var values: seq[Value]
+  for cell in cells:
+    let value = cell.valueAt
+    if value.isNone or value.get.stop != cell.len: return
+    values.add value.get
+  let unit = text.unitEstimate(values)
+  if unit.isNone or
+      not (values[0].amount < values[1].amount and values[1].amount < values[2].amount):
+    return
+  some(Estimate(low: values[0].amount, median: values[1].amount, high: values[2].amount,
+    unit: unit.get))
+
+
+func outcomeResult*(cell: string, unit: UnitNumber): Option[float] =
+  ## Read outcome that opens cell under `Result` of estimate of unit: amount of value at its start
+  ##   (`valueAt`) whose marks give unit, bare for `Tokens` and `Count`; none otherwise, so
+  ##   `15, inside` gives no minutes, and `$1.10` no count.
+  let value = cell.valueAt
+  if value.isNone: return
+  let marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
+  if value.get.unit == marked: some(value.get.amount) else: none(float)
+
+
+func rowsClaim(text: string): seq[RowClaim] =
+  ## Read each row of each table of judgements or estimates of block text, in order: table whose
+  ##   header holds `#`, then `Judgement` or `Estimate @ 90%` (7200557915). Bold label and
+  ##   sentence above table read as none, as each line that opens no table does.
+  ##   Table whose header holds both reads as judgements.
+  for table in text.tablesMarkdown:
+    let
+      at_number = table.header.find(COLUMN_NUMBER)
+      at_judgement = table.header.find(COLUMN_JUDGEMENT)
+      at_estimate = table.header.find(COLUMN_ESTIMATE)
+      is_estimate = at_judgement < 0
+    if at_number < 0 or (is_estimate and at_estimate < 0): continue
+    for row in table.rows:
+      var claim = RowClaim(cell_number: row.cellAt(at_number), is_estimate: is_estimate,
+        text: row.cellAt(if is_estimate: at_estimate else: at_judgement))
+      if is_estimate:
+        for k, column in COLUMNS_PERCENTILE:
+          claim.percentiles[k] = row.cellAt(table.header.find(column))
+      else: claim.confidence = row.cellAt(table.header.find(COLUMN_CONFIDENCE))
+      result.add claim
+
+
+func criteriaBlock(text: string): seq[tuple[number: int, criterion: string]] =
+  ## Read number and criterion of each row of each table of criteria of block text: header holds
+  ##   `#` and `Resolution criterion` (7196051993); row with no number gives none.
+  for table in text.tablesMarkdown:
+    let
+      at_number = table.header.find(COLUMN_NUMBER)
+      at_criterion = table.header.find(COLUMN_CRITERION)
+    if at_number < 0 or at_criterion < 0: continue
+    for row in table.rows:
+      let number = row.cellAt(at_number).numberCell
+      if number.isSome: result.add (number.get, row.cellAt(at_criterion))
+
+
+func forecastsTable(text: string): seq[Forecast] =
+  ## Read claim of each row of table of judgements or estimates of block text that opens with
+  ##   number and holds text, by that number: whole cell of its text, which row of reflection
+  ##   quotes (7200557915). Judgement takes confidence of its `%`, and estimate 90%, with
+  ##   percentiles of its cells where they rise in one unit (`estimateCells`).
+  for row in text.rowsClaim:
+    let number = row.cell_number.numberCell
+    if number.isNone or row.text.len == 0: continue
+    var forecast = Forecast(position: number.get, forms: @[row.text], is_row: true,
+      is_number: row.is_estimate)
+    if row.is_estimate:
+      forecast.confidence = some(CONFIDENCE_ESTIMATE)
+      forecast.estimate = row.text.estimateCells(row.percentiles)
+    else: forecast.confidence = row.confidence.percentageCell
+    result.add forecast
+
+
+func forecasts*(text: string): seq[Forecast] =
+  ## Read each claim of block text: each bullet (`forecastsBullets`), then each row of its tables
+  ##   of judgements and estimates (`forecastsTable`), so block of either form serves call.
+  ##   Bullets stay read while running session may still write them (choice), and their checks
+  ##     stay as they were.
+  text.forecastsBullets & text.forecastsTable
+
+
+func findingsPrediction*(text: string): seq[Finding] =
+  ## Report each row of table of claims of block text whose `#` holds no number of its own,
+  ##   whose text is empty, judgement whose `%` holds no percentage alone, estimate whose cells
+  ##   are no rising values of one unit, and claim whose number takes no criterion (7200557915).
+  ##   Row with no number takes that finding alone, since others name it by its number. Bullets
+  ##     take none, since check of their form reads only cell that quotes them.
+  let criteria = text.criteriaBlock
+  var seen: seq[int]
+  for row in text.rowsClaim:
+    let number = row.cell_number.numberCell
+    if number.isNone or number.get in seen:
+      result.add finding("", 0, Check.TablesPrediction, RULE_NUMBER & "; got `" &
+        row.cell_number & "`.")
       continue
-    let rows = lines[i + 1 ..< stop].mapIt(it.cellsRow).filterIt(not it.isRowSeparator)
+    seen.add number.get
+    let named = " for claim `" & $number.get & "`."
+    if row.text.len == 0:
+      result.add finding("", 0, Check.TablesPrediction, RULE_TEXT & "; got empty cell" & named)
+    if row.is_estimate and row.text.estimateCells(row.percentiles).isNone:
+      result.add finding("", 0, Check.TablesPrediction, RULE_ESTIMATE & "; got `" &
+        row.percentiles.join("`, `") & "`" & named)
+    if not row.is_estimate and row.confidence.percentageCell.isNone:
+      result.add finding("", 0, Check.TablesPrediction, RULE_CONFIDENCE & "; got `" &
+        row.confidence & "`" & named)
+    if not criteria.anyIt(it.number == number.get and it.criterion.len > 0):
+      result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION & "; got none" & named)
+
+
+func tablesReflection(text: string): seq[TableMarkdown] =
+  ## Read each table of claims of reflection text, in order: first table with column `Predicted`,
+  ##   as block of bullets takes it, and each table whose header holds `#`, then `Judgement` or
+  ##   `Estimate @ 90%` (7200557915).
+  var has_predicted = false
+  for table in text.tablesMarkdown:
+    if COLUMN_PREDICTED in table.header:
+      if not has_predicted: result.add table
+      has_predicted = true
+    elif COLUMN_NUMBER in table.header and
+        (COLUMN_JUDGEMENT in table.header or COLUMN_ESTIMATE in table.header):
+      result.add table
+
+
+func rowsTable(table: TableMarkdown): seq[RowReflection] =
+  ## Read each row of table of claims of reflection, its cells collapsed: claim under
+  ##   `Predicted`, else `Judgement`, else `Estimate @ 90%`, and confidence under `Confidence`,
+  ##   else `%`; empty cell where its column is missing.
+  let
+    at_number = table.header.find(COLUMN_NUMBER)
+    at_quoted = [COLUMN_PREDICTED, COLUMN_JUDGEMENT, COLUMN_ESTIMATE].mapIt(table.header.find(it))
+      .filterIt(it >= 0)
+    at_confidence = [COLUMN_CONFIDENCE_PREDICTED, COLUMN_CONFIDENCE].mapIt(table.header.find(it))
+      .filterIt(it >= 0)
+    is_numbered = COLUMN_PREDICTED notin table.header and at_number >= 0
+  for row in table.rows:
+    var read = RowReflection(
+      is_numbered: is_numbered,
+      quoted: row.cellAt(if at_quoted.len > 0: at_quoted[0] else: -1),
+      state: row.cellAt(table.header.find(COLUMN_STATE)),
+      confidence: row.cellAt(if at_confidence.len > 0: at_confidence[0] else: -1),
+      result: row.cellAt(table.header.find(COLUMN_RESULT)),
+    )
+    if is_numbered:
+      read.cell_number = row.cellAt(at_number)
+      read.number = read.cell_number.numberCell
+    result.add read
+
+
+func rowsReflection*(text: string): seq[RowReflection] =
+  ## Read each row of each table of claims of reflection text, in order (`tablesReflection`).
+  text.tablesReflection.mapIt(it.rowsTable).concat
+
+
+func isQuoting*(row: RowReflection, forecast: Forecast): bool =
+  ## Decide whether row of reflection quotes claim: its cell is one form of claim, word for word
+  ##   (7016134603), and number of row in table with column `#` is number of claim (7200557915).
+  ##   Row of table with column `Predicted` names no number, so it quotes claim of either form.
+  row.quoted in forecast.forms and (not row.is_numbered or row.number == some(forecast.position))
+
+
+func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Finding] =
+  ## Report reflection with no table of claims, each such table with no row, each row of it that
+  ##   is empty or quotes no claim of block call took, and each result of estimate marked hit or
+  ##   miss that opens with no value in its unit (7200557915).
+  ##   Table of claims is first one with column `Predicted`, and each one with `#` and
+  ##     `Judgement` or `Estimate @ 90%` (`tablesReflection`); text is fenced out already.
+  ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
+  ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
+  ##     so it names `No prediction`, which row of missed prediction holds.
+  ##   Cell under `Predicted` equals one claim of block call took, with or without its label
+  ##     (7016134603), run that opens with capital, plain or in form of bold of `FORMS_LABEL`
+  ##     (7022872980, 7027197745), each run of whitespace read as one space. Fragment of claim,
+  ##     claim with other label before it, claim with its confidence (7018501890), or claim with
+  ##     no mark that keeps final full stop of its bullet (7017902016) is none.
+  ##   Row of table with column `#` names its claim by number too (`isQuoting`), so text of
+  ##     claim of other number quotes none.
+  ##   Cell `No prediction` passes too, in that case of letters alone: it counts missing
+  ##     prediction in row of its own, with cause of miss under `Result` (7015791554).
+  let tables = text.tablesReflection
+  if tables.len == 0:
+    return @[finding(
+      "",
+      0,
+      Check.TableReflection,
+      "Reflection holds table of claims: table of judgements or estimates whose header has " &
+        "column `" & COLUMN_NUMBER & "`, or table whose header has column `" &
+        COLUMN_PREDICTED & "` (GUIDE.md, Prediction, critic and reflection)."
+    )]
+  for table in tables:
+    let rows = table.rowsTable
     if rows.len == 0:
-      return @[finding(
+      result.add finding(
         "",
         0,
         Check.TableReflection,
-        "Table of reflection holds row under its header; got none under `" &
-          lines[i].strip & "`."
-      )]
+        "Table of reflection holds row under its header; got none under `" & table.line & "`."
+      )
     for n, row in rows:
-      let cell = (if column < row.len: row[column].collapsed else: "")
-      if cell.len == 0:
+      let rule = (if row.is_numbered: RULE_ROW else: RULE_CELL)
+      if row.quoted.len == 0:
         result.add finding(
           "",
           0,
           Check.TableReflection,
-          RULE_CELL & "; got empty cell in row `" & $(n + 1) & "`.",
+          rule & "; got empty cell in row `" & $(n + 1) & "`.",
         )
-      elif cell != NO_PREDICTION and cell notin quoted:
-        result.add finding("", 0, Check.TableReflection, RULE_CELL & "; got `" & cell & "`.")
-    return
-  @[finding(
-    "",
-    0,
-    Check.TableReflection,
-    "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
-      "(GUIDE.md, Prediction, critic and reflection)."
-  )]
+        continue
+      if row.quoted == NO_PREDICTION: continue
+      let quoting = forecasts.filterIt(row.isQuoting(it))
+      if quoting.len == 0:
+        let got = (if row.is_numbered: "`" & row.cell_number & "` and `" & row.quoted & "`"
+          else: "`" & row.quoted & "`")
+        result.add finding("", 0, Check.TableReflection, rule & "; got " & got & ".")
+        continue
+      let estimate = quoting[0].estimate
+      if estimate.isSome and MARKERS_SCORED.anyIt(row.state.startsWith(it)) and
+          row.result.outcomeResult(estimate.get.unit).isNone:
+        result.add finding("", 0, Check.TableReflection, RULE_OUTCOME & "; got `" & row.result &
+          "` for claim `" & $quoting[0].position & "`.")
+
+
+func checkTables(subagents: Subagents): seq[Finding] =
+  ## Report each part of claim that tables of `## Prediction` block of current model turn lack
+  ##   (`findingsPrediction`): turn of block is turn whose stop delegate mends it in, since block
+  ##   of later turn serves call in its place (7027197745), and block after call is no evidence.
+  let current = subagents.turns - 1
+  for prediction in subagents.predictions:
+    if prediction.place.turn == current: result.add prediction.text.findingsPrediction
 
 
 func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
@@ -2440,16 +2822,16 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
         "any sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
         "for report `" & $(n + 1) & "` of `" & $reports.len & "` in this turn.",
     )
-  let quoted = subagents.blocksTaken(kinds).filterIt(it >= 0)
-    .mapIt(subagents.predictions[it].text.claims).concat
+  let taken = subagents.blocksTaken(kinds).filterIt(it >= 0)
+    .mapIt(subagents.predictions[it].text.forecasts).concat
   for reflection in subagents.reflections:
-    if reflection.place.turn == current: result.add findingsTable(reflection.text, quoted)
+    if reflection.place.turn == current: result.add findingsReflection(reflection.text, taken)
 
 
 func checkBlocks*(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
   ## Report what `stop` holds of prediction, critic and reflection at end of each model turn,
   ##   whether or not turn pushed or posted.
-  subagents.checkPredictions(kinds) & subagents.checkReflections(kinds)
+  subagents.checkPredictions(kinds) & subagents.checkTables & subagents.checkReflections(kinds)
 
 
 func reasonStop*(

@@ -1,21 +1,29 @@
 ## Log each scored claim of each reflection, as text format of `claims.proto`, where role writes.
-##   Claim is row of first table with column `Predicted` of `## Reflection` block of current
-##     model turn, whose cell is whole claim of block call took; `No prediction`, cell quoting no
-##     claim, and cell under `State` that no marker opens give none (#964). Reflection counts
-##     wherever it stands in turn, below sign-off too, since its marks hold there.
+##   Claim is row of table of claims of `## Reflection` block of current model turn
+##     (`rowsReflection`): first table with column `Predicted`, and each table of judgements or
+##     estimates with column `#`. Its cell quotes claim of block call took (`isQuoting`);
+##     `No prediction`, cell quoting no claim, and cell under `State` that no marker opens give
+##     none (#964). Reflection counts wherever it stands in turn, below sign-off too, since its
+##     marks hold there.
 ##   Claim takes latest call before reflection whose block holds it, of kind line `**Subagent:**`
 ##     of reflection names, else of any kind, so claim of block of critic takes call of critic.
 ##   Kind is `subagent_type` of call, and effort is input `effort`, else `effort:` of its template
 ##     (`readEfforts`); model stays empty, as `D1 b` of #1025 rules, since harness keeps name of
 ##     model out of each file it pushes.
-##   State is marker opening cell under `State`, and confidence is percentage of cell under
-##     `Confidence`. Tokens and cost are first `<n> tokens` and `$<x>` of line `**Subagent:**`;
-##     call of critic that line does not name reads line `**Critic:**`.
-##   Number claim, whose bullet ends at percentiles (`isNumber`), takes last three numbers of its
-##     text; its outcome is first number of its cell under `Result`, as GUIDE.md asks.
+##   State is marker opening cell under `State`. Confidence is what row of table of block states,
+##     `%` of judgement or 90% of estimate (7200557915), else percentage of cell under
+##     `Confidence` or `%` of reflection, since bullet states none apart. Tokens and cost are first
+##     `<n> tokens` and `$<x>` of line `**Subagent:**`; call of critic that line does not name
+##     reads line `**Critic:**`.
+##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
+##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
+##     end it, takes last three numbers of its text, unit its text names (`unitText`), and first
+##     number of its cell under `Result`, as GUIDE.md asked; so one claim in either form gives
+##     same row but its text.
 ##   Date, delegate and address come from entry of reflection: `timestamp`, `sessionId`, `uuid`.
-##   Key is delegate, id of call, position of claim in its block, and state: reflection written
-##     again adds no row, and later mark of claim that waits adds one (`keysIn`).
+##   Key is delegate, id of call, number or position of claim in its block, and state:
+##     reflection written again adds no row, and later mark of claim that waits adds one
+##     (`keysIn`).
 ##   Log is `claims.txtpb` of scope branch writes (`pathLog`), with project its role names; other
 ##     checkout writes file outside tree, with project `curator`, since root curator alone keeps
 ##     checkout outside grammar. `moveClaims` empties that file into log of root branch alone.
@@ -36,8 +44,12 @@
 ##     of 14 lines, which `union` joins into one block that `protoc` refuses.
 ##   Rejected: tokens summed from transcript of subagent: cost would need price of each model in
 ##     code, and reflection states both.
+##   Rejected: unit read from text of estimate, which design gives its cells (7194411522); so
+##     `Number` holds unit, under new number.
 ##   Cost: one claim in blocks of several calls of one kind takes latest such call alone.
 ##   Cost: rows waiting outside tree are lost where machine ends before `moveClaims` runs.
+##   Cost: number of bullet quoted in table of estimates takes no confidence, since neither its
+##     block nor row states one apart, so it takes no score.
 
 {.experimental: "strictFuncs".}
 
@@ -54,11 +66,12 @@ type
     Delegate  ## Delegate, in table of its reflection.
     Resolver  ## Resolver, in table of its report.
 
-  Number* = object  ## Define number claim: its percentiles, and value its result gives.
+  Number* = object  ## Define number claim: its percentiles, value its result gives, and its unit.
     low*: float  ## Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
     median*: float  ## 50th percentile.
     high*: float  ## Highest percentile: 95th at confidence 0.9, 90th at 0.8.
-    outcome*: Option[float]  ## First number of cell under `Result`; none where cell holds none.
+    outcome*: Option[float]  ## Value cell under `Result` opens with; none where it holds none.
+    unit*: UnitNumber  ## Unit cells of estimate or text of bullet name; unspecified where none.
 
   Claim* = object  ## Define one row of log: message `Claim` of `claims.proto`.
     date*: string  ## Day of reflection, as `2026-11-20`.
@@ -68,14 +81,14 @@ type
     call*: string  ## Id of tool use of that call.
     model*: string  ## Model of that call; `stop` leaves it empty (`D1 b` of #1025).
     effort*: string  ## Effort of that call, else of template of its kind.
-    text*: string  ## Claim, as cell under `Predicted` quotes it.
-    confidence*: float  ## Percentage of cell under `Confidence`, as fraction.
+    text*: string  ## Claim, as cell of reflection quotes it.
+    confidence*: float  ## Confidence row of block or of reflection states, as fraction.
     state*: State  ## Marker opening cell under `State`.
     marker*: Marker  ## Who marked state; delegate where none is named.
     tokens*: int  ## Tokens line of reflection gives for call.
     cost*: float  ## Dollars line of reflection gives for call.
     address*: string  ## Delegate, `uuid` of entry of reflection, and row from 1, by `/`.
-    key*: string  ## Delegate, call, position of claim in its block, and state, by `/`.
+    key*: string  ## Delegate, call, number or position of claim in its block, and state, by `/`.
     number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
     result*: string  ## Cell under `Result`.
 
@@ -131,7 +144,7 @@ const
   FIELDS_CLAIM* = ["date", "delegate", "project", "kind", "call", "model", "effort", "text",
     "confidence", "state", "marker", "tokens", "cost", "address", "key", FIELD_NUMBER, "result"]
     ## Fields of message `Claim` of `claims.proto` that reader of row knows.
-  FIELDS_NUMBER* = ["low", "median", "high", "outcome"]
+  FIELDS_NUMBER* = ["low", "median", "high", "outcome", "unit"]
     ## Fields of message `Number` of `claims.proto` that reader of row knows.
   FIELD_PRIOR = "prior"  ## Field of `Log` that holds message `Prior`.
   FIELD_TALLIES = "tallies"  ## Field of `Prior` that holds each message `Tally`.
@@ -144,8 +157,6 @@ const
   OPENING_ROW* = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
   CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
   MARK_COMMENT = '#'  ## Mark that opens comment line of log, as header of log does.
-  COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
-    ## Columns of table of reflection, in order of their cells in `rowsTable`.
   MARKERS_STATE = [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
     ("⏸", State.Waiting)]
     ## Markers of cell under `State`, as GUIDE.md gives them; `⏸️` opens with `⏸`.
@@ -154,6 +165,14 @@ const
     ## Name of each value of enum `State` of `claims.proto`.
   NAMES_MARKER: array[Marker, string] = ["MARKER_UNSPECIFIED", "MARKER_DELEGATE", "MARKER_RESOLVER"]
     ## Name of each value of enum `Marker` of `claims.proto`.
+  NAMES_UNIT: array[UnitNumber, string] =
+    ["UNIT_UNSPECIFIED", "UNIT_TOKENS", "UNIT_COST", "UNIT_TIME", "UNIT_COUNT"]
+    ## Name of each value of enum `Unit` of `claims.proto`.
+  WORDS_UNIT = [(UnitNumber.Tokens, "tokens "), (UnitNumber.Cost, "cost "),
+    (UnitNumber.Time, "time ")]
+    ## Word that opens text of number of bullet in unit, past its label, in lower case.
+  LABEL_COUNT = "count: "  ## Label that opens text of number of bullet that is count, lowercase.
+  SEPARATOR_LABEL = ": "  ## Mark after label of claim of bullet, as in `Work: `.
   LABELS_CRITIC = ["**critic:**", "**critic**:"]
     ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
   WORD_TOKENS = " tokens"  ## Word after count of tokens, as line of reflection writes it.
@@ -213,34 +232,6 @@ func figuresLine(text: string, labels: openArray[string]): tuple[tokens: int, co
     return
 
 
-func rowsTable(text: string): seq[array[COLUMNS.len, string]] =
-  ## Read cells under each of `COLUMNS` of each row of first table of text whose header has
-  ##   column `Predicted`, each collapsed; empty cell where its column is missing.
-  ##   Table is run of lines opening with `|`, header first, as `findingsTable` of `hooks.nim`
-  ##     reads it.
-  let lines = text.splitLines
-  var i = 0
-  while i < lines.len:
-    if not lines[i].strip.startsWith("|"):
-      inc i
-      continue
-    var stop = i
-    while stop < lines.len and lines[stop].strip.startsWith("|"): inc stop
-    let header = lines[i].cellsRow
-    if COLUMN_PREDICTED notin header:
-      i = stop
-      continue
-    for line in lines[i + 1 ..< stop]:
-      let cells = line.cellsRow
-      if cells.isRowSeparator: continue
-      var row: array[COLUMNS.len, string]
-      for c, name in COLUMNS:
-        let column = header.find(name)
-        if column >= 0 and column < cells.len: row[c] = cells[column].collapsed
-      result.add row
-    return
-
-
 func stateCell(cell: string): State =
   ## Read state that marker opening cell gives; `State.Unspecified` where none opens it.
   for (marker, state) in MARKERS_STATE:
@@ -256,75 +247,105 @@ func confidenceCell(cell: string): float =
   if numbers.len > 0: numbers[^1] / 100 else: 0
 
 
+func unitText*(text: string): UnitNumber =
+  ## Read unit that text of number of bullet names, as GUIDE.md asked before tables: label
+  ##   `Count:`, else word `tokens`, `cost` or `time` that opens text, past its label;
+  ##   `UnitNumber.Unspecified` where none does, so `Cost: $0.80` names none.
+  ##   Row written before `Number` held unit takes its unit here too, as scorer reads it.
+  let
+    lower = text.toLowerAscii
+    colon = lower.find(SEPARATOR_LABEL)
+  if lower.startsWith(LABEL_COUNT): return UnitNumber.Count
+  for opening in [lower, (if colon >= 0: lower[colon + SEPARATOR_LABEL.len .. ^1] else: "")]:
+    for (unit, word) in WORDS_UNIT:
+      if opening.startsWith(word): return unit
+  UnitNumber.Unspecified
+
+
 func callTaken(
-  subagents: Subagents; taken: openArray[int]; reflection: Block; claim, named: string
-): int =
-  ## Read index of latest call before reflection whose block holds claim, of kind named, else of
-  ##   any kind; -1 where no call took block holding it.
-  result = -1
+  subagents: Subagents;
+  taken: openArray[int];
+  forecasts: openArray[seq[Forecast]];
+  reflection: Block;
+  row: RowReflection;
+  named: string
+): Option[int] =
+  ## Read index of latest call before reflection whose block holds claim row quotes
+  ##   (`isQuoting`), of kind named, else of any kind; none where no call took block holding it.
+  ##   Forecasts are claims of block each call took, by index of call.
   for k in countdown(subagents.calls.high, 0):
     let call = subagents.calls[k]
     if call.place.at >= reflection.place.at or taken[k] < 0: continue
-    if claim notin subagents.predictions[taken[k]].text.claims: continue
-    if named.len == 0 or call.kind == named: return k
-    if result < 0: result = k
+    if not forecasts[k].anyIt(row.isQuoting(it)): continue
+    if named.len == 0 or call.kind == named: return some(k)
+    if result.isNone: result = some(k)
+
+
+func numberForecast(forecast: Forecast, row: RowReflection): Option[Number] =
+  ## Read number of claim that row of reflection quotes: percentiles and unit of cells of
+  ##   estimate, with outcome of value of its result (`outcomeResult`); else, for bullet that
+  ##   percentiles end, last three numbers of its text, unit its text names (`unitText`), and
+  ##   first number of its result; none for judgement, or bullet whose text holds fewer numbers.
+  if forecast.estimate.isSome:
+    let estimate = forecast.estimate.get
+    return some(Number(low: estimate.low, median: estimate.median, high: estimate.high,
+      outcome: row.result.outcomeResult(estimate.unit), unit: estimate.unit))
+  let numbers = row.quoted.numbersIn
+  if not forecast.is_number or numbers.len < 3: return
+  let outcome = row.result.numbersIn
+  some(Number(
+    low: numbers[^3],
+    median: numbers[^2],
+    high: numbers[^1],
+    outcome: (if outcome.len > 0: some(outcome[0]) else: none(float)),
+    unit: row.quoted.unitText,
+  ))
 
 
 func claimsTurn*(
   subagents: Subagents; kinds: openArray[string]; efforts: Table[string, string]; project: string
 ): seq[Claim] =
-  ## Read claim of each row of each reflection of current model turn whose cell under `Predicted`
-  ##   is whole claim of block call took, and whose cell under `State` opens with marker, in order
-  ##   of reflections and rows, each of project.
+  ## Read claim of each row of each reflection of current model turn that quotes claim of block
+  ##   call took, and whose cell under `State` opens with marker, in order of reflections and
+  ##   rows, each of project.
   let
     current = subagents.turns - 1
     taken = subagents.blocksTaken(kinds)
+    forecasts = taken.mapIt(if it >= 0: subagents.predictions[it].text.forecasts else: @[])
   for reflection in subagents.reflections:
     if reflection.place.turn != current: continue
     let
       named = reflection.text.kindNamed(kinds)
       figures_subagent = reflection.text.figuresLine(LABELS_SUBAGENT)
       figures_critic = reflection.text.figuresLine(LABELS_CRITIC)
-    for n, row in reflection.text.rowsTable:
+    for n, row in reflection.text.rowsReflection:
+      let state = row.state.stateCell
+      if row.quoted.len == 0 or row.quoted == NO_PREDICTION or state == State.Unspecified: continue
+      let k = subagents.callTaken(taken, forecasts, reflection, row, named)
+      if k.isNone: continue
       let
-        quoted = row[2]
-        state = row[0].stateCell
-      if quoted.len == 0 or quoted == NO_PREDICTION or state == State.Unspecified: continue
-      let k = subagents.callTaken(taken, reflection, quoted, named)
-      if k < 0: continue
-      let
-        call = subagents.calls[k]
-        prediction = subagents.predictions[taken[k]].text
+        call = subagents.calls[k.get]
+        forecast = forecasts[k.get].filterIt(row.isQuoting(it))[0]
         figures = (if call.kind == KIND_CRITIC and call.kind != named: figures_critic
           else: figures_subagent)
-      var claim = Claim(
+      result.add Claim(
         date: reflection.timestamp[0 ..< min(LENGTH_DATE, reflection.timestamp.len)],
         delegate: reflection.delegate,
         project: project,
         kind: call.kind,
         call: call.id,
         effort: (if call.effort.len > 0: call.effort else: efforts.getOrDefault(call.kind)),
-        text: quoted,
-        confidence: row[1].confidenceCell,
+        text: row.quoted,
+        confidence: forecast.confidence.get(row.confidence.confidenceCell),
         state: state,
         marker: Marker.Delegate,
         tokens: figures.tokens,
         cost: figures.cost,
         address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
-        key: [reflection.delegate, call.id, $prediction.positionClaim(quoted), NAMES_STATE[state]]
-          .join("/"),
-        result: row[3],
+        key: [reflection.delegate, call.id, $forecast.position, NAMES_STATE[state]].join("/"),
+        number: forecast.numberForecast(row),
+        result: row.result,
       )
-      let numbers = quoted.numbersIn
-      if prediction.isNumber(quoted) and numbers.len >= 3:
-        let outcome = row[3].numbersIn
-        claim.number = some(Number(
-          low: numbers[^3],
-          median: numbers[^2],
-          high: numbers[^1],
-          outcome: (if outcome.len > 0: some(outcome[0]) else: none(float)),
-        ))
-      result.add claim
 
 
 func quotedText(s: string): string =
@@ -346,7 +367,8 @@ func quotedText(s: string): string =
 
 func lineClaim*(claim: Claim): string =
   ## Write claim as one line of log: field `claims` of `Log`, fields in order of their numbers.
-  ##   Empty string, zero number and unspecified state stay out, as text format leaves defaults.
+  ##   Empty string, zero number, and unspecified state and unit stay out, as text format leaves
+  ##     defaults.
   var fields: seq[string]
   template put(name, value: string) =
     ## Add field of name and its value, as text format writes it.
@@ -371,6 +393,7 @@ func lineClaim*(claim: Claim): string =
     let number = claim.number.get
     var inside = @["low: " & $number.low, "median: " & $number.median, "high: " & $number.high]
     if number.outcome.isSome: inside.add "outcome: " & $number.outcome.get
+    if number.unit != UnitNumber.Unspecified: inside.add "unit: " & NAMES_UNIT[number.unit]
     fields.add FIELD_NUMBER & " { " & inside.join(" ") & " }"
   if claim.result.len > 0: put "result", claim.result.quotedText
   FIELD_LOG & " { " & fields.join(" ") & " }"
@@ -512,6 +535,7 @@ func claimLine*(line: string): Claim =
       of "median": result.number.get.median = value.parseFloat
       of "high": result.number.get.high = value.parseFloat
       of "outcome": result.number.get.outcome = some(value.parseFloat)
+      of "unit": result.number.get.unit = NAMES_UNIT.valueName(value)
       else: raise newException(ValueError, &"Number of row holds unknown field; got `{name}`.")
       continue
     case name

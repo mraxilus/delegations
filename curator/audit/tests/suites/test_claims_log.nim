@@ -10,10 +10,11 @@
 import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
 import std/unittest
 import ../../src/[claims_log, hooks, sums_exact]
+import ./fixtures
 
 
 const
-  KINDS = ["critic", "resolver", "reviewer"]  ## Kinds templates of scratch root name.
+  KINDS = ["builder", "critic", "resolver", "reviewer"]  ## Kinds templates of scratch root name.
   DELEGATE = "s1"  ## `sessionId` of each entry of reflection.
   UUID = "u9"  ## `uuid` of entry of reflection.
   STAMP = "2026-11-20T11:57:03.512Z"  ## `timestamp` of entry of reflection.
@@ -60,6 +61,84 @@ const
 | ✅ | 70% | the race leads the findings | it leads |
 """
     ## Reflection on reviewer whose one row quotes claim that several blocks hold.
+  PREDICTION_BULLETS = """## Prediction
+
+**Subagent:** reviewer of the diff, fresh context.
+
+- Judgement: The diff weakens no test. (85%). Resolution criterion: no assertion goes.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
+  95th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the cost on the line `**Subagent:**` of the reflection.
+- Time: time to its report, in minutes: 5, 12 and 30, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the minutes on the line `**Subagent:**` of the reflection.
+- Count: findings that the report ranks: 3, 6 and 11, as the 5th, 50th and 95th percentiles.
+  Resolution criterion: the count of the findings that the report ranks.
+"""
+    ## Block of reviewer in bullets, as GUIDE.md wrote it before tables: claim of each unit.
+  REFLECTION_BULLETS = """## Reflection
+
+**Subagent:** reviewer of the diff, 170,000 tokens and $1.10 at list price, 57 calls, 15 min.
+
+| State | Confidence | Predicted | Result |
+| --- | --- | --- | --- |
+| ✅ | 85% | The diff weakens no test. | Each assertion stands. |
+| ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
+| ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |
+| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15m, inside |
+| ⬜ | 90% | Count: findings that the report ranks: 3, 6 and 11 | 12, above the 95th |
+"""
+    ## Reflection on `PREDICTION_BULLETS`.
+  PREDICTION_TABLE = """## Prediction
+
+**Subagent:** reviewer of the diff, fresh context.
+
+**Judgements.** One claim.
+
+| # | % | Judgement |
+| --- | :---: | --- |
+| 1 | 85% | The diff weakens no test. |
+
+**Estimates.** Four numbers.
+
+| # | Estimate @ 90% | 5th | 50th | 95th |
+| --- | --- | ---: | ---: | ---: |
+| 2 | The reviewer uses ~160k tokens. | 100k | 160k | 300k |
+| 3 | The reviewer costs ~$0.90. | $0.40 | $0.90 | $2.00 |
+| 4 | The reviewer takes ~12m. | 5m | 12m | 30m |
+| 5 | The report ranks ~6 findings. | 3 | 6 | 11 |
+
+**Criteria.** By number.
+
+| # | Resolution criterion |
+| --- | --- |
+| 1 | No assertion goes. |
+| 2 | The sum of the usage of its requests. |
+| 3 | The cost on the line `**Subagent:**` of the reflection. |
+| 4 | The minutes on the line `**Subagent:**` of the reflection. |
+| 5 | The count of the findings that the report ranks. |
+"""
+    ## Block of `PREDICTION_BULLETS` in tables of comment 7200557915 on #1028.
+  REFLECTION_TABLE = """## Reflection
+
+**Subagent:** reviewer of the diff, 170,000 tokens and $1.10 at list price, 57 calls, 15 min.
+
+**Judgements.** It held.
+
+| # | State | % | Judgement | Result |
+| --- | :---: | :---: | --- | --- |
+| 1 | ✅ | 85% | The diff weakens no test. | Each assertion stands. |
+
+**Estimates.** Three inside, one above.
+
+| # | State | Estimate @ 90% | Result |
+| --- | :---: | --- | --- |
+| 2 | ✅ | The reviewer uses ~160k tokens. | 170,000, inside |
+| 3 | ✅ | The reviewer costs ~$0.90. | $1.10, inside |
+| 4 | ✅ | The reviewer takes ~12m. | 15m, inside |
+| 5 | ⬜ | The report ranks ~6 findings. | 12, above the 95th |
+"""
+    ## Reflection on `PREDICTION_TABLE`, each result as `REFLECTION_BULLETS` gives it.
 
 
 func lineUser(text, kind: string): string =
@@ -127,6 +206,12 @@ func linesPredicted(prediction, kind: string; effort = ""; id = ""; model = ""):
     linesAgent(kind, effort, id, model) & lineSaid("Started.") & lineHandback(kind)
 
 
+func transcriptOne(prediction, kind, reflection: string): string =
+  ## Write transcript of one call of kind, with block prediction in turn of its own, then
+  ##   reflection in last turn.
+  lineUser("Do the work.", "human") & linesPredicted(prediction, kind) & lineSaid(reflection, UUID)
+
+
 func transcript(reflection = REFLECTION): string =
   ## Write transcript of reviewer and its critic, each with its block in turn of its own, then
   ##   reflection in last turn.
@@ -182,6 +267,19 @@ func fieldsMessage(schema, message: string): seq[string] =
         words = row.split({' ', '='}).filterIt(it.len > 0)
         at = (if words[0] in ["optional", "repeated"]: 2 else: 1)
       if words.len > at: result.add words[at]
+
+
+func positionClaim(text, claim: string): int =
+  ## Read number of first claim of block text whose forms hold claim, as key of its row names it;
+  ##   0 where none does.
+  for forecast in text.forecasts:
+    if claim in forecast.forms: return forecast.position
+
+
+func isNumber(text, claim: string): bool =
+  ## Decide whether first claim of block text whose forms hold claim is number, as log reads it.
+  for forecast in text.forecasts:
+    if claim in forecast.forms: return forecast.is_number
 
 
 
@@ -306,6 +404,88 @@ suite "Log of claims":
     check (transcript() & lineSaid("Done.")).claimsRead.len == 0  # reflection is of earlier turn
 
 
+  test "reflection of tables writes eight rows of case as found, each with its unit (#1028)":
+    # Case as found: example of comment 7200557915, which `D1 a` of comment 7218520265 rules;
+    #   rows 2, 4 and 5 as posted quote part of their claim, so they give none until mended.
+    var whole = REFLECTION_TABLES_POSTED
+    for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
+    let
+      posted = transcriptOne(PREDICTION_TABLES, "builder", REFLECTION_TABLES_POSTED).claimsRead
+      claims = transcriptOne(PREDICTION_TABLES, "builder", whole).claimsRead
+    check posted.mapIt(it.key.split('/')[2]) == @["1", "3", "6", "7", "8"]
+    check claims.len == 8
+    check claims.mapIt(it.text) == PREDICTION_TABLES.forecasts.mapIt(it.forms[0])
+    check claims.mapIt(it.confidence) == @[0.8, 0.8, 0.75, 0.75, 0.55, 0.9, 0.9, 0.9]
+    check claims.allIt(it.state == State.Hit and it.kind == "builder")
+    check claims.allIt((it.tokens, it.cost) == (39_100_000, 14.4))
+    check claims.mapIt(it.key) == toSeq(1..8).mapIt(DELEGATE & "/toolu_builder/" & $it &
+      "/STATE_HIT")
+    check claims.mapIt(it.address) == toSeq(1..8).mapIt(DELEGATE & "/" & UUID & "/" & $it)
+    check claims[0 .. 4].allIt(it.number.isNone)
+    check claims[5].number == some(Number(low: 5e6, median: 15e6, high: 45e6,
+      outcome: some(39_100_000.0), unit: UnitNumber.Tokens))
+    check claims[6].number == some(Number(low: 2.5, median: 7, high: 20, outcome: some(14.4),
+      unit: UnitNumber.Cost))
+    check claims[7].number == some(Number(low: 20, median: 50, high: 120, outcome: some(47.0),
+      unit: UnitNumber.Time))
+    check claims[7].result == "47m, inside"
+
+
+  test "claim of bullets and its claim of tables give equal rows, but text of number (#1028)":
+    # Domain: judgement, and number of each unit, each scale of cells, and hit and miss.
+    let
+      bullets = transcriptOne(PREDICTION_BULLETS, "reviewer", REFLECTION_BULLETS).claimsRead
+      table = transcriptOne(PREDICTION_TABLE, "reviewer", REFLECTION_TABLE).claimsRead
+    check bullets.len == 5 and table.len == 5
+    check bullets.mapIt(it.number.map(proc (n: Number): UnitNumber = n.unit)) == @[
+      none(UnitNumber), some(UnitNumber.Tokens), some(UnitNumber.Cost), some(UnitNumber.Time),
+      some(UnitNumber.Count)]
+    check bullets[0].text == table[0].text  # judgement quotes one text in either form
+    for k in 0 ..< bullets.len:
+      var (a, b) = (bullets[k], table[k])
+      check a.number.isSome == (k > 0)
+      (a.text, b.text) = ("", "")
+      check a == b
+    check bullets[4].number.get == Number(low: 3, median: 6, high: 11, outcome: some(12.0),
+      unit: UnitNumber.Count)
+
+
+  test "each state writes its row, and estimate that waits or is annulled takes no outcome":
+    var whole = REFLECTION_TABLES_POSTED
+    for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
+    const row = "| 8 | ✅ | The builder takes ~50m. | 47m, inside |"
+    for (marker, state) in [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
+        ("⏸️", State.Waiting)]:
+      for (cell, outcome) in [("47m, inside", some(47.0)), ("waits on the merge", none(float))]:
+        let
+          changed = whole.replace(row, row.replace("✅", marker).replace("47m, inside", cell))
+          claims = transcriptOne(PREDICTION_TABLES, "builder", changed).claimsRead
+        check claims.len == 8
+        check claims[7].state == state
+        check claims[7].key.endsWith("/8/" & ["STATE_UNSPECIFIED", "STATE_HIT", "STATE_MISS",
+          "STATE_ANNULLED", "STATE_WAITING"][ord(state)])
+        check claims[7].number.get.outcome == outcome
+    let unmarked = whole.replace(row, row.replace("| ✅ |", "| yes |"))
+    check transcriptOne(PREDICTION_TABLES, "builder", unmarked).claimsRead.len == 7
+
+
+  test "sample reflection of GUIDE.md writes one row for each claim of sample prediction":
+    # Delegate copies form from samples, so their rows reach log whole, in either form.
+    const guide = staticRead("../../../../GUIDE.md")
+    func sample(heading: string): string =
+      ## Read text of sample in fence that opens with heading.
+      let at = guide.find("```md\n" & heading & "\n")
+      guide[at + "```md\n".len ..< guide.find("\n```", at)] & "\n"
+    let
+      prediction = sample(HEADING_PREDICTION)
+      claims = transcriptOne(prediction, "reviewer", sample(HEADING_REFLECTION)).claimsRead
+    check prediction.forecasts.len > 0
+    check claims.len == prediction.forecasts.len
+    check claims.mapIt(it.key.split('/')[2]) == prediction.forecasts.mapIt($it.position)
+    check claims.filterIt(it.number.isSome).allIt(it.number.get.unit != UnitNumber.Unspecified and
+      it.number.get.outcome.isSome)
+
+
   test "line writes each field in order of schema, escaped, and leaves out each default":
     let claim = transcript().claimsRead[0]
     check claim.lineClaim == "claims { date: \"2026-11-20\" delegate: \"s1\" project: " &
@@ -326,6 +506,7 @@ suite "Log of claims":
   test "protoc and reader read each line back, field by field, and protoc refuses misspelt field":
     # `D1 a` of #964 (comment 7189788889): suite holds reader to `protoc` on same rows.
     var claims = transcript().claimsRead
+    claims.add transcriptOne(PREDICTION_TABLE, "reviewer", REFLECTION_TABLE).claimsRead
     claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled,
       marker: Marker.Delegate)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Delegate)
@@ -348,6 +529,7 @@ suite "Log of claims":
       "high: 300000", "outcome: 320000", "state: STATE_WAITING", "state: STATE_ANNULLED",
       "text: \"quote \\\" slash \\\\ tab \\t mark \\342\\234\\205 2.4\\302\\260\"",
       "text: \"a\\\\b\\n\\t\\001\"", "marker: MARKER_RESOLVER", "model: \"model-a\"",
+      "unit: UNIT_TOKENS", "unit: UNIT_COST", "unit: UNIT_TIME", "unit: UNIT_COUNT", "low: 0.4",
     ]:
       check decoded.splitLines.anyIt(it.strip == field)
     check lines.mapIt(it.claimLine) == claims  # each field `protoc` printed, as claim holds it
@@ -356,6 +538,8 @@ suite "Log of claims":
 
   test "reader reads each row of writer back into same claim, and each row of log in order":
     var claims = transcript().claimsRead
+    claims.add transcriptOne(PREDICTION_TABLE, "reviewer", REFLECTION_TABLE).claimsRead
+    check claims.anyIt(it.number.isSome and it.number.get.unit == UnitNumber.Count)
     claims.add Claim(text: "quote \" slash \\ tab \t mark ✅ 2.4°", state: State.Annulled,
       marker: Marker.Delegate)
     claims.add Claim(text: "a\\b\n\t\x01", state: State.Hit, marker: Marker.Resolver)
@@ -463,6 +647,7 @@ suite "Log of claims":
     expect ValueError: discard claimLine("claims { text: \"open }")
     expect ValueError: discard claimLine("claims { result { low: 1 } }")
     expect ValueError: discard claimLine("claims { number { mean: 1 } }")
+    expect ValueError: discard claimLine("claims { number { unit: UNIT_GOOD } }")
     expect ValueError: discard claimLine("claims { } text: \"a\" }")  # text after closing brace
     expect ValueError: discard claimLine("claims { number { number { low: 1 } } }")  # in block
     expect ValueError: discard claimLine("claims { text \"a\" }")  # no colon after name
