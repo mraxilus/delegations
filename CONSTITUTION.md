@@ -326,15 +326,21 @@ CAYLEYS_WEDGE  # module constant
 ## Article VI: Documentation is an outline
 
 1. Every declaration except a local, a parameter and a placeholder gets a doc comment, public or
-   not. The one other exception is a one-line mechanical delegation (a borrow, a forward) that
-   stands in a stack under one group comment. A doc is imperative and opens with a verb, and a
-   type opens with "Define …". It holds one summary line that ends in a period, and it cites
-   formal notation inline with `i.e.`. Where you cannot write honest text yet, write the doc
+   not. Another exception is a one-line mechanical delegation (a borrow, a forward) that stands in
+   a stack under one group comment. A doc is imperative and opens with a verb, and a type opens
+   with "Define …". It holds one summary line that ends in a period, and it cites formal
+   notation inline with `i.e.`. Where you cannot write honest text yet, write the doc
    `TODO: Document.`, and never leave the doc empty. A generator carries its docs through a
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 
-   The doc of a value that opens `block` is a `#` comment (VI.9). So such a doc that waits for
-   text is `# TODO: Document.`.
+   A `const`, `let`, `var` or `type` keyword alone on its line opens a section, and the section
+   gets one doc. No name inside it needs a doc, and no field of an object or member of an enum
+   needs one anywhere. A doc that such a name holds stays, and is optional. A section inside a
+   routine, or inside any other block that opens a scope, is local, so it gets none. So does a
+   section of the entry block (V.10).
+
+   The doc of a section and the doc of a value that opens `block` are `#` comments (VI.9). So
+   such a doc that waits for text is `# TODO: Document.`.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
    The two spaces count from where the text of the parent starts, a tag such as `TODO:`
@@ -364,9 +370,10 @@ CAYLEYS_WEDGE  # module constant
    project.
 9. A doc has one position for each shape of declaration, and the expression guide of the
    language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
-   value whose `block:` stands on its `=` line, wherever the doc stands. So that doc is a `#`
-   comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads such a doc,
-   the doc takes `##` again.
+   value whose `block:` stands on its `=` line, wherever the doc stands. Nor does it read the doc
+   of a section, on its keyword line or above it. So each such doc is a `#` comment, and no
+   comment claims to be a doc that Nim reads. Where a later Nim reads such a doc, the doc takes
+   `##` again.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
