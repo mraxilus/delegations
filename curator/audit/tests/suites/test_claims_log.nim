@@ -593,7 +593,7 @@ suite "Log of claims":
 
 
   test "stop commits no log right after test commit, so fix can follow it, and commits after fix":
-    # Case held: review of #1059's build, whose `ladder.sh` committed `test(rictadni)`, then a
+    # Case held: review of #1059's build, whose `ladder.sh` committed `test(rictadni)`, then
     #   row, which hook committed, so commit hook refused `fix(rictadni)` after it.
     #   Domain: `test` of scope of branch and of other scope, then `fix`, `docs` and `chore`.
     let
