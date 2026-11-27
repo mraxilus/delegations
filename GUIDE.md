@@ -215,8 +215,13 @@ return it confirmed.
   estimate states its 50th percentile in its text, as `~160k`.
 - **`**Criteria.**` takes the columns `#` and `Resolution criterion`.** It holds one row for each
   claim above. Each criterion stands alone, so that a resolver reads it with its claim alone.
+- **A table of a block is a table of claims where its header holds `#`, `Judgement`,
+  `Estimate @ 90%` or `Resolution criterion`.** A table of a reflection is one where its header
+  holds `#`, `Judgement` or `Estimate @ 90%`. So a table of other content holds none of these
+  columns, as `| Step | Cause |`.
 - **Each claim takes a number of its own, from 1, across the judgements and the estimates.** The
-  hook reads each claim from its row, and its criterion from the row of the same number.
+  number is digits alone, as `6`, and never `6.` or `#6`. The hook reads each claim from its row,
+  and its criterion from the row of the same number.
 - **Each cell of a percentile holds one value with its unit.** `$` marks cost, as `$2.50`, and
   `s`, `m` or `h` marks time, as `50s` or `20m`. The word `tokens` in the estimate marks tokens,
   and a bare number is a count. `k` scales a number by a thousand, and `M` by a million, as
@@ -286,14 +291,18 @@ Then the subagent runs, and these steps follow:
   no reflection after it. A reply to a refusal passes unread, so the hook holds no step there.
 - **The hook refuses a block of its turn where a claim lacks its number, its text, its
   confidence or its criterion.** It also refuses an estimate whose cells do not rise in one
-  unit, and a table whose header lacks a column of its form. It refuses a criterion whose number
-  names no claim or a claim of an earlier criterion, and a bullet beside the tables. Write the
-  block again in your reply, whole and mended. The reply is a later turn, so its block serves the
-  call.
+  unit. It refuses a table of claims whose header lacks a column of its form, and a bullet beside
+  the tables. It refuses a criterion whose `#` holds no number, or names no claim or a claim of
+  an earlier criterion. Write the block again in your reply, whole and mended. The reply is a
+  later turn, so its block serves the call.
 - **The hook refuses a row of a reflection that quotes no whole claim of a block that a call
-  took.** A row that holds `No prediction` passes. It also refuses a table whose header lacks a
-  column of its form. It refuses a hit or missed estimate whose cell under `Result` opens with no
-  value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
+  took.** A row that holds `No prediction` passes. It also refuses a table of claims whose header
+  lacks a column of its form. It refuses a hit or missed estimate whose cell under `Result` opens
+  with no value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
+- **The hook refuses a line `**Subagent:**` that gives no tokens right before ` tokens`, or no
+  cost at `$`.** Each figure there is a plain value after a space, as a cell holds it, so
+  `**170k** tokens` gives none. A space parts the words of the line, so the tokens take no group
+  after a space, as `170 000`.
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
