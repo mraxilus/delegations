@@ -145,7 +145,8 @@ type  # TODO: Document.
     is_outlined: bool  ## Line below doc in place opens doc too, which lexer joins to it.
     is_stacked: bool  ## One-line borrow or forward standing under group comment (VI.1).
     is_optional: bool
-      ## Field, enum member, or name inside section, whose doc is optional (D1 c, `D2 a` of #1020).
+      ## Name on line no section keyword opens, whose doc is optional (D1 c, `D2 a` of #1020):
+      ##   field, enum member, or name inside section; members keyword line lists share its doc.
     is_above: bool
       ## Doc on line above, at declaration's indent, that neither block above nor module owns.
     is_forward: bool  ## Forward declaration with no body, whose routine follows.
@@ -497,8 +498,7 @@ func placements(source: string): seq[Placement] =
       is_trailing: line_doc >= 0 and trailing[line_doc] >= 0,
       is_outlined: line_doc >= 0 and outline < lines.len and opening[outline],
       is_stacked: d.kind == KindName.Routine and isStacked(i),
-      is_optional: d.kind in {KindName.Field, KindName.Member} or
-          (d.kind != KindName.Routine and code[i].wordFirst notin KEYWORDS_SECTION),
+      is_optional: d.kind != KindName.Routine and code[i].wordFirst notin KEYWORDS_SECTION,
       is_above: d.kind != KindName.Routine and i > 0 and opening[i-1] and
         lines[i-1].indentWidth == indent and not is_owned,
       is_forward: d.kind == KindName.Routine and not is_bodied and
