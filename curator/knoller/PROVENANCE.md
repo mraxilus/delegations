@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 8c2726038e8b855a |
+| Rules   | d7c1b1970e4e5435 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -1098,8 +1098,8 @@ static pass of `audit` does not run this check yet.
 **Each layout rule that has one right answer has a check and a fixer, from one reading.** The checks
 and fixers of separators, signatures and calls share the reading of `wrapping.nim`. Spaces read
 `spacing.nim`, and `## Spaces` gives them. Blank lines read `blanks.nim`, and docs and defaults
-`declarations.nim`, where `## Docs` gives the docs. A construct that the scanner cannot read with
-certainty stays as written, and its check stays silent.
+`declarations.nim`, where `## Docs` and `## Block docs` give the docs. A construct that the
+scanner cannot read with certainty stays as written, and its check stays silent.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the separator after the last
@@ -1452,7 +1452,8 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - A doc that holds another TODO, such as `## TODO: Make distinct.`, holds a design note and no
   text. The fixer moves the note above the declaration as a `#` comment (VIII.3), and the doc
   becomes `## TODO: Document.`. A doc of several lines that opens with a note stays for hand,
-  because its outline can elaborate the note or the text.
+  because its outline can elaborate the note or the text. The lexer joins a `##` line right below
+  it at any indent, so that line makes it a doc of several lines too.
 - A one-line borrow or forward in a stack under a group comment passes (VI.1). The stack is a run
   of routines on one line each, at one indent, with the group comment right above it. The group
   comment is a `#` comment. A `##` doc right above the run is no group comment. Inside a
@@ -1486,20 +1487,13 @@ the first line of its body, at the indent of the body.
   takes the doc joined to its last line, or on the line below it, one level in.
 - A `case` value takes the doc on the line below its last branch, because `nim doc` reads none
   that trails a branch.
-- A value that opens `block` on its first line stays for hand. Its report asks for the doc after
-  `=`, with `block` on the next line.
+- A value that opens `block` takes `# TODO: Document.` above it (Block docs).
 - `nim jsondoc` of 2.2.12 and of commit `27763495` reads a doc in each of these places. It
-  reads none after the `(` of a call, after `[`, `,` or a binary operator, after `block:`, or
-  first in the body of `block:`. Verified by hand with both compilers, 2026-10-25. 2.4.0 reads
-  the same, verified by hand, 2026-10-29.
+  reads none after the `(` of a call, after `[`, `,` or a binary operator. Verified by hand with
+  both compilers, 2026-10-25, and with 2.4.0, 2026-10-29.
 - Nim parses no doc on the line below an `=` that ends the first line. So a first line too wide
   for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25,
   and with 2.4.0, 2026-10-29.
-- No comment alone gives a value that opens `block` on its first line a doc that `nim doc` reads.
-  `nim jsondoc` reads none after `block:`, first in the body, after its last line, or below it at
-  the indent of the declaration. A doc below the body at the indent of the body leaves its last
-  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25, and
-  with 2.4.0, 2026-10-29.
 
 **A forward declaration takes the doc of its routine, and the fix leaves that move for hand.**
 `nim doc` of Nim 2.2.12, of 2.4.0 and of commit `27763495` reads the doc of a forward
@@ -1519,27 +1513,26 @@ trails a line which opens a bracket holds apart a call that the wraps would join
 - Verified by `suites/test_declarations.nim`: each kind and shape of declaration, and what passes.
   It holds a shared line, a line of enum members, a design note, a forward declaration and the
   lines that the fix traces. It holds a value over lines in each shape that takes its own place,
-  and a value that opens `block` and stays for hand.
+  and a value that opens `block`.
   It also holds cases of this repository whose value or signature runs past its first line, each
   named where it stands.
 - Verified by `suites/test_chain.nim`: a call that the wraps join takes the doc after them.
 - Verified by hand on the PGA library at `3d9696e`, 2026-10-25, with a driver that runs
-  `fixDocsMissing` alone. It writes 43 docs, and leaves 8 values that open `block:` for hand.
-  `nim jsondoc` of commit `27763495` reads 42 of those docs, in the rigid and the conformal
-  configuration. The other one is the doc of a private field, which `nim doc` shows nowhere.
-  Knoller built at `cb433e68` and knoller of this rule give outputs that differ by those writes
-  alone, and a second run reports `0 to fix`.
-- Verified by hand on that output, 2026-10-25: the suites of `rga3d` and `cga4d` compile and
-  pass, with commit `27763495`.
+  `fixDocsMissing` alone. It writes 43 docs where `nim doc` reads them. `nim jsondoc` of commit
+  `27763495` reads 42 of those docs, in the rigid and the conformal configuration. The other one
+  is the doc of a private field, which `nim doc` shows nowhere. Knoller at `9d6d168e` writes
+  those 43, and `# TODO: Document.` above each of the 8 values there that open `block`, verified
+  by the same driver, 2026-11-27. A second run writes nothing.
+- Verified by hand on the output of those 43 writes, 2026-10-25: the suites of `rga3d` and
+  `cga4d` compile and pass, with commit `27763495`.
 - Verified by hand with that driver over each Nim file of this repository and of the library,
   2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
   each file the fix writes with `parseStmt`, under 2.2.12 and under commit `27763495`, and
   each one parses. Each one parses under 2.4.0 too, verified by hand, 2026-10-29.
 - A doc that opens the line right below the first line of a declaration counts, though the
-  value runs on past it. That holds for the first line of a `block:`, and for a line inside a
-  bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
-  2026-10-25, and of 2.4.0, 2026-10-29. The fixer never writes a doc there, and doc position
-  moves such a doc, or reports it for hand (below).
+  value runs on past it. That holds for a line inside a bracket, where `nim jsondoc` reads no
+  doc. Verified by hand with `nim jsondoc` of 2.2.12, 2026-10-25, and of 2.4.0, 2026-10-29. The
+  fixer never writes a doc there, and doc position moves such a doc (below).
 - Cost: a routine with no body reads as a forward declaration where any overload of its name
   follows.
 - Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
@@ -1562,6 +1555,9 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   one level in. A trailing doc that widens its line past `LINE_MAX` moves there.
 - A next-line doc of several lines, or below a line that holds a `#` comment, stands one level in
   too. A trailing doc keeps the lines below it that continue it, at the column that the hand gave.
+  The lexer joins each `##` line right below a doc into that doc, at any indent. So no move splits
+  such a doc, and that holds on the first line of a value over lines too. Verified by
+  `suites/test_declarations.nim`, with `nim jsondoc` of the compiler that builds it.
 - A doc above a type, a field, a global binding or an enum member moves where missing doc writes
   it. It joins the line where it fits, else it takes the next line, one level in. A value over
   brackets takes it after its close.
@@ -1588,24 +1584,19 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   the `=` that ends that first line, where it fits. Otherwise it moves after the close of the
   value, joined where it fits, else one level in. `nim doc` reads none below an `=` that ends the
   first line, nor after `[` or `(` (above).
-- A doc inside a value that opens `block` reports, and stays for hand, as missing doc leaves such
-  a value. The ruling names the doc of `lut_grade_by_basis` at `pga/algebra.nim:343`, a local
-  binding. So this shape reads a binding of any reach.
 - The doc of a routine opens the line after its signature, at the indent of its body. A doc on the
   signature line, after a blank line, or at another indent moves there.
 - A one-line doc under a bare `type` joins the keyword line, as the group doc of the block.
 - Doc position reads as a declaration each line of code in a `type`, `const`, `let` or `var`
-  section, at any depth. A keyword line that holds one declaration is one too. A line that
-  continues an expression declares nothing.
+  section, at any depth (`sections`). A keyword line that holds one declaration is one too. A
+  line that continues an expression declares nothing.
 - Verified by `suites/test_declarations.nim`, for each shape and for each doc that stays. The cases
   of `type Order` and `lut_grade_by_basis` quote the PGA library at `3d9696e`.
-- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
+- Verified by hand with knoller at `9d6d168e` on the PGA library at `3d9696e`, 2026-11-27. A driver
   imports `knoller` and runs `checkDocs` and `fixDocs` alone on each file that
-  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 2 reports. The fix writes 1 line and
-  removes 2 at `type Order`, and leaves the doc under `block:` for hand.
-- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. Knoller at
-  `048c3c36` gives 36 reports. Knoller at `4245dca8`, before these shapes, gives 22 of them, at the
-  same places. Each of the other 14 is a doc inside `block` that stays for hand.
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 2 reports. The fix moves the doc of
+  `type Order` onto its line, and the doc of `lut_grade_by_basis` above it as `#`. A second fix
+  writes nothing.
 - Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
   stays, though `nim doc` reads none there.
 - Cost: a doc above a routine stays, and neither rule reads it, though `nim doc` reads none there.
@@ -1615,16 +1606,64 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 - No Nim file of the tree at `16a573cc` opens with a doc right above a declaration. Nor does one
   hold such a doc below blank lines or `#` comments alone. Verified by a scan of each file that
   `git ls-files '*.nim' '*.nims' '*.nimble'` lists, 2026-11-21.
-- Verified by hand with a driver over the projects of the repository at `16a573cc`, 2026-11-21.
-  It runs `checkDocs` and `checkDocsMissing` alone on each file that git tracks in each project.
-  Knoller at `fd3bc4b5` and knoller at `1bed07fd` give the same 36 reports of doc position and
-  1,056 of missing doc. On a copy of the PGA library at `3d9696e`, each knoller gives 2 and 51
-  reports.
-- `koch fix --dry-run --branch:main`, built at each, gives 23 and 861 fixes over the same tree. Of
-  the 36, the 14 docs of a value that opens `block` stay for hand, so koch fixes the other 22. It
-  fixes 1 more, at `curator/audit/src/checker.nim:79`, where the chain also fixes expression
-  spacing. Of the 1,056 reports of missing doc, 188 stand in the files that do not settle, which
-  the chain leaves as written. The cause of the other 7 is unmeasured.
+
+## Block docs
+
+**The doc of a value that opens `block` stands above its declaration, as a `#` comment.** The
+Architect ruled so on D1 c of #1020. `nim doc` reads no doc of such a value with `block:` on its
+`=` line, wherever the doc stands. `blocks` of `declarations.nim` reads each such binding, at any
+reach, and where its doc stands. Doc position and missing doc both read it, so each doc that the
+fixer of one writes, the check of the other passes.
+
+- `block:` stays on the `=` line, so the body takes one indent. The doc stands on its own lines
+  above the declaration, or above the name in a section. A blank line stands above it. None
+  stands where the line above opens the body that holds it, as `if` does, or where the file opens.
+- `nim jsondoc` reads no `##` there, and one above a declaration at module level joins the doc of
+  the module. So the doc is `#`. The suite "Article VI.9" of `test_declarations.nim` fails once
+  the compiler that builds it reads one of these places, and that place then takes `##` again.
+- The comment right above the declaration, at its indent, is its doc. A `##` there stays where
+  code above, the module, a routine or another declaration holds it, as the lexer joins it.
+  `heads` gives the doc of a routine named in backticks, which no declaration reads.
+- `blocks` reads the lines that declare in a `const`, `let` or `var` section (`sections`), and
+  each placement that opens `block`. The reading of declarations passes over each name below a
+  section nested in a block, so it alone would miss such a value. Verified by hand with a probe of
+  `declarations` at `9d6d168e`, 2026-11-27.
+- `sections` walks up from a line to the keyword of its section. It stops at an enclosing line
+  that ends on `=` or opens `block`, other than the keyword alone. So a statement in the body of a
+  value declares nothing, as a labelled `block` or an assignment that opens `block`.
+- Missing doc writes `# TODO: Document.` above a global such value, with the blank line where it
+  is due. A comment above counts as the doc, and so does a `##` that doc position moves there.
+- Doc position moves a `##` doc that trails `block:` or stands first in the body. It moves the
+  doc to the lines above the declaration, with each line that the lexer joins to it. Each run of
+  `#` that opens a doc line there becomes one `#`, and the blank line comes where it is due.
+- A doc inside or after `block:` with a comment above it too is two docs, so it stays for hand.
+  So does a `block` that opens below `=`, since its body would take one indent less. Its message
+  says why. A `=` that closes the head of a routine, as of a lambda, opens no such `block`. Its
+  binding takes its doc after that `=`.
+- Cost: a `#` comment right above such a value reads as its doc, though it may remark on the
+  line above it.
+- Cost: missing doc reads its names from declarations, so such a name with no doc takes no
+  placeholder.
+- Cost: a binding of a routine type whose `block` opens below its `=`, as `let f: proc(): int =`,
+  reads as the head of a lambda. So it takes no report of this section.
+- Verified by `suites/test_declarations.nim`. Its cases are `lut_grade_by_basis` and `∪` of the
+  PGA library, and the doc after `block:` that knoller at `6905e55e` passes. They also hold
+  `FACINGS` of `dance_ontology` and `LUT_INITIAL_BY_PAIR` of `ricysoho`, each with its domain. The
+  review of #1070 found three more cases, and each is held with its domain. They are a statement
+  in the body of such a value, a lambda whose body opens `block`, and a doc on `###`.
+- Verified by hand, 2026-11-27, with a driver that runs `checkDocs` and `checkDocsMissing` alone
+  on each Nim file that git tracks at `9d6d168e`. Knoller at `9d6d168e` gives 75 reports of doc
+  position and 1,082 of missing doc, and knoller at `6905e55e` gives 47 and 1,083. Knoller at
+  `672b76a3` gives the same 75 and 1,082 on the tree at that commit, with the same reports of a
+  value that opens `block`.
+- Of the later reports, 44 read a value that opens `block`, all in contributor projects. Of them,
+  39 hold a doc inside the block, 1 a `##` above, 2 a `block` below `=`, and 2 no doc. The earlier
+  knoller gives 16 of them, at the same places. It gives 1 more at `curator/audit/src/role.nim:80`,
+  since it does not count the `#` doc above that value.
+- `fixDocs` alone keeps each token of code in each file that it writes there, and a second fix
+  writes nothing. `knoller --check`, built at `9d6d168e`, reports 40 of the 44 as `to fix` in
+  those files. It leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and
+  `walk.nim` of `dance_ontology`, which neither knoller settles.
 
 ## Stages
 

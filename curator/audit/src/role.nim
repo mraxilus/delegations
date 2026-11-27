@@ -73,10 +73,11 @@ const
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
+
+  # Lines above role line finding quotes at most: twice block of longest listed harness, so
+  #   block of new harness shows whole, and body whose role line stands low prints no whole
+  #   opening.
   LINES_QUOTED* = block:
-    ## Lines above role line finding quotes at most: twice block of longest listed harness, so
-    ##   block of new harness shows whole, and body whose role line stands low prints no whole
-    ##   opening.
     var longest = 0
     for harness in HARNESSES: longest = max(longest, harness.shapes.len)
     2 * longest
