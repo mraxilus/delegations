@@ -539,6 +539,9 @@ const
   RULE_CRITERION_ROW = "Row of table of criteria of block names, by its number under `#`, claim " &
     "of block that no other row names (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of criteria of number of no claim, or of claim named twice, states.
+  RULE_BULLET = "Block of tables holds no bullet beside them (GUIDE.md, Prediction, critic and " &
+    "reflection)"
+    ## Rule that finding of bullet of block that holds table of claims states.
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each block of this turn that lacks " &
@@ -2609,6 +2612,11 @@ func isHolding(header, columns: openArray[string]): bool =
   columns.allIt(it in header)
 
 
+func isClaims(header: openArray[string]): bool =
+  ## Decide whether header is of table of claims: it holds column of `COLUMNS_NAMING`.
+  COLUMNS_NAMING.anyIt(it in header)
+
+
 func rowsClaim(text: string): seq[RowClaim] =
   ## Read each row of each table of judgements or estimates of block text, in order: table whose
   ##   header holds each column of `COLUMNS_JUDGEMENTS` or of `COLUMNS_ESTIMATES`, in any order
@@ -2672,8 +2680,10 @@ func findingsPrediction*(text: string): seq[Finding] =
   ## Report each table of claims of block text whose header holds no form whole, each row of
   ##   table of judgements or estimates whose `#` holds no number of its own, whose text is empty,
   ##   judgement whose `%` holds no percentage alone, estimate whose cells are no rising values of
-  ##   one unit, claim whose number takes no criterion, and row of criteria whose number names no
-  ##   claim, or claim that other row names (7200557915).
+  ##   one unit, claim whose number takes no criterion, row of criteria whose number names no
+  ##   claim, or claim that other row names, and bullet beside tables (7200557915).
+  ##   Bullet beside tables is refused (choice): GUIDE.md writes tables alone, and position of
+  ##     bullet and number of row take one key of log, so log keeps one of two such rows.
   ##   Table of claims holds column of `COLUMNS_NAMING`; one that holds no form whole takes that
   ##     finding, since its rows read as none (choice).
   ##   Row with no number takes that finding alone, since others name it by its number. Bullets
@@ -2688,11 +2698,17 @@ func findingsPrediction*(text: string): seq[Finding] =
     is_formed = true  # Each table of claims holds each column of its form.
     is_numbered = true  # Each row of claims holds number of its own.
 
+  # Refuse each bullet beside tables, whose position may be number of row.
+  let tables = text.tablesMarkdown
+  if tables.anyIt(it.header.isClaims):
+    for forecast in text.forecastsBullets:
+      result.add finding("", 0, Check.TablesPrediction, RULE_BULLET & "; got `" &
+        forecast.forms[0] & "`.")
+
   # Refuse table of claims that holds no form whole, since its rows read as none.
-  for table in text.tablesMarkdown:
-    if not COLUMNS_NAMING.anyIt(it in table.header) or
-        [@COLUMNS_JUDGEMENTS, @COLUMNS_ESTIMATES, @COLUMNS_CRITERIA].anyIt(
-          table.header.isHolding(it)):
+  for table in tables:
+    if not table.header.isClaims or [@COLUMNS_JUDGEMENTS, @COLUMNS_ESTIMATES,
+        @COLUMNS_CRITERIA].anyIt(table.header.isHolding(it)):
       continue
     is_formed = false
     result.add finding("", 0, Check.TablesPrediction, RULE_FORM & "; got `" & table.line & "`.")
