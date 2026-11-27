@@ -471,9 +471,9 @@ func placements(source: string): seq[Placement] =
 
 func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
   ## Read each binding whose value opens `block`, at any reach, and where its doc stands: comment
-  ##   right above it at its indent, but `##` doc that code, module or declaration of `found` owns,
-  ##   as lexer joins it; `##` doc trailing `block:` with lines lexer joins to it, else `##` doc
-  ##   first in its body.
+  ##   right above it at its indent, but `##` doc that code, module, routine or declaration of
+  ##   `found` owns, as lexer joins it; `##` doc trailing `block:` with lines lexer joins to it,
+  ##   else `##` doc first in its body.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
@@ -492,11 +492,16 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
     ## Decide whether `##` doc trails code of line `k`.
     k.trailing >= 0
 
-  # Mark doc each declaration holds in place, and first line holding code or opening doc, so
-  #   doc opening there is module's (#980: `D3 a` on file's start, `D1 a` on comments above).
+  # Mark doc each declaration holds in place, and doc of each routine, operator among them, whose
+  #   name no declaration reads; and first line holding code or opening doc, so doc opening there
+  #   is module's (#980: `D3 a` on file's start, `D1 a` on comments above).
   var owned = newSeq[bool](lines.len)
   for p in found:
     if p.doc >= 0: owned[p.doc] = true
+  for h in source.heads:
+    var below = h.last  # Zero-based line after signature.
+    while below < lines.len and lines[below].strip.len == 0: inc below
+    if below.isLineDoc: owned[below] = true
   var heading = lines.len
   for k in 0 ..< lines.len:
     if code[k].strip.len > 0 or kept[k].strip.startsWith("##"):
