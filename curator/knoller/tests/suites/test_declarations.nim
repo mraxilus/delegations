@@ -643,6 +643,12 @@ suite "Declarations":
         "doc of section stands on its keyword line, or above it where that line is too long; " &
           "got it below `const`",
       ),  # `when` opens no scope
+      (
+        "const\n  ## Doc.\n  B* = block:\n    2\n",
+        "const\n  # Doc.\n  B* = block:\n    2\n",
+        "doc above value opening `block` is `#` comment, since `nim doc` reads none there; got " &
+          "`##` above `const B`",
+      ),  # `##` right below keyword, above value opening `block`, is that value's
     ]:
       checkpoint breach
       check checkDocs("a.nim", breach).mapIt(it.brief) == @[brief]
@@ -742,6 +748,10 @@ suite "Declarations":
       ),  # `#` below keyword may head first group, so no doc of section
       ("## Module.\nconst\n  N* = 3\n", "## Module.\nconst  # TODO: Document.\n  N* = 3\n"),
         # doc of module stays (#980)
+      (
+        "const\n  ## Doc.\n  B* = block:\n    2\n",
+        "const  # TODO: Document.\n  ## Doc.\n  B* = block:\n    2\n",
+      ),  # `##` above value opening `block` is that value's, so no doc of section
     ]:
       checkpoint source
       check source.documented == written
