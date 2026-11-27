@@ -7,8 +7,11 @@
 ##     Each dev dependency off `PACKAGES_ALLOWED` is finding, and so is each import of TypeScript
 ##       naming package off it. Specifier opening `.` or `/` is path, and `node:` is built-in.
 ##     Bare built-in, as `fs`, reads as package, and help names `node:fs`.
-##     Each `<script>` of page or SVG whose `src`, `href` or `xlink:href` names other host is
+##     Each `<script>` of page or SVG whose `src`, `href` or `xlink:href` may name other host is
 ##       finding, since page loads package from there; tag reads across lines, in any case.
+##     Address passes only as path of project: no scheme, and no `//` at its head, once each
+##       reference decodes and each control and space leaves it. Rule refuses wherever browser may
+##       load, so script inside HTML comment is finding too.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
 ##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
@@ -30,8 +33,9 @@
 ##     parsed: regular expression after word or `)`, as after `return`, reads as division, and
 ##     its quote can open string, or template that runs across lines. Specifier on line after its
 ##     keyword reads as none, and so does import built from expression.
-##   Cost: inline script of page reads as none, and so does `<svg:script>`; address reads as
-##     browser reads it, but named entity other than `&sol;` and `&colon;` stays as written.
+##   Cost: inline script of page reads as none, and so does `<svg:script>`; named reference other
+##     than `&sol;` and `&colon;` stays as written. Script in comment, and path holding space
+##     before `//`, are refused, though browser loads neither from other host.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
@@ -64,6 +68,7 @@ const
   }
     ## Last marks of code after which `/` opens regular expression rather than division.
   CHARS_WORD = IdentChars + {'$', '#'}  ## Characters of name of script, private name included.
+  DIGITS_REFERENCE_MAX = 7  ## Digits of character reference read at most; more names no ASCII.
   SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
   COMMAND_AUDIT* = "npm audit --package-lock-only --include=dev --json --fetch-retries=1 " &
     "--fetch-timeout=" & $(SECONDS_ASK * 1000)
@@ -321,79 +326,78 @@ func attributes(tag: string): seq[tuple[name, value: string]] =
       result.add (name: name, value: tag[probe ..< cursor])
 
 
-func markupVisible(text: string): string =
-  ## Blank each HTML comment of text, its line ends kept, so script inside it reads as none, and
-  ##   each index and line stays.
-  result = text
-  var at = result.find("<!--")
-  while at >= 0:
-    let
-      closing = result.find("-->", at + 4)
-      ending = if closing < 0: result.len else: closing + 3
-    for i in at ..< ending:
-      if result[i] != '\n': result[i] = ' '
-    at = result.find("<!--", ending)
-
-
-func entityChar(entity: string): Option[char] =
-  ## Read character of ASCII that entity between `&` and `;` names, as `#47`, `#x2F`, `sol` or
-  ##   `colon`; none for any other.
-  try:
-    let code =
-      if entity == "sol": ord('/')
-      elif entity == "colon": ord(':')
-      elif entity.len > 2 and entity[0] == '#' and entity[1] in {'x', 'X'}:
-        fromHex[int](entity[2 .. ^1])
-      elif entity.len > 1 and entity[0] == '#': parseInt(entity[1 .. ^1])
-      else: -1
-    if code in 0 .. 127: some(char(code)) else: none(char)
-  except ValueError: none(char)
+func referenceAt(value: string, at: int): tuple[mark: Option[char], ending: int] =
+  ## Read character reference that opens at `at`, as browser decodes it, with index past it:
+  ##   decimal or hex digits after `&#`, its `;` optional, or `&sol;` and `&colon;`. None, ending at
+  ##   `at`, where none opens there, or where it names no character of ASCII.
+  ##   Only character of ASCII can form scheme or `/`, so others keep their text.
+  if value.continuesWith("&sol;", at): return (some('/'), at + "&sol;".len)
+  if value.continuesWith("&colon;", at): return (some(':'), at + "&colon;".len)
+  if not value.continuesWith("&#", at): return (none(char), at)
+  let
+    is_hex = at + 2 < value.len and value[at + 2] in {'x', 'X'}
+    digits = if is_hex: HexDigits else: Digits
+    start = at + (if is_hex: 3 else: 2)
+  var cursor = start
+  while cursor < value.len and value[cursor] in digits: inc cursor
+  if cursor == start or cursor - start > DIGITS_REFERENCE_MAX: return (none(char), at)
+  let code =
+    if is_hex: parseHexInt(value[start ..< cursor])
+    else: parseInt(value[start ..< cursor])
+  if code > 127: return (none(char), at)
+  (some(char(code)), if cursor < value.len and value[cursor] == ';': cursor + 1 else: cursor)
 
 
 func addressRead(value: string): string =
-  ## Read address of attribute as browser reads it: entity of `entityChar` decoded, tab and line
-  ##   end dropped, spaces at each end stripped, and `\` read as `/`.
+  ## Read address of attribute as browser may read it: each reference of `referenceAt` decoded,
+  ##   each control and space dropped wherever it stands, and `\` read as `/`.
+  ##   Space inside path dropped too, which makes rule refuse more, never less.
   var cursor = 0
   while cursor < value.len:
-    let
-      closing = if value[cursor] == '&': value.find(';', cursor) else: -1
-      decoded = if closing > cursor: value[cursor + 1 ..< closing].entityChar else: none(char)
-    if decoded.isSome:
-      result.add decoded.get
-      cursor = closing + 1
+    let (mark, ending) = value.referenceAt(cursor)
+    if mark.isSome:
+      if mark.get > ' ': result.add mark.get
+      cursor = ending
       continue
-    if value[cursor] notin {'\t', '\n', '\r'}: result.add value[cursor]
+    if value[cursor] > ' ': result.add value[cursor]
     inc cursor
-  result = result.strip.replace('\\', '/')
+  result = result.replace('\\', '/')
+
+
+func isOtherHost(address: string): bool =
+  ## Decide whether address may name other host: it opens with `//`, or with scheme, as `https:`.
+  ##   Path of project passes alone, so query or fragment that names host passes with it.
+  if address.startsWith("//"): return true
+  var cursor = 0
+  while cursor < address.len and (address[cursor] in Letters or
+      (cursor > 0 and address[cursor] in Digits + {'+', '-', '.'})):
+    inc cursor
+  cursor > 0 and cursor < address.len and address[cursor] == ':'
 
 
 func checkPage*(path, text: string): seq[Finding] =
-  ## Report each `<script>` whose `src`, `href` or `xlink:href` names other host, at line of tag.
+  ## Report each `<script>` whose `src`, `href` or `xlink:href` may name other host, at line of tag.
   ##   Tag reads to first `>` outside quote, across lines, with no regard to case of letters.
-  ##   Tag inside HTML comment reads as none, since browser never loads it.
-  let
-    visible = text.markupVisible
-    lowered = visible.toLowerAscii
+  ##   Tag inside HTML comment is finding too, since rule refuses wherever browser may load.
+  let lowered = text.toLowerAscii
   var at = lowered.find("<script")
   while at >= 0:
     let after = at + "<script".len
-    if after < visible.len and visible[after] in Whitespace + {'>', '/'}:
+    if after < text.len and text[after] in Whitespace + {'>', '/'}:
       var
         cursor = after
         quote = none(char)
-      while cursor < visible.len and (quote.isSome or visible[cursor] != '>'):
-        if quote.isSome and visible[cursor] == quote.get: quote = none(char)
-        elif quote.isNone and visible[cursor] in {'"', '\''}: quote = some(visible[cursor])
+      while cursor < text.len and (quote.isSome or text[cursor] != '>'):
+        if quote.isSome and text[cursor] == quote.get: quote = none(char)
+        elif quote.isNone and text[cursor] in {'"', '\''}: quote = some(text[cursor])
         inc cursor
-      for (name, value) in visible[after ..< cursor].attributes:
-        let source = value.addressRead
-        if name notin ["src", "href", "xlink:href"]: continue
-        if "://" notin source and not source.startsWith("//"): continue
+      for (name, value) in text[after ..< cursor].attributes:
+        if name notin ["src", "href", "xlink:href"] or not value.addressRead.isOtherHost: continue
         result.add finding(
           path,
-          visible[0 ..< at].count('\n') + 1,
+          text[0 ..< at].count('\n') + 1,
           "Page loads script from other host; take base JavaScript, or script of project" &
-            CITE_RULE & "; got `" & source & "`.",
+            CITE_RULE & "; got `" & value & "`.",
         )
     at = lowered.find("<script", at + 1)
 
