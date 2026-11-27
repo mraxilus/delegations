@@ -3775,7 +3775,6 @@ ni'o **le papri po'u `pages/layers.html` cu skari ro valsi ja'i le girzu be le s
   .i ro linji cu sinxa pa porsi be lo jgena poi pa ckini be lo javni cu cmene ke'a
   .i lo jgena poi vasru re jgena pe le ckini cu cfari pa cnino linji
   .i ro valsi cu skari ja'i lo girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
-  .i se ki'u bo pa valsi .e le traji cmalu linji pe ke'a cu skari mintu
       Verified by `suites/test_layers.nim`.
 
 ni'o **ro linji cu vasru ro valsi pe le jgena poi le linji cu sinxa ke'a gi'e zvati lo jbini be le
@@ -3788,6 +3787,8 @@ ni'o **le papri cu tcidu le selci'a ta'i `readTextMarked`**
   .i se ki'u bo lo jufra poi lidne pa srera cu ponse lo linji pe vo'a
   .i pa gunka cu tcidu le selci'a
   .i va'o lo nu le papri cu ponse no gunka kei le papri cu tcidu ba lo nu le nu ciska cu denpa
+  .i pa se tcidu pe pa pu selci'a cu muvdu ja'i ro nu cenba poi ba fasnu
+  .i ku'i ri na basti pa se tcidu pe le selci'a poi ca zvati
       Verified by `browser/suite_layers.nim`.
 
 ni'o **le stuzi be lo nu ciska cu du le se ciska poi skari to `D2` pe `#1055` toi**
