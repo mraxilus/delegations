@@ -593,9 +593,10 @@ proc commitClaims*(root, branch: string): bool =
   ##   Log that lost row commits nothing, since hand that removed it decides its commit. Log waits
 ##     too while last commit is `test`, so its `fix` comes right after it.
   ##   Failure of git commits nothing and raises nothing, so log that cannot commit refuses no
-  ##     turn; error goes to stderr.
+  ##     turn; error goes to stderr, and log that hook staged is unstaged again, so index stays.
   let relative = branch.pathLog
   if relative.len == 0 or not fileExists(root / relative): return false
+  var is_added = false  # Hook staged log itself, so refused commit unstages it again.
   try:
     if root.isOperationGit: return false
     # Commit right after `test` waits, since its `fix` must follow it (CONTRIBUTOR.md, Tests
@@ -609,12 +610,18 @@ proc commitClaims*(root, branch: string): bool =
       rows_now = readFile(root / relative).splitLines.filterIt(it.startsWith(OPENING_ROW))
       added = rows_now.filterIt(it notin rows_before)
     if added.len == 0 or not (rows_before <= rows_now.toHashSet): return false
-    let (subject, body) = relative.messageClaims(added.mapIt(it.claimLine.kind).deduplicate)
+    let
+      (subject, body) = relative.messageClaims(added.mapIt(it.claimLine.kind).deduplicate)
+      is_staged = fieldsGit(root, ["diff", "--cached", "--name-only", "-z", "--", relative]).len > 0
     discard fieldsGit(root, ["add", "--", relative])
+    is_added = not is_staged
     discard fieldsGit(
       root, ["commit", "--quiet", "--only", "-m", subject, "-m", body, "--", relative]
     )
     true
   except IOError, OSError, ValueError:
     stderr.writeLine "Log of claims is not committed; got `" & getCurrentExceptionMsg() & "`."
+    if is_added:
+      try: discard fieldsGit(root, ["reset", "--quiet", "--", relative])
+      except IOError: discard
     false
