@@ -287,7 +287,13 @@ Then the subagent runs, and these steps follow:
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
-  Commit the log in a commit of its own, as `chore(<project>): log the claims of the reviewer`.
+- **The hook then commits the log in a commit of its own, and the next push carries it.** Its
+  subject reads as `chore(<project>): log the claims of the reviewer`. It commits nothing during a
+  merge, a rebase, a cherry-pick or a revert, or right after a `test` commit. The rows then wait
+  in the tree, and a later stop commits them.
+- **Once `koch check` names the log past 5,000 rows, roll it on a branch of your project.**
+  `nim r koch roll` moves each row that can change no more into the prior at the head of the log
+  (#1049).
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
