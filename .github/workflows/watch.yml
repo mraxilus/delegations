@@ -30,7 +30,7 @@ name: watch
 
 on:
   workflow_run:
-    workflows: [check, head, ledger]
+    workflows: [check, head, ledger, nim, npm]
     types: [completed]
     branches: [main]
   workflow_dispatch:
