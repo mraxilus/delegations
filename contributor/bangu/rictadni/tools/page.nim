@@ -3,10 +3,12 @@
 ##   |---------|----------------------------------------------------------------------------|
 ##   | Command | Effect                                                                     |
 ##   |---------|----------------------------------------------------------------------------|
-##   | page    | compile `app/page.nim` to JavaScript, inline it and each font face of      |
-##   |         | store into `pages/tagger.html`, and write `build/page/tagger.html`         |
-##   | drive   | build page, run collector on it and on control page of `koch drive` in    |
-##   |         | Chromium, and write `build/font-faces/written.json` for `koch drive`       |
+##   | page    | compile `app/page.nim` to JavaScript, inline it, each font face of store   |
+##   |         | and worked example `alice` into `pages/tagger.html`, and write             |
+##   |         | `build/page/tagger.html`                                                   |
+##   | drive   | build page, run `tests/browser/suite_page.nim` in it in each mode, run     |
+##   |         | collector on it and on control page of `koch drive` in Chromium, and write |
+##   |         | `build/font-faces/written.json` for `koch drive`                           |
 ##   |---------|----------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 build or drive failed, 2 usage error.
 ##
@@ -26,7 +28,8 @@ when compileOption("profiler"):
 
 import std/[base64, json, os, osproc, strutils, tables]
 
-import ./drive
+import ../src/rictadni/suggestions
+import ./[drive, examples]
 
 
 const
@@ -35,6 +38,8 @@ const
   PATH_SHELL = "pages" / "tagger.html"  ## Source of page, with tokens build fills.
   PATH_ENTRY = "app" / "page.nim"  ## Source of script of page.
   PATH_COLLECTOR = "tools" / "drive" / "collector.nim"  ## Source of collector drive runs in page.
+  PATH_SUITE = "tests" / "browser" / "suite_page.nim"  ## Source of suite drive runs on page.
+  MODES_SUITE = ["runtime", "served", "server"]  ## Each mode suite runs page in.
   DIRECTORY_PAGE = ROOT_BUILT / "page"  ## Directory of built page and its script.
   PATH_COMPILED = DIRECTORY_PAGE / "page.js"  ## Script of page, compiled.
   PATH_PAGE* = DIRECTORY_PAGE / "tagger.html"  ## Page as built, which `suggester serve` serves.
@@ -54,6 +59,9 @@ const
     ## Binary of Chromium of store, once unpacked.
   TOKEN_EMBED = "@EMBED:"  ## Token of font face in shell: `@EMBED:<file>@`.
   TOKEN_SCRIPT = "@SCRIPT@"  ## Token of script in shell.
+  TOKEN_EXAMPLE_TEXT = "@EXAMPLE_TEXT@"  ## Token of text of worked example in shell.
+  TOKEN_EXAMPLE_ANSWER = "@EXAMPLE_ANSWER@"  ## Token of answer of worked example in shell.
+  NAME_EXAMPLE = "alice"  ## Worked example page shows before any text is asked.
   SKELETON_HOSTED = (
     "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" " &
       "content=\"width=device-width, initial-scale=1\"></head><body>",
@@ -131,10 +139,15 @@ proc builtPage(script: string): string =
         "url(data:" & mediaType(name) & ";base64," & encode(bytes) & ")")
   if "url(" & TOKEN_EMBED in result:
     raise newException(ValueError, "Shell should hold no font face build fills no more.")
-  if result.count(TOKEN_SCRIPT) != 2:  # Once in header comment, once in element.
-    raise newException(ValueError, "Shell should hold token of script once in its element.")
-  result = result.replace("<script>" & TOKEN_SCRIPT & "</script>", "<script>" & script &
-      "</script>")
+  var example = EXAMPLES[0]
+  for each in EXAMPLES:
+    if each.name == NAME_EXAMPLE: example = each
+  for (token, text) in [(TOKEN_SCRIPT, script), (TOKEN_EXAMPLE_TEXT, example.argument.escapeMarkup),
+      (TOKEN_EXAMPLE_ANSWER, example.answer.escapeMarkup)]:
+    if result.count(">" & token & "<") != 1 or result.count(token) != 2:
+      raise newException(ValueError, "Shell should hold token `" & token & "` once in header " &
+          "comment and once as content of its element.")
+    result = result.replace(">" & token & "<", ">" & text & "<")
 
 
 proc writePage(): int =
@@ -202,15 +215,39 @@ proc collected(chromium, page: string): JsonNode =
   run.posted["/collected"].parseJson
 
 
+proc passesSuite(chromium, page: string): bool =
+  ## Run suite on page in each mode, before script of page, and print what it logged; each passes.
+  ##   Suite runs inside function of its own, since each program Nim compiles to JavaScript
+  ##     declares same global names, and second program on page would replace those of first.
+  result = true
+  let
+    at = page.rfind("<script>")
+    suite = "<script>(function () {\n" & readFile(DIRECTORY_DRIVE / "suite_page.js") &
+        "\n})();</script>"
+  for mode in MODES_SUITE:
+    let
+      body = "<body data-mode=\"" & mode & "\">"
+      hosted = SKELETON_HOSTED[0].replace("<body>", body) & page[0 ..< at] &
+          suite & page[at .. ^1] & SKELETON_HOSTED[1]
+      run = chromium.runPage(hosted, DIRECTORY_DRIVE)
+    for line in run.lines: echo line
+    if run.code != 0:
+      stderr.writeLine "Suite of page should pass in mode `" & mode & "`; got exit `" & $run.code &
+          "`."
+      result = false
+
+
 proc runDrive(): int =
-  ## Build page, collect it and control page of `koch drive`, and write `written.json`.
-  ##   Exit 1 where build, collector or control page fails.
+  ## Build page, run its suite, collect it and control page of `koch drive`, and write
+  ##   `written.json`. Exit 1 where build, suite, collector or control page fails.
 
   # Build page and collector.
   if writePage() != 0: return 1
   if compileJs(PATH_COLLECTOR, DIRECTORY_DRIVE / "collector.js") != 0: return 1
+  if compileJs(PATH_SUITE, DIRECTORY_DRIVE / "suite_page.js") != 0: return 1
   let chromium = findChromium()
   if chromium.len == 0: return 1
+  if not chromium.passesSuite(readFile(PATH_PAGE)): return 1
   removeDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
   createDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
 

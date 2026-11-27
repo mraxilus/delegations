@@ -13,8 +13,8 @@
 ##   | examples  | write worked examples of `suggester` as exchange files under             |
 ##   |           | `build/examples/`, and print command replaying each                      |
 ##   | page      | build tag page into `build/page/tagger.html` (`tools/page.nim`)          |
-##   | drive     | build tag page, collect what it draws in Chromium, and write             |
-##   |           | `build/font-faces/written.json`, which `koch drive` judges               |
+##   | drive     | build tag page, run its suite and collect what it draws in Chromium,     |
+##   |           | and write `build/font-faces/written.json`, which `koch drive` judges     |
 ##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
 ##   |           | `openssl` and `protoc` commands among them, which `test_exchanges` runs  |
 ##   |-----------|--------------------------------------------------------------------------|

@@ -1,7 +1,8 @@
 <!-- Tag page of rictadni: paste text, get gismu that person might search it by.
-       Script comes from `app/page.nim`, compiled to JavaScript: same prompt and reader as
-       `suggester` (II.9).
-       Placeholders `@EMBED:<file>@` take font faces of store, and `@SCRIPT@` takes script;
+       Script comes from `app/page.nim`, compiled to JavaScript, and is only script of page:
+       same prompt and reader as `suggester` (II.9).
+       Placeholders `@EMBED:<file>@` take font faces of store, `@SCRIPT@` takes script, and
+       `@EXAMPLE_TEXT@` and `@EXAMPLE_ANSWER@` take worked example `alice` of `tools/examples.nim`;
        build replaces each before page ships.
        No doctype, html, head or body: provider of page wraps it. -->
 <title>rictadni tags</title>
@@ -85,6 +86,8 @@ pre.report {
   border-radius: 6px; padding: 12px; margin: 0; overflow-x: auto; white-space: pre;
 }
 .notes { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
+/* Data of script, never shown: in font of page all the same, since drive reveals it. */
+main > pre[hidden] { font: 400 0.8rem/1.5 var(--sans); }
 @media (prefers-reduced-motion: no-preference) {
   .tile { animation: rise 180ms ease-out both; }
   @keyframes rise { from { opacity: 0.4; transform: translateY(3px); } }
@@ -105,8 +108,7 @@ pre.report {
       <textarea id="text" name="text" spellcheck="false"></textarea>
       <div class="row">
         <button id="suggest" type="submit">Suggest tags</button>
-        <span id="status" class="status" role="status">Asks Opus 5.5 at effort high, through
-          your own Claude usage.</span>
+        <span id="status" class="status" role="status"></span>
       </div>
     </form>
   </section>
@@ -114,8 +116,9 @@ pre.report {
   <section aria-labelledby="gismu-heading">
     <h2 id="gismu-heading">Gismu</h2>
     <ul id="tiles" class="tiles"></ul>
-    <p id="example" class="example">Example: the answer of Sonnet 5.5 at effort xhigh for the
-      text above, from the live grid of 2026-11-26.</p>
+    <p id="example" class="example">Example: worked example <code>alice</code> of
+      <code>suggester</code>, whose answer is illustrative, read by the same reader as a live
+      answer.</p>
   </section>
 
   <section aria-labelledby="command-heading">
@@ -136,131 +139,13 @@ pre.report {
     <p>The page builds its request and reads the answer with the same code as
       <code>suggester</code>, compiled to JavaScript. A gismu the list lacks, a cmavo, a lujvo or
       a repeat drops alone, and the report names it.</p>
-    <p>This page asks Opus 5.5 at effort high, where <code>suggester</code> asks Sonnet 5.5 at
-      effort xhigh with a schema. The page has no schema, so its tags are unmeasured.</p>
+    <p>This page asks <code class="model-page"></code> at effort
+      <code class="effort-page"></code>, where <code>suggester</code> asks
+      <code class="model-cli"></code> at effort <code class="effort-cli"></code> with a schema.
+      The page has no schema, so its tags are unmeasured.</p>
   </section>
+  <pre id="example-text" hidden>@EXAMPLE_TEXT@</pre>
+  <pre id="example-answer" hidden>@EXAMPLE_ANSWER@</pre>
 </main>
 
 <script>@SCRIPT@</script>
-<script>
-// Drive page: ask `sample` of runtime, read answer with reader compiled from Nim.
-const MODEL = "claude-opus-5-5";
-const TEXT_EXAMPLE = "The plan for the spring garden: plant the roses near the fence, " +
-  "water them each morning, and record how tall each one grows.";
-const EXAMPLE = [
-  ["purdi", "garden"], ["rozgu", "roses to be planted"], ["spati", "planting, plants"],
-  ["platu", "the plan for the garden"], ["vensa", "spring season"],
-  ["djacu", "watering the roses"], ["banro", "growth of the plants"],
-  ["cerni", "morning watering"], ["vreji", "recording the growth"], ["xrula", "flowers"],
-  ["galtu", "height, tall"], ["jibni", "near the fence"], ["merli", "measuring height"],
-];
-const $ = (id) => document.getElementById(id);
-
-function show(pairs, report) {
-  // Render tiles, command and report from pairs of gismu and gloss.
-  const tiles = $("tiles");
-  tiles.replaceChildren();
-  for (const [gismu, gloss] of pairs) {
-    const item = document.createElement("li");
-    item.className = "tile";
-    const word = document.createElement("b");
-    word.textContent = gismu;
-    const note = document.createElement("span");
-    note.textContent = gloss;
-    item.append(word, note);
-    tiles.append(item);
-  }
-  const words = pairs.map((p) => p[0]).join(" ");
-  $("command").textContent = pairs.length ? "tagger tag notes/text.md " + words : "";
-  $("report").textContent = report;
-}
-
-function pairsFrom(report) {
-  // Read gismu and gloss of each kept line of report.
-  const found = [];
-  for (const m of report.matchAll(/^Service suggests `([a-z]{5})`, glossed `([^`]*)`\.$/gm)) {
-    found.push([m[1], m[2]]);
-  }
-  return found;
-}
-
-function setStatus(text, isFail) {
-  $("status").textContent = text;
-  $("status").className = isFail ? "status fail" : "status";
-}
-
-async function suggest(event) {
-  // Ask Claude once for text, then check each element with reader of Nim.
-  //   Without runtime of Artifact, form posts to server of `suggester --serve` instead.
-  if (!window.claude) return;
-  event.preventDefault();
-  const text = $("text").value;
-  if (!text.trim()) { setStatus("Paste a text first.", true); return; }
-  const sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
-  if (!sample) {
-    setStatus("This view cannot ask Claude. Open the page on claude.ai, signed in.", true);
-    return;
-  }
-  $("suggest").disabled = true;
-  setStatus("Asking Claude…", false);
-  try {
-    const result = await sample(rictadniPrompt(text), {
-      model: MODEL, modelTier: "complex", effort: "high",
-    });
-    const answer = result.text;
-    const start = answer.indexOf("{");
-    const json = start < 0 ? answer : answer.slice(start, answer.lastIndexOf("}") + 1);
-    const model = result.modelApplied || "the tier that answered";
-    const report = rictadniReport(text, json, model);
-    show(pairsFrom(report), report);
-    $("example").hidden = true;
-    const kept = rictadniGismu(json, model).split("\n").filter(Boolean).length;
-    setStatus(kept ? "Kept " + kept + " gismu." : "Claude gave no gismu of the list.", !kept);
-  } catch (error) {
-    const code = error && error.code;
-    const message =
-      code === "not_granted" ? "The page may not ask Claude for you. Allow it to try again." :
-      code === "rate_limited" ?
-        "Claude is busy or your usage limit is reached. Wait, then try again." :
-      "Claude gave no answer: " + (error && error.message ? error.message : String(error));
-    setStatus(message, true);
-  } finally {
-    $("suggest").disabled = false;
-  }
-}
-
-async function copyCommand() {
-  // Copy command of tagger, or select it where clipboard is refused.
-  const text = $("command").textContent;
-  try {
-    await navigator.clipboard.writeText(text);
-    $("copied").textContent = "Copied.";
-  } catch (error) {
-    const range = document.createRange();
-    range.selectNodeContents($("command"));
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    $("copied").textContent = "Selected. Copy it with your keyboard.";
-  }
-}
-
-const served = $("served");
-if (served) {
-  // Show report that `suggester --serve` put in page, in place of example.
-  const pairs = pairsFrom(served.textContent);
-  show(pairs, served.textContent);
-  $("example").hidden = true;
-  setStatus(pairs.length ? "Kept " + pairs.length + " gismu." : "No gismu of the list was kept.",
-    !pairs.length);
-} else {
-  if (!window.claude) {
-    setStatus("Sends text to suggester on this machine, which asks with your key.", false);
-  }
-  const lines = EXAMPLE.map(([g, l]) => "Service suggests `" + g + "`, glossed `" + l + "`.");
-  $("text").value = TEXT_EXAMPLE;
-  show(EXAMPLE, lines.join("\n"));
-}
-$("form").addEventListener("submit", suggest);
-$("copy").addEventListener("click", copyCommand);
-</script>
