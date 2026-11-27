@@ -71,6 +71,7 @@ type
     range*: string  ## Versions advisory covers, as `<=4.17.23`.
     notes*: seq[string]  ## Title and address of each advisory npm names for package.
     fix*: string  ## Version npm names as fix; empty where it names none.
+    has_fix*: bool  ## Npm names fix, by version or as `true` that `npm audit fix` applies.
 
   Locked* = object  ## Define project carrying node manifest beside its lock.
     directory*: string  ## Project, repository-relative.
@@ -263,6 +264,7 @@ proc readAudit*(answer: Answer): tuple[advisories: seq[Advisory], failure: strin
       if via.kind == JObject: advisory.notes.add via{"title"}.getStr & ", " & via{"url"}.getStr
     let fix = entry{"fixAvailable"}
     if not fix.isNil and fix.kind == JObject: advisory.fix = fix{"version"}.getStr
+    advisory.has_fix = not fix.isNil and (fix.kind == JObject or fix.getBool)
     result.advisories.add advisory
   # Exit that disagrees with count marks answer npm did not finish.
   if (answer.code == 1) != (result.advisories.len > 0) or total.getInt != result.advisories.len:
@@ -308,7 +310,10 @@ proc checkAdvisories*(
       result.lines.add "Advisories that npm names in `" & path_lock & "`; move each package " &
         "to its fix" & CITE_RULE & ":"
     for advisory in advisories:
-      let fix = if advisory.fix.len > 0: "fix `" & advisory.fix & "`" else: "no fix"
+      let fix =
+        if advisory.fix.len > 0: "fix `" & advisory.fix & "`"
+        elif advisory.has_fix: "fix by `npm audit fix`"
+        else: "no fix"
       result.lines.add "  `" & advisory.name & "`, " & advisory.severity & ", `" &
         advisory.range & "`, " & fix & ":"
       for note in advisory.notes: result.lines.add "    " & note & "."
