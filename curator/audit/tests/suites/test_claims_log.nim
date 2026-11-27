@@ -539,6 +539,12 @@ suite "Log of claims":
     discard root.git("add other.txt")
     check commitClaims(root, BRANCH)  # log new to git
     check root.subject == "chore(rictadni): log the claims of the reviewer"
+    let body = root.git("log -1 --format=%b").strip
+    check body ==
+        "The `stop` hook commits the rows of each reflection, by the path of the log alone."
+    check checkCommits(BRANCH, [root.subject]).len == 0  # as commit hook reads subject
+    check checkBody(root.subject, body).len == 0
+    check checkCommitRecord(root.subject, [path]).len == 0
     check root.git("show --name-only --format= HEAD").strip == path
     check root.git("diff --cached --name-only").strip == "other.txt"  # other path stays staged
     check root.git("status --porcelain -- " & path).len == 0
@@ -582,6 +588,7 @@ suite "Log of claims":
       checkpoint name
       check not commitClaims(busy, BRANCH)
       check busy.subject == "chore(curator): init"
+      check busy.git("diff --cached --name-only").strip.len == 0  # guard stages nothing either
       removeDir(busy)
 
 
