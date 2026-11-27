@@ -32,7 +32,10 @@
 ##   Cost: imports read by scanner of strings, templates, comments and regular expressions, never
 ##     parsed: regular expression after word or `)`, as after `return`, reads as division, and
 ##     its quote can open string, or template that runs across lines. Specifier on line after its
-##     keyword reads as none, and so does import built from expression.
+##     keyword reads as none, and so do `module.require('x')`, `require?.('x')` and import built
+##     from expression. Such miss costs little: package it names resolves only where manifest
+##     names it, which manifest check holds, and import of address is expected to fail type check
+##     of `types`, which resolves no address (unmeasured).
 ##   Cost: inline script of page reads as none, and so does `<svg:script>`; named reference other
 ##     than `&sol;` and `&colon;` stays as written. Script in comment, and path holding space
 ##     before `//`, are refused, though browser loads neither from other host.
@@ -69,6 +72,8 @@ const
     ## Last marks of code after which `/` opens regular expression rather than division.
   CHARS_WORD = IdentChars + {'$', '#'}  ## Characters of name of script, private name included.
   DIGITS_REFERENCE_MAX = 7  ## Digits of character reference read at most; more names no ASCII.
+  SPACES_LINE = {' ', '\t', '\f', '\v'}  ## Spaces of script that end no line, but no-break space.
+  SPACE_NO_BREAK = "\xC2\xA0"  ## No-break space in UTF-8, which script reads as space.
   SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
   COMMAND_AUDIT* = "npm audit --package-lock-only --include=dev --json --fetch-retries=1 " &
     "--fetch-timeout=" & $(SECONDS_ASK * 1000)
@@ -135,12 +140,13 @@ func keywordAt(text: string, at: int): string =
 
 
 func operand(text: string; at: int; is_call: bool): tuple[specifier: string, ending: int] =
-  ## Read quoted operand that opens at `at`, past spaces, tabs and comment on same line, and past
+  ## Read quoted operand that opens at `at`, past spaces of line and comment on same line, and past
   ##   `(` of call, with index past its closing quote on same line; empty, ending at `at`, where
   ##   none opens there.
   var cursor = at
   while cursor < text.len:
-    if text[cursor] in {' ', '\t'} or (is_call and text[cursor] == '('): inc cursor
+    if text[cursor] in SPACES_LINE or (is_call and text[cursor] == '('): inc cursor
+    elif text.continuesWith(SPACE_NO_BREAK, cursor): cursor += SPACE_NO_BREAK.len
     elif text.continuesWith("/*", cursor):
       let closing = text.find("*/", cursor + 2)
       if closing < 0 or '\n' in text[cursor ..< closing]: return ("", at)
@@ -237,7 +243,9 @@ func specifiersScript*(text: string): seq[tuple[line: int, specifier: string]] =
         if c == '{': inc braces[^1]
         elif c == '}': braces[^1] = max(braces[^1] - 1, 0)
         # Postfix `++` or `--` ends operand, so `/` after it divides.
-        if c in {'+', '-'} and cursor > 0 and text[cursor - 1] == c: mark = 'x'
+        if c in {'+', '-'} and cursor > 0 and text[cursor - 1] == c and
+            (cursor < 2 or text[cursor - 2] != c):
+          mark = 'x'
         elif c notin Whitespace: mark = c
     inc cursor
   result = result.filterIt(it.specifier.len > 0)
