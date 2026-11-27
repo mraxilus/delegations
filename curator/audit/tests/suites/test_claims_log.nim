@@ -614,6 +614,24 @@ suite "Log of claims":
     removeDir(root)
 
 
+  test "stop commits log that index holds and HEAD lacks, as any new log":
+    # Case held: E1 of `cases.sh` of review of #1059's build: new log staged, so `ls-files` read
+    #   it as tracked, `show HEAD:` failed, and each later stop failed again.
+    #   Domain: new log staged, and log of HEAD with new rows staged.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    root.writeInto(path, HEADER_LOG & rowKind("reviewer", 1))
+    discard root.git("add -- " & path)
+    check commitClaims(root, BRANCH)
+    check root.git("status --porcelain -- " & path).len == 0
+    root.writeInto(path, readFile(root / path) & rowKind("critic", 2))
+    discard root.git("add -- " & path)
+    check commitClaims(root, BRANCH)
+    check root.subject == "chore(rictadni): log the claims of the critic"
+    removeDir(root)
+
+
   test "rows waiting outside tree move into log of root branch once each, and file goes":
     let
       root = createTempDir("claims_", "_move")
