@@ -229,10 +229,12 @@ suite "Declarations":
     check noted.documented == noted  # note runs on below its line, so hand moves it whole
 
 
-  test "doc inside value opening `block` reports, and stays for hand":
+  test "doc inside value opening `block` moves above its declaration, as `#` comment":
     # Case held: `lut_grade_by_basis` of `func grade*` in `pga/algebra.nim` of PGA library at
-    #   `3d9696e`, line 343, whose doc opens body of `block:`, where `nim doc` reads none
-    #   (ruling on rule 5 of #443).
+    #   `3d9696e`, line 343, whose doc opens body of `block:`, where `nim doc` reads none; ruling
+    #   D1 c of #1020 moves it above, with blank line above it.
+    #   Domain: top level, section, local, under `if`, label, doc of several lines, and doc after
+    #     blank line in body.
     let grade = "func grade*(b: Basis): Grade {.noinit.} =\n" &
       "  ## Count number of vector basis elements present in factorization of basis.\n" &
       "  ##   I.e. number of full dimensions occupied by given basis.\n" &
@@ -241,10 +243,118 @@ suite "Declarations":
       "    for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)\n    lut\n\n" &
       "  lut_grade_by_basis[b]\n"
     check checkDocs("a.nim", grade).mapIt((it.line, it.brief)) == @[
-      (4, "doc of value opening `block` stands after `=`, with `block` on next line; got it " &
-        "below `const lut_grade_by_basis`"),
+      (4, "doc of value opening `block` stands above its declaration, as `#` comment; got it " &
+        "inside block of `const lut_grade_by_basis`"),
     ]
-    check grade.fixed == grade  # no comment alone gives value opening `block` doc `nim doc` reads
+    check grade.fixed == grade.replace(
+      "basis.\n  const lut_grade_by_basis = block:\n    ## Construct LUT for grade of basis " &
+        "element.\n",
+      "basis.\n\n  # Construct LUT for grade of basis element.\n" &
+        "  const lut_grade_by_basis = block:\n",
+    )  # routine's doc stands above, so blank line goes between
+    check grade.fixed.isSettled
+    check grade.fixed.spellingsCode == grade.spellingsCode
+    for (breach, settled) in [
+      (
+        "const A* = 1  ## A.\nconst B* = block:\n  ## Doc,\n  ##   of two lines.\n  2\n",
+        "const A* = 1  ## A.\n\n# Doc,\n#   of two lines.\nconst B* = block:\n  2\n",
+      ),  # top level, under code: outline keeps its indent past `#`
+      (
+        "const\n  C* = block:\n    ## Doc.\n    3\n  D* = block outer:\n    ## Doc.\n    4\n",
+        "const\n  # Doc.\n  C* = block:\n    3\n\n  # Doc.\n  D* = block outer:\n    4\n",
+      ),  # section: keyword opens its body, so first name takes no blank line
+      (
+        "proc f*() =\n  if true:\n    let e = block:\n      ## Doc.\n      5\n    discard e\n",
+        "proc f*() =\n  if true:\n    # Doc.\n    let e = block:\n      5\n    discard e\n",
+      ),  # opens body of `if`, so no blank line
+      ("var g* = block:\n\n  ## Doc.\n  6\n", "# Doc.\nvar g* = block:\n  6\n"),  # file opens
+    ]:
+      checkpoint breach
+      check checkDocs("a.nim", breach).len > 0
+      check checkDocs("a.nim", breach).allIt(it.brief.startsWith("doc of value opening `block`"))
+      check breach.fixed == settled
+      check settled.isSettled
+      check settled.spellingsCode == breach.spellingsCode
+      check settled.docsRead == breach.docsRead  # `nim doc` reads neither place
+
+
+  test "doc above value opening `block` is `#` comment, blank line above where other line stands":
+    # Ruling D1 c of #1020: `nim doc` reads no doc above keyword, and `##` above declaration at
+    #   top level joins doc of module, which `#` avoids. Domain: `##` and `#`, at each reach,
+    #   under code, under doc of routine, other declaration or module, and under line opening body.
+    for kept in [
+      "## Module.\n\n# Doc.\nconst A* = block:\n  1\n",  # blank line above
+      "const\n  # Doc.\n  B* = block:\n    2\n",  # first in section, under keyword
+      "proc f*() =\n  ## Do.\n\n  # Doc,\n  #   of two lines.\n  const c = block:\n    3\n" &
+        "  discard c\n",  # local, outline
+      "proc f*() =\n  if true:\n    # Doc.\n    let d = block:\n      4\n    discard d\n",
+      "proc f*() =\n  ## Do.\n  let e = block:\n    5\n  discard e\n",  # routine's doc, none of `e`
+      "## Module.\nconst F* = block:\n  6\n",  # doc of module stays (#980)
+      "const G* = 7  ## G,\n## held twice.\nconst H* = block:\n  8\n",  # lexer joins it to `G`
+    ]:
+      checkpoint kept
+      check kept.isSettled
+    let opening = "{.experimental: \"strictFuncs\".}\n\n"
+    for (breach, settled, brief) in [
+      (
+        opening & "## Doc.\nconst A* = block:\n  1\n",
+        opening & "# Doc.\nconst A* = block:\n  1\n",
+        "doc above value opening `block` is `#` comment, since `nim doc` reads none there; " &
+          "got `##` above `const A`",
+      ),
+      (
+        "const A* = 1  ## A.\n# Doc.\nconst B* = block:\n  2\n",
+        "const A* = 1  ## A.\n\n# Doc.\nconst B* = block:\n  2\n",
+        "doc above value opening `block` takes blank line above it; got no blank line above doc " &
+          "of `const B`",
+      ),
+      (
+        "proc f*() =\n  ## Do.\n  # Doc.\n  const c = block:\n    3\n  discard c\n",
+        "proc f*() =\n  ## Do.\n\n  # Doc.\n  const c = block:\n    3\n  discard c\n",
+        "doc above value opening `block` takes blank line above it; got no blank line above doc " &
+          "of `const c`",
+      ),
+      (
+        "const\n  A* = 1\n  ## Doc,\n  ##   of two lines.\n  B* = block:\n    2\n",
+        "const\n  A* = 1\n\n  # Doc,\n  #   of two lines.\n  B* = block:\n    2\n",
+        "doc above value opening `block` is `#` comment, since `nim doc` reads none there; " &
+          "got `##` above `const B`",
+      ),  # both at once
+      (
+        "proc f*() =\n  if true:\n    ## Doc.\n    let d = block:\n      4\n    discard d\n",
+        "proc f*() =\n  if true:\n    # Doc.\n    let d = block:\n      4\n    discard d\n",
+        "doc above value opening `block` is `#` comment, since `nim doc` reads none there; " &
+          "got `##` above `let d`",
+      ),
+    ]:
+      checkpoint breach
+      check checkDocs("a.nim", breach).mapIt(it.brief) == @[brief]
+      check breach.fixed == settled
+      check settled.isSettled
+      check settled.spellingsCode == breach.spellingsCode
+    check (opening & "## Doc.\nconst A* = block:\n  1\n").docsRead.module == "Module.Doc."
+    check (opening & "# Doc.\nconst A* = block:\n  1\n").docsRead.module == "Module."
+
+
+  test "value whose `block` opens below its `=` reports, and stays for hand to dedent":
+    # Case held: `FACINGS` of `simulation/words.nim` of `dance_ontology`, whose doc stands below
+    #   body; ruling D1 c of #1020 keeps `block:` on `=` line, so fix would dedent body.
+    #   Domain: doc on `=` line, doc below body, and none, at each reach, with label.
+    for (source, line, name) in [
+      (
+        "const FACINGS* =\n  block:\n    var each = 0\n    each\n  ## Name each state.\n",
+        1,
+        "const FACINGS",
+      ),
+      ("const F* =  ## Doc.\n  block:\n    6\n", 1, "const F"),
+      ("proc f*() =\n  ## Do.\n  let g =\n    block outer:\n      7\n  discard g\n", 3, "let g"),
+    ]:
+      checkpoint source
+      check checkDocs("a.nim", source).mapIt((it.line, it.brief)) == @[
+        (line, "value opening `block` keeps `block:` on its `=` line, so body takes one indent; " &
+          "got `block` below `=` of `" & name & "`, whose body hand dedents"),
+      ]
+      check source.fixed == source
 
 
   test "next-line doc of several lines, or under line holding comment, stands one level in":
@@ -341,7 +451,7 @@ suite "Declarations":
       "const N = 3  ## Size.\n",
       "const\n  N = 3\n    ## Size.\n",  # next line, one level in
       "const T = [\n  1,\n]  ## Table.\n",  # last line of value
-      "const T = block:\n  ## Table.\n  1\n",  # doc right below first line counts, as cost
+      "const T = block:\n  ## Table.\n  1\n",  # first in block: doc position moves it
       "proc f[T](x: T): T =\n  ## Echo.\n  let y = x\n  y\n",
       "func g() =\n  ##[ Block doc. ]##\n  discard\n",
       "macro m(): untyped =\n  ## Emit.\n  quote do:\n    proc h() = discard\n",
@@ -479,16 +589,51 @@ suite "Declarations":
       check source.documented.isDocumented
 
 
-  test "value opening `block` on its first line stays for hand, as no comment gives it doc":
-    # `nim jsondoc` of Nim 2.2.12 and 2.4.0 reads none after `block:`, first in body or after its
-    #   last line; doc below body at its indent leaves last value unused.
+  test "value opening `block` with no doc takes `# TODO: Document.` above it, blank line above":
+    # Ruling D1 c of #1020: doc of value opening `block` stands above its declaration, as `#`,
+    #   since `nim doc` reads none there, and comment there counts as its doc. Domain: global at
+    #   top level, in section and under `when`, under code, doc of module, keyword and none; doc in
+    #   each place doc position moves from; and local, which takes none.
     let blocked = "const V = block:\n  1\nconst W = block outer:\n  2\n"
     check checkDocsMissing("a.nim", blocked).mapIt((it.line, it.brief)) == @[
-      (1, "value opening `block` takes doc after `=`, with `block` on next line; got `const V`"),
-      (3, "value opening `block` takes doc after `=`, with `block` on next line; got `const W`"),
+      (1, "declaration takes doc comment; got `const V`"),
+      (3, "declaration takes doc comment; got `const W`"),
     ]
-    check blocked.documented == blocked
-    check "const V =  ## Value.\n  block:\n    1\n".isDocumented  # as message asks
+    check blocked.documented == "# TODO: Document.\nconst V = block:\n  1\n\n" &
+      "# TODO: Document.\nconst W = block outer:\n  2\n"
+    check blocked.documented.isDocumented
+    check blocked.documented.isSettled  # doc position passes what missing doc writes
+    for (source, documented) in [
+      (
+        "## Module.\nconst V* = block:\n  1\n",
+        "## Module.\n\n# TODO: Document.\nconst V* = block:\n  1\n",
+      ),  # doc of module stays (#980)
+      (
+        "const\n  A* = 1  ## A.\n  B* = block:\n    2\n",
+        "const\n  A* = 1  ## A.\n\n  # TODO: Document.\n  B* = block:\n    2\n",
+      ),
+      ("const\n  B* = block:\n    2\n", "const\n  # TODO: Document.\n  B* = block:\n    2\n"),
+      (
+        "when true:\n  let C* = block:\n    3\n",
+        "when true:\n  # TODO: Document.\n  let C* = block:\n    3\n",
+      ),  # `when` opens no scope, so `C` is global
+    ]:
+      checkpoint source
+      check source.documented == documented
+      check documented.isDocumented
+      check documented.isSettled
+    let below = "const F* =\n  block:\n    6\n"
+    check below.documented == "# TODO: Document.\n" & below  # doc position leaves `block` for hand
+    for kept in [
+      "# Doc.\nconst V = block:\n  1\n",
+      "const A = 1  ## A.\n# Doc.\nconst V = block:\n  1\n",  # doc position adds blank line
+      "{.experimental: \"strictFuncs\".}\n\n## Doc.\nconst V = block:\n  1\n",  # doc position: `#`
+      "const V = block:\n  ## Doc.\n  1\n",  # inside: doc position moves it
+      "const V =  ## Doc.\n  block:\n    1\n",  # on `=` line, which hand moves
+      "proc f() =\n  ## Do.\n  let v = block:\n    1\n  discard v\n",  # local takes none
+    ]:
+      checkpoint kept
+      check kept.isDocumented
 
 
   test "type running over lines reads doc where it closes, and name inside its brackets none":
@@ -547,6 +692,7 @@ suite "Declarations":
       "const\n  PAGE* = \"\"\"\n<p>\n\"\"\"\n  NEXT = 1\n" &
         "func page*(): string = \"\"\"\n<main>\n\"\"\"\n",
       "let x = foo(\n  1,\n)\nlet (a, b) = (1, 2)\nconst S = \"## TODO: x\"\n",
+      "const V = block:\n  1\nconst W = 2\nconst X = block:\n  3\n",  # `#` above `block` value
     ]:
       check breach.documented != breach  # each source takes doc
       check breach.documented.spellingsCode == breach.spellingsCode
