@@ -4726,7 +4726,9 @@ suite "Hooks":
       rules = work[start ..< work.find("### ", start + heading.len)]
       quotes = record.textSection("## Quotes of claims")
     check start >= 0
-    check "`" & COLUMN_PREDICTED & "`" notin rules  # guide states tables alone (#1028)
+    check rules.count("`" & COLUMN_PREDICTED & "`") == 1  # guide states tables alone (#1028)
+    check "The hook also reads the first table of a reflection whose header holds `" &
+      COLUMN_PREDICTED & "` as one, for a block of bullets." in rules  # as table of claims alone
     check "A cell under `Predicted` is one whole claim of a block that a call took, or " &
       "`No prediction`." in quotes  # record states rule of cell
     check "**A claim of bullets is a bullet" in quotes  # and where claim of bullets ends

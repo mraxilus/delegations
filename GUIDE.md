@@ -217,8 +217,9 @@ return it confirmed.
   claim above. Each criterion stands alone, so that a resolver reads it with its claim alone.
 - **A table of a block is a table of claims where its header holds `#`, `Judgement`,
   `Estimate @ 90%` or `Resolution criterion`.** A table of a reflection is one where its header
-  holds `#`, `Judgement` or `Estimate @ 90%`. So a table of other content holds none of these
-  columns, as `| Step | Cause |`.
+  holds `#`, `Judgement` or `Estimate @ 90%`. The hook also reads the first table of a reflection
+  whose header holds `Predicted` as one, for a block of bullets. So a table of other content
+  holds none of these columns, as `| Step | Cause |`.
 - **Each claim takes a number of its own, from 1, across the judgements and the estimates.** The
   number is digits alone, as `6`, and never `6.` or `#6`. The hook reads each claim from its row,
   and its criterion from the row of the same number.
@@ -292,9 +293,10 @@ Then the subagent runs, and these steps follow:
 - **The hook refuses a block of its turn where a claim lacks its number, its text, its
   confidence or its criterion.** It also refuses an estimate whose cells do not rise in one
   unit. It refuses a table of claims whose header lacks a column of its form, and a bullet beside
-  the tables. It refuses a criterion whose `#` holds no number, or names no claim or a claim of
-  an earlier criterion. Write the block again in your reply, whole and mended. The reply is a
-  later turn, so its block serves the call.
+  the tables. A bullet with an indent, or a numbered item, holds no claim, so the hook passes it,
+  as under `**Basis:**`. It refuses a criterion whose `#` holds no number, or names no claim or a
+  claim of an earlier criterion. Write the block again, whole and mended, in your reply, a later
+  turn whose block serves the call.
 - **The hook refuses a row of a reflection that quotes no whole claim of a block that a call
   took.** A row that holds `No prediction` passes. It also refuses a table of claims whose header
   lacks a column of its form. It refuses a hit or missed estimate whose cell under `Result` opens
