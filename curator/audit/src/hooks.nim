@@ -559,8 +559,8 @@ const
     ##   Bare value with scale reads as cost or time in no case, as `15 M` of time is 15 minutes or
     ##     15,000,000 (choice).
   RULE_LINE = "Line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
-    "at `$`, each plain value after space, as cell holds it, and value of tokens holds no group " &
-    "after space (GUIDE.md, Prediction, critic and reflection)"
+    "at `$`, each one plain value after space, as cell holds it, and value of tokens holds no " &
+    "group after space (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of line `**Subagent:**` that gives no tokens or no cost states, since
     ##   log writes field of neither then, and rows of call lose both.
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
@@ -2737,9 +2737,12 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
   ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
   ##   Tokens are whole bare value that opens after space (`isFigureAt`) and ends right before
-  ##     first ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000.
-  ##   Cost is value at first `$`, after space, that no mark of `MARKS_KIND` and nothing value
+  ##     ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000.
+  ##   Cost is value at `$` that opens after space, which no mark of `MARKS_KIND` and nothing value
   ##     cannot read follows (`isRunOn`).
+  ##   Line gives one of each, so it gives none where two values end before ` tokens`, or two
+  ##     `$` open after space, as `at $3.00 per 1M tokens, 170,000 tokens and $1.10` (choice);
+  ##     `$` in code, or ` tokens` with no value before it, counts none.
   ##   Space parts words of line, so it reads no group after space, and value after digit and
   ##     space is none: `round 2 170 000 tokens` gives none, where it would read 2,170,000 or
   ##     170,000 (choice). Mark of emphasis or code around figure makes none, as no cell reads
@@ -2749,18 +2752,25 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
     let lower = line.strip(trailing = false).toLowerAscii
     if not labels.anyIt(lower.startsWith(it)): continue
     result.line = line.strip
-    let at = line.find(" " & WORD_TOKENS)
-    for start in 0 ..< max(at, 0):
-      if line[start] notin Digits or not line.isFigureAt(start): continue
-      let value = line.valueAt(start, {MARK_COMMA})
-      if value.isNone or value.get.stop != at: continue
-      if value.get.unit == UnitNumber.Unspecified and value.get.amount >= 1 and
-          value.get.amount == value.get.amount.floor:
-        result.tokens = some(int(value.get.amount))
-      break
-    let dollar = line.find(MARK_COST)
-    if dollar >= 0 and line.isFigureAt(dollar):
-      let value = line.valueAt(dollar, {MARK_COMMA})
+    var
+      values: seq[Value]  # Value right before each ` tokens` that one ends before.
+      at = line.find(" " & WORD_TOKENS)
+    while at >= 0:
+      for start in 0 ..< at:
+        if line[start] notin Digits or not line.isFigureAt(start): continue
+        let value = line.valueAt(start, {MARK_COMMA})
+        if value.isSome and value.get.stop == at:
+          values.add value.get
+          break
+      at = line.find(" " & WORD_TOKENS, at + 1)
+    if values.len == 1 and values[0].unit == UnitNumber.Unspecified and values[0].amount >= 1 and
+        values[0].amount == values[0].amount.floor:
+      result.tokens = some(int(values[0].amount))
+    var dollars: seq[int]  # Each `$` that opens after space.
+    for k, c in line:
+      if c == MARK_COST and line.isFigureAt(k): dollars.add k
+    if dollars.len == 1:
+      let value = line.valueAt(dollars[0], {MARK_COMMA})
       if value.isSome and value.get.unit == UnitNumber.Cost and value.get.amount > 0 and
           not line.isRunOn(value.get.stop) and
           (value.get.stop == line.len or line[value.get.stop] notin MARKS_KIND):
