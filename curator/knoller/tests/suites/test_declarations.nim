@@ -387,6 +387,24 @@ suite "Declarations":
     check (opening & "# Doc.\nconst A* = block:\n  1\n").docsRead.module == "Module."
 
 
+  test "each name of section reads as value opening `block`, past section nested in body":
+    # Case held: `LUT_INITIAL_BY_PAIR` of `src/ricysoho/clusters.nim` of `ricysoho`, line 99,
+    #   below value whose block nests `let` section, whose doc doc position read nowhere.
+    #   Domain: name below nested `let`, `var` and `const`, at top level and in routine.
+    for nested in ["let", "var", "const"]:
+      for (head, margin) in [("const\n", "  "), ("proc f*() =\n  let\n", "    ")]:
+        let breach = head & margin & "A = block:\n" & margin & "  " & nested & "\n" & margin &
+          "    x = 1\n" & margin & "  x\n" & margin & "B = block:\n" & margin & "  ## Doc.\n" &
+          margin & "  2\n"
+        checkpoint breach
+        check checkDocs("a.nim", breach).mapIt(it.line) == @[head.count('\n') + 5]
+        check breach.fixed == breach.replace(
+          margin & "  x\n" & margin & "B = block:\n" & margin & "  ## Doc.\n",
+          margin & "  x\n\n" & margin & "# Doc.\n" & margin & "B = block:\n",
+        )
+        check breach.fixed.isSettled
+
+
   test "doc of routine named in backticks stays its own, above value opening `block`":
     # Case held: `∪` of `pga/operators.nim` of PGA library at `3d9696e`, line 401, whose doc doc
     #   position read as doc of `const 𝐞̄ₙ` right below it, and wrote as `#`.
