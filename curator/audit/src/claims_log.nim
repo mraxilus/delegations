@@ -603,7 +603,7 @@ proc commitClaims*(root, branch: string): bool =
     let last = fieldsGit(root, ["log", "-1", "--format=%s"]).join.strip.parseSubject
     if last.isSome and last.get.kind == "test": return false
     let
-      tracked = fieldsGit(root, ["ls-files", "-z", "--", relative]).len > 0
+      tracked = fieldsGit(root, ["ls-tree", "-z", "--name-only", "HEAD", "--", relative]).len > 0
       before = (if tracked: fieldsGit(root, ["show", "HEAD:" & relative]).join else: "")
       rows_before = before.splitLines.filterIt(it.startsWith(OPENING_ROW)).toHashSet
       rows_now = readFile(root / relative).splitLines.filterIt(it.startsWith(OPENING_ROW))
