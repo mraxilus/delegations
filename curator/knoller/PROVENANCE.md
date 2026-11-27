@@ -1610,49 +1610,60 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 ## Block docs
 
 **The doc of a value that opens `block` stands above its declaration, as a `#` comment.** The
-Architect ruled so on D1 c of #1020, since `nim doc` reads no doc in any place of such a value.
-`blocks` of `declarations.nim` reads each such binding, at any reach, and where its doc stands.
-Doc position and missing doc both read it, so each doc that the fixer of one writes, the check of
-the other passes.
+Architect ruled so on D1 c of #1020. `nim doc` reads no doc of such a value with `block:` on its
+`=` line, wherever the doc stands. `blocks` of `declarations.nim` reads each such binding, at any
+reach, and where its doc stands. Doc position and missing doc both read it, so each doc that the
+fixer of one writes, the check of the other passes.
 
 - `block:` stays on the `=` line, so the body takes one indent. The doc stands on its own lines
   above the declaration, or above the name in a section. A blank line stands above it. None
   stands where the line above opens the body that holds it, as `if` does, or where the file opens.
 - `nim jsondoc` reads no `##` there, and one above a declaration at module level joins the doc of
-  the module. So the doc is `#`. The suite "What `nim doc` reads" fails once the compiler that
-  builds it reads one of these places, and that place then takes `##` again.
+  the module. So the doc is `#`. The suite "Article VI.9" of `test_declarations.nim` fails once
+  the compiler that builds it reads one of these places, and that place then takes `##` again.
 - The comment right above the declaration, at its indent, is its doc. A `##` there stays where
   code above, the module, a routine or another declaration holds it, as the lexer joins it.
   `heads` gives the doc of a routine named in backticks, which no declaration reads.
 - `blocks` reads the lines that declare in a `const`, `let` or `var` section (`sections`), and
   each placement that opens `block`. The reading of declarations passes over each name below a
   section nested in a block, so it alone would miss such a value. Verified by hand with a probe of
-  `declarations`, 2026-11-27.
+  `declarations` at `9d6d168e`, 2026-11-27.
+- `sections` walks up from a line to the keyword of its section. It stops at an enclosing line
+  that ends on `=` or opens `block`, other than the keyword alone. So a statement in the body of a
+  value declares nothing, as a labelled `block` or an assignment that opens `block`.
 - Missing doc writes `# TODO: Document.` above a global such value, with the blank line where it
   is due. A comment above counts as the doc, and so does a `##` that doc position moves there.
-- Doc position moves a `##` doc after `block:`, with each line that the lexer joins to it, or
-  else first in the body, above. It writes `#` for a `##` above, and adds the blank line.
+- Doc position moves a `##` doc that trails `block:` or stands first in the body to the lines
+  above the declaration, with each line that the lexer joins to it. Each run of `#` that opens a
+  doc line there becomes one `#`, and the blank line comes where it is due.
 - A doc inside or after `block:` with a comment above it too is two docs, so it stays for hand.
   So does a `block` that opens below `=`, since its body would take one indent less. Its message
-  says why.
+  says why. A `=` that closes the head of a routine, as of a lambda, opens no such `block`, so its
+  binding takes its doc after that `=`.
 - Cost: a `#` comment right above such a value reads as its doc, though it may remark on the
   line above it.
 - Cost: missing doc reads its names from declarations, so such a name with no doc takes no
   placeholder.
+- Cost: a binding of a routine type whose `block` opens below its `=`, as `let f: proc(): int =`,
+  reads as the head of a lambda. So it takes no report of this section.
 - Verified by `suites/test_declarations.nim`. Its cases are `lut_grade_by_basis` and `∪` of the
   PGA library, and the doc after `block:` that knoller at `6905e55e` passes. They also hold
-  `FACINGS` of `dance_ontology` and `LUT_INITIAL_BY_PAIR` of `ricysoho`, each with its domain.
+  `FACINGS` of `dance_ontology` and `LUT_INITIAL_BY_PAIR` of `ricysoho`, each with its domain. The
+  review of #1070 found three more cases, each now held with its domain: a statement in the body
+  of such a value, a lambda whose body opens `block`, and a doc that opens on `###`.
 - Verified by hand, 2026-11-27, with a driver that runs `checkDocs` and `checkDocsMissing` alone
   on each Nim file that git tracks at `9d6d168e`. Knoller at `9d6d168e` gives 75 reports of doc
-  position and 1,082 of missing doc, and knoller at `6905e55e` gives 47 and 1,083.
+  position and 1,082 of missing doc, and knoller at `6905e55e` gives 47 and 1,083. Knoller at
+  `672b76a3` gives the same 75 and 1,082 on the tree at that commit, with the same reports of a
+  value that opens `block`.
 - Of the later reports, 44 read a value that opens `block`, all in contributor projects. Of them,
   39 hold a doc inside the block, 1 a `##` above, 2 a `block` below `=`, and 2 no doc. The earlier
   knoller gives 16 of them, at the same places. It gives 1 more at `curator/audit/src/role.nim:80`,
   since it does not count the `#` doc above that value.
 - `fixDocs` alone keeps each token of code in each file that it writes there, and a second fix
-  writes nothing. `knoller --check`, built at `9d6d168e`, fixes 40 of the 44 in those files. It
-  leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and `walk.nim` of
-  `dance_ontology`, which neither knoller settles.
+  writes nothing. `knoller --check`, built at `9d6d168e`, reports 40 of the 44 as `to fix` in
+  those files. It leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and
+  `walk.nim` of `dance_ontology`, which neither knoller settles.
 
 ## Stages
 
