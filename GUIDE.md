@@ -286,11 +286,14 @@ Then the subagent runs, and these steps follow:
   no reflection after it. A reply to a refusal passes unread, so the hook holds no step there.
 - **The hook refuses a block of its turn where a claim lacks its number, its text, its
   confidence or its criterion.** It also refuses an estimate whose cells do not rise in one
-  unit. Write the block again in your reply, whole and mended. The reply is a later turn, so its
-  block serves the call.
+  unit, and a table whose header lacks a column of its form. It refuses a criterion whose number
+  names no claim or a claim of an earlier criterion, and a bullet beside the tables. Write the
+  block again in your reply, whole and mended. The reply is a later turn, so its block serves the
+  call.
 - **The hook refuses a row of a reflection that quotes no whole claim of a block that a call
-  took.** A row that holds `No prediction` passes. It also refuses a hit or missed estimate whose
-  cell under `Result` opens with no value in its unit.
+  took.** A row that holds `No prediction` passes. It also refuses a table whose header lacks a
+  column of its form. It refuses a hit or missed estimate whose cell under `Result` opens with no
+  value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
