@@ -98,13 +98,11 @@ func isPath(specifier: string): bool =
 
 
 func widthKeyword(line: string, at: int): int =
-  ## Measure keyword of import standing alone as word at `at`, never after `.`; `0` where none
-  ##   stands there.
+  ## Measure keyword of import that opens word at `at`, never after `.`; `0` where none opens there.
+  ##   End of word needs no test: `operand` reads only quote past spaces and `(`.
   if at > 0 and (line[at - 1] in IdentChars or line[at - 1] == '.'): return 0
   for keyword in KEYWORDS_IMPORT:
-    let after = at + keyword.len
-    if line.continuesWith(keyword, at) and (after >= line.len or line[after] notin IdentChars):
-      return keyword.len
+    if line.continuesWith(keyword, at): return keyword.len
   0
 
 
