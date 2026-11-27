@@ -3280,6 +3280,8 @@ rules where `knoller --check <project>` reports it, with the same counts. Both r
 again on `curator/audit` and `curator/knoller`, whose files differ there. A script outside the
 tree matched each report of the two outputs by rule, path and line.
 
+- The run read the code before `4998481a` and `ea179bdf`. Neither changes a count, and the second
+  changes only the warning of a refused rename.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
   it once. Each warning of rule 11 is of a whole file that the compiler proves nothing of, and
   each tool prints it once.
@@ -4369,13 +4371,16 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 **`stop` commits each new row of the log of the branch, as D1 a of #1059 rules.** After
 `logStop`, `commitClaims` commits the log alone, by its path, where the log holds rows that `HEAD`
 lacks and lost none of its rows. Its subject, `chore(<project>): log the claims of the <kinds>`,
-names each new kind, and the commit hook reads it as any other.
+names each new kind where it fits `SUBJECT_MAX`, and else the subagents.
 
 - A detached checkout, a branch outside the grammar, and a merge, cherry-pick, revert or rebase in
-  progress commit nothing. The rows then wait in the tree.
+  progress commit nothing. Nor does a `HEAD` that is a `test` commit, since its `fix` must come
+  right after it. The rows then wait in the tree, and a later stop commits them.
 - The commit takes the path alone (`--only`), so a change staged for another path stays staged. A
-  log that lost a row commits nothing, and a failure of git prints its error and refuses no turn.
-- Verified by `suites/test_claims_log.nim`, in scratch repositories. Verified by hand on
+  commit that git refuses prints its error, refuses no turn, and unstages the log that it staged.
+- During a merge, git refuses the partial commit too, so no test tells that guard from git.
+- Verified by `suites/test_claims_log.nim`, in scratch repositories, with the checks that the
+  commit hook runs on the message. Verified by hand on
   2026-11-27 too, with `koch hook stop` of this change in a scratch worktree on a branch of
   `rictadni`. It wrote the 8 rows of a `reviewer`, and committed the log alone.
 - Cost: a commit appears that the delegate did not type, and its subject names it. It moves the
@@ -4389,7 +4394,9 @@ takes one row as the delegate marked it, and one as the resolver did, whose key 
 `MARKER_RESOLVER`.
 
 - A row takes the tokens and the cost that its reflection used, and its outcome after the id of
-  its run. No row names a model (#1025), so no figure groups by model.
+  its run. No row names a model (#1025), so no figure groups by model. Each run used one model.
+- Verified by hand on 2026-11-26: `protoc` and `koch figures` read each row of the log, and no key
+  repeats. Each of the 372 claims of the study takes one row of each marker.
 - Verified by hand on 2026-11-21: each count of a batch agrees with its result on #963. Each of
   150 outcomes agrees with the usage of its row too.
 
