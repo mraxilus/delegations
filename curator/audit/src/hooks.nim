@@ -503,15 +503,23 @@ const
   MARKERS_SCORED = ["✅", "⬜"]
     ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
   MARK_COST = '$'  ## Mark before value of cost, as `$2.50`.
-  MARK_GROUP = ','  ## Mark before each group of three digits of value, as `170,000`.
-  LENGTH_GROUP = 3  ## Digits of group after `MARK_GROUP`.
+  MARKS_GROUP = {',', ' '}
+    ## Marks before each group of three digits of value, one to value, as `170,000` or `170 000`.
+  LENGTH_GROUP = 3  ## Digits of group after mark of `MARKS_GROUP`.
   SCALES_VALUE = [('k', 3), ('M', 6)]
     ## Mark after digits of value that scales it, with places it moves point: thousand and
     ##   million (7194411522); case tells `M` of million from `m` of minutes.
+  WORDS_SCALE = [("k", 3), ("M", 6), ("thousand", 3), ("million", 6), ("billion", 9)]
+    ## Word after value and one space that scales it, with places it moves point: mark in its case,
+    ##   and name in any case (choice).
   MINUTES_TIME = [('s', 1.0 / 60), ('m', 1.0), ('h', 60.0)]
     ## Mark after value of time, with minutes in one of it, as range of time is in minutes.
   WORD_TOKENS = "tokens"
     ## Word of estimate whose cells are bare that marks tokens; other bare cells mark count.
+  WORDS_TIME = ["sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "hr", "hrs",
+    "hour", "hours"]
+    ## Words of time, in lower case, that result refuses after value and space, as mark of time
+    ##   stands glued to its value.
   WORDS_UNIT = [(UnitNumber.Tokens, "tokens "), (UnitNumber.Cost, "cost "),
     (UnitNumber.Time, "time ")]
     ## Word that opens text of number of bullet in unit, past its label, in lower case.
@@ -2550,11 +2558,16 @@ func percentageCell(cell: string): Option[float] =
 
 func valueAt*(text: string, at = 0): Option[Value] =
   ## Read value that opens at `at` of text, as cell of estimate writes it (7194411522): `$` of
-  ##   cost, digits with each group of three after comma and decimal part, `k` or `M` that scales
-  ##   it, then `s`, `m` or `h` of time; none where no digit opens it after any `$`, both marks
-  ##   of cost and time stand, or letter or digit follows it.
+  ##   cost, digits with each group of three after comma, or after one space, and decimal part,
+  ##   scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m` or `h` of
+  ##   time; none where no digit opens it after any `$`, both marks of cost and time stand, or
+  ##   letter or digit follows it.
   ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
-  ##     `39,100,000` does; time reads in minutes, since range of time is in minutes.
+  ##     `39,100,000`, `39.1 M` and `39 100 000` do; time reads in minutes, since range of time is
+  ##     in minutes.
+  ##   Space before scale and between groups reads (choice): result that hook refuses keeps row of
+  ##     its first write with no outcome, which its mend never replaces. Mark of time after space
+  ##     reads as none, so `5 m` is no whole value.
   var
     i = at
     unit = UnitNumber.Unspecified
@@ -2565,7 +2578,10 @@ func valueAt*(text: string, at = 0): Option[Value] =
   while i < text.len and text[i] in Digits: inc i
   if i == start: return
   var whole = text[start ..< i]
-  while i + LENGTH_GROUP < text.len and text[i] == MARK_GROUP and
+
+  # Read each group of three digits after mark that opens first one, so `1,000 000` reads 1,000.
+  let separator = (if i < text.len and text[i] in MARKS_GROUP: text[i] else: '\0')
+  while i + LENGTH_GROUP < text.len and text[i] == separator and
       text[i + 1 .. i + LENGTH_GROUP].allCharsInSet(Digits) and
       (i + LENGTH_GROUP + 1 == text.len or text[i + LENGTH_GROUP + 1] notin Digits):
     whole.add text[i + 1 .. i + LENGTH_GROUP]
@@ -2577,14 +2593,25 @@ func valueAt*(text: string, at = 0): Option[Value] =
       fraction.add text[i]
       inc i
 
-  # Move point by places of scale, so digits parse once and round once.
-  for (mark, places) in SCALES_VALUE:
+  # Move point by places of scale, glued or after one space, so digits parse once and round once.
+  var places = 0
+  for (mark, moved) in SCALES_VALUE:
     if i < text.len and text[i] == mark:
-      let moved = min(places, fraction.len)
-      whole.add fraction[0 ..< moved] & '0'.repeat(places - moved)
-      fraction = fraction[moved .. ^1]
+      places = moved
       inc i
       break
+  if places == 0 and i + 1 < text.len and text[i] == ' ':
+    var stop = i + 1
+    while stop < text.len and text[stop] in Letters: inc stop
+    let word = text[i + 1 ..< stop]
+    for (name, moved) in WORDS_SCALE:
+      if word == name or (name.len > 1 and word.toLowerAscii == name):
+        places = moved
+        i = stop
+        break
+  let moved = min(places, fraction.len)
+  whole.add fraction[0 ..< moved] & '0'.repeat(places - moved)
+  fraction = fraction[moved .. ^1]
   var amount = (whole & (if fraction.len > 0: "." & fraction else: "")).parseFloat
 
   # Read mark of time, which value of cost refuses, and refuse value that runs on.
@@ -2633,14 +2660,28 @@ func estimateCells(text: string, cells: array[3, string]): Option[Estimate] =
     unit: unit.get))
 
 
+func isRunOn(text: string, at: int): bool =
+  ## Decide whether value that ends at `at` of text runs on past whitespace into digit, word of one
+  ##   letter, or word of `WORDS_TIME`: group, scale or mark of time that value cannot read there,
+  ##   as in `39 1`, `39.1 K` or `1.5 h`.
+  var i = at
+  while i < text.len and text[i] in Whitespace: inc i
+  if i == at or i == text.len: return false
+  if text[i] in Digits: return true
+  var stop = i
+  while stop < text.len and text[stop] in Letters: inc stop
+  stop - i == 1 or text[i ..< stop].toLowerAscii in WORDS_TIME
+
+
 func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[float] =
   ## Read outcome that opens cell under `Result` of number of unit: amount of value at its start
   ##   (`valueAt`) whose marks give unit, bare for `Tokens` and `Count`; none otherwise, so
   ##   `15, inside` gives no minutes of estimate, and `$1.10` no count.
   ##   Where `as_bare`, as number of bullets writes its percentiles bare, bare value reads in unit
   ##     too, and value of any mark reads for `Unspecified`, whose number takes no score.
+  ##   Value that runs on past space (`isRunOn`) gives none, so `1.5 h` gives no 1.5 minutes.
   let value = cell.valueAt
-  if value.isNone: return
+  if value.isNone or cell.isRunOn(value.get.stop): return
   let
     marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
     is_read = value.get.unit == marked or
