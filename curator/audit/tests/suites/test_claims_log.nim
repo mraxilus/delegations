@@ -358,10 +358,11 @@ suite "Log of claims":
     # Case as found: `39.1M tokens` read 39, and `39100k tokens` read 39,100, as last number
     #   before ` tokens`, since tables teach `k` and `M`. Domain: each form of value that cell
     #   reads, before ` tokens` and after `$`, on line of subagent and of critic; no value that
-    #   ends right before ` tokens` gives none.
+    #   ends right before ` tokens` gives none, nor does group after space, as hook refuses each
+    #   (finding 2 of critic of mends, where `round 2 170 000 tokens` read 2,170,000).
     const
       tokens = ["39,100,000", "39100000", "39.1M", "39100k", "39.1 M", "39.1 million",
-        "39 100 000", "0.0391 billion", "39,100 k"]
+        "0.0391 billion", "39,100 k"]
       costs = ["$14.40", "$14.4", "$0.0144k", "$0.0144 k"]
     var whole = REFLECTION_TABLES_POSTED
     for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
@@ -371,12 +372,14 @@ suite "Log of claims":
           "39,100,000 tokens and $14.40", written & " tokens and " & cost)).claimsRead
         check claims.len == 8
         check claims.allIt(it.tokens == 39_100_000 and it.cost == 14.4)
-    for written in ["39.1 K", "39.1 Mio", "about"]:
+    for written in ["39.1 K", "39.1 Mio", "about", "39 100 000", "round 2 170 000", "**39.1M**",
+        "`39.1M`"]:
       let claims = transcriptOne(PREDICTION_TABLES, "builder", whole.replace("39,100,000 tokens",
         written & " tokens")).claimsRead
       check claims.allIt(it.tokens == 0)  # no value ends right before ` tokens`
     for (written, figures) in [("0.05M tokens and $0.35", (50_000, 0.35)),
-        ("50 k tokens and $0.35", (50_000, 0.35)), ("50,000 tokens and $0.0035k", (50_000, 3.5))]:
+        ("50 k tokens and $0.35", (50_000, 0.35)), ("50,000 tokens and $0.0035k", (50_000, 3.5)),
+        ("50,000 tokens and **$0.35**", (50_000, 0.0)), ("50,000 tokens and $0 35", (50_000, 0.0))]:
       let critic = transcript(REFLECTION.replace("50,000 tokens and $0.35", written)).claimsRead[2]
       check (critic.tokens, critic.cost) == figures
 

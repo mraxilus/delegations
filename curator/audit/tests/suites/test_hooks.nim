@@ -2779,8 +2779,8 @@ suite "Hooks":
       taken = asked & lineSaid(PREDICTION) & calls
     proc reflected(table: string, before = taken): seq[string] =
       ## Read findings of reflection holding table, after report of critic.
-      blocksHeld(before & lineSaid("## Reflection\n\n**Subagent:** builder.\n\n" & table &
-        "\n- **Change:** none.\n"))
+      blocksHeld(before & lineSaid("## Reflection\n\n**Subagent:** builder, 160,000 tokens and " &
+        "$2.10 at list price.\n\n" & table & "\n- **Change:** none.\n"))
     check blocksHeld(taken & lineSaid(REFLECTION)).len == 0
 
     # Whitespace collapses on both sides, and `\|` reads as `|`.
@@ -4314,6 +4314,74 @@ suite "Hooks":
       check bullet(2, "15" & space & "inside").len == 0  # word after space ends value
     check count == 4 * 5
     check estimate("39.1 M, inside").len == 0  # one ASCII space reads scale
+
+
+  test "line `**Subagent:**` gives tokens and cost as cell reads value, or is refused (#1028)":
+    # Case as found (findings 2 and 3 of critic of mends): line gave 0 tokens with no finding for
+    #   `**170,000** tokens`, `` `170,000` tokens `` and `39.1 K tokens`, and 2,170,000 for
+    #   `builder of round 2 170 000 tokens`. Domain: each mark of emphasis or code around each
+    #   figure, each scale that cell reads or refuses, group after space, each form of cost, and
+    #   reflection with no such line, which takes no finding.
+    const
+      rule = "line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
+        "at `$`, each plain value after space, as cell holds it, and value of tokens holds no " &
+        "group after space (GUIDE.md, Prediction, critic and reflection); got `"
+      figures = "39,100,000 tokens and $14.40"
+      opening = "**Subagent:** builder of the weekly release check, "
+    let whole = REFLECTION_TABLES_POSTED.mended
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
+    func refusal(written: string): seq[string] =
+      ## Write finding of line that gives figures written.
+      @[rule & opening & written & " at list price,`"]
+    for written in ["**170,000** tokens and $14.40", "`170,000` tokens and $14.40",
+        "39.1 K tokens and $14.40"]:
+      check lined(written) == refusal(written)  # case as found
+    check heldReflection(PREDICTION_TABLES, whole.replace(opening & "39,100,000 tokens",
+      "**Subagent:** builder of round 2 170 000 tokens")) == @[rule & "**Subagent:** builder " &
+      "of round 2 170 000 tokens and $14.40 at list price,`"]
+    check lined(figures).len == 0
+    let flow = lineUser("Build it.", "human") & lineSaid(PREDICTION_TABLES) &
+      lineUser("<task-notification>timer</task-notification>", "task-notification") &
+      linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+    check rulesHeld(flow & lineSaid(whole.replace(figures, "39.1 K tokens and $14.40"))) ==
+      @["koch.reflection-line"]  # check of its own, apart from table
+
+    # Mark of emphasis or code around figure makes none, as cell reads value with none; so does
+    #   any mark but space before figure, as `~`.
+    var count = 0
+    for mark in ["**", "*", "_", "__", "***", "`"]:
+      for written in [mark & "39,100,000" & mark & " tokens and $14.40",
+          "39,100,000 tokens and " & mark & "$14.40" & mark, mark & "39,100,000 tokens" & mark &
+          " and $14.40"]:
+        check lined(written) == refusal(written)
+        inc count
+    check count == 6 * 3
+
+    # Each scale that cell reads gives tokens, and each that cell refuses gives none; space
+    #   before group joins value to number before it, as `round 2 170 000`, so it gives none.
+    for written in ["39.1M", "39100k", "39.1 M", "39.1 million", "0.0391 billion", "39,100 k",
+        "39100000", "0.0391 Billion"]:
+      check lined(written & " tokens and $14.40").len == 0
+    for written in ["39.1 K", "39.1 Mio", "39.1m", "$39.1M", "39 100 000", "170 000",
+        "2 170,000", "39.1\u00A0M", "0", "39,100,000.5", "~39.1M", "39.1M-"]:
+      check lined(written & " tokens and $14.40") == refusal(written & " tokens and $14.40")
+
+    # Cost reads first `$` as cell reads value, with no group after space and nothing after it
+    #   that value cannot read.
+    for written in ["$14.40", "$0.0144k", "$0.0144 k", "$14.4"]:
+      check lined("39,100,000 tokens and " & written).len == 0
+    for written in ["$1,10", "$14 40", "14.40 dollars", "$0", "$14.40 m", "$ 14.40"]:
+      check lined("39,100,000 tokens and " & written) ==
+        refusal("39,100,000 tokens and " & written)
+
+    # Reflection with no line `**Subagent:**` takes no finding of line, as GUIDE.md asks line of
+    #   it and no rule of hook does.
+    let bare = whole.replace(whole.splitLines[2] & "\n" & whole.splitLines[3], "")
+    check opening notin bare
+    check heldReflection(PREDICTION_TABLES, bare).len == 0
 
 
   test "each refusal of bullets cites section that states its rule (#1028)":
