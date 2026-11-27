@@ -3795,7 +3795,7 @@ suite "Hooks":
     check heldBlock(PREDICTION_TABLES.replace(row1, "| 1 | 80% |  |")) ==
       @[refusal(text, "empty cell for claim `1`")]
 
-    # Block of bullets takes none of these, so block of running session still serves.
+    # Block of bullets takes none of these, so block of delegate that runs at merge still serves.
     check heldBlock(PREDICTION).len == 0
 
 
@@ -3892,7 +3892,7 @@ suite "Hooks":
     let two = PREDICTION_TABLES.replace("**Criteria.**",
       "- Work: a (60%).\n- Work: b (70%).\n\n**Criteria.**")
     check heldBlock(two) == @[rule & "Work: a`", rule & "Work: b`"]
-    check heldBlock(PREDICTION).len == 0  # bullets alone, as block of running session
+    check heldBlock(PREDICTION).len == 0  # bullets alone, as block of delegate that runs at merge
 
     # Table of claims that reads no row of claims, as one of criteria alone or one character off
     #   its form, still makes bullet beside it refused, as its rows share numbers too.
@@ -3956,8 +3956,8 @@ suite "Hooks":
       "Result |\n| --- | --- | --- | --- |\n") == @["table of reflection holds row under its " &
       "header; got none under `| # | State | Estimate @ 90% | Result |`"]
 
-    # Bullets of running session quote either way: cell under `Predicted` quotes claim of
-    #   table, and row with `#` quotes bullet by its position, with or without its label.
+    # Bullets of delegate that runs at merge quote either way: cell under `Predicted` quotes claim
+    #   of table, and row with `#` quotes bullet by its position, with or without its label.
     check heldReflection(PREDICTION_TABLES, "## Reflection\n\n| State | Confidence | " &
       "Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 75% | " & three & " | yes |\n").len ==
       0

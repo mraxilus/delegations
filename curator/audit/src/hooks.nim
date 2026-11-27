@@ -2755,8 +2755,8 @@ func forecastsTable(text: string): seq[Forecast] =
 func forecasts*(text: string): seq[Forecast] =
   ## Read each claim of block text: each bullet (`forecastsBullets`), then each row of its tables
   ##   of judgements and estimates (`forecastsTable`), so block of either form serves call.
-  ##   Bullets stay read while running session may still write them (choice), and their checks
-  ##     stay as they were.
+  ##   Bullets stay read while delegate that runs at merge may still write them (choice), and their
+  ##     checks stay as they were.
   text.forecastsBullets & text.forecastsTable
 
 
