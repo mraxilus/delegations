@@ -102,11 +102,11 @@ const
   FIELDS_NUMBER* = ["low", "median", "high", "outcome"]
     ## Fields of message `Number` of `claims.proto` that reader of row knows.
   OPENING_ROW = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
+  CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
   PATHS_OPERATION = [
     "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply"
   ]
     ## Paths under git directory that merge, cherry-pick, revert or rebase in progress leaves.
-  CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
   MARK_COMMENT = '#'  ## Mark that opens comment line of log, as header of log does.
   COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
     ## Columns of table of reflection, in order of their cells in `rowsTable`.
