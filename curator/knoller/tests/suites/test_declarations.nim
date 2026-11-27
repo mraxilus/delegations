@@ -391,6 +391,25 @@ suite "Declarations":
     # Case held: `LUT_INITIAL_BY_PAIR` of `src/ricysoho/clusters.nim` of `ricysoho`, line 99,
     #   below value whose block nests `let` section, whose doc doc position read nowhere.
     #   Domain: name below nested `let`, `var` and `const`, at top level and in routine.
+    let clusters = "const\n  LUT_PERMISSIBLE_BY_PAIR = block:\n" &
+      "    ## jdice ro zunsna remei ja'i le vo javni pe `CLL 3.6`\n" &
+      "    var lut: PairsJudged\n    for a in CONSONANTS:\n      for b in CONSONANTS:\n" &
+      "        let\n          is_doubled = a == b  # le pamoi javni\n" &
+      "        lut[a][b] = not is_doubled\n    lut\n  LUT_INITIAL_BY_PAIR = block:\n" &
+      "    ## jdice ro boi remei ja'i le liste pe `CLL 3.7`\n    var lut: PairsJudged\n" &
+      "    for pair in PAIRS_INITIAL: lut[pair[0]][pair[1]] = true\n    lut\n"
+        # lines 76 to 103 of `clusters.nim`, nested section cut to one name
+    check checkDocs("a.nim", clusters).mapIt(it.line) == @[2, 11]
+    check clusters.fixed == clusters.multiReplace(
+      ("  LUT_PERMISSIBLE_BY_PAIR = block:\n    ## jdice ro zunsna",
+        "  # jdice ro zunsna"),
+      ("pe `CLL 3.6`\n", "pe `CLL 3.6`\n  LUT_PERMISSIBLE_BY_PAIR = block:\n"),
+      ("    lut\n  LUT_INITIAL_BY_PAIR = block:\n    ## jdice ro boi",
+        "    lut\n\n  # jdice ro boi"),
+      ("pe `CLL 3.7`\n", "pe `CLL 3.7`\n  LUT_INITIAL_BY_PAIR = block:\n"),
+    )  # first name under bare keyword takes no blank line, second one does
+    check clusters.fixed.isSettled
+    check clusters.fixed.spellingsCode == clusters.spellingsCode
     for nested in ["let", "var", "const"]:
       for (head, margin) in [("const\n", "  "), ("proc f*() =\n  let\n", "    ")]:
         let breach = head & margin & "A = block:\n" & margin & "  " & nested & "\n" & margin &
@@ -410,6 +429,11 @@ suite "Declarations":
     #   position read as doc of `const 𝐞̄ₙ` right below it, and wrote as `#`.
     #   Domain: operator of each routine kind, under `when`, and doc after blank line.
     for kept in [
+      "when IS_RIGID:\n  func `∪`*(m: Multivector): Multivector =\n" &
+        "    ## Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).\n" &
+        "    const 𝐞̄ₙ = block:\n      let h = Basis.horizon\n" &
+        "      h.basis.initElement(if h.is_negated: -1 else: 1)\n    m ∧ (𝐞̄ₙ ∨ ★m)\n",
+        # lines 395 and 400 to 405 of `pga/operators.nim`, as found
       "when true:\n  func `∪`*(m: int): int =\n    ## Get antisupport.\n    const e = block:\n" &
         "      1\n    m + e\n",
       "proc `+`*(a, b: int): int =\n  ## Add.\n  let s = block:\n    a + b\n  s\n",
