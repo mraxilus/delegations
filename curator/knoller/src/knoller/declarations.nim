@@ -51,9 +51,10 @@
 ##     module's (suite "What `nim doc` reads"). Blank line stands above that doc, but where line
 ##     above opens body holding it, as `if` or section keyword, or file opens there (`blocks`).
 ##   Missing doc writes `# TODO: Document.` there for global such value; comment there counts as
-##     its doc, and so does `##` doc doc position moves there. Doc position moves doc first in
-##     body there, writes `#` for `##` above, and adds blank line above; doc inside with comment
-##     above it too, and `block` opening below `=`, whose body needs dedent, wait for hand. `##`
+##     its doc, and so does `##` doc doc position moves there. Doc position moves doc after
+##     `block:`, with lines lexer joins to it, or else first in body, there; it writes `#` for
+##     `##` above, and adds blank line above. Doc inside or after `block:` with comment above it
+##     too, and `block` opening below `=`, whose body needs dedent, wait for hand. `##`
 ##     above that routine, module or other declaration holds, or lexer joins to doc trailing code
 ##     above, stays its owner's (`movesBlock`).
 ##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
@@ -145,9 +146,10 @@ type
     Inside  ## One-line doc inside value joins `=` ending its first line.
     Close  ## One-line doc inside value moves after its close.
     BlockInside  ## Doc first in body of value opening `block` moves above it, as `#` comment.
+    BlockAfter  ## Doc trailing `block:` moves above declaration, as `#` comment.
     BlockHash  ## `##` doc above value opening `block` takes `#`, since `nim doc` reads none there.
     BlockBlank  ## Doc above value opening `block` takes blank line above it.
-    BlockTwice  ## Doc inside value opening `block` and comment above it, which hand joins.
+    BlockTwice  ## Doc inside or after `block:` and comment above it, which hand joins.
     BlockBelow  ## `block` opens below `=`, so body needs dedent, which fix leaves for hand.
     Signature  ## Doc on routine's signature line takes line after it.
     Blank  ## Blank line between routine's signature and its doc goes.
@@ -174,9 +176,10 @@ type
       ## Zero-based first line of comment right above declaration, at its indent; `line` for none.
     is_clear: bool  ## Line above `above` is blank or opens body holding declaration, or is none.
     is_hashed: bool  ## Comment above holds `##` doc.
-    is_trailed: bool  ## `##` doc trails declaration's line.
-    inside: int  ## Zero-based first line of `##` doc first in body of block; `-1` for none.
+    inside: int
+      ## Zero-based first line of `##` doc after `block:`, else first in its body; `-1` for none.
     ends: int  ## Zero-based last line of that doc, as lexer joins it.
+    offset: int  ## Byte offset of `##` of doc trailing `block:`; `-1` where doc opens own line.
     shown: string  ## Declaration as message echoes it, e.g. `const LUT`.
 
   Default = object
@@ -469,7 +472,8 @@ func placements(source: string): seq[Placement] =
 func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
   ## Read each binding whose value opens `block`, at any reach, and where its doc stands: comment
   ##   right above it at its indent, but `##` doc that code, module or declaration of `found` owns,
-  ##   as lexer joins it; `##` doc trailing its line, and `##` doc first in its body.
+  ##   as lexer joins it; `##` doc trailing `block:` with lines lexer joins to it, else `##` doc
+  ##   first in its body.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
@@ -479,10 +483,14 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
     ## Decide whether line `k` holds `##` doc alone.
     k >= 0 and k < lines.len and isDoc(code[k], kept[k])
 
+  func trailing(k: int): int =
+    ## Read byte offset of `##` doc trailing code of line `k`; `-1` where none.
+    let at = kept[k].find('#', code[k].strip(leading = false).len)
+    if code[k].strip.len > 0 and at >= 0 and kept[k][at .. ^1].startsWith("##"): at else: -1
+
   func isTrailingDoc(k: int): bool =
     ## Decide whether `##` doc trails code of line `k`.
-    let at = kept[k].find('#', code[k].strip(leading = false).len)
-    code[k].strip.len > 0 and at >= 0 and kept[k][at .. ^1].startsWith("##")
+    k.trailing >= 0
 
   # Mark doc each declaration holds in place, and first line holding code or opening doc, so
   #   doc opening there is module's (#980: `D3 a` on file's start, `D1 a` on comments above).
@@ -495,8 +503,8 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
       heading = k
       break
 
-  # Read each binding opening `block`, once for each line, and doc first in its body, which no
-  #   comment above other binding takes.
+  # Read each binding opening `block`, once for each line, and doc trailing `block:` or first in
+  #   its body, which no comment above other binding takes.
   for d in source.declarations:
     let i = d.line - 1
     if d.kind != KindName.Binding or i < 0 or i >= lines.len or result.anyIt(it.line == i):
@@ -507,18 +515,20 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
       line: i,
       is_below: is_below,
       above: i,
-      is_trailed: i.isTrailingDoc,
       inside: -1,
       ends: -1,
+      offset: if is_below: -1 else: i.trailing,
       shown: code.section(i) & " " & d.name,
     )
     var below = i + 1
     while below < lines.len and lines[below].strip.len == 0: inc below
-    if not is_below and not b.is_trailed and below.isLineDoc and
-        lines[below].indentWidth > lines[i].indentWidth:
-      (b.inside, b.ends) = (below, below)
-      while isLineDoc(b.ends + 1): inc b.ends
+    if b.offset >= 0: b.inside = i
+    elif not is_below and below.isLineDoc and lines[below].indentWidth > lines[i].indentWidth:
+      b.inside = below
       owned[below] = true
+    if b.inside >= 0:
+      b.ends = b.inside
+      while isLineDoc(b.ends + 1): inc b.ends
     result.add b
 
   # Read comment right above each at its indent, up to `##` doc that other owns, and whether
@@ -582,8 +592,7 @@ func writesDoc(source: string): seq[WriteDoc] =
     #   any doc near value whose `block` opens below `=`, which hand moves.
     if p.is_block:
       let b = valued.filterIt(it.line == p.line)
-      if b.len == 0 or b[0].above < p.line or b[0].inside >= 0 or b[0].is_trailed or
-          (b[0].is_below and p.doc >= 0):
+      if b.len == 0 or b[0].above < p.line or b[0].inside >= 0 or (b[0].is_below and p.doc >= 0):
         continue
       result.add WriteDoc(
         line: p.line,
@@ -969,9 +978,10 @@ func movesPlaced(source: string, found: seq[Placement]): seq[MoveDoc] =
 
 func movesBlock(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
   ## Find each doc of value opening `block` of `valued` out of its position, own lines above its
-  ##   declaration as `#` comment, blank line above them (D1 c of #1020): doc first in body moves
-  ##   there, `##` above takes `#`, and comment above under other line takes blank line. Doc
-  ##   inside with comment above too, and `block` below `=`, whose body needs dedent, wait for hand.
+  ##   declaration as `#` comment, blank line above them (D1 c of #1020): doc trailing `block:` or
+  ##   first in body moves there, `##` above takes `#`, and comment above under other line takes
+  ##   blank line. Doc inside with comment above too, and `block` below `=`, whose body needs
+  ##   dedent, wait for hand.
   let lines = source.split('\n')
   for b in valued:
     if b.is_below:
@@ -988,7 +998,8 @@ func movesBlock(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
       first = if b.inside >= 0: b.line else: b.above
     var move = MoveDoc(line: b.line, first: first, last: b.line - 1, got: b.shown)
     if b.inside >= 0:
-      (move.shape, move.last) = (Shape.BlockInside, b.ends)
+      move.shape = if b.offset >= 0: Shape.BlockAfter else: Shape.BlockInside
+      move.last = b.ends
       if b.above < b.line:
         (move.shape, move.first) = (Shape.BlockTwice, b.above)
         result.add move
@@ -1002,11 +1013,13 @@ func movesBlock(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
       move.origins.add -1
     let docs = if b.inside >= 0: toSeq(b.inside .. b.ends) else: toSeq(b.above ..< b.line)
     for k in docs:
-      let text = lines[k].strip
+      let text = if k == b.line: lines[k][b.offset .. ^1].strip else: lines[k].strip
       move.lines.add margin & (if text.startsWith("##"): text[1 .. ^1] else: text)
       move.origins.add k
     if b.inside >= 0:
-      move.lines.add lines[b.line]
+      move.lines.add(
+        if b.offset >= 0: lines[b.line][0 ..< b.offset].strip(leading = false) else: lines[b.line]
+      )
       move.origins.add b.line
     result.add move
 
@@ -1045,6 +1058,9 @@ func checkDocs*(path, source: string): seq[Report] =
       of Shape.BlockInside:
         "Doc of value opening `block` stands above its declaration, as `#` comment; got it " &
           "inside block of `" & move.got & "`."
+      of Shape.BlockAfter:
+        "Doc of value opening `block` stands above its declaration, as `#` comment; got it " &
+          "after `block:` of `" & move.got & "`."
       of Shape.BlockHash:
         "Doc above value opening `block` is `#` comment, since `nim doc` reads none there; got " &
           "`##` above `" & move.got & "`."
@@ -1053,7 +1069,7 @@ func checkDocs*(path, source: string): seq[Report] =
           "doc of `" & move.got & "`."
       of Shape.BlockTwice:
         "Doc of value opening `block` stands above its declaration, as one `#` comment; got " &
-          "one inside block of `" & move.got & "` and comment above it, which hand joins."
+          "comment above `" & move.got & "` and other doc of it, which hand joins."
       of Shape.BlockBelow:
         "Value opening `block` keeps `block:` on its `=` line, so body takes one indent; got " &
           "`block` below `=` of `" & move.got & "`, whose body hand dedents."
