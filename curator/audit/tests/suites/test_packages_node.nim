@@ -441,6 +441,7 @@ suite "Static check":
     for page in [
       "<!ENTITY\th \"a.js\"><script href=\"a.js\"/>", "<!entity h \"a.js\">",
       "<!ATTLIST script href CDATA \"https://cdn.example/a.js\"><script/>",
+      "<!ATTLIST\tscript href CDATA \"https://cdn.example/a.js\"><script/>",
     ]:
       check checkPage(PATH_PAGE, page).len == 1
 
@@ -463,8 +464,27 @@ suite "Static check":
       "<x:base href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
       "<iframe srcdoc=\"&lt;script src=https://cdn.example/a.js&gt;&lt;/script&gt;\"></iframe>",
       "<IFRAME SRCDOC='a'></IFRAME>",
+      # Case: sixth review of #1069; mutant that passed each of these passed suite. Domain: no
+      #   space after quoted value, other quote inside value, `<` before tag, and `xml:base`, which
+      #   moves each path of SVG as `<base>` does; then style sheet of XML, which as XSLT can
+      #   build script of other host, from page itself or from that host.
+      "<script x=\"a\"src=\"https://cdn.example/a.js\"></script>",
+      "<script x='\"==' src=\"https://cdn.example/a.js\"></script>",
+      "<<script src=\"https://cdn.example/a.js\"></script>",
+      "<svg xml:base=\"https://cdn.example/\"><script href=\"a.js\"/></svg>",
+      "<?xml-stylesheet type=\"text/xsl\" href=\"#s\"?><svg><xsl:stylesheet id=\"s\">" &
+        "<xsl:element name=\"script\"><xsl:attribute name=\"href\">https://cdn.example/a.js" &
+        "</xsl:attribute></xsl:element></xsl:stylesheet></svg>",
+      "<?xml-stylesheet type=\"text/xsl\" href=\"https://cdn.example/t.xsl\"?><svg/>",
     ]:
       check checkPage(PATH_PAGE, page).len == 1
+    # Domain: each space of HTML, written out, before quoted value and after name of tag.
+    for space in ["\t", "\n", "\f", "\r", " "]:
+      for page in [
+        "<script x=" & space & "\"> \" src=\"https://cdn.example/a.js\"></script>",
+        "<script" & space & "src=\"https://cdn.example/a.js\"></script>",
+      ]:
+        check checkPage(PATH_PAGE, page).len == 1
     # Domain: comment of plain path, which takes same rule, `>` in quoted value, frame of path,
     #   tag whose name only ends with `script`, and vertical tab that opens name, as `\vsrc`, which
     #   browser reads as name, so `src` before it stays empty.
@@ -473,6 +493,11 @@ suite "Static check":
       "<iframe src=\"a.html\"></iframe>", "<noscript src=\"https://cdn.example/a.js\">",
       "<script \vsrc=\"https://cdn.example/a.js\"></script>",
       "<script src \v=\"https://cdn.example/a.js\"></script>",
+      # Case: sixth review of #1069; vertical tab after name of tag, which HTML reads as part of
+      #   name, gave false refusal, and no case held bare plain path. Domain: each, and plain
+      #   `xml:base`.
+      "<script\v src=\"https://cdn.example/a.js\"></script>", "<script src=a.js></script>",
+      "<svg xml:base=\"/pages/\"><script href=\"a.js\"/></svg>",
     ]:
       check checkPage(PATH_PAGE, page).len == 0
 
