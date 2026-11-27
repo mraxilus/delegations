@@ -62,8 +62,9 @@
 ##     keyword line, as group doc of block.
 ##   Doc position reads declaration as line of code inside `type`, `const`, `let` or `var`
 ##     section, at any depth of object, enum or branch, or such keyword's own line holding one
-##     declaration (`movesLine`); line that continues expression declares nothing. Doc above and
-##     routine's doc it reads from declarations missing doc reads (`movesPlaced`).
+##     declaration (`sections`), so value opening `block` too; line that continues expression
+##     declares nothing. Doc above and routine's doc it reads from declarations missing doc reads
+##     (`movesPlaced`).
 ##   Default of parameter (X.12): type goes where literal default gives exactly that type:
 ##     `int` of integer literal, `float` of float literal, `bool` of `true` or `false`, `string`
 ##     of string literal, `char` of character literal; `T` of `default(T)`, and `Option[T]` of
@@ -469,11 +470,80 @@ func placements(source: string): seq[Placement] =
     )
 
 
-func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
-  ## Read each binding whose value opens `block`, at any reach, and where its doc stands: comment
-  ##   right above it at its indent, but `##` doc that code, module, routine or declaration of
-  ##   `found` owns, as lexer joins it; `##` doc trailing `block:` with lines lexer joins to it,
-  ##   else `##` doc first in its body.
+func sections(source: string): seq[string] =
+  ## Read keyword of section each line of code declares in, e.g. `const`, for line opening there,
+  ##   outside brackets, that continues no expression; empty for other line, and for section
+  ##   keyword alone on its line.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    tokens = source.tokens
+  result = newSeq[string](lines.len)
+  var
+    firsts = newSeqWith(lines.len, -1)  # First token of each line opening there.
+    lasts = newSeqWith(lines.len, -1)  # Last code token ending on each line.
+    depths = newSeq[int](lines.len)  # Brackets open before line's first token.
+    spanned = newSeq[bool](lines.len)  # Line inside or opening token spanning lines.
+    depth = 0
+  for k, t in tokens:
+    let last = t.lineLast(source)
+    if firsts[t.line] < 0 and (k == 0 or tokens[k - 1].lineLast(source) < t.line):
+      firsts[t.line] = k
+      depths[t.line] = depth
+    if last > t.line:
+      for line in t.line .. last: spanned[line] = true
+    if t.kind != KindToken.Comment: lasts[last] = k
+    if t.kind == KindToken.Open: inc depth
+    elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
+
+  for d in 0 ..< lines.len:
+    let first = firsts[d]
+    if first < 0 or code[d].strip.len == 0 or spanned[d] or depths[d] > 0 or lasts[d] < 0:
+      continue
+    let
+      word = code[d].wordFirst
+      stripped = code[d].strip
+      ending = tokens[lasts[d]]
+      text_ending = ending.spelling(source)
+    if word in KEYWORDS_ROUTINE or stripped in KEYWORDS_SECTION or stripped.startsWith("{"):
+      continue
+
+    # Line continuing expression declares nothing, but value it opens may hold doc; section
+    #   keyword opens statement, wherever token before it stands.
+    let is_opening = text_ending == "=" or code[d].isOpeningBlock or ending.kind == KindToken.Open
+    if not is_opening and (ending.kind in {KindToken.Open, KindToken.Comma, KindToken.Operator} or
+        text_ending in KEYWORDS_CONTINUING):
+      continue
+    if first > 0 and word notin KEYWORDS_SECTION:
+      var previous = first - 1
+      while previous > 0 and tokens[previous].kind == KindToken.Comment: dec previous
+      let before = tokens[previous]
+      if before.kind in {KindToken.Open, KindToken.Comma} or
+          (before.kind == KindToken.Operator and before.spelling(source) != ":") or
+          before.spelling(source) in KEYWORDS_CONTINUING:
+        continue
+
+    # Declaration context: section keyword on line, or above it through enclosing lines.
+    var
+      section = if word in KEYWORDS_SECTION: word else: ""
+      parent = d
+    while section.len == 0 and code[parent].indentWidth > 0:
+      let indent_parent = code[parent].indentWidth
+      dec parent
+      while parent >= 0 and
+          (code[parent].strip.len == 0 or code[parent].indentWidth >= indent_parent):
+        dec parent
+      if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
+      if code[parent].wordFirst in KEYWORDS_SECTION: section = code[parent].wordFirst
+    result[d] = section
+
+
+func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[ValueBlock] =
+  ## Read each binding whose value opens `block`, at any reach: each of `found` that reads so,
+  ##   and each line declaring in `const`, `let` or `var` section of `declaring`. Read where its
+  ##   doc stands: comment right above it at its indent, but `##` doc that code, module, routine
+  ##   or declaration of `found` owns, as lexer joins it; `##` doc trailing `block:` with lines
+  ##   lexer joins to it, else `##` doc first in its body.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
@@ -508,14 +578,23 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
       heading = k
       break
 
-  # Read each binding opening `block`, once for each line, and doc trailing `block:` or first in
-  #   its body, which no comment above other binding takes.
-  for d in source.declarations:
-    let i = d.line - 1
-    if d.kind != KindName.Binding or i < 0 or i >= lines.len or result.anyIt(it.line == i):
+  # Read each binding opening `block`, once for each line: placement that names it, then line
+  #   declaring in section, which reading of declarations may pass over.
+  var candidates: seq[(int, string)]  # Line of declaration, and declaration message echoes.
+  for p in found:
+    if p.is_block: candidates.add (p.line, p.shown)
+  for d, section in declaring:
+    if section notin ["const", "let", "var"] or candidates.anyIt(it[0] == d) or
+        not (code[d].isOpeningBlock or code.isBlockBelow(d)):
       continue
+    let
+      stripped = code[d].strip
+      named = if stripped.wordFirst == section: stripped[section.len .. ^1] else: stripped
+    candidates.add (d, section & " " & named.identifierAt(0))
+
+  # Read doc trailing `block:` or first in body of each, which no comment above other takes.
+  for (i, shown) in candidates.sortedByIt(it[0]):
     let is_below = code.isBlockBelow(i)
-    if not (code[i].isOpeningBlock or is_below): continue
     var b = ValueBlock(
       line: i,
       is_below: is_below,
@@ -523,7 +602,7 @@ func blocks(source: string, found: seq[Placement]): seq[ValueBlock] =
       inside: -1,
       ends: -1,
       offset: if is_below: -1 else: i.trailing,
-      shown: code.section(i) & " " & d.name,
+      shown: shown,
     )
     var below = i + 1
     while below < lines.len and lines[below].strip.len == 0: inc below
@@ -591,7 +670,7 @@ func writesDoc(source: string): seq[WriteDoc] =
   let
     lines = source.split('\n')
     found = source.placements
-    valued = source.blocks(found)
+    valued = source.blocks(found, source.sections)
   for p in found:
     # Pass value opening `block` that holds comment above it, or doc doc position moves there;
     #   any doc near value whose `block` opens below `=`, which hand moves.
@@ -686,12 +765,12 @@ func fixDocsMissing*(path, source: string): Fix =
   if writes.len > 0: result.origin = origin
 
 
-func movesLine(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
+func movesLine(source: string; valued: seq[ValueBlock]; declaring: seq[string]): seq[MoveDoc] =
   ## Find each doc of type, field, binding or enum member out of its position, by line it hangs
-  ##   from: one-line doc that joins its line or takes indent one level in, trailing doc too
-  ##   wide, doc of several lines or under comment off that indent, one-line doc inside value over
-  ##   lines, and one-line doc under bare `type`; value opening `block` of `valued` is
-  ##   `movesBlock`'s.
+  ##   from, which declares in section of `declaring`: one-line doc that joins its line or takes
+  ##   indent one level in, trailing doc too wide, doc of several lines or under comment off that
+  ##   indent, one-line doc inside value over lines; and one-line doc under bare `type`. Value
+  ##   opening `block` of `valued` is `movesBlock`'s.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
@@ -753,37 +832,9 @@ func movesLine(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
           origins: @[d],
         )
       continue
-    if word in KEYWORDS_ROUTINE or stripped in KEYWORDS_SECTION or stripped.startsWith("{"):
-      continue
-
-    # Line continuing expression declares nothing, but value it opens may hold doc; section
-    #   keyword opens statement, wherever token before it stands.
-    let is_opening = text_ending == "=" or code[d].isOpeningBlock or ending.kind == KindToken.Open
-    if not is_opening and (ending.kind in {KindToken.Open, KindToken.Comma, KindToken.Operator} or
-        text_ending in KEYWORDS_CONTINUING):
-      continue
-    if first > 0 and word notin KEYWORDS_SECTION:
-      var previous = first - 1
-      while previous > 0 and tokens[previous].kind == KindToken.Comment: dec previous
-      let before = tokens[previous]
-      if before.kind in {KindToken.Open, KindToken.Comma} or
-          (before.kind == KindToken.Operator and before.spelling(source) != ":") or
-          before.spelling(source) in KEYWORDS_CONTINUING:
-        continue
-
-    # Declaration context: section keyword on line, or above it through enclosing lines.
-    var
-      section = if word in KEYWORDS_SECTION: word else: ""
-      parent = d
-    while section.len == 0 and code[parent].indentWidth > 0:
-      let indent_parent = code[parent].indentWidth
-      dec parent
-      while parent >= 0 and
-          (code[parent].strip.len == 0 or code[parent].indentWidth >= indent_parent):
-        dec parent
-      if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
-      if code[parent].wordFirst in KEYWORDS_SECTION: section = code[parent].wordFirst
+    let section = declaring[d]
     if section.len == 0 or valued.anyIt(it.line == d): continue
+    let is_opening = text_ending == "=" or code[d].isOpeningBlock or ending.kind == KindToken.Open
 
     # One-line doc inside value over lines, which `nim doc` reads not: after `=` ending first
     #   line where it fits, else after close; `block` that opens no value of binding holds its
@@ -1034,10 +1085,10 @@ func movesDoc(source: string): seq[MoveDoc] =
   ##   placement, and for value opening `block`, in order of first line each replaces.
   let
     found = source.placements
-    valued = source.blocks(found)
-  (source.movesLine(valued) & source.movesPlaced(found) & source.movesBlock(valued)).sortedByIt(
-    (it.first, it.line),
-  )
+    declaring = source.sections
+    valued = source.blocks(found, declaring)
+  (source.movesLine(valued, declaring) & source.movesPlaced(found) & source.movesBlock(valued)).
+    sortedByIt((it.first, it.line))
 
 
 func checkDocs*(path, source: string): seq[Report] =
