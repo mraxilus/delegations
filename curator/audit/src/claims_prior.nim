@@ -66,8 +66,10 @@ const
     ##   its rows may still write.
     ##   Expected, and never measured past one case: on #1049, log of audit project holds rows of
     ##     one delegate from 2026-11-21 to 2026-11-27, which still works; 30 days holds four such.
-  FORMAT_DATE = "yyyy-MM-dd"  ## Form of day of row, as `2026-11-20`.
-  FORMAT_MONTH = "yyyy-MM"  ## Form of month of day, as `2026-11`.
+  FORMAT_DATE = "uuuu-MM-dd"
+    ## Form of day of row, as `2026-11-20`, with astronomical year, since `yyyy` refuses year 0.
+    ##   Year before year 0 formats with its sign, as `-0001`, so cutoff sorts before each day.
+  FORMAT_MONTH = "uuuu-MM"  ## Form of month of day, as `2026-11`.
   DAY_FIRST = "-01"  ## First day of month, after its form.
   MARK_KEY = '/'  ## Mark between parts of key of row.
   PART_STATE = 3  ## Index of state among parts of key: delegate, call, position, then state.
