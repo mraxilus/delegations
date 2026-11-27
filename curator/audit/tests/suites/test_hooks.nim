@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import std/[algorithm, json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[findings, hooks, lags, markdown, tree]
 import ./fixtures
 
@@ -342,6 +342,23 @@ func blockEstimate(text: string, cells: array[3, string], has_criterion = true):
 func isNear(value, expected: float): bool =
   ## Decide whether value lies within one part in `10^12` of expected one, or of one near zero.
   abs(value - expected) <= 1e-12 * max(1.0, abs(expected))
+
+
+func tableColumns(
+  text, header: string, columns: openArray[int], names: openArray[string] = []
+): string =
+  ## Write text whose table that line header opens holds its columns of indices given, in that
+  ##   order, each cell with them; header holds names in their place where given.
+  var lines = text.split('\n')
+  let start = lines.find(header)
+  doAssert start >= 0, header
+  var k = start
+  while k < lines.len and lines[k].startsWith("|"):
+    let cells = lines[k][1 ..< ^1].split('|').mapIt(it.strip)
+    lines[k] = "| " & (if k == start and names.len > 0: @names else: columns.mapIt(cells[it]))
+      .join(" | ") & " |"
+    inc k
+  lines.join("\n")
 
 
 
@@ -3780,6 +3797,79 @@ suite "Hooks":
 
     # Block of bullets takes none of these, so block of running session still serves.
     check heldBlock(PREDICTION).len == 0
+
+
+  test "each table of claims of block holds its form whole, and each criterion names claim (#1028)":
+    # Case as found: header one character off its form read as no table and gave no finding at
+    #   stop of its own turn, so reflection was refused later, where no mend serves call. Domain:
+    #   each column of each form dropped or one character off, each order of columns, and each
+    #   criterion of no claim or of claim that other row names (GUIDE.md, Prediction, critic and
+    #   reflection).
+    const
+      forms = [
+        ("| # | % | Judgement |", @["#", "%", "Judgement"]),
+        ("| # | Estimate @ 90% | 5th | 50th | 95th |",
+          @["#", "Estimate @ 90%", "5th", "50th", "95th"]),
+        ("| # | Resolution criterion |", @["#", "Resolution criterion"]),
+      ]
+      rule = "table of block whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+        "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
+        "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      orphan = "row of table of criteria of block names, by its number under `#`, claim of " &
+        "block that no other row names (GUIDE.md, Prediction, critic and reflection); got `"
+    func header(names: openArray[string]): string =
+      ## Write header row of names, as table of fixture writes it.
+      "| " & names.join(" | ") & " |"
+    for (line, names) in [(forms[0][0], @["#", "%", "Judgements"]),
+        (forms[1][0], @["#", "Estimate @90%", "5th", "50th", "95th"])]:
+      let changed = PREDICTION_TABLES.tableColumns(line, toSeq(0 ..< names.len), names)
+      check heldBlock(changed) == @[rule & names.header & "`"]  # case as found
+      check heldReflection(changed, REFLECTION_TABLES_POSTED.mended).len > 0  # its rows read none
+
+    # Table that drops column of its form, or holds column one character off, takes one finding,
+    #   and its rows read as none; criteria are held to claims only once each table holds form.
+    var count = 0
+    for (line, names) in forms:
+      for k, column in names:
+        let kept = toSeq(0 ..< names.len).filterIt(it != k)
+        var offs = @[column & "s", column[0 ..< ^1]]
+        if column[0] in Letters: offs.add (if column[0].isUpperAscii: column.toLowerAscii
+          else: column.capitalizeAscii)
+        let dropped = PREDICTION_TABLES.tableColumns(line, kept)
+        check heldBlock(dropped) == @[rule & kept.mapIt(names[it]).header & "`"]
+        check dropped.forecasts.len == PREDICTION_TABLES.forecasts.len -
+          (if line == forms[0][0]: 5 elif line == forms[1][0]: 3 else: 0)
+        for off in offs:
+          var named = names
+          named[k] = off
+          check heldBlock(PREDICTION_TABLES.tableColumns(line, toSeq(0 ..< names.len), named)) ==
+            @[rule & named.header & "`"]
+          inc count
+    check count == 3 * 2 + 5 * 2 + 2 * 2 + 3  # added, dropped, and case of each opening letter
+
+    # Each order of columns of each form reads same claims, since hook reads columns by name; table
+    #   with extra column, or with no column that names form, reads too.
+    for (line, names) in forms:
+      var order = toSeq(0 ..< names.len)
+      while true:
+        let moved = PREDICTION_TABLES.tableColumns(line, order)
+        check heldBlock(moved).len == 0
+        check moved.forecasts == PREDICTION_TABLES.forecasts
+        if not order.nextPermutation: break
+    check heldBlock(blockEstimate("~2 findings.", ["1", "2", "3"], has_criterion = false) &
+      "\n| # | Resolution criterion | Note |\n| --- | --- | --- |\n| 1 | The line. | x |\n")
+      .len == 0
+    check heldBlock(PREDICTION_TABLES.replace("**Working:**",
+      "| Option | Cost |\n| --- | --- |\n| a | $1 |\n\n**Working:**")).len == 0
+
+    # Criterion of number of no claim, or of claim of other row, is refused; row of no number is
+    #   none, since claim it misses takes its own finding.
+    const row8 = "| 8 | The minutes on the line `**Subagent:**` of the reflection. |"
+    for number in 0 .. 10:
+      let extra = PREDICTION_TABLES.replace(row8, row8 & "\n| " & $number & " | A criterion. |")
+      check heldBlock(extra) == (if number == 0: @[] else: @[orphan & $number & "`"])
+    check heldBlock(PREDICTION_TABLES.replace(row8, row8 & "\n| x | A note. |")).len == 0
 
 
   test "block is held at stop of its own turn, and its mend of later turn serves call (#1028)":
