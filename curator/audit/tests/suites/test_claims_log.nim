@@ -7,9 +7,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
+import std/[json, options, os, osproc, sequtils, sets, streams, strformat, strutils, tables,
+  tempfiles, unicode]
 import std/unittest
-import ../../src/[claims_log, hooks, sums_exact]
+import ../../src/[claims_log, commits, hooks, sums_exact]
 import ./fixtures
 
 
@@ -223,6 +224,27 @@ func transcript(reflection = REFLECTION): string =
 proc claimsRead(text: string): seq[Claim] =
   ## Read claims of last turn of transcript, with effort `xhigh` for template of critic.
   text.parseTurn.subagents.claimsTurn(KINDS, {"critic": "xhigh"}.toTable, PROJECT)
+
+
+proc rowKind(kind: string, n: int): string =
+  ## Render row `n` of first claim of transcript under kind, one line of log, key unique to `n`.
+  var each = transcript().claimsRead[0]
+  each.kind = kind
+  each.key = &"{each.key}/{n}"
+  each.lineClaim & "\n"
+
+
+proc repoBranch(branch: string): string =
+  ## Make throwaway repository on branch, with identity commit of hook takes from config.
+  result = repoTemp()
+  for setting in ["user.name Test", "user.email test@example.invalid", "commit.gpgsign false"]:
+    discard result.git("config " & setting)
+  discard result.git("checkout -q -b " & branch)
+
+
+proc subject(root: string): string =
+  ## Read subject of last commit.
+  root.git("log -1 --format=%s").strip
 
 
 proc rootTemplates(): string =
@@ -911,6 +933,180 @@ suite "Log of claims":
     check logStop(root, BRANCH, root / FILE_WAITING, transcript().parseTurn.subagents) == -1
     check not fileExists(root / FILE_WAITING)
     removeDir(root)
+
+
+  test "stop commits new rows of log alone, by its path, and nothing where a guard holds":
+    # Ruling `D1 a` of #1059: hook commits log, so next push carries rows with no turn spent.
+    #   Domain: branch of contributor, of curator project and of root curator; change staged for
+    #   other path; rows of one, two and three kinds; log new and tracked; no new row; row lost;
+    #   detached checkout, branch outside grammar, and merge, cherry-pick, revert and rebase.
+    var count = 0  # Rows rendered, so each row is new.
+
+    proc row(kind: string): string =
+      ## Render new row of claim of transcript under kind.
+      inc count
+      kind.rowKind(count)
+
+    # Branch of contributor: log new to git, then tracked, with change staged for other path.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    root.writeInto(path, HEADER_LOG & row("reviewer"))
+    root.writeInto("other.txt", "staged\n")
+    discard root.git("add other.txt")
+    check commitClaims(root, BRANCH)  # log new to git
+    check root.subject == "chore(rictadni): log the claims of the reviewer"
+    let body = root.git("log -1 --format=%b").strip
+    check body ==
+        "The `stop` hook commits the rows of each reflection, by the path of the log alone."
+    check checkCommits(BRANCH, [root.subject]).len == 0  # as commit hook reads subject
+    check checkBody(root.subject, body).len == 0
+    check checkCommitRecord(root.subject, [path]).len == 0
+    check root.git("show --name-only --format= HEAD").strip == path
+    check root.git("diff --cached --name-only").strip == "other.txt"  # other path stays staged
+    check root.git("status --porcelain -- " & path).len == 0
+    check not commitClaims(root, BRANCH)  # no new row
+    root.writeInto(path, readFile(root / path) & row("builder") & row("critic") & row("builder"))
+    check commitClaims(root, BRANCH)
+    check root.subject == "chore(rictadni): log the claims of the builder and the critic"
+    root.writeInto(path, readFile(root / path) & row("builder") & row("critic") & row("resolver"))
+    check commitClaims(root, BRANCH)
+    check root.subject ==
+        "chore(rictadni): log the claims of the builder, the critic and the resolver"
+    root.writeInto(path, HEADER_LOG & row("surveyor"))  # each earlier row lost
+    check not commitClaims(root, BRANCH)
+    check root.subject ==
+        "chore(rictadni): log the claims of the builder, the critic and the resolver"
+    removeDir(root)
+
+    # Branch of curator project, and root branch of curator, whose log record of checker holds.
+    for (branch, scope) in [("curator/knoller/rule-docs", "knoller"), ("curator/claims", "audit")]:
+      let other = repoBranch(branch)
+      other.writeInto(pathLog(branch), HEADER_LOG & row("reviewer"))
+      checkpoint branch
+      check commitClaims(other, branch)
+      check other.subject == &"chore({scope}): log the claims of the reviewer"
+      removeDir(other)
+
+    # Branch outside grammar and detached checkout name no log.
+    let outside = repoBranch("claude/setup")
+    outside.writeInto(PATH_LOG_CURATOR, HEADER_LOG & row("reviewer"))
+    check not commitClaims(outside, "claude/setup")  # branch outside grammar logs no path
+    discard outside.git("checkout -q --detach")
+    check not commitClaims(outside, "HEAD")  # detached checkout of root curator
+    removeDir(outside)
+
+    # Merge, cherry-pick, revert or rebase in progress commits nothing.
+    for name in ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply"]:
+      let busy = repoBranch(BRANCH)
+      busy.writeInto(pathLog(BRANCH), HEADER_LOG & row("reviewer"))
+      let at = busy / busy.git("rev-parse --git-path " & name).strip
+      if name.startsWith("rebase"): createDir(at) else: writeFile(at, "")
+      checkpoint name
+      check not commitClaims(busy, BRANCH)
+      check busy.subject == "chore(curator): init"
+      check busy.git("diff --cached --name-only").strip.len == 0  # guard stages nothing either
+      removeDir(busy)
+
+
+  test "stop commits no log right after test commit, so fix can follow it, and commits after fix":
+    # Case held: review of #1059's build, whose `ladder.sh` committed `test(rictadni)`, then
+    #   row, which hook committed, so commit hook refused `fix(rictadni)` after it.
+    #   Domain: `test` of scope of branch and of other scope, then `fix`, `docs` and `chore`.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    for (n, scope) in [(1, "rictadni"), (2, "audit")]:
+      root.writeInto(&"probe{n}.txt", "probe\n")
+      discard root.git(&"add probe{n}.txt")
+      discard root.git(&"commit -q -m 'test({scope}): hold the probe'")
+      root.writeInto(path, (if n == 1: HEADER_LOG else: readFile(root / path)) &
+          rowKind("reviewer", n))
+      checkpoint scope
+      check not commitClaims(root, BRANCH)
+      check root.subject == &"test({scope}): hold the probe"
+      root.writeInto(&"probe{n}.txt", "fixed\n")
+      discard root.git(&"add probe{n}.txt")
+      discard root.git(&"commit -q -m 'fix({scope}): mend the probe'")
+      check commitClaims(root, BRANCH)
+      check root.subject == "chore(rictadni): log the claims of the reviewer"
+    for kind in ["docs", "chore"]:
+      root.writeInto(path, readFile(root / path) & rowKind("critic", 10 + kind.len))
+      discard root.git(&"commit -q --allow-empty -m '{kind}(rictadni): mark the probe'")
+      checkpoint kind
+      check commitClaims(root, BRANCH)
+    removeDir(root)
+
+
+  test "stop commits log that index holds and HEAD lacks, as any new log":
+    # Case held: E1 of `cases.sh` of review of #1059's build: new log staged, so `ls-files` read
+    #   it as tracked, `show HEAD:` failed, and each later stop failed again.
+    #   Domain: new log staged, and log of HEAD with new rows staged.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    root.writeInto(path, HEADER_LOG & rowKind("reviewer", 1))
+    discard root.git("add -- " & path)
+    check commitClaims(root, BRANCH)
+    check root.git("status --porcelain -- " & path).len == 0
+    root.writeInto(path, readFile(root / path) & rowKind("critic", 2))
+    discard root.git("add -- " & path)
+    check commitClaims(root, BRANCH)
+    check root.subject == "chore(rictadni): log the claims of the critic"
+    removeDir(root)
+
+
+  test "commit of log that git refuses leaves index as it was, and refuses no turn":
+    # Case held: E4 of `cases.sh` of review of #1059's build: `commit-msg` refused, and log stayed
+    #   staged, so next `docs` commit of hand took it and `koch.record-commit` refused that one.
+    #   Domain: new log, tracked log with new rows, and log hand staged before stop.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+      hook = root / ".git/hooks/commit-msg"
+    root.writeInto(path, HEADER_LOG & rowKind("reviewer", 1))
+    check commitClaims(root, BRANCH)
+    root.writeInto(".git/hooks/commit-msg", "#!/bin/sh\nexit 1\n")
+    setFilePermissions(hook, {fpUserRead, fpUserWrite, fpUserExec})
+    for (n, is_staged) in [(2, false), (3, true)]:
+      root.writeInto(path, readFile(root / path) & rowKind("critic", n))
+      if is_staged: discard root.git("add -- " & path)
+      checkpoint $is_staged
+      check not commitClaims(root, BRANCH)
+      check root.subject == "chore(rictadni): log the claims of the reviewer"
+      check root.git("diff --cached --name-only").strip == (if is_staged: path else: "")
+    removeDir(root)
+    let fresh = repoBranch(BRANCH)
+    fresh.writeInto(".git/hooks/commit-msg", "#!/bin/sh\nexit 1\n")
+    setFilePermissions(fresh / ".git/hooks/commit-msg", {fpUserRead, fpUserWrite, fpUserExec})
+    fresh.writeInto(path, HEADER_LOG & rowKind("reviewer", 4))
+    check not commitClaims(fresh, BRANCH)  # new log
+    check fresh.git("status --porcelain -- " & path).strip == "?? " & path
+    removeDir(fresh)
+
+
+  test "subject of commit of log names its kinds where they fit, else names subagents":
+    # Case held: `wide.sh` of review of #1059's build: five kinds in log of `pga_visualiser` gave
+    #   subject of 109 runes, so commit hook refused it at each stop.
+    #   Domain: kinds that fit and kinds that do not, in project of long name and of short one.
+    let kinds = ["builder", "critic", "driver", "investigator", "measurer"]
+    for (branch, wanted) in [
+      ("contributor/ronri/pga_visualiser/probe", "chore(pga_visualiser): log the claims of the " &
+          "builder, the critic and the driver"),
+      ("contributor/ronri/pga_visualiser/wide", "chore(pga_visualiser): log the claims of the " &
+          "subagents"),
+    ]:
+      let
+        root = repoBranch(branch)
+        count = (if branch.endsWith("wide"): kinds.len else: 3)
+      var text = HEADER_LOG
+      for n in 0 ..< count: text.add rowKind(kinds[n], n)
+      root.writeInto(pathLog(branch), text)
+      checkpoint branch
+      check commitClaims(root, branch)
+      check root.subject == wanted
+      check root.subject.runeLen <= SUBJECT_MAX
+      removeDir(root)
 
 
   test "rows waiting outside tree move into log of root branch once each, and file goes":
