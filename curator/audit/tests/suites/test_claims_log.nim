@@ -484,6 +484,35 @@ suite "Log of claims":
           check claims[0].key.split('/')[2] == $(k + 2)
 
 
+  test "result with space before scale or between groups logs whole value (#1028)":
+    # Case as found: `39.1 M, inside`, `39.1 million, inside` and `39 100 000, inside` logged 39.1
+    #   or 39 for estimate of tokens. Domain: each form against estimate of table, and against
+    #   number of bullets; space before mark of time, or before letter, logs no outcome.
+    var whole = REFLECTION_TABLES_POSTED
+    for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
+    for cell in ["39.1 M, inside", "39.1 million, inside", "39 100 000, inside", "39 100 k"]:
+      let claims = transcriptOne(PREDICTION_TABLES, "builder",
+        whole.replace("39.1M, inside", cell)).claimsRead
+      check claims[5].number.get.outcome == some(39_100_000.0)  # case as found
+    for (claim, cell, outcome) in [
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000", "170 k, inside",
+          some(170_000.0)),
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000", "0.17 Million",
+          some(170_000.0)),
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000", "170 000",
+          some(170_000.0)),
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000", "170 K", none(float)),
+        ("time to its report, in minutes: 5, 12 and 30", "1.5 h, inside", none(float)),
+        ("time to its report, in minutes: 5, 12 and 30", "15 min", none(float))]:
+      let
+        reflection = "## Reflection\n\n**Subagent:** reviewer of the diff, 170,000 tokens and " &
+          "$1.10 at list price.\n\n| State | Confidence | Predicted | Result |\n" &
+          "| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n"
+        claims = transcriptOne(PREDICTION_BULLETS, "reviewer", reflection).claimsRead
+      check claims.len == 1
+      check claims[0].number.get.outcome == outcome
+
+
   test "each state writes its row, and estimate that waits or is annulled takes no outcome":
     var whole = REFLECTION_TABLES_POSTED
     for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)

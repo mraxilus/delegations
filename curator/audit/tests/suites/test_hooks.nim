@@ -4101,6 +4101,82 @@ suite "Hooks":
     check count == 2 * 2 * (2 + 1 + 1 + 2)  # two states and two tables of each refused cell
 
 
+  test "value reads scale and groups after one space, and result refuses what space leaves (#1028)":
+    # Case as found: `39.1 M, inside`, `39.1 million, inside` and `39 100 000, inside` took 39.1 or
+    #   39, since space ended value. Choice: each reads whole, since result that hook refuses keeps
+    #   row of its first write with no outcome. Domain: each form of digits, each scale after one
+    #   space in each case, groups after spaces, and digit, letter or word of time after space.
+    for cell in ["39.1 M, inside", "39.1 million, inside", "39 100 000, inside"]:
+      check cell.valueAt.get.amount == 39_100_000.0  # case as found
+      check cell.valueAt.get.stop == cell.find(',')
+    const
+      digits = [("5", 5.0), ("0.5", 0.5), ("12.25", 12.25), ("1,500", 1500.0), ("1 500", 1500.0)]
+      scales = [("k", 1e3), ("M", 1e6), ("thousand", 1e3), ("Thousand", 1e3), ("million", 1e6),
+        ("MILLION", 1e6), ("billion", 1e9)]
+    for (written, amount) in digits:
+      check written.valueAt.get.amount == amount and written.valueAt.get.stop == written.len
+      for (scale, factor) in scales:
+        let cell = written & " " & scale
+        check cell.valueAt.get.amount.isNear(amount * factor)
+        check (cell & ", inside").valueAt.get.stop == cell.len
+        check ("$" & cell).valueAt.get.unit == UnitNumber.Cost
+        check (cell & "s").valueAt.get.stop == written.len  # word runs on, so no scale
+        check (cell & "0").valueAt.isNone  # digit runs on
+    check "1 00".valueAt.get.stop == 1  # group holds three digits
+    check "1 0000".valueAt.get.stop == 1
+    check "1,000 000".valueAt.get.stop == 5  # one mark of group to value
+    check "1 000,000".valueAt.get.stop == 5
+    check "1  000".valueAt.get.stop == 1  # one space alone
+    check "5 m".valueAt.get.stop == 1 and "5 K".valueAt.get.stop == 1  # no scale of these
+
+    # Result of estimate or of bullet refuses digit, letter or word of time after space, which
+    #   value cannot read; each state but hit and miss passes.
+    let whole = REFLECTION_TABLES_POSTED.mended
+    const
+      outcome = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit of " &
+        "its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      forms = [
+        ("| 6 |", "39.1M, inside", @["39.1 M, inside", "39.1 million, inside",
+          "39 100 000, inside", "39 100 k", "0.0391 billion"],
+          @["39 1, inside", "39.1 K, inside", "39.1 B", "39.1 h", "39 100 000 0"]),
+        ("| 7 |", "$14.40, inside", @["$14.40 at list price", "$0.0144 k"], @["$14.40 m", "$14 4"]),
+        ("| 8 |", "47m, inside", @["47m, inside"],
+          @["47 m, inside", "0.8 h", "2820 s", "47 minutes", "1 Hour"]),
+      ]
+    var count = 0
+    for (row, written, held, refused) in forms:
+      let line = whole.splitLines.filterIt(it.startsWith(row))[0]
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        for cell in held & refused:
+          let
+            changed = line.replace("| ✅ |", "| " & state & " |").replace(written, cell)
+            found = heldReflection(PREDICTION_TABLES, whole.replace(line, changed))
+          if cell in refused and state in ["✅", "⬜"]:
+            check found == @[outcome & cell & "` for claim `" & row[2 .. ^3] & "`"]
+            inc count
+          else: check found.len == 0
+    check count == 2 * (5 + 2 + 5)
+    const
+      numbers = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+        "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
+        "50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and 30, as " &
+        "the 5th, 50th and 95th percentiles.\n"
+      bullets = "value that opens cell under `Result` of number of bullets marked ✅ or ⬜ stands " &
+        "bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or `h` " &
+        "for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+    for (k, claim, held, refused) in [
+        (1, "tokens summed over its requests: 100,000, 160,000 and 300,000",
+          @["170 k, inside", "170 000, inside"], @["170 K", "170 0, inside"]),
+        (2, "time to its report, in minutes: 5, 12 and 30", @["15, inside"],
+          @["1.5 h, inside", "15 min", "900 s"])]:
+      for cell in held & refused:
+        let found = heldReflection(numbers, "## Reflection\n\n| State | Confidence | Predicted | " &
+          "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n")
+        check found == (if cell in refused: @[bullets & cell & "` for claim `" & $k & "`"]
+          else: @[])
+
+
   test "each refusal of bullets cites section that states its rule (#1028)":
     # Case as found: `RULE_CELL` of `hooks.nim` cited GUIDE.md, Prediction, critic and reflection,
     #   whose rules name tables alone since #1028, so refusal of bullets cited rule that is gone.
