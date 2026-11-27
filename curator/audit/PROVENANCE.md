@@ -4390,6 +4390,29 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 - Cost: the log of the audit project holds the rows of the root curator too, each with its own
   project.
 
+**`stop` commits each new row of the log of the branch, as D1 a of #1059 rules.** After
+`logStop`, `commitClaims` commits the log alone, by its path, where the log holds rows that `HEAD`
+lacks and lost none of its rows. So the next push carries the rows, and no turn goes to a commit of
+the log by hand.
+
+- The subject is `chore(<project>): log the claims of the <kinds>`. It names each kind of the new
+  rows, and takes the folder of the log as its scope. The commit hook reads it as any other.
+- It commits nothing on a detached checkout or a branch outside the grammar, since `pathLog`
+  names no log there. It commits nothing during a merge, a cherry-pick, a revert or a rebase
+  either. The rows then wait in the tree.
+- A change staged for another path stays staged, since the commit takes the path alone
+  (`--only`). A log that lost a row commits nothing, since the hand that removed it decides.
+- A failure of git prints its error, and refuses no turn.
+- Verified by `suites/test_claims_log.nim`, in scratch repositories.
+- Verified by hand on 2026-11-27, with `koch hook stop` built at `d6df52a5` with this change, in
+  a scratch worktree on a branch of `rictadni`. Over a copy of the transcript of the root curator,
+  it wrote the 8 rows of a reviewer, and committed that log alone.
+- Cost: a commit appears that the delegate did not type. Its subject and its one path name it.
+- Cost: the commit moves the tree, so a push after it needs `koch check` again, as each commit
+  does.
+- Rejected: a record of the tree hash that skips the log, proposal 2 of #1059. The form checks
+  and the start hook read each row, so a push could then carry rows that no check judged.
+
 **The log of the root curator holds the 372 claims of the effort study of #963.** They ran before
 the log merged, so D3 a of #964 (comment 7065645801) filled them once. A script in scratch read
 each reflection and each report of a resolver of the study. It wrote each row through
