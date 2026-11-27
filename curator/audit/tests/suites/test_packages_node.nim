@@ -248,6 +248,7 @@ suite "Static check":
       ("const a = {...require('lodash')};", 1),
       ("const a = i++ / n; import x from 'lodash'; const b = c / d;", 1),
       ("const a = i-- / n; import x from 'lodash'; const b = c / d;", 1),
+      ("import x from /* a\n b */ 'lodash';\nimport y from 'zod';", 3),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
