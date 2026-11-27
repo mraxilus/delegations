@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | d7c1b1970e4e5435 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 823751741e8a5e8ad980b5cf49471ccbce028d87 |
+| Pruned  | 413e2f466d17b7705abb86b41f33b001327215a1 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -3280,33 +3280,9 @@ rules where `knoller --check <project>` reports it, with the same counts. Both r
 again on `curator/audit` and `curator/knoller`, whose files differ there. A script outside the
 tree matched each report of the two outputs by rule, path and line.
 
-| Rule | Project | Rewrites | Left for hand |
-| --- | --- | --- | --- |
-| 7 | `pga_visualiser` | 1 | 0 |
-| 8 | `knoller` | 3 | 0 |
-| 8 | `pga_benchmark` | 0 | 5 |
-| 8 | `pga_visualiser` | 0 | 1 |
-| 8 | `dance_ontology` | 0 | 1 |
-| 9 | `pga_benchmark` | 2 | 0 |
-| 9 | `pga_visualiser` | 1 | 0 |
-| 11 | `pga_visualiser` | 33 | 1 warning |
-| 11 | `dance_ontology` | 13 | 0 |
-| 11 | `rictadni` | 3 | 0 |
-| 11 | `pga_benchmark` | 1 | 1 warning |
-| 11 | `knoller` | 1 | 0 |
-| 15, constructor | `pga_visualiser` | 0 | 1 |
-
-- Each other project takes none of these rules. The compound argument of rule 15 gives the same
-  counts as before the wiring.
-- The rewrites of rule 11 in `pga_benchmark` and `knoller` are `mergeAllocations` and
-  `initToolchains`, at the code of `cbf1e68b`. The code of D1 a of #980 (2026-11-20) and of D6 a
-  (2026-11-21) keeps each a `proc`, as `## Pure routines` of knoller gives.
-- The run read the code before `4998481a` and `ea179bdf`. The first changes no count, since the run
-  left no index of rule 9 for hand. The second changes only the warning of a refused rename, and
-  the table counts that rename as one site.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
-  it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
-  proves nothing of, and each tool prints it once.
+  it once. Each warning of rule 11 is of a whole file that the compiler proves nothing of, and
+  each tool prints it once.
 - Cost: over the files of `curator/knoller` at `2d496af8`, `koch fix --dry-run --branch:main` takes
   65.4 s built there, and 34.9 s built at `8a7b2f61`. That build fixes each entry on the pool, and
   reads the names and the renames once (the profile on #1001). Each figure is the median of three
@@ -4392,41 +4368,30 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
 
 **`stop` commits each new row of the log of the branch, as D1 a of #1059 rules.** After
 `logStop`, `commitClaims` commits the log alone, by its path, where the log holds rows that `HEAD`
-lacks and lost none of its rows. So the next push carries the rows, and no turn goes to a commit of
-the log by hand.
+lacks and lost none of its rows. Its subject, `chore(<project>): log the claims of the <kinds>`,
+names each new kind, and the commit hook reads it as any other.
 
-- The subject is `chore(<project>): log the claims of the <kinds>`. It names each kind of the new
-  rows, and takes the folder of the log as its scope. The commit hook reads it as any other.
-- It commits nothing on a detached checkout or a branch outside the grammar, since `pathLog`
-  names no log there. It commits nothing during a merge, a cherry-pick, a revert or a rebase
-  either. The rows then wait in the tree.
-- A change staged for another path stays staged, since the commit takes the path alone
-  (`--only`). A log that lost a row commits nothing, since the hand that removed it decides.
-- A failure of git prints its error, and refuses no turn.
-- Verified by `suites/test_claims_log.nim`, in scratch repositories.
-- Verified by hand on 2026-11-27, with `koch hook stop` built at `d6df52a5` with this change, in
-  a scratch worktree on a branch of `rictadni`. Over a copy of the transcript of the root curator,
-  it wrote the 8 rows of a reviewer, and committed that log alone.
-- Cost: a commit appears that the delegate did not type. Its subject and its one path name it.
-- Cost: the commit moves the tree, so a push after it needs `koch check` again, as each commit
-  does.
-- Rejected: a record of the tree hash that skips the log, proposal 2 of #1059. The form checks
-  and the start hook read each row, so a push could then carry rows that no check judged.
+- A detached checkout, a branch outside the grammar, and a merge, cherry-pick, revert or rebase in
+  progress commit nothing. The rows then wait in the tree.
+- The commit takes the path alone (`--only`), so a change staged for another path stays staged. A
+  log that lost a row commits nothing, and a failure of git prints its error and refuses no turn.
+- Verified by `suites/test_claims_log.nim`, in scratch repositories. Verified by hand on
+  2026-11-27 too, with `koch hook stop` of this change in a scratch worktree on a branch of
+  `rictadni`. It wrote the 8 rows of a `reviewer`, and committed the log alone.
+- Cost: a commit appears that the delegate did not type, and its subject names it. It moves the
+  tree, so a push after it needs `koch check` again, as each commit does.
+- Rejected: a tree hash that skips the log (proposal 2 of #1059), since a push could then carry
+  rows that no check judged.
 
-**The log of the root curator holds the 372 claims of the effort study of #963.** They ran before
-the log merged, so D3 a of #964 (comment 7065645801) filled them once. A script in scratch read
-each reflection and each report of a resolver of the study. It wrote each row through
-`lineClaim`, as the delegate marked the claim, and again as the resolver did.
+**The log of the root curator holds the claims of the effort study of #963.** They ran before the
+log merged, so D3 a of #964 (comment 7065645801) filled them once, through `lineClaim`. Each claim
+takes one row as the delegate marked it, and one as the resolver did, whose key ends in
+`MARKER_RESOLVER`.
 
 - A row takes the tokens and the cost that its reflection used, and its outcome after the id of
-  its run. The key of a resolver row ends in `MARKER_RESOLVER`.
-- No row names a model, since this harness keeps model names out of pushed files (#1025). Each
-  run of the study used one model.
-- Cost: no figure groups by model, since no row of any log names one.
-- Verified by hand on 2026-11-26: `protoc` reads the 767 rows of the log, no key repeats, and
-  `koch figures` reads each row. Each claim of the study takes one row of each marker, 372 of
-  each. By hand on 2026-11-21, each count of a batch agrees with its result on #963. Each of 150
-  outcomes agrees with the usage of its row too.
+  its run. No row names a model (#1025), so no figure groups by model.
+- Verified by hand on 2026-11-21: each count of a batch agrees with its result on #963. Each of
+  150 outcomes agrees with the usage of its row too.
 
 **`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
 exception to `CONTRIBUTOR.md`, Data, which the Architect ruled on #989 (comment 7053329096). The
