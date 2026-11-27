@@ -19,8 +19,9 @@ import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
   checker, citations_section, coverage, dependencies, domains, duplicates, english, findings,
-  font_families, form, glossary, idioms, imports, justification, kinds, layout, names, plan,
-  prompts, prose, prose_own, provenance, record, toolchain, tree, waits, workflows,
+  font_families, form, glossary, idioms, imports, justification, kinds, layout, names,
+  packages_node, plan, prompts, prose, prose_own, provenance, record, toolchain, tree, waits,
+  workflows,
 ]
 
 export layout.Entry, layout.directoriesProject, layout.Tree
@@ -171,6 +172,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
   #   no package, since it runs before any restore (D1 of #927).
   result.add tree.checkImportsProject
   result.add tree.checkImportsDriver
+  # Script takes base JavaScript, Node built-ins and tools of list alone (#1045).
+  result.add tree.checkPackagesNode
   let
     stamp_now = tree.stampRules
     directories = tree.directoriesProject

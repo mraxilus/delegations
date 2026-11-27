@@ -17,6 +17,7 @@
 ##     from list.
 ##   `head` is no `check-` verb, and `check` never runs it: its verdict varies with outside
 ##     reference rather than with code, so `head.yml` runs it daily, and merge waits on none.
+##     `releases` is none either, for same reason: it asks nim-lang.org, and `nim.yml` runs it.
 ##   `check-types` runs on driver's compiler and `drive` on project's own, because type check
 ##     compiles no project code and drive does: it builds page through JS backend. So `drive`
 ##     is planned like `test`, through `list-projects --drive`, and reaches CI as matrix.
@@ -75,8 +76,10 @@ import ./curator/audit/src/[
   hooks,
   lags,
   merge,
+  packages_node,
   plan,
   projects,
+  releases,
   role,
   schemas,
   scope,
@@ -104,6 +107,8 @@ Verbs:
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
   head           fetch deps, then project's own `head` verb, on project's own pin
+  releases       ask nim-lang.org for later Nim releases; exit 1 where driver lags, 2 on failure
+  advisories     ask npm for advisories of each node lock; exit 1 on one, 2 on failure
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
@@ -119,6 +124,7 @@ Options:
   --recent         projects whose code merged within last week
   --drive          list-projects keeps projects carrying `drive` verb
   --head           list-projects keeps projects carrying `head` verb
+  --node           list-projects keeps projects carrying node manifest beside its lock
   --write          stamp writes every Rules row rather than printing
   --dry-run        fix prints each change it would make, writes none, exits 1 where any
   --form:<form>    finding form, `terminal` or `line` (default terminal at terminal, else line)
@@ -133,7 +139,7 @@ const
 
 type
   Flag = enum  ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun, FormFinding
+    Root, Branch, Base, All, Recent, Drive, Head, Node, Write, DryRun, FormFinding
 
   Options = object  ## Define parsed command line.
     command: string
@@ -146,6 +152,7 @@ type
     is_recent: bool
     is_drive: bool
     is_head: bool
+    is_node: bool
     is_write: bool
     is_dry_run: bool
     form: string  ## Form `--form` names, as given; empty where none.
@@ -173,6 +180,7 @@ proc parseOptions(): Option[Options] =
       of "recent": options.is_recent = true
       of "drive": options.is_drive = true
       of "head": options.is_head = true
+      of "node": options.is_node = true
       of "write": options.is_write = true
       of "dry-run": options.is_dry_run = true
       of "form": options.form = value
@@ -192,6 +200,7 @@ func given(options: Options): set[Flag] =
   if options.is_recent: result.incl Recent
   if options.is_drive: result.incl Drive
   if options.is_head: result.incl Head
+  if options.is_node: result.incl Node
   if options.is_write: result.incl Write
   if options.is_dry_run: result.incl DryRun
   if options.form.len > 0: result.incl FormFinding
@@ -389,6 +398,9 @@ proc runHook(root, event, input: string): int =
     # Commits of lock that lag `main` read what fetch brought, or what checkout held before.
     try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
+    # Nim pins that lag pin of driver read checkout as it stands; read that fails names none.
+    try: notices.add noticesPin(readPins(root))
+    except CatchableError: discard
     # Past figures of each kind come from logs of tree; log that reads no row names its fault.
     let rates = root.ratesTree
     # Record branch works on is read where it exists; new project has none until it writes one.
@@ -497,6 +509,8 @@ proc checkInPlace(options: Options; branch, base: string): int =
   held.reportHeld(options)
   # Commit of lock that lags `main` is named, and fails nothing (D2 of #927); start prints same.
   for line in noticesLag(readLags(options.root, "origin/" & MAIN), "origin/" & MAIN): echo line
+  # Nim pin that lags pin of driver is named, and fails nothing (GUIDE.md, Toolchain); start too.
+  for line in noticesPin(readPins(options.root)): echo line
   if own.len > 0:
     own.report(options)
     echo "Types, suites and drive not run; fix findings above, then run again."
@@ -639,6 +653,37 @@ proc run(options: Options): int =
       return options.refused
     let tree = options.root.readTree
     found = jobsHead(options.root, tree, options.jobsPlanned(tree))
+  of "releases":
+    # Asks reach nim-lang.org, whose answer moves with no commit here, so `nim.yml` runs verb
+    #   weekly and `check` never does; search and lines are `releases.nim`'s, offline in suite.
+    #   Failure of search exits 2, as usage error does, so `nim.yml` reads exit 1 as lag alone.
+    if not options.isReadAll({Root}): return options.refused
+    let (lines, named, failure) = checkReleases(readPins(options.root), askRelease)
+    for line in lines: echo line
+    if failure.len > 0:
+      stderr.write "koch releases: " & failure & "\n"
+      return 2
+    found = named
+  of "advisories":
+    # Asks reach npm registry, whose answer moves with no commit here, so `npm.yml` runs verb
+    #   weekly and `check` never does; search and lines are `packages_node.nim`'s, offline in
+    #   suite. Failure of search exits 2, so `npm.yml` reads exit 1 as advisory alone.
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+      return options.refused
+    let
+      tree = options.root.readTree
+      directories = tree.directoriesNode(options.directoriesScoped(tree))
+    let failure_named = failureNamed(options.project, directories)
+    if failure_named.len > 0:
+      stderr.write "koch advisories: " & failure_named & "\n"
+      return 2
+    let (lines, named, failure) =
+      checkAdvisories(readLocked(options.root, directories), askAudit, askLatest)
+    for line in lines: echo line
+    if failure.len > 0:
+      stderr.write "koch advisories: " & failure & "\n"
+      return 2
+    found = named
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
@@ -740,12 +785,13 @@ proc run(options: Options): int =
     for line in failed.rendered(form, is_colored): stderr.write line & "\n"
     return if failed.len > 0: 1 else: 0
   of "list-projects":
-    if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, Drive, Head, Node}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     var jobs = options.jobsPlanned(tree)
     if options.is_drive: jobs = tree.drivenOnly(jobs)
     if options.is_head: jobs = tree.carryingOnly(jobs, VERB_HEAD)
+    if options.is_node: jobs = jobs.filterIt(tree.directoriesNode([it.directory]).len > 0)
     echo render(jobs)
     return 0
   of "stamp":
