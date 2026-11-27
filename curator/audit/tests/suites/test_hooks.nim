@@ -4596,6 +4596,9 @@ suite "Hooks":
     for written in ["39.1 K", "39.1 Mio", "39.1m", "$39.1M", "39 100 000", "170 000",
         "2 170,000", "39.1\u00A0M", "0", "39,100,000.5", "~39.1M", "39.1M-"]:
       check lined(written & " tokens and $14.40") == refusal(written & " tokens and $14.40")
+    for space in ["\u00A0", "\u202F", "\t"]:  # space but ASCII space opens no word `tokens`
+      check lined("39,100,000" & space & "tokens and $14.40") ==
+        refusal("39,100,000" & space & "tokens and $14.40")
 
     # Cost reads first `$` as cell reads value, with no group after space and nothing after it
     #   that value cannot read.
