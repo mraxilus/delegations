@@ -236,8 +236,13 @@ func isOpeningBlock(code: string): bool =
 
 func isBlockBelow(code: openArray[string], i: int): bool =
   ## Decide whether code line `i` ends on `=` and next line holding code opens `block` alone,
-  ##   labelled or not, at deeper indent.
-  if not code[i].strip.endsWith(" ="): return false
+  ##   labelled or not, at deeper indent; never where `=` closes head of routine, as lambda's.
+  let head = code[i].strip
+  if not head.endsWith(" ="): return false
+  var spoken = head[0 ..< ^1]  # Identifiers alone, each apart.
+  for c in spoken.mitems:
+    if c notin {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: c = ' '
+  if spoken.splitWhitespace.anyIt(it in KEYWORDS_ROUTINE): return false
   var k = i + 1
   while k < code.len and code[k].strip.len == 0: inc k
   if k >= code.len or code[k].indentWidth <= code[i].indentWidth: return false
