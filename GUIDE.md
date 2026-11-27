@@ -205,37 +205,52 @@ return it confirmed.
 - **Each prediction also gives three numbers: the tokens, the cost and the time of the
   subagent.** They stand beside the judgements, and never count against the five, so that each
   delegate learns to estimate them.
+- **The block holds the line `**Subagent:**`, the line `**Basis:**`, then three tables.** Each
+  table opens with its bold label and one sentence that says what the table holds and sums it
+  up. The hook skips that sentence.
+- **`**Judgements.**` takes the columns `#`, `%` and `Judgement`.** Each judgement is a whole
+  sentence, with its subject, its capital and its full stop. Its confidence stands alone under
+  `%`, as `70%`.
+- **`**Estimates.**` takes the columns `#`, `Estimate @ 90%`, `5th`, `50th` and `95th`.** Each
+  estimate states its 50th percentile in its text, as `~160k`.
+- **`**Criteria.**` takes the columns `#` and `Resolution criterion`.** It holds one row for each
+  claim above. Each criterion stands alone, so that a resolver reads it with its claim alone.
+- **Each claim takes a number of its own, from 1, across the judgements and the estimates.** The
+  hook reads each claim from its row, and its criterion from the row of the same number.
+- **Each cell of a percentile holds one value with its unit.** `$` marks cost, as `$2.50`, and
+  `s`, `m` or `h` marks time, as `50s` or `20m`. The word `tokens` in the estimate marks tokens,
+  and a bare number is a count. `k` scales a number by a thousand, and `M` by a million, as
+  `160k` or `15M`.
+- **The three cells of an estimate take one unit, and each cell is above the cell before it.**
 
 Each claim follows these rules for forecasting:
 
 - **Each claim stands on the side that you believe, from 51% to 98%.**
 - **Each claim has a resolution criterion.** A reader can resolve it from the report, the critic
   and the tree alone.
-- **A number is three percentiles: the 5th, the 50th and the 95th.** In the table, its
-  confidence is 90%, the mass between its 5th and 95th percentiles. Its state is ✅ where the
-  result falls between them, and a result on either percentile counts as inside. Its cell under
-  `Result` opens with the value, as `170,000, inside`, since the log of claims reads that number.
+- **A number is three percentiles: the 5th, the 50th and the 95th.** Its confidence is 90%, the
+  mass between its 5th and 95th percentiles, as the header `Estimate @ 90%` says. Its state is ✅
+  where the result falls between them, and a result on either percentile counts as inside.
+- **The cell under `Result` of a number opens with its value in the unit of its cells**, as
+  `170k, inside` or `15m, inside`. The log of claims reads that value.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
   scores by the log score of the distribution of its percentiles, with a floor, as Metaculus
   scores it. The track record is a calibration curve with its 90% credible band.
-- **A number names its unit at the start of its text, after its label: `tokens`, `cost` or
-  `time`.** A count takes the label `Count:` instead. The range of `tokens` is 10,000 to
-  1,000,000,000, that of `cost` $0.01 to $1,000, and that of `time` 0.1 to 10,000 minutes. Each
-  is on the logarithm, with open bounds. A count runs from 0, a closed bound, to 100,000, an open
-  bound, on the logarithm of the count plus one. A number of another unit takes no score.
-- **A label names no unit, except `Count:`.** So `Cost: cost at list price: $0.80, …` takes a
-  score, and `Cost: $0.80, …` takes none.
-- **The table has no column for the score, and no second forecast follows the report.**
+- **Each unit has its range, on the logarithm.** The range of tokens is 10,000 to
+  1,000,000,000, that of cost $0.01 to $1,000, and that of time 0.1 to 10,000 minutes. Each has
+  open bounds. A count runs from 0, a closed bound, to 100,000, an open bound, on the logarithm
+  of the count plus one.
+- **No table has a column for the score, and no second forecast follows the report.**
 - **Each new term goes through the glossary process first.**
 
 Then the subagent runs, and these steps follow:
 
 - **The prediction of a critic is optional, and a resolver takes none.**
 - **A missing prediction is a miss.** Name it in your reply, and count it as a miss in the
-  reflection, with its cause. Write no block after its call. Its row in the table holds exactly
-  `No prediction` under `Predicted`, and the cause of the miss under `Result`.
+  reflection, with its cause. Write no block after its call. Its row in the table of judgements
+  holds exactly `No prediction` under `Judgement`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
 - **A critic runs after a builder, an investigator or a measurer, whose reports others build on,
@@ -244,35 +259,22 @@ Then the subagent runs, and these steps follow:
   of the evidence, but never your prediction. It checks each claim against the evidence, and
   never does the work again. It runs the checks of a build again, and no critic checks a critic.
 - **A resolver marks each prediction whose subagent a critic checked, after the critic.** Its
-  prompt holds each claim with its resolution criterion and with no percentage, the report, and
-  the report of the critic. Where no critic ran, you mark each claim, and the log names you as its
-  marker.
+  prompt holds each claim by its number with its resolution criterion, the report, and the report
+  of the critic. It holds the percentiles of each estimate, and no confidence. Where no critic
+  ran, you mark each claim, and the log names you as its marker.
 - **Write the reflection when the critic reports, or when the report comes where no critic
   follows**, before any sign-off or working line. Give the subagent a line, and the critic one
   where it ran. Each line holds the tokens summed over its requests,
   the cost at list price, the calls and the time. The tokens of a request are its input, cache
   write, cache read and output tokens. Each request counts once, by its `requestId`.
-- **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
-  ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event. The state ➖ marks a claim
-  that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
-  is a miss.
-- **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
-  claim is a bullet at the top level of the block. Its label opens it: any run with no space
-  that opens with a capital from `A` to `Z`, then `: `, as `Q1:` or `Follow-up:`. A label in
-  bold, as `**Judgement:**`, `**Judgement**:`, `__Judgement:__` or `***Judgement:***`, is a
-  label too. Other text before a `: ` makes no label, as a word in lower case or more than one
-  word. A part of a claim, or a claim with its confidence, quotes no claim.
-- **A claim ends at its confidence**, the last percentage in brackets, as `(70%)` or `(62.5%)`,
-  before its resolution criterion or its end. A percentage before its confidence stays in the
-  claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
-  neither stands, it ends before one final full stop of its bullet.
-- **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
-  confidence. It ends at its percentiles, which open with the words `, as the 5th`. A
-  percentage in brackets in its text, as `(10% cached)`, stays in the claim.
-- **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
-  letters, plain or in italics, bold or both. So `. **Resolution criterion:**` and
-  `. *Resolution criterion:*` end a claim too. A line right under a claim that opens an item, as
-  `1. ` or a marker and a tab, ends that claim.
+- **The reflection holds two tables, each with its bold label and one sentence.**
+  `**Judgements.**` takes the columns `#`, `State`, `%`, `Judgement` and `Result`, and
+  `**Estimates.**` takes `#`, `State`, `Estimate @ 90%` and `Result`.
+- **The states are ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event.** The state
+  ➖ marks a claim that is ambiguous or annulled, and the row gives its cause. A claim that holds
+  only in part is a miss.
+- **Each row names its claim by its number, and quotes the text of that claim whole.** The hook
+  reads each run of whitespace as one space. A part of a claim quotes no claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
@@ -281,9 +283,14 @@ Then the subagent runs, and these steps follow:
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
   other than `critic` and `resolver` that no block serves. It refuses a report of a critic with
-  no reflection after it. It refuses a cell under `Predicted` that is neither a whole claim of a
-  block that a call took, nor `No prediction`. A reply to a refusal passes unread, so the hook
-  holds no step there.
+  no reflection after it. A reply to a refusal passes unread, so the hook holds no step there.
+- **The hook refuses a block of its turn where a claim lacks its number, its text, its
+  confidence or its criterion.** It also refuses an estimate whose cells do not rise in one
+  unit. Write the block again in your reply, whole and mended. The reply is a later turn, so its
+  block serves the call.
+- **The hook refuses a row of a reflection that quotes no whole claim of a block that a call
+  took.** A row that holds `No prediction` passes. It also refuses a hit or missed estimate whose
+  cell under `Result` opens with no value in its unit.
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
@@ -300,18 +307,32 @@ Then the subagent runs, and these steps follow:
 **Subagent:** reviewer of the diff of `curator/asset-fetch`, fresh context.
 **Basis:** what this delegate knows, with no new read.
 
-- Judgement: the race to save one shared key leads the findings (70%). Resolution criterion:
-  it is the first finding of the report.
-- Judgement: no test is weakened (85%). Resolution criterion: the diff removes or loosens no
-  assertion.
-- Judgement: it names the lock of the store as a second risk (60%). Resolution criterion: the
-  report names the lock in a finding.
-- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th and
-  95th percentiles. Resolution criterion: the sum of the usage of its requests.
-- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.
-  Resolution criterion: the cost on the line `**Subagent:**` of the reflection.
-- Time: time to its report, in minutes: 5, 12 and 30, as the 5th, 50th and 95th percentiles.
-  Resolution criterion: the minutes on the line `**Subagent:**` of the reflection.
+**Judgements.** Three claims of yes or no about the findings, at a confidence of 60% to 85%.
+
+| # | % | Judgement |
+| --- | :---: | --- |
+| 1 | 70% | The race to save one shared key leads the findings. |
+| 2 | 85% | The diff weakens no test. |
+| 3 | 60% | The report names the lock of the store as a second risk. |
+
+**Estimates.** The size of the review, about 160k tokens, $0.90 and 12 minutes.
+
+| # | Estimate @ 90% | 5th | 50th | 95th |
+| --- | --- | ---: | ---: | ---: |
+| 4 | The reviewer uses ~160k tokens. | 100k | 160k | 300k |
+| 5 | The reviewer costs ~$0.90. | $0.40 | $0.90 | $2.00 |
+| 6 | The reviewer takes ~12m. | 5m | 12m | 30m |
+
+**Criteria.** How a reader decides each claim above, by its number.
+
+| # | Resolution criterion |
+| --- | --- |
+| 1 | The race is the first finding of the report. |
+| 2 | The diff removes or loosens no assertion. |
+| 3 | A finding of the report names the lock. |
+| 4 | The tokens on the line `**Subagent:**` of the reflection. |
+| 5 | The cost on the line `**Subagent:**` of the reflection. |
+| 6 | The minutes on the line `**Subagent:**` of the reflection. |
 
 **Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
 ```
@@ -322,14 +343,21 @@ Then the subagent runs, and these steps follow:
 **Subagent:** reviewer of the diff of `curator/asset-fetch`, 170,000 tokens and $1.10 at list
 price, 57 calls, 15 min.
 
-| State | Confidence | Predicted | Result |
-| --- | --- | --- | --- |
-| ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
-| ✅ | 85% | no test is weakened | none is: each assertion of the diff stands |
-| ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
-| ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
-| ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |
-| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15, inside |
+**Judgements.** Two of the three claims held, and the report names no lock.
+
+| # | State | % | Judgement | Result |
+| --- | :---: | :---: | --- | --- |
+| 1 | ✅ | 70% | The race to save one shared key leads the findings. | It leads, as high. |
+| 2 | ✅ | 85% | The diff weakens no test. | Each assertion of the diff stands. |
+| 3 | ⬜ | 60% | The report names the lock of the store as a second risk. | It names no lock. |
+
+**Estimates.** Each result fell inside its 90% range: 170k tokens, $1.10 and 15 minutes.
+
+| # | State | Estimate @ 90% | Result |
+| --- | :---: | --- | --- |
+| 4 | ✅ | The reviewer uses ~160k tokens. | 170k, inside |
+| 5 | ✅ | The reviewer costs ~$0.90. | $1.10, inside |
+| 6 | ✅ | The reviewer takes ~12m. | 15m, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.
