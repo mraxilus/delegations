@@ -632,6 +632,35 @@ suite "Log of claims":
     removeDir(root)
 
 
+  test "commit of log that git refuses leaves index as it was, and refuses no turn":
+    # Case held: E4 of `cases.sh` of review of #1059's build: `commit-msg` refused, and log stayed
+    #   staged, so next `docs` commit of hand took it and `koch.record-commit` refused that one.
+    #   Domain: new log, tracked log with new rows, and log hand staged before stop.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+      hook = root / ".git/hooks/commit-msg"
+    root.writeInto(path, HEADER_LOG & rowKind("reviewer", 1))
+    check commitClaims(root, BRANCH)
+    root.writeInto(".git/hooks/commit-msg", "#!/bin/sh\nexit 1\n")
+    setFilePermissions(hook, {fpUserRead, fpUserWrite, fpUserExec})
+    for (n, is_staged) in [(2, false), (3, true)]:
+      root.writeInto(path, readFile(root / path) & rowKind("critic", n))
+      if is_staged: discard root.git("add -- " & path)
+      checkpoint $is_staged
+      check not commitClaims(root, BRANCH)
+      check root.subject == "chore(rictadni): log the claims of the reviewer"
+      check root.git("diff --cached --name-only").strip == (if is_staged: path else: "")
+    removeDir(root)
+    let fresh = repoBranch(BRANCH)
+    fresh.writeInto(".git/hooks/commit-msg", "#!/bin/sh\nexit 1\n")
+    setFilePermissions(fresh / ".git/hooks/commit-msg", {fpUserRead, fpUserWrite, fpUserExec})
+    fresh.writeInto(path, HEADER_LOG & rowKind("reviewer", 4))
+    check not commitClaims(fresh, BRANCH)  # new log
+    check fresh.git("status --porcelain -- " & path).strip == "?? " & path
+    removeDir(fresh)
+
+
   test "rows waiting outside tree move into log of root branch once each, and file goes":
     let
       root = createTempDir("claims_", "_move")
