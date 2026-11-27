@@ -36,8 +36,9 @@ const
     "imported('lodash');", "fromage('lodash');", "const source = 'import';",
     "report('a corner of empty sky stands to start from', false, 'every corner hovers');",
     "draw(); // import x from 'lodash';", "const said = \"it reads from 'lodash'\";",
+    "reimport('lodash');", "const said = 'it\\'s from \"lodash\"';",
   ]
-    ## Lines that hold word of import beside quote, and name no module; fourth from last as found
+    ## Lines that hold word of import beside quote, and name no module; line of `report` as found
     ##   at line 223 of `chrome.ts` of `pga_visualiser`, 2026-11-27, where `from` inside string
     ##   read next quote as specifier.
   MANIFEST_FOUND = """{
@@ -150,6 +151,12 @@ const
 }"""
     ## Answer of same command over lock holding `lodash` `4.17.15`, npm 10.9.9, 2026-11-27,
     ##   trimmed from five advisories to first two.
+  AUDIT_ERROR =
+      "{\n  \"message\": \"request to http://127.0.0.1:9/-/npm/v1/security/audits/quick " &
+      "failed, reason: connect ECONNREFUSED 127.0.0.1:9\",\n  \"error\": {\n    " &
+      "\"summary\": \"\",\n    \"detail\": \"\"\n  }\n}\n"
+    ## Answer of same command, with exit 1, where registry does not answer, npm 10.9.9,
+    ##   2026-11-27.
   LOCK_LODASH = """{
   "packages": {
     "": {"devDependencies": {"lodash": "4.17.15"}},
@@ -248,6 +255,15 @@ suite "Static check":
     )
     check found.len == 1 and found[0].line == 4 and found[0].message.endsWith("got `lodash`.")
 
+  test "package named in two fields takes line of field that names it":
+    # Domain: dev field names package first, then runtime field names it again below.
+    let found = checkManifest(
+      PATH_MANIFEST,
+      "{\n  \"devDependencies\": {\n    \"lodash\": \"4.17.15\"\n  },\n" &
+        "  \"dependencies\": {\n    \"lodash\": \"4.17.15\"\n  }\n}\n",
+    )
+    check found.mapIt(it.line) == @[6, 3]
+
   test "manifest that JSON cannot read is finding, and manifest with no fields passes":
     check checkManifest(PATH_MANIFEST, "{ not json").len == 1
     check checkManifest(PATH_MANIFEST, "{}").len == 0
@@ -309,6 +325,11 @@ suite "Advisories":
     ]:
       let (advisories, failure) = readAudit(answer)
       check advisories.len == 0 and failure.len > 0
+
+  test "answer of error names it, though it holds no count either":
+    # Case: registry that does not answer, npm 10.9.9, 2026-11-27.
+    let (advisories, failure) = readAudit((code: 1, output: AUDIT_ERROR))
+    check advisories.len == 0 and failure == "npm audit answered with error"
 
   test "fix that npm gives as flag reads as no fix":
     let answer = AUDIT_LODASH.replace(
