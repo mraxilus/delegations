@@ -19,11 +19,20 @@
 ##   Log is `claims.txtpb` of scope branch writes (`pathLog`), with project its role names; other
 ##     checkout writes file outside tree, with project `curator`, since root curator alone keeps
 ##     checkout outside grammar. `moveClaims` empties that file into log of root branch alone.
+##   `stop` then commits log of branch alone, by its path, so next push carries rows with no turn
+##     spent; detached checkout, branch outside grammar, merge, rebase, cherry-pick and revert
+##     commit nothing (`commitClaims`, `D1 a` of #1059).
 ##   Text format is written here, one row to line, as exception to CONTRIBUTOR.md, Data, that
 ##     Architect ruled on #989 (comment 7053329096); suite reads it back through `protoc`, which
 ##     refuses misspelt field.
 ##   Text format is read here too, by `claimLine`, as `D1 a` of #964 rules (comment 7189788889):
 ##     each field by name, each escape of `quotedText` undone, and unknown field refused.
+##   Prior of rows rolled out of log is one line, which roll writes at head of log (`linePrior`,
+##     #1049). Merge by `union` can put rows before it, or join two rolls into two priors, so reader
+##     reads each prior wherever it stands: log reads as prior whose keys hold keys of each other,
+##     and refuses log where none does (`logText`).
+##   Each key counts once, in prior that names it, else in its first row (`claimsCounted`), so row
+##     that merge or replay of `stop` brings back after roll counts once.
 ##
 ##   Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as
 ##     Data asks: first dependency of audit and `protoc` at each stop of each delegate, and row
@@ -36,7 +45,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, sets, strformat, strutils, tables]
-import ./[domains, hooks, tree]
+from std/unicode import runeLen
+import ./[commits, domains, hooks, sums_exact, tree]
 
 
 type
@@ -73,6 +83,36 @@ type
     number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
     result*: string  ## Cell under `Result`.
 
+  Tally* = object
+    ## Define tally of prior: sums of rolled rows whose model, effort, project, kind, marker and
+    ##   band agree, as message `Tally` of `claims.proto`.
+    model*: string  ## Model of call of each row.
+    effort*: string  ## Effort of call of each row.
+    project*: string  ## Role string of branch that wrote each row.
+    kind*: string  ## Kind of call of each row.
+    marker*: Marker  ## Who marked state of each row.
+    band*: int  ## Lowest percentage of band of claim that takes baseline score; 0 for other.
+    rows*: int  ## Rows tally holds.
+    count*: int  ## Claims of yes or no that take baseline score.
+    hits*: int  ## Of those, claims that hold.
+    hits_band*: int  ## Of those, claims that hold on side of band: claim under 50% turns.
+    confidence*: SumExact  ## Exact sum of confidence on side of band.
+    score*: SumExact  ## Exact sum of baseline score.
+    count_number*: int  ## Numbers that take score as continuous question.
+    score_number*: SumExact  ## Exact sum of score of those numbers.
+
+  Prior* = object
+    ## Define prior at head of log: tallies of rows rolled out of it (#1049); no field names branch,
+    ##   so two rolls of same rows write same line.
+    date_first*: string  ## Earliest day of row rolled, as `2026-11-20`.
+    date_last*: string  ## Latest day of row rolled.
+    keys*: seq[uint64]  ## Hash of key of each row rolled (`hashKey`), ascending, each once.
+    tallies*: seq[Tally]  ## One for each model, effort, project, kind, marker and band.
+
+  Log* = object  ## Define log of claims: message `Log` of `claims.proto`.
+    claims*: seq[Claim]  ## Claim of each row, in order of log.
+    prior*: Option[Prior]  ## Prior at head of log; none until first roll.
+
   Cursor = object  ## Define place that reader of row has reached in its line.
     line: string  ## Line of row.
     at: int  ## Index of next character to read.
@@ -97,8 +137,20 @@ const
     ## Fields of message `Claim` of `claims.proto` that reader of row knows.
   FIELDS_NUMBER* = ["low", "median", "high", "outcome"]
     ## Fields of message `Number` of `claims.proto` that reader of row knows.
-  OPENING_ROW = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
+  FIELD_PRIOR = "prior"  ## Field of `Log` that holds message `Prior`.
+  FIELD_TALLIES = "tallies"  ## Field of `Prior` that holds each message `Tally`.
+  FIELDS_PRIOR* = ["date_first", "date_last", "keys", FIELD_TALLIES]
+    ## Fields of message `Prior` of `claims.proto` that reader of prior knows.
+  FIELDS_TALLY* = ["model", "effort", "project", "kind", "marker", "band", "rows", "count", "hits",
+    "hits_band", "confidence", "score", "count_number", "score_number"]
+    ## Fields of message `Tally` of `claims.proto` that reader of prior knows.
+  OPENING_PRIOR* = FIELD_PRIOR & " { "  ## Opening of line of prior, as `linePrior` writes it.
+  OPENING_ROW* = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
   CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
+  PATHS_OPERATION = [
+    "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply"
+  ]
+    ## Paths under git directory that merge, cherry-pick, revert or rebase in progress leaves.
   MARK_COMMENT = '#'  ## Mark that opens comment line of log, as header of log does.
   COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
     ## Columns of table of reflection, in order of their cells in `rowsTable`.
@@ -119,6 +171,8 @@ const
   COMMA = ','  ## Mark between groups of three digits of number, as in `170,000`.
   DIGITS_GROUP = 3  ## Digits of group after comma.
   LENGTH_DATE = 10  ## Characters of day of ISO 8601 timestamp, as `2026-11-20`.
+  OFFSET_FNV = 0xcbf29ce484222325'u64  ## Hash of FNV-1a, 64 bits, before first byte.
+  PRIME_FNV = 0x100000001b3'u64  ## Prime of FNV-1a, 64 bits, that each byte meets.
 
 
 func numbersIn*(text: string): seq[float] =
@@ -330,6 +384,49 @@ func lineClaim*(claim: Claim): string =
   FIELD_LOG & " { " & fields.join(" ") & " }"
 
 
+func hashKey*(key: string): uint64 =
+  ## Hash of key of row, by FNV-1a of 64 bits, as prior names each row it holds (#1049): each byte
+  ##   joins by xor, then meets prime of FNV, modulo `2^64`.
+  ##   Collision makes row prior holds of new one; expected chance about `n² / 2^65` for `n` keys.
+  result = OFFSET_FNV
+  for ch in key: result = (result xor uint64(ord(ch))) * PRIME_FNV
+
+
+func lineTally(tally: Tally): string =
+  ## Write tally as block `tallies` of line of prior, fields in order of their numbers, each partial
+  ##   of sum as one value; empty string and zero stay out, as `lineClaim` leaves them.
+  var fields: seq[string]
+  template put(name, value: string) =
+    ## Add field of name and its value, as text format writes it.
+    fields.add name & ": " & value
+  if tally.model.len > 0: put "model", tally.model.quotedText
+  if tally.effort.len > 0: put "effort", tally.effort.quotedText
+  if tally.project.len > 0: put "project", tally.project.quotedText
+  if tally.kind.len > 0: put "kind", tally.kind.quotedText
+  let marker = (if tally.marker == Marker.Unspecified: Marker.Delegate else: tally.marker)
+  put "marker", NAMES_MARKER[marker]
+  if tally.band != 0: put "band", $tally.band
+  if tally.rows != 0: put "rows", $tally.rows
+  if tally.count != 0: put "count", $tally.count
+  if tally.hits != 0: put "hits", $tally.hits
+  if tally.hits_band != 0: put "hits_band", $tally.hits_band
+  for partial in tally.confidence.partials: put "confidence", $partial
+  for partial in tally.score.partials: put "score", $partial
+  if tally.count_number != 0: put "count_number", $tally.count_number
+  for partial in tally.score_number.partials: put "score_number", $partial
+  FIELD_TALLIES & " { " & fields.join(" ") & " }"
+
+
+func linePrior*(prior: Prior): string =
+  ## Write prior as one line for head of log: field `prior` of `Log`, each tally block of its own.
+  var fields: seq[string]
+  if prior.date_first.len > 0: fields.add "date_first: " & prior.date_first.quotedText
+  if prior.date_last.len > 0: fields.add "date_last: " & prior.date_last.quotedText
+  for key in prior.keys: fields.add "keys: " & $key
+  for tally in prior.tallies: fields.add tally.lineTally
+  OPENING_PRIOR & fields.join(" ") & CLOSING_ROW
+
+
 func skipSpaces(cursor: var Cursor) =
   ## Move cursor past each space.
   while cursor.at < cursor.line.len and cursor.line[cursor.at] == ' ': inc cursor.at
@@ -370,46 +467,59 @@ func valueName[E: enum](names: array[E, string], value: string): E =
   raise newException(ValueError, &"Row of log holds no known value of enum; got `{value}`.")
 
 
-func claimLine*(line: string): Claim =
-  ## Read claim of one row that `lineClaim` writes, each field by its name; `ValueError` for row
-  ##   that opens or closes otherwise, holds text after its closing brace, or holds unknown field
-  ##   or value.
-  if not (line.startsWith(OPENING_ROW) and line.endsWith(CLOSING_ROW)):
-    raise newException(ValueError, &"Row of log is no row of `lineClaim`; got `{line}`.")
+func fieldsLine(line, opening, nested: string): seq[tuple[block_at: int, name, value: string]] =
+  ## Read each field of one line of text format that opens with opening, in order, each with index
+  ##   from 0 of block `nested` that holds it, or -1 outside each; each block opens with field of
+  ##   empty name. `ValueError` for line that opens or closes otherwise, ends inside field, opens
+  ##   block of other field or block in block, names field with no colon, or holds text after its
+  ##   closing brace.
+  if not (line.startsWith(opening) and line.endsWith(CLOSING_ROW)):
+    raise newException(ValueError, &"Line of log opens or closes in no known way; got `{line}`.")
   var
-    cursor = Cursor(line: line, at: OPENING_ROW.len)
-    number = Number()
-    is_number = false
+    cursor = Cursor(line: line, at: opening.len)
+    block_at = -1
+    blocks = 0
   while true:
     cursor.skipSpaces
     if cursor.at >= line.len:
-      raise newException(ValueError, &"Row of log ends inside field; got `{line}`.")
+      raise newException(ValueError, &"Line of log ends inside field; got `{line}`.")
     if line[cursor.at] == '}':
       inc cursor.at
-      if not is_number: break
-      is_number = false
-      result.number = some(number)
+      if block_at < 0: break
+      block_at = -1
       continue
     let name = cursor.word
     cursor.skipSpaces
     if cursor.at < line.len and line[cursor.at] == '{':
-      if name != FIELD_NUMBER or is_number:
-        raise newException(ValueError, &"Row of log opens block of no known field; got `{name}`.")
-      is_number = true
+      if name != nested or block_at >= 0:
+        raise newException(ValueError, &"Line of log opens block of no known field; got `{name}`.")
+      block_at = blocks
+      inc blocks
       inc cursor.at
+      result.add (block_at, "", "")
       continue
     if cursor.at >= line.len or line[cursor.at] != ':':
-      raise newException(ValueError, &"Field of row has no colon after its name; got `{name}`.")
+      raise newException(ValueError, &"Field of log has no colon after its name; got `{name}`.")
     inc cursor.at
     cursor.skipSpaces
     let value = (if cursor.at < line.len and line[cursor.at] == '"': cursor.quoted
       else: cursor.word)
-    if is_number:
+    result.add (block_at, name, value)
+  if cursor.at != line.len:
+    raise newException(ValueError, &"Line of log holds text after its closing brace; got `{line}`.")
+
+
+func claimLine*(line: string): Claim =
+  ## Read claim of one row that `lineClaim` writes, each field by its name; `ValueError` for row
+  ##   that `fieldsLine` refuses, or that holds unknown field or value.
+  for (block_at, name, value) in line.fieldsLine(OPENING_ROW, FIELD_NUMBER):
+    if block_at >= 0:
       case name
-      of "low": number.low = value.parseFloat
-      of "median": number.median = value.parseFloat
-      of "high": number.high = value.parseFloat
-      of "outcome": number.outcome = some(value.parseFloat)
+      of "": result.number = some(Number())
+      of "low": result.number.get.low = value.parseFloat
+      of "median": result.number.get.median = value.parseFloat
+      of "high": result.number.get.high = value.parseFloat
+      of "outcome": result.number.get.outcome = some(value.parseFloat)
       else: raise newException(ValueError, &"Number of row holds unknown field; got `{name}`.")
       continue
     case name
@@ -430,17 +540,88 @@ func claimLine*(line: string): Claim =
     of "key": result.key = value
     of "result": result.result = value
     else: raise newException(ValueError, &"Row of log holds unknown field; got `{name}`.")
-  if cursor.at != line.len:
-    raise newException(ValueError, &"Row of log holds text after its closing brace; got `{line}`.")
 
 
-func claimsLog*(text: string): seq[Claim] =
-  ## Read claim of each row of log text, in order; blank line and comment line, as header of
-  ##   log, read as none.
+func priorLine*(line: string): Prior =
+  ## Read prior of line that `linePrior` writes, each field by its name; `ValueError` for line that
+  ##   `fieldsLine` refuses, or that holds unknown field or value.
+  var tallies: seq[Tally]
+  for (block_at, name, value) in line.fieldsLine(OPENING_PRIOR, FIELD_TALLIES):
+    if block_at >= 0:
+      if name.len == 0:
+        tallies.add Tally()
+        continue
+      template tally: untyped = tallies[block_at]  # Alias; `let` would copy tally written.
+      case name
+      of "model": tally.model = value
+      of "effort": tally.effort = value
+      of "project": tally.project = value
+      of "kind": tally.kind = value
+      of "marker": tally.marker = NAMES_MARKER.valueName(value)
+      of "band": tally.band = value.parseInt
+      of "rows": tally.rows = value.parseInt
+      of "count": tally.count = value.parseInt
+      of "hits": tally.hits = value.parseInt
+      of "hits_band": tally.hits_band = value.parseInt
+      of "confidence": tally.confidence.add value.parseFloat
+      of "score": tally.score.add value.parseFloat
+      of "count_number": tally.count_number = value.parseInt
+      of "score_number": tally.score_number.add value.parseFloat
+      else: raise newException(ValueError, &"Tally of prior holds unknown field; got `{name}`.")
+      continue
+    case name
+    of "date_first": result.date_first = value
+    of "date_last": result.date_last = value
+    of "keys": result.keys.add value.parseBiggestUInt
+    else: raise newException(ValueError, &"Prior of log holds unknown field; got `{name}`.")
+  result.tallies = tallies
+
+
+func logText*(text: string): Log =
+  ## Read prior and claim of each row of log text, in order; blank line and comment line, as header
+  ##   of log, read as none. Prior reads wherever it stands, and log of several priors reads as one
+  ##   whose keys hold keys of each other, as `union` joins two rolls of rows one of other.
+  ##   `ValueError` where no prior holds keys of each other, and for two priors of same keys and
+  ##   other tallies.
+  var priors: seq[Prior]
   for line in text.splitLines:
     let row = line.strip
     if row.len == 0 or row[0] == MARK_COMMENT: continue
-    result.add row.claimLine
+    if row.startsWith(OPENING_PRIOR): priors.add row.priorLine
+    else: result.claims.add row.claimLine
+  if priors.len == 0: return
+  var widest = priors[0]
+  for prior in priors:
+    if prior.keys.len > widest.keys.len: widest = prior
+  let keys = widest.keys.toHashSet
+  for prior in priors:
+    let is_other = prior.keys.len == widest.keys.len and prior != widest
+    if is_other or not (prior.keys.toHashSet <= keys):
+      raise newException(ValueError, "Two priors of log hold other rows, as merge of two rolls " &
+        "that differ writes; got `" & $prior.keys.len & "` and `" & $widest.keys.len & "` key(s).")
+  result.prior = some(widest)
+
+
+func claimsCounted*(log: Log): seq[Claim] =
+  ## Claims of rows of log that count, in order: each key once, in prior that names it (`hashKey`),
+  ##   else in its first row; row of no key counts each time, since prior names none.
+  var seen = (if log.prior.isSome: log.prior.get.keys.toHashSet else: initHashSet[uint64]())
+  for claim in log.claims:
+    if claim.key.len > 0:
+      let hash = claim.key.hashKey
+      if hash in seen: continue
+      seen.incl hash
+    result.add claim
+
+
+func claimsLog*(text: string): seq[Claim] =
+  ## Read claim of each row of log text, in order, as `logText` reads it, copies included.
+  text.logText.claims
+
+
+func rowsLog*(text: string): int =
+  ## Count rows of log text: lines that open with `claims {`, as `lineClaim` writes each.
+  text.splitLines.countIt(it.startsWith(OPENING_ROW))
 
 
 func keysIn*(text: string): HashSet[string] =
@@ -472,11 +653,17 @@ func projectBranch*(branch: string): string =
   if parsed.isSome: parsed.get.nameRole else: CURATOR
 
 
-proc claimsTree*(root: string): seq[Claim] =
-  ## Read claim of each row of each log of claims that tree holds, in order of its path
-  ##   (`listPaths`), so figures join log of each project (#964).
+proc logsTree*(root: string): seq[Log] =
+  ## Read each log of claims that tree holds, in order of its path (`listPaths`), so figures join
+  ##   log of each project (#964), and sum prior of each into one prior of repository (#1049).
   for path in root.listPaths:
-    if path.extractFilename == FILE_LOG: result.add readFile(root / path).claimsLog
+    if path.extractFilename == FILE_LOG: result.add readFile(root / path).logText
+
+
+proc claimsTree*(root: string): seq[Claim] =
+  ## Read claim of each row that counts of each log of claims that tree holds, in order of its path
+  ##   (`claimsCounted`).
+  for log in root.logsTree: result.add log.claimsCounted
 
 
 proc pathWaiting*(): string =
@@ -551,3 +738,72 @@ proc logStop*(root, branch, waiting: string; subagents: Subagents): int =
   except IOError, OSError:
     stderr.writeLine "Log of claims is not written; got `" & getCurrentExceptionMsg() & "`."
     -1
+
+
+func phraseKinds(kinds: openArray[string]): string =
+  ## Render kinds as subject of commit of log names them: `reviewer`, `builder and the critic`,
+  ##   or `builder, the critic and the resolver`.
+  if kinds.len < 2: kinds.join
+  else: kinds[0 ..< ^1].join(", the ") & " and the " & kinds[^1]
+
+
+func messageClaims(path: string, kinds: openArray[string]): (string, string) =
+  ## Render subject and body of commit of log at path that adds rows of kinds; scope is folder
+  ##   holding log, as `audit` for log of root branch of curator.
+  ##   Subject wider than `SUBJECT_MAX` names subagents, since commit hook refuses it otherwise.
+  let
+    opening = &"chore({path.parentDir.extractFilename}): log the claims of the "
+    named = opening & kinds.phraseKinds
+    subject = if named.runeLen <= SUBJECT_MAX: named else: opening & "subagents"
+  (subject, "The `stop` hook commits the rows of each reflection, by the path of the log alone.")
+
+
+proc isOperationGit(root: string): bool =
+  ## Decide whether merge, cherry-pick, revert or rebase is in progress in checkout at root.
+  for name in PATHS_OPERATION:
+    let at = fieldsGit(root, ["rev-parse", "--path-format=absolute", "--git-path", name])[0].strip
+    if fileExists(at) or dirExists(at): return true
+
+
+proc commitClaims*(root, branch: string): bool =
+  ## Commit log of claims of branch alone, by its path, where it holds rows that `HEAD` lacks and
+  ##   lost none of its rows; true where commit lands, as `D1 a` of #1059 rules.
+  ##   Branch outside grammar or detached checkout commits nothing, since `pathLog` gives none,
+  ##     and neither does merge, cherry-pick, revert or rebase in progress: rows wait in tree.
+  ##   Change staged for other path stays staged, since commit takes path alone (`--only`).
+  ##   Commit hook reads message as any other, and commit stays local, so next push carries it.
+  ##   Log that lost row commits nothing, since hand that removed it decides its commit. Log waits
+##     too while last commit is `test`, so its `fix` comes right after it.
+  ##   Failure of git commits nothing and raises nothing, so log that cannot commit refuses no
+  ##     turn; error goes to stderr, and log that hook staged is unstaged again, so index stays.
+  let relative = branch.pathLog
+  if relative.len == 0 or not fileExists(root / relative): return false
+  var is_added = false  # Hook staged log itself, so refused commit unstages it again.
+  try:
+    if root.isOperationGit: return false
+    # Commit right after `test` waits, since its `fix` must follow it (CONTRIBUTOR.md, Tests
+    #   are paramount); first stop after fix commits rows.
+    let last = fieldsGit(root, ["log", "-1", "--format=%s"]).join.strip.parseSubject
+    if last.isSome and last.get.kind == "test": return false
+    let
+      tracked = fieldsGit(root, ["ls-tree", "-z", "--name-only", "HEAD", "--", relative]).len > 0
+      before = (if tracked: fieldsGit(root, ["show", "HEAD:" & relative]).join else: "")
+      rows_before = before.splitLines.filterIt(it.startsWith(OPENING_ROW)).toHashSet
+      rows_now = readFile(root / relative).splitLines.filterIt(it.startsWith(OPENING_ROW))
+      added = rows_now.filterIt(it notin rows_before)
+    if added.len == 0 or not (rows_before <= rows_now.toHashSet): return false
+    let
+      (subject, body) = relative.messageClaims(added.mapIt(it.claimLine.kind).deduplicate)
+      is_staged = fieldsGit(root, ["diff", "--cached", "--name-only", "-z", "--", relative]).len > 0
+    discard fieldsGit(root, ["add", "--", relative])
+    is_added = not is_staged
+    discard fieldsGit(
+      root, ["commit", "--quiet", "--only", "-m", subject, "-m", body, "--", relative]
+    )
+    true
+  except IOError, OSError, ValueError:
+    stderr.writeLine "Log of claims is not committed; got `" & getCurrentExceptionMsg() & "`."
+    if is_added:
+      try: discard fieldsGit(root, ["reset", "--quiet", "--", relative])
+      except IOError: discard
+    false

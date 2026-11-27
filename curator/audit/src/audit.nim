@@ -18,11 +18,12 @@ when compileOption("profiler"):
 import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
-  checker, citations_section, coverage, dependencies, domains, duplicates, english, findings,
-  font_families, form, glossary, idioms, imports, justification, kinds, layout, names,
+  checker, citations_section, claims_prior, coverage, dependencies, domains, duplicates, english,
+  findings, font_families, form, glossary, idioms, imports, justification, kinds, layout, names,
   packages_node, plan, prompts, prose, prose_own, provenance, record, toolchain, tree, waits,
   workflows,
 ]
+from ./claims_log import FILE_LOG
 
 export layout.Entry, layout.directoriesProject, layout.Tree
 
@@ -199,6 +200,11 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if is_governed and not e.path.endsWith("GLOSSARY.md"):
         result.add checkWordsPeople(e.path, e.content)
     if e.path in PATHS_PROMPT: result.add checkPrompt(e.path, e.content)
+    # Each log of claims holds at most its cap, which role that writes log clears by roll, and reads
+    #   as figures read it (#1049).
+    if e.path.extractFilename == FILE_LOG:
+      result.add checkCap(e.path, e.content)
+      result.add checkFormLog(e.path, e.content)
     # Checker's own project names these families as data and carries fixture pages, so it
     #   would report itself; it holds no presentation target of its own to check. Paths of
     #   one machine it names as fixtures, for same reason.

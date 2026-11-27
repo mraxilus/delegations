@@ -68,6 +68,7 @@ import ./curator/audit/src/[
   audit,
   base,
   claims_log,
+  claims_prior,
   claims_scores,
   commits,
   domains,
@@ -103,6 +104,7 @@ Verbs:
   check-role     pull request's role line, label, title and form of body, from ROLE_* env
   claims         move rows of log of claims that wait outside tree into log of branch
   figures        figures of each log of claims, by marker, then by fields named as `kind,effort`
+  roll           roll rows of log of branch that can change no more into its prior; keys named stay
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
@@ -165,11 +167,12 @@ proc parseOptions(): Option[Options] =
     case kind
     of cmdArgument:
       # Third argument onward is refused for every verb but `fetch-assets` and `fix`, which
-      #   name files rather than one project; refusing them everywhere would make those verbs
-      #   impossible and accepting them everywhere would let typo pass as argument nothing reads.
+      #   name files rather than one project, and `roll`, which names prefixes of keys; refusing
+      #   them everywhere would make those verbs impossible and accepting them everywhere would let
+      #   typo pass as argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command in ["fetch-assets", "fix"]: options.rest.add key
+      elif options.command in ["fetch-assets", "fix", "roll"]: options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -356,6 +359,8 @@ proc runHook(root, event, input: string): int =
         turn = readFile(data{"transcript_path"}.getStr).parseTurn
         kinds = readKinds(root)
       discard logStop(root, branch_root, pathWaiting(), turn.subagents)
+      # Log that holds new rows commits alone, by its path, where guards allow (`commitClaims`).
+      discard commitClaims(root, branch_root)
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       var found = checkNumbersBare(turn.text)
@@ -626,6 +631,18 @@ proc run(options: Options): int =
       stderr.writeLine error.msg
       return 1
     for line in lines: echo line
+    return 0
+  of "roll":
+    # Role rolls log of own branch alone (`D2 a` of #1049), as `claims` moves rows into it; each
+    #   argument is prefix of key whose rows stay, as delegate of study that still reads them.
+    if not options.isReadAll({Root}, has_project = true): return options.refused
+    let prefixes = (if options.project.len > 0: @[options.project] else: @[]) & options.rest
+    try:
+      let (rolled, path) = rollLog(options.root, options.root.branch, prefixes)
+      echo $rolled & " row(s) rolled into prior of `" & path & "`."
+    except CatchableError as error:
+      stderr.writeLine error.msg
+      return 1
     return 0
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
