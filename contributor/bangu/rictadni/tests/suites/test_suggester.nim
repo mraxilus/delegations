@@ -53,7 +53,8 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[
-  asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest, uri,
+  asyncdispatch, asyncnet, httpclient, json, net, options, os, osproc, random, sequtils, strtabs,
+  strutils, unittest, uri,
 ]
 from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
@@ -61,7 +62,8 @@ from std/unicode import Rune, toUTF8
 import ricysoho
 
 import ../../app/exchanges
-from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
+from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, KEY_PAGE, MARK_MAIN,
+    MARK_TEXT, USAGE
 
 import ../../src/rictadni/[suggestions, tags]
 import ../../tools/examples
@@ -316,6 +318,12 @@ func example(name: string): Example =
   for one in EXAMPLES:
     if one.name == name: return one
   raise newException(KeyError, "Worked example should be in `EXAMPLES`; got `" & name & "`.")
+
+
+func escapedSuite(text: string): string =
+  ## Escape text for content of element, as server of tag page escapes it; sibling of
+  ##   `escapedHtml` of `app/suggester.nim`, written apart so test reads no code it tests.
+  text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
 func urlLoopback(port: int, path: string): string =
@@ -919,6 +927,79 @@ suite "Internal: Suggester":
             exited = binary.run([(KEY_SERVICE, $service)], replay & arguments)
           check exited == expected  # output, report and exit of pure pipeline, notes first
           check exited.output == example.tags.mapIt(it.gismu & "\n").join  # gismu, one to line
+
+
+  test "server of tag page answers text posted with page holding its replayed report, refuses rest":
+    # Real server, real HTTP and real child run, on loopback alone, so test reaches wiring (IX.5).
+    let
+      example = example("lojban")
+      directory_case = directory / "served"
+      exchanges = example.toExchanges(Service.Claude)
+      page = "<main>" & MARK_TEXT & MARK_MAIN  # Fixture: least page server takes.
+      path_page = directory / "served.html"
+      expected = toExited(
+        Service.Claude.readReply(exchanges[^1].reply),
+        example.toPassage,
+        Service.Claude.toSettings.model,
+        exchanges.mapIt(noteReplayed(directory_case, it.request, it.label)),
+      )
+      port = block:
+        let probe = newSocket()  # Free port of loopback, read once and closed.
+        probe.bindAddr(Port(0), "127.0.0.1")
+        let found = int(probe.getLocalAddr[1])
+        probe.close()
+        found
+      address = urlLoopback(port, "/")
+    writeExchanges(directory_case, exchanges)
+    writeFile(path_page, page)
+    let child = startProcess(binary.path, args = ["--replay:" & directory_case,
+        "--serve:" & $port], env = newStringTable({KEY_SERVICE: $Service.Claude,
+        KEY_PAGE: path_page}), options = {})
+
+    # Wait until server answers or child exits; each wait ends on event, never on span of time.
+    var is_up = false
+    while not is_up and child.running:
+      try:
+        let probe = newSocket()
+        probe.connect("127.0.0.1", Port(port))
+        probe.close()
+        is_up = true
+      except OSError: poll(MS_POLL)
+    check is_up  # server listens before any request
+
+    let
+      client = newHttpClient()
+      shown = page.replace(MARK_TEXT, MARK_TEXT.replace("></textarea>", ">" &
+          example.argument.escapedSuite & "</textarea>"))
+      served = client.request(address, HttpPost, body = encodeQuery({"text": example.argument}),
+          headers = newHttpHeaders({"Content-Type": "application/x-www-form-urlencoded",
+          "Origin": "http://127.0.0.1:" & $port}))
+    check served.code == Http200
+    check served.body == shown.replace(MARK_MAIN, "<pre id=\"served\" hidden>" &
+        expected.report.escapedSuite & "</pre>" & MARK_MAIN)  # text in box, report of replay
+    check client.request(address).body == page  # page itself, as built
+    check client.request(address, HttpPost, body = "text=mi",
+        headers = newHttpHeaders({"Origin": "https://example.org"})).code ==
+        Http403  # page of other site spends no request
+    check client.request(address, headers = newHttpHeaders({"Host": "example.org"})).code ==
+        Http403  # name rebound to loopback reaches nothing
+    check client.request(urlLoopback(port, "/other")).code == Http404  # page alone is served
+    client.close()
+    child.kill()
+    discard child.waitForExit
+    child.close()
+
+
+  test "flag `--serve` takes port in 1..65535 and no text, else exits 2 before any socket":
+    for (arguments, problem) in [
+      (@["--serve", "mi"], "`--serve` should take no text, since page posts each; got `mi`."),
+      (@["--serve:0"], "Port of `--serve` should be in 1..65535; got `--serve:0`."),
+      (@["--serve:65536"], "Port of `--serve` should be in 1..65535; got `--serve:65536`."),
+      (@["--serve:x"], "Port of `--serve` should be in 1..65535; got `--serve:x`."),
+    ]:
+      let exited = binary.run([], arguments)
+      check exited.code == 2  # usage error, nothing sent
+      check exited.report == problem & "\n" & USAGE  # problem names offending value, then usage
 
 
   test "command `examples` prints replays each worked example under any workspace, umask `000` too":

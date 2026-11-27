@@ -100,7 +100,7 @@ pre.report {
   </header>
 
   <section>
-    <form id="form">
+    <form id="form" method="post" action="/">
       <label for="text">Text</label>
       <textarea id="text" name="text" spellcheck="false"></textarea>
       <div class="row">
@@ -191,6 +191,8 @@ function setStatus(text, isFail) {
 
 async function suggest(event) {
   // Ask Claude once for text, then check each element with reader of Nim.
+  //   Without runtime of Artifact, form posts to server of `suggester --serve` instead.
+  if (!window.claude) return;
   event.preventDefault();
   const text = $("text").value;
   if (!text.trim()) { setStatus("Paste a text first.", true); return; }
@@ -243,9 +245,22 @@ async function copyCommand() {
   }
 }
 
-const lines = EXAMPLE.map(([g, l]) => "Service suggests `" + g + "`, glossed `" + l + "`.");
-$("text").value = TEXT_EXAMPLE;
-show(EXAMPLE, lines.join("\n"));
+const served = $("served");
+if (served) {
+  // Show report that `suggester --serve` put in page, in place of example.
+  const pairs = pairsFrom(served.textContent);
+  show(pairs, served.textContent);
+  $("example").hidden = true;
+  setStatus(pairs.length ? "Kept " + pairs.length + " gismu." : "No gismu of the list was kept.",
+    !pairs.length);
+} else {
+  if (!window.claude) {
+    setStatus("Sends text to suggester on this machine, which asks with your key.", false);
+  }
+  const lines = EXAMPLE.map(([g, l]) => "Service suggests `" + g + "`, glossed `" + l + "`.");
+  $("text").value = TEXT_EXAMPLE;
+  show(EXAMPLE, lines.join("\n"));
+}
 $("form").addEventListener("submit", suggest);
 $("copy").addEventListener("click", copyCommand);
 </script>
