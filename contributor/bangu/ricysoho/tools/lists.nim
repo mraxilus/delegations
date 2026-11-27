@@ -6,12 +6,8 @@
 ##   .i ciska `src/ricysoho/lists/gismu.nim` .e `cmavo.nim`
 ##   .i `build.nim` pilno le vi datnyvei
 ##
-## ni'o le galfi samtci pe `rictadni/tools/lists.nim` cpacu `Source` .e `readSource` .e
-##     `KEY_LISTS` .e `DIRECTORY_LISTS` .e `DIGEST_GISMU` .e `DIGEST_LUJVO` le vi datnyvei
-##   .i se ki'u bo ro le xa selcpa cu selpli su'o samtci poi na pagbu le genturfa'i
-##   .i ji'a ro stosni cu selci'a pa roi gi'e selpli le re selgu'a
-##   .i le galfi samtci cu ponse pa sivyfancu po'u `field` noi fukpi `field` pe le vi datnyvei to
-##       `Article II.9` toi
+## ni'o `field` pe `rictadni/tools/lists.nim` cu fukpi `field` pe le vi datnyvei to
+##     `Article II.9` toi
 ##   .i lo nu cikre pa le re fancu cu na mulno pu lo nu le datfancu cu se cipra
 ##
 ## ni'o lo stuzi pe `gismu.txt` ge'u .e lo stuzi pe `cmavo.txt` stodi
@@ -32,7 +28,6 @@
 ##
 ## ni'o no samtci datnyvei cu selzba fi `lujvo.txt`
 ##   .i ki'u bo le jvoste cu dunda lo smuni gi'e no roi dunda lo ka drani
-##   .i se ki'u bo le jvoste cu stali `rictadni`
 ##
 ## ni'o lo cipra cu tcidu le datnyvei poi selpu'i ku'o ta'i lo datselci'a
 ##   .i le vi datnyvei cu stosni le datnyvei sepi'o lo snina'u
