@@ -27,7 +27,8 @@ const
     "#         Maybe best to use template for defining both at once?\n"
     ## Lines 1 to 4 of `pga/operators.nim` at `3d9696e`, nuance two spaces past `Implement`.
   NESTED = "# TODO: Fit.\n#       Child.\n#         Grandchild.\n"
-    ## Child two spaces past `Fit.`, and grandchild two spaces past child.
+    ## Child at column of `Fit.`, six spaces past where text of parent starts, and grandchild
+    ##   two spaces past child.
   GEONORM =
     "func `|`*(m: Multivector): MultivectorScalars {.inline.} =\n" &
     "  ## Get geometric norm of multivector as distance from origin.\n" &
@@ -116,9 +117,9 @@ suite "Outlines":
     ]:
       check kept.isSettled
     check "# Cost: one fetch,\n#         paid once.\n".fixed ==
-      "# Cost: one fetch,\n#   paid once.\n"  # two spaces past `Cost:`, not past `one`
+      "# Cost: one fetch,\n#   paid once.\n"  # two spaces past where `Cost:` starts
     check "## Cost: reads twice.\n## Second claim.\n".fixed ==
-      "## Cost: reads twice.\n##   Second claim.\n"  # second summary, two spaces past `Cost:`
+      "## Cost: reads twice.\n##   Second claim.\n"  # second summary, past where `Cost:` starts
 
 
   test "nuance off its step moves there, in doc and comment, at any column":
