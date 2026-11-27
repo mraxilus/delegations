@@ -18,18 +18,6 @@ ni'o le vi selgu'a cu tcidu lo jbovla .e lo porsi be lo jbovla ja'i lo javni pe 
     tcidu lo selci'a ja'i le gerna pe `CLL 21.1`
   .i pu lo nu le gerna cu tcidu kei lo javni pe `CLL 19.16` galfi lo valsi
 
-ni'o ci pagbu be le vi selgu'a cu ponse lo tunba ne'i `rictadni`
-  .i lo stedu be ro le ci pagbu cu cusku lo cmene be le tunba ja'i `Article II.9`
-
-ni'o le pamoi pagbu cu du `tools/lists.nim`
-  .i le remoi pagbu cu du le re minde pe `tools/build.nim` zi'e po'u `lists` jo'u `head`
-  .i le cimoi pagbu cu du `ending` noi sivyfancu ne'i `tanru_units.nim`
-  .i lo nu cikre pa tunba cu mulno va'o lo nu cipra fi le datytunba kei po'o
-
-ni'o `tools/drive.nim` .e `tools/drive/collector.nim` .e `tools/page.nim` .e `tools/browser.nim` .e
-    `tests/browser/report.nim` cu ponse lo tunba ne'i `rictadni` ji'a
-  .i lo stedu be ro le mu datnyvei cu cusku lo cmene be le tunba ja'i `Article II.9`
-
 ni'o le turni be le vi selgu'a cu du `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
   .i `CLL` selci'a `John Woldemar Cowan` gi'e seldu'a `Logical Language Group`
 
