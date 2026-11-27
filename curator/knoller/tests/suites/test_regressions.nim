@@ -626,9 +626,10 @@ suite "Regressions":
       # rule 2: lines 121, 122, 123 and 127 of `pga/algebra.nim`
 
 
-  test "14. nuance under tag stands two spaces past sentence after tag (#443)":
-    holds PRIMITIVES, PRIMITIVES.replace("\n#   ", "\n#         ")
-      # rule 3: lines 4 to 10 of `pga/multivectors.nim` gain six spaces, two past `Represent`
+  test "14. nuance under tag stands two spaces past where tag starts (#1020)":
+    holds PRIMITIVES.replace("\n#   ", "\n#         "), PRIMITIVES
+      # lines 4 to 10 of `pga/multivectors.nim`, six spaces past tag as rule 3 of #443 read it,
+      #   move back to where library writes them
 
 
   test "15. paragraph of routine that comments stage takes placeholder (#443)":
