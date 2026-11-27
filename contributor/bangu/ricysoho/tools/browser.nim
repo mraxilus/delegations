@@ -73,9 +73,6 @@
 ##   .i va'o lo drata `Chromium` poi selpli cu du `headless shell` pe `Chrome for Testing` ge'u zi'e
 ##       noi `koch fetch-assets` cpacu ke'a lo sorcu pe `delegations` zi'e noi se kalri ne'i
 ##       `build/chromium/`
-##
-## ni'o `contributor/bangu/rictadni/tools/page.nim` cu fukpi le vi datnyvei
-##   .i se ki'u bo lo nu cikre le vi datnyvei cu mulno va'o lo nu cipra le fukpi to `II.9` toi
 
 {.experimental: "strictFuncs".}
 

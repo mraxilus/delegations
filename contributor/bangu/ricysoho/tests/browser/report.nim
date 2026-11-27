@@ -27,9 +27,6 @@
 ##     1
 ##   .i se ki'u bo lo nu cipra poi spofu cu fliba ca lo nu spofu
 ##   .i le nu cipra cu na denpa lo rairtei pe le sabji samtci
-##
-## ni'o `contributor/bangu/rictadni/tests/browser/report.nim` cu fukpi le vi datnyvei
-##   .i se ki'u bo lo nu cikre le vi datnyvei cu mulno va'o lo nu cipra le fukpi to `II.9` toi
 
 {.experimental: "strictFuncs".}
 

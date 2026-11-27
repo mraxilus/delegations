@@ -35,9 +35,6 @@
 ##   .i le papri cu no roi selra'e `git`
 ##   .i jdima fa lo nu le papri cu vasru le mulno genturfa'i .e mu lertai
 ##   .i so'e lo stuzi pe le papri cu pagbu le genturfa'i .a le lertai
-##
-## ni'o `contributor/bangu/rictadni/tools/page.nim` cu fukpi le vi datnyvei
-##   .i se ki'u bo lo nu cikre le vi datnyvei cu mulno va'o lo nu cipra le fukpi to `II.9` toi
 
 {.experimental: "strictFuncs".}
 

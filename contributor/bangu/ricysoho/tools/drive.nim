@@ -56,9 +56,6 @@
 ## ni'o jdima fa lo nu va'o lo nu `Linux` na selpli kei pa pruce pe `Chromium` ge'u zi'e poi lo
 ##     rirni be ke'a cu morsi cu klama `init`
 ##   .i se ki'u bo lo nu vimcu le vreji cu ka'e jivna le pruce
-##
-## ni'o `contributor/bangu/rictadni/tools/drive.nim` cu fukpi le vi datnyvei
-##   .i se ki'u bo lo nu cikre le vi datnyvei cu mulno va'o lo nu cipra le fukpi to `II.9` toi
 
 {.experimental: "strictFuncs".}
 

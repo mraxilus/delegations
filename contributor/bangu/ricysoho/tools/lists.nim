@@ -6,10 +6,6 @@
 ##   .i ciska `src/ricysoho/lists/gismu.nim` .e `cmavo.nim`
 ##   .i `build.nim` pilno le vi datnyvei
 ##
-## ni'o `field` pe `rictadni/tools/lists.nim` cu fukpi `field` pe le vi datnyvei to
-##     `Article II.9` toi
-##   .i lo nu cikre pa le re fancu cu na mulno pu lo nu le datfancu cu se cipra
-##
 ## ni'o lo stuzi pe `gismu.txt` ge'u .e lo stuzi pe `cmavo.txt` stodi
 ##   .i `entries.nim` ciska le stuzi ne'i lo lijgri liste
 ##   .i ro kuspe pe le vi datnyvei cu selmre ne'i ro linji pe ro le re datnyvei

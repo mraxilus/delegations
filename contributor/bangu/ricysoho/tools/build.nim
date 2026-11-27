@@ -51,12 +51,6 @@
 ##       frica .a lo nu pa cipra cu fliba
 ##   .i le jitro samtci cu sisti sepi'o li 2 va'o lo nu lo nu pilno cu srera
 ##
-## ni'o le tadji pe le minde po'u `lists` .e `head` cu tunba lo tadji pe `rictadni/tools/lists.nim`
-##   .i ro le re tadji cu tcidu le mitkra ja'i le mintu stodi to `tools/lists.nim` toi
-##   .i no jitro samtci cu dunda pa minde lo drata samtci
-##   .i se ki'u bo le tadji cu zvati ro le re selgu'a to `II.9` toi
-##   .i va'o lo nu le drata na se cipra kei lo nu cikre pa le re jitro samtci cu na mulno
-##
 ## ni'o `CONTRIBUTOR.md` cusku lo minde po'u `head` tezu'e lo nu cipra lo barselsitna poi cenba
 ##   .i lo bakfu cu ka'e bevri lo ninste ca lo nu no da selpu'i vi
 ##   .i no nu jmina cu denpa lo minde po'u `head`
