@@ -3781,7 +3781,9 @@ suite "Hooks":
       criterion = "claim takes its resolution criterion in row of its number of table with " &
         "column `Resolution criterion`"
       number = "row of table of judgements or estimates of block opens with number of its own " &
-        "under `#`, from 1"
+        "under `#`, as digits alone, from 1"
+      row_criteria = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names"
       confidence = "judgement states its confidence alone under `%`, as `70%` or `62.5%`"
       text = "claim of table states its text under `Judgement` or `Estimate @ 90%`"
       row3 = "| 3 | The critic finds no HTTP request in the code that `start` runs. |"
@@ -3794,7 +3796,7 @@ suite "Hooks":
     check heldBlock(PREDICTION_TABLES.replace(row3, "| 3 |  |")) ==
       @[refusal(criterion, "none for claim `3`")]
     check heldBlock(PREDICTION_TABLES.replace(row3, row3.replace("| 3 |", "| 3. |"))) ==
-      @[refusal(criterion, "none for claim `3`")]
+      @[refusal(criterion, "none for claim `3`"), refusal(row_criteria, "`3.`")]
     let none = PREDICTION_TABLES[0 ..< PREDICTION_TABLES.find("**Criteria.**")]
     check heldBlock(none) == toSeq(1..8).mapIt(refusal(criterion, "none for claim `" & $it & "`"))
 
@@ -3837,8 +3839,9 @@ suite "Hooks":
         "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
         "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` " &
         "(GUIDE.md, Prediction, critic and reflection); got `"
-      orphan = "row of table of criteria of block names, by its number under `#`, claim of " &
-        "block that no other row names (GUIDE.md, Prediction, critic and reflection); got `"
+      orphan = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
     func header(names: openArray[string]): string =
       ## Write header row of names, as table of fixture writes it.
       "| " & names.join(" | ") & " |"
@@ -3884,13 +3887,42 @@ suite "Hooks":
     check heldBlock(PREDICTION_TABLES.replace("**Working:**",
       "| Option | Cost |\n| --- | --- |\n| a | $1 |\n\n**Working:**")).len == 0
 
-    # Criterion of number of no claim, or of claim of other row, is refused; row of no number is
-    #   none, since claim it misses takes its own finding.
+    # Criterion of number of no claim, or of claim of other row, is refused, as is row of no
+    #   number (finding 5 of critic of mends).
     const row8 = "| 8 | The minutes on the line `**Subagent:**` of the reflection. |"
     for number in 0 .. 10:
       let extra = PREDICTION_TABLES.replace(row8, row8 & "\n| " & $number & " | A criterion. |")
-      check heldBlock(extra) == (if number == 0: @[] else: @[orphan & $number & "`"])
-    check heldBlock(PREDICTION_TABLES.replace(row8, row8 & "\n| x | A note. |")).len == 0
+      check heldBlock(extra) == @[orphan & $number & "`"]
+    check heldBlock(PREDICTION_TABLES.replace(row8, row8 & "\n| x | A note. |")) == @[orphan & "x`"]
+
+
+  test "number under `#` of each table of claims of block is digits alone, from 1 (#1028)":
+    # Case as found (finding 5 of critic of mends): row `6.` of criteria beside row `6`, and row
+    #   of criteria with no number, passed, so two criteria could name one claim. Domain: each
+    #   cell that is no digits alone, or 0, under `#` of each table of claims of block.
+    const
+      number = "row of table of judgements or estimates of block opens with number of its own " &
+        "under `#`, as digits alone, from 1 (GUIDE.md, Prediction, critic and reflection); got `"
+      row_criteria = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
+      row6 = "| 6 | The tokens on the line `**Subagent:**` of the reflection. |"
+      row7 = "| 7 | The builder costs ~$7.00. | $2.50 | $7.00 | $20.00 |"
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| 6. | The line. |")) ==
+      @[row_criteria & "6.`"]  # case as found
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n|  | The line. |")) ==
+      @[row_criteria & "`"]
+    var count = 0
+    for cell in ["", "0", "6.", "#6", "x", "6 7", "-6", "+6", "6a", "(6)", "６"]:
+      check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| " & cell & " | The line. |")) ==
+        @[row_criteria & cell & "`"]
+      check heldBlock(PREDICTION_TABLES.replace(row7, row7.replace("| 7 |", "| " & cell & " |"))) ==
+        @[number & cell & "`"]
+      inc count
+    check count == 11
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| 06 | The line. |")) ==
+      @[row_criteria & "6`"]  # digits alone read past leading zero, so claim is named twice
+    check heldBlock(PREDICTION_TABLES).len == 0
 
 
   test "block of tables holds no bullet beside them, as bullet and row take one key (#1028)":
