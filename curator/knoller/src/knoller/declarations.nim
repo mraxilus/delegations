@@ -546,16 +546,77 @@ func sections(source: string): seq[string] =
     result[d] = section
 
 
-func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[ValueBlock] =
-  ## Read each binding whose value opens `block`, at any reach: each of `found` that reads so,
-  ##   and each line declaring in `const`, `let` or `var` section of `declaring`. Read where its
-  ##   doc stands: comment right above it at its indent, but `##` doc that code, module, routine
-  ##   or declaration of `found` owns, as lexer joins it; `##` doc trailing `block:` with lines
-  ##   lexer joins to it, else `##` doc first in its body.
+func ownership(source: string, found: seq[Placement]): tuple[owned: seq[bool], heading: int] =
+  ## Read each line of `##` doc that declaration of `found` holds in place, or that routine holds,
+  ##   operator among them, whose name no declaration reads; and first line holding code or
+  ##   opening doc, so doc opening there is module's (#980: `D3 a` on file's start, `D1 a` on
+  ##   comments above).
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
     kept = source.codeAndComments.split('\n')
+  result.owned = newSeq[bool](lines.len)
+  for p in found:
+    if p.doc >= 0: result.owned[p.doc] = true
+  for h in source.heads:
+    var below = h.last  # Zero-based line after signature.
+    while below < lines.len and lines[below].strip.len == 0: inc below
+    if below < lines.len and isDoc(code[below], kept[below]): result.owned[below] = true
+  result.heading = lines.len
+  for k in 0 ..< lines.len:
+    if code[k].strip.len > 0 or kept[k].strip.startsWith("##"):
+      result.heading = k
+      break
+
+
+func commentAbove(
+  lines, code, kept: seq[string]; owned: seq[bool]; heading, line: int
+): tuple[top: int, is_hashed: bool] =
+  ## Read zero-based first line of comment right above line `line`, at its indent, `line` where
+  ##   none, and whether it holds `##` doc. Walk stops at `##` doc that code above, module (line
+  ##   `heading`), routine or declaration (`owned`) holds, as lexer joins it.
+  let indent = lines[line].indentWidth
+
+  func isLineDoc(k: int): bool =
+    ## Decide whether line `k` holds `##` doc alone.
+    k >= 0 and k < lines.len and isDoc(code[k], kept[k])
+
+  func isTrailingDoc(k: int): bool =
+    ## Decide whether `##` doc trails code of line `k`.
+    let at = kept[k].find('#', code[k].strip(leading = false).len)
+    code[k].strip.len > 0 and at >= 0 and kept[k][at .. ^1].startsWith("##")
+
+  result.top = line
+  while result.top > 0:
+    let
+      k = result.top - 1
+      text = kept[k].strip
+    if code[k].strip.len > 0 or lines[k].indentWidth != indent or not text.startsWith("#") or
+        text.startsWith("#[") or text.startsWith("#!"):
+      break
+    if not text.startsWith("##"):
+      result.top = k
+      continue
+    var start = k  # First line of doc lexer joins line `k` into.
+    while start > 0 and start.isLineDoc and (isLineDoc(start - 1) or isTrailingDoc(start - 1)):
+      dec start
+    if start == heading or owned[start] or
+        toSeq(start .. k).anyIt(not it.isLineDoc or lines[it].indentWidth != indent):
+      break
+    result.is_hashed = true
+    result.top = start
+
+
+func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[ValueBlock] =
+  ## Read each binding whose value opens `block`, at any reach: each of `found` that reads so,
+  ##   and each line declaring in `const`, `let` or `var` section of `declaring`. Read where its
+  ##   doc stands: comment right above it at its indent (`commentAbove`); `##` doc trailing
+  ##   `block:` with lines lexer joins to it, else `##` doc first in its body.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    kept = source.codeAndComments.split('\n')
+  var (owned, heading) = source.ownership(found)
 
   func isLineDoc(k: int): bool =
     ## Decide whether line `k` holds `##` doc alone.
@@ -565,26 +626,6 @@ func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[
     ## Read byte offset of `##` doc trailing code of line `k`; `-1` where none.
     let at = kept[k].find('#', code[k].strip(leading = false).len)
     if code[k].strip.len > 0 and at >= 0 and kept[k][at .. ^1].startsWith("##"): at else: -1
-
-  func isTrailingDoc(k: int): bool =
-    ## Decide whether `##` doc trails code of line `k`.
-    k.trailing >= 0
-
-  # Mark doc each declaration holds in place, and doc of each routine, operator among them, whose
-  #   name no declaration reads; and first line holding code or opening doc, so doc opening there
-  #   is module's (#980: `D3 a` on file's start, `D1 a` on comments above).
-  var owned = newSeq[bool](lines.len)
-  for p in found:
-    if p.doc >= 0: owned[p.doc] = true
-  for h in source.heads:
-    var below = h.last  # Zero-based line after signature.
-    while below < lines.len and lines[below].strip.len == 0: inc below
-    if below.isLineDoc: owned[below] = true
-  var heading = lines.len
-  for k in 0 ..< lines.len:
-    if code[k].strip.len > 0 or kept[k].strip.startsWith("##"):
-      heading = k
-      break
 
   # Read each binding opening `block`, once for each line: placement that names it, then line
   #   declaring in section, which reading of declarations may pass over.
@@ -623,31 +664,14 @@ func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[
       while isLineDoc(b.ends + 1): inc b.ends
     result.add b
 
-  # Read comment right above each at its indent, up to `##` doc that other owns, and whether
-  #   blank line, line opening its body, or none stands above it.
+  # Read comment right above each at its indent, and whether blank line, line opening its body, or
+  #   none stands above it.
   for b in result.mitems:
     let indent = lines[b.line].indentWidth
-    var top = b.line
-    while top > 0:
-      let
-        k = top - 1
-        text = kept[k].strip
-      if code[k].strip.len > 0 or lines[k].indentWidth != indent or not text.startsWith("#") or
-          text.startsWith("#[") or text.startsWith("#!"):
-        break
-      if not text.startsWith("##"):
-        top = k
-        continue
-      var start = k  # First line of doc lexer joins line `k` into.
-      while start > 0 and start.isLineDoc and (isLineDoc(start - 1) or isTrailingDoc(start - 1)):
-        dec start
-      if start == heading or owned[start] or
-          toSeq(start .. k).anyIt(not it.isLineDoc or lines[it].indentWidth != indent):
-        break
-      b.is_hashed = true
-      top = start
-    b.above = top
-    let opener = if top > 0: code[top - 1].strip else: ""
+    (b.above, b.is_hashed) = commentAbove(lines, code, kept, owned, heading, b.line)
+    let
+      top = b.above
+      opener = if top > 0: code[top - 1].strip else: ""
     b.is_clear = top == 0 or lines[top - 1].strip.len == 0 or
       (opener.len > 0 and lines[top - 1].indentWidth < indent and
         (opener.endsWith(":") or opener.endsWith("=") or opener in KEYWORDS_SECTION))
