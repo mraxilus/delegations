@@ -4,7 +4,7 @@
 
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[findings, hooks, lags, markdown, tree]
-import ./fixtures
+import ./[fixtures, fixtures_claims]
 
 
 const
@@ -155,6 +155,21 @@ The gap list reads the baseline of each algebra.
     "has column `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md, Quotes " &
     "of claims)"
     ## Finding of reflection with no table of claims: each form cites text that states it.
+  REFUSAL_OUTCOME_BULLETS = "cell under `Result` of number of bullets marked ✅ or ⬜ opens with " &
+    "its value, bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` " &
+    "or `h` for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+    ## Opening of finding of result of number of bullets that reads no value in unit of its text.
+  NUMBERS_BULLETS = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+    "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th " &
+    "and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, " &
+    "50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and 30, as the " &
+    "5th, 50th and 95th percentiles.\n- Count: findings that the report ranks: 3, 6 and 11, as " &
+    "the 5th, 50th and 95th percentiles.\n"
+    ## Block of bullets of number of each unit, as GUIDE.md wrote it before tables.
+  CLAIMS_BULLETS = ["tokens summed over its requests: 100,000, 160,000 and 300,000",
+    "cost at list price: $0.40, $0.90 and $2.00", "time to its report, in minutes: 5, 12 and 30",
+    "Count: findings that the report ranks: 3, 6 and 11"]
+    ## Claim of each number of `NUMBERS_BULLETS`, in order, as cell quotes it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -300,6 +315,7 @@ func predicting(kind: string): string =
 proc quoted(bullets, cell: string): seq[string] =
   ## Read findings of reflection whose one row holds cell under `Predicted`, after report of
   ##   critic, where block that call of `reviewer` took holds bullets alone.
+  ##   Its result opens with bare value, which number of bullets of each unit reads (#1028).
   let prediction = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
     bullets & "\n"
   blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
@@ -307,7 +323,7 @@ proc quoted(bullets, cell: string): seq[string] =
     linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
     linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
     lineSaid("## Reflection\n\n| State | Confidence | Predicted | Result |\n" &
-      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | it holds |\n"))
+      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | 1, it holds |\n"))
 
 
 proc heldReflection(prediction, reflection: string): seq[string] =
@@ -2867,7 +2883,7 @@ suite "Hooks":
       ## Read findings of reflection whose rows hold cells under `Predicted`, after report of
       ##   critic.
       var rows = ""
-      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | it holds |\n"
+      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | 1, it holds |\n"
       blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
     proc passes(bullets, cell: string): bool =
       ## Decide whether cell passes, where block that call took holds bullets alone, after line
@@ -3031,7 +3047,7 @@ suite "Hooks":
       blocksHeld(asked & lineSaid("## Prediction\n\n**Subagent:** researcher of forecasting " &
         "practice, fresh context.\n\n" & bullets & "\n") & calls & lineSaid("## Reflection\n\n" &
         "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 80% | " &
-        cell & " | it holds |\n"), ["critic", "researcher"]).len == 0
+        cell & " | 1, it holds |\n"), ["critic", "researcher"]).len == 0
 
     # Case as found: each cell drops final full stop of its bullet, and passes; cell that keeps
     #   it is refused. Text before `: ` of each bullet is several words, so it is no label, and
@@ -4071,8 +4087,8 @@ suite "Hooks":
     # Case as found: bullet of tokens took `170k, inside`, and bullet of time `1.5h, inside`, as
     #   first number of cell, with no finding. Domain: each unit of bullet, each form of value,
     #   each state, under `Predicted` and under `#`; bare value reads in unit text names, as its
-    #   percentiles stand bare, and value of other unit is refused. Cell that opens with no value
-    #   passes, as checks of bullets stay as they were (choice).
+    #   percentiles stand bare, and value of other unit is refused, as is cell that opens with no
+    #   value (finding 1 of critic of mends).
     const
       numbers = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
         "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
@@ -4080,17 +4096,15 @@ suite "Hooks":
         "the 5th, 50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and " &
         "30, as the 5th, 50th and 95th percentiles.\n- Count: findings that the report ranks: " &
         "3, 6 and 11, as the 5th, 50th and 95th percentiles.\n"
-      rule = "value that opens cell under `Result` of number of bullets marked ✅ or ⬜ stands " &
-        "bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or `h` " &
-        "for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+      rule = REFUSAL_OUTCOME_BULLETS
       forms = [
         ("tokens summed over its requests: 100,000, 160,000 and 300,000",
-          @["170,000, inside", "170000", "170k, inside", "0.17M", "inside", "~170k"],
-          @["$170k", "170m, inside"]),
+          @["170,000, inside", "170000", "170k, inside", "0.17M"],
+          @["$170k", "170m, inside", "inside", "~170k"]),
         ("cost at list price: $0.40, $0.90 and $2.00",
-          @["$1.10, inside", "1.10", "$1.1k", "inside"], @["1.10m"]),
+          @["$1.10, inside", "1.10", "$1.1k"], @["1.10m", "inside"]),
         ("time to its report, in minutes: 5, 12 and 30",
-          @["15m, inside", "15, inside", "1.5h", "900s", "inside"], @["$15"]),
+          @["15m, inside", "15, inside", "1.5h", "900s"], @["$15", "inside"]),
         ("Count: findings that the report ranks: 3, 6 and 11", @["12, above the 95th", "1.2k"],
           @["$12", "12m"]),
       ]
@@ -4107,7 +4121,7 @@ suite "Hooks":
               check found == @[rule & cell & "` for claim `" & $(k + 1) & "`"]
               inc count
             else: check found.len == 0
-    check count == 2 * 2 * (2 + 1 + 1 + 2)  # two states and two tables of each refused cell
+    check count == 2 * 2 * (4 + 2 + 2 + 2)  # two states and two tables of each refused cell
 
     # Number whose text names no unit, as `Cost: $0.40, …`, takes value of any mark, as it takes no
     #   score (GUIDE.md before tables: label names no unit but `Count:`).
@@ -4117,6 +4131,48 @@ suite "Hooks":
       check heldReflection(unnamed, "## Reflection\n\n| State | Confidence | Predicted | Result " &
         "|\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " & cell & " |\n")
         .len == 0
+
+
+  test "result of number of bullets that opens with no value is refused, as log reads none (#1028)":
+    # Case as found (finding 1 of critic of mends): each cell below logged no outcome with no
+    #   finding, as check read only cell that opens with value. Domain: each state of each case,
+    #   and each result of scored number of log of root curator (`RESULTS_LOGGED`), through hook
+    #   and through reader of log; hook refuses each result whose value log reads as none.
+    const found = [(0, "s08, 170,000, inside"), (1, "m01: $1.10, inside"), (0, "✅ 170,000"),
+      (1, "✅ $1.10, in $0.40–$2.00"), (2, "r1: 15"), (0, "~170k, inside"), (1, "about $1.10")]
+    for (k, cell) in found:
+      check cell.outcomeResult(CLAIMS_BULLETS[k].unitText, as_bare = true).isNone
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        let held = heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | " &
+          "Predicted | Result |\n| --- | --- | --- | --- |\n| " & state & " | 90% | " &
+          CLAIMS_BULLETS[k] & " | " & cell & " |\n")
+        check held == (if state in ["✅", "⬜"]:
+          @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"] else: @[])
+
+    # Of results logged, these read value row holds, these read other value, as cell of four
+    #   places of cost whose row of #963 logged cents, and hook refuses these, as label, marker
+    #   or word before value, or no value, as `r01: $0.16`, `✅ $0.35` or `⬜`.
+    const
+      read_same = 148  ## Results that read value row logged.
+      read_other = 17  ## Results that read value of four places, where row logged cents.
+      refused_logged = 186  ## Results that hook refuses, as they read no value.
+    var same, other, refused = 0
+    for (text, cell, logged) in RESULTS_LOGGED:
+      let
+        prediction = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n- " &
+          text & ", as the 5th, 50th and 95th percentiles.\n"
+        held = heldReflection(prediction, "## Reflection\n\n| State | Confidence | Predicted " &
+          "| Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & text & " | " & cell & " |\n")
+        outcome = cell.outcomeResult(text.unitText, as_bare = true)
+      check held == (if outcome.isNone: @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `1`"]
+        else: @[])
+      if outcome.isNone: inc refused
+      elif outcome.get == logged: inc same
+      else:
+        check abs(outcome.get - logged) < 0.005  # four places, where row logged cents
+        inc other
+    check (same, other, refused) == (read_same, read_other, refused_logged)
+    check RESULTS_LOGGED.len == read_same + read_other + refused_logged
 
 
   test "value reads scale and groups after one space, and result refuses what space leaves (#1028)":
@@ -4180,9 +4236,7 @@ suite "Hooks":
         "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
         "50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and 30, as " &
         "the 5th, 50th and 95th percentiles.\n"
-      bullets = "value that opens cell under `Result` of number of bullets marked ✅ or ⬜ stands " &
-        "bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or `h` " &
-        "for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+      bullets = REFUSAL_OUTCOME_BULLETS
     for (k, claim, held, refused) in [
         (1, "tokens summed over its requests: 100,000, 160,000 and 300,000",
           @["170 k, inside", "170 000, inside"], @["170 K", "170 0, inside"]),
