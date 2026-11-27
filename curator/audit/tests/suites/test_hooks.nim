@@ -3973,6 +3973,64 @@ suite "Hooks":
     check heldReflection(mixed, bullet).len == 0
 
 
+  test "each table of claims of reflection holds its form whole (7200557915 of #1028)":
+    # Case as found: `| # | State | Estimate | Result |` read as no table and gave no finding, so
+    #   log lost three estimates. Domain: each column of each form dropped or one character off,
+    #   each order of columns, and table that names no form (GUIDE.md, Prediction, critic and
+    #   reflection).
+    const
+      forms = [
+        ("| # | State | % | Judgement | Result |", @["#", "State", "%", "Judgement", "Result"]),
+        ("| # | State | Estimate @ 90% | Result |", @["#", "State", "Estimate @ 90%", "Result"]),
+      ]
+      rule = "table of reflection whose header holds `#`, `Judgement` or `Estimate @ 90%` holds " &
+        "each column of one form: `#`, `State`, `%`, `Judgement` and `Result`, or `#`, `State`, " &
+        "`Estimate @ 90%` and `Result` (GUIDE.md, Prediction, critic and reflection); got `"
+    func header(names: openArray[string]): string =
+      ## Write header row of names, as table of fixture writes it.
+      "| " & names.join(" | ") & " |"
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      found = whole.tableColumns(forms[1][0], toSeq(0 ..< 4), ["#", "State", "Estimate", "Result"])
+    check heldReflection(PREDICTION_TABLES, found) ==
+      @[rule & "| # | State | Estimate | Result |`"]  # case as found
+    check found.rowsReflection.len == 5  # its rows read as none
+    let alone = "## Reflection\n\n" & found[found.find("| # | State | Estimate |") .. ^1]
+    check heldReflection(PREDICTION_TABLES, alone) == @[rule & "| # | State | Estimate | Result |`"]
+
+    # Table that drops column of its form, or holds column one character off, takes one finding,
+    #   and its rows read as none.
+    var count = 0
+    for (line, names) in forms:
+      for k, column in names:
+        let kept = toSeq(0 ..< names.len).filterIt(it != k)
+        var offs = @[column & "s", column[0 ..< ^1]]
+        if column[0] in Letters: offs.add column.toLowerAscii
+        let dropped = whole.tableColumns(line, kept)
+        check heldReflection(PREDICTION_TABLES, dropped) == @[rule & kept.mapIt(names[it]).header &
+          "`"]
+        check dropped.rowsReflection.len == (if line == forms[0][0]: 3 else: 5)
+        for off in offs:
+          var named = names
+          named[k] = off
+          let changed = whole.tableColumns(line, toSeq(0 ..< names.len), named)
+          check heldReflection(PREDICTION_TABLES, changed) == @[rule & named.header & "`"]
+          inc count
+    check count == 5 * 2 + 4 * 2 + 3 + 3  # added, dropped, and case of each opening letter
+
+    # Each order of columns reads same rows, since hook reads columns by name; table with no
+    #   column that names form, and table with column `Predicted`, read as before.
+    for (line, names) in forms:
+      var order = toSeq(0 ..< names.len)
+      while true:
+        let moved = whole.tableColumns(line, order)
+        check heldReflection(PREDICTION_TABLES, moved).len == 0
+        check moved.rowsReflection == whole.rowsReflection
+        if not order.nextPermutation: break
+    check heldReflection(PREDICTION_TABLES, whole & "\n| Test | Result |\n| --- | --- |\n" &
+      "| suites | pass |\n").len == 0
+
+
   test "result of estimate hit or missed opens with its value in unit of its cells (#1028)":
     # Domain: each state, against each form of result of each unit of case as found.
     let whole = REFLECTION_TABLES_POSTED.mended
