@@ -635,6 +635,51 @@ on 2026-11-26.
 
 Opus at `low` and Haiku have one sample of each text, so their spread is unmeasured.
 
+## Tag page
+
+**One page serves two front ends.** `pages/tagger.html` is the source, and the verb `page`
+inlines its script and each font face of the store into `build/page/tagger.html`. The script is
+`app/page.nim`, compiled to JavaScript. It exports the prompt and the reader of
+`suggestions.nim`, so the page holds no second copy of the gismu list or of the check (II.9). The
+Architect ruled two front ends from one source on #1058, as D1 b.
+
+**On claude.ai, the page asks Opus 5.5 at effort `high` through `sample`.** The runtime of an
+Artifact takes effort `low`, `medium` or `high` alone, and Opus at `high` kept the most gismu of
+the grid (Live replies). `sample` has no system role and no schema. So `toPromptAlone` puts the
+system text, the passage and the shape of the answer into one user turn. The reader then checks
+each element, as for `suggester`. The cost falls on the Claude usage of the viewer, and not on a
+key.
+
+Cost: the pattern of five letters is asked in words, not held by a schema, and the system text
+goes uncached with each call. So more elements can drop. Open questions names the gap. Verified
+by hand with Node on 2026-11-27: the compiled reader kept `purdi` and `rozgu`, and dropped
+`samtc` with the refusal of `suggester`.
+
+**On your machine, `suggester --serve` runs `suggester` itself for each text posted.** The child
+reads the text on standard input, under the mode of the server. So the page asks what the command
+line asks, with the same settings and key. The server writes the text into the box and the report
+into a hidden element, and the script of the page shows the report. So the served path needs no
+script to send.
+
+Rejected: a call into `main` from the server, which would need `main` split, and
+would give the server a second path to the service. Cost: one process for each text posted.
+
+The server binds `127.0.0.1` alone, and answers only requests whose host is its own address. It
+refuses a post whose origin is another site, so a page of another site can spend no request.
+Verified by `suites/test_suggester.nim`, through real HTTP and a replayed exchange.
+
+**rictadni drives its own page.** `tools/page.nim` builds the page, and `tools/drive.nim` serves
+it on loopback to Chromium of the store. `tools/drive/collector.nim` reads each run of text with
+its font, and the drive writes `build/font-faces/written.json` for `koch drive`. The Architect
+ruled that each project drives its own pages, as D1 a on #1058. The three files take their logic
+from `ricyso'o`, and each names its siblings, the collector of `pga_benchmark` among them.
+Verified by hand with `nim r koch drive contributor/bangu/rictadni` on 2026-11-27, with 0
+findings.
+
+Cost: the page holds about 3.3 MB, nearly all font faces, under the limit of 16 MiB of an
+Artifact. Two builds of one tree differ, because `koch drive` compiles the script with its own
+compiler. So the digest of the page names its build, not its tree.
+
 ## Transport
 
 **Each request gets a new client that follows no redirect.** A client loop keeps its headers
@@ -1134,6 +1179,10 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
 - **The hits of the cache.** In the grid of Live replies, 115 of 120 requests read the system
   text from the cache. Those requests came within minutes of each other. No run measured the hits
   of requests that come hours apart.
+- **Answers of the tag page.** No grid measured Opus at `high` through `sample`, with no system
+  role and no schema. A form of a browser sends each line break as CR LF. So a text from the page
+  can miss an exchange that the command line recorded. That is assumed from the rules of HTML
+  forms, and no run checked it.
 - **The spread of Opus at `low` and of Haiku.** The grid of Live replies sent one request for
   each text to these configurations. So it does not show how far a second request can differ.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`

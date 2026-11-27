@@ -51,6 +51,8 @@ nim r tools/build.nim suggester                   # build binaries/suggester, wi
 nim r tools/build.nim examples                    # write worked examples of suggester
 nim r tools/build.nim lists                       # write both lists again from lojban-common
 nim r tools/build.nim head                        # compare committed lists with lojban-common
+nim r tools/build.nim page                        # build tag page into build/page/tagger.html
+nim r tools/build.nim drive                       # build tag page, collect what it draws
 ```
 
 The build needs the compiler that `rictadni.nimble` pins, and `libssl3`, because
@@ -111,7 +113,8 @@ position, and the tool keeps the rest. If the tool keeps no gismu, it exits 1.
 A text of at most 64 bytes that reads as a tag of at most six words asks no service, and needs no
 key. The tool then prints the gismu of that tag, and leaves out its cmavo.
 
-Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`
+Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`, or
+`suggester [--record:<directory>|--replay:<directory>] --serve[:<port>]` for the tag page.
 
 Before `--`, a word that starts with `-` and is no flag is a usage error, wherever it stands. So
 a mistyped flag never sends a paid request. Put `--` before a text that holds such a word.
@@ -175,9 +178,32 @@ holds the same text. `head -n 1` prints the line that names the format.
 
 ## Pages
 
-The project publishes no page.
+The tag page takes a pasted text and shows the gismu that a person might search by to find it.
+It has two front ends, which share one source, `pages/tagger.html`:
+
+- **On your machine.** Build the page, then serve it from the project folder:
+
+  ```sh
+  nim r tools/build.nim page
+  binaries/suggester --serve
+  ```
+
+  Open `http://127.0.0.1:8461/`. The form sends each text to `suggester` itself, with your key
+  and the default model, and the page shows the gismu and the report. `--serve:<port>` takes
+  another port, and `RICTADNI_PAGE` names another built page. The server answers only requests
+  of its own host and origin.
+- **As an Artifact on claude.ai.** The published page is at
+  `https://claude.ai/artifact/VCrXVVid41EzZSx67N9SCr`, and only its owner can open it. It asks
+  Opus 5.5 at effort `high` through the Claude usage of the viewer, and needs no key.
+
+Both front ends read each answer with the reader of `suggester`, compiled to JavaScript for the
+page.
 
 ## Status
+
+The tag page serves on your machine, and a suite posts a text to it and reads the report back. Its
+Artifact has not asked Claude live yet, so the answers of Opus at `high` without a schema are
+unmeasured.
 
 The tags, the index, the search and the command line work, and the suites hold them to CLL. They
 read each word through `ricyso'o`.
