@@ -409,6 +409,8 @@ const
   LABELS_SUBAGENT* = ["**subagent:**", "**subagent**:"]
     ## Forms of `LABEL_SUBAGENT` that line opens with, in lower case: match reads it in any case,
     ##   with colon inside or outside bold (7027197745).
+  LABELS_CRITIC* = ["**critic:**", "**critic**:"]
+    ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
   MARKS_KIND = {'`', '*', '_'}
     ## Marks of code, bold and italic that word of kind may stand inside; match drops them, with
     ##   case and final mark of `MARKS_END_KIND` (7022770415).
@@ -2689,6 +2691,30 @@ func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[flo
     is_read = value.get.unit == marked or
       (as_bare and UnitNumber.Unspecified in {value.get.unit, unit})
   if is_read: some(value.get.amount) else: none(float)
+
+
+func figuresLine*(text: string, labels: openArray[string]): tuple[tokens: int, cost: float] =
+  ## Read tokens and cost of first line of text that opens with one of labels, in any case: bare
+  ##   value that ends right before first ` tokens`, longest first, and value of cost at first `$`,
+  ##   each as cell reads it (`valueAt`), so `39.1M tokens` and `39100k tokens` read 39,100,000;
+  ##   zero where none.
+  ##   Cost: word between value and ` tokens`, as `170,000 cached tokens`, gives none.
+  for line in text.splitLines:
+    let lower = line.strip(trailing = false).toLowerAscii
+    if not labels.anyIt(lower.startsWith(it)): continue
+    let at = line.find(" " & WORD_TOKENS)
+    for start in 0 ..< max(at, 0):
+      if line[start] notin Digits or (start > 0 and line[start - 1] in Digits + {POINT_DECIMAL}):
+        continue
+      let value = line.valueAt(start)
+      if value.isSome and value.get.stop == at and value.get.unit == UnitNumber.Unspecified:
+        result.tokens = int(value.get.amount)
+        break
+    let dollar = line.find(MARK_COST)
+    if dollar >= 0:
+      let value = line.valueAt(dollar)
+      if value.isSome and value.get.unit == UnitNumber.Cost: result.cost = value.get.amount
+    return
 
 
 func isHolding(header, columns: openArray[string]): bool =
