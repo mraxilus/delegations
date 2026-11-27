@@ -19,6 +19,9 @@
 ##   Log is `claims.txtpb` of scope branch writes (`pathLog`), with project its role names; other
 ##     checkout writes file outside tree, with project `curator`, since root curator alone keeps
 ##     checkout outside grammar. `moveClaims` empties that file into log of root branch alone.
+##   `stop` then commits log of branch alone, by its path, so next push carries rows with no turn
+##     spent; detached checkout, branch outside grammar, merge, rebase, cherry-pick and revert
+##     commit nothing (`commitClaims`, `D1 a` of #1059).
 ##   Text format is written here, one row to line, as exception to CONTRIBUTOR.md, Data, that
 ##     Architect ruled on #989 (comment 7053329096); suite reads it back through `protoc`, which
 ##     refuses misspelt field.
@@ -98,6 +101,10 @@ const
   FIELDS_NUMBER* = ["low", "median", "high", "outcome"]
     ## Fields of message `Number` of `claims.proto` that reader of row knows.
   OPENING_ROW = FIELD_LOG & " { "  ## Opening of each row, as `lineClaim` writes it.
+  PATHS_OPERATION = [
+    "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply"
+  ]
+    ## Paths under git directory that merge, cherry-pick, revert or rebase in progress leaves.
   CLOSING_ROW = " }"  ## Closing of each row, as `lineClaim` writes it.
   MARK_COMMENT = '#'  ## Mark that opens comment line of log, as header of log does.
   COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
@@ -551,3 +558,58 @@ proc logStop*(root, branch, waiting: string; subagents: Subagents): int =
   except IOError, OSError:
     stderr.writeLine "Log of claims is not written; got `" & getCurrentExceptionMsg() & "`."
     -1
+
+
+func phraseKinds(kinds: openArray[string]): string =
+  ## Render kinds as subject of commit of log names them: `reviewer`, `builder and the critic`,
+  ##   or `builder, the critic and the resolver`.
+  if kinds.len < 2: kinds.join
+  else: kinds[0 ..< ^1].join(", the ") & " and the " & kinds[^1]
+
+
+func messageClaims(path: string, kinds: openArray[string]): (string, string) =
+  ## Render subject and body of commit of log at path that adds rows of kinds; scope is folder
+  ##   holding log, as `audit` for log of root branch of curator.
+  (
+    &"chore({path.parentDir.extractFilename}): log the claims of the {kinds.phraseKinds}",
+    "The `stop` hook commits the rows of each reflection, by the path of the log alone.",
+  )
+
+
+proc isOperationGit(root: string): bool =
+  ## Decide whether merge, cherry-pick, revert or rebase is in progress in checkout at root.
+  for name in PATHS_OPERATION:
+    let at = fieldsGit(root, ["rev-parse", "--path-format=absolute", "--git-path", name])[0].strip
+    if fileExists(at) or dirExists(at): return true
+
+
+proc commitClaims*(root, branch: string): bool =
+  ## Commit log of claims of branch alone, by its path, where it holds rows that `HEAD` lacks and
+  ##   lost none of its rows; true where commit lands, as `D1 a` of #1059 rules.
+  ##   Branch outside grammar or detached checkout commits nothing, since `pathLog` gives none,
+  ##     and neither does merge, cherry-pick, revert or rebase in progress: rows wait in tree.
+  ##   Change staged for other path stays staged, since commit takes path alone (`--only`).
+  ##   Commit hook reads message as any other, and commit stays local, so next push carries it.
+  ##   Log that lost row commits nothing, since hand that removed it decides its commit.
+  ##   Failure of git commits nothing and raises nothing, so log that cannot commit refuses no
+  ##     turn; error goes to stderr.
+  let relative = branch.pathLog
+  if relative.len == 0 or not fileExists(root / relative): return false
+  try:
+    if root.isOperationGit: return false
+    let
+      tracked = fieldsGit(root, ["ls-files", "-z", "--", relative]).len > 0
+      before = (if tracked: fieldsGit(root, ["show", "HEAD:" & relative]).join else: "")
+      rows_before = before.splitLines.filterIt(it.startsWith(OPENING_ROW)).toHashSet
+      rows_now = readFile(root / relative).splitLines.filterIt(it.startsWith(OPENING_ROW))
+      added = rows_now.filterIt(it notin rows_before)
+    if added.len == 0 or not (rows_before <= rows_now.toHashSet): return false
+    let (subject, body) = relative.messageClaims(added.mapIt(it.claimLine.kind).deduplicate)
+    discard fieldsGit(root, ["add", "--", relative])
+    discard fieldsGit(
+      root, ["commit", "--quiet", "--only", "-m", subject, "-m", body, "--", relative]
+    )
+    true
+  except IOError, OSError, ValueError:
+    stderr.writeLine "Log of claims is not committed; got `" & getCurrentExceptionMsg() & "`."
+    false

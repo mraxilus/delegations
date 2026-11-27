@@ -7,9 +7,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
+import std/[json, options, os, osproc, sequtils, sets, streams, strformat, strutils, tables,
+  tempfiles]
 import std/unittest
 import ../../src/[claims_log, hooks]
+import ./fixtures
 
 
 const
@@ -493,6 +495,88 @@ suite "Log of claims":
     check logStop(root, BRANCH, root / FILE_WAITING, transcript().parseTurn.subagents) == -1
     check not fileExists(root / FILE_WAITING)
     removeDir(root)
+
+
+  test "stop commits new rows of log alone, by its path, and nothing where a guard holds":
+    # Ruling `D1 a` of #1059: hook commits log, so next push carries rows with no turn spent.
+    #   Domain: branch of contributor, of curator project and of root curator; change staged for
+    #   other path; rows of one, two and three kinds; log new and tracked; no new row; row lost;
+    #   detached checkout, branch outside grammar, and merge, cherry-pick, revert and rebase.
+    let claim = transcript().claimsRead[0]
+    var count = 0  # Rows rendered, so each row is new.
+
+    proc row(kind: string): string =
+      ## Render new row of `claim` under kind, one line of log.
+      inc count
+      var each = claim
+      each.kind = kind
+      each.key = &"{claim.key}/{count}"
+      each.lineClaim & "\n"
+
+    proc repoBranch(branch: string): string =
+      ## Make throwaway repository on branch, with identity commit of hook takes from config.
+      result = repoTemp()
+      for setting in ["user.name Test", "user.email test@example.invalid", "commit.gpgsign false"]:
+        discard result.git("config " & setting)
+      discard result.git("checkout -q -b " & branch)
+
+    proc subject(root: string): string =
+      ## Read subject of last commit.
+      root.git("log -1 --format=%s").strip
+
+    # Branch of contributor: log new to git, then tracked, with change staged for other path.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    root.writeInto(path, HEADER_LOG & row("reviewer"))
+    root.writeInto("other.txt", "staged\n")
+    discard root.git("add other.txt")
+    check commitClaims(root, BRANCH)  # log new to git
+    check root.subject == "chore(rictadni): log the claims of the reviewer"
+    check root.git("show --name-only --format= HEAD").strip == path
+    check root.git("diff --cached --name-only").strip == "other.txt"  # other path stays staged
+    check root.git("status --porcelain -- " & path).len == 0
+    check not commitClaims(root, BRANCH)  # no new row
+    root.writeInto(path, readFile(root / path) & row("builder") & row("critic") & row("builder"))
+    check commitClaims(root, BRANCH)
+    check root.subject == "chore(rictadni): log the claims of the builder and the critic"
+    root.writeInto(path, readFile(root / path) & row("builder") & row("critic") & row("resolver"))
+    check commitClaims(root, BRANCH)
+    check root.subject ==
+        "chore(rictadni): log the claims of the builder, the critic and the resolver"
+    root.writeInto(path, HEADER_LOG & row("surveyor"))  # each earlier row lost
+    check not commitClaims(root, BRANCH)
+    check root.subject ==
+        "chore(rictadni): log the claims of the builder, the critic and the resolver"
+    removeDir(root)
+
+    # Branch of curator project, and root branch of curator, whose log record of checker holds.
+    for (branch, scope) in [("curator/knoller/rule-docs", "knoller"), ("curator/claims", "audit")]:
+      let other = repoBranch(branch)
+      other.writeInto(pathLog(branch), HEADER_LOG & row("reviewer"))
+      checkpoint branch
+      check commitClaims(other, branch)
+      check other.subject == &"chore({scope}): log the claims of the reviewer"
+      removeDir(other)
+
+    # Branch outside grammar and detached checkout name no log.
+    let outside = repoBranch("claude/setup")
+    outside.writeInto(PATH_LOG_CURATOR, HEADER_LOG & row("reviewer"))
+    check not commitClaims(outside, "claude/setup")  # branch outside grammar logs no path
+    discard outside.git("checkout -q --detach")
+    check not commitClaims(outside, "HEAD")  # detached checkout of root curator
+    removeDir(outside)
+
+    # Merge, cherry-pick, revert or rebase in progress commits nothing.
+    for name in ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply"]:
+      let busy = repoBranch(BRANCH)
+      busy.writeInto(pathLog(BRANCH), HEADER_LOG & row("reviewer"))
+      let at = busy / busy.git("rev-parse --git-path " & name).strip
+      if name.startsWith("rebase"): createDir(at) else: writeFile(at, "")
+      checkpoint name
+      check not commitClaims(busy, BRANCH)
+      check busy.subject == "chore(curator): init"
+      removeDir(busy)
 
 
   test "rows waiting outside tree move into log of root branch once each, and file goes":
