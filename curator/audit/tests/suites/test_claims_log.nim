@@ -403,17 +403,26 @@ suite "Log of claims":
     check protoc("--encode", "prior { tallies { hit: 1 } }\n").code != 0  # misspelt field
 
 
-  test "log reads prior at its head, and refuses prior after row and second prior":
+  test "log reads prior wherever merge puts it, and refuses two priors where none holds other":
+    # Merge by `union` puts rows before prior, or joins two rolls, as their order of merge falls.
     let
       rows = transcript().claimsRead.mapIt(it.lineClaim & "\n").join
-      prior = Prior(date_first: "2026-11-20",
-        tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior
+      prior = Prior(date_first: "2026-11-20", keys: @[1'u64],
+        tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior & "\n"
+      wider = Prior(keys: @[1'u64, 2],
+        tallies: @[Tally(kind: "reviewer", rows: 3)]).linePrior & "\n"
+      other = Prior(keys: @[2'u64], tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior & "\n"
+      tallied = Prior(keys: @[1'u64], tallies: @[Tally(kind: "critic", rows: 2)]).linePrior & "\n"
     check (HEADER_LOG & rows).logText == Log(claims: transcript().claimsRead)
-    check (HEADER_LOG & prior & "\n" & rows).logText.prior.get.date_first == "2026-11-20"
-    check (HEADER_LOG & prior & "\n" & rows).claimsLog == transcript().claimsRead
-    check (HEADER_LOG & prior & "\n" & rows).rowsLog == transcript().claimsRead.len
-    expect ValueError: discard (HEADER_LOG & rows & prior & "\n").logText  # after row
-    expect ValueError: discard (HEADER_LOG & prior & "\n" & prior & "\n").logText  # twice
+    check (HEADER_LOG & prior & rows).logText.prior.get.date_first == "2026-11-20"
+    check (HEADER_LOG & prior & rows).claimsLog == transcript().claimsRead
+    check (HEADER_LOG & prior & rows).rowsLog == transcript().claimsRead.len
+    check (HEADER_LOG & rows & prior).logText.prior.get.keys == @[1'u64]  # after row
+    check (HEADER_LOG & prior & prior).logText.prior.get.keys == @[1'u64]  # same line twice
+    check (HEADER_LOG & prior & rows & wider).logText.prior.get.keys == @[1'u64, 2]
+    check (HEADER_LOG & wider & rows & prior).logText.prior.get.keys == @[1'u64, 2]
+    expect ValueError: discard (HEADER_LOG & prior & other).logText  # neither holds other
+    expect ValueError: discard (HEADER_LOG & prior & tallied).logText  # same rows, other tallies
     expect ValueError: discard priorLine("prior { tallies { tallies { rows: 1 } } }")
     expect ValueError: discard priorLine("prior { claims { rows: 1 } }")  # block of no tally
     expect ValueError: discard priorLine("prior { tallies { hit: 1 } }")
@@ -421,6 +430,17 @@ suite "Log of claims":
     expect ValueError: discard priorLine("prior { tallies { marker: MARKER_GOOD } }")
     expect ValueError: discard priorLine("prior { tallies { band: \"a\" } }")
     expect ValueError: discard priorLine("prior { date_first: \"a\" } x }")
+
+
+  test "each key counts once: in prior that names it, else in its first row; row of no key always":
+    let
+      a = Claim(text: "a", key: "s1/c/1/STATE_HIT", marker: Marker.Delegate)
+      b = Claim(text: "b", key: "s1/c/2/STATE_HIT", marker: Marker.Delegate)
+      keyless = Claim(text: "none", marker: Marker.Delegate)
+      log = Log(claims: @[a, b, keyless, a, keyless, b],
+        prior: some(Prior(keys: @[b.key.hashKey], tallies: @[Tally(rows: 1)])))
+    check log.claimsCounted == @[a, keyless, keyless]
+    check Log(claims: @[a, a, b]).claimsCounted == @[a, b]
 
 
   test "claim that names no marker reads back as marked by delegate, as its line writes it":

@@ -16,8 +16,8 @@ import ./fixtures
 const
   SAMPLES_LOG = 40  ## Random logs that law of rows prior holds reads.
   SAMPLES_FIGURES = 10
-    ## Random logs that law of figures reads: each takes 16 sets of fields at 4 states, and Beta of
-    ##   each band of each group costs most of suite, about 0.3 s each log.
+    ## Random logs that each law of figures reads: each takes 16 sets of fields at 4 states, and
+    ##   Beta of each band of each group costs most of suite, about 0.3 s each log.
   ROWS_SAMPLE = 150  ## Rows of each random log.
   CASES_HELD = 375  ## Cases of rule of row that stays: 5 states, 5 others, 5 days, 3 prefixes.
   CASES_DAY = 1848  ## Cases of day in form of date: 4 years, 14 months from 0, 33 days from 0.
@@ -84,8 +84,15 @@ proc claimRandom(at: int): Claim =
 
 
 proc textRandom(rows = ROWS_SAMPLE): string =
-  ## Text of random log of rows, as `stop` writes it.
-  HEADER_LOG & toSeq(0 ..< rows).mapIt(claimRandom(it).lineClaim & "\n").join
+  ## Text of random log of rows, as `stop` writes it: each key once, since `stop` writes no row
+  ##   whose key log holds; row of key drawn before stays out.
+  var keys: HashSet[string]
+  result = HEADER_LOG
+  for at in 0 ..< rows:
+    let claim = claimRandom(at)
+    if claim.key in keys: continue
+    keys.incl claim.key
+    result.add claim.lineClaim & "\n"
 
 
 func linesPrinted(texts: openArray[string]): seq[string] =
@@ -97,7 +104,7 @@ func linesPrinted(texts: openArray[string]): seq[string] =
     tallies: seq[Tally]
   for text in texts:
     let log = text.logText
-    claims.add log.claims
+    claims.add log.claimsCounted
     if log.prior.isSome: tallies.add log.prior.get.tallies
   for mask in 0 ..< 1 shl FIELDS_GROUP.len:
     var fields = {Field.Marker}
@@ -291,6 +298,54 @@ suite "Prior":
     check @[keyless].isHeld(CUTOFF, []) == @[true]  # prior names no row of no key
 
 
+  test "copies of rows, before prior or after it, count none, and next roll drops each of them":
+    # Merge by `union` can bring row back on each side of prior, or join one row twice (#1049).
+    randomize(1055)
+    for sample in 0 ..< SAMPLES_FIGURES:
+      let
+        text = textRandom()
+        rows = text.splitLines.filterIt(it.startsWith(OPENING_ROW))
+        rolled = textRolled(text, "2026-10-15", ["s4"]).text
+      var lines = rolled.splitLines.filterIt(it.len > 0)
+      for copy in 0 ..< 20: lines.insert(rows.sample, rand(2 .. lines.len))  # after head
+      let
+        copied = lines.mapIt(it & "\n").join
+        again = textRolled(copied, "2026-10-15", ["s4"])
+        keys = again.text.logText.claims.mapIt(it.key)
+      check linesPrinted([copied]) == linesPrinted([text])
+      check again.rolled == 0
+      check again.text.splitLines.filterIt(it.startsWith(OPENING_PRIOR)) ==
+        rolled.splitLines.filterIt(it.startsWith(OPENING_PRIOR))
+      check keys.toHashSet == rolled.logText.claims.mapIt(it.key).toHashSet
+      check keys.len == keys.toHashSet.len  # each key once
+      check linesPrinted([again.text]) == linesPrinted([text])
+
+
+  test "log of two priors reads as prior that holds rows of other, as `union` joins two rolls":
+    # Two rolls of whole log at two cutoffs, each with each row that it keeps, as `union` joins
+    #   them where each changed whole log (#1049).
+    randomize(1054)
+    for sample in 0 ..< SAMPLES_FIGURES:
+      let
+        text = textRandom()
+        early = textRolled(text, "2026-09-01", []).text
+        late = textRolled(text, "2026-10-15", []).text
+        merged = HEADER_LOG & (early.splitLines & late.splitLines)
+          .filterIt(it.len > 0 and it[0] != '#').mapIt(it & "\n").join
+      check linesPrinted([merged]) == linesPrinted([text])
+      check textRolled(merged, "2026-10-15", []) == (late, 0)  # one prior again, each row once
+
+
+  test "roll writes one prior at head again, where merge put it after rows or twice":
+    let
+      row = rowDated("2026-06-01", key = "s1/c/1/STATE_HIT").lineClaim & "\n"
+      prior = Prior(keys: @[7'u64],
+        tallies: @[Tally(kind: "reviewer", marker: Marker.Delegate, rows: 1)]).linePrior & "\n"
+    for text in [HEADER_LOG & row & prior, HEADER_LOG & prior & prior & row,
+        HEADER_LOG & prior & row & prior]:
+      check textRolled(text, "2026-05-01", []) == (HEADER_LOG & prior & row, 0)
+
+
 
 suite "Roll of branch":
   test "verb rolls log of branch alone, before first day of month 30 days before its latest day":
@@ -401,40 +456,56 @@ suite "Roll of branch":
     removeDir(root)
 
 
-  test "verb refuses roll while branch stands whose base log ends in row roll takes":
-    # Case as found on #1049, by hand with git 2.43.0: branch forked before rows that roll takes,
-    #   and with rows of its own, merges by `union` and brings each rolled row of its base back.
+  test "row that merge by `union` brings back after roll counts once, in each order of merge":
+    # Case as found on #1049: branch forked before rows that roll takes, with rows of its own,
+    #   merges by `union` and brings each rolled row back, after prior or before it, by order of
+    #   merge. After prior it counted twice, and before it reader refused log; guard that refused
+    #   such roll read only branches of its own clone.
     let
       old = @[rowDated("2026-01-01", key = "s1/c/1/STATE_HIT"),
         rowDated("2026-01-02", key = "s1/c/2/STATE_HIT")]
       root = repoLog(old)
     discard root.git("branch stale")
-    discard root.git("branch idle")
     writeFile(root / PATH_LOG, readFile(root / PATH_LOG) &
       rowDated("2026-06-01", key = "s1/c/3/STATE_HIT").lineClaim & "\n")
     discard root.git("commit -q -am 'chore(rictadni): log the claims'")
-    discard root.git("branch fresh")
-    for (branch, key) in [("stale", "s3/c/1/STATE_HIT"), ("fresh", "s4/c/1/STATE_HIT")]:
-      discard root.git("checkout -q " & branch)
-      writeFile(root / PATH_LOG, readFile(root / PATH_LOG) & rowDated("2026-06-02", key = key)
-        .lineClaim & "\n")
-      discard root.git("commit -q -am 'chore(rictadni): log the claims'")
-    discard root.git("checkout -q " & BRANCH)
-    let removed = old.mapIt(it.lineClaim).toHashSet
-    check branchesStale(root, PATH_LOG, removed) == @["stale"]  # idle changed no log
-    expect IOError: discard rollLog(root, BRANCH, [])
-    check readFile(root / PATH_LOG).logText.prior.isNone  # refused roll writes nothing
-    # Merge of stale branch after roll is what guard refuses: its rows come back, beside prior.
-    #   Cutoff is that of verb: first day of month 30 days before latest day, 2026-06-01.
-    let rolled = textRolled(readFile(root / PATH_LOG), "2026-05-01", []).text
-    writeFile(root / PATH_LOG, rolled)
-    discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+    discard root.git("checkout -q stale")
+    writeFile(root / PATH_LOG, readFile(root / PATH_LOG) &
+      rowDated("2026-06-02", key = "s3/c/1/STATE_HIT").lineClaim & "\n")
+    discard root.git("commit -q -am 'chore(rictadni): log the claims'")
+    discard root.git("checkout -q -b plain " & BRANCH)
     discard root.git("merge -q stale -m 'chore(rictadni): merge stale'")
-    check readFile(root / PATH_LOG).rowsLog == 4  # 2 rolled rows back, beside 2 others
-    check readFile(root / PATH_LOG).rowsHeld == 6  # 4 rows, and 2 of them twice
-    discard root.git("reset -q --hard HEAD~1")
-    discard root.git("merge -q fresh -m 'chore(rictadni): merge fresh'")
-    check readFile(root / PATH_LOG).rowsHeld == 4  # fresh merges clean, each row once
+    let expected = (linesTree(root, "kind"), ratesTree(root))  # each row once, with no roll
+    discard root.git("checkout -q " & BRANCH)
+    check rollLog(root, BRANCH, []) == (2, PATH_LOG)
+    discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+    for (name, ours, theirs) in [("after", BRANCH, "stale"), ("before", "stale", BRANCH)]:
+      discard root.git("checkout -q -b " & name & " " & ours)
+      discard root.git("merge -q " & theirs & " -m 'chore(rictadni): merge'")
+      check readFile(root / PATH_LOG).rowsLog == 4  # 2 rolled rows back, beside 2 others
+      check (linesTree(root, "kind"), ratesTree(root)) == expected
+      check rollLog(root, BRANCH, []) == (0, PATH_LOG)  # next roll drops each copy
+      check readFile(root / PATH_LOG).rowsLog == 2
+      check readFile(root / PATH_LOG).splitLines[2].startsWith(OPENING_PRIOR)  # head again
+      check (linesTree(root, "kind"), ratesTree(root)) == expected
+      discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+    removeDir(root)
+
+
+  test "row that `stop` writes again after roll counts once, as replay of reflection writes it":
+    # Log holds no key that prior holds, so `stop` writes row again whose key roll took (#1049).
+    let
+      rows = @[rowDated("2026-01-01", key = "s1/c/1/STATE_HIT"),
+        rowDated("2026-06-01", key = "s1/c/2/STATE_HIT")]
+      root = repoLog(rows)
+    check rollLog(root, BRANCH, []) == (1, PATH_LOG)
+    discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+    let before = (linesTree(root, "kind"), ratesTree(root))
+    check appendClaims(root, BRANCH, root / "waiting.txtpb", rows[0 .. 0]) == 1
+    check (linesTree(root, "kind"), ratesTree(root)) == before
+    discard root.git("commit -q -am 'chore(rictadni): log the claims'")
+    check rollLog(root, BRANCH, []) == (0, PATH_LOG)
+    check readFile(root / PATH_LOG).logText.claims == rows[1 .. 1]
     removeDir(root)
 
 
