@@ -649,7 +649,9 @@ on #1058, as D1 b.
 verdict kept, once and in order, with its gloss. The page never reads its report back, so a gloss
 that holds a backtick shows whole. Before the page asks anything, it shows the worked example
 `alice` of `tools/examples.nim`, read by the same reader. The page names each model and effort
-from the constants of the code, and its prose repeats none.
+from the constants of the code, and its prose repeats none. Verified by `suites/test_shown.nim`,
+and in Chromium by `browser/suite_page.nim`, with an answer that holds a cmavo, a repeat and a
+gloss with a backtick.
 
 **On claude.ai, the page asks Opus 5.5 at effort `high` through `sample`.** The runtime of an
 Artifact takes effort `low`, `medium` or `high` alone, and Opus at `high` kept the most gismu of
@@ -668,6 +670,10 @@ the report, the gismu that the child printed and its exit code into hidden eleme
 script of the page shows them. The status follows the exit code, so a refused run never reads as
 "no gismu".
 
+Verified by `suites/test_suggester.nim`, which posts to the real server and reads
+back the whole run of the child. `suites/test_shown.nim` holds the status of each exit, and
+`browser/suite_page.nim` holds what the page shows for a run that exits 2.
+
 Cost: the child prints no gloss, so a served tile shows the gismu alone. The report beside it
 names each gloss. Rejected: a call into `main` from the server, which would need `main` split,
 and would give the server a second path to the service. Cost: one process for each text posted.
@@ -679,14 +685,21 @@ alone, and answers only requests whose host is its own address. It refuses a pos
 another site. Each answer forbids a frame by another site, so no click on a hidden frame posts a
 text.
 
+Verified by `suites/test_suggester.nim`, through real HTTP on loopback. It holds each refusal
+before the server listens, and the answer to another host and another origin. It also holds the
+headers of the frame.
+
 Cost: the server has no token, so any process or user of the machine can post to it and spend
 the key. It runs one child at a time, so a live run stalls each other request until it ends.
 
 **rictadni drives its own page.** `tools/page.nim` builds the page, and `tools/drive.nim` serves
 it on loopback to Chromium of the store. The verb `drive` runs `tests/browser/suite_page.nim` in
-the page, in three modes. With a stub of the runtime, the suite submits a text and checks the
-tiles, the command, the report and the request to `sample`. With a served run, it checks the
-exit and report. With neither, it checks the worked example.
+the page, once in each mode that `MODES_SUITE` of `tools/page.nim` names. With a stub of the
+runtime, the suite submits a text and checks the tiles, the command, the report and the request
+to `sample`. With a served run, it checks the exit and report. With neither, it checks the worked
+example.
+
+`koch check` and the job `drive` run the suite.
 
 The suite runs inside a function of its own. Each program that Nim compiles to JavaScript declares
 the same global names, so a second program would replace those of the first. Then
