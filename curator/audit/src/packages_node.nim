@@ -26,9 +26,9 @@
 ##     10.9.9, 2026-11-27).
 ##   Rejected: list of Node built-ins for bare names, which moves with each Node release, where
 ##     `node:` form names built-in by itself.
-##   Cost: imports read as text by line, never parsed: string or comment spanning lines ends at
-##     each line, so text shaped as import inside it reads as import, and import built from
-##     expression reads as none.
+##   Cost: imports read by scanner of strings, templates, comments and regular expressions, never
+##     parsed: regular expression after word, as after `return`, reads as division, specifier on
+##     line after its keyword reads as none, and so does import built from expression.
 ##   Cost: inline script of page reads as none; only `src` of `<script>` is read.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
@@ -56,6 +56,12 @@ const
   KEYWORDS_IMPORT = ["from", "import", "require"]
     ## Words whose quoted operand names module, as `from 'x'`, `import 'x'` and `require('x')`.
   QUOTES = {'\'', '"', '`'}  ## Marks that open and close specifier.
+  MARKS_BEFORE_EXPRESSION = {
+    '(', ',', '=', ':', '[', '!', '&', '|', '?', '{', '}', ';', '+', '-', '*', '%', '<', '>', '~',
+    '^',
+  }
+    ## Last marks of code after which `/` opens regular expression rather than division.
+  CHARS_WORD = IdentChars + {'$', '#'}  ## Characters of name of script, private name included.
   SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
   COMMAND_AUDIT* = "npm audit --package-lock-only --include=dev --json --fetch-retries=1 " &
     "--fetch-timeout=" & $(SECONDS_ASK * 1000)
@@ -80,6 +86,13 @@ type
 
   Answer* = tuple[code: int, output: string]  ## Define exit and standard output of one ask.
 
+  Scope {.pure.} = enum  ## Define what scanner of script stands inside.
+    Code  ## Code, at top or in `${}` of template.
+    Single  ## String that `'` opens.
+    Double  ## String that `"` opens.
+    Template  ## Template that backtick opens.
+    Comment  ## Comment that `/*` opens.
+
 
 
 #[ Static Check ]#
@@ -102,55 +115,115 @@ func isPath(specifier: string): bool =
   specifier.startsWith('.') or (specifier.startsWith('/') and not specifier.startsWith("//"))
 
 
-func widthKeyword(line: string, at: int): int =
-  ## Measure keyword of import that opens word at `at`, never after `.`; `0` where none opens there.
+func keywordAt(text: string, at: int): string =
+  ## Read keyword of import that opens word at `at`, never after `.` or character of name; empty
+  ##   where none opens there.
   ##   End of word needs no test: `operand` reads only quote past spaces and `(`.
-  if at > 0 and (line[at - 1] in IdentChars or line[at - 1] == '.'): return 0
+  if at > 0 and (text[at - 1] in CHARS_WORD or text[at - 1] == '.'): return ""
   for keyword in KEYWORDS_IMPORT:
-    if line.continuesWith(keyword, at): return keyword.len
-  0
+    if text.continuesWith(keyword, at): return keyword
+  ""
 
 
-func operand(line: string, at: int): tuple[specifier: string, ending: int] =
-  ## Read quoted operand that opens at `at`, past spaces and `(`, with index past its closing
-  ##   quote; empty, ending at `at`, where none opens there.
+func operand(text: string; at: int; is_call: bool): tuple[specifier: string, ending: int] =
+  ## Read quoted operand that opens at `at`, past spaces, and past `(` of call, with index past
+  ##   its closing quote on same line; empty, ending at `at`, where none opens there.
   var cursor = at
-  while cursor < line.len and line[cursor] in {' ', '('}: inc cursor
-  if cursor >= line.len or line[cursor] notin QUOTES: return ("", at)
-  let closing = line.find(line[cursor], cursor + 1)
-  if closing < 0: ("", at) else: (line[cursor + 1 ..< closing], closing + 1)
+  while cursor < text.len and (text[cursor] == ' ' or (is_call and text[cursor] == '(')):
+    inc cursor
+  if cursor >= text.len or text[cursor] notin QUOTES: return ("", at)
+  let closing = text.find(text[cursor], cursor + 1)
+  if closing < 0 or '\n' in text[cursor + 1 ..< closing]: return ("", at)
+  (text[cursor + 1 ..< closing], closing + 1)
+
+
+func endExpression(text: string, at: int): int =
+  ## Find index past regular expression that `/` at `at` opens, on its line; `at + 1` where none
+  ##   closes there, so `/` reads as division.
+  var
+    cursor = at + 1
+    is_class = false
+  while cursor < text.len and text[cursor] != '\n':
+    let c = text[cursor]
+    if c == '\\': inc cursor
+    elif c == '[': is_class = true
+    elif c == ']': is_class = false
+    elif c == '/' and not is_class: return cursor + 1
+    inc cursor
+  at + 1
 
 
 func specifiersScript*(text: string): seq[tuple[line: int, specifier: string]] =
-  ## Read each module script names, by line, i.e. quoted operand of `from`, `import` or `require`.
-  ##   Keyword counts outside string alone, so `Array.from('x')` and `'start from'` name none.
-  ##   Line opening comment is skipped, and `//` outside string ends line.
-  let lines = text.splitLines
-  for i, line in lines:
-    let opening = line.strip
-    if opening.startsWith("//") or opening.startsWith("*") or opening.startsWith("/*"): continue
-    var
-      cursor = 0
-      quote = none(char)
-    while cursor < line.len:
-      let c = line[cursor]
-      if quote.isSome:
-        if c == '\\': inc cursor
-        elif c == quote.get: quote = none(char)
+  ## Read each module script names, with its line, i.e. quoted operand of `from`, `import` or
+  ##   `require` in code.
+  ##   Scanner holds stack of scopes, so keyword inside string, template, comment or regular
+  ##     expression names none, and import inside `${}` of template names its module.
+  ##   Keyword after `.` or character of name names none, and `from` takes no `(`.
+  ##   Stays one routine, since scopes, braces of each `${}` and last mark of code move together.
+  var
+    scopes = @[Scope.Code]
+    braces = @[0]
+    line = 1
+    cursor = 0
+    mark = ';'  # Last mark of code; `;` stands for start of text, where expression may open.
+  while cursor < text.len:
+    let c = text[cursor]
+    if c == '\n': inc line
+    case scopes[^1]
+    of Scope.Comment:
+      if text.continuesWith("*/", cursor):
+        scopes.setLen(scopes.len - 1)
         inc cursor
-        continue
-      if c in QUOTES:
-        quote = some(c)
+    of Scope.Single, Scope.Double, Scope.Template:
+      let closing =
+        case scopes[^1]
+        of Scope.Single: '\''
+        of Scope.Double: '"'
+        else: '`'
+      if c == '\\':
+        if cursor + 1 < text.len and text[cursor + 1] == '\n': inc line
         inc cursor
-        continue
-      if line.continuesWith("//", cursor): break
-      let width = line.widthKeyword(cursor)
-      if width == 0:
+      elif c == closing or (c == '\n' and scopes[^1] != Scope.Template):
+        scopes.setLen(scopes.len - 1)
+      elif scopes[^1] == Scope.Template and text.continuesWith("${", cursor):
+        scopes.add Scope.Code
+        braces.add 0
         inc cursor
+    of Scope.Code:
+      if text.continuesWith("//", cursor):
+        while cursor + 1 < text.len and text[cursor + 1] != '\n': inc cursor
+      elif text.continuesWith("/*", cursor):
+        scopes.add Scope.Comment
+        inc cursor
+      elif c in QUOTES:
+        scopes.add (
+          case c
+          of '\'': Scope.Single
+          of '"': Scope.Double
+          else: Scope.Template
+        )
+        mark = c
+      elif c == '}' and scopes.len > 1 and braces[^1] == 0:
+        scopes.setLen(scopes.len - 1)
+        braces.setLen(braces.len - 1)
+      elif c == '/' and mark in MARKS_BEFORE_EXPRESSION:
+        cursor = text.endExpression(cursor)
+        mark = '/'
         continue
-      let (specifier, ending) = line.operand(cursor + width)
-      if specifier.len > 0: result.add (line: i + 1, specifier: specifier)
-      cursor = max(ending, cursor + width)
+      elif text.keywordAt(cursor).len > 0:
+        let
+          keyword = text.keywordAt(cursor)
+          (specifier, ending) = text.operand(cursor + keyword.len, is_call = keyword != "from")
+        result.add (line: line, specifier: specifier)
+        cursor = max(ending, cursor + keyword.len)
+        mark = 'x'
+        continue
+      else:
+        if c == '{': inc braces[^1]
+        elif c == '}': braces[^1] = max(braces[^1] - 1, 0)
+        if c notin Whitespace: mark = c
+    inc cursor
+  result = result.filterIt(it.specifier.len > 0)
 
 
 func checkScript*(path, text: string): seq[Finding] =
