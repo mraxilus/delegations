@@ -14,9 +14,9 @@ typed point and line at rga3d, spend the multiplies of Lengyel's code. They spen
 except the line at rga4d, which spends one add fewer.
 
 **What it costs.** Each pair of types builds its table when a program first calls it, so
-`import pga` builds none. The macro builds three forms of each table, and keeps the form of fewest
-operations. At cga6d a full multivector by a motor type then adds about 5 s to the build of a
-program. The macro holds 227 lines of Nim.
+`import pga` builds none. The macro builds two forms of each table and counts a third, then keeps
+the form of fewest operations. At cga6d a full multivector by a motor type then adds about 5 s to
+the build of a program. The macro holds 226 lines of Nim.
 
 ## Problem
 
@@ -47,10 +47,11 @@ runtime baselines.
   It spells the three steps of pin for each type of 𝐦, as the Architect ruled (D1 b on #990). A
   table over every pair spends 204 multiplies and 607 adds at rga4d, which is more adds than the
   chain. Code that needs speed types both the object and the operator.
-- **Three forms.** A macro builds each typed transform in three forms. It keeps the form of
-  fewest multiplies, adds and subtractions, and a tie keeps the table form. It counts each form
-  from the Cayley tables alone, so the choice reads no time and holds on every machine. So no form
-  is written by hand for one object or one algebra, as [the gap of the table to Lengyel
+- **Three forms.** A macro weighs three forms of each typed transform. It builds the table form
+  and the cross form, and counts the chain. It keeps the form of fewest multiplies, adds and
+  subtractions. A tie keeps the earlier form: the table form, then the cross form. It counts each
+  form from the Cayley tables alone, so the choice reads no time and holds on every machine. So no
+  form is written by hand for one object or one algebra, as [the gap of the table to Lengyel
   (#1015)](https://github.com/mraxilus/delegations/issues/1015) asks.
 - **Table form.** The macro names the product of each pair once. A cross pair reads one of its
   bases doubled. The macro doubles the basis that most cross pairs hold, then the next, until each
@@ -108,10 +109,10 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 | Each entry where it is read | 54 adds more for a full 𝐦 by a motor type at rga4d |
 | Table form alone | The line at rga4d spends 53 multiplies and 67 adds, at ×1.18 of Lengyel |
 | Table or cross form, no chain | Full 𝐦 by a motor at cga6d: 2 544 and 6 430, not 4 096 and 3 968 |
-| Weight folded first | Same counts, but bulk comes first by convention; line at ×1.23 of Lengyel |
+| Weight folded first | Same counts, but bulk comes first by convention. Line at ×1.23 of Lengyel |
 | Choice by time | It reads one machine, which the goal of the library keeps out |
-| Balanced sum of each entry | No count moves: point and plane at ×0.98 of Lengyel, line at ×1.22 |
-| Shared sums of two terms | Line and point: 57 and 36 adds, at ×1.20 and ×1.09 of Lengyel |
+| Balanced sum of each entry | No count moves. Table form: point and plane at ×0.98, line at ×1.22 |
+| Shared sums of two terms | Not one of the three forms. Table form: point 36 adds, line 57 (D1) |
 | Line through quaternion 𝐤 | Lengyel's form for one object, which no rule of the tables gives |
 
 ## Costs
@@ -125,7 +126,7 @@ is counted from its two tables, and the operator as the evaluation reads its C:
   against 12.05 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.3 MiB, against
   210.2 MiB at pin.
 - **Size.** At rga4d the function holds 96 lines of C, inline in each caller. The macro holds
-  227 lines of Nim, and runs only when the code compiles.
+  226 lines of Nim, and runs only when the code compiles.
 - **Dimensions.** The adds of the table form grow faster than its multiplies, so the other forms
   win at more dimensions. For a full 𝐦 by a motor type at cga5d, the macro keeps the table form:
   408 multiplies and 1 223 adds, against 2 048 and 1 984 of the chain at pin. At rga6d it keeps
@@ -134,11 +135,20 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 
 ## Open decisions
 
-None. The Architect ruled four decisions on [the rules of the table for the gap to Lengyel
-(#1056)](https://github.com/mraxilus/delegations/pull/1056). The cover of doubled bases stands,
-though two pairs of types read ×1.04 of the old cover under it (D1 a). Each entry sums its terms
-in order (D2 a). The cross form folds the bulk basis first, as bulk comes first by convention. A
-later ruling, D1 c, keeps the fewest of the three forms.
+One decision waits on [the rules of the table for the gap to Lengyel
+(#1056)](https://github.com/mraxilus/delegations/pull/1056):
+
+- **D1.** Shared sums of two terms name once the sum of two terms that most sums of the table
+  hold, then the next, until no two terms repeat. On the table form, they bring the point at
+  rga4d to 35 multiplies and 36 adds, 4 adds fewer than Lengyel's. The line takes 57 adds there,
+  against 53 of the cross form. They are not one of the three forms that D1 c weighs, and their
+  build at six dimensions is not measured. So the choice is to keep the three forms (a), or to
+  weigh shared sums as a fourth form in an item of its own (b).
+
+The Architect ruled four decisions on #1056. The rulings of 2026-11-26 keep the cover of doubled
+bases, though two pairs of types read ×1.04 of the old cover under it (D1 a). Each entry sums its
+terms in order (D2 a). The rulings of 2026-11-27 fold the bulk basis of a cross pair first, as
+bulk comes first by convention. They also keep the fewest of the three forms (D1 c).
 
 The Architect ruled D48 a, D49 f and D50 a on
 [the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
@@ -200,6 +210,9 @@ crossed_E23 = folded0 * n[E41] + folded1 * n[E42] - folded2 * n[E43] + folded3 *
 r[E23] = entry0 * m[E23] + entry1 * m[E31] + entry2 * m[E12] + crossed_E23 + crossed_E23;
 ```
 
+The listing shortens the C. It drops the casts and the suffixes of the names, and writes each
+negation as the sign of its term.
+
 The five transforms read:
 
 | Algebra | Object | Form | Operator: multiplies, adds | Lengyel: multiplies, adds | Of his time |
@@ -210,24 +223,26 @@ The five transforms read:
 | rga3d | point | table | 14, 10 | 14, 10 | ×0.96 |
 | rga3d | line | table | 14, 10 | 14, 10 | ×1.01 to ×1.08 |
 
-Each count reads the C of the operator. Each pair ran four times, with seven passes in a copy of
-the timed loop of `measurements.nim`. Each ratio is the time of the operator against the time of
-Lengyel's code in the same run. Before the rules of #1015, these ratios read ×1.07 to ×1.08, ×1.23,
-×1.05 to ×1.14, ×1.03 and ×1.02. The point stays above ×1.05 of his time, though its counts equal
-his. So no rule of the counts moves it.
+Each count reads the C of the operator. Each pair ran four times on 2026-11-27, on the Xeon of
+family 6 model 207, with seven passes in a copy of the timed loop of `measurements.nim`. Each ratio
+is the time of the operator against the time of Lengyel's code in the same run. Before the rules of
+#1015, these ratios read ×1.07 to ×1.08, ×1.23, ×1.05 to ×1.14, ×1.03 and ×1.02. The point stays
+above ×1.05 of his time, though its counts equal his.
 
-The same loop timed 148 pairs of types at the nine algebras: each grade, the even part, the odd
-part and a full 𝐦, by a motor type and by a flector type. The macro keeps the table form for 82,
-the cross form for 46 and the chain for 20. Against the table form alone, the median reads ×0.97,
-and a full 𝐦 by a motor at rga6d reads ×0.32. Against the chain of typed antiproducts, the median
-reads ×0.67.
+The same loop timed 148 pairs of types at the nine algebras on 2026-11-27, on the same machine: each
+grade, the even part, the odd part and a full 𝐦, by a motor type and by a flector type. The macro
+keeps the table form for 82, the cross form for 46 and the chain for 20. Against the table form
+alone, the median reads ×0.99, and a full 𝐦 by a motor at rga6d reads ×0.32. Against the chain of
+typed antiproducts, the median reads ×0.69.
 
 The counts and the times disagree on two pairs. A line by a flector at rga4d reads ×1.09 of the
 table form, though the cross form spends 15 operations fewer. A vector by a flector at cga3d reads
 ×1.07 of the chain, though the table form spends 8 fewer. This loop also moves a pair by up to
-×1.08 with no change of C, as a grade-1 object by a flector at rga2d showed.
+×1.21 in one run with no change of C, as a scalar by a motor at rga3d reads.
 
 The counts of the chain, of the other algebras and of the forms that lost come from scripts that
 read the tables of pin. The build of one call is the median of four builds of a program with the
 call, against four without it. The scripts are not committed, so these figures are assumed until
-a claim holds them.
+a claim holds them. No claim holds the form that each pair keeps either. The laws hold each form
+equal to the chain, but they pass whichever form the macro keeps. So the form and the counts of
+each typed transform above are assumed too.
