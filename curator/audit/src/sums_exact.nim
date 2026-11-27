@@ -21,6 +21,9 @@
 ##     value added touches three limbs and their carry, and each rounding walks each limb.
 ##   Cost: last limb is signed, so limbs hold exact sum of fewer than `2^100` largest floats;
 ##     intended bound, past count any log reaches.
+##   Cost: `koch figures kind,effort,project,model` takes 0.024 to 0.027 s, where it took 0.023 to
+##     0.024 s with partials of Shewchuk; mean of 5 runs of release build, taken twice, on 4 x86_64
+##     cores, 2026-11-27, with same output to last character.
 
 {.experimental: "strictFuncs".}
 

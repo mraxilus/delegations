@@ -58,8 +58,9 @@ from ./provenance import isDateIso
 const
   ROWS_LOG* = 5000
     ## Rows log of claims may hold before its role rolls it, as `D3 a` of #1049 rules.
-    ##   About 3 MB at 606 bytes of row, mean of log of audit project on #1049; start hook reads
-    ##     each log at each start, so cap bounds that read as well as file.
+    ##   About 3 MB at 606 bytes of row, mean of log of audit project on #1049.
+    ##   Cap bounds rows alone: prior keeps key of about 26 bytes for each row it rolls, so file,
+    ##     and read of each log at each start, grow by that with each roll, with no bound.
     ##   Same number of lines as `LINES_RECORD` gives record.
   DAYS_OPEN* = 30
     ## Days before latest day of log whose month, and each later, stays at roll, since delegate of
