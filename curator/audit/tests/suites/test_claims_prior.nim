@@ -370,3 +370,49 @@ suite "Cap of log":
     check treeGood().with(entry(path, HEADER_LOG & row.repeat(ROWS_LOG))).auditTree.len == 0
     let found = treeGood().with(entry(path, HEADER_LOG & row.repeat(ROWS_LOG + 1))).auditTree
     check found.mapIt((it.path, it.rule)) == @[(path, "koch.log-length")]
+
+
+
+suite "Form of log":
+  test "merge by union of two rolls that hold different rows is finding at path of log":
+    # Case as found on #1049: two branches each roll one log, and `union` joins their two priors,
+    #   which reader refuses; `koch figures` then exits 1, start prints no base rate, and `koch
+    #   check` passes. Each branch also holds old row of its own, so its roll takes other rows.
+    let
+      base = @[rowDated("2026-01-01", key = "s1/c/1/STATE_HIT"),
+        rowDated("2026-01-02", key = "s1/c/2/STATE_HIT"),
+        rowDated("2026-06-01", key = "s1/c/3/STATE_HIT")]
+      root = repoLog(base)
+    for (name, delegate) in [("a", "s2"), ("b", "s3")]:
+      let branch = PROJECT & "/" & name
+      discard root.git("checkout -q -b " & branch & " " & BRANCH)
+      writeFile(root / PATH_LOG, readFile(root / PATH_LOG) &
+        rowDated("2026-01-10", key = delegate & "/c/1/STATE_HIT").lineClaim & "\n" &
+        rowDated("2026-06-02", key = delegate & "/c/2/STATE_HIT").lineClaim & "\n")
+      discard root.git("commit -q -am 'chore(rictadni): log the claims'")
+      check rollLog(root, branch, []).rolled == 3  # two old rows of base, and old row of branch
+      discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+    discard root.git("merge -q " & PROJECT & "/a -m 'chore(rictadni): merge a'")
+    let
+      merged = readFile(root / PATH_LOG)
+      path = DIRECTORY_ALPHA & "/" & FILE_LOG
+    expect ValueError: discard merged.logText  # reader of figures and start refuses it
+    check treeGood().with(entry(path, merged)).auditTree.mapIt((it.path, it.rule)) ==
+      @[(path, "koch.log-form")]
+    removeDir(root)
+
+
+  test "each line that reader refuses is one finding at path of log, and log it reads is none":
+    let
+      path = DIRECTORY_ALPHA & "/" & FILE_LOG
+      row = rowDated("2026-01-01").lineClaim & "\n"
+      prior = Prior(date_first: "2025-12-01", date_last: "2025-12-02",
+        tallies: @[Tally(kind: "reviewer", marker: Marker.Delegate, rows: 2)]).linePrior & "\n"
+    # Empty log is finding of its own, of form of file (VIII.5).
+    for text in [HEADER_LOG, HEADER_LOG & row, HEADER_LOG & prior & row]:
+      check treeGood().with(entry(path, text)).auditTree.len == 0
+    for line in ["rows { text: \"a\" }", "claims { dat: \"2026-11-20\" }",
+        "claims { state: STATE_GOOD }", "claims { text: \"open }", "claims { } text: \"a\" }",
+        "prior { tallies { hit: 1 } }", "prior { tallies { marker: MARKER_GOOD } }"]:
+      let found = treeGood().with(entry(path, HEADER_LOG & row & line & "\n")).auditTree
+      check found.mapIt((it.path, it.rule)) == @[(path, "koch.log-form")]
