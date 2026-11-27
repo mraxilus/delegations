@@ -24,10 +24,12 @@
 ##     refuses misspelt field.
 ##   Text format is read here too, by `claimLine`, as `D1 a` of #964 rules (comment 7189788889):
 ##     each field by name, each escape of `quotedText` undone, and unknown field refused.
-##   Prior of rows rolled out of log is one line at its head, before each row (`linePrior`, #1049);
-##     reader refuses second prior, and prior after row, which merge by `union` of log whose
-##     rolled rows other branch still holds writes (`claims_prior.nim`). `stop` adds each row at
-##     end of log, so prior stays at head.
+##   Prior of rows rolled out of log is one line, which roll writes at head of log (`linePrior`,
+##     #1049). Merge by `union` can put rows before it, or join two rolls into two priors, so reader
+##     reads each prior wherever it stands: log reads as prior whose keys hold keys of each other,
+##     and refuses log where none does (`logText`).
+##   Each key counts once, in prior that names it, else in its first row (`claimsCounted`), so row
+##     that merge or replay of `stop` brings back after roll counts once.
 ##
 ##   Rejected: bytes through `protobuf_serialization`, then text through `protoc --decode`, as
 ##     Data asks: first dependency of audit and `protoc` at each stop of each delegate, and row
@@ -569,22 +571,43 @@ func priorLine*(line: string): Prior =
 
 func logText*(text: string): Log =
   ## Read prior and claim of each row of log text, in order; blank line and comment line, as header
-  ##   of log, read as none. `ValueError` for second prior, and for prior after row, which merge by
-  ##   `union` writes where other branch still holds rows that roll took (`claims_prior.nim`).
+  ##   of log, read as none. Prior reads wherever it stands, and log of several priors reads as one
+  ##   whose keys hold keys of each other, as `union` joins two rolls of rows one of other.
+  ##   `ValueError` where no prior holds keys of each other, and for two priors of same keys and
+  ##   other tallies.
+  var priors: seq[Prior]
   for line in text.splitLines:
     let row = line.strip
     if row.len == 0 or row[0] == MARK_COMMENT: continue
-    if not row.startsWith(OPENING_PRIOR):
-      result.claims.add row.claimLine
-      continue
-    if result.prior.isSome or result.claims.len > 0:
-      raise newException(ValueError, "Prior of log stands after row or after prior; got `" &
-        $result.claims.len & "` row(s) before it.")
-    result.prior = some(row.priorLine)
+    if row.startsWith(OPENING_PRIOR): priors.add row.priorLine
+    else: result.claims.add row.claimLine
+  if priors.len == 0: return
+  var widest = priors[0]
+  for prior in priors:
+    if prior.keys.len > widest.keys.len: widest = prior
+  let keys = widest.keys.toHashSet
+  for prior in priors:
+    let is_other = prior.keys.len == widest.keys.len and prior != widest
+    if is_other or not (prior.keys.toHashSet <= keys):
+      raise newException(ValueError, "Two priors of log hold other rows, as merge of two rolls " &
+        "that differ writes; got `" & $prior.keys.len & "` and `" & $widest.keys.len & "` key(s).")
+  result.prior = some(widest)
+
+
+func claimsCounted*(log: Log): seq[Claim] =
+  ## Claims of rows of log that count, in order: each key once, in prior that names it (`hashKey`),
+  ##   else in its first row; row of no key counts each time, since prior names none.
+  var seen = (if log.prior.isSome: log.prior.get.keys.toHashSet else: initHashSet[uint64]())
+  for claim in log.claims:
+    if claim.key.len > 0:
+      let hash = claim.key.hashKey
+      if hash in seen: continue
+      seen.incl hash
+    result.add claim
 
 
 func claimsLog*(text: string): seq[Claim] =
-  ## Read claim of each row of log text, in order, as `logText` reads it.
+  ## Read claim of each row of log text, in order, as `logText` reads it, copies included.
   text.logText.claims
 
 
@@ -630,8 +653,9 @@ proc logsTree*(root: string): seq[Log] =
 
 
 proc claimsTree*(root: string): seq[Claim] =
-  ## Read claim of each row of each log of claims that tree holds, in order of its path.
-  for log in root.logsTree: result.add log.claims
+  ## Read claim of each row that counts of each log of claims that tree holds, in order of its path
+  ##   (`claimsCounted`).
+  for log in root.logsTree: result.add log.claimsCounted
 
 
 proc pathWaiting*(): string =

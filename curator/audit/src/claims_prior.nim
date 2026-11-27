@@ -25,10 +25,11 @@
 ##     in one span of month; rule of row that stays reads rows before cutoff alone; prior names no
 ##     field of branch, its keys and tallies sort, and each sum writes canonical partials. Rolls of
 ##     other rows write other lines, since prior names hash of key of each row it holds.
+##   Each key counts once, in prior that names it, else in its first row (`claimsCounted`): merge by
+##     `union` brings rolled row back after prior or before it, or joins two rolls, and `stop`
+##     writes rolled row again on replay, since log holds no key that prior names. Roll drops each
+##     such copy, and writes one prior at head again.
 ##   Verb refuses log that differs from `HEAD`, so commit before roll holds each row roll takes.
-##   Verb refuses roll while branch stands that changed log since base it shares with `HEAD`, where
-##     log of that base ends in row roll takes: merge by `union` then joins that row's hunk with
-##     roll's, and brings each rolled row of base back, after prior or before it (`branchesStale`).
 ##   Cap: log past `ROWS_LOG` rows is finding at its path (`D3 a`), which its role clears by roll.
 ##   Form: log that reader of figures refuses is finding at its path too, so merge that writes it
 ##     fails branch that makes it, rather than `koch figures` and start of whole tree.
@@ -38,11 +39,14 @@
 ##   Rejected: cutoff `DAYS_OPEN` days before latest day, and prior that names `HEAD`: latest day
 ##     and `HEAD` differ on each branch, so two rolls of one log write two lines, which `union`
 ##     joins into two priors.
+##   Rejected: guard that refused roll while branch stood whose base log ended in row roll takes,
+##     as `union` then brings that row back: it read only branches of its own clone.
 ##   Cost: group by delegate reads prior as one delegate, `DELEGATE_PRIOR`, since it keeps no
 ##     session; rolled row stays in git, in each commit before roll that took it.
 ##   Cost: row stays from `DAYS_OPEN` days to `DAYS_OPEN` and month after its day, and two branches
 ##     whose latest days fall on each side of month roll at two cutoffs.
-##   Cost: branch that other clone alone holds, or that no fetch brought, goes unread by guard.
+##   Cost: prior names one key for each row it holds, 20 digits at most in text; and two rolls
+##     whose rows neither holds other's merge into log that reader refuses, finding at its path.
 
 {.experimental: "strictFuncs".}
 
@@ -113,14 +117,37 @@ func isHeld*(claims: openArray[Claim]; cutoff: string; prefixes: openArray[strin
 func textRolled*(
   text, cutoff: string; prefixes: openArray[string]
 ): tuple[text: string, rolled: int] =
-  ## Roll each row of log text that can change no more (`isHeld`) into its prior, with tally of each
-  ##   such row added; text stays as it is where no row rolls.
+  ## Roll each row of log text that counts (`claimsCounted`) and can change no more (`isHeld`) into
+  ##   its prior, with tally and key of each such row added; drop each row that counts none, and
+  ##   each prior but one. Text stays as it is where no line rolls or drops.
   ##   Comment lines of head stay first, prior follows, then each other line that stays, as written.
-  let
-    log = text.logText
-    held = log.claims.isHeld(cutoff, prefixes)
+  let log = text.logText
+
+  # Mark rows that count, as figures read them, then of those, rows that stay.
+  var
+    seen = (if log.prior.isSome: log.prior.get.keys.toHashSet else: initHashSet[uint64]())
+    counted: seq[int]
+  for k, claim in log.claims:
+    if claim.key.len > 0:
+      if claim.key.hashKey in seen: continue
+      seen.incl claim.key.hashKey
+    counted.add k
+  let held = counted.mapIt(log.claims[it]).isHeld(cutoff, prefixes)
+  var stays = newSeq[bool](log.claims.len)
+  for i, k in counted: stays[k] = held[i]
   result.rolled = held.countIt(not it)
-  if result.rolled == 0: return (text, 0)
+  var
+    priors = 0
+    is_after_row = false
+    is_moved = false  # Whether prior stands after row, so roll writes it at head again.
+  for line in text.splitLines:
+    let stripped = line.strip
+    if stripped.startsWith(OPENING_PRIOR):
+      inc priors
+      is_moved = is_moved or is_after_row
+    elif stripped.startsWith(OPENING_ROW): is_after_row = true
+  if result.rolled == 0 and counted.len == log.claims.len and priors <= 1 and not is_moved:
+    return (text, 0)
 
   # Sum tally of each rolled row into tally of prior whose fields and band agree, and name its key.
   var
@@ -128,10 +155,10 @@ func textRolled*(
     tallies = prior.tallies
     by_key: Table[(string, string, string, string, Marker, int), Tally]
     hashes = prior.keys.toHashSet
-  for k, claim in log.claims:
-    if held[k]: continue
-    tallies.add claim.toTally
-    hashes.incl claim.key.hashKey
+  for i, k in counted:
+    if held[i]: continue
+    tallies.add log.claims[k].toTally
+    hashes.incl log.claims[k].key.hashKey
   prior.keys = hashes.toSeq.sorted
   for tally in tallies:
     let key = (tally.model, tally.effort, tally.project, tally.kind, tally.marker, tally.band)
@@ -140,12 +167,13 @@ func textRolled*(
   var keys = by_key.keys.toSeq
   keys.sort
   prior.tallies = keys.mapIt(by_key[it])
-  for k, claim in log.claims:
-    if held[k]: continue  # Rolled row names its day, since row of no day stays.
-    if prior.date_first.len == 0 or claim.date < prior.date_first: prior.date_first = claim.date
-    if claim.date > prior.date_last: prior.date_last = claim.date
+  for i, k in counted:
+    if held[i]: continue  # Rolled row names its day, since row of no day stays.
+    let date = log.claims[k].date
+    if prior.date_first.len == 0 or date < prior.date_first: prior.date_first = date
+    if date > prior.date_last: prior.date_last = date
 
-  # Write head, prior, then each line that stays, in order, as `logText` reads them.
+  # Write head, one prior, then each line that stays, in order, as `logText` reads them.
   var
     lines: seq[string]
     row = 0
@@ -154,13 +182,13 @@ func textRolled*(
     let stripped = line.strip
     if stripped.len == 0: continue
     if is_head and stripped[0] != '#':
-      lines.add prior.linePrior
+      if log.prior.isSome or result.rolled > 0: lines.add prior.linePrior
       is_head = false
     if stripped.startsWith(OPENING_PRIOR): continue
     if stripped[0] == '#':
       lines.add line
       continue
-    if held[row]: lines.add line
+    if stays[row]: lines.add line
     inc row
   result.text = lines.join("\n") & "\n"
 
@@ -177,32 +205,12 @@ proc dateCutoff*(claims: openArray[Claim]): string =
       DAY_FIRST
 
 
-proc branchesStale*(root, path: string; removed: HashSet[string]): seq[string] =
-  ## Branches whose log at path changed since base they share with `HEAD`, where log of that base
-  ##   ends in line roll removes: merge by `union` joins hunk of their rows with hunk of roll, and
-  ##   brings rows of base back.
-  ##   Each local and remote branch is read, as fetch last left it; branch of no shared base reads
-  ##     as none.
-  let names = fieldsGit(root, ["for-each-ref", "--format=%(refname:short)%00", "refs/heads",
-    "refs/remotes"])
-  for name in names.mapIt(it.strip):
-    if name.len == 0 or name.endsWith("/HEAD"): continue
-    var base = ""
-    try: base = fieldsGit(root, ["merge-base", "HEAD", name])[0].strip
-    except IOError: continue
-    let text_base = textAt(root, base, path)
-    if text_base == textAt(root, name, path): continue
-    let lines = text_base.splitLines.filterIt(it.strip.len > 0)
-    if lines.len > 0 and lines[^1].strip in removed: result.add name
-
-
 proc rollLog*(
   root, branch: string; prefixes: openArray[string]
 ): tuple[rolled: int, path: string] =
   ## Roll each row of log of branch that can change no more into its prior (`textRolled`), before
-  ##   cutoff of its rows (`dateCutoff`); count rows rolled, with path of log from root. `IOError`
-  ##   for branch outside grammar, for log that differs from `HEAD`, and for roll that merge of
-  ##   other branch undoes.
+  ##   cutoff of its rows (`dateCutoff`), and drop each copy; count rows rolled, with path of log
+  ##   from root. `IOError` for branch outside grammar, and for log that differs from `HEAD`.
   result.path = branch.pathLog
   if result.path.len == 0:
     raise newException(IOError, &"Branch outside grammar owns no log of claims; got `{branch}`.")
@@ -213,16 +221,7 @@ proc rollLog*(
   let
     text = readFile(root / result.path)
     (written, rolled) = textRolled(text, text.claimsLog.dateCutoff, prefixes)
-  if rolled == 0: return
-  let
-    removed = text.splitLines.mapIt(it.strip).toHashSet -
-        written.splitLines.mapIt(it.strip).toHashSet
-    stale = branchesStale(root, result.path, removed)
-  if stale.len > 0:
-    raise newException(IOError, "Branch changed log since its base, whose last row roll takes, " &
-      "so merge by `union` would bring rolled rows back; merge it, or merge `main` into it, " &
-      &"first; got `{stale.join(\", \")}`.")
-  writeFile(root / result.path, written)
+  if written != text: writeFile(root / result.path, written)
   result.rolled = rolled
 
 

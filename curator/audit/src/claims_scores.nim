@@ -566,9 +566,10 @@ func linesBase*(claims: openArray[Claim], tallies: openArray[Tally] = []): seq[s
 
 
 proc readLogs(root: string): tuple[claims: seq[Claim], tallies: seq[Tally]] =
-  ## Read claim of each row, and each tally of each prior, of each log of tree at root (#1049).
+  ## Read claim of each row that counts (`claimsCounted`), and each tally of each prior, of each log
+  ##   of tree at root (#1049).
   for log in root.logsTree:
-    result.claims.add log.claims
+    result.claims.add log.claimsCounted
     if log.prior.isSome: result.tallies.add log.prior.get.tallies
 
 
