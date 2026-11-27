@@ -562,7 +562,7 @@ const
     ## Rule that finding of line `**Subagent:**` that gives no tokens or no cost states, since
     ##   log writes field of neither then, and rows of call lose both.
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
-    "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
+    "under `#`, as digits alone, from 1 (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of block with no number, or number of other row, states.
   RULE_TEXT = "Claim of table states its text under `Judgement` or `Estimate @ 90%` (GUIDE.md, " &
     "Prediction, critic and reflection)"
@@ -583,9 +583,11 @@ const
     "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` (GUIDE.md, " &
     "Prediction, critic and reflection)"
     ## Rule that finding of table of claims of block whose header holds no form whole states.
-  RULE_CRITERION_ROW = "Row of table of criteria of block names, by its number under `#`, claim " &
-    "of block that no other row names (GUIDE.md, Prediction, critic and reflection)"
-    ## Rule that finding of row of criteria of number of no claim, or of claim named twice, states.
+  RULE_CRITERION_ROW = "Row of table of criteria of block names, by its number under `#` as " &
+    "digits alone, from 1, claim of block that no other row names (GUIDE.md, Prediction, critic " &
+    "and reflection)"
+    ## Rule that finding of row of criteria of no number, of number of no claim, or of claim named
+    ##   twice, states.
   RULE_BULLET = "Block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
     "`Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
     "reflection)"
@@ -2806,15 +2808,18 @@ func rowsClaim(text: string): seq[RowClaim] =
       result.add claim
 
 
-func criteriaBlock(text: string): seq[tuple[number: Option[int], criterion: string]] =
-  ## Read number and criterion of each row of each table of criteria of block text: header holds
-  ##   each column of `COLUMNS_CRITERIA` (7196051993); number is none where `#` holds none.
+func criteriaBlock(text: string): seq[tuple[cell: string, number: Option[int], criterion: string]] =
+  ## Read cell under `#`, number and criterion of each row of each table of criteria of block
+  ##   text: header holds each column of `COLUMNS_CRITERIA` (7196051993); number is none where
+  ##   `#` holds no digits alone from 1 (`numberCell`).
   for table in text.tablesMarkdown:
     if not table.header.isHolding(COLUMNS_CRITERIA): continue
     let
       at_number = table.header.find(COLUMN_NUMBER)
       at_criterion = table.header.find(COLUMN_CRITERION)
-    for row in table.rows: result.add (row.cellAt(at_number).numberCell, row.cellAt(at_criterion))
+    for row in table.rows:
+      let cell = row.cellAt(at_number)
+      result.add (cell, cell.numberCell, row.cellAt(at_criterion))
 
 
 func forecastsTable(text: string): seq[Forecast] =
@@ -2846,8 +2851,8 @@ func findingsPrediction*(text: string): seq[Finding] =
   ## Report each table of claims of block text whose header holds no form whole, each row of
   ##   table of judgements or estimates whose `#` holds no number of its own, whose text is empty,
   ##   judgement whose `%` holds no percentage alone, estimate whose cells are no rising values of
-  ##   one unit, claim whose number takes no criterion, row of criteria whose number names no
-  ##   claim, or claim that other row names, and bullet beside tables (7200557915).
+  ##   one unit, claim whose number takes no criterion, row of criteria whose `#` holds no number,
+  ##   or names no claim or claim that other row names, and bullet beside tables (7200557915).
   ##   Bullet beside tables is refused (choice): GUIDE.md writes tables alone, and position of
   ##     bullet and number of row take one key of log, so log keeps one of two such rows.
   ##   Table of claims holds column of `COLUMNS_NAMING_BLOCK`; one that holds no form whole takes
@@ -2856,8 +2861,8 @@ func findingsPrediction*(text: string): seq[Finding] =
   ##     take none, since check of their form reads only cell that quotes them.
   ##   Claims are held to criteria only where each table holds its form, and criteria to claims
   ##     only where each row of claims has number of its own too, since claim or criterion of row
-  ##     that reads as none reads as missing. Row of criteria with no number is none, since claim
-  ##     it misses takes finding of its own.
+  ##     that reads as none reads as missing. Row of criteria with no number takes finding of its
+  ##     own, whatever tables hold, as number of claim is digits alone (GUIDE.md).
   let criteria = text.criteriaBlock
   var
     seen: seq[int]
@@ -2900,10 +2905,16 @@ func findingsPrediction*(text: string): seq[Finding] =
     if is_formed and not criteria.anyIt(it.number == number and it.criterion.len > 0):
       result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION & "; got none" & named)
 
+  # Refuse each row of criteria whose `#` holds no number, so no row names claim by `6.` or none.
+  for (cell, number, _) in criteria:
+    if number.isNone:
+      result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION_ROW & "; got `" & cell &
+        "`.")
+
   # Refuse each row of criteria that names no claim, or claim that row before it names.
   if not (is_formed and is_numbered): return
   var named: seq[int]
-  for (number, _) in criteria:
+  for (_, number, _) in criteria:
     if number.isNone: continue
     if number.get notin seen or number.get in named:
       result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION_ROW & "; got `" &
