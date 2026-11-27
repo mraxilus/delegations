@@ -301,10 +301,18 @@ Then the subagent runs, and these steps follow:
   took.** A row that holds `No prediction` passes. It also refuses a table of claims whose header
   lacks a column of its form. It refuses a hit or missed estimate whose cell under `Result` opens
   with no value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
+  Each mark between digits but a comma of a group and one decimal point makes no value, as
+  `1.234.567`, `170_000` or `15:30`.
 - **The hook refuses a line `**Subagent:**` that gives no tokens right before ` tokens`, or no
-  cost at `$`, or two of either.** Each figure there is one plain value after a space, as a cell
-  holds it, so `**170k** tokens` gives none. A space parts the words of the line, so the tokens
-  take no group after a space, as `170 000`.
+  cost at `$`, or two of either.** The line runs on to the next blank line, or to the next line
+  that opens with a label in bold, as `**Critic:**`. So the line may wrap, and a line of a critic
+  after it adds no second figure.
+- **Each figure of the line is one plain value after a space, as a cell holds it.** So
+  `**170k** tokens` gives none. A space parts the words of the line, so the tokens take no group
+  after a space, as `170 000`. They also take no value after a digit and a space, as
+  `round 2 170,000 tokens`. The tokens are a whole number from 1, and hold a point only where a
+  scale moves it, as `39.1M`, so `170.000` gives none. The cost is above zero, and a no-break
+  space before `tokens` gives no tokens.
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
