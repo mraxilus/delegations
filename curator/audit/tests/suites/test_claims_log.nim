@@ -551,6 +551,34 @@ suite "Log of claims":
       check claims[0].number.get.outcome == outcome
 
 
+  test "scale of bare cost or time, two marks of group, and other space log no outcome (#1028)":
+    # Case as found (finding 2 of critic of mends): `15 M, inside` logged 15,000,000 minutes for
+    #   bullet of time, `39 100,000, inside` logged 39,100, and `39.1 M` with no-break space 39.1.
+    #   Domain: each against number of bullets of its unit, and against estimate of tokens.
+    const
+      tokens = "tokens summed over its requests: 100,000, 160,000 and 300,000"
+      time = "time to its report, in minutes: 5, 12 and 30"
+      cost = "cost at list price: $0.40, $0.90 and $2.00"
+    for (claim, cell, outcome) in [(time, "15 M, inside", none(float)),
+        (time, "15k", none(float)), (cost, "1.1 k", none(float)), (cost, "$1.1 k", some(1100.0)),
+        (tokens, "39 100,000, inside", none(float)), (tokens, "39.1\u00A0M", none(float)),
+        (tokens, "170\u202F000", none(float)), (tokens, "170 k", some(170_000.0)),
+        (time, "1,5h", none(float)), (time, "15, inside", some(15.0))]:
+      let
+        reflection = "## Reflection\n\n**Subagent:** reviewer of the diff, 170,000 tokens and " &
+          "$1.10 at list price.\n\n| State | Confidence | Predicted | Result |\n" &
+          "| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n"
+        claims = transcriptOne(PREDICTION_BULLETS, "reviewer", reflection).claimsRead
+      check claims.len == 1
+      check claims[0].number.get.outcome == outcome
+    var whole = REFLECTION_TABLES_POSTED
+    for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
+    for cell in ["39 100,000, inside", "39,1M", "39.1\u00A0M, inside", "39\u2009100\u2009000"]:
+      let claims = transcriptOne(PREDICTION_TABLES, "builder",
+        whole.replace("39.1M, inside", cell)).claimsRead
+      check claims[5].number.get.outcome.isNone
+
+
   test "each state writes its row, and estimate that waits or is annulled takes no outcome":
     var whole = REFLECTION_TABLES_POSTED
     for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)

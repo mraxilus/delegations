@@ -156,9 +156,14 @@ The gap list reads the baseline of each algebra.
     "of claims)"
     ## Finding of reflection with no table of claims: each form cites text that states it.
   REFUSAL_OUTCOME_BULLETS = "cell under `Result` of number of bullets marked ✅ or ⬜ opens with " &
-    "its value, bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` " &
-    "or `h` for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+    "its value, bare in unit its text names, with no scale for cost or time, or with mark of " &
+    "that unit: `$` for cost, `s`, `m` or `h` for time (curator/audit/PROVENANCE.md, Quotes of " &
+    "claims); got `"
     ## Opening of finding of result of number of bullets that reads no value in unit of its text.
+  REFUSAL_OUTCOME = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
+    "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+    "(GUIDE.md, Prediction, critic and reflection); got `"
+    ## Opening of finding of result of estimate of table that reads no value in unit of its cells.
   NUMBERS_BULLETS = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
     "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th " &
     "and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, " &
@@ -3725,7 +3730,7 @@ suite "Hooks":
     for cell in ["", "$", "k", "m", "~5", "-5", " 5", "$m5", "five"]:
       check cell.valueAt.isNone
     check "5 m".valueAt.get.stop == 1  # space ends value, so cell `5 m` is no whole value
-    check "1,23".valueAt.get.amount == 1.0  # group of two digits is no group
+    check "1,23".valueAt.isNone  # comma before digit that opens no group runs on (#1028)
 
 
   test "estimate takes unit of its cells, in one unit, rising (7194411522 of #1028)":
@@ -4198,8 +4203,8 @@ suite "Hooks":
         check (cell & "0").valueAt.isNone  # digit runs on
     check "1 00".valueAt.get.stop == 1  # group holds three digits
     check "1 0000".valueAt.get.stop == 1
-    check "1,000 000".valueAt.get.stop == 5  # one mark of group to value
-    check "1 000,000".valueAt.get.stop == 5
+    check "1,000 000".valueAt.get.stop == 5  # one mark of group to value; result refuses rest
+    check "1 000,000".valueAt.isNone  # comma before digit runs on (#1028)
     check "1  000".valueAt.get.stop == 1  # one space alone
     check "5 m".valueAt.get.stop == 1 and "5 K".valueAt.get.stop == 1  # no scale of these
 
@@ -4247,6 +4252,68 @@ suite "Hooks":
           "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n")
         check found == (if cell in refused: @[bullets & cell & "` for claim `" & $k & "`"]
           else: @[])
+
+
+  test "result refuses scale of bare cost or time, two marks of group, and other space (#1028)":
+    # Case as found (finding 2 of critic of mends): bullet of time took `15 M, inside` as
+    #   15,000,000 minutes, result `39 100,000, inside` took 39,100, and `39.1 M` with no-break
+    #   space took 39.1, each with no finding. Domain: each scale on bare value of each unit of
+    #   bullets, each order of two marks of group, comma before digit, and each space of Unicode
+    #   before group, scale or mark of time; cell reads each run of ASCII whitespace as one space.
+    proc bullet(k: int, cell: string): seq[string] =
+      ## Read findings of reflection whose one row quotes number `k` of `NUMBERS_BULLETS`.
+      heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | Predicted | " &
+        "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & CLAIMS_BULLETS[k] & " | " & cell &
+        " |\n")
+    func refusal(k: int, cell: string): seq[string] =
+      ## Write finding of result of number `k` of `NUMBERS_BULLETS` that reads no value.
+      @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"]
+    check bullet(2, "15 M, inside") == refusal(2, "15 M, inside")  # case as found
+
+    # Bare value takes unit of cost or time of its text with no scale alone, as `M` of million
+    #   and `m` of minutes differ by case alone; tokens and count read each scale.
+    var count = 0
+    for scale in ["k", " k", "M", " M", " thousand", " million"]:
+      for k in 0 .. 3:
+        let cell = "15" & scale & ", inside"
+        if k in [1, 2]:
+          check bullet(k, cell) == refusal(k, cell)
+          inc count
+        else: check bullet(k, cell).len == 0
+      check bullet(1, "$15" & scale).len == 0  # mark of cost reads its scale
+    check count == 6 * 2
+
+    # Value with two marks of group, or comma before digit that opens no group, reads none.
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      line = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    proc estimate(cell: string): seq[string] =
+      ## Read findings of mended reflection whose result of estimate 6, of tokens, is cell.
+      heldReflection(PREDICTION_TABLES, whole.replace(line, line.replace("39.1M, inside", cell)))
+    for cell in ["39 100,000, inside", "39,100 000, inside", "39 100 000,000", "39,100,000 000",
+        "39,1M, inside", "1,5"]:
+      check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+      check bullet(0, cell) == refusal(0, cell)
+    for text in ["39 100,000", "1 000,000", "1,23", "1,5h", "$1,10", "12,5k"]:
+      check text.valueAt.isNone
+    check bullet(1, "$1,10, inside") == refusal(1, "$1,10, inside")
+    check bullet(2, "1,5h, inside") == refusal(2, "1,5h, inside")
+    check bullet(0, "170,000, inside").len == 0 and estimate("39,100,000, inside").len == 0
+
+    # Each space of Unicode before group, scale or mark of time runs on: no-break, figure,
+    #   narrow no-break and thin space, as value reads group and scale after ASCII space alone.
+    count = 0
+    for space in ["\u00A0", "\u2007", "\u202F", "\u2009"]:
+      for (written, after) in [("39.1", "M"), ("39.1", "k"), ("39.1", "million"),
+          ("39", "100 000"), ("0.0391", "Billion")]:
+        let cell = written & space & after & ", inside"
+        check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+        check bullet(0, cell) == refusal(0, cell)
+        inc count
+      check bullet(2, "1.5" & space & "h") == refusal(2, "1.5" & space & "h")
+      check bullet(2, "15" & space & "inside").len == 0  # word after space ends value
+    check count == 4 * 5
+    check estimate("39.1 M, inside").len == 0  # one ASCII space reads scale
 
 
   test "each refusal of bullets cites section that states its rule (#1028)":
