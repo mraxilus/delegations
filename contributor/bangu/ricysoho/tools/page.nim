@@ -49,6 +49,13 @@ const
   PATH_ENTRY = "src" / "browser" / "page.nim"  ## le krasi datnyvei pe le samtci pe le papri
   PATH_COMPILED = "build" / "page" / "page.js"  ## le se fanva samtci pe le papri
   PATH_PAGE* = "build" / "ricysoho.html"  ## le selzbapapri
+  PATH_SHELL_LAYERS* = "pages" / "layers.html"
+    ## le calku poi le papri pe lo linji be lo selci'a cu selzba ne'i ke'a
+  PATH_ENTRY_LAYERS = "src" / "browser" / "text_layers.nim"
+    ## le krasi datnyvei pe le samtci pe le papri pe lo linji
+  PATH_COMPILED_LAYERS = "build" / "page" / "layers.js"
+    ## le se fanva samtci pe le papri pe lo linji
+  PATH_PAGE_LAYERS* = "build" / "layers.html"  ## le selzbapapri pe lo linji be lo selci'a
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu lo lertai ke'a
   TOKEN_EMBED = "@EMBED:"
@@ -135,8 +142,10 @@ proc fontFaces*(): Table[string, string] =
   ##   .i le te kancu be lo judri cu se cipra
   ##   .i ki'u bo le minde cu ciska no da va'o lo nu le minde cu na ka'e sabji pa lertai
   ##   .i va'o lo nu le liste cu claxu pa judri kei lo na drastu cu ka'e seljo'e lo dracme
+  var names = readFile(PATH_SHELL).fontFacesAsked
+  for name in readFile(PATH_SHELL_LAYERS).fontFacesAsked:
+    if name notin names: names.add name
   let
-    names = readFile(PATH_SHELL).fontFacesAsked
     (output, code) = execCmdEx("nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) &
       " fetch-assets " & names.quoteShellCommand)
   if code != 0:
@@ -187,9 +196,40 @@ proc builtPage*(script: string, faces: Table[string, string]): string =
   result = result.replace(TOKENS[^1], script)
 
 
+proc compiledLayers*(): string =
+  ## fanva le samtci pe le papri pe lo linji to `src/browser/text_layers.nim` toi gi'e dunda le
+  ##     selci'a pe le samtci
+  if compileJs(PATH_ENTRY_LAYERS, PATH_COMPILED_LAYERS) != 0:
+    raise newException(OSError, "Script of page should compile; got `" & PATH_ENTRY_LAYERS & "`.")
+  readFile(PATH_COMPILED_LAYERS)
+
+
+proc builtLayers*(script: string, faces: Table[string, string]): string =
+  ## zbasu le papri pe lo linji le calku
+  ##   .i punji lo lertai gi'e ba bo punji `script`
+  if "</script" in script.toLowerAscii:
+    raise newException(ValueError, "Script should never close its element; it would close " &
+        "element it stands in.")
+  let shell = readFile(PATH_SHELL_LAYERS)
+  result = shell
+  for name in shell.fontFacesAsked:
+    result = result.replace(TOKEN_EMBED & name & "@",
+        "data:" & mediaType(name) & ";base64," & encode(faces[name]))
+  if TOKEN_EMBED in result:
+    raise newException(ValueError, "Shell should hold no token build fills no more; got `" &
+        TOKEN_EMBED & "`.")
+  result = result.replace(TOKENS[^1], script)
+
+
 proc writePage*(): int =
   ## zbasu le papri ne'i `build/` gi'e ciska le judri .e le snina'u .e lo ni le papri cu barda
-  let page = builtPage(compiledPage(), fontFaces())
+  let
+    faces = fontFaces()
+    page = builtPage(compiledPage(), faces)
   writeFile(PATH_PAGE, page)
   echo PATH_PAGE
   echo "sha256 ", page.digestText, ", bytes ", page.len
+  let layers = builtLayers(compiledLayers(), faces)
+  writeFile(PATH_PAGE_LAYERS, layers)
+  echo PATH_PAGE_LAYERS
+  echo "sha256 ", layers.digestText, ", bytes ", layers.len
