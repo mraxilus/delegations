@@ -83,8 +83,9 @@ func basesSandwiched(a, b: Bases): Bases {.compileTime.} =
 
 macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
   ## Emit one assignment per basis that table of bases `A` of `m` and pairs of `B` of `n` reaches.
-  ##   Builds three forms, and keeps one of fewest multiplies, adds and subtractions, each counted
-  ##     once, so choice reads Cayley tables alone and holds on every machine. Ties keep table.
+  ##   Builds table and cross forms, counts chain, and keeps form of fewest multiplies, adds and
+  ##     subtractions, each counted once, so choice reads Cayley tables alone and holds on every
+  ##     machine. Tie keeps earlier form: table, then cross.
   ##   Table form names product of each pair once. Cross pair reads one of its bases doubled:
   ##     basis in most cross pairs left, until each pair holds one, so few bases are doubled.
   ##   Cross form reads each pair across bulk and weight of `n` as chain: bulk basis times `m`
@@ -95,7 +96,7 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
   ##     terms in order of pairs, as table walks them, so equal entries compare term by term
   ##     among entries of same first pair.
   ##   Chain form spells 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ through typed antiproducts, counted term by term from their
-  ##     table. It wins where operator holds many bases, as motor at cga6d does.
+  ##     table. It wins where both operands hold many bases, as bivector by motor at cga5d does.
   ##   Loops walk terms, pairs, or entries of one first pair, so table at six dimensions stays
   ##     under loop bound of VM.
   func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
@@ -185,7 +186,7 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
     else:
       emitEntry(terms, 1, is_folded)
 
-  proc emitTable(table: CayleySandwich, weight: Bases, is_crossed: bool): NimNode =
+  func emitTable(table: CayleySandwich, weight: Bases, is_crossed: bool): NimNode =
     var tabled, folded: CayleySandwich  # Terms that table reads, and cross terms read as chain.
     for output in Basis:
       for term in table[output]:
@@ -199,7 +200,7 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
           tabled[output].add term
     var
       pairs, folds: seq[array[2, Basis]]
-      paired, foldedWith: array[Basis, Bases]  # Bases that pair or fold with each so far.
+      paired, folded_with: array[Basis, Bases]  # Bases that pair or fold with each so far.
       open: seq[array[2, Basis]]  # Cross pairs that no doubled basis holds yet.
       doubled: Bases
     for output in Basis:
@@ -211,8 +212,8 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
           if i != j: open.add term.pair
       for term in folded[output]:
         let (a, k) = (term.pair[0], term.pair[1])
-        if k notin foldedWith[a]:
-          foldedWith[a].incl k
+        if k notin folded_with[a]:
+          folded_with[a].incl k
           folds.add term.pair
     while open.len > 0:
       var count: array[Basis, int]  # Open cross pairs that hold each basis.
@@ -228,8 +229,8 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
         if best notin pair: rest.add pair
       open = rest
     let
-      shared_table = share(tabled)
-      shared_fold = share(folded)
+      entries_table = share(tabled)
+      entries_fold = share(folded)
     result = newStmtList()
     var products = newNimNode(nnkLetSection)
     for x in doubled:
@@ -253,22 +254,22 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
     var
       shared = newNimNode(nnkLetSection)  # Entries that several coefficients read, named once.
       sums = newNimNode(nnkLetSection)  # Cross part of each output, which result adds twice.
-      is_named_table = newSeq[bool](shared_table.firsts.len)
-      is_named_fold = newSeq[bool](shared_fold.firsts.len)
+      is_named_table = newSeq[bool](entries_table.firsts.len)
+      is_named_fold = newSeq[bool](entries_fold.firsts.len)
       assignments = newStmtList()
     for output in Basis:
       if table[output].len == 0: continue
       var summands: seq[NimNode]
-      for k in shared_table.keys[output]:
+      for k in entries_table.keys[output]:
         let
-          entry = readEntry(shared_table, output, k, "entry_", false, is_named_table, shared)
+          entry = readEntry(entries_table, output, k, "entry_", false, is_named_table, shared)
           bk = emitBasis(k)
         summands.add infix(entry, "*", quote do: `m`[`bk`])
-      if shared_fold.keys[output].card > 0:
+      if entries_fold.keys[output].card > 0:
         var crossed: seq[NimNode]
-        for b in shared_fold.keys[output]:
+        for b in entries_fold.keys[output]:
           let
-            entry = readEntry(shared_fold, output, b, "folded_", true, is_named_fold, shared)
+            entry = readEntry(entries_fold, output, b, "folded_", true, is_named_fold, shared)
             bb = emitBasis(b)
           crossed.add infix(entry, "*", quote do: `n`[`bb`])
         let name = ident("crossed_" & $output)
@@ -284,7 +285,7 @@ macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
     if sums.len > 0: result.add sums
     result.add assignments
 
-  proc emitChain(table: CayleySandwich): NimNode =
+  func emitChain(table: CayleySandwich): NimNode =
     let chained = genSym(nskLet, "chained")
     result = newStmtList(quote do:
       let `chained` = (`n` ⟇ `m`) ⟇ (~∘ `n`))
