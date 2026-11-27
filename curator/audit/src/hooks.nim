@@ -109,7 +109,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, math, options, os, sequtils, strutils, tables, uri]
-from std/unicode import isWhiteSpace, lastRune, runeAt, runeLenAt
+from std/unicode import `==`, isWhiteSpace, lastRune, Rune, runeAt, runeLenAt
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -190,6 +190,7 @@ type
     unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `m` or `h`; `Unspecified` for bare.
     stop*: int  ## Index after value in its text.
     is_scaled*: bool  ## Scale moves point of value, as `k`, `M` or `million` does.
+    has_point*: bool  ## Digits of value hold decimal point, as `170.000` or `39.1M` do.
 
   FiguresLine* = object  ## Define figures of line of reflection for one call, as line gives them.
     line*: string  ## First line that opens with label, stripped; empty where text holds none.
@@ -520,7 +521,7 @@ const
   MARKERS_SCORED = ["✅", "⬜"]
     ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
   MARK_COST = '$'  ## Mark before value of cost, as `$2.50`.
-  MARK_COMMA = ','  ## Mark of group, which value refuses before digit that opens no group.
+  MARK_COMMA = ','  ## Mark of group of `MARKS_GROUP` that line of reflection reads alone.
   MARKS_GROUP = {MARK_COMMA, ' '}
     ## Marks before each group of three digits of value, one to value, as `170,000` or `170 000`.
   LENGTH_GROUP = 3  ## Digits of group after mark of `MARKS_GROUP`.
@@ -538,6 +539,11 @@ const
     "hour", "hours"]
     ## Words of time, in lower case, that result refuses after value and space, as mark of time
     ##   stands glued to its value.
+  RUNES_WIDTH_ZERO = [Rune(0x00AD), Rune(0x200B), Rune(0x200C), Rune(0x200D), Rune(0x2060),
+    Rune(0xFEFF)]
+    ## Runes of no width, which Unicode counts as no space: soft hyphen, zero-width space,
+    ##   non-joiner and joiner, word joiner, and zero-width no-break space; result reads each as
+    ##   space after value, so `39.1` and zero-width space before `M` give none (choice).
   WORDS_UNIT = [(UnitNumber.Tokens, "tokens "), (UnitNumber.Cost, "cost "),
     (UnitNumber.Time, "time ")]
     ## Word that opens text of number of bullet in unit, past its label, in lower case.
@@ -2589,9 +2595,10 @@ func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
   ##   cost, digits with each group of three after one mark of `groups`, comma or one space, and
   ##   decimal part, scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m`
   ##   or `h` of time; none where no digit opens it after any `$`, both marks of cost and time
-  ##   stand, or letter, digit, or comma and digit follow it.
-  ##   Comma and digit after value make none, as group of other mark, as in `39 100,000`, or
-  ##     decimal comma, as in `1,5h`, would read wrong value (choice).
+  ##   stand, or letter, digit, or mark and digit follow it.
+  ##   Mark other than space glued between value and digit makes none (choice): group of other
+  ##     mark, as in `39 100,000`, `1.234.567`, `170_000` or `170'000`, decimal comma, as in
+  ##     `1,5h`, or time of clock, as in `15:30`, would read part of value.
   ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
   ##     `39,100,000`, `39.1 M` and `39 100 000` do; time reads in minutes, since range of time is
   ##     in minutes.
@@ -2617,7 +2624,8 @@ func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
     whole.add text[i + 1 .. i + LENGTH_GROUP]
     i += LENGTH_GROUP + 1
   var fraction = ""
-  if i + 1 < text.len and text[i] == POINT_DECIMAL and text[i + 1] in Digits:
+  let has_point = i + 1 < text.len and text[i] == POINT_DECIMAL and text[i + 1] in Digits
+  if has_point:
     inc i
     while i < text.len and text[i] in Digits:
       fraction.add text[i]
@@ -2653,8 +2661,17 @@ func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
       inc i
       break
   if i < text.len and text[i] in Letters + Digits: return
-  if i + 1 < text.len and text[i] == MARK_COMMA and text[i + 1] in Digits: return
-  some(Value(amount: amount, unit: unit, stop: i, is_scaled: places > 0))
+  if i < text.len and not text.runeAt(i).isWhiteSpace and i + text.runeLenAt(i) < text.len and
+      text[i + text.runeLenAt(i)] in Digits:
+    return
+  some(Value(amount: amount, unit: unit, stop: i, is_scaled: places > 0, has_point: has_point))
+
+
+func isCount(value: Value): bool =
+  ## Decide whether value may be count, as of tokens: bare, with decimal point only where scale
+  ##   moves it, so `170.000`, which may group digits of 170,000, is none (choice), and `39.1k`
+  ##   reads.
+  value.unit == UnitNumber.Unspecified and (not value.has_point or value.is_scaled)
 
 
 func unitEstimate(text: string, values: openArray[Value]): Option[UnitNumber] =
@@ -2692,12 +2709,14 @@ func estimateCells(text: string, cells: array[3, string]): Option[Estimate] =
 
 
 func isRunOn(text: string, at: int): bool =
-  ## Decide whether value that ends at `at` of text runs on past whitespace, ASCII or Unicode, into
-  ##   digit, word of one letter, word of `WORDS_TIME`, or word of `WORDS_SCALE` in any case:
-  ##   group, scale or mark of time that value cannot read there, as in `39 1`, `39.1 K`, `1.5 h`,
-  ##   or `39.1 M` after no-break space, which value reads as no space (choice).
+  ## Decide whether value that ends at `at` of text runs on past whitespace, ASCII or Unicode, or
+  ##   rune of `RUNES_WIDTH_ZERO`, into digit, word of one letter, word of `WORDS_TIME`, or word
+  ##   of `WORDS_SCALE` in any case: group, scale or mark of time that value cannot read there, as
+  ##   in `39 1`, `39.1 K`, `1.5 h`, or `39.1 M` after no-break space, which value reads as no
+  ##   space (choice).
   var i = at
-  while i < text.len and text.runeAt(i).isWhiteSpace: i += text.runeLenAt(i)
+  while i < text.len and (text.runeAt(i).isWhiteSpace or text.runeAt(i) in RUNES_WIDTH_ZERO):
+    i += text.runeLenAt(i)
   if i == at or i == text.len: return false
   if text[i] in Digits: return true
   var stop = i
@@ -2714,8 +2733,12 @@ func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[flo
   ##     reads in unit too, and value of any mark reads for `Unspecified`, whose number takes no
   ##     score; so `15 M` gives no minutes, as `M` of million and `m` of minutes differ by case.
   ##   Value that runs on past space (`isRunOn`) gives none, so `1.5 h` gives no 1.5 minutes.
+  ##   Tokens and count read only value that may be count (`isCount`), so `170.000` gives none.
   let value = cell.valueAt
   if value.isNone or cell.isRunOn(value.get.stop): return
+  if unit in {UnitNumber.Tokens, UnitNumber.Count} and value.get.unit == UnitNumber.Unspecified and
+      not value.get.isCount:
+    return
   let
     marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
     is_bare = value.get.unit == UnitNumber.Unspecified and not value.get.is_scaled
@@ -2736,8 +2759,9 @@ func isFigureAt(line: string, at: int): bool =
 func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
   ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
-  ##   Tokens are whole bare value that opens after space (`isFigureAt`) and ends right before
-  ##     ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000.
+  ##   Tokens are whole value of count (`isCount`) that opens after space (`isFigureAt`) and ends
+  ##     right before ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000, and
+  ##     `170.000 tokens` none.
   ##   Cost is value at `$` that opens after space, which no mark of `MARKS_KIND` and nothing value
   ##     cannot read follows (`isRunOn`).
   ##   Line gives one of each, so it gives none where two values end before ` tokens`, or two
@@ -2763,7 +2787,7 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
           values.add value.get
           break
       at = line.find(" " & WORD_TOKENS, at + 1)
-    if values.len == 1 and values[0].unit == UnitNumber.Unspecified and values[0].amount >= 1 and
+    if values.len == 1 and values[0].isCount and values[0].amount >= 1 and
         values[0].amount == values[0].amount.floor:
       result.tokens = some(int(values[0].amount))
     var dollars: seq[int]  # Each `$` that opens after space.
