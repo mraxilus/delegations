@@ -40,7 +40,7 @@
 
 import std/[algorithm, math, options, sequtils, strformat, strutils, tables]
 import ./[claims_log, sums_exact]
-from ./hooks import UnitNumber
+from ./hooks import UnitNumber, unitText
 
 
 type

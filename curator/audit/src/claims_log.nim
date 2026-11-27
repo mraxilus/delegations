@@ -168,11 +168,6 @@ const
   NAMES_UNIT: array[UnitNumber, string] =
     ["UNIT_UNSPECIFIED", "UNIT_TOKENS", "UNIT_COST", "UNIT_TIME", "UNIT_COUNT"]
     ## Name of each value of enum `Unit` of `claims.proto`.
-  WORDS_UNIT = [(UnitNumber.Tokens, "tokens "), (UnitNumber.Cost, "cost "),
-    (UnitNumber.Time, "time ")]
-    ## Word that opens text of number of bullet in unit, past its label, in lower case.
-  LABEL_COUNT = "count: "  ## Label that opens text of number of bullet that is count, lowercase.
-  SEPARATOR_LABEL = ": "  ## Mark after label of claim of bullet, as in `Work: `.
   LABELS_CRITIC = ["**critic:**", "**critic**:"]
     ## Forms of label of line of reflection for critic, in lower case, as `LABELS_SUBAGENT`.
   WORD_TOKENS = " tokens"  ## Word after count of tokens, as line of reflection writes it.
@@ -245,21 +240,6 @@ func confidenceCell(cell: string): float =
   if at < 0: return 0
   let numbers = cell[0 ..< at].numbersIn
   if numbers.len > 0: numbers[^1] / 100 else: 0
-
-
-func unitText*(text: string): UnitNumber =
-  ## Read unit that text of number of bullet names, as GUIDE.md asked before tables: label
-  ##   `Count:`, else word `tokens`, `cost` or `time` that opens text, past its label;
-  ##   `UnitNumber.Unspecified` where none does, so `Cost: $0.80` names none.
-  ##   Row written before `Number` held unit takes its unit here too, as scorer reads it.
-  let
-    lower = text.toLowerAscii
-    colon = lower.find(SEPARATOR_LABEL)
-  if lower.startsWith(LABEL_COUNT): return UnitNumber.Count
-  for opening in [lower, (if colon >= 0: lower[colon + SEPARATOR_LABEL.len .. ^1] else: "")]:
-    for (unit, word) in WORDS_UNIT:
-      if opening.startsWith(word): return unit
-  UnitNumber.Unspecified
 
 
 func callTaken(

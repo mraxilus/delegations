@@ -512,6 +512,10 @@ const
     ## Mark after value of time, with minutes in one of it, as range of time is in minutes.
   WORD_TOKENS = "tokens"
     ## Word of estimate whose cells are bare that marks tokens; other bare cells mark count.
+  WORDS_UNIT = [(UnitNumber.Tokens, "tokens "), (UnitNumber.Cost, "cost "),
+    (UnitNumber.Time, "time ")]
+    ## Word that opens text of number of bullet in unit, past its label, in lower case.
+  LABEL_COUNT = "count: "  ## Label that opens text of number of bullet that is count, lowercase.
   RULE_ROW = "Row of table of judgements or estimates of reflection names claim of `" &
     HEADING_PREDICTION & "` block that call took by its number under `#`, and quotes that " &
     "claim whole, or holds `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection)"
@@ -2478,6 +2482,21 @@ func forecastsBullets(text: string): seq[Forecast] =
       is_number: MARKS_PERCENTILES.anyIt bullet.continuesWith(it, stop))
     if label.len > 0 and claim.len > label.len: forecast.forms.add claim[label.len .. ^1]
     result.add forecast
+
+
+func unitText*(text: string): UnitNumber =
+  ## Read unit that text of number of bullet names, as GUIDE.md asked before tables: label
+  ##   `Count:`, else word `tokens`, `cost` or `time` that opens text, past its label;
+  ##   `UnitNumber.Unspecified` where none does, so `Cost: $0.80` names none.
+  ##   Row written before `Number` held unit takes its unit here too, as scorer reads it.
+  let
+    lower = text.toLowerAscii
+    colon = lower.find(SEPARATOR_LABEL)
+  if lower.startsWith(LABEL_COUNT): return UnitNumber.Count
+  for opening in [lower, (if colon >= 0: lower[colon + SEPARATOR_LABEL.len .. ^1] else: "")]:
+    for (unit, word) in WORDS_UNIT:
+      if opening.startsWith(word): return unit
+  UnitNumber.Unspecified
 
 
 func tablesMarkdown(text: string): seq[TableMarkdown] =
