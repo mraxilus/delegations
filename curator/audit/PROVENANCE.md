@@ -4027,11 +4027,10 @@ where that base sits in that span, and only groups of pull requests elsewhere.
 
 ## Blocks of subagents
 
-**`stop` holds steps for each subagent of a kind, at the end of each model turn.** `GUIDE.md`,
-Prediction, critic and reflection, gives the steps that #962, #969 and #1028 rule. `checkBlocks`
-holds a prediction and its tables before each call, a reflection after each report of a critic, and
-a quote in each row. It reads each turn, as a prediction writes nothing. Reading holds each other
-step. Sections Quotes of claims and Runs of the block check give tables, quotes and runs.
+**`stop` holds steps for each subagent of a kind at the end of each model turn.** `GUIDE.md`,
+Prediction, critic and reflection, gives the steps of #962, #969 and #1028. `checkBlocks` holds a
+prediction and its tables before each call, a reflection after each report of a critic, and a quote
+in each row. It reads each turn, as a prediction writes nothing. Reading holds each other step.
 
 **A model turn ends where the model stops**: at the last entry of a message, by `message.id`, whose
 `stop_reason` is a string other than `tool_use`. The harness writes each item as an entry. An entry
@@ -4091,9 +4090,8 @@ the nearest turn, and inside that turn the earliest (comments 7017187857 and 702
   names. A block before the call, in its turn, adds that a block stands in an earlier turn. Thinking
   with no text before the call adds that a block in thinking reaches neither the chat nor the hook
   (`D3 a` of comment 6982373798). A block or thinking after it adds no hint.
-- A call of an earlier turn is held at its own stop, so it takes no finding again. A call in a reply
-  to a refusal is held at no stop (a cost below). A change to the prompt of a running subagent takes
-  no new prediction (comment 6975348319), so `stop` asks for none.
+- A call of an earlier turn is held only at its own stop. A change to the prompt of a running
+  subagent takes no new prediction (comment 6975348319), so `stop` asks for none.
 - Verified by `suites/test_hooks.nim`: the pass, each refusal and hint, and no hint after the call.
   It holds each kind here by name, tool use, and a block of one kind before a call of another. It
   holds a reply, hand-back or message of the Architect before the call, up to nine turns back. It
@@ -4142,11 +4140,12 @@ missing reflection now, and a mend of each part refused. Verified by `suites/tes
 - A block of a later turn replaces one of its kind of an earlier turn (comments 7022770415 and
   7027197745). So of two blocks for two subagents of one kind, the first call takes the block of the
   nearer turn. Verified by `suites/test_hooks.nim` (probe F4, and C12 inside one turn).
-- The block check reads headers, quoting columns, `State` and `Result` of a number, and the line
-  `**Subagent:**`, never whether the resolver ran. Section Log of claims gives what `logStop` reads.
-  Of the rules for forecasting of `D1 a` (comment 6982373798), it checks only that estimate cells
-  rise. It never checks the side of a claim, whether it meets its criterion (comment 6982623146), or
-  the effort of a critic (comment 6977822742). It reads a bullet only to end its claim.
+- The block check reads headers, columns that quote, `State` and `Result` of a number and the line
+  `**Subagent:**`, not whether the resolver ran. Of the rules for forecasting of `D1 a` (comment
+  6982373798), it checks only that estimate cells rise. It never checks the side of a claim, whether
+  it meets its criterion (comment 6982623146), or the effort of a critic (comment 6977822742). It
+  reads a bullet to end its claim, quote it and check its result by its unit. Section Log of claims
+  gives what `logStop` reads, its percentiles too.
 - The hook never reads two choices of the guide that no comment holds. A number on a percentile is a
   hit, and the delegate answers the resolver in the turn of its report, after the reflection.
 - A reply to a refusal passes unread, as the stop branch of `koch.nim` reads `stop_hook_active`. So
@@ -4168,18 +4167,17 @@ A table of judgements takes `#`, `%` and `Judgement`, and one of estimates takes
   collapsed. A judgement takes the confidence of its `%`, and an estimate 90%. A table of claims
   holds `#`, `Judgement`, `Estimate @ 90%` or `Resolution criterion`, as `GUIDE.md` says, and
   refusals of one name them. Choice: `#` makes one, so a header one character off is refused.
-- At the stop of its own turn, `findingsPrediction` refuses a row with no number of its own, or
-  empty text. It refuses a `%` that is no percentage alone, a claim with no criterion, and an
-  estimate whose cells do not rise in one unit. It refuses a bullet beside the tables, and a table
-  of claims that holds no form whole, as its rows read as none. It refuses a row of criteria whose
-  `#` holds no digits alone from 1, as `6.`. Once each table holds its form and each row its number,
-  it refuses a criterion of no claim or of one named before. The reply is a later turn, so its
-  mended block serves the call (comment 7027197745).
+- At the stop of its turn, `findingsPrediction` refuses a row with no number of its own or no text.
+  It refuses a `%` that is no percentage alone, a claim with no criterion, and an estimate whose
+  cells do not rise in one unit. It refuses a bullet beside the tables, and a table of claims of no
+  form whole, as its rows read as none. It refuses a row of criteria whose `#` holds no digits alone
+  from 1, as `6.`. Once each table holds its form and each row its number, it refuses a criterion of
+  no claim or of one named before. A mend in the reply serves the call (comment 7027197745).
 - Choice: a block after its call is no evidence, so the stop of the call is too late. The cells rise
   strictly, as a number that does not rise takes no score. A bullet and a row share keys of the log.
-  Each bullet reads as a claim, one with no mark too (comment 7017902016), so a bullet of the basis
-  is refused too. Claims meet criteria once each table holds its form, as a row read as none reads
-  as missing. Rejected: a check of the sentences, and a key of its own for each form.
+  Each bullet with no indent reads as a claim, one with no mark too (comment 7017902016), so one of
+  the basis is refused too. Claims meet criteria once each table holds its form, as a row read as
+  none reads as missing. Rejected: a check of the sentences, and a key of its own for each form.
 - Cost: an unmended block serves its call, and the log keeps one of a bullet and a row of one
   number. A header with none of those columns, as `| No. | % | Judgements |`, reads as no table: the
   sample reads 3 claims of 8 and takes 5 findings. A table of other content takes none.
@@ -4194,14 +4192,15 @@ Time reads in minutes. Bare cells are tokens where the text holds `tokens`, else
 
 - A group of three digits follows a comma or one space, and a scale may follow one space, as `M` or
   `million`. Choice: `39.1 M` and `39 100 000` read whole, as a refused result keeps its first row
-  with no outcome (section Log of claims). Rejected: a refusal of each. `isRunOn` refuses a result
-  whose value a space and a digit, or a word of one letter, of time or of scale, follow.
-- Choice: a comma and a digit after a value make none, as `39 100,000`, and a space of Unicode opens
-  no group or scale. Case tells `M` of a million from `m` of minutes. Cost: a scale it lacks, as
+  with no outcome. Rejected: a refusal of each. `isRunOn` refuses a result whose value a space and a
+  digit, or a word of one letter, of time or scale, follow. A rune of no width reads as a space.
+- Choice: a mark and a digit after a value make none, as `39 100,000` or `1.234.567`, and a space of
+  Unicode opens no group or scale. Tokens and counts take a point only where a scale moves it, so
+  `170.000` gives none. Case tells `M` of a million from `m` of minutes. Cost: a scale it lacks, as
   `bn`, is text, and a space joins three digits of another figure as a group, as `5 100-line files`.
 - Verified by `suites/test_hooks.nim`: each mark, form of digits and scale, glued or after a space,
-  and a letter or a digit after it. It holds each unit, mix and order of the cells of an estimate,
-  two marks of group, four spaces of Unicode, and each cost above.
+  and a letter, digit or mark after it. It holds each unit, mix and order of the cells of an
+  estimate, and each cost above. It holds four spaces of Unicode and six runes of no width.
 
 **A row of a table with column `#` names its claim by number, and quotes its text whole.**
 `isQuoting` holds both, as D5 b of #969 holds a cell to a whole claim. A row of `No prediction`
@@ -4217,8 +4216,8 @@ with `#`, `Judgement` or `Estimate @ 90%` whose header holds no form of a reflec
   empty row, and `No prediction`. It holds no table, an empty one, each state, result and header.
 
 **The hook still reads a block of bullets alone, and the first table of a reflection with column
-`Predicted`.** Choice of the delegate: a delegate at the merge may hold one, which no mend replaces
-after its call, so it reads as it did. A row with `#` quotes a bullet by its position, and a cell
+`Predicted`, which `GUIDE.md` names.** Choice of the delegate: a delegate at the merge may hold one,
+and no mend replaces it after its call. A row with `#` quotes a bullet by its position, and a cell
 under `Predicted` a claim of either form. Its refusals cite this section. Cost: two readers.
 
 - A hit or missed number of bullets opens its result with its value in the unit of its text
@@ -4368,9 +4367,10 @@ transcript, so another copy gives its own figures.
   value at `$`. Each reads as a cell reads it, after a space and in no mark of emphasis or code. The
   tokens take no group after a space. A `critic` that the line does not name reads `**Critic:**`.
 - The hook refuses a line `**Subagent:**` of no tokens or no cost, or two of either, as the log
-  writes neither. Rejected: groups after a space, as `round 2 170 000 tokens` reads 2,170,000. Cost:
-  `1,000 cached tokens` gives none. The line `**Critic:**` and a missing line take no finding, as
-  the guide asks neither. Verified by `suites/test_hooks.nim` and `suites/test_claims_log.nim`.
+  writes neither. The line runs on to a blank line or a bold label. Rejected: groups after a space,
+  as `round 2 170 000 tokens` reads 2,170,000. Cost: `1,000 cached tokens` gives none, and a bullet
+  right under the line is part of it. It passes the line `**Critic:**` and a reflection with none,
+  as the guide asks neither. Verified by `suites/test_hooks.nim` and `suites/test_claims_log.nim`.
 - An estimate takes the percentiles and the unit of its cells, and the value that opens its result.
   `Number` holds the unit under field 5, as the design gives it to the cells (comment 7194411522),
   and the text need not name it. A number of bullets takes the last three numbers and unit of its
