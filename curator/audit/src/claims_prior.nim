@@ -23,6 +23,8 @@
 ##     log of that base ends in row roll takes: merge by `union` then joins that row's hunk with
 ##     roll's, and brings each rolled row of base back, after prior or before it (`branchesStale`).
 ##   Cap: log past `ROWS_LOG` rows is finding at its path (`D3 a`), which its role clears by roll.
+##   Form: log that reader of figures refuses is finding at its path too, so merge that writes it
+##     fails branch that makes it, rather than `koch figures` and start of whole tree.
 ##
 ##   Rejected: one prior in `curator/audit` for whole tree, which would make curator roll rows of
 ##     contributor project, where curator writes only records (`D2 a`).
@@ -206,4 +208,18 @@ func checkCap*(path, source: string): seq[Finding] =
       "Log of claims over " & $ROWS_LOG & " rows (#1049); got `" & $count & "`.",
       expected = some("at most " & $ROWS_LOG),
       help = "roll it on branch of its project: `nim r koch roll`",
+    )
+
+
+func checkFormLog*(path, source: string): seq[Finding] =
+  ## Report log of claims that reader of figures and start refuses (`logText`), at its path, so
+  ##   merge that joins two rolls fails branch that makes it, and never tree that reads it later.
+  try: discard source.logText
+  except ValueError as error:
+    result.add finding(
+      path,
+      0,
+      Check.FormLog,
+      "Log of claims reads no way (#1049); got `" & error.msg & "`.",
+      help = "mend line it names; where merge joined two rolls, revert one, merge, and roll again",
     )

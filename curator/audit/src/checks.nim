@@ -26,6 +26,7 @@ type Check* {.pure.} = enum  ## Define one check of koch, by rule it holds.
   MentionVerb = "verb mention"  ## Mention of verb names one koch dispatches.
   SectionCited = "cited section"  ## Section cited stands in file cited.
   LengthLog = "log length"  ## Log of claims holds at most `ROWS_LOG` rows.
+  FormLog = "log form"  ## Log of claims reads as reader of figures reads it.
   FixTested = "test before fix"  ## Fix follows commit of test that fails before it.
   SubjectCommit = "commit subject"  ## Commit subject reads `type(scope): lowercase summary`.
   ScopeCommit = "commit scope"  ## Commit scope names scope of branch.
