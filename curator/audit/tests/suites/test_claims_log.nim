@@ -8,9 +8,9 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, osproc, sequtils, sets, streams, strformat, strutils, tables,
-  tempfiles]
+  tempfiles, unicode]
 import std/unittest
-import ../../src/[claims_log, hooks]
+import ../../src/[claims_log, commits, hooks]
 import ./fixtures
 
 
@@ -659,6 +659,30 @@ suite "Log of claims":
     check not commitClaims(fresh, BRANCH)  # new log
     check fresh.git("status --porcelain -- " & path).strip == "?? " & path
     removeDir(fresh)
+
+
+  test "subject of commit of log names its kinds where they fit, else names subagents":
+    # Case held: `wide.sh` of review of #1059's build: five kinds in log of `pga_visualiser` gave
+    #   subject of 109 runes, so commit hook refused it at each stop.
+    #   Domain: kinds that fit and kinds that do not, in project of long name and of short one.
+    let kinds = ["builder", "critic", "driver", "investigator", "measurer"]
+    for (branch, wanted) in [
+      ("contributor/ronri/pga_visualiser/probe", "chore(pga_visualiser): log the claims of the " &
+          "builder, the critic and the driver"),
+      ("contributor/ronri/pga_visualiser/wide", "chore(pga_visualiser): log the claims of the " &
+          "subagents"),
+    ]:
+      let
+        root = repoBranch(branch)
+        count = (if branch.endsWith("wide"): kinds.len else: 3)
+      var text = HEADER_LOG
+      for n in 0 ..< count: text.add rowKind(kinds[n], n)
+      root.writeInto(pathLog(branch), text)
+      checkpoint branch
+      check commitClaims(root, branch)
+      check root.subject == wanted
+      check root.subject.runeLen <= SUBJECT_MAX
+      removeDir(root)
 
 
   test "rows waiting outside tree move into log of root branch once each, and file goes":
