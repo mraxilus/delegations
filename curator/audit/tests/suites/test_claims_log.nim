@@ -9,7 +9,7 @@
 
 import std/[json, options, os, osproc, sequtils, sets, streams, strutils, tables, tempfiles]
 import std/unittest
-import ../../src/[claims_log, hooks]
+import ../../src/[claims_log, hooks, sums_exact]
 
 
 const

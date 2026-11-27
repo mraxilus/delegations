@@ -40,7 +40,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, sets, strformat, strutils, tables]
-import ./[domains, hooks, tree]
+import ./[domains, hooks, sums_exact, tree]
 
 
 type
@@ -76,9 +76,6 @@ type
     key*: string  ## Delegate, call, position of claim in its block, and state, by `/`.
     number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
     result*: string  ## Cell under `Result`.
-
-  SumExact* = object  ## Define exact sum of floats: partials that share no bit, smallest first.
-    partials*: seq[float]  ## Floats whose exact sum is sum; `claims_scores.nim` adds and rounds.
 
   Tally* = object
     ## Define tally of prior: sums of rolled rows whose model, effort, project, kind, marker and

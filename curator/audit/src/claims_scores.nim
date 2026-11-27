@@ -27,20 +27,17 @@
 ##   Mass of Beta comes from continued fraction of incomplete Beta (Numerical Recipes, 3rd
 ##     edition, 6.4), by modified Lentz method, and percentile from bisection on that mass.
 ##   Figures sum tallies: each claim is tally of one row (`toTally`), and prior of log holds
-##     tallies of rows rolled out of it (#1049). Each sum of floats is exact, as partials that
-##     share no bit (Shewchuk, 1997; `msum` of Python's `math.fsum`), and rounds once, to nearest
-##     float; so sum takes no order, and roll leaves each figure of each group to last bit.
-##     Prior keeps no session, so group by delegate reads its tallies as one delegate, `prior`.
+##     tallies of rows rolled out of it (#1049). Each sum of floats is exact, and rounds once
+##     (`sums_exact.nim`); so sum takes no order, and roll leaves each figure of each group to last
+##     bit. Prior keeps no session, so group by delegate reads its tallies as one delegate, `prior`.
 ##
 ##   Cost: each percentile takes `ITERATIONS_BISECTION` masses of up to `ITERATIONS_FRACTION`
 ##     terms each.
-##   Cost: each value added to exact sum meets each of its partials, as few as bits of sum span
-##     allow; naive sum would meet one.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, math, options, sequtils, strformat, strutils, tables]
-import ./claims_log
+import ./[claims_log, sums_exact]
 
 
 type
@@ -370,57 +367,6 @@ func scoreNumber*(claim: Claim): Option[float] =
   let baseline = (if bucket == 0 or bucket == COUNT_BUCKETS + 1: BASELINE_OUTSIDE
     else: (1 - BASELINE_OUTSIDE * float(unit.get.countOpen)) / float(COUNT_BUCKETS))
   some(SCALE_SCORE * ln(masses[bucket] / baseline) / DIVISOR_NUMBER)
-
-
-func add*(sum: var SumExact, value: float) =
-  ## Add value to exact sum: each partial meets value as sum and its error, both exact, and partial
-  ##   of error zero drops (Shewchuk, 1997; `msum` of Python's `math.fsum`). Partials then share no
-  ##   bit, smallest first; exact compare of floats is point of each step.
-  var
-    x = value
-    kept = 0
-  for i in 0 ..< sum.partials.len:
-    var y = sum.partials[i]
-    if abs(x) < abs(y): swap(x, y)
-    let
-      high = x + y
-      low = y - (high - x)
-    if low != 0:
-      sum.partials[kept] = low
-      inc kept
-    x = high
-  sum.partials.setLen(kept)
-  if x != 0: sum.partials.add x
-
-
-func add*(sum: var SumExact, other: SumExact) =
-  ## Add each partial of other exact sum, so sum holds both exactly.
-  for partial in other.partials: sum.add partial
-
-
-func toFloat*(sum: SumExact): float =
-  ## Round exact sum once, to nearest float, half to even, as Python's `math.fsum` rounds partials.
-  ##   Sum runs down from largest partial until it turns inexact; partial below then breaks tie of
-  ##     half way, as `fsum` gives `1e16 + 2` for `1e16`, `1` and `1e-16`.
-  var at = sum.partials.len
-  if at == 0: return 0
-  dec at
-  var
-    high = sum.partials[at]
-    low = 0.0
-  while at > 0:
-    let x = high
-    dec at
-    let y = sum.partials[at]
-    high = x + y
-    low = y - (high - x)
-    if low != 0: break
-  if at > 0 and ((low < 0 and sum.partials[at-1] < 0) or (low > 0 and sum.partials[at-1] > 0)):
-    let
-      y = low * 2
-      x = high + y
-    if y == x - high: high = x
-  high
 
 
 func indexBand(confidence: float): int =
