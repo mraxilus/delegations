@@ -797,6 +797,7 @@ var
   IS_COMPOSING = false  ## lo nu basti cu ca'o fasnu
   COMPOSED: Option[(int, int)]  ## le cuxna ca lo nu le nu basti cu cfari
   GOAL_X = -1.0  ## le stuzi pe le korbi ca lo nu le cuxna cu muvdu gapru ja cnita
+  ANSWERS = 0  ## lo klani be lo se tcidu poi le gunka cu dunda ke'a
   WORKER: JsObject  ## le gunka to `null` va'o lo nu le papri cu ponse no gunka toi
   IS_BUSY = false
   WANTED: cstring  ## le selci'a poi le papri cu cpedu lo nu tcidu ke'a
@@ -1285,6 +1286,7 @@ proc started*(script: cstring) =
   if worker.isNull: return
   worker.onmessage = proc(event: JsObject) =
     if event.data.isNull or event.data.id.isUndefined: return
+    inc ANSWERS
     IS_BUSY = false
     if IS_WANTED: sent()
     took(event.data.model.to(Model))
@@ -1451,6 +1453,14 @@ proc scriptText*(): cstring {.importjs:
 
 proc current*(): Model = CURRENT
   ## le se tcidu poi le papri cu ca pixra ke'a
+
+
+proc answersTaken*(): int = ANSWERS
+  ## lo klani be lo se tcidu poi le gunka cu dunda ke'a
+
+
+proc isWorking*(): bool = not WORKER.isNil
+  ## jdice lo du'u pa gunka cu tcidu le selci'a
 
 
 proc isAsking*(): bool = IS_BUSY or IS_WANTED
