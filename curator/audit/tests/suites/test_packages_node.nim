@@ -326,7 +326,7 @@ suite "Static check":
     #   each gave one. Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href`
     #   and `xlink:href` of SVG, `>` inside quote, `/` after name of tag, and space, backslash,
     #   entity or line break in address, which browser reads; then attribute that only ends in
-    #   `src`, tag that only opens with `script`, and tag inside comment, which browser never loads.
+    #   `src`, and tag that only opens with `script`.
     for tag in [
       "<script src=\"https://cdn.example/a.js\"></script>",
       "<script\n  src=\"https://cdn.example/a.js\"></script>",
@@ -349,11 +349,39 @@ suite "Static check":
     for tag in [
       "<script data-src=\"https://cdn.example/a.js\" src=\"a.js\"></script>",
       "<scripting src=\"https://cdn.example/a.js\"></scripting>",
-      "<!-- <script src=\"https://cdn.example/a.js\"></script> -->",
     ]:
       check checkPage(PATH_PAGE, tag).len == 0
     let below = checkPage(PATH_PAGE, "<!-- a\nb -->\n<script src=\"//cdn.example/a.js\">")
     check below.len == 1 and below[0].line == 3  # Comment keeps its line ends.
+
+  test "page script that browser can load from other host is finding, comment and address alike":
+    # Case: third review of #1069; blank of each HTML comment hid each script after `<!-->`,
+    #   `<!--->`, `--!>`, `<!--` in attribute, script or title, and each form of address below
+    #   gave no finding. Domain: each such comment, comment that browser closes as written, then
+    #   control, entity with and without `;`, and scheme with no slashes in address.
+    #   Script inside comment is finding too, since rule refuses where browser may load.
+    let script = "<script src=\"https://cdn.example/a.js\"></script>"
+    for page in [
+      "<!--> " & script, "<!---> " & script, "<!-- a --!> " & script,
+      "<img alt=\"<!--\">" & script, "<script>const s='<!--';</script>" & script,
+      "<title><!--</title>" & script, "<!-- " & script & " -->",
+    ]:
+      check checkPage(PATH_PAGE, page).len == 1
+    for address in [
+      "/&#9;/cdn.example/a.js", "/&#10;/cdn.example/a.js", "/&#13;/cdn.example/a.js",
+      "&#1;//cdn.example/a.js", "\x01//cdn.example/a.js", "\f//cdn.example/a.js",
+      "/\t/cdn.example/a.js", "/\r/cdn.example/a.js", "&#47&#47cdn.example/a.js",
+      "&#x2F&#x2Fwww.example/a.js", "&#X2F;/cdn.example/a.js", "https&colon;//cdn.example/a.js",
+      "https:cdn.example/a.js", "https:/cdn.example/a.js",
+    ]:
+      let found = checkPage(PATH_PAGE, "\n<script src=\"" & address & "\"></script>")
+      check found.len == 1 and found[0].line == 2
+    # Domain: path of project, query that names host, and reference that browser leaves undecoded.
+    for address in [
+      "a.js", "/scripts/a.js", "./a.js?from=https://x.example", "&#x0x2F;/cdn.example/a.js",
+      "&#+47;/cdn.example/a.js", "&#4_7;/cdn.example/a.js",
+    ]:
+      check checkPage(PATH_PAGE, "<script src=\"" & address & "\"></script>").len == 0
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
