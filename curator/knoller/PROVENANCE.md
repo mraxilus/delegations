@@ -1633,12 +1633,12 @@ fixer of one writes, the check of the other passes.
   value declares nothing, as a labelled `block` or an assignment that opens `block`.
 - Missing doc writes `# TODO: Document.` above a global such value, with the blank line where it
   is due. A comment above counts as the doc, and so does a `##` that doc position moves there.
-- Doc position moves a `##` doc that trails `block:` or stands first in the body to the lines
-  above the declaration, with each line that the lexer joins to it. Each run of `#` that opens a
-  doc line there becomes one `#`, and the blank line comes where it is due.
+- Doc position moves a `##` doc that trails `block:` or stands first in the body. It moves the
+  doc to the lines above the declaration, with each line that the lexer joins to it. Each run of
+  `#` that opens a doc line there becomes one `#`, and the blank line comes where it is due.
 - A doc inside or after `block:` with a comment above it too is two docs, so it stays for hand.
   So does a `block` that opens below `=`, since its body would take one indent less. Its message
-  says why. A `=` that closes the head of a routine, as of a lambda, opens no such `block`, so its
+  says why. A `=` that closes the head of a routine, as of a lambda, opens no such `block`. Its
   binding takes its doc after that `=`.
 - Cost: a `#` comment right above such a value reads as its doc, though it may remark on the
   line above it.
@@ -1649,8 +1649,8 @@ fixer of one writes, the check of the other passes.
 - Verified by `suites/test_declarations.nim`. Its cases are `lut_grade_by_basis` and `∪` of the
   PGA library, and the doc after `block:` that knoller at `6905e55e` passes. They also hold
   `FACINGS` of `dance_ontology` and `LUT_INITIAL_BY_PAIR` of `ricysoho`, each with its domain. The
-  review of #1070 found three more cases, each now held with its domain: a statement in the body
-  of such a value, a lambda whose body opens `block`, and a doc that opens on `###`.
+  review of #1070 found three more cases, and each is held with its domain. They are a statement
+  in the body of such a value, a lambda whose body opens `block`, and a doc on `###`.
 - Verified by hand, 2026-11-27, with a driver that runs `checkDocs` and `checkDocsMissing` alone
   on each Nim file that git tracks at `9d6d168e`. Knoller at `9d6d168e` gives 75 reports of doc
   position and 1,082 of missing doc, and knoller at `6905e55e` gives 47 and 1,083. Knoller at
