@@ -9,7 +9,8 @@
 ##     Bare built-in, as `fs`, reads as package, and help names `node:fs`.
 ##     Each `<script>` of page or SVG, and each `<base>`, under any prefix, whose address is no
 ##       plain path of project is finding, since page may load package from other host; so is each
-##       `srcdoc` of frame, entity and default of attribute.
+##       `xml:base` that is none, `srcdoc` of frame, entity, default of attribute, and style sheet
+##       of XML, which XSLT can turn into script.
 ##     Plain path holds `CHARS_PATH` alone before its query, and opens with no `//`. Rule decodes
 ##       nothing, since each decode copies browser in part, and each part it leaves out is way past.
 ##     Tag reads as HTML reads it, since quote outside value that ends it early hides address.
@@ -38,10 +39,9 @@
 ##     from expression. Such miss can import package that listed tool pulls in and its lock
 ##     hoists, as `playwright-core`; import of address is expected to fail type check of `types`,
 ##     which resolves no address (unmeasured).
-##   Cost: inline script of page reads as none, and so do frame, object and embed of other host,
-##     whose script runs in origin of that host, apart from page. Path holding query mark that
-##     reference encodes, or address of other host in comment, is refused, though browser loads
-##     neither.
+##   Cost: inline script of page reads as none, and so do frame, object and embed at no plain
+##     path, whose script runs apart from page. Path holding query mark that reference encodes,
+##     or address of other host in comment, is refused, though browser loads neither.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
@@ -370,59 +370,69 @@ func isPathPlain(value: string): bool =
   path.allCharsInSet(CHARS_PATH) and not path.startsWith("//")
 
 
-func tagsNamed(
-  text, name: string
-): seq[tuple[line: int, attributes: seq[tuple[name, value: string]]]] =
-  ## Read each tag of text with name, under any prefix, as `svg:script`, with no regard to case of
-  ##   letters, as its line and attributes.
+func tags(
+  text: string
+): seq[tuple[name: string, line: int, attributes: seq[tuple[name, value: string]]]] =
+  ## Read each tag of text as its name past any prefix, as `script` of `svg:script`, in lowercase,
+  ##   with its line and attributes. Name ends at space of HTML, `/` or `>`, as HTML reads it.
   let lowered = text.toLowerAscii
-  var at = lowered.find('<')
+  var
+    at = lowered.find('<')
+    line = 1
+    counted = 0
   while at >= 0:
+    for index in counted ..< at:
+      if text[index] == '\n': inc line
+    counted = at
     var ending = at + 1
-    while ending < text.len and text[ending] notin Whitespace + {'>', '/'}: inc ending
+    while ending < text.len and text[ending] notin SPACES_HTML + {'>', '/'}: inc ending
     let written = lowered[at + 1 ..< ending]
-    if written[written.rfind(':') + 1 .. ^1] == name:
-      result.add (line: text[0 ..< at].count('\n') + 1, attributes: text.attributes(ending))
+    result.add (
+      name: written[written.rfind(':') + 1 .. ^1], line: line, attributes: text.attributes(ending)
+    )
     at = lowered.find('<', at + 1)
 
 
 func checkPage*(path, text: string): seq[Finding] =
-  ## Report each `<script>` and `<base>` whose address is no plain path of project, each `srcdoc`
-  ##   of frame, and each entity and default of attribute, which can name address; at line of each.
+  ## Report each `<script>` and `<base>` whose address is no plain path of project, and each
+  ##   `xml:base` that is none, each `srcdoc` of frame, and each entity, default of attribute and
+  ##   style sheet of XML, which can name address; at line of each.
   ##   Script takes address from `src`, or from `href` under any prefix, as `xlink:href` of SVG.
   ##   Tag inside comment takes same rule, though browser loads none of it.
-  for (name, is_base) in [("script", false), ("base", true)]:
-    for (line, attributes) in text.tagsNamed(name):
-      for (attribute, value) in attributes:
-        let is_address =
-          if is_base: attribute == "href"
-          else: attribute in ["src", "href"] or attribute.endsWith(":href")
-        if not is_address or value.isPathPlain: continue
+  for (name, line, attributes) in text.tags:
+    for (attribute, value) in attributes:
+      let is_address =
+        case name
+        of "script": attribute in ["src", "href"] or attribute.endsWith(":href")
+        of "base": attribute == "href"
+        else: attribute == "xml:base"
+      if is_address and not value.isPathPlain:
         result.add finding(
           path,
           line,
           "Page loads script from other host, or may; take base JavaScript, or script of " &
             "project at plain path" & CITE_RULE & "; got `" & value.escape("", "") & "`.",
         )
-  for (line, attributes) in text.tagsNamed("iframe"):
-    if attributes.anyIt(it.name == "srcdoc"):
-      result.add finding(
-        path,
-        line,
-        "Frame holds document in `srcdoc`, which can load script from other host in origin of " &
-          "page; frame page of project at plain path by `src`" & CITE_RULE & "; got `srcdoc`.",
-      )
+      elif name == "iframe" and attribute == "srcdoc":
+        result.add finding(
+          path,
+          line,
+          "Frame holds document in `srcdoc`, which can load script from other host in origin of " &
+            "page; frame page of project at plain path by `src`" & CITE_RULE & "; got `srcdoc`.",
+        )
   let lowered = text.toLowerAscii
-  for (declaration, kind) in [("<!entity", "entity"), ("<!attlist", "default of attribute")]:
-    var at = lowered.find(declaration)
+  for (marker, written, said) in [
+    ("<!entity", "<!ENTITY", "declares entity, which can name address of script from other host"),
+    ("<!attlist", "<!ATTLIST",
+      "declares default of attribute, which can name address of script from other host"),
+    ("<?xml-stylesheet", "<?xml-stylesheet",
+      "names style sheet of XML, which as XSLT can build script from other host; take `<style>`"),
+  ]:
+    var at = lowered.find(marker)
     while at >= 0:
-      result.add finding(
-        path,
-        text[0 ..< at].count('\n') + 1,
-        "Page declares " & kind & ", which can name address of script from other host" &
-          CITE_RULE & "; got `" & declaration.toUpperAscii & "`.",
-      )
-      at = lowered.find(declaration, at + 1)
+      let line = text[0 ..< at].count('\n') + 1
+      result.add finding(path, line, "Page " & said & CITE_RULE & "; got `" & written & "`.")
+      at = lowered.find(marker, at + 1)
 
 
 proc checkPackagesNode*(tree: Tree): seq[Finding] =
