@@ -9,6 +9,7 @@
 ##   .i pa gunka .a le papri cu tcidu le selci'a
 ##   .i ro valsi .e ro linji cu drani ba ro nu cenba poi selzba
 ##   .i pa se tcidu pe pa pu selci'a cu na basti le se tcidu pe pa mupli
+##   .i le papri cu tcidu le selci'a ba lo nu basti
 
 {.experimental: "strictFuncs".}
 
@@ -53,6 +54,9 @@ proc pasted(editor: JsObject, text: cstring) {.importjs:
   "e.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertFromPaste', " &
   "dataTransfer: d, bubbles: true, cancelable: true })); })(#, #)".}
   ## rinka pa nu punji lo selci'a
+proc fired(editor: JsObject, kind: cstring) {.importjs:
+  "#.dispatchEvent(new CompositionEvent(#, { bubbles: true }))".}
+  ## rinka pa nu cfari ja fanmo lo nu basti
 proc focused(node: JsObject) {.importjs: "#.focus()".}
   ## punji le cuxna ne'i le dacti
 proc slice(text: cstring, a, b: int): cstring {.importjs: "#.slice(#, #)".}
@@ -208,6 +212,18 @@ proc runSuite() {.async.} =
   expectThat current().described == expectations[1],
       "page draws reading of sample, not of text before"
   ended "Answer of text before a sample never stands in place of reading of sample"
+
+  # lo se tcidu poi klama ca lo nu basti cu na se cirko
+  selected(current().text.len, current().text.len)
+  editor.inputted("insertText", " ")
+  editor.fired("compositionstart")
+  for _ in 0 ..< WAIT_MOST:
+    if not isAsking(): break
+    await nextFrame()
+  editor.fired("compositionend")
+  await settled()
+  expectThat not current().is_moved, "page reads text after composition that changed nothing"
+  ended "Answer that comes while input method composes is read once composition ends"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))
