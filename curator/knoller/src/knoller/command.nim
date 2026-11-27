@@ -153,6 +153,24 @@ type
     nim: string  ## Compiler proving it.
     prefix, suffix: string  ## Text of includer around file; empty where file is entry.
 
+  JobPart = object
+    ## Define one file `part` fixes on thread of pool, with what it reads of run. Proofs of its
+    ##   batch and plans of run stay in caller, read in place, as each copy would hold every
+    ##   source asked.
+    path, source: string  ## Path as named, and text as given.
+    is_check: bool  ## Report changes due and write none.
+    directory: string  ## Directory path is named from.
+    proofs: ptr Proofs  ## Answers of parser of batch holding file.
+    answer: Answer  ## Answer of semantic pass for file.
+    uses: Uses  ## Use of each private symbol and `{.all.}` of file.
+    pures: Pures  ## Each `proc` compiler checks as `func` in file.
+    plans: ptr seq[Plan]  ## Rename of each declaration of run, planned or refused.
+    nimble: string  ## Nimble file nearest file; empty where none stands above.
+    has_format_value: bool  ## Whether package of file declares `formatValue`.
+    constants: seq[string]  ## Constants other modules of package export.
+    configurations: Configurations  ## Defaults of configurations of package.
+    names: NamesPackage  ## Names of package, aliases of library it builds on among them.
+
 
 proc parseOptions*(arguments: openArray[string]): Option[Options] =
   ## Parse command line; `none` on unknown option, value where none belongs, `--nim` without
@@ -349,6 +367,26 @@ func part(
   if not is_check: result.written.add (path, fix.source)
 
 
+func fixedPart(job: JobPart): Part =
+  ## Fix one file as `part` does, so thread of pool runs it.
+  part(
+    job.path,
+    job.source,
+    job.is_check,
+    job.directory,
+    job.proofs[],
+    job.answer,
+    job.uses,
+    job.pures,
+    job.plans[],
+    job.nimble,
+    job.has_format_value,
+    job.constants,
+    job.configurations,
+    job.names,
+  )
+
+
 func joined(
   parts: openArray[Part],
   is_check: bool,
@@ -522,6 +560,8 @@ proc outcomeProven*(
   ##   since two compilers can read one source otherwise. File that asked nothing read only
   ##   sources answered, and answer once held never changes, so fixing it again would give
   ##   same part.
+  ##   Each fix runs on threads of pool (`pools.nim`), and parts keep order of files, as one
+  ##     loop gives them; proofs change only between runs of pool, in caller.
   let
     read = files.filterIt(it[0].dialect.isSome and it[0] notin locked)
     formatting = files.nimblesFormatting(nimbles)
@@ -531,32 +571,35 @@ proc outcomeProven*(
   var
     proofs = newSeq[Proofs](batches.len)
     failures = newSeq[string](batches.len)
+    held = @plans  # Plans of run, which each job reads in place.
     owners: seq[int]
-    parts: seq[Part]
-
-  # Fix each file once, with answers of batch holding it.
+    jobs: seq[JobPart]
   for (path, source) in read:
     var owner = -1
     for b, batch in batches:
       if path in batch.paths: owner = b
     doAssert owner >= 0, "File reads in no batch; got `" & path & "`."
     owners.add owner
-    parts.add part(
-      path,
-      source,
-      is_check,
-      directory,
-      proofs[owner],
-      answers.getOrDefault(path),
-      uses.getOrDefault(path),
-      pures.getOrDefault(path),
-      plans,
-      nimbles.getOrDefault(path),
-      nimbles.getOrDefault(path) in formatting,
-      constants.getOrDefault(nimbles.getOrDefault(path)),
-      configurations.getOrDefault(nimbles.getOrDefault(path)),
-      names.getOrDefault(nimbles.getOrDefault(path)),
+    let nimble = nimbles.getOrDefault(path)
+    jobs.add JobPart(
+      path: path,
+      source: source,
+      is_check: is_check,
+      directory: directory,
+      proofs: proofs[owner].addr,
+      answer: answers.getOrDefault(path),
+      uses: uses.getOrDefault(path),
+      pures: pures.getOrDefault(path),
+      plans: held.addr,
+      nimble: nimble,
+      has_format_value: nimble in formatting,
+      constants: constants.getOrDefault(nimble),
+      configurations: configurations.getOrDefault(nimble),
+      names: names.getOrDefault(nimble),
     )
+
+  # Fix each file once, with answers of batch holding it.
+  var parts = jobs.mapParallel(fixedPart)
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
   for ask in 1..ASKS_MAX:
@@ -571,24 +614,8 @@ proc outcomeProven*(
         for source in asked: proofs[b].answers[source] = @[]
       else: failures[b] = proofs[b].answered(asked.deduplicate, batch.prover)
     if not is_asked: break
-    for k, (path, source) in read:
-      if parts[k].asked.len == 0: continue
-      parts[k] = part(
-        path,
-        source,
-        is_check,
-        directory,
-        proofs[owners[k]],
-        answers.getOrDefault(path),
-        uses.getOrDefault(path),
-        pures.getOrDefault(path),
-        plans,
-        nimbles.getOrDefault(path),
-        nimbles.getOrDefault(path) in formatting,
-        constants.getOrDefault(nimbles.getOrDefault(path)),
-        configurations.getOrDefault(nimbles.getOrDefault(path)),
-        names.getOrDefault(nimbles.getOrDefault(path)),
-      )
+    let again = toSeq(0..<parts.len).filterIt(parts[it].asked.len > 0)
+    for k, part in again.mapIt(jobs[it]).mapParallel(fixedPart): parts[again[k]] = part
   parts.joined(is_check, failures, form, is_colored)
 
 

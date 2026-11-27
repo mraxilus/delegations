@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | cc6267e0196158c8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 930b8b8807c3486adedf0aceb6a131244d8f8022 |
+| Pruned  | 823751741e8a5e8ad980b5cf49471ccbce028d87 |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -3131,11 +3131,12 @@ exports (rule 12). The third is the names of its modules (rules 8, 9 and 15). Th
 fence warning of each entry take those of its project. The record of `curator/knoller` gives the
 reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
 
-- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that the
-  project builds on join them, from the modules that `readFacts` reads (`## Facts of the compiler`).
-- The queries of the semantic pass read the names of the tree alone, since a library adds no axis
-  value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
-  the case rename of its declaration into one rename, whose rule is that of the case.
+- The names come from `namesPackage` of knoller, once for each project that an entry lies in
+  (`namesEntries`). The aliases of its library join them (`## Facts of the compiler`).
+- The renames come from those names once, for the queries of the semantic pass and the context. A
+  library adds no axis value and no word, so a cut rename asks the pass for each site, as a case
+  rename does. It joins the case rename of its declaration into one rename, whose rule is that of
+  the case. Verified by `suites/test_fixes.nim`, against the names of the tree and of a library.
 - A cut rename keeps each word that the glossaries list, as the case rename of the audit keeps it.
   Knoller takes its jargon alone, so where a glossary lists a word, the two tools can differ.
   Verified by `suites/test_fixes.nim`, with a glossary and with none.
@@ -3306,14 +3307,12 @@ tree matched each report of the two outputs by rule, path and line.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
   it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
   proves nothing of, and each tool prints it once.
-- Cost: over the files of `curator/knoller` at `b585ea65`, `koch fix --dry-run` takes 116.9 s built
-  there, and 67.4 s built at `41c24818`. The second build runs the compiler calls of rules 7 and 11
-  on a pool of threads (`## Caller of both rules` of knoller). Each figure is the median of three
-  alternating runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-21.
-- Cost: at `b585ea65`, the profile on #1001 gives 110.8 s. Uses take 31.3 s, pure routines 34.8 s
-  and cut renames 3.1 s. The static part takes 41.8 s, and asks no compiler. With no checkout of a
-  lock, each project prints the same text with both builds. Their times sum to 1,347.7 s and
-  776.7 s, with the first run of knoller.
+- Cost: over the files of `curator/knoller` at `2d496af8`, `koch fix --dry-run --branch:main` takes
+  65.4 s built there, and 34.9 s built at `8a7b2f61`. That build fixes each entry on the pool, and
+  reads the names and the renames once (the profile on #1001). Each figure is the median of three
+  alternating runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-26. Both print the same text.
+- Cost: with no checkout of a lock, each project prints the same text with both builds, in one run
+  of each, alternating. Their times sum to 763.1 s and 475.6 s.
 
 ## Parser proof
 
@@ -3331,9 +3330,11 @@ of knoller, under Content fixes.
   one warning of rule `needless-parentheses`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
   once held. So each round fixes again only the entries that asked, and the scope check reads all
-  parts joined.
+  parts joined. The first fix and each round run on the pool of knoller, as its command line does
+  (`## Command line` of knoller). The parts keep the order of the entries.
 - Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
-  pin, the group that the parser refuses stays, and a second fix writes nothing.
+  pin, the group that the parser refuses stays, and a second fix writes nothing. `fixProven` gives
+  what a loop that fixes every entry again in each round gives (`fixEvery`).
 
 ## Fixed waits
 
@@ -4192,8 +4193,7 @@ read. It is the form of the samples of `GUIDE.md`, where each claim is a bullet 
   ends the claim there, as a bullet at any indent does. Verified by `suites/test_hooks.nim`.
 - Cost: an indent of one to three spaces, `1.`, or a tab after the marker opens no claim.
   Markdown shows each as an item of a list, yet a cell quotes nothing of that bullet.
-- Cost: a bullet that is no claim, as a question, reads as one. Verified by
-  `suites/test_hooks.nim`.
+- Cost: a bullet that is no claim, as a question, reads as one. Verified by `suites/test_hooks.nim`.
 
 **A claim with percentiles ends at them, and no percentage in brackets ends it** (comment
 7023048202). Its percentiles state its confidence, the mass between its outer two percentiles.

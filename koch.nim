@@ -648,10 +648,11 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; so does each file knoller's fixers do not settle, with no article, since
     #   fault is tool's. Exit code ignores warnings.
-    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`);
-    #   compiler and disk under root give rest fixers read across project (`fixes.readFacts`).
-    #   Parser of each project's pin proves each needless group (`fixes.fixProven`); run that
-    #   proved nothing prints one warning saying why.
+    #   Compiler and disk under root give what fixers read across project (`fixes.readFacts`).
+    #   Names of each project entries name, and renames they ask, are read once, for semantic
+    #   pass and fixers alike (`fixes.renames`); pass then runs on files holding candidate text
+    #   cannot settle (`symbols.nim`). Parser of each project's pin proves each needless group
+    #   (`fixes.fixProven`); run that proved nothing prints one warning saying why.
     if not options.isReadAll(
       {Root, Branch, Base, All, Recent, DryRun, FormFinding}, has_project = true
     ):
@@ -667,14 +668,16 @@ proc run(options: Options): int =
       return 1
     let
       locked = tree.nimblesLocked
-      answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
       (uses, pures, libraries) = readFacts(options.root, entries, locked)
+      names = tree.namesEntries(entries, libraries)
+      renamed = tree.renames(entries, locked, names)
+      answers = resolve(options.root, tree, tree.queriesSemantic(entries, locked, renamed))
       (fix, failures) = fixProven(
         options.branchOrDefault,
         tree,
         entries,
         locked,
-        initContext(tree, entries, answers, locked, uses, pures, libraries),
+        initContext(tree, entries, answers, locked, uses, pures, names, renamed),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix

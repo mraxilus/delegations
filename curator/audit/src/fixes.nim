@@ -71,6 +71,7 @@
 import std/[algorithm, options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 from ../../knoller/src/knoller/command import modulesLibrary, resolveMarkers, resolvePures
+from ../../knoller/src/knoller/pools import mapParallel
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
   waits,
@@ -105,6 +106,13 @@ type
     warned: seq[Finding]
       ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
+
+  JobEntry = object
+    ## Define one entry `fixEntry` fixes on thread of pool. Locked paths and context stay in
+    ##   caller, read in place, as each copy would hold names of each project and every plan.
+    entry: Entry  ## Entry to fix.
+    locked: ptr seq[string]  ## Path of each nimble file whose copy lock holds.
+    context: ptr Context  ## What tree, semantic pass and parser tell fixer.
 
 
 const ASKS_MAX = 8
@@ -191,7 +199,17 @@ func namesProjects(
     result[project] = namesPackage(sources, libraries.getOrDefault(project))
 
 
-func renames(
+func namesEntries*(
+  tree: Tree, entries: openArray[Entry], libraries = initTable[string, seq[string]]()
+): Table[string, NamesPackage] =
+  ## Read names of each project entries name, as `namesProjects` reads them over whole tree,
+  ##   since names of project read its own files alone; fixer of entry reads names of its own
+  ##   project alone, so other project asks none.
+  let nimbles = entries.mapIt(it.path.nimbleProject).deduplicate
+  tree.filterIt(it.path.nimbleProject in nimbles).namesProjects(libraries)
+
+
+func renames*(
   tree: Tree,
   entries: openArray[Entry],
   locked: openArray[string],
@@ -240,17 +258,19 @@ func renames(
 
 
 func queriesSemantic*(
-  tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
+  tree: Tree,
+  entries: openArray[Entry],
+  locked: openArray[string],
+  renamed: openArray[(Rename, string)],
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
   ##   §5), and every site of each name rename of abbreviation (V.6), case (V.1, V.11) or cut
-  ##   (V.2) would write, across its scope; cut reads names of project from tree, as library adds
-  ##   no axis value or word. File fix leaves as written, and rename refused already, ask
-  ##   nothing; one query holds all one file is asked.
+  ##   (V.2) would write, across its scope, as `renamed` holds them (`renames`). File fix leaves
+  ##   as written, and rename refused already, ask nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
-  for (rename, refusal) in renames(tree, entries, locked, tree.namesProjects):
+  for (rename, refusal) in renamed:
     if refusal.len == 0: asked.add rename.queries(tree.scopeRename(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
@@ -262,6 +282,14 @@ func queriesSemantic*(
       if site notin result[k].sites: result[k].sites.add site
     for name in query.names:
       if name notin result[k].names: result[k].names.add name
+
+
+func queriesSemantic*(
+  tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
+): seq[Query] =
+  ## Build what fixers of entries ask semantic pass, as full form does, each rename read from
+  ##   names of each project of tree; cut reads them so, as library adds no axis value or word.
+  queriesSemantic(tree, entries, locked, renames(tree, entries, locked, tree.namesProjects))
 
 
 proc checkConversions*(
@@ -321,21 +349,23 @@ proc readFacts*(
 
 func initContext*(
   tree: Tree,
-  entries: openArray[Entry] = [],
-  answers: openArray[Answer] = [],
-  locked: openArray[string] = [],
-  uses = initTable[string, Uses](),
-  pures = initTable[string, Pures](),
-  libraries = initTable[string, seq[string]](),
+  entries: openArray[Entry],
+  answers: openArray[Answer],
+  locked: openArray[string],
+  uses: Table[string, Uses],
+  pures: Table[string, Pures],
+  names: Table[string, NamesPackage],
+  renamed: openArray[(Rename, string)],
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
-  ##   of each abbreviation, case and cut in entries, refused where it would write file entries
-  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
-  ##   defaults of its configurations, and names of its modules (`namesProjects`), aliases of
-  ##   library it builds on among them, as `libraries` holds its modules by nimble file.
-  ##   Use of each private symbol and `{.all.}` of each file, and each `proc` compiler checks as
-  ##   `func` there, as `uses` and `pures` hold them by path (`readFacts`), pass through.
+  ##   of each abbreviation, case and cut in entries, as `renamed` holds them (`renames`), refused
+  ##   where it would write file entries leave out; and, by project, each file declaring
+  ##   `formatValue`, constants its modules export and defaults of its configurations.
+  ##   Names of modules of each project, aliases of library it builds on among them, pass
+  ##   through as `names` holds them by nimble file; so do use of each private symbol and
+  ##   `{.all.}` of each file, and each `proc` compiler checks as `func` there, as `uses` and
+  ##   `pures` hold them by path (`readFacts`).
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -351,12 +381,12 @@ func initContext*(
   for project, sources in modules:
     result.configurations[project] = readConfigurations(sources)
     result.constants[project] = sources.mapIt(it.constantsExported).concat
-  result.names = tree.namesProjects(libraries)
+  result.names = names
   result.uses = uses
   result.pures = pures
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for (rename, refusal) in renames(tree, entries, locked, result.names):
+  for (rename, refusal) in renamed:
     if refusal.len > 0:
       result.plans.add Plan(rename: rename, refusal: refusal)
       continue
@@ -369,6 +399,24 @@ func initContext*(
       if path notin named or path in locked:
         plan.refusal = "it would write `" & path & "`, which this fix leaves alone"
     result.plans.add plan
+
+
+func initContext*(
+  tree: Tree,
+  entries: openArray[Entry] = [],
+  answers: openArray[Answer] = [],
+  locked: openArray[string] = [],
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
+  libraries = initTable[string, seq[string]](),
+): Context =
+  ## Read what tree and semantic pass tell fixers, as full form does, names of each project read
+  ##   from tree, aliases of library it builds on among them, as `libraries` holds its modules by
+  ##   nimble file (`namesProjects`), and renames of entries read from those names.
+  let
+    names = tree.namesProjects(libraries)
+    renamed = renames(tree, entries, locked, names)
+  initContext(tree, entries, answers, locked, uses, pures, names, renamed)
 
 
 func warnUnsettled*(path: string, fix: Fix): seq[Finding] =
@@ -634,6 +682,11 @@ proc answered*(
     if proving.failure.len > 0 and proving.failure notin result: result.add proving.failure
 
 
+func fixedEntry(job: JobEntry): Fixed =
+  ## Fix one entry as `fixEntry` does, so thread of pool runs it.
+  job.entry.fixEntry(job.locked[], job.context[])
+
+
 proc fixProven*(
   branch: string;
   tree: Tree;
@@ -647,15 +700,19 @@ proc fixProven*(
   ##   rule `needless-parentheses`, with no location and no article, as knoller prints it.
   ##   Entry that asked nothing read only sources answered, and answer once held never changes,
   ##   so each round fixes again only entries that asked.
+  ##   Each fix runs on threads of pool (`pools.nim` of knoller), and parts keep order of
+  ##     entries, as one loop gives them; answers join context only between runs of pool.
   var
     known = context
-    parts = entries.mapIt(it.fixEntry(locked, known))
+    held = @locked
+    jobs = entries.mapIt(JobEntry(entry: it, locked: held.addr, context: known.addr))
+    parts = jobs.mapParallel(fixedEntry)
   for ask in 1 .. ASKS_MAX:
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
     for failure in known.answered(tree, asked, provers):
       let warning = finding("", 0, failure, rule = Rule.ParenthesesNeedless.id)
       if warning notin result.failures: result.failures.add warning
-    for k, e in entries:
-      if parts[k].asked.len > 0: parts[k] = e.fixEntry(locked, known)
+    let again = toSeq(0..<parts.len).filterIt(parts[it].asked.len > 0)
+    for k, part in again.mapIt(jobs[it]).mapParallel(fixedEntry): parts[again[k]] = part
   result.fix = scoped(branch, parts)
