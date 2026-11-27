@@ -39,7 +39,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, sets, strformat, strutils, tables]
-import ./[domains, hooks, tree]
+import ./[commits, domains, hooks, tree]
 
 
 type
@@ -590,13 +590,18 @@ proc commitClaims*(root, branch: string): bool =
   ##     and neither does merge, cherry-pick, revert or rebase in progress: rows wait in tree.
   ##   Change staged for other path stays staged, since commit takes path alone (`--only`).
   ##   Commit hook reads message as any other, and commit stays local, so next push carries it.
-  ##   Log that lost row commits nothing, since hand that removed it decides its commit.
+  ##   Log that lost row commits nothing, since hand that removed it decides its commit. Log waits
+##     too while last commit is `test`, so its `fix` comes right after it.
   ##   Failure of git commits nothing and raises nothing, so log that cannot commit refuses no
   ##     turn; error goes to stderr.
   let relative = branch.pathLog
   if relative.len == 0 or not fileExists(root / relative): return false
   try:
     if root.isOperationGit: return false
+    # Commit right after `test` waits, since its `fix` must follow it (CONTRIBUTOR.md, Tests
+    #   are paramount); first stop after fix commits rows.
+    let last = fieldsGit(root, ["log", "-1", "--format=%s"]).join.strip.parseSubject
+    if last.isSome and last.get.kind == "test": return false
     let
       tracked = fieldsGit(root, ["ls-files", "-z", "--", relative]).len > 0
       before = (if tracked: fieldsGit(root, ["show", "HEAD:" & relative]).join else: "")
