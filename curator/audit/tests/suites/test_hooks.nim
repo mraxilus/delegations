@@ -3899,3 +3899,17 @@ suite "Hooks":
       lineSaid(sample(HEADING_REFLECTION))
     check transcript.parseTurn.subagents.predictions.len == 1
     check blocksHeld(transcript).len == 0
+
+    # Samples take tables of claims of `D1 a` of #1028 (comment 7218520265): each claim stands in
+    #   row of its number, with its criterion, and each row of reflection names claim by number.
+    let read = sample(HEADING_PREDICTION).forecasts
+    check read.len == 6 and read.allIt(it.is_row)
+    check read.mapIt(it.position) == toSeq(1..6)
+    check sample(HEADING_PREDICTION).findingsPrediction.len == 0
+    check blocksHeld(lineUser("Review the diff.", "human") &
+      lineSaid(sample(HEADING_PREDICTION))).len == 0  # stop of turn of block
+    check read.filterIt(it.estimate.isSome).mapIt(it.estimate.get.unit) ==
+      @[UnitNumber.Tokens, UnitNumber.Cost, UnitNumber.Time]
+    let rows = sample(HEADING_REFLECTION).rowsReflection
+    check rows.len == 6 and rows.allIt(it.is_numbered)
+    check rows.mapIt(it.number.get) == toSeq(1..6)
