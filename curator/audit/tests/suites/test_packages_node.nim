@@ -258,6 +258,10 @@ suite "Static check":
       ("a+-/'/.source; import x from 'lodash';", 1),
       ("n = a+++/'/.source; import x from 'lodash';", 1),
       ("import x from /*/ */ 'lodash';", 1),
+      ("import x from\xE2\x80\x83'lodash';", 1),
+      ("import x from\xEF\xBB\xBF'lodash';", 1),
+      ("import x from\xE2\x80\xAF'lodash';", 1),
+      ("import x from\xE3\x80\x80'lodash';", 1),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
@@ -382,15 +386,37 @@ suite "Static check":
       "/\t/cdn.example/a.js", "/\r/cdn.example/a.js", "&#47&#47cdn.example/a.js",
       "&#x2F&#x2Fwww.example/a.js", "&#X2F;/cdn.example/a.js", "https&colon;//cdn.example/a.js",
       "https:cdn.example/a.js", "https:/cdn.example/a.js",
+      # Case: fourth review of #1069; named reference, leading zeros, and each mutant that passed.
+      "/&Tab;/cdn.example/a.js", "/&NewLine;/cdn.example/a.js", "/&bsol;cdn.example/a.js",
+      "&bsol;&bsol;cdn.example/a.js", "&#0000000047;&#0000000047;cdn.example/a.js",
+      "&#x000000002F;/cdn.example/a.js", "https&#00000000058;//cdn.example/a.js",
+      "&sol;&sol;cdn.example/a.js", "&#32;//cdn.example/a.js", "&#047;&#047;cdn.example/a.js",
+      "&#99999999999999999999999;//cdn.example/a.js", "\xEF\xBC\x8F\xEF\xBC\x8Fcdn.example/a.js",
+      # Rule refuses each reference in path, so these that browser leaves undecoded are refused too.
+      "&#x0x2F;/cdn.example/a.js", "&#+47;/cdn.example/a.js", "&#4_7;/cdn.example/a.js",
     ]:
       let found = checkPage(PATH_PAGE, "\n<script src=\"" & address & "\"></script>")
-      check found.len == 1 and found[0].line == 2
-    # Domain: path of project, query that names host, and reference that browser leaves undecoded.
+      check found.len == 1 and found[0].line == 2 and '\t' notin found[0].message and
+        '\n' notin found[0].message
+    # Domain: plain path of project, with spaces at its ends, with query that names host or holds
+    #   `&`, with `%2F`, and empty address of page itself.
     for address in [
-      "a.js", "/scripts/a.js", "./a.js?from=https://x.example", "&#x0x2F;/cdn.example/a.js",
-      "&#+47;/cdn.example/a.js", "&#4_7;/cdn.example/a.js",
+      "a.js", "/scripts/a.js", " a.js ", "./a.js?from=https://x.example", "./a.js?v=1&x=2",
+      "%2F%2Fcdn.example/a.js", "",
     ]:
       check checkPage(PATH_PAGE, "<script src=\"" & address & "\"></script>").len == 0
+
+  test "base, entity and href under each prefix that can send script to other host are findings":
+    # Case: fourth review of #1069; `<base>` sent each path of page to other host, and SVG named
+    #   address through entity or `x:href`, and each gave no finding. Domain: each, then `<base>`
+    #   of plain path, which passes.
+    for page in [
+      "<base href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
+      "<!DOCTYPE svg [<!ENTITY h \"https://cdn.example\">]><script href=\"&h;/a.js\"/>",
+      "<script xmlns:x=\"http://www.w3.org/1999/xlink\" x:href=\"https://cdn.example/a.js\"/>",
+    ]:
+      check checkPage(PATH_PAGE, page).len >= 1
+    check checkPage(PATH_PAGE, "<base href=\"/pages/\"><script src=\"a.js\"></script>").len == 0
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
