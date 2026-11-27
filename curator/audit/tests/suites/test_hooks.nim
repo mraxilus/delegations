@@ -159,11 +159,11 @@ The gap list reads the baseline of each algebra.
     "its value, bare in unit its text names, with no scale for cost or time, or with mark of " &
     "that unit: `$` for cost, `s`, `m` or `h` for time (curator/audit/PROVENANCE.md, Quotes of " &
     "claims); got `"
-    ## Opening of finding of result of number of bullets that reads no value in unit of its text.
+    ## Start of finding of result of number of bullets that reads no value in unit of its text.
   REFUSAL_OUTCOME = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
     "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
     "(GUIDE.md, Prediction, critic and reflection); got `"
-    ## Opening of finding of result of estimate of table that reads no value in unit of its cells.
+    ## Start of finding of result of estimate of table that reads no value in unit of its cells.
   NUMBERS_BULLETS = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
     "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th " &
     "and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, " &

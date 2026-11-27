@@ -13,9 +13,11 @@
 ##   State is marker opening cell under `State`. Confidence is what row of table of block states,
 ##     `%` of judgement or 90% of estimate (7200557915), else percentage of cell under
 ##     `Confidence` or `%` of reflection, since bullet states none apart. Tokens and cost are value
-##     right before first ` tokens` and value at first `$` of line `**Subagent:**`, as cell reads
-##     each (`figuresLine`), else zero, which hook refuses; call of critic that line does not name
-##     reads line `**Critic:**`.
+##     right before ` tokens` and value at `$` of line `**Subagent:**` and lines that continue it,
+##     as cell reads each (`figuresLine`); line that gives no value, or two of either, gives zero.
+##     Hook refuses such line `**Subagent:**`, and passes reflection with no such line, and line
+##     `**Critic:**` that call of critic reads where line `**Subagent:**` does not name it, so
+##     their zero stays (choice).
 ##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
 ##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
 ##     end it, takes last three numbers of its text, unit its text names (`unitText`), and value
