@@ -10,6 +10,7 @@
 ##   .i ro valsi .e ro linji cu drani ba ro nu cenba poi selzba
 ##   .i pa se tcidu pe pa pu selci'a cu na basti le se tcidu pe pa mupli
 ##   .i le papri cu tcidu le selci'a ba lo nu basti
+##   .i le cuxna cu muvdu gapru ja cnita ja'i le stuzi poi ri ca zvati
 
 {.experimental: "strictFuncs".}
 
@@ -34,6 +35,8 @@ const
   LETTERS = ["a", " ", "'", ".", "\n", "mi", "😀"]
     ## lo pagbu be lo selci'a poi lo nu cenba cu punji ke'a
     ##   .i pa pagbu cu vasru pa lerfu poi zmadu `U+FFFF`
+  REACH_MOST = 24.0
+    ## lo du'u le cuxna cu zvati su'e xo kau `px` lo stuzi poi le cipra cu cpedu ke'a
 
 
 let DOCUMENT {.nodecl, importc: "document".}: JsObject
@@ -57,8 +60,16 @@ proc pasted(editor: JsObject, text: cstring) {.importjs:
 proc fired(editor: JsObject, kind: cstring) {.importjs:
   "#.dispatchEvent(new CompositionEvent(#, { bubbles: true }))".}
   ## rinka pa nu cfari ja fanmo lo nu basti
+proc pressed(editor: JsObject, key: cstring) {.importjs:
+  "#.dispatchEvent(new KeyboardEvent('keydown', { key: #, bubbles: true, cancelable: true }))".}
+  ## rinka pa nu danre pa batke
 proc focused(node: JsObject) {.importjs: "#.focus()".}
   ## punji le cuxna ne'i le dacti
+proc caretLeft(): float {.importjs:
+  "(function() { var s = getSelection(); var r = document.createRange(); " &
+  "r.setStart(s.focusNode, s.focusOffset); r.collapse(true); var b = r.getClientRects()[0]; " &
+  "return b ? b.left : r.getBoundingClientRect().left; })()".}
+  ## le stuzi pe le cuxna ne'i le papri ta'i lo mulna'u pe `px`
 proc slice(text: cstring, a, b: int): cstring {.importjs: "#.slice(#, #)".}
   ## le pagbu be le selci'a poi zvati `a` bi'o `b`
 
@@ -224,6 +235,23 @@ proc runSuite() {.async.} =
   await settled()
   expectThat not current().is_moved, "page reads text after composition that changed nothing"
   ended "Answer that comes while input method composes is read once composition ends"
+
+  # le cuxna cu muvdu gapru ja'i le stuzi poi ri ca zvati
+  #   .i ri na muvdu ja'i lo stuzi poi ri pu zvati
+  let long = DOCUMENT.querySelector("[data-sample]:nth-child(1)").getAttribute("data-sample")
+  drawn(long.to(cstring).toModel, none((int, int, bool)))
+  editor.focused
+  selected(1, 1)
+  editor.pressed("ArrowDown")
+  await nextFrame()
+  selected(8, 8)
+  await nextFrame()
+  let goal_left = caretLeft()
+  editor.pressed("ArrowDown")
+  await nextFrame()
+  expectThat abs(caretLeft() - goal_left) <= REACH_MOST,
+      "vertical move keeps place that caret took last: " & $caretLeft() & " for " & $goal_left
+  ended "Caret moves up and down from place it took last, never from place before"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))
