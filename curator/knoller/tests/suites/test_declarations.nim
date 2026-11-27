@@ -424,6 +424,29 @@ suite "Declarations":
         check breach.fixed.isSettled
 
 
+  test "statement in body of value opening `block` declares nothing, so fix leaves body alone":
+    # Case held: labelled `block search:` in body of `const X`, which doc position read as line
+    #   declaring in `const`, and gave blank line inside body (review of #1070, probe of
+    #   `declarations` at `2ed7a769`).
+    #   Domain: labelled `block` and assignment opening `block`, in value of `const`, `let` and
+    #   `var`, at top level, in section, and in routine alone and in section.
+    let found = "const X* = block:\n  var r = 0\n  # Search.\n  block search:\n    r = 1\n  r\n"
+    check checkDocs("a.nim", found).len == 0
+    check fixDocs("a.nim", found).source == found
+    for keyword in ["const", "let", "var"]:
+      for (opener, inner) in [("block search:", "r = 1"), ("r = block:", "2")]:
+        for (head, margin, tail) in [
+          ("# Make X.\n" & keyword & " X* = block:\n", "  ", ""),
+          (keyword & "\n  # Make X.\n  X* = block:\n", "    ", ""),
+          ("proc f*() =\n  ## Do.\n  " & keyword & " x = block:\n", "    ", "  discard x\n"),
+          ("proc f*() =\n  ## Do.\n  " & keyword & "\n    x = block:\n", "      ", "  discard x\n"),
+        ]:
+          let kept = head & margin & "var r = 0\n" & margin & "# Search.\n" & margin & opener &
+            "\n" & margin & "  " & inner & "\n" & margin & "r\n" & tail
+          checkpoint kept
+          check kept.isSettled
+
+
   test "doc of routine named in backticks stays its own, above value opening `block`":
     # Case held: `∪` of `pga/operators.nim` of PGA library at `3d9696e`, line 401, whose doc doc
     #   position read as doc of `const 𝐞̄ₙ` right below it, and wrote as `#`.
