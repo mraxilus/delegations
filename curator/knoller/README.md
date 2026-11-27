@@ -278,7 +278,7 @@ each rule where the sentence ends, as in
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
 | `definition-blank-lines` | Blank lines before a definition follow its kind and the kind above. |
-| `doc-position` | A doc stands where the shape of its declaration puts it. |
+| `doc-position` | A doc stands where the shape of its declaration or its section puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |
 | `parameter-separators` | Commas stand between parameters, and semicolons between groups. |
@@ -287,7 +287,7 @@ each rule where the sentence ends, as in
 | `call-wrapping` | A call splits only where it must, or where its last comma asks. |
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
-| `missing-doc` | A declaration takes a doc, and `TODO: Document.` waits for its text. |
+| `missing-doc` | A section and each declaration outside one take a doc. `TODO: Document.` waits. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `stage-comment` | A stage of three lines of code or more opens with a comment if another does. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
