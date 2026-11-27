@@ -2624,8 +2624,9 @@ func contextStart*(
   ##     it, since item `This file to the end` names no file out of its document.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
-  ##   Lags are lines `noticesLag` of `lags.nim` renders, which `koch check` prints too; each
-  ##     stands as given, and fails nothing (D2 of #927).
+  ##   Lags are lines `noticesLag` of `lags.nim` and `noticesPin` of `releases.nim` render, which
+  ##     `koch check` prints too; each stands as given, and fails nothing (D2 of #927; GUIDE.md,
+  ##     Toolchain).
   ##   Rates are lines `linesBase` of `claims_scores.nim` renders from logs of claims: past
   ##     figures of each kind, as base rate (GUIDE.md, Prediction, critic and reflection).
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
