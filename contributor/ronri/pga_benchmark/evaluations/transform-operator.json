@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "transform-operator",
   "path": "proposals/13-transform-operator",
-  "edits_digest": "9bbe84672c659f57",
+  "edits_digest": "2a3c6371930bcdab",
   "taken": {
     "date": "2026-11-27",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
@@ -2895,7 +2895,7 @@
       "at_most": 1.1,
       "passed": true,
       "detail": [
-        "cga5d peak 210.2 → 210.3 MiB, 3.76 → 3.95 s, ×1.00"
+        "cga5d peak 210.2 → 210.3 MiB, 3.74 → 3.89 s, ×1.00"
       ]
     },
     {
@@ -2905,7 +2905,7 @@
       "at_most": 1.2,
       "passed": true,
       "detail": [
-        "cga6d peak 615.0 → 615.4 MiB, 12.05 → 12.24 s, ×1.02"
+        "cga6d peak 615.0 → 615.4 MiB, 11.84 → 12.75 s, ×1.08"
       ]
     }
   ]
