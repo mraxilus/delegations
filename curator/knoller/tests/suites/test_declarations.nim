@@ -280,7 +280,7 @@ suite "Declarations":
 
   test "doc after `block:` moves above its declaration, as `#` comment":
     # Case held: `const X* = block:  ## Doc of X.`, which knoller at `6905e55e` passed with no
-    #   finding, though `nim doc` reads none after `block:` (suite "What `nim doc` reads").
+    #   finding, though `nim doc` reads none after `block:` (suite "Article VI.9").
     #   Domain: top level, section, local, label, doc lexer joins over lines, and other doc too.
     let found = "const X* = block:  ## Doc of X.\n  1\n"
     check checkDocs("a.nim", found).mapIt((it.line, it.brief)) == @[
@@ -408,7 +408,7 @@ suite "Declarations":
 
   test "each name of section reads as value opening `block`, past section nested in body":
     # Case held: `LUT_INITIAL_BY_PAIR` of `src/ricysoho/clusters.nim` of `ricysoho`, line 99,
-    #   below value whose block nests `let` section, whose doc doc position read nowhere.
+    #   below value whose block nests `let` section; doc position read its doc nowhere.
     #   Domain: name below nested `let`, `var` and `const`, at top level and in routine.
     let clusters = "const\n  LUT_PERMISSIBLE_BY_PAIR = block:\n" &
       "    ## jdice ro zunsna remei ja'i le vo javni pe `CLL 3.6`\n" &
@@ -467,8 +467,8 @@ suite "Declarations":
 
 
   test "doc of routine named in backticks stays its own, above value opening `block`":
-    # Case held: `∪` of `pga/operators.nim` of PGA library at `3d9696e`, line 401, whose doc doc
-    #   position read as doc of `const 𝐞̄ₙ` right below it, and wrote as `#`.
+    # Case held: `∪` of `pga/operators.nim` of PGA library at `3d9696e`, line 401; doc position
+    #   read its doc as doc of `const 𝐞̄ₙ` right below it, and wrote it as `#`.
     #   Domain: operator of each routine kind, under `when`, and doc after blank line.
     for kept in [
       "when IS_RIGID:\n  func `∪`*(m: Multivector): Multivector =\n" &
@@ -481,6 +481,10 @@ suite "Declarations":
       "proc `+`*(a, b: int): int =\n  ## Add.\n  let s = block:\n    a + b\n  s\n",
       "template `-`*(a: int): int =\n  ## Negate.\n  let s = block:\n    -a\n  s\n",
       "func `*`*(a, b: int): int =\n\n  ## Scale.\n  let s = block:\n    a * b\n  s\n",
+      "macro `@`*(a: untyped): untyped =\n  ## Quote.\n  let s = block:\n    a\n  s\n",
+      "iterator `..<`*(a, b: int): int =\n  ## Walk.\n  let s = block:\n    a\n  yield s\n",
+      "method `$`*(a: Base): string =\n  ## Show.\n  let s = block:\n    \"a\"\n  s\n",
+      "converter `!`*(a: int): bool =\n  ## Convert.\n  let s = block:\n    a > 0\n  s\n",
     ]:
       checkpoint kept
       check checkDocs("a.nim", kept).len == 0
@@ -878,7 +882,7 @@ suite "Declarations":
 
 
 
-suite "What `nim doc` reads":
+suite "Article VI.9":
   test "doc after value or on `=` line is read, and doc above, inside block or on keyword none":
     # Case held: rulings of D1 c of #1020 write `#` where Nim reads no doc, and `##` again
     #   where later Nim reads one; so this test fails once compiler building suite reads one
