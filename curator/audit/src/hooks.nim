@@ -193,8 +193,8 @@ type
 
   FiguresLine* = object  ## Define figures of line of reflection for one call, as line gives them.
     line*: string  ## First line that opens with label, stripped; empty where text holds none.
-    tokens*: Option[int]  ## Tokens right before first ` tokens`; none where none reads.
-    cost*: Option[float]  ## Dollars at first `$`; none where none reads.
+    tokens*: Option[int]  ## Tokens right before ` tokens`; none where no value or two read.
+    cost*: Option[float]  ## Dollars at `$` after space; none where no value or two read.
 
   Estimate* = object  ## Define percentiles of estimate, in base unit its cells give.
     low*: float  ## 5th percentile.
