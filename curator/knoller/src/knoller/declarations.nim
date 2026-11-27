@@ -48,23 +48,23 @@
 ##   Value of binding opening `block`, at any reach (D1 c of #1020): `block:` stays on its `=`
 ##     line, so body takes one indent, and doc stands on own lines above declaration, as `#`
 ##     comment, since `nim doc` reads none there and `##` above top-level declaration joins
-##     module's (suite "What `nim doc` reads"). Blank line stands above that doc, but where line
+##     module's (suite "Article VI.9"). Blank line stands above that doc, but where line
 ##     above opens body holding it, as `if` or section keyword, or file opens there (`blocks`).
 ##   Missing doc writes `# TODO: Document.` there for global such value; comment there counts as
-##     its doc, and so does `##` doc doc position moves there. Doc position moves doc after
+##     its doc, and so does `##` doc that doc position moves there. Doc position moves doc after
 ##     `block:`, with lines lexer joins to it, or else first in body, there; it writes `#` for
 ##     `##` above, and adds blank line above. Doc inside or after `block:` with comment above it
-##     too, and `block` opening below `=`, whose body needs dedent, wait for hand. `##`
-##     above that routine, module or other declaration holds, or lexer joins to doc trailing code
-##     above, stays its owner's (`movesBlock`).
+##     too, and `block` opening below `=` of value, never of routine's head, as lambda's, whose
+##     body needs dedent, wait for hand. `##` above that routine, module or other declaration
+##     holds, or lexer joins to doc trailing code above, stays its owner's (`movesBlock`).
 ##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
 ##     after blank line or off that indent moves there. One-line doc under bare `type` joins
 ##     keyword line, as group doc of block.
 ##   Doc position reads declaration as line of code inside `type`, `const`, `let` or `var`
 ##     section, at any depth of object, enum or branch, or such keyword's own line holding one
-##     declaration (`sections`), so value opening `block` too; line that continues expression
-##     declares nothing. Doc above and routine's doc it reads from declarations missing doc reads
-##     (`movesPlaced`).
+##     declaration (`sections`), so value opening `block` too; line that continues expression,
+##     or stands in body of value, as of `block`, declares nothing. Doc above and routine's doc
+##     it reads from declarations missing doc reads (`movesPlaced`).
 ##   Default of parameter (X.12): type goes where literal default gives exactly that type:
 ##     `int` of integer literal, `float` of float literal, `bool` of `true` or `false`, `string`
 ##     of string literal, `char` of character literal; `T` of `default(T)`, and `Option[T]` of
@@ -680,7 +680,7 @@ func writesDoc(source: string): seq[WriteDoc] =
     found = source.placements
     valued = source.blocks(found, source.sections)
   for p in found:
-    # Pass value opening `block` that holds comment above it, or doc doc position moves there;
+    # Pass value opening `block` that holds comment above it, or doc that doc position moves there;
     #   any doc near value whose `block` opens below `=`, which hand moves.
     if p.is_block:
       let b = valued.filterIt(it.line == p.line)
