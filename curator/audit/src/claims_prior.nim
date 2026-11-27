@@ -13,7 +13,8 @@
 ##     claim that waits, until other row of log marks same claim, by same marker, in other state;
 ##     row of last `DAYS_OPEN` days of log, since its delegate may write its reflection again, or
 ##       replay of its transcript may feed `stop` again, and `stop` writes each row whose key log
-##       lacks; row of no day, whose age reads no way;
+##       lacks; row of no day, whose age reads no way, as day in form of date that calendar
+##       lacks, as `2026-13-45` (`isDay`);
 ##     row whose key opens with prefix verb names, as delegate of study that still reads its rows.
 ##   Prior names last commit that held rolled rows, as `Pruned` row of record names commit before
 ##     prune, so `git show` of that commit gives each rolled row; verb refuses log that differs from
@@ -59,16 +60,27 @@ func claimMarked(key: string): string =
   (parts[0 ..< PART_STATE] & parts[PART_STATE + 1 .. ^1]).join($MARK_KEY)
 
 
+func isDay(date: string): bool =
+  ## Whether date names day that calendar holds: form of `isDateIso`, month from 1 to 12, and day
+  ##   from 1 to last of its month, leap year counted; `2026-13-45` names none.
+  if not date.isDateIso: return false
+  let
+    year = date[0 .. 3].parseInt
+    month = date[5 .. 6].parseInt
+    day = date[8 .. 9].parseInt
+  month in 1 .. 12 and day in 1 .. getDaysInMonth(Month(month), year)
+
+
 func isHeld*(claims: openArray[Claim]; cutoff: string; prefixes: openArray[string]): seq[bool] =
   ## Whether each row stays in log, since it can still change: claim that waits, until other row
-  ##   marks same claim by same marker in other state; row of no day, or of day `cutoff` or later;
-  ##   and row whose key opens with one of prefixes.
+  ##   marks same claim by same marker in other state; row of no day that calendar holds (`isDay`),
+  ##   or of day `cutoff` or later; and row whose key opens with one of prefixes.
   var marked: HashSet[string]
   for claim in claims:
     if claim.state notin {State.Waiting, State.Unspecified}: marked.incl claim.key.claimMarked
   for claim in claims:
     let is_waiting = claim.state == State.Waiting and claim.key.claimMarked notin marked
-    result.add is_waiting or not claim.date.isDateIso or claim.date >= cutoff or
+    result.add is_waiting or not claim.date.isDay or claim.date >= cutoff or
       prefixes.anyIt(claim.key.startsWith(it))
 
 
@@ -125,10 +137,11 @@ func textRolled*(
 
 
 proc dateCutoff(claims: openArray[Claim]): string =
-  ## Day `DAYS_OPEN` before latest day of claims, as `2026-10-28`; empty where no claim names day.
+  ## Day `DAYS_OPEN` before latest day of claims that calendar holds (`isDay`), as `2026-10-28`;
+  ##   empty where no claim names such day, so parse never meets day that calendar lacks.
   var latest = ""
   for claim in claims:
-    if claim.date.isDateIso and claim.date > latest: latest = claim.date
+    if claim.date.isDay and claim.date > latest: latest = claim.date
   if latest.len == 0: return ""
   (latest.parse(FORMAT_DATE, utc()) - initDuration(days = DAYS_OPEN)).format(FORMAT_DATE)
 
