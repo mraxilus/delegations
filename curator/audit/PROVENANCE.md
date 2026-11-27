@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | dae6d3de62b81f22 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 55f066c4dbef9f0a8eced3ff424be08566bd4759 |
+| Pruned  | 35efc2a7a342cb839167be1e1800031e4bff9e9e |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -2046,7 +2046,8 @@ the series only when the Architect asks.
   number by number, since text reads `2.4.10` below `2.4.2`. Cost: a branch that forked before the
   curators moved learns of the lag at `koch check`, which judges the merge with `main`.
 - `koch releases` sends a HEAD request for the `linux_x64` tarball that koch fetches, so a release
-  counts once koch can serve it. 200 reads as published, 404 as missing, and else as unread.
+  counts once koch can serve it. 200 reads as published, 404 as missing, and else as unread. Cost:
+  six asks where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
 - In the series of `X.Y.Z`, it asks each patch from `Z + 1` until two in a row are missing. From 1.6
   to 2.4, each series leaves out one patch number at most (HEAD of patches 0 to 24, 2026-11-26).
   Cost: a later gap of two would read as the end of the series, and exit 0.
@@ -2054,8 +2055,6 @@ the series only when the Architect asks.
   exits 1 where the pin of `curator/audit` lags its series, or names no release. A failed search
   exits 2, so the issue names a lag alone and never closes for work not done. An unread answer, a
   pin the host lacks, or 50 patches with no two misses in a row fail it, though 1.6 ends at 1.6.20.
-- Rejected: the tags of `nim-lang/Nim`, which name a tag and not the tarball of koch. Cost: six asks
-  where nothing is newer, each 0.18 s to 0.55 s through an HTTPS proxy, 2026-11-26.
 - Verified by `suites/test_releases.nim` over a fake host, 2026-11-26: each of 34 mutants of the
   search and the notice fails it. `askRelease`, which no suite reaches, holds by reading. By hand,
   `koch releases` names 2.4.2 and exits 0 in 2.54 s. It exits 1 on a copy whose driver pins 2.4.0,
