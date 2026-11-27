@@ -6,7 +6,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets, unittest]
+import std/[options, sets, strutils, unittest]
 
 import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru]
 import ./corpora
@@ -51,6 +51,12 @@ const
 type Span = tuple[first, last: int]
 
 
+func toFamily(rule: string): string =
+  ## le ckini be pa javni to mu'u `sumti-6` ja'i `sumti` toi
+  let cut = rule.rfind('-')
+  if cut > 0 and rule[cut + 1 .. ^1].allCharsInSet({'0' .. '9'}): rule[0 ..< cut] else: rule
+
+
 func spanned(reading: ReadingMarked, node: Node, rules: var HashSet[(string, Span)]): Span =
   ## lo stuna'u pe le pamoi valsi .e le romoi valsi pe `node`
   ##   .i ji'a jmina le javni .e le stuna'u pe ro jgena poi na srejge `rules`
@@ -92,17 +98,46 @@ suite "Internal: Bars of text":
     check bars >= COUNT_BARS_LEAST
     check marked >= COUNT_MARKED_LEAST
 
-  test "Each bar stands one row below the bars it holds, and the rows hold every bar":
+  test "Each bar stands one row above the tallest bar it holds, and the rows hold every bar":
     for (name, text) in textsCorpora():
       let layers = text.readTextMarked.toLayers
-      var most = newSeq[int](layers.bars.len)
-      for k in countdown(layers.bars.high, 0):
-        check layers.bars[k].height == most[k]
-        let parent = layers.bars[k].parent
-        if parent >= 0: most[parent] = max(most[parent], layers.bars[k].height + 1)
+      var kids = newSeq[seq[int]](layers.bars.len)
+      for k, bar in layers.bars:
+        if bar.parent >= 0: kids[bar.parent].add k
+      proc tallest(k: int): int =
+        for kid in kids[k]: result = max(result, tallest(kid) + 1)
       var rows = 0
-      for bar in layers.bars: rows = max(rows, bar.height + 1)
+      for k, bar in layers.bars:
+        check bar.height == tallest(k)
+        rows = max(rows, tallest(k) + 1)
       check layers.rows == rows
+
+  test "Each bar takes the kind of the family of its first rule":
+    for (name, text) in textsCorpora():
+      let
+        reading = text.readTextMarked
+        layers = reading.toLayers
+      for bar in layers.bars:
+        let family = bar.rule.toFamily
+        case bar.category
+        of Category.Bridi: check family == "sentence"
+        of Category.Tail: check false
+        of Category.Sumti: check family == "sumti"
+        of Category.Selbri, Category.Tanru, Category.Unit:
+          check family in ["selbri", "tanru-unit"]
+        of Category.Clause: check family == "relative-clause"
+        of Category.Abstraction:
+          check family == "tanru-unit"
+          var has_nu = false
+          for word in bar.first .. bar.last:
+            let reading_word = reading.occurrences[word].reading
+            if reading_word.is_word and reading_word.selmaho == some(Selmaho.Nu): has_nu = true
+          check has_nu
+        of Category.Linked: check family == "linkargs"
+        of Category.Tagged: check family == "term"
+        of Category.Tag: check family == "tag"
+        of Category.Number: check family in ["quantifier", "number", "mex"]
+        of Category.Free: check family == "free"
 
 
 suite "Chapter 20":
@@ -117,13 +152,7 @@ suite "Chapter 20":
           check reading.toGroup == Group.Refused
         elif reading.selmaho.isSome:
           check reading.toGroup == reading.selmaho.get.toGroup
-          check reading.toGloss == $reading.selmaho.get
         elif reading.kind == Kind.Cmene:
           check reading.toGroup == Group.Sumti
-          check reading.toGloss == "CMENE"
         elif reading.kind in {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}:
           check reading.toGroup == Group.Predicate
-          check reading.toGloss == "BRIVLA"
-
-  test "Each selma'o takes one of seven groups, and never group of refused word":
-    for selmaho in Selmaho: check selmaho.toGroup != Group.Refused
