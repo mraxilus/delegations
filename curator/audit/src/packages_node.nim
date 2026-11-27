@@ -7,11 +7,13 @@
 ##     Each dev dependency off `PACKAGES_ALLOWED` is finding, and so is each import of TypeScript
 ##       naming package off it. Specifier opening `.` or `/` is path, and `node:` is built-in.
 ##     Bare built-in, as `fs`, reads as package, and help names `node:fs`.
-##     Each `<script>` of page or SVG, and each `<base>`, whose address is no plain path of
-##       project is finding, since page may load package from other host; so is each entity.
+##     Each `<script>` of page or SVG, and each `<base>`, under any prefix, whose address is no
+##       plain path of project is finding, since page may load package from other host; so is each
+##       `srcdoc` of frame, entity and default of attribute.
 ##     Plain path holds `CHARS_PATH` alone before its query, and opens with no `//`. Rule decodes
 ##       nothing, since each decode copies browser in part, and each part it leaves out is way past.
-##     Rule refuses wherever browser may load, so tag inside HTML comment is finding too.
+##     Tag reads as HTML reads it, since quote outside value that ends it early hides address.
+##     Tag inside HTML comment takes same rule, though browser loads none of it.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
 ##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
@@ -36,9 +38,10 @@
 ##     from expression. Such miss can import package that listed tool pulls in and its lock
 ##     hoists, as `playwright-core`; import of address is expected to fail type check of `types`,
 ##     which resolves no address (unmeasured).
-##   Cost: inline script of page reads as none, and so does `<svg:script>`. Path holding query
-##     mark that reference encodes, or address of project in comment, is refused, though browser
-##     loads neither from other host.
+##   Cost: inline script of page reads as none, and so do frame, object and embed of other host,
+##     whose script runs in origin of that host, apart from page. Path holding query mark that
+##     reference encodes, or address of other host in comment, is refused, though browser loads
+##     neither.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
@@ -319,34 +322,40 @@ proc checkManifest*(path, text: string): seq[Finding] =
       )
 
 
-func attributes(tag: string): seq[tuple[name, value: string]] =
-  ## Read each attribute of text of tag past its name, as `a="v"`, `a='v'`, `a=v` or bare `a`,
-  ##   spaces round `=` allowed; name lowercase, as HTML reads it.
-  var cursor = 0
-  while cursor < tag.len:
-    while cursor < tag.len and tag[cursor] in Whitespace + {'/'}: inc cursor
-    let start = cursor
-    while cursor < tag.len and tag[cursor] notin Whitespace + {'=', '/'}: inc cursor
-    let name = tag[start ..< cursor].toLowerAscii
-    var probe = cursor
-    while probe < tag.len and tag[probe] in Whitespace: inc probe
-    if probe >= tag.len or tag[probe] != '=':
-      if name.len > 0: result.add (name: name, value: "")
+func attributes(text: string; at: int): seq[tuple[name, value: string]] =
+  ## Read each attribute of tag from `at`, past its name, to `>` that ends it, as HTML reads it:
+  ##   `a="v"`, `a='v'`, `a=v` or bare `a`, names lowercase.
+  ##   Quote opens value only past `=` and its spaces; elsewhere it is character of name or of bare
+  ##     value. Spaces are those of HTML alone, since wider set opens quote that browser reads as
+  ##     bare, and so ends tag before browser does, which hides each attribute after.
+  var cursor = at
+  while cursor < text.len:
+    while cursor < text.len and text[cursor] in SPACES_HTML + {'/'}: inc cursor
+    if cursor >= text.len or text[cursor] == '>': return
+
+    # Name opens at any other character, `=` too, and runs to space, `/`, `>` or `=`.
+    let opening = cursor
+    inc cursor
+    while cursor < text.len and text[cursor] notin SPACES_HTML + {'/', '>', '='}: inc cursor
+    let name = text[opening ..< cursor].toLowerAscii
+    while cursor < text.len and text[cursor] in SPACES_HTML: inc cursor
+    if cursor >= text.len or text[cursor] != '=':
+      result.add (name: name, value: "")
       continue
 
-    # Read value past `=`, quoted to its closing quote, or bare to next space.
-    inc probe
-    while probe < tag.len and tag[probe] in Whitespace: inc probe
-    if probe < tag.len and tag[probe] in {'"', '\''}:
+    # Value past `=`, quoted to its closing quote, or bare to space or `>`.
+    inc cursor
+    while cursor < text.len and text[cursor] in SPACES_HTML: inc cursor
+    if cursor < text.len and text[cursor] in {'"', '\''}:
       let
-        closing = tag.find(tag[probe], probe + 1)
-        ending = if closing < 0: tag.len else: closing
-      result.add (name: name, value: tag[probe + 1 ..< ending])
+        closing = text.find(text[cursor], cursor + 1)
+        ending = if closing < 0: text.len else: closing
+      result.add (name: name, value: text[cursor + 1 ..< ending])
       cursor = ending + 1
     else:
-      cursor = probe
-      while cursor < tag.len and tag[cursor] notin Whitespace: inc cursor
-      result.add (name: name, value: tag[probe ..< cursor])
+      let value = cursor
+      while cursor < text.len and text[cursor] notin SPACES_HTML + {'>'}: inc cursor
+      result.add (name: name, value: text[value ..< cursor])
 
 
 func isPathPlain(value: string): bool =
@@ -364,34 +373,24 @@ func isPathPlain(value: string): bool =
 func tagsNamed(
   text, name: string
 ): seq[tuple[line: int, attributes: seq[tuple[name, value: string]]]] =
-  ## Read each tag of text with name, with no regard to case of letters, as its line and attributes.
-  ##   Tag reads to first `>` outside quote, across lines.
-  let
-    lowered = text.toLowerAscii
-    opening = "<" & name
-  var at = lowered.find(opening)
+  ## Read each tag of text with name, under any prefix, as `svg:script`, with no regard to case of
+  ##   letters, as its line and attributes.
+  let lowered = text.toLowerAscii
+  var at = lowered.find('<')
   while at >= 0:
-    let after = at + opening.len
-    if after < text.len and text[after] in Whitespace + {'>', '/'}:
-      var
-        cursor = after
-        quote = none(char)
-      while cursor < text.len and (quote.isSome or text[cursor] != '>'):
-        if quote.isSome and text[cursor] == quote.get: quote = none(char)
-        elif quote.isNone and text[cursor] in {'"', '\''}: quote = some(text[cursor])
-        inc cursor
-      result.add (
-        line: text[0 ..< at].count('\n') + 1,
-        attributes: text[after ..< cursor].attributes,
-      )
-    at = lowered.find(opening, at + 1)
+    var ending = at + 1
+    while ending < text.len and text[ending] notin Whitespace + {'>', '/'}: inc ending
+    let written = lowered[at + 1 ..< ending]
+    if written[written.rfind(':') + 1 .. ^1] == name:
+      result.add (line: text[0 ..< at].count('\n') + 1, attributes: text.attributes(ending))
+    at = lowered.find('<', at + 1)
 
 
 func checkPage*(path, text: string): seq[Finding] =
-  ## Report each `<script>` and `<base>` whose address is no plain path of project, and each
-  ##   entity, which can name address; at line of each.
+  ## Report each `<script>` and `<base>` whose address is no plain path of project, each `srcdoc`
+  ##   of frame, and each entity and default of attribute, which can name address; at line of each.
   ##   Script takes address from `src`, or from `href` under any prefix, as `xlink:href` of SVG.
-  ##   Rule refuses wherever browser may load from other host, so tag inside comment is finding too.
+  ##   Tag inside comment takes same rule, though browser loads none of it.
   for (name, is_base) in [("script", false), ("base", true)]:
     for (line, attributes) in text.tagsNamed(name):
       for (attribute, value) in attributes:
@@ -405,16 +404,25 @@ func checkPage*(path, text: string): seq[Finding] =
           "Page loads script from other host, or may; take base JavaScript, or script of " &
             "project at plain path" & CITE_RULE & "; got `" & value.escape("", "") & "`.",
         )
+  for (line, attributes) in text.tagsNamed("iframe"):
+    if attributes.anyIt(it.name == "srcdoc"):
+      result.add finding(
+        path,
+        line,
+        "Frame holds document in `srcdoc`, which can load script from other host in origin of " &
+          "page; frame page of project at plain path by `src`" & CITE_RULE & "; got `srcdoc`.",
+      )
   let lowered = text.toLowerAscii
-  var at = lowered.find("<!entity")
-  while at >= 0:
-    result.add finding(
-      path,
-      text[0 ..< at].count('\n') + 1,
-      "Page declares entity, which can name address of script from other host" & CITE_RULE &
-        "; got `<!ENTITY`.",
-    )
-    at = lowered.find("<!entity", at + 1)
+  for (declaration, kind) in [("<!entity", "entity"), ("<!attlist", "default of attribute")]:
+    var at = lowered.find(declaration)
+    while at >= 0:
+      result.add finding(
+        path,
+        text[0 ..< at].count('\n') + 1,
+        "Page declares " & kind & ", which can name address of script from other host" &
+          CITE_RULE & "; got `" & declaration.toUpperAscii & "`.",
+      )
+      at = lowered.find(declaration, at + 1)
 
 
 proc checkPackagesNode*(tree: Tree): seq[Finding] =
