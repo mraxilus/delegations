@@ -281,6 +281,27 @@ suite "Static check":
     check found.mapIt(it.line) == @[2, 2]
     check found[1].message.endsWith("got `//cdn.example/b.js`.")
 
+  test "page script names its source in each form that HTML and SVG allow":
+    # Case: review of #1069; each form below but first gave no finding, and `data-src` gave one.
+    #   Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href` and `xlink:href`
+    #   of SVG; then attribute that only ends in `src`, and tag that only opens with `script`.
+    for tag in [
+      "<script src=\"https://cdn.example/a.js\"></script>",
+      "<script\n  src=\"https://cdn.example/a.js\"></script>",
+      "<script src=https://cdn.example/a.js></script>",
+      "<script src = \"https://cdn.example/a.js\"></script>",
+      "<SCRIPT SRC=\"https://cdn.example/a.js\"></SCRIPT>",
+      "<script href=\"https://cdn.example/a.js\"/>",
+      "<script xlink:href='//cdn.example/a.js'/>",
+    ]:
+      let found = checkPage(PATH_PAGE, "\n" & tag)
+      check found.len == 1 and found[0].line == 2
+    for tag in [
+      "<script data-src=\"https://cdn.example/a.js\" src=\"a.js\"></script>",
+      "<scripting src=\"https://cdn.example/a.js\"></scripting>",
+    ]:
+      check checkPage(PATH_PAGE, tag).len == 0
+
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
       entry(PATH_MANIFEST, "{\"dependencies\": {\"lodash\": \"4.17.15\"}}"),
