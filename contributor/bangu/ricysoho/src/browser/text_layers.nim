@@ -1042,7 +1042,7 @@ proc moved(event: JsObject): bool =
 
 #[ ni'o ni'o ni'o lo nu cenba le selci'a ]#
 
-func diff(source, goal: cstring): (int, int, cstring) =
+func diff*(source, goal: cstring): (int, int, cstring) =
   ## le traji cmalu nu cenba poi galfi `source` `goal`
   let n = min(source.lengthUnits, goal.lengthUnits)
   var low = 0
@@ -1053,7 +1053,7 @@ func diff(source, goal: cstring): (int, int, cstring) =
   (low, source.lengthUnits - k, goal.slice(low, goal.lengthUnits - k))
 
 
-func shifted(model: Model, low, high: int, inserted: cstring, text: cstring): Model =
+func shifted*(model: Model, low, high: int, inserted: cstring, text: cstring): Model =
   ## le se tcidu poi muvdu ja'i pa nu cenba
   ##   .i lo valsi poi lidne le nu cenba cu stali
   ##   .i lo valsi poi selkra le nu cenba cu muvdu

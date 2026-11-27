@@ -7,10 +7,11 @@
 ##   .i ro linji cu zvati ro valsi pe vo'a
 ##   .i lo nu ciska cu stali le selci'a .e le cuxna
 ##   .i pa gunka .a le papri cu tcidu le selci'a
+##   .i ro valsi .e ro linji cu drani ba ro nu cenba poi selzba
 
 {.experimental: "strictFuncs".}
 
-import std/[asyncjs, jsffi, options, strutils]
+import std/[asyncjs, jsffi, options, random, strutils]
 
 import ../../src/browser/text_layers
 import ./report
@@ -26,6 +27,11 @@ const
   WAIT_MOST = 600  ## lo klani be lo nu le cipra cu denpa pa se tcidu ta'i pa pixra
   CLASS_GROUP = ["g-pred", "g-sumti", "g-num", "g-tag", "g-link", "g-free", "g-struct", "g-bad"]
     ## lo klesi pe `CSS` pe ro girzu be lo valsi to `text_layers.nim` toi
+  SEED = 1055  ## lo tsiju be lo nu cenba poi selzba
+  COUNT_EDITS = 60  ## lo klani be lo nu cenba poi selzba ku'o pe ro se cipra
+  LETTERS = ["a", " ", "'", ".", "\n", "mi", "😀"]
+    ## lo pagbu be lo selci'a poi lo nu cenba cu punji ke'a
+    ##   .i pa pagbu cu vasru pa lerfu poi zmadu `U+FFFF`
 
 
 let DOCUMENT {.nodecl, importc: "document".}: JsObject
@@ -48,6 +54,8 @@ proc pasted(editor: JsObject, text: cstring) {.importjs:
   ## rinka pa nu punji lo selci'a
 proc focused(node: JsObject) {.importjs: "#.focus()".}
   ## punji le cuxna ne'i le dacti
+proc slice(text: cstring, a, b: int): cstring {.importjs: "#.slice(#, #)".}
+  ## le pagbu be le selci'a poi zvati `a` bi'o `b`
 
 
 proc described(model: Model): string =
@@ -74,6 +82,22 @@ proc settled() {.async.} =
   for k in 0 ..< WAIT_MOST:
     if not isAsking() and not current().is_moved: return
     await nextFrame()
+
+
+proc isSound(model: Model): bool =
+  ## jdice lo du'u ro valsi .e ro linji pe le se tcidu cu drani
+  ##   .i ro valsi cu vasru su'o pa lerfu gi'e lidne le bavla'i valsi gi'e mintu le pagbu be le
+  ##       selci'a
+  ##   .i ro linji cu vasru su'o pa valsi
+  ##   .i le mamta be ro linji cu lidne ri
+  var after = 0
+  for word in model.words:
+    if word.s >= word.e or word.s < after or word.e > model.text.len: return false
+    if word.text != model.text.slice(word.s, word.e): return false
+    after = word.e
+  for k, bar in model.bars:
+    if bar.first > bar.last or bar.last >= model.words.len or bar.parent >= k: return false
+  true
 
 
 proc runSuite() {.async.} =
@@ -121,6 +145,23 @@ proc runSuite() {.async.} =
       let (node, at) = toPoint(offset)
       expectThat toOffset(node, at) == offset, "offset " & $offset & " maps back: " & text
   ended "Each offset of text maps to place of page, and back to itself"
+
+  var random_edits = initRand(SEED)
+  for text in texts:
+    let model = cstring(text).toModel
+    for k in 0 ..< COUNT_EDITS:
+      let
+        source = cstring(text)
+        a = random_edits.rand(source.len)
+        b = a + random_edits.rand(source.len - a)
+        inserted = cstring(random_edits.sample(LETTERS))
+        goal = source.slice(0, a) & inserted & source.slice(b, source.len)
+        (low, high, put) = diff(source, goal)
+      expectThat source.slice(0, low) & put & source.slice(high, source.len) == goal,
+          "diff rebuilds text it reaches: " & $goal
+      expectThat model.shifted(low, high, put, goal).isSound,
+          "edit keeps words and bars sound: " & $goal
+  ended "Each edit keeps each word on its letters and each bar on its words"
 
   drawn(cstring("").toModel, none((int, int, bool)))
   editor.focused
