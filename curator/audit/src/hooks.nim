@@ -107,6 +107,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, sequtils, strutils, tables, uri]
+from std/unicode import isWhiteSpace, runeAt, runeLenAt
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -186,6 +187,7 @@ type
     amount*: float  ## Dollars, minutes or count, after scale of `k` or `M`.
     unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `m` or `h`; `Unspecified` for bare.
     stop*: int  ## Index after value in its text.
+    is_scaled*: bool  ## Scale moves point of value, as `k`, `M` or `million` does.
 
   Estimate* = object  ## Define percentiles of estimate, in base unit its cells give.
     low*: float  ## 5th percentile.
@@ -507,7 +509,8 @@ const
   MARKERS_SCORED = ["✅", "⬜"]
     ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
   MARK_COST = '$'  ## Mark before value of cost, as `$2.50`.
-  MARKS_GROUP = {',', ' '}
+  MARK_COMMA = ','  ## Mark of group, which value refuses before digit that opens no group.
+  MARKS_GROUP = {MARK_COMMA, ' '}
     ## Marks before each group of three digits of value, one to value, as `170,000` or `170 000`.
   LENGTH_GROUP = 3  ## Digits of group after mark of `MARKS_GROUP`.
   SCALES_VALUE = [('k', 3), ('M', 6)]
@@ -537,11 +540,13 @@ const
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of result of estimate states, since log reads its outcome there.
   RULE_OUTCOME_BULLETS = "Cell under `Result` of number of bullets marked ✅ or ⬜ opens with its " &
-    "value, bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or " &
-    "`h` for time " & CITATION_BULLETS
+    "value, bare in unit its text names, with no scale for cost or time, or with mark of that " &
+    "unit: `$` for cost, `s`, `m` or `h` for time " & CITATION_BULLETS
     ## Rule that finding of result of number of bullets states: its percentiles stand bare in
     ##   its text, so bare value reads in unit text names (`outcomeBullets`); cell that opens with
     ##   label, marker or word, or with no value, takes it too, as log reads no outcome there.
+    ##   Bare value with scale reads as cost or time in no case, as `15 M` of time is 15 minutes or
+    ##     15,000,000 (choice).
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
     "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of block with no number, or number of other row, states.
@@ -2565,7 +2570,9 @@ func valueAt*(text: string, at = 0): Option[Value] =
   ##   cost, digits with each group of three after comma, or after one space, and decimal part,
   ##   scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m` or `h` of
   ##   time; none where no digit opens it after any `$`, both marks of cost and time stand, or
-  ##   letter or digit follows it.
+  ##   letter, digit, or comma and digit follow it.
+  ##   Comma and digit after value make none, as group of other mark, as in `39 100,000`, or
+  ##     decimal comma, as in `1,5h`, would read wrong value (choice).
   ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
   ##     `39,100,000`, `39.1 M` and `39 100 000` do; time reads in minutes, since range of time is
   ##     in minutes.
@@ -2627,7 +2634,8 @@ func valueAt*(text: string, at = 0): Option[Value] =
       inc i
       break
   if i < text.len and text[i] in Letters + Digits: return
-  some(Value(amount: amount, unit: unit, stop: i))
+  if i + 1 < text.len and text[i] == MARK_COMMA and text[i + 1] in Digits: return
+  some(Value(amount: amount, unit: unit, stop: i, is_scaled: places > 0))
 
 
 func unitEstimate(text: string, values: openArray[Value]): Option[UnitNumber] =
@@ -2665,31 +2673,35 @@ func estimateCells(text: string, cells: array[3, string]): Option[Estimate] =
 
 
 func isRunOn(text: string, at: int): bool =
-  ## Decide whether value that ends at `at` of text runs on past whitespace into digit, word of one
-  ##   letter, or word of `WORDS_TIME`: group, scale or mark of time that value cannot read there,
-  ##   as in `39 1`, `39.1 K` or `1.5 h`.
+  ## Decide whether value that ends at `at` of text runs on past whitespace, ASCII or Unicode, into
+  ##   digit, word of one letter, word of `WORDS_TIME`, or word of `WORDS_SCALE` in any case:
+  ##   group, scale or mark of time that value cannot read there, as in `39 1`, `39.1 K`, `1.5 h`,
+  ##   or `39.1 M` after no-break space, which value reads as no space (choice).
   var i = at
-  while i < text.len and text[i] in Whitespace: inc i
+  while i < text.len and text.runeAt(i).isWhiteSpace: i += text.runeLenAt(i)
   if i == at or i == text.len: return false
   if text[i] in Digits: return true
   var stop = i
   while stop < text.len and text[stop] in Letters: inc stop
-  stop - i == 1 or text[i ..< stop].toLowerAscii in WORDS_TIME
+  let word = text[i ..< stop].toLowerAscii
+  stop - i == 1 or word in WORDS_TIME or WORDS_SCALE.anyIt(it[0].toLowerAscii == word)
 
 
 func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[float] =
   ## Read outcome that opens cell under `Result` of number of unit: amount of value at its start
   ##   (`valueAt`) whose marks give unit, bare for `Tokens` and `Count`; none otherwise, so
   ##   `15, inside` gives no minutes of estimate, and `$1.10` no count.
-  ##   Where `as_bare`, as number of bullets writes its percentiles bare, bare value reads in unit
-  ##     too, and value of any mark reads for `Unspecified`, whose number takes no score.
+  ##   Where `as_bare`, as number of bullets writes its percentiles bare, bare value with no scale
+  ##     reads in unit too, and value of any mark reads for `Unspecified`, whose number takes no
+  ##     score; so `15 M` gives no minutes, as `M` of million and `m` of minutes differ by case.
   ##   Value that runs on past space (`isRunOn`) gives none, so `1.5 h` gives no 1.5 minutes.
   let value = cell.valueAt
   if value.isNone or cell.isRunOn(value.get.stop): return
   let
     marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
+    is_bare = value.get.unit == UnitNumber.Unspecified and not value.get.is_scaled
     is_read = value.get.unit == marked or
-      (as_bare and UnitNumber.Unspecified in {value.get.unit, unit})
+      (as_bare and (unit == UnitNumber.Unspecified or is_bare))
   if is_read: some(value.get.amount) else: none(float)
 
 
