@@ -106,8 +106,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, sequtils, strutils, tables, uri]
-from std/unicode import isWhiteSpace, runeAt, runeLenAt
+import std/[algorithm, json, math, options, os, sequtils, strutils, tables, uri]
+from std/unicode import isWhiteSpace, lastRune, runeAt, runeLenAt
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -188,6 +188,11 @@ type
     unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `m` or `h`; `Unspecified` for bare.
     stop*: int  ## Index after value in its text.
     is_scaled*: bool  ## Scale moves point of value, as `k`, `M` or `million` does.
+
+  FiguresLine* = object  ## Define figures of line of reflection for one call, as line gives them.
+    line*: string  ## First line that opens with label, stripped; empty where text holds none.
+    tokens*: Option[int]  ## Tokens right before first ` tokens`; none where none reads.
+    cost*: Option[float]  ## Dollars at first `$`; none where none reads.
 
   Estimate* = object  ## Define percentiles of estimate, in base unit its cells give.
     low*: float  ## 5th percentile.
@@ -547,6 +552,11 @@ const
     ##   label, marker or word, or with no value, takes it too, as log reads no outcome there.
     ##   Bare value with scale reads as cost or time in no case, as `15 M` of time is 15 minutes or
     ##     15,000,000 (choice).
+  RULE_LINE = "Line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
+    "at `$`, each plain value after space, as cell holds it, and value of tokens holds no group " &
+    "after space (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of line `**Subagent:**` that gives no tokens or no cost states, since
+    ##   log writes field of neither then, and rows of call lose both.
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
     "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of block with no number, or number of other row, states.
@@ -2565,12 +2575,12 @@ func percentageCell(cell: string): Option[float] =
   some(cell[0 ..< i].parseFloat / 100)
 
 
-func valueAt*(text: string, at = 0): Option[Value] =
+func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
   ## Read value that opens at `at` of text, as cell of estimate writes it (7194411522): `$` of
-  ##   cost, digits with each group of three after comma, or after one space, and decimal part,
-  ##   scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m` or `h` of
-  ##   time; none where no digit opens it after any `$`, both marks of cost and time stand, or
-  ##   letter, digit, or comma and digit follow it.
+  ##   cost, digits with each group of three after one mark of `groups`, comma or one space, and
+  ##   decimal part, scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m`
+  ##   or `h` of time; none where no digit opens it after any `$`, both marks of cost and time
+  ##   stand, or letter, digit, or comma and digit follow it.
   ##   Comma and digit after value make none, as group of other mark, as in `39 100,000`, or
   ##     decimal comma, as in `1,5h`, would read wrong value (choice).
   ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
@@ -2591,7 +2601,7 @@ func valueAt*(text: string, at = 0): Option[Value] =
   var whole = text[start ..< i]
 
   # Read each group of three digits after mark that opens first one, so `1,000 000` reads 1,000.
-  let separator = (if i < text.len and text[i] in MARKS_GROUP: text[i] else: '\0')
+  let separator = (if i < text.len and text[i] in groups: text[i] else: '\0')
   while i + LENGTH_GROUP < text.len and text[i] == separator and
       text[i + 1 .. i + LENGTH_GROUP].allCharsInSet(Digits) and
       (i + LENGTH_GROUP + 1 == text.len or text[i + LENGTH_GROUP + 1] notin Digits):
@@ -2705,27 +2715,47 @@ func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[flo
   if is_read: some(value.get.amount) else: none(float)
 
 
-func figuresLine*(text: string, labels: openArray[string]): tuple[tokens: int, cost: float] =
-  ## Read tokens and cost of first line of text that opens with one of labels, in any case: bare
-  ##   value that ends right before first ` tokens`, longest first, and value of cost at first `$`,
-  ##   each as cell reads it (`valueAt`), so `39.1M tokens` and `39100k tokens` read 39,100,000;
-  ##   zero where none.
+func isFigureAt(line: string, at: int): bool =
+  ## Decide whether figure of line of reflection may open at `at`: space, or start of line, before
+  ##   it, and no digit before that space, so no mark of emphasis or code, and no number before it
+  ##   that group after space would join, as `round 2 170 000`.
+  if at == 0: return true
+  let (rune, size) = line.lastRune(at - 1)
+  rune.isWhiteSpace and (at - size == 0 or line[at - size - 1] notin Digits)
+
+
+func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
+  ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
+  ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
+  ##   Tokens are whole bare value that opens after space (`isFigureAt`) and ends right before
+  ##     first ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000.
+  ##   Cost is value at first `$`, after space, that no mark of `MARKS_KIND` and nothing value
+  ##     cannot read follows (`isRunOn`).
+  ##   Space parts words of line, so it reads no group after space, and value after digit and
+  ##     space is none: `round 2 170 000 tokens` gives none, where it would read 2,170,000 or
+  ##     170,000 (choice). Mark of emphasis or code around figure makes none, as no cell reads
+  ##     value inside them.
   ##   Cost: word between value and ` tokens`, as `170,000 cached tokens`, gives none.
   for line in text.splitLines:
     let lower = line.strip(trailing = false).toLowerAscii
     if not labels.anyIt(lower.startsWith(it)): continue
+    result.line = line.strip
     let at = line.find(" " & WORD_TOKENS)
     for start in 0 ..< max(at, 0):
-      if line[start] notin Digits or (start > 0 and line[start - 1] in Digits + {POINT_DECIMAL}):
-        continue
-      let value = line.valueAt(start)
-      if value.isSome and value.get.stop == at and value.get.unit == UnitNumber.Unspecified:
-        result.tokens = int(value.get.amount)
-        break
+      if line[start] notin Digits or not line.isFigureAt(start): continue
+      let value = line.valueAt(start, {MARK_COMMA})
+      if value.isNone or value.get.stop != at: continue
+      if value.get.unit == UnitNumber.Unspecified and value.get.amount >= 1 and
+          value.get.amount == value.get.amount.floor:
+        result.tokens = some(int(value.get.amount))
+      break
     let dollar = line.find(MARK_COST)
-    if dollar >= 0:
-      let value = line.valueAt(dollar)
-      if value.isSome and value.get.unit == UnitNumber.Cost: result.cost = value.get.amount
+    if dollar >= 0 and line.isFigureAt(dollar):
+      let value = line.valueAt(dollar, {MARK_COMMA})
+      if value.isSome and value.get.unit == UnitNumber.Cost and value.get.amount > 0 and
+          not line.isRunOn(value.get.stop) and
+          (value.get.stop == line.len or line[value.get.stop] notin MARKS_KIND):
+        result.cost = some(value.get.amount)
     return
 
 
@@ -3007,6 +3037,17 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
         result.add finding("", 0, Check.TableReflection, RULE_OUTCOME_BULLETS & got)
 
 
+func findingsLine(text: string): seq[Finding] =
+  ## Report line `**Subagent:**` of reflection text that gives no tokens or no cost
+  ##   (`figuresLine`), since log then writes neither for rows of its call; reflection with no
+  ##   such line takes none, as no rule of hook asks for it (choice).
+  ##   Line `**Critic:**`, which log reads for call of critic, takes none, as GUIDE.md names no
+  ##     such label.
+  let figures = text.figuresLine(LABELS_SUBAGENT)
+  if figures.line.len > 0 and (figures.tokens.isNone or figures.cost.isNone):
+    result.add finding("", 0, Check.LineReflection, RULE_LINE & "; got `" & figures.line & "`.")
+
+
 func checkTables(subagents: Subagents): seq[Finding] =
   ## Report each part of claim that tables of `## Prediction` block of current model turn lack
   ##   (`findingsPrediction`): turn of block is turn whose stop delegate mends it in, since block
@@ -3048,7 +3089,9 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
   let taken = subagents.blocksTaken(kinds).filterIt(it >= 0)
     .mapIt(subagents.predictions[it].text.forecasts).concat
   for reflection in subagents.reflections:
-    if reflection.place.turn == current: result.add findingsReflection(reflection.text, taken)
+    if reflection.place.turn != current: continue
+    result.add reflection.text.findingsLine
+    result.add findingsReflection(reflection.text, taken)
 
 
 func checkBlocks*(subagents: Subagents; kinds: openArray[string]): seq[Finding] =

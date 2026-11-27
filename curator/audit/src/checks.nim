@@ -142,6 +142,7 @@ type Check* {.pure.} = enum  ## Define one check of koch, by rule it holds.
     ## Tables of prediction give each claim number, text, confidence or rising percentiles, and
     ##   criterion.
   TableReflection = "reflection table"  ## Reflection holds table of each claim predicted.
+  LineReflection = "reflection line"  ## Line `**Subagent:**` of reflection gives tokens and cost.
   Reflection = "reflection"  ## Report of critic takes reflection of its own.
   CheckPush = "push check"  ## Commit pushed is one `koch check` passed.
 

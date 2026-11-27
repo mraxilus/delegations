@@ -14,7 +14,8 @@
 ##     `%` of judgement or 90% of estimate (7200557915), else percentage of cell under
 ##     `Confidence` or `%` of reflection, since bullet states none apart. Tokens and cost are value
 ##     right before first ` tokens` and value at first `$` of line `**Subagent:**`, as cell reads
-##     each (`figuresLine`); call of critic that line does not name reads line `**Critic:**`.
+##     each (`figuresLine`), else zero, which hook refuses; call of critic that line does not name
+##     reads line `**Critic:**`.
 ##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
 ##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
 ##     end it, takes last three numbers of its text, unit its text names (`unitText`), and value
@@ -299,8 +300,8 @@ func claimsTurn*(
         confidence: forecast.confidence.get(row.confidence.confidenceCell),
         state: state,
         marker: Marker.Delegate,
-        tokens: figures.tokens,
-        cost: figures.cost,
+        tokens: figures.tokens.get(0),
+        cost: figures.cost.get(0),
         address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
         key: [reflection.delegate, call.id, $forecast.position, NAMES_STATE[state]].join("/"),
         number: forecast.numberForecast(row),
