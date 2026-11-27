@@ -19,9 +19,9 @@
 ##
 ##   Rejected: broad form, i.e. every paragraph blank line opens: 45 lines by count on #443.
 ##   Cost: scanner, never parser: routine reads from line opening with its keyword and name,
-##           so lambda's body reads as lines of routine holding it, and test as `test "…":`.
+##     so lambda's body reads as lines of routine holding it, and test as `test "…":`.
 ##   Cost: line inside string spanning lines is no line of code, so long literal counts its
-##           first line alone.
+##     first line alone.
 
 {.experimental: "strictFuncs".}
 

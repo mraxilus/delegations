@@ -44,10 +44,10 @@
 ##
 ##   Cost: name is read where file itself declares it, so name of other file stays bare.
 ##   Cost: two spaces between words, outside backticks and quotes and after no closing mark,
-##           comma or semicolon, read as aligned column, so such sentence holds no prose.
+##     comma or semicolon, read as aligned column, so such sentence holds no prose.
 ##   Cost: `#` comment of code at odd step that reads as no code, as `# echo x`, reads as
-##           prose; `#` line of prose that holds call glued to name reads as code, so it takes
-##           no report.
+##     prose; `#` line of prose that holds call glued to name reads as code, so it takes
+##     no report.
 
 {.experimental: "strictFuncs".}
 

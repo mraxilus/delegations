@@ -39,7 +39,7 @@
 ##     form, value whose backtick would widen narrow line stays, finding and all.
 ##   Cost: scanner, never parser; format through `%` (`"$1" % [x]`) is unread.
 ##   Cost: `formatValue` of dependency is unread, and wrap holding value that would not fit
-##           stays whole, though join inside one of its lines would fit.
+##     stays whole, though join inside one of its lines would fit.
 
 {.experimental: "strictFuncs".}
 
