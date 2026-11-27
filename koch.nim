@@ -673,10 +673,9 @@ proc run(options: Options): int =
     let
       tree = options.root.readTree
       directories = tree.directoriesNode(options.directoriesScoped(tree))
-    # Project named with no lock asks npm nothing, so its exit 0 would close issue of lock it lost.
-    if options.project.len > 0 and directories.len == 0:
-      stderr.write "koch advisories: project carries no node manifest beside its lock; got `" &
-        options.project & "`.\n"
+    let failure_named = failureNamed(options.project, directories)
+    if failure_named.len > 0:
+      stderr.write "koch advisories: " & failure_named & "\n"
       return 2
     let (lines, named, failure) =
       checkAdvisories(readLocked(options.root, directories), askAudit, askLatest)

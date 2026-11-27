@@ -377,6 +377,14 @@ proc readAudit*(answer: Answer): tuple[advisories: seq[Advisory], failure: strin
       " advisories")
 
 
+func failureNamed*(project: string, directories: openArray[string]): string =
+  ## Read why verb refuses project named on command line; empty where none is named, or where
+  ##   named one carries node manifest beside its lock.
+  ##   Project named with no lock asks npm nothing, so its exit 0 would read as clean lock.
+  if project.len == 0 or directories.len > 0: return ""
+  "project carries no node manifest beside its lock; got `" & project & "`."
+
+
 proc versionLocked*(lock, name: string): Option[string] =
   ## Read version lock holds for dependency of project; none where lock names none.
   let node =
