@@ -85,6 +85,7 @@ proc findingsPruned*(root: string, tree: Tree): seq[Finding] =
       result.add finding(
         path,
         0,
+        Check.RowPruned,
         "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
       )
 
@@ -233,8 +234,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
       result.add finding(
         path_config,
         0,
+        Check.ConfigTypescript,
         "Project holding TypeScript carries `tsconfig.json` at its root (CONTRIBUTOR.md, " &
-          "TypeScript); got none.",
+          "TypeScript).",
       )
 
   # Names: every Nim file is held to words glossaries admit, root and its own project, acronyms

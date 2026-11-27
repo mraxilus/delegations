@@ -9,7 +9,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[edits, landmarks, rules]
+import ../../src/knoller/[edits, landmarks, reports, rules]
 import ./sources
 
 
@@ -51,8 +51,8 @@ suite "Article V.8":
       check checkLandmarks("a.nim", written, landmarks).len == 0
     let found = checkLandmarks("a.nim", "let a = 1\nif b.grade == Grade(1): discard\n", landmarks)
     check found.mapIt((it.line, it.rule)) == @[(2, Rule.AliasLandmark)]
-    check found[0].message ==
-      "Landmark index stands as its alias, `Grade.vector`; got `Grade(1)`."
+    check found[0].brief ==
+      "landmark index stands as its alias, `Grade.vector`; got `Grade(1)`"
     let (_, reports) = editsLandmark("a.nim", "let a = Grade(1)\n", landmarks, [])
     check reports.mapIt((it.line, it.rule)) == @[(1, Rule.AliasLandmark)]
 
@@ -74,8 +74,8 @@ suite "Article V.8":
       twice = "template a*(t: typedesc[T]): T = T(5)\ntemplate b*(t: typedesc[T]): T = T(5)\n"
       chosen = landmarksDeclared([twice])
       found = checkLandmarks("a.nim", "let c = T(5)\n", chosen)
-    check found.mapIt(it.message) ==
-      @["Landmark index stands as one of its aliases, `T.a` or `T.b`; got `T(5)`."]
+    check found.mapIt(it.brief) ==
+      @["landmark index stands as one of its aliases, `T.a` or `T.b`; got `T(5)`"]
     check "let c = T(5)\n".fixed(chosen) == "let c = T(5)\n"  # choice stays for hand
     check "let g = Grade(1)\n".fixed(landmarks, fenced = [0]) == "let g = Grade(1)\n"  # fence
     let wide = "let g = " & 'x'.repeat(81) & " + Grade(1)\n"  # 100 characters, alias widens

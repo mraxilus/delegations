@@ -511,10 +511,11 @@ project and nothing checked it:
 - A `koch <verb>` written as a command, outside contributor code, must name a verb that koch
   dispatches. A stale one is a finding.
 
-A finding prints in one form, and the exit code is 1:
+A finding prints through `knoller/report`, in the two forms of STYLE.md §3, and the exit code
+is 1. A hook and a log take the line form, where help stands last:
 
 ```text
-path:line: message; got `value`.
+path:line:column: rule: actual="…" expect="…" message="…" help="…"
 ```
 
 Kinds, domains, root entries, project files, commit types and banned words are data at the

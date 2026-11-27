@@ -3,6 +3,9 @@
 ##   Semantic pass asks compiler once for each job and waits on answer: at `b585ea65`, before
 ##     pool, 59 calls of rules 7 and 11 in `koch fix --dry-run curator/knoller` take 61 s of 111 s,
 ##     one after another, while three of four cores wait (profile of #1001, 2026-11-21).
+##   Fix of each file reads its own file and what run read, and waits on no other: at `2d496af8`,
+##     it takes 26.6 s of 65.0 s of same command, one file after another (profile of #1001,
+##     2026-11-26).
 ##   Job and answer hold no `ref`: ORC counts references without atomics, so object two threads
 ##     count would race. Thread reads its job in place, and its answer moves into sequence of
 ##     caller.

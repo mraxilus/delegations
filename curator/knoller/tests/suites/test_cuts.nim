@@ -9,7 +9,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, unittest]
-import ../../src/knoller/[cuts, names, rules]
+import ../../src/knoller/[cuts, names, reports, rules]
 
 
 const
@@ -30,7 +30,7 @@ const
   AXES = ["left", "right", "flat", "round", "bulk", "weight", "base", "anti"]
     ## Axis values `WRAPPERS` declares.
   WORDS = ["basis", "scalar", "name"]  ## Words names of package take alone.
-  ANTI = "Name puts `anti` after word it qualifies, as `scalarAnti`"
+  ANTI = "name puts `anti` after word it qualifies, as `scalarAnti`"
     ## Sentence of finding of `anti` glued first.
 
 
@@ -38,7 +38,7 @@ func stated(name: string; axes: openArray[string] = AXES; words: openArray[strin
     string =
   ## Read message cut check gives local `name` of one routine; empty where it passes.
   let found = checkCuts("a.nim", "proc p() =\n  let " & name & " = 1\n", axes, words)
-  if found.len == 0: "" else: found[0].message
+  if found.len == 0: "" else: found[0].brief
 
 
 func renamed(source: string; axes = AXES; words = WORDS): seq[(string, string, string)] =
@@ -64,15 +64,15 @@ suite "Article V.2":
 
   test "property after its one-letter value, `anti` glued first and axis value first report":
     for (name, message) in [
-      ("m_norm_bulk", "Property leads name, value it belongs to last; got `m_norm_bulk`."),
-      ("m_order", "Property leads name, value it belongs to last; got `m_order`."),
-      ("𝐦_grade", "Property leads name, value it belongs to last; got `𝐦_grade`."),
-      ("c_parity", "Property leads name, value it belongs to last; got `c_parity`."),
-      ("p_centroid", "Property leads name, value it belongs to last; got `p_centroid`."),
-      ("antibasis", ANTI & "; got `antibasis`."),
-      ("antiscalar", ANTI & "; got `antiscalar`."),
-      ("left_name", "Name opens with head, axis value `left` last; got `left_name`."),
-      ("weight_norm", "Name opens with head, axis value `weight` last; got `weight_norm`."),
+      ("m_norm_bulk", "property leads name, value it belongs to last; got `m_norm_bulk`"),
+      ("m_order", "property leads name, value it belongs to last; got `m_order`"),
+      ("𝐦_grade", "property leads name, value it belongs to last; got `𝐦_grade`"),
+      ("c_parity", "property leads name, value it belongs to last; got `c_parity`"),
+      ("p_centroid", "property leads name, value it belongs to last; got `p_centroid`"),
+      ("antibasis", ANTI & "; got `antibasis`"),
+      ("antiscalar", ANTI & "; got `antiscalar`"),
+      ("left_name", "name opens with head, axis value `left` last; got `left_name`"),
+      ("weight_norm", "name opens with head, axis value `weight` last; got `weight_norm`"),
     ]:
       check name.stated == message
     let
@@ -98,7 +98,7 @@ suite "Article V.2":
 
   test "word glued after `anti` holds three letters or more, so shorter one reads as no shape":
     # Case of review of record: `antic` passes by its word alone, so floor held no case.
-    check "antiabc".stated(words = ["abc"]) == ANTI & "; got `antiabc`."
+    check "antiabc".stated(words = ["abc"]) == ANTI & "; got `antiabc`"
     check "antiab".stated(words = ["ab"]) == ""
 
 

@@ -6,7 +6,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unicode, unittest]
-import ../../src/[markdown, role {.all.}]
+import ../../src/[findings, markdown, role {.all.}]
 import ./fixtures
 
 
@@ -18,6 +18,8 @@ const
     ## Credit line of block Claude Code writes above role line, as it writes it.
   TEMPLATE_PULL = staticRead("../../../../.github/pull_request_template.md")
     ## Template of pull request body, as tree holds it.
+  EXPECT_ROLE = "; expect `**Role:** curator`"
+    ## Expected value that finding of role line gives on branch of curator.
 
 
 
@@ -50,7 +52,8 @@ suite "Role":
       ["curator"],
     )
     check wrong.len == 1
-    check wrong[0].message.endsWith("got `**Role:** curator/probe`.")  # line below block echoed
+    check wrong[0].brief.endsWith("got `**Role:** curator/probe`" & EXPECT_ROLE)  # line echoed
+    check wrong.anyIt(it.rule == "koch.role-line")
 
 
   test "block of listed harness is passed only whole, once and in order":
@@ -94,28 +97,28 @@ suite "Role":
     #   finding quotes block, so curator adds its entry.
     let lone = checkRole("curator/mend-it", "<!-- note -->\n**Role:** curator\n", ["curator"])
     check lone.len == 1
-    check lone[0].message.endsWith("got `<!-- note -->` above `**Role:** curator`.")
+    check lone[0].brief.endsWith("got `<!-- note -->` above `**Role:** curator`" & EXPECT_ROLE)
     let stray = MARKER & "\n" & CREDIT & "\nStray line.\n\n**Role:** curator\n"
-    check checkRole("curator/mend-it", stray, ["curator"])[0].message.endsWith(
+    check checkRole("curator/mend-it", stray, ["curator"])[0].brief.endsWith(
       "got `" & MARKER.shortened & "`, `" & CREDIT.shortened & "`, `Stray line.` above " &
-        "`**Role:** curator`.",
+        "`**Role:** curator`" & EXPECT_ROLE,
     )  # whole block quoted, each line cut
     check LINES_QUOTED == 4  # twice block of Claude Code, marker then credit
     var many = ""
     for i in 0 .. LINES_QUOTED: many.add "line " & $i & "\n"
     let quoted = checkRole("curator/mend-it", many & "**Role:** curator\n", ["curator"])
-    check quoted[0].message.endsWith(
-      "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`.",
+    check quoted[0].brief.endsWith(
+      "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`" & EXPECT_ROLE,
     )
-    check "`line " & $LINES_QUOTED & "`" notin quoted[0].message  # quote cut at bound
+    check "`line " & $LINES_QUOTED & "`" notin quoted[0].brief  # quote cut at bound
     var exact = ""  # as many lines above role line as quote holds
     for i in 0..<LINES_QUOTED: exact.add "line " & $i & "\n"
     let whole = checkRole("curator/mend-it", exact & "**Role:** curator\n", ["curator"])
-    check whole[0].message.endsWith(
-      "got `line 0`, `line 1`, `line 2`, `line 3` above `**Role:** curator`.",
+    check whole[0].brief.endsWith(
+      "got `line 0`, `line 1`, `line 2`, `line 3` above `**Role:** curator`" & EXPECT_ROLE,
     )  # quote reaches bound, and shows no cut
     let fenced = checkRole("curator/mend-it", "## What\n\n```md\n**Role:** curator\n```\n", [])
-    check fenced[0].message.endsWith("got `## What`.")  # role line in fence is example only
+    check fenced[0].brief.endsWith("got `## What`" & EXPECT_ROLE)  # role line in fence: example
 
 
   test "echoed opening is cut, since body may open with whole paragraph":
@@ -123,8 +126,8 @@ suite "Role":
     check "é".repeat(ECHO_MAX).shortened == "é".repeat(ECHO_MAX)  # runes, never bytes
     let long = "x".repeat(ECHO_MAX + 1).shortened
     check long.runeLen == ECHO_MAX + 1 and long.endsWith("…")  # cut marked
-    check checkRole("curator/mend-it", "y".repeat(200), ["curator"])[0].message.endsWith(
-      "got `" & "y".repeat(ECHO_MAX) & "…`.",
+    check checkRole("curator/mend-it", "y".repeat(200), ["curator"])[0].brief.endsWith(
+      "got `" & "y".repeat(ECHO_MAX) & "…`" & EXPECT_ROLE,
     )
 
 
@@ -143,7 +146,7 @@ suite "Role":
     let bare = checkRole("curator/mend-it", "## Intent\n\nText.\n", ["curator"])
     check bare.len == 1
     check bare[0].path.len == 0  # branch-level, no file to open
-    check bare[0].message.endsWith("got `## Intent`.")  # no role line, so opening alone
+    check bare[0].brief.endsWith("got `## Intent`" & EXPECT_ROLE)  # no role line: opening alone
     check checkRole(
       "curator/mend-it", "**Role:** <!-- curator, or contributor -->\n", ["curator"]
     ).len == 1  # template opened and left unfilled
@@ -161,8 +164,9 @@ suite "Role":
     ]:  # none, near miss, and two that miss, each echoed whole
       let found = checkRole("curator/mend-it", "**Role:** curator\n", labels)
       check found.len == 1
-      check found[0].message == "Pull request must carry label `curator`, which job `label` of " &
-        "`role.yml` adds from its branch; got `" & labels.join(", ") & "`."
+      check found[0].brief == "pull request must carry label `curator`, which job `label` of " &
+        "`role.yml` adds from its branch; got `" & labels.join(", ") & "`"
+      check found.anyIt(it.rule == "koch.role-label")
 
 
   test "branch outside grammar reports nothing, since scope already fails it":
@@ -178,15 +182,18 @@ suite "Role":
     check checkTitle("curator/mend-it", "fix(pga_visualiser): mend it").len == 0  # any scope
     let charter = checkTitle("curator/mend-it", "Charter: label architect, linked names")
     check charter.len == 1
-    check charter[0].message.startsWith("Pull request title must match")
+    check charter[0].brief.startsWith("pull request title must match")
+    check charter.anyIt(it.rule == "koch.pull-request-title")
     check checkTitle("curator/mend-it", "docs(curator): order it.").len == 1  # final period
     check checkTitle("curator/mend-it", "docs(curator): Order it").len == 1  # capital summary
     let scoped = checkTitle("contributor/ronri/pga_visualiser/x", "feat(pga_benchmark): add it")
     check scoped.len == 1
-    check scoped[0].message.startsWith("Pull request title scope must be `pga_visualiser`")
+    check scoped[0].brief.startsWith("pull request title scope must be `pga_visualiser`")
+    check scoped[0].rule == "koch.title-scope"
     check checkTitle("curator/audit/x", "feat(curator): add it").len == 1  # project branch
     let wide = checkTitle("curator/mend-it", "docs(curator): " & "a".repeat(90))
-    check wide.len == 1 and wide[0].message.startsWith("Pull request title exceeds 100")
+    check wide.len == 1 and wide[0].brief.startsWith("pull request title exceeds 100")
+    check wide.len == 1 and wide[0].rule == "koch.title-width"
     check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it
 
 
@@ -203,11 +210,12 @@ suite "Role":
     check checkBodyPull(form.replace("\n", "\r\n")).len == 0  # edited on GitHub
     let old = "**Role:** curator\n\n## Intent\n\nX.\n\n## Scope\n\nX.\n\n## Verification\n\n" &
       "X.\n\n## Record\n\nX.\n\n## Notes\n\nX.\n"  # template before #845
-    check checkBodyPull(old).mapIt(it.message) == @[
-      "Pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
+    check checkBodyPull(old).mapIt(it.brief) == @[
+      "pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
         "each and in that order; got `## Intent`, `## Scope`, `## Verification`, `## Record`, " &
-        "`## Notes`.",
+        "`## Notes`",
     ]
+    check checkBodyPull(old).anyIt(it.rule == "koch.body-headings")
     # Each heading missing, then twice, then turned with next: sections of form, joined again.
     let
       parts = form.sections  # part above first heading, then one for each heading
@@ -221,10 +229,10 @@ suite "Role":
       for order in orders:
         let got = order.mapIt("`" & parts[it].heading & "`").join(", ")
         check checkBodyPull(parts[0].text & order.mapIt(parts[it].text).join)
-          .mapIt(it.message.endsWith("got " & got & ".")) == @[true]
-    check checkBodyPull("**Role:** curator\n\nText.\n").mapIt(it.message) == @[
-      "Pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
-      "each and in that order; got ``.",
+          .mapIt(it.brief.endsWith("got " & got)) == @[true]
+    check checkBodyPull("**Role:** curator\n\nText.\n").mapIt(it.brief) == @[
+      "pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
+      "each and in that order; got ``",
     ]  # no heading
     for body in [
       form.replace("The suites pass.\n", "The suites pass.\n\n```md\n## Sign-off\n```\n"),
@@ -242,21 +250,22 @@ suite "Role":
       "### Detail\n\nMore.",
     ]:
       let found = checkBodyPull(form.replace("This adds one check.", opening))
-      check found.mapIt(it.message) == @[
-        "Section `## What` opens with summary of one to three sentences, then its points; " &
-          "got `" & opening.splitLines[0] & "`.",
+      check found.mapIt(it.brief) == @[
+        "section `## What` opens with summary of one to three sentences, then its points; " &
+          "got `" & opening.splitLines[0] & "`",
       ]
+      check found.anyIt(it.rule == "koch.section-summary")
     let unfilled = checkBodyPull(form.replace("This adds one check.\n\n- One point.", "<!-- -->"))
-    check unfilled.len == 1 and unfilled[0].message.endsWith("got ``.")  # comment alone
-    check checkBodyPull(TEMPLATE_PULL).mapIt(it.message.endsWith("got ``.")) == @[true].cycle(4)
+    check unfilled.len == 1 and unfilled[0].brief.endsWith("got ``")  # comment alone
+    check checkBodyPull(TEMPLATE_PULL).mapIt(it.brief.endsWith("got ``")) == @[true].cycle(4)
     for summary in [
       "One. Two. Three.", "This adds one\ncheck.", "**What:** this adds one check.",
     ]:
       check checkBodyPull(form.replace("This adds one check.", summary)).len == 0
     check checkBodyPull(form.replace("This adds one check.", "One. Two. Three. Four."))
-      .mapIt(it.message) == @[
-        "Section `## What` opens with summary of one to three sentences, then its points; " &
-          "got `4` sentences.",
+      .mapIt(it.brief) == @[
+        "section `## What` opens with summary of one to three sentences, then its points; " &
+          "got `4` sentences",
       ]
 
 
@@ -301,10 +310,12 @@ suite "Role":
     check full.textShown.runeLen == CHARACTERS_BODY
     check full.textShown.len > CHARACTERS_BODY  # `é` takes two bytes, so count reads characters
     check checkBodyPull(full).len == 0
-    check checkBodyPull(full & "x").mapIt(it.message) == @[
-      "Pull request body shows at most 2500 characters while each fold is closed, with each " &
-        "link counted by its text; fold long output in `<details>`; got `2501`.",
+    check checkBodyPull(full & "x").mapIt(it.brief) == @[
+      "pull request body shows at most 2500 characters while each fold is closed, with each " &
+        "link counted by its text; got `2501`; expect `at most 2500`; help: fold long output in " &
+        "`<details>`",
     ]
+    check checkBodyPull(full & "x").anyIt(it.rule == "koch.body-length")
     for body in [
       full.replace("The suites pass.", "The [suites](https://github.com/o/r/actions/runs/1) pass."),
       full.replace("\n", "\r\n"),  # edited on GitHub, as runner reads it

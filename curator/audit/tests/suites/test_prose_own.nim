@@ -4,7 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, sequtils, strutils, unittest]
-import ../../src/[domains, prose_own]
+import ../../src/[domains, findings, prose_own]
 import ./fixtures
 
 
@@ -41,7 +41,10 @@ suite "Article VI":
       found = entriesProject(DIRECTORY_ALPHA, "x").checkProjectsProseOwn([listed])
     check entriesProject(DIRECTORY_PARSER, "x").checkProjectsProseOwn([listed]).len == 0  # held
     check found.mapIt((it.path, it.line)) == @[(PATH_PROSE_OWN, 0)]  # entry is what to change
-    check found[0].message.endsWith("got `" & DIRECTORY_PARSER & "`.")  # IV.4 echo value
+    check found[0].brief.endsWith(
+      "got `" & DIRECTORY_PARSER & "`; help: remove its entry, or name project where it moved",
+    )  # IV.4 echo value
+    check found.anyIt(it.rule == "koch.own-prose")
 
 
   test "VI.5, VI.8 suite entry demands is finding where tree lacks it, at that suite":
@@ -55,7 +58,10 @@ suite "Article VI":
       tree = entriesProject(DIRECTORY_PARSER, "x")
       found = tree.checkProjectsProseOwn([demanding])
     check found.mapIt(it.path) == @[DIRECTORY_PARSER & "/" & SUITE]  # inside project (duty 3)
-    check found[0].message.endsWith("got `" & DIRECTORY_PARSER & "/" & SUITE & "`.")
+    check found[0].brief.endsWith(
+      "got `" & DIRECTORY_PARSER & "/" & SUITE & "`; help: restore it, or demand it no longer " &
+        "in `" & PATH_PROSE_OWN & "`",
+    )
     let written = tree.with(entry(DIRECTORY_PARSER & "/" & SUITE, "## Hold prose.\n"))
     check written.checkProjectsProseOwn([demanding]).len == 0  # suite present
     let elsewhere = tree.with(entry(DIRECTORY_AUDIT & "/" & SUITE, "## Hold prose.\n"))

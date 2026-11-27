@@ -59,7 +59,7 @@ func fixed(source: string): string =
 func messages(source: string): seq[string] =
   ## Collect messages every wrapping check reports over source.
   (checkSeparators("a.nim", source) & checkSignatures("a.nim", source) &
-    checkCalls("a.nim", source)).mapIt(it.message)
+    checkCalls("a.nim", source)).mapIt(it.brief)
 
 
 func isSettled(source: string): bool =
@@ -102,7 +102,7 @@ suite "Wrapping":
   test "tuple type takes `,` between fields, its comments kept":
     let tuples = "type T = tuple[a, b: int; c: string]\nlet u: tuple[\n  x: int;  # Why.\n" &
       "  y: int;\n] = (1, 2)\n"
-    check checkSeparators("a.nim", tuples).mapIt(it.message).allIt(it.startsWith("Tuple type"))
+    check checkSeparators("a.nim", tuples).mapIt(it.brief).allIt(it.startsWith("tuple type"))
     check fixSeparators("a.nim", tuples).source == "type T = tuple[a, b: int, c: string]\n" &
       "let u: tuple[\n  x: int,  # Why.\n  y: int,\n] = (1, 2)\n"
     check checkSeparators("a.nim", "let p = (a; b)\n").len == 0  # statement list, no tuple
@@ -110,7 +110,7 @@ suite "Wrapping":
 
   test "signature that fits joins one line; one that fits nowhere takes one group to line":
     let joined = "func f(\n    a: int, b: int\n): int =\n  a\n"
-    check checkSignatures("a.nim", joined)[0].message.endsWith("got `3` lines.")
+    check checkSignatures("a.nim", joined)[0].brief.endsWith("got `3` lines")
     check fixSignatures("a.nim", joined).source == "func f(a: int, b: int): int =\n  a\n"
     check fixSignatures("a.nim", joined).fixed[0].rule == Rule.WrappingSignature
     let
@@ -275,7 +275,7 @@ suite "Wrapping":
   test "continuation takes four spaces more than line opening it; call keeps one level":
     let hand = "let x = a +\n  b\ncheck c ==\n  d +\n  e\n"
     check checkContinuations("a.nim", hand).mapIt(it.line) == @[2, 4, 5]
-    check checkContinuations("a.nim", hand)[0].message.endsWith("got `2`.")
+    check checkContinuations("a.nim", hand)[0].brief.endsWith("got `2`")
     check hand.fixed == "let x = a +\n    b\ncheck c ==\n    d +\n    e\n"
     check hand.fixed.isSettled
     # Last line of 100 runes two spaces in crosses `LINE_MAX` four spaces in.
@@ -334,7 +334,7 @@ suite "Wrapping":
       check kept.fixed == kept
     let stepped = "let x = (\n  a xor\n      b xor\n      c\n)\n"
     check checkContinuations("a.nim", stepped).mapIt(it.line) == @[3, 4]
-    check checkContinuations("a.nim", stepped)[0].message.endsWith("got `4`.")
+    check checkContinuations("a.nim", stepped)[0].brief.endsWith("got `4`")
     check stepped.fixed == "let x = (\n  a xor\n  b xor\n  c\n)\n"  # flat at first piece
     check "doAssert c,\n  \"a \" &\n      \"b\"\n".fixed == "doAssert c,\n  \"a \" &\n  \"b\"\n"
     for kept in [
@@ -355,7 +355,7 @@ suite "Wrapping":
         "    second_condition and first_condition):\n    echo a_long_name\n"
       lifted = head.replace("\n    second_condition", "\n      second_condition")
     check checkContinuations("a.nim", head).mapIt(it.line) == @[3]
-    check checkContinuations("a.nim", head)[0].message.endsWith("got `2`.")
+    check checkContinuations("a.nim", head)[0].brief.endsWith("got `2`")
     check head.fixed == lifted  # head reads apart from body
     check lifted.isSettled  # second run writes nothing
     let nested = "proc p() =\n  for x in (a, (b,\n      c),\n    d):\n    discard\n"

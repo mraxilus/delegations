@@ -91,6 +91,7 @@ func checkScopes*(path, workflow: string): seq[Finding] =
     result.add finding(
       path,
       0,
+      Check.ScopesWorkflow,
       "Steps use `" & mark & "`, so `permissions` must grant `" & scope &
         "`; block is whole grant and scope left out is `none`; got `" &
         granted.get.join(", ") & "`.",
@@ -117,6 +118,8 @@ func checkWindow*(path, workflow: string; days: int): seq[Finding] =
     result.add finding(
       path,
       0,
-      "Schedule and `DAYS_RECENT` name one window; change both together (CURATOR.md, duty 9); " &
-        "got `" & $read & "` days against `" & $days & "`.",
+      Check.WindowRecent,
+      "Schedule and `DAYS_RECENT` name one window (CURATOR.md, duty 9); got `" & $read &
+        "` days against `" & $days & "`.",
+      help = "change both together",
     )

@@ -25,6 +25,11 @@
 ##     whose code changed against base. Verb refuses option or argument it does not read, with
 ##     usage and exit 2, so typo never passes as input nothing reads.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
+##   Each verb that reports prints each finding and warning through renderer of knoller
+##     (STYLE.md §3): terminal form, with text of its line from disk, where stdout is terminal,
+##     else one line each; `--form` forces either, and koch of merge takes it too. Color shows at
+##     terminal alone, and `NO_COLOR` set to any text drops it (`output`). Rewrite of `fix`
+##     stays on one line of its own, since it is no finding.
 ##   `check-role` reads pull request rather than tree, so runner hands it two inputs through
 ##     env: `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `check` leaves it out: local run has no pull request to read.
@@ -57,7 +62,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, json, options, os, parseopt, sequtils, sets, strutils, tables]
+import std/[algorithm, json, options, os, parseopt, sequtils, sets, strutils, tables, terminal]
 import ./curator/audit/src/[
   assets,
   audit,
@@ -119,13 +124,19 @@ Options:
   --head           list-projects keeps projects carrying `head` verb
   --write          stamp writes every Rules row rather than printing
   --dry-run        fix prints each change it would make, writes none, exits 1 where any
+  --form:<form>    finding form, `terminal` or `line` (default terminal at terminal, else line)
 """
   ## Text `./koch` prints alone and on usage error; `checker.nim` reads verbs and options here.
 
 
+const
+  FORM_TERMINAL = "terminal"  ## Value of `--form` that prints each finding in terminal form.
+  FORM_LINE = "line"  ## Value of `--form` that prints each finding on one line.
+
+
 type
   Flag = enum  ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun
+    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun, FormFinding
 
   Options = object  ## Define parsed command line.
     command: string
@@ -140,6 +151,7 @@ type
     is_head: bool
     is_write: bool
     is_dry_run: bool
+    form: string  ## Form `--form` names, as given; empty where none.
 
 
 proc parseOptions(): Option[Options] =
@@ -166,9 +178,11 @@ proc parseOptions(): Option[Options] =
       of "head": options.is_head = true
       of "write": options.is_write = true
       of "dry-run": options.is_dry_run = true
+      of "form": options.form = value
       else: return none(Options)
     of cmdEnd: discard
-  if options.command.len == 0: return none(Options)
+  if options.command.len == 0 or options.form notin ["", FORM_TERMINAL, FORM_LINE]:
+    return none(Options)
   some(options)
 
 
@@ -183,6 +197,7 @@ func given(options: Options): set[Flag] =
   if options.is_head: result.incl Head
   if options.is_write: result.incl Write
   if options.is_dry_run: result.incl DryRun
+  if options.form.len > 0: result.incl FormFinding
 
 
 func isReadAll(options: Options, flags: set[Flag], has_project = false): bool =
@@ -244,9 +259,10 @@ proc branch(checkout: string): string =
 
 
 proc refuse(found: seq[Finding], code: int): int =
-  ## Print findings to stderr for hook host, and return code; zero findings return 0.
+  ## Print findings to stderr for hook host, each in line form, help last (ruling 7197275206 of
+  ##   #1002), and return code; zero findings return 0.
   if found.len == 0: return 0
-  for f in found: stderr.write f.message & "\n"
+  for f in found: stderr.write f.toLine & "\n"
   code
 
 
@@ -415,13 +431,51 @@ proc runHook(root, event, input: string): int =
     2
 
 
-proc reportHeld(held: seq[Finding]) =
+proc output(options: Options, file = stdout): tuple[form: Form, is_colored: bool] =
+  ## Read form each finding prints in on file, and whether it takes color: form `--form` names,
+  ##   else terminal form where file is terminal (STYLE.md §3); color at terminal alone, and
+  ##   `NO_COLOR` set to any text drops it.
+  let
+    is_terminal = file.isatty
+    forced =
+      if options.form == FORM_TERMINAL: some(Form.Terminal)
+      elif options.form == FORM_LINE: some(Form.Line)
+      else: none(Form)
+    form = formOutput(is_terminal, forced)
+  (form, form == Form.Terminal and isColored(is_terminal, getEnv("NO_COLOR")))
+
+
+proc sourcesRead(root: string, found: openArray[Finding]): Table[string, string] =
+  ## Read text of each file finding names at its line, from disk under root, so terminal form
+  ##   shows that line; path naming no file reads none.
+  for f in found:
+    if f.line > 0 and f.path.len > 0 and f.path notin result and fileExists(root / f.path):
+      result[f.path] = readFile(root / f.path)
+
+
+proc report(found: seq[Finding], options: Options) =
+  ## Print findings, then count, through renderer in form options ask (`findings.report`).
+  let (form, is_colored) = options.output
+  found.report(form, is_colored, options.root.sourcesRead(found))
+
+
+proc warn(found: seq[Finding], options: Options) =
+  ## Print each finding as warning, through renderer in form options ask, with no count; terminal
+  ##   form takes blank line after last.
+  let
+    (form, is_colored) = options.output
+    lines = found.rendered(form, is_colored, options.root.sourcesRead(found), is_warning = true)
+  for line in lines: echo line
+  if form == Form.Terminal and found.len > 0: echo ""
+
+
+proc reportHeld(held: seq[Finding], options: Options) =
   ## Print findings branch holds for their projects, which each clears in its next pull request
   ##   (CURATOR.md, duty 3); nothing where none is held.
   if held.len == 0: return
   echo "Held for their projects (CURATOR.md, duty 3, and the skill /enact); each clears them " &
     "in its next pull request:"
-  held.report
+  held.report(options)
 
 
 proc checkInPlace(options: Options; branch, base: string): int =
@@ -446,13 +500,13 @@ proc checkInPlace(options: Options; branch, base: string): int =
   # Finding inside project blocks only branch of role owning it (duty 3), and finding on line
   #   branch changed blocks it wherever it lies; rest blocks here.
   let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
-  held.reportHeld
+  held.reportHeld(options)
   # Commit of lock that lags `main` is named, and fails nothing (D2 of #927); start prints same.
   for line in noticesLag(readLags(options.root, "origin/" & MAIN), "origin/" & MAIN): echo line
   # Nim pin that lags pin of driver is named, and fails nothing (GUIDE.md, Toolchain); start too.
   for line in noticesPin(readPins(options.root)): echo line
   if own.len > 0:
-    own.report
+    own.report(options)
     echo "Types, suites and drive not run; fix findings above, then run again."
     return 1
 
@@ -463,11 +517,11 @@ proc checkInPlace(options: Options; branch, base: string): int =
   found.add runJobsCi(options.root, tree, jobs)
   let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
   found.add converted
-  for warning in unread: echo "warning: " & warning
+  unread.warn(options)
 
   # Green run records tree for `pre-push` hook, where checkout is clean and on branch.
   if found.len == 0: options.root.recordMark
-  found.report
+  found.report(options)
   if found.len == 0: 0 else: 1
 
 
@@ -481,16 +535,24 @@ proc run(options: Options): int =
     #   and mark read this checkout.
     #   Cost: no suite runs this arm, so its fetch, and proc giving `checkInPlace` branch and
     #     base, hold by hand (`curator/audit/PROVENANCE.md`, Merge with base).
-    if not options.isReadAll({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base, FormFinding}): return options.refused
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     # Base runner compares with is fetched fresh; koch of merge is handed commit, fetching none.
     if base == "origin/" & MAIN: discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
     var toolchains = initToolchains()
+    let (form, is_colored) = options.output
     return judgeCheckout(
-      options.root, base, branch, toolchains, proc(): int = options.checkInPlace(branch, base)
+      options.root,
+      base,
+      branch,
+      toolchains,
+      proc(): int = options.checkInPlace(branch, base),
+      options.form,
+      form,
+      is_colored,
     )
   of "check-files":
-    if not options.isReadAll({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base, FormFinding}): return options.refused
     let tree = options.root.readTree
     found = tree.auditTree
     found.add findingsPruned(options.root, tree)
@@ -498,15 +560,15 @@ proc run(options: Options): int =
     let (held, own) = splitHeld(
       options.branchOrDefault, found, linesOwned(options.root, tree, options.baseOrDefault)
     )
-    held.reportHeld
+    held.reportHeld(options)
     found = own
   of "check-types":
-    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, FormFinding}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = runJobsType(options.root, tree, options.directoriesScoped(tree))
   of "check-scope":
-    if not options.isReadAll({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base, FormFinding}): return options.refused
     let base = options.baseOrDefault
     found = checkScope(
       options.branchOrDefault,
@@ -514,19 +576,19 @@ proc run(options: Options): int =
       pathsMoved(options.root, base),
     )
   of "check-commits":
-    if not options.isReadAll({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base, FormFinding}): return options.refused
     let commits = commitsBranch(options.root, options.baseOrDefault)
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
-    if not options.isReadAll({Root, Base}): return options.refused
+    if not options.isReadAll({Root, Base, FormFinding}): return options.refused
     found = checkBase(readDrift(options.root, options.baseOrDefault))
   of "check-schemas":
-    if not options.isReadAll({Root, Base}): return options.refused
+    if not options.isReadAll({Root, Base, FormFinding}): return options.refused
     found = checkSchemas(options.root, options.baseOrDefault)
   of "check-role":
     # Pull request's own facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
-    if not options.isReadAll({Root, Branch}): return options.refused
+    if not options.isReadAll({Root, Branch, FormFinding}): return options.refused
     let
       named = getEnv("ROLE_LABELS").strip
       labels =
@@ -566,7 +628,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root}, has_project = true): return options.refused
     return runHook(options.root, options.project, stdin.readAll)
   of "test":
-    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, FormFinding}, has_project = true):
       return options.refused
     let
       tree = options.root.readTree
@@ -574,14 +636,14 @@ proc run(options: Options): int =
     found = runJobs(options.root, jobs)
     let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
     found.add converted
-    for warning in unread: echo "warning: " & warning
+    unread.warn(options)
   of "drive":
-    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, FormFinding}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = runJobsDriven(options.root, tree, options.jobsPlanned(tree))
   of "head":
-    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, FormFinding}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = jobsHead(options.root, tree, options.jobsPlanned(tree))
@@ -605,11 +667,14 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; so does each file knoller's fixers do not settle, with no article, since
     #   fault is tool's. Exit code ignores warnings.
-    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`);
-    #   compiler and disk under root give rest fixers read across project (`fixes.readFacts`).
-    #   Parser of each project's pin proves each needless group (`fixes.fixProven`); run that
-    #   proved nothing prints one warning saying why.
-    if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
+    #   Compiler and disk under root give what fixers read across project (`fixes.readFacts`).
+    #   Names of each project entries name, and renames they ask, are read once, for semantic
+    #   pass and fixers alike (`fixes.renames`); pass then runs on files holding candidate text
+    #   cannot settle (`symbols.nim`). Parser of each project's pin proves each needless group
+    #   (`fixes.fixProven`); run that proved nothing prints one warning saying why.
+    if not options.isReadAll(
+      {Root, Branch, Base, All, Recent, DryRun, FormFinding}, has_project = true
+    ):
       return options.refused
     let
       tree = options.root.readTree
@@ -618,26 +683,32 @@ proc run(options: Options): int =
         if named.len > 0: named else: options.directoriesScoped(tree)
       )
     if unknown.len > 0:
-      unknown.report
+      unknown.report(options)
       return 1
     let
       locked = tree.nimblesLocked
-      answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
       (uses, pures, libraries) = readFacts(options.root, entries, locked)
+      names = tree.namesEntries(entries, libraries)
+      renamed = tree.renames(entries, locked, names)
+      answers = resolve(options.root, tree, tree.queriesSemantic(entries, locked, renamed))
       (fix, failures) = fixProven(
         options.branchOrDefault,
         tree,
         entries,
         locked,
-        initContext(tree, entries, answers, locked, uses, pures, libraries),
+        initContext(tree, entries, answers, locked, uses, pures, names, renamed),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix
-    for f in left.sorted: echo f.render
-    for f in warned.sorted: echo "warning: " & f.render
-    for failure in failures: echo "warning: " & failure
+      (form, is_colored) = options.output
+      sources = options.root.sourcesRead(left & warned)
+    var lines = left.rendered(form, is_colored, sources)
+    lines.add warned.rendered(form, is_colored, sources, is_warning = true)
+    for failure in failures: lines.add [failure].rendered(form, is_colored, is_warning = true)
+    if form == Form.Terminal and lines.len > 0: lines.add ""
+    for line in lines: echo line
     if refused.len > 0:
-      refused.report
+      refused.report(options)
       echo "Nothing written; fix writes only inside branch scope."
       return 1
     let outcome = if options.is_dry_run: " to fix" else: " fixed"
@@ -647,7 +718,7 @@ proc run(options: Options): int =
     echo $fixed.len & outcome & "."
     return if options.is_dry_run and fixed.len > 0: 1 else: 0
   of "fetch-deps":
-    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, FormFinding}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = restoreJobs(options.root, options.jobsPlanned(tree))
@@ -655,7 +726,7 @@ proc run(options: Options): int =
     # Fetched file is repository's, never one project's: two targets pinning one file would
     #   hold two copies of one digest. Store holds digest; caller names which files it wants,
     #   so what is shared is bytes rather than choice.
-    if not options.isReadAll({}, has_project = true): return options.refused
+    if not options.isReadAll({FormFinding}, has_project = true): return options.refused
     let root = rootStore(getEnv(KEY_ASSETS))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
@@ -667,10 +738,7 @@ proc run(options: Options): int =
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
-        found.add(if file.digestDeclared.len == 0: unknown(file) else: @[finding(
-          "curator/audit/src/assets.nim", 0,
-          "Asset is declared but could not be fetched or checked; got `" & file & "`.",
-        )])
+        found.add(if file.digestDeclared.len == 0: unknown(file) else: unfetched(file))
       else: echo path
     if found.len == 0: return 0
   of "list-packages":
@@ -679,15 +747,16 @@ proc run(options: Options): int =
     #   since question is what must be installed rather than what one change touched.
     #   Driver that fails is named on stderr, since runner pipes stdout into installer, and exit
     #   is 1, so step that installs goes red rather than suite that needs package (#934).
-    if not options.isReadAll({Root}, has_project = true): return options.refused
+    if not options.isReadAll({Root, FormFinding}, has_project = true): return options.refused
     let
       tree = options.root.readTree
       (named, failed) =
         if options.project.len > 0:
           packagesSystem(options.root, tree, [options.project.strip(chars = {'/'})])
         else: systemRepository(options.root, tree, tree.directoriesProject)
+    let (form, is_colored) = options.output(stderr)
     for package in named: echo package
-    for f in failed: stderr.write f.render & "\n"
+    for line in failed.rendered(form, is_colored): stderr.write line & "\n"
     return if failed.len > 0: 1 else: 0
   of "list-projects":
     if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
@@ -710,7 +779,7 @@ proc run(options: Options): int =
   else:
     stderr.write USAGE
     return 2
-  found.report
+  found.report(options)
   if found.len == 0: 0 else: 1
 
 

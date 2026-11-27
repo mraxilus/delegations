@@ -93,6 +93,60 @@ so a new rule without a citation does not compile there.
   `curator/audit` holds it, article included, through the real check of each message that `koch`
   prints.
 
+## Renderer
+
+**Each finding prints in one of two forms, through `knoller/report`.** The terminal form serves a
+reader at a terminal, and the line form serves a pipe or a log (STYLE.md §3). A finding is a
+`Notice` that holds only the parts that its check knows (D3 a of #1002). So its location shows the
+path, the line and the column, each only behind the part before it. The renderer is pure. The
+caller reads the terminal, the flag and `NO_COLOR`, and passes what they say.
+
+- The terminal form prints the location and the rule, the summary, the source line with a marker,
+  `actual` and `expect`, and `help`. A blank line stands between two blocks, and a block shows
+  only where the finding holds its parts.
+- The source line shows only where the finding holds its line and the text of that line. The
+  marker shows only where it holds a column too.
+- A source line over 80 runes shows a window of 80 runes around the span, and `…` marks each
+  edge that the window cuts. A finding of width names a line of hundreds of runes, which a
+  terminal would wrap.
+- Column and span count runes, as the width of a line counts them. A control character of the
+  source line prints as its control picture, as `␉`, so the marker stays under its rune.
+- The terminal form quotes a value that is empty, or whose edge or control character would hide
+  it. So each value stays visible, as Article IV.4 asks.
+- A message cuts at its first `; got ` outside a code span, and a code span runs to the next run
+  of as many backticks (`sentenceEnd`). So a sentence that quotes ``…; got `{value}`.`` ends after
+  the quote. The sentence is the summary, with its first letter lowercase (`initNotice`). The
+  value after `; got ` is the actual, out of the code span that it stands in whole.
+- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
+  the value. The sentence then runs to its closing period. No message of knoller holds such a
+  backtick, and reading holds that.
+- Each suite compares the short text of a finding (`brief`), as D3 c of #1002 rules. It holds the
+  summary, then the actual after `; got`, the expected value after `; expect` and the help after
+  `; help:`, each where held. The rule stands apart, so the text reads as the message.
+- A sentence that names an absence ends without `; got `, so the notice holds no actual. Article
+  IV.4 never takes an in-range value for an absence, and `none` would read as one.
+- The line form reads `path:line:column: rule: actual="…" expect="…" message="…" help="…"`. Each
+  value is quoted, with `\`, `"` and each control character escaped, so a finding takes one line.
+  Help stands last, so a hook and a log keep each remedy (ruling 7197275206 on #1002).
+- A warning prints in both forms, with `warning` after its rule, as the command line of knoller
+  marks it (D2 a of #1002). A rewrite is no finding, so its caller keeps its one line.
+- Color shows in the terminal form on a terminal alone. `NO_COLOR` set to any text turns it off,
+  as no-color.org reads it, and `formOutput` takes the form that a flag forces.
+- Verified by `suites/test_report.nim`: both findings of the example of #1002, as that example
+  draws them, and each case above.
+- The command line of knoller prints each finding that stays for the hand through the renderer,
+  and each warning too. Each shows the text of its line as given. A rewrite and an unsettled file
+  keep their one line, since a tool reads them. `--form` forces a form, and else `main` takes the
+  terminal form where stdout is a terminal. In the terminal form, a blank line stands before
+  each finding and before the count.
+- Verified by `suites/test_command.nim`: both forms of one run, the flag, and the line form of
+  each warning. The suites that read what a run prints hold the line form.
+- Cost: the marker counts each rune as one column. So a wide glyph, as of East Asian text or an
+  emoji, shifts the marker to the right of its span.
+- Each verb of koch that reports prints each finding and warning through the renderer too, and
+  each hook prints each finding in the line form. A finding of a report of knoller keeps the id
+  of its rule there. Each check of koch takes an id `koch.<name>` (D4 a of #1002).
+
 ## Chain
 
 **One chain runs every fixer in one order until the source settles.** `formatted` reads the
@@ -282,6 +336,28 @@ static pass of `curator/audit` reads, on every line. So a finding that no fixer 
   left that `471007f` does not report.
 - Cost, measured on that run, two runs each. `rga_visualiser` took 34.3 s and 34.6 s, against
   32.7 s and 32.1 s. `curator` took 20.5 s and 19.8 s, against 19.1 s and 19.5 s.
+
+**The command line fixes each file on a pool of threads, one for each core (`pools.nim`).** The
+fix of a file reads its own file and what the run read, and nothing that the fix of another file
+writes. At `2d496af8`, one file waits for the one before it, and `koch fix` runs the same loop.
+There the fixes of all files take 26.6 s of the 65.0 s of `koch fix --dry-run curator/knoller`.
+Meanwhile three of the four cores wait (the profile on #1001).
+
+- `outcomeProven` gives each file to a thread of the pool, and each file that asked the parser
+  again, after its batch answers. The parts keep the order of the files, as one loop gives them.
+- A job holds the facts of its file, as a call of `part` for one file takes them (`JobPart`). The
+  proofs of its batch and the plans of the run stay in the caller. The job reads them through a
+  pointer, since a copy would hold each source asked. The caller changes the proofs only between
+  two runs of the pool.
+- `outcome` stays one loop, since a `func` starts no thread.
+- Verified by `suites/test_command.nim`, which holds `outcomeProven` equal to a loop that fixes
+  every file again in each round (`outcomeEvery`). Its files ask the parser, and some do not.
+  Verified by `suites/test_pools.nim`, for the order of the answers.
+- Verified by run of `knoller --check --form:line curator/knoller` over the tree at `2d496af8`,
+  2026-11-26. Knoller built there and at `8a7b2f61` prints the same 2,746 lines in each of three
+  runs, and the runs alternate between the two builds. The median falls from 62.1 s to 34.4 s.
+  Each build is the debug build that `nim c` makes, on 4 cores at 2.10 GHz, under a load of 1.42
+  to 2.25.
 
 **The command lists a directory through `runGit`, which reads stdout and stderr of git apart.**
 Git ends a warning on stderr in a newline, while the paths end in NUL. So one stream that carries

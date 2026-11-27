@@ -1079,7 +1079,7 @@ reads the change itself. The code of the stamp is one finding more, which names 
 - The start hook prints each finding under one line of its own (Hooks on tool calls). So a
   delegate reads the same lines at the start, at resume and after a compaction.
 - Rejected: one finding for all paths. It names no section, and asks for a new stamp after any edit.
-- Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks reference).
+- Rejected: a message of several lines. Each hook prints one line (CURATOR.md, Checks reference).
 
 On the runner the job checks out the branch head, and never the merge ref that a pull request
 offers. The first parent of that ref is the tip of the base. So what it gained over the base is
@@ -2460,6 +2460,9 @@ union, sorted and deduplicated. The job pipes it into `apt-get`. Koch prints and
 installs, because which package manager serves a name is the business of the machine, while
 the list is the project's.
 
+- Rejected: `koch list-packages` for each verb. The install took 32% of the `drive` job on the
+  runner, 2026-09-08, which bounds what it could save.
+
 Only bare names survive the read. The contract is one name to a line. The one other thing
 that reaches that stream is the compiler complaining, which always spells a position first. So
 a line that carries whitespace is dropped.
@@ -2574,9 +2577,7 @@ The stub leaves out `-d:nimUnittestAbortOnError:on`, so every failure shows in o
   and the other suites still run. The exit is 1.
 
 `git ls-files '*/tests/t*.nim' '*/tests/suites/t*.nim'` counts the suites. No count is written
-here, because a written count goes stale. Verified by hand, 2026-09-08: `nim r koch test` over
-every project passes with 0 findings, and the suites of `dance_ontology` took most of that run.
-Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+here, because a written count goes stale.
 
 **Trap: `koch check` selects suites from committed paths.** `pathsChanged` reads
 `git diff <base>...HEAD`, so a change that is not committed selects no project. `koch check` then
@@ -2808,21 +2809,14 @@ package` there).
   compiles with `-d:testing` (`## Semantic pass`).
 - Each test file, stub and umbrella of a project lies below the folder of its nimble file, as the
   record of knoller verifies (`Layout of a package` there).
-- Verified by hand, 2026-11-14: koch built at `c2e80da3` and koch built at `269d6579` gave the same
-  output, byte for byte, on the tree at `c2e80da3`. That holds for `check-files`, and for
-  `fix --dry-run --all --branch:main`, which reads every project.
 
 **The audit cites the article of each message of knoller, where its sentence ends.** A message of
 a check of knoller names no article, and reads `<sentence>; got <value>.`, or `<sentence>.` where
-it gives no value (D2 a of #505). `toFinding` puts the article that `CITATIONS` holds for the rule
-before `; got `, or before the closing period. So `koch check` prints
-``Bracket import is alphabetised (X.5); got `strutils, os`.``.
+it gives no value (D2 a of #505). `toFinding` puts the article of the rule where its sentence ends
+(`sentenceEnd`), so the summary holds it, as `bracket import is alphabetised (X.5)` does.
 
 - The articles belong to the charter of this repository, and knoller runs on any repository.
   `CITATIONS` holds the article of each rule for its rewrite, so one table serves both.
-- The sentence ends at the first `; got ` outside a code span, and a code span runs to the next
-  run of as many backticks. So the message of `message-value`, which quotes
-  ``…; got `{value}`.``, takes its article after the quote.
 - Verified by `suites/test_findings.nim`. Each message of knoller that the static pass or
   `koch fix` prints renders through its real check to the text that koch prints, article included.
   The messages of checks that no pass of koch runs yet render through their checks too, and so
@@ -2835,9 +2829,6 @@ before `; got `, or before the closing period. So `koch check` prints
   parameter cites V.12, as a placeholder does. So the case takes three rules, `name-case`,
   `member-case` and `placeholder-letter`, and each cites one article.
 - Each message of the static pass cites its article, as `Line holds tab (X.1).` does.
-- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
-  the value. The article then goes before the closing period. No message of knoller holds such a
-  backtick, and reading holds that.
 
 **The checker holds knoller as it holds itself, because koch compiles it.**
 
@@ -2855,6 +2846,33 @@ before `; got `, or before the closing period. So `koch check` prints
   `suites/test_toolchain.nim`.
 - The rule on dead exports reads the modules and suites of knoller too. Verified by
   `suites/test_checker.nim`.
+
+## Findings
+
+**Each check of koch names its rule by an id, and each finding prints through the renderer of
+knoller.** `checks.nim` names each check, and its id is `koch.` and the slug of its name, as
+`koch.commit-subject-width` (D4 a of #1002). One check holds one id, whatever messages it gives.
+A report of knoller keeps the id of its own rule (`toFinding`). `toNotice` reads a finding as a
+notice, which the renderer cuts into summary and actual (Renderer, in the record of knoller).
+
+- Each verb of koch that reports takes the terminal form at a terminal, and else the line form.
+  `--form` forces either one, and `koch check` passes it on to the koch of the merge.
+- Each hook prints each finding in the line form, help last (`toLine`), as ruling 7197275206 on
+  #1002 asks. So a refusal, the stop reason and the start context keep its remedy.
+- Verified by `suites/test_findings.nim`, `suites/test_merge.nim` and `suites/test_hooks.nim`.
+
+**A check gives its remedy as help, and its expected value apart from its sentence.** The article
+of the rule stays in the sentence (D1 a of #1002). An expected value stands apart only where it is
+of the kind of the actual, as in knoller: `101` against `at most 100`. A form or a pattern stays
+in its sentence, as `name-case` of knoller keeps its case. An absence gives no actual, since
+Article IV.4 never takes an in-range value for it, so no `none` reads as a value.
+
+- Rejected: an expected value for each sentence that says "must", where a pattern stands twice.
+- Cost: a limit or a pin stands twice, in the sentence and in the expected value.
+
+**Each suite compares the short text of a finding, and one test of each check holds its id.** The
+short text holds no rule (D3 c of #1002), so `suites/test_checks.nim` holds each id in a suite. A
+check whose tool no suite runs builds its finding where a suite reaches, as `unfetched` does.
 
 ## Fixes
 
@@ -3142,11 +3160,12 @@ exports (rule 12). The third is the names of its modules (rules 8, 9 and 15). Th
 fence warning of each entry take those of its project. The record of `curator/knoller` gives the
 reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
 
-- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that the
-  project builds on join them, from the modules that `readFacts` reads (`## Facts of the compiler`).
-- The queries of the semantic pass read the names of the tree alone, since a library adds no axis
-  value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
-  the case rename of its declaration into one rename, whose rule is that of the case.
+- The names come from `namesPackage` of knoller, once for each project that an entry lies in
+  (`namesEntries`). The aliases of its library join them (`## Facts of the compiler`).
+- The renames come from those names once, for the queries of the semantic pass and the context. A
+  library adds no axis value and no word, so a cut rename asks the pass for each site, as a case
+  rename does. It joins the case rename of its declaration into one rename, whose rule is that of
+  the case. Verified by `suites/test_fixes.nim`, against the names of the tree and of a library.
 - A cut rename keeps each word that the glossaries list, as the case rename of the audit keeps it.
   Knoller takes its jargon alone, so where a glossary lists a word, the two tools can differ.
   Verified by `suites/test_fixes.nim`, with a glossary and with none.
@@ -3317,14 +3336,12 @@ tree matched each report of the two outputs by rule, path and line.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
   it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
   proves nothing of, and each tool prints it once.
-- Cost: over the files of `curator/knoller` at `b585ea65`, `koch fix --dry-run` takes 116.9 s built
-  there, and 67.4 s built at `41c24818`. The second build runs the compiler calls of rules 7 and 11
-  on a pool of threads (`## Caller of both rules` of knoller). Each figure is the median of three
-  alternating runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-21.
-- Cost: at `b585ea65`, the profile on #1001 gives 110.8 s. Uses take 31.3 s, pure routines 34.8 s
-  and cut renames 3.1 s. The static part takes 41.8 s, and asks no compiler. With no checkout of a
-  lock, each project prints the same text with both builds. Their times sum to 1,347.7 s and
-  776.7 s, with the first run of knoller.
+- Cost: over the files of `curator/knoller` at `2d496af8`, `koch fix --dry-run --branch:main` takes
+  65.4 s built there, and 34.9 s built at `8a7b2f61`. That build fixes each entry on the pool, and
+  reads the names and the renames once (the profile on #1001). Each figure is the median of three
+  alternating runs of a debug build, on 4 cores at 2.10 GHz, 2026-11-26. Both print the same text.
+- Cost: with no checkout of a lock, each project prints the same text with both builds, in one run
+  of each, alternating. Their times sum to 763.1 s and 475.6 s.
 
 ## Parser proof
 
@@ -3339,12 +3356,14 @@ of knoller, under Content fixes.
   So each project reads with the grammar of its own pin. 2.2.12 lexes as names the glyph
   operators that 2.4.0 lexes as operators.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
-  one line `warning: needless-parentheses: <message>`, and the exit code stays.
+  one warning of rule `needless-parentheses`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
   once held. So each round fixes again only the entries that asked, and the scope check reads all
-  parts joined.
+  parts joined. The first fix and each round run on the pool of knoller, as its command line does
+  (`## Command line` of knoller). The parts keep the order of the entries.
 - Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
-  pin, the group that the parser refuses stays, and a second fix writes nothing.
+  pin, the group that the parser refuses stays, and a second fix writes nothing. `fixProven` gives
+  what a loop that fixes every entry again in each round gives (`fixEvery`).
 
 ## Fixed waits
 
@@ -4781,8 +4800,8 @@ and test, which is what the order of `koch check` rests on.
 
 - Cost: on that machine and date, `nim r koch test curator/audit` took 14.7 s warm, and 22.9 s
   at its first run. So the static pass costs about as much as the suites of the checker itself.
-- The suites of `dance_ontology` and `pga_visualiser`, and each driven check, took minutes on
-  2026-09-24 (below). Assumed: they still take minutes, so the static pass is cheap next to them.
+- Assumed: the suites of `dance_ontology` and `pga_visualiser`, and each driven check, take
+  minutes, so the static pass is cheap next to them.
 - The dead-export rule reads each source once. Rejected: a scan of every source for each export,
   which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
   pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
@@ -4857,24 +4876,6 @@ s of their sum. The saving is the sum minus the slowest, so it grows as projects
 Cost from the same run: matrix jobs cannot start until `list-projects` reports. That puts 16 s
 between the start of the run and the first `test` job. That is a floor on every run, and the
 price of a matrix computed in tested Nim rather than in shell.
-
-**What the driven check costs, and where it goes.** Locally, `koch drive` on `rga_visualiser`
-takes 2 m 36 s warm, and 3 m 31 s on a tree whose `build/` was removed (2026-09-07). About two
-thirds of that is the deliberate wall-clock windows of the harness, which a faster machine does
-not shorten. On the runner the job is 5 m 31 s on the same checks, recorded 2026-09-08. The gap
-is apt install, a restore of a 2.4 GB compiler from cache, and a slower core.
-
-A figure from one machine predicts the figure of another only where what differs has been measured.
-
-| Step of the `drive` job | Wall |
-|--------------------------|------|
-| read the declaration and `apt-get install` | 1 m 47 s |
-| `nim r koch drive` | 3 m 04 s |
-| restore the commit-pinned compiler from cache | 28 s |
-
-The install is 32% of the job. It is also an upper bound on what a `koch list-packages` asked for
-each verb could save. The same step compiles koch and runs the verb of the project. So
-`list-packages` stays for each project.
 
 ## Runner caches
 
