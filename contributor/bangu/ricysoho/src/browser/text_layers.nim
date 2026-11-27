@@ -1226,9 +1226,11 @@ proc readBack(): (cstring, int) =
 
 proc adopted(was: Option[(int, int, bool)]) =
   ## punji le selci'a poi le stuzi cu jarco ke'a
+  ##   .i va'o lo nu le se tcidu cu muvdu kei .e lo nu no se cpedu cu denpa kei le papri cu cpedu
   let (text, caret) = readBack()
   if text == CURRENT.text:
     drawn(CURRENT, some((caret, caret, false)))
+    if CURRENT.is_moved and not (IS_BUSY or IS_WANTED): asked(CURRENT.text)
     return
   UNDO.add Edit(text: CURRENT.text, a: if was.isSome: was.get[0] else: caret,
       f: if was.isSome: was.get[1] else: caret)
