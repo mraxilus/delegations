@@ -629,8 +629,4 @@ ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le
   .i le cipra cu fliba ji'a va'o lo nu pa jufra cu krasi lo midju be pa linji
   .i `Architect` jdice di'u bu'u `#818`
 
-ni'o `rictadni` tcidu la lojban. sepi'o le genturfa'i gi'e ralte no fukpi be lo pagbu be le
-    genturfa'i
-  .i lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu lo tcidu be le liste be'o .e lo stodi
-      be le liste be'o `tools/lists.nim`
-  .i no prenu cu tcidu ro lo jufra pe le vi selci'a
+ni'o no prenu cu tcidu ro lo jufra pe le vi selci'a
