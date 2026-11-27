@@ -3872,6 +3872,29 @@ suite "Hooks":
     check heldBlock(PREDICTION_TABLES.replace(row8, row8 & "\n| x | A note. |")).len == 0
 
 
+  test "block of tables holds no bullet beside them, as bullet and row take one key (#1028)":
+    # Case as found: bullet at position 1 and row 1 of table of one block took one key of log,
+    #   so `appendClaims` dropped one row. Domain: bullet of each marker before, between and
+    #   after tables, with number of claim of table or none, and two bullets.
+    const rule = "block of tables holds no bullet beside them (GUIDE.md, Prediction, critic and " &
+      "reflection); got `"
+    let found = PREDICTION_TABLES.replace("**Judgements.**",
+      "- Work: four to eight findings (60%).\n\n**Judgements.**")
+    check found.forecasts.mapIt(it.position).count(1) == 2  # bullet and row share one number
+    check heldBlock(found) == @[rule & "Work: four to eight findings`"]  # case as found
+    for marker in ["-", "*", "+"]:
+      for before in ["**Judgements.**", "**Estimates.**", "**Criteria.**", "**Working:**"]:
+        for (bullet, claim) in [("Work: four to eight findings (60%).",
+            "Work: four to eight findings"), ("the report ranks 9 findings (60%).",
+            "the report ranks 9 findings")]:
+          let text = PREDICTION_TABLES.replace(before, marker & " " & bullet & "\n\n" & before)
+          check heldBlock(text) == @[rule & claim & "`"]
+    let two = PREDICTION_TABLES.replace("**Criteria.**",
+      "- Work: a (60%).\n- Work: b (70%).\n\n**Criteria.**")
+    check heldBlock(two) == @[rule & "Work: a`", rule & "Work: b`"]
+    check heldBlock(PREDICTION).len == 0  # bullets alone, as block of running session
+
+
   test "block is held at stop of its own turn, and its mend of later turn serves call (#1028)":
     # Delegate mends block in reply, which is later turn, so block of that turn serves call.
     let
