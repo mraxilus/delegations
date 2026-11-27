@@ -52,7 +52,7 @@ nim r tools/build.nim examples                    # write worked examples of sug
 nim r tools/build.nim lists                       # write both lists again from lojban-common
 nim r tools/build.nim head                        # compare committed lists with lojban-common
 nim r tools/build.nim page                        # build tag page into build/page/tagger.html
-nim r tools/build.nim drive                       # build tag page, collect what it draws
+nim r tools/build.nim drive                       # build tag page, run its suite, collect it
 ```
 
 The build needs the compiler that `rictadni.nimble` pins, and `libssl3`, because
@@ -191,7 +191,8 @@ It has two front ends, which share one source, `pages/tagger.html`:
   Open `http://127.0.0.1:8461/`. The form sends each text to `suggester` itself, with your key
   and the default model, and the page shows the gismu and the report. `--serve:<port>` takes
   another port, and `RICTADNI_PAGE` names another built page. The server answers only requests
-  of its own host and origin.
+  of its own host and origin, and no other site may frame it. It has no token, so each user of
+  your machine can spend your key through it.
 - **As an Artifact on claude.ai.** The published page is at
   `https://claude.ai/artifact/VCrXVVid41EzZSx67N9SCr`, and only its owner can open it. It asks
   Opus 5.5 at effort `high` through the Claude usage of the viewer, and needs no key.
@@ -201,9 +202,9 @@ page.
 
 ## Status
 
-The tag page serves on your machine, and a suite posts a text to it and reads the report back. Its
-Artifact has not asked Claude live yet, so the answers of Opus at `high` without a schema are
-unmeasured.
+The tag page serves on your machine, and a suite posts a text to it and reads the report back.
+`nim r tools/build.nim drive` runs a suite of the page in Chromium. Its Artifact has not asked
+Claude live yet, so the answers of Opus at `high` without a schema are unmeasured.
 
 The tags, the index, the search and the command line work, and the suites hold them to CLL. They
 read each word through `ricyso'o`.

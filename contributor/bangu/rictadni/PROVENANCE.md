@@ -638,10 +638,18 @@ Opus at `low` and Haiku have one sample of each text, so their spread is unmeasu
 ## Tag page
 
 **One page serves two front ends.** `pages/tagger.html` is the source, and the verb `page`
-inlines its script and each font face of the store into `build/page/tagger.html`. The script is
-`app/page.nim`, compiled to JavaScript. It exports the prompt and the reader of
-`suggestions.nim`, so the page holds no second copy of the gismu list or of the check (II.9). The
-Architect ruled two front ends from one source on #1058, as D1 b.
+inlines its script, each font face of the store and a worked example into
+`build/page/tagger.html`. The one script of the page is `app/page.nim`, compiled to JavaScript.
+It builds the prompt with `toPromptAlone`, and `app/shown.nim` reads each answer with
+`readAnswer` of `suggestions.nim`. So the page holds no second copy of the gismu list, of the
+check or of the format of the report (II.9). The Architect ruled two front ends from one source
+on #1058, as D1 b.
+
+**The tiles are the verdicts that the reader keeps.** `toShownAnswer` takes each gismu of each
+verdict kept, once and in order, with its gloss. The page never reads its report back, so a gloss
+that holds a backtick shows whole. Before the page asks anything, it shows the worked example
+`alice` of `tools/examples.nim`, read by the same reader. The page names each model and effort
+from the constants of the code, and its prose repeats none.
 
 **On claude.ai, the page asks Opus 5.5 at effort `high` through `sample`.** The runtime of an
 Artifact takes effort `low`, `medium` or `high` alone, and Opus at `high` kept the most gismu of
@@ -651,30 +659,41 @@ each element, as for `suggester`. The cost falls on the Claude usage of the view
 key.
 
 Cost: the pattern of five letters is asked in words, not held by a schema, and the system text
-goes uncached with each call. So more elements can drop. Open questions names the gap. Verified
-by hand with Node on 2026-11-27: the compiled reader kept `purdi` and `rozgu`, and dropped
-`samtc` with the refusal of `suggester`.
+goes uncached with each call. So more elements can drop. Open questions names the gap.
 
 **On your machine, `suggester --serve` runs `suggester` itself for each text posted.** The child
 reads the text on standard input, under the mode of the server. So the page asks what the command
-line asks, with the same settings and key. The server writes the text into the box and the report
-into a hidden element, and the script of the page shows the report. So the served path needs no
-script to send.
+line asks, with the same settings and key. The server writes the text into the box. It writes
+the report, the gismu that the child printed and its exit code into hidden elements, and the
+script of the page shows them. The status follows the exit code, so a refused run never reads as
+"no gismu".
 
-Rejected: a call into `main` from the server, which would need `main` split, and
-would give the server a second path to the service. Cost: one process for each text posted.
+Cost: the child prints no gloss, so a served tile shows the gismu alone. The report beside it
+names each gloss. Rejected: a call into `main` from the server, which would need `main` split,
+and would give the server a second path to the service. Cost: one process for each text posted.
 
-The server binds `127.0.0.1` alone, and answers only requests whose host is its own address. It
-refuses a post whose origin is another site, so a page of another site can spend no request.
-Verified by `suites/test_suggester.nim`, through real HTTP and a replayed exchange.
+**The server refuses before it listens what would refuse each post.** It reads the settings, the
+credential where the mode is not replay, and the directory of replay. A problem, or a port that
+is taken, exits 2 with its name, before the server claims to serve. The server binds `127.0.0.1`
+alone, and answers only requests whose host is its own address. It refuses a post whose origin is
+another site. Each answer forbids a frame by another site, so no click on a hidden frame posts a
+text.
+
+Cost: the server has no token, so any process or user of the machine can post to it and spend
+the key. It runs one child at a time, so a live run stalls each other request until it ends.
 
 **rictadni drives its own page.** `tools/page.nim` builds the page, and `tools/drive.nim` serves
-it on loopback to Chromium of the store. `tools/drive/collector.nim` reads each run of text with
-its font, and the drive writes `build/font-faces/written.json` for `koch drive`. The Architect
-ruled that each project drives its own pages, as D1 a on #1058. The three files take their logic
-from `ricyso'o`, and each names its siblings, the collector of `pga_benchmark` among them.
-Verified by hand with `nim r koch drive contributor/bangu/rictadni` on 2026-11-27, with 0
-findings.
+it on loopback to Chromium of the store. The verb `drive` runs `tests/browser/suite_page.nim` in
+the page, in three modes. With a stub of the runtime, the suite submits a text and checks the
+tiles, the command, the report and the request to `sample`. With a served run, it checks the
+exit and report. With neither, it checks the worked example.
+
+The suite runs inside a function of its own. Each program that Nim compiles to JavaScript declares
+the same global names, so a second program would replace those of the first. Then
+`tools/drive/collector.nim` reads each run of text with its font, and the drive writes
+`build/font-faces/written.json` for `koch drive`. The Architect ruled that each project drives
+its own pages, as D1 a on #1058. The files of the drive take their logic from `ricyso'o`, and each
+names its siblings, the collector of `pga_benchmark` among them.
 
 Cost: the page holds about 3.3 MB, nearly all font faces, under the limit of 16 MiB of an
 Artifact. Two builds of one tree differ, because `koch drive` compiles the script with its own
@@ -1180,9 +1199,12 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   text from the cache. Those requests came within minutes of each other. No run measured the hits
   of requests that come hours apart.
 - **Answers of the tag page.** No grid measured Opus at `high` through `sample`, with no system
-  role and no schema. A form of a browser sends each line break as CR LF. So a text from the page
-  can miss an exchange that the command line recorded. That is assumed from the rules of HTML
-  forms, and no run checked it.
+  role and no schema.
+- **Line ends of text from the page.** A text area gives no final line break. So a text posted
+  through `--serve` misses an exchange that the command line recorded from a file that ends in
+  one. A review of #1062 saw this with the garden text of the grid. A form also sends each line
+  break as CR LF, which is assumed from the rules of HTML forms, and no run checked it. To
+  normalise line ends before the hash would change the key of each recorded exchange.
 - **The spread of Opus at `low` and of Haiku.** The grid of Live replies sent one request for
   each text to these configurations. So it does not show how far a second request can differ.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
