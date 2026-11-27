@@ -13,6 +13,8 @@
 ##   |                           | answer model produced; send rest; write each reply     |
 ##   | --replay:<directory>      | read every exchange from files; send nothing           |
 ##   | --                        | end flags, so passage may open with `-`                |
+##   | --serve[:<port>]          | serve tag page on loopback; each text posted runs this |
+##   |                           | binary on it, under same mode, and page shows report   |
 ##   |---------------------------|--------------------------------------------------------|
 ##   Exit: 0 gismu printed, 1 none kept and each failure named, 2 usage, input or settings error,
 ##     nothing sent.
@@ -119,7 +121,8 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[asyncdispatch, net, options, os, sequtils, strutils, times, uri]
+import std/[asyncdispatch, asynchttpserver, net, options, os, osproc, sequtils, streams, strutils,
+    times, uri]
 from std/posix import close, mkdir, O_CREAT, O_EXCL, open, O_WRONLY
 
 import ricysoho
@@ -142,6 +145,7 @@ type
     argument: string  ## Text given, joined by one space, or URL; text of input once read.
     is_url: bool  ## Argument is one http or https URL, so page is fetched.
     is_input: bool  ## Argument is `-` alone, so text is read from standard input.
+    port_served: Option[int]  ## Port `--serve` serves tag page on; `none` where run reads text.
 
   Commanded = object  ## Define outcome of reading arguments: command, or usage error.
     case is_read: bool  ## Arguments read as command usage takes.
@@ -186,7 +190,8 @@ type
 
 
 const
-  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n"
+  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n" &
+      "       suggester [--record:<directory>|--replay:<directory>] --serve[:<port>]\n"
     ## Text printed on usage error.
   RULE_AUTHORITY = "name host and port as RFC 3986 section 3.2 splits them"
     ## Rule problem of URL argument and of endpoint states where `isURL` refuses authority past
@@ -194,6 +199,15 @@ const
     ##   `exchanges.nim` words same rule.
   FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
   FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
+  FLAG_SERVE = "--serve"  ## Flag serving tag page; `:<port>` after it names port.
+  PORT_SERVED_DEFAULT = 8461  ## Port `--serve` takes where flag names none; any free port serves.
+  KEY_PAGE = "RICTADNI_PAGE"  ## Environment name of built page `--serve` serves.
+  PATH_PAGE_DEFAULT = "build" / "page" / "tagger.html"
+    ## Page `--serve` serves where `KEY_PAGE` is empty: as verb `page` writes it, in project folder.
+    ##   Sibling: `PATH_PAGE` of `tools/page.nim`, which app may not import (II.9).
+  MARK_TEXT = "<textarea id=\"text\" name=\"text\" spellcheck=\"false\"></textarea>"
+    ## Empty text box of page, which served page fills with text posted.
+  MARK_MAIN = "</main>"  ## End of main of page, before which served page puts report.
   KEY_SERVICE = "RICTADNI_SERVICE"  ## Environment name of service.
   KEY_ENDPOINT = "RICTADNI_ENDPOINT"  ## Environment name overriding endpoint.
   KEY_MODEL = "RICTADNI_MODEL"  ## Environment name overriding model.
@@ -238,6 +252,8 @@ func readCommand(arguments: openArray[string]): Commanded =
   ##     by scheme, host, port and path alone (`dropSecrets`), never passage, so mistyped port or
   ##     host never goes out as paid request; problem states `RULE_PORT` where port alone fails
   ##     (`isPortFaulty`), else `RULE_AUTHORITY`.
+  ##   `--serve` or `--serve:<port>`, port in 1..65535, serves tag page and takes no text, since
+  ##     page posts each; text after it is usage error, so no word goes out unasked.
   var
     command = Command(mode: Mode.Live)
     at = 0
@@ -249,12 +265,25 @@ func readCommand(arguments: openArray[string]): Commanded =
       is_ended = true
       break
     var is_taken = false
+    if command.port_served.isNone and (flag == FLAG_SERVE or flag.startsWith(FLAG_SERVE & ":")):
+      let port =
+        if flag == FLAG_SERVE: PORT_SERVED_DEFAULT
+        else: (try: flag[FLAG_SERVE.len + 1 .. ^1].parseInt except ValueError: -1)
+      if port < 1 or port > 65_535:
+        return Commanded(is_read: false, problem: "Port of `--serve` should be in 1..65535; got `" &
+            flag.toPrintable(RUNES_SHOWN) & "`.")
+      command.port_served = some(port)
+      continue
     for (prefix, mode) in [(FLAG_RECORD, Mode.Record), (FLAG_REPLAY, Mode.Replay)]:
       if command.mode == Mode.Live and flag.startsWith(prefix) and flag.len > prefix.len:
         (command.mode, command.directory) = (mode, flag[prefix.len .. ^1])
         is_taken = true
     if not is_taken: return Commanded(is_read: false)
   let rest = @arguments[at .. ^1]
+  if command.port_served.isSome:
+    if rest.len == 0 and not is_ended: return Commanded(is_read: true, command: command)
+    return Commanded(is_read: false, problem: "`--serve` should take no text, since page posts " &
+        "each; got `" & rest.join(" ").toPrintable(RUNES_SHOWN) & "`.")
   if rest.len == 0: return Commanded(is_read: false)
   if not is_ended and ((rest[0] == "-" and rest.len > 1) or
       rest.anyIt(it.len > 1 and it.startsWith('-'))):
@@ -596,6 +625,123 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
 
 
 
+#[ Tag page ]#
+
+func toPageServed(page, text, output, report: string, code: int): string =
+  ## Fill page with text posted, in its box, and run of child, in hidden elements its script
+  ##   shows: report in `served` with exit as `data-code`, and gismu printed in `served-output`.
+  page.replace(MARK_TEXT, MARK_TEXT.replace("></textarea>", ">" & text.escapeMarkup &
+      "</textarea>")).replace(MARK_MAIN, "<pre id=\"served\" hidden data-code=\"" & $code &
+      "\">" & report.escapeMarkup & "</pre><pre id=\"served-output\" hidden>" &
+      output.escapeMarkup & "</pre>" & MARK_MAIN)
+
+
+proc runChild(command: Command, text: string): tuple[output, report: string, code: int] =
+  ## Run this binary on text through standard input, under mode of command; its output, report
+  ##   and exit. Child reads settings and credential as any run does, so page asks what command
+  ##   line asks.
+  var arguments: seq[string]
+  case command.mode
+  of Mode.Live: discard
+  of Mode.Record: arguments.add FLAG_RECORD & command.directory
+  of Mode.Replay: arguments.add FLAG_REPLAY & command.directory
+  arguments.add "-"
+  let child = startProcess(getAppFilename(), args = arguments, options = {})
+  child.inputStream.write text
+  child.inputStream.close()
+  result.output = child.outputStream.readAll
+  result.report = child.errorStream.readAll
+  result.code = child.waitForExit
+  child.close()
+
+
+proc answerPage(request: Request, page: string, port: int, command: Command) {.async.} =
+  ## Answer one request: page at `/`, and text posted there run as child; refuse request whose
+  ##   host or origin is not this server, so page of other site can spend no request.
+  let
+    hosts = ["127.0.0.1:" & $port, "localhost:" & $port]
+    host = request.headers.getOrDefault("host")
+    origin = request.headers.getOrDefault("origin")
+    headers = newHttpHeaders({"Content-Type": "text/html; charset=utf-8",
+        "Content-Security-Policy": "frame-ancestors 'none'", "X-Frame-Options": "DENY"})
+      # Page of other site may not frame this one, so no click on it posts text unseen.
+  if $host notin hosts:
+    await request.respond(Http403, "Host should be `127.0.0.1:" & $port & "`.\n")
+    return
+  if request.url.path != "/":
+    await request.respond(Http404, "")
+    return
+  if request.reqMethod == HttpGet:
+    await request.respond(Http200, page, headers)
+    return
+  if request.reqMethod != HttpPost:
+    await request.respond(Http405, "")
+    return
+  if ($origin).len > 0 and $origin notin hosts.mapIt("http://" & it):
+    await request.respond(Http403, "Origin should be this server.\n")
+    return
+  var text = ""
+  for (key, value) in request.body.decodeQuery:
+    if key == "text": text = value
+  let ran = command.runChild(text)
+  await request.respond(Http200, page.toPageServed(text, ran.output, ran.report, ran.code),
+      headers)
+
+
+proc toProblemServed(command: Command, configured: Configured,
+    found: Option[Credentialed]): string =
+  ## Name what stops each post from running, before server listens: settings, credential where
+  ##   mode is not replay, or directory of replay; empty where none.
+  if not configured.is_valid: return configured.problem
+  if found.isSome and not found.get.is_read: return found.get.problem
+  if command.mode == Mode.Replay and not command.directory.dirExists:
+    return "Directory of `" & FLAG_REPLAY & "` should exist; got `" & command.directory & "`."
+  ""
+
+
+proc serve(command: Command): int =
+  ## Serve tag page on loopback at port of command until stopped; exit 2 where page is absent or
+  ##   lacks text box or main, where settings, credential or directory of replay would refuse each
+  ##   post, or where port is taken, so nothing listens that cannot run text posted.
+  let
+    path = (let named = getEnv(KEY_PAGE); if named.len > 0: named else: PATH_PAGE_DEFAULT)
+    port = command.port_served.get
+  if not path.fileExists:
+    stderr.writeLine "Page should be built at `" & path & "`, by `nim r tools/build.nim page` " &
+        "in project folder, or named in `" & KEY_PAGE & "`; got none."
+    return 2
+  let page = readFile(path)
+  if MARK_TEXT notin page or MARK_MAIN notin page:
+    stderr.writeLine "Page should hold empty text box and end of main; got `" & path & "`."
+    return 2
+  let configured = readSettings(
+    readVariable(KEY_SERVICE),
+    readVariable(KEY_ENDPOINT),
+    readVariable(KEY_MODEL),
+    readVariable(KEY_EFFORT),
+    readVariable(KEY_WORKSPACE),
+  )
+  let
+    found =
+      if configured.is_valid and command.mode != Mode.Replay:
+        some(configured.settings.findCredential)
+      else: none(Credentialed)
+    problem = command.toProblemServed(configured, found)
+  if problem.len > 0:
+    stderr.writeLine problem
+    return 2
+  let server = newAsyncHttpServer(maxBody = BYTES_PAGE_MAX + 4096)
+  try: server.listen(Port(port), "127.0.0.1")
+  except OSError as error:
+    stderr.writeLine "Port `" & $port & "` of loopback should be free; got `" &
+        error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
+    return 2
+  stderr.writeLine "Serving tag page at http://127.0.0.1:" & $port & "/ until stopped."
+  proc answer(request: Request) {.async.} = await request.answerPage(page, port, command)
+  while true: waitFor server.acceptRequest(answer)
+
+
+
 #[ Entry ]#
 
 proc main(): int =
@@ -607,6 +753,7 @@ proc main(): int =
     stderr.write USAGE
     return 2
   var command = parsed.command
+  if command.port_served.isSome: return command.serve
 
   # Read text of standard input, capped as page, before any setting; it goes as text given.
   if command.is_input:
