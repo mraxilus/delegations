@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks, lags, tree]
+import ../../src/[findings, hooks, lags, markdown, tree]
 import ./fixtures
 
 
@@ -146,9 +146,15 @@ The gap list reads the baseline of each algebra.
   RULE_CELL = "cell under `Predicted` is one whole claim of `## Prediction` block that call " &
     "took, up to its confidence, percentiles or resolution criterion, or before final full " &
     "stop of bullet with none, with or without its label of one word that opens with capital, " &
-    "or `No prediction` (GUIDE.md, Prediction, critic and reflection)"
+    "or `No prediction` (curator/audit/PROVENANCE.md, Quotes of claims)"
     ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
-    ##   7017902016, 7018501890 and 7022872980 of #969 give it.
+    ##   7017902016, 7018501890 and 7022872980 of #969 give it; record states it, since GUIDE.md
+    ##   states tables alone (#1028).
+  REFUSAL_NO_TABLE = "reflection holds table of claims: table of judgements or estimates whose " &
+    "header has column `#` (GUIDE.md, Prediction, critic and reflection), or table whose header " &
+    "has column `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md, Quotes " &
+    "of claims)"
+    ## Finding of reflection with no table of claims: each form cites text that states it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -2769,10 +2775,11 @@ suite "Hooks":
         lineSaid("The critic runs.") & lineHandback("critic")
       check blocksHeld(critic & lineSaid(REFLECTION)).len == count
 
-    # Reflection quotes nothing with no table, no row, or empty cell.
-    check reflected("No table.").anyIt("column `Predicted` (GUIDE.md" in it)
-    check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |")
-      .anyIt("column `Predicted` (GUIDE.md" in it)
+    # Reflection quotes nothing with no table, no row, or empty cell; record states table of
+    #   bullets, since GUIDE.md states tables alone (#1028).
+    const bullets = "column `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md"
+    check reflected("No table.").anyIt(bullets in it)
+    check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |").anyIt(bullets in it)
     check reflected(header).anyIt("got none under `| State | Confidence | Predicted |" in it)
     check reflected(header & "| ✅ | 70% |  | it leads |").anyIt("empty cell in row `1`" in it)
     check reflected(header & "| ✅ | 70% |").anyIt("empty cell in row `1`" in it)  # short row
@@ -3469,7 +3476,7 @@ suite "Hooks":
           ("| ⬜ | 60% |  \t  | missed |\n", @[refusalEmpty(1)])]:
         let held = blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
         check held == found
-        check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
+        check held.allIt("`No prediction` (curator/audit/PROVENANCE.md, Quotes of claims)" in it)
 
 
   test "claim reads `\\|` as `|`, as cell does (7022872980 of #969)":
@@ -3822,10 +3829,7 @@ suite "Hooks":
     let missed = "## Reflection\n\n| # | State | % | Judgement | Result |\n" &
       "| --- | --- | --- | --- | --- |\n| – | ⬜ | – | No prediction | started before it |\n"
     check heldReflection(PREDICTION_TABLES, missed).len == 0
-    check heldReflection(PREDICTION_TABLES, "## Reflection\n\nNone.\n") == @["reflection " &
-      "holds table of claims: table of judgements or estimates whose header has column `#`, " &
-      "or table whose header has column `Predicted` (GUIDE.md, Prediction, critic and " &
-      "reflection)"]
+    check heldReflection(PREDICTION_TABLES, "## Reflection\n\nNone.\n") == @[REFUSAL_NO_TABLE]
     check heldReflection(PREDICTION_TABLES, "## Reflection\n\n| # | State | Estimate @ 90% | " &
       "Result |\n| --- | --- | --- | --- |\n") == @["table of reflection holds row under its " &
       "header; got none under `| # | State | Estimate @ 90% | Result |`"]
@@ -3881,6 +3885,38 @@ suite "Hooks":
           if cell in refused and state in ["✅", "⬜"]:
             check found == @[rule & "; got `" & cell & "` for claim `" & row[2 .. ^3] & "`"]
           else: check found.len == 0
+
+
+  test "each refusal of bullets cites section that states its rule (#1028)":
+    # Case as found: `RULE_CELL` of `hooks.nim` cited GUIDE.md, Prediction, critic and reflection,
+    #   whose rules name tables alone since #1028, so refusal of bullets cited rule that is gone.
+    #   Domain: refusal of cell, of empty cell, and of reflection with no table, for bullets.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      record = staticRead("../../PROVENANCE.md")
+      heading = "### Prediction, critic and reflection"
+      cited = "(curator/audit/PROVENANCE.md, Quotes of claims)"
+    func textSection(text, heading: string): string =
+      ## Read `##` section of heading of text, fenced lines blank, each run of whitespace as one.
+      text.sections.filterIt(it.heading == heading)[0].text.fencedOut.collapsed
+    let
+      work = guide.textSection("## Work for subagents")
+      start = work.find(heading)
+      rules = work[start ..< work.find("### ", start + heading.len)]
+      quotes = record.textSection("## Quotes of claims")
+    check start >= 0
+    check "`" & COLUMN_PREDICTED & "`" notin rules  # guide states tables alone (#1028)
+    check "A cell under `Predicted` is one whole claim of a block that a call took, or " &
+      "`No prediction`." in quotes  # record states rule of cell
+    check "**A claim of bullets is a bullet" in quotes  # and where claim of bullets ends
+
+    # Each refusal that rules of bullets alone state cites record, and never guide.
+    const bullet = "- Judgement: the race leads the findings (70%)."
+    let refusals = quoted(bullet, "the race") & quoted(bullet, "") &
+      heldReflection(PREDICTION, "## Reflection\n\nNone.\n")
+    check refusals == @[refusalCell("the race"), refusalEmpty(1), REFUSAL_NO_TABLE]
+    check refusals.allIt(cited in it)
+    check refusals[0 .. 1].allIt("GUIDE.md" notin it)  # cell is rule of bullets alone
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
