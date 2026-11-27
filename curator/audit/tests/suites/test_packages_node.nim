@@ -332,6 +332,17 @@ suite "Advisories":
       let (advisories, failure) = readAudit(answer)
       check advisories.len == 0 and failure.len > 0
 
+  test "answer whose packages are no object is failure, and never crash of koch":
+    # Case: review of #1069; list of packages raised in `pairs`, and crash exits 1, which reads as
+    #   advisory. Domain: list, text, number and null in place of object, beside count of 0.
+    for value in ["[]", "\"none\"", "0", "null"]:
+      let (advisories, failure) = readAudit((
+        code: 0,
+        output: "{\"vulnerabilities\": " & value & ", \"metadata\": {\"vulnerabilities\": " &
+          "{\"total\": 0}}}",
+      ))
+      check advisories.len == 0 and failure == "npm audit gave no count of advisories"
+
   test "answer of error names it, though it holds no count either":
     # Case: registry that does not answer, npm 10.9.9, 2026-11-27.
     let (advisories, failure) = readAudit((code: 1, output: AUDIT_ERROR))
