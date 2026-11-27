@@ -224,13 +224,13 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A one-line routine takes its doc on the next line, indented to the body. A longer routine
   takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
 - A `const`, `let` or `var` whose value opens `block` keeps `block:` on its `=` line, so its
-  body takes one indent. This holds at top level and inside a routine. Its doc stands on its own
-  lines above the declaration, and a long doc wraps there as an outline (VI.2). In a section,
-  the doc stands above the name. Nim reads no doc there, so the doc is a `#` comment, and an
-  empty one is `# TODO: Document.` (VI.9).
+  body takes one indent. This holds at top level and inside a routine. Nim then reads no doc of
+  the declaration, wherever the doc stands. So its doc is a `#` comment on its own lines above
+  the declaration, and a long doc wraps there as an outline (VI.2). In a section, the doc stands
+  above the name. A doc that waits for text is `# TODO: Document.` (VI.9).
 
-  A blank line stands above the doc, unless the line above opens the body that holds it, as
-  `if` does. The keyword of a section opens a body too:
+  A blank line stands above the doc. None stands where the doc opens the file, or where the line
+  above opens the body that holds it, as `if` does. The keyword of a section opens a body too:
 
   ```nim
   const STEPS_MAX* = 3  ## Count steps of walk at most.

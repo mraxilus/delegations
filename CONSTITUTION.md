@@ -363,9 +363,10 @@ CAYLEYS_WEDGE  # module constant
    Architect approves keeps its records in its own language, and the checker lists each such
    project.
 9. A doc has one position for each shape of declaration, and the expression guide of the
-   language fixes it. A reader then finds every doc where the last one was. Nim reads no doc in
-   the position of a value that opens `block`, so that doc is a `#` comment. So no comment claims
-   to be a doc that Nim reads. Where a later Nim reads a doc there, the doc takes `##` again.
+   language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
+   value whose `block:` stands on its `=` line, wherever the doc stands. So that doc is a `#`
+   comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads such a doc,
+   the doc takes `##` again.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
