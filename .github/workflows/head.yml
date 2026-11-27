@@ -16,6 +16,8 @@
 #   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
 #   it, so nobody reads it as delegate having judged anything. Label is project's directory,
 #   which is its role string, copied rather than composed.
+#   Issue step has copies in `nim.yml` and `npm.yml` (Article II.9); fix to one is finished
+#   when all three are checked.
 #
 #   Matrix job per project on its own pin, as `drive` in `check.yml`. Compiler arms, packages
 #   and Atlas cache are copies of that job's steps, since workflow shares steps only through

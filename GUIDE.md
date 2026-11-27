@@ -288,6 +288,9 @@ Then the subagent runs, and these steps follow:
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
   Commit the log in a commit of its own, as `chore(<project>): log the claims of the reviewer`.
+- **Once `koch check` names the log past 5,000 rows, roll it on a branch of your project.**
+  `nim r koch roll` moves each row that can change no more into the prior at the head of the log
+  (#1049).
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
@@ -375,6 +378,11 @@ it. `curator/audit/PROVENANCE.md`, Toolchain, says how.
   silence.
 - **A bump of the pin is your work.** Run the suites on the new version. Move the line.
   Record in `PROVENANCE.md` what moved and why.
+- **Keep up with each patch release of the 2.4 series, for its fixes.** Nothing fails while
+  your pin lags. `koch check` and the start hook name each release pin below the pin of
+  `curator/audit`. The `nim` workflow runs `koch releases` weekly. It keeps an issue open while
+  that pin lags its series, so the curators move first. A newer series waits until the Architect
+  asks for it.
 
 ## How to add a dependency
 

@@ -239,6 +239,11 @@ proc writeInto*(root, path, content: string) =
   writeFile(root / path, content)
 
 
+func bits*(value: float): uint64 =
+  ## Bits of float, so that compare holds to last bit, and `-0.0` stands apart from `0.0`.
+  cast[uint64](value)
+
+
 proc repoTemp*(): string =
   ## Create temporary git repository on branch `main` with one empty commit.
   result = createTempDir("delegations_", "_fixture")
