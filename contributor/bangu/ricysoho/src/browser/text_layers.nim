@@ -1243,13 +1243,15 @@ proc adopted(was: Option[(int, int, bool)]) =
 proc took(model: Model) =
   ## pixra lo se tcidu pe pa selci'a
   ##   .i pa se tcidu pe pa pu selci'a cu muvdu ja'i ro nu cenba poi ba fasnu
+  ##   .i ku'i ri na basti pa se tcidu poi na muvdu
   if IS_COMPOSING: return
-  var shown = model
-  if model.text != CURRENT.text:
-    let (low, high, inserted) = diff(model.text, CURRENT.text)
-    shown = model.shifted(low, high, inserted, CURRENT.text)
-    shown.is_moved = false
-  drawn(shown, selectionOffsets())
+  if model.text == CURRENT.text:
+    drawn(model, selectionOffsets())
+    return
+  if not CURRENT.is_moved: return
+  let (low, high, inserted) = diff(model.text, CURRENT.text)
+  drawn(model.shifted(low, high, inserted, CURRENT.text), selectionOffsets())
+  if not (IS_BUSY or IS_WANTED): asked(CURRENT.text)
 
 
 proc sent() =
