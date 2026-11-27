@@ -243,7 +243,7 @@ each rule where the sentence ends, as in
 | `landmark-alias` | A landmark index stands as the alias that its type declares, never bare. |
 | `article-in-comment` | A comment holds no article. |
 | `comment-form` | A claim takes a capital and a period. A path, literal or name takes backticks. |
-| `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
+| `doc-outline` | A nuance stands two spaces past where the text of its parent starts. |
 | `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
 | `interpolation-braces` | An interpolated string takes each value in braces, never by `&`. |

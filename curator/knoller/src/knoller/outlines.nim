@@ -8,8 +8,8 @@
 ##     leading tag as `TODO:`, `Cost:` or `Rejected:` included, as Architect ruled on #1020.
 ##   Parent of line: nearest line above it in its comment at smaller step. Nuance stands two spaces
 ##     past where text of parent starts (VI.2), so line below `# TODO: Implement …` stands two
-##     spaces past `TODO:`. Wrap of sentence stands so too, since summary may wrap two spaces
-##     deeper.
+##     spaces past where `TODO:` starts. Wrap of sentence stands so too, since summary may wrap
+##     two spaces deeper.
 ##   Line holds no step where it is table row (`|`), diagram, or code between fences of three
 ##     backticks; blank line holds none. Diagram stands one item each side of each arrow `->`,
 ##     outside backticks (`isDiagram`), so arrow that prose quotes or writes marks none. `#`
