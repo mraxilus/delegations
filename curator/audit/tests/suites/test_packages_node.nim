@@ -39,6 +39,7 @@ const
     "reimport('lodash');", "const said = 'it\\'s from \"lodash\"';",
     "$from('rxjs-like');", "this.#require('lodash');", "const v = from('lodash');",
     "go(); /* see import('lodash') */", "const t = `\nimport x from 'lodash'\n`;",
+    "const m = loader.require('lodash');",
   ]
     ## Lines that hold word of import beside quote, and name no module; line of `report` as found
     ##   at line 223 of `chrome.ts` of `pga_visualiser`, 2026-11-27, where `from` inside string
@@ -219,7 +220,9 @@ suite "Static check":
     # Case: review of #1069; each form passed, since line opening `/*` or `*` was skipped whole,
     #   quote of regular expression opened string, and `${}` read as text of template.
     #   Domain: comment before import on its line and on line above, line opening `*` in code,
-    #   regular expression holding quote, `${}` on one line, on line below, and holding braces.
+    #   regular expression holding quote, `${}` on one line, on line below, and holding braces;
+    #   then operand across line, `/` in class, division before `/` in string, and string that
+    #   line ends.
     for (text, line) in [
       ("/* note */ import x from 'lodash';", 1),
       ("/* a\n b */ import x from 'lodash';", 2),
@@ -228,6 +231,10 @@ suite "Static check":
       ("const t = `${await import('lodash')}`;", 1),
       ("const t = `a\nb ${require('lodash')}`;", 2),
       ("const t = `${ f({a: 1}) + require('lodash') }`;", 1),
+      ("const m = import(`lodash\n`);\nimport y from 'zod';", 3),
+      ("s.split(/[/']/); import x from 'lodash';", 1),
+      ("const r = a / 2, s = \"/\"; import x from 'lodash';", 1),
+      ("const s = 'oops\nimport x from 'lodash';", 2),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
