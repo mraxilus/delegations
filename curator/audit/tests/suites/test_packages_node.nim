@@ -341,6 +341,7 @@ suite "Static check":
       "<script src=\"/\\cdn.example/a.js\"></script>",
       "<script src=\"&#47;/cdn.example/a.js\"></script>",
       "<script src=\"/\n/cdn.example/a.js\"></script>",
+      "<script src=\"&#x2F;&sol;cdn.example/a.js\"></script>",
     ]:
       let found = checkPage(PATH_PAGE, "\n" & tag)
       check found.len == 1 and found[0].line == 2
@@ -350,6 +351,8 @@ suite "Static check":
       "<!-- <script src=\"https://cdn.example/a.js\"></script> -->",
     ]:
       check checkPage(PATH_PAGE, tag).len == 0
+    let below = checkPage(PATH_PAGE, "<!-- a\nb -->\n<script src=\"//cdn.example/a.js\">")
+    check below.len == 1 and below[0].line == 3  # Comment keeps its line ends.
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
