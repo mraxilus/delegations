@@ -3987,6 +3987,32 @@ suite "Hooks":
       "| # | Resolution criteria |"))[0] == rule & "Work: four to eight findings`"
 
 
+  test "bullet with indent, or item of number, under basis passes, as it holds no claim (#1028)":
+    # Case as found (finding 3 of third critic): bullet indented under `**Basis:**` passed, where
+    #   GUIDE.md said hook refuses bullet beside tables. Domain: each marker of bullet at each
+    #   indent of one to four spaces or tab, and item of number, under basis of block of tables;
+    #   none reads as claim, so none takes key of log that row takes; bullet with no indent does.
+    const
+      basis = "**Basis:** what this delegate knows, with no new read."
+      rule = "block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` " &
+        "or `Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
+        "reflection); got `"
+    func listed(opening: string): string =
+      ## Write block of tables whose basis lists two items, each opening with opening.
+      PREDICTION_TABLES.replace(basis, "**Basis:** what this delegate knows:\n\n" & opening &
+        "the diff of `main`\n" & opening & "the report")
+    var count = 0
+    for marker in ["- ", "* ", "+ "]:
+      for indent in [" ", "  ", "   ", "    ", "\t"]:
+        check listed(indent & marker).forecasts.len == 8  # claims of tables alone
+        check heldBlock(listed(indent & marker)).len == 0
+        inc count
+      check heldBlock(listed(marker)) == @[rule & "the diff of `main``", rule & "the report`"]
+    check count == 3 * 5
+    for item in ["1. ", "1) ", "  1. "]:
+      check heldBlock(listed(item)).len == 0 and listed(item).forecasts.len == 8
+
+
   test "block is held at stop of its own turn, and its mend of later turn serves call (#1028)":
     # Delegate mends block in reply, which is later turn, so block of that turn serves call.
     let
