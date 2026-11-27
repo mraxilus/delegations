@@ -489,6 +489,26 @@ suite "Declarations":
       check source.fixed == source
 
 
+  test "routine as value, whose body opens `block`, takes doc of binding after its `=`":
+    # Case held: `let f* = proc(): int =  ## Make one.` over body `block:`, which doc position
+    #   read as `block` below `=`, and missing doc wrote `# TODO: Document.` above (review of
+    #   #1070, probe of `declarations` at `2ed7a769`).
+    #   Domain: routine kind of each lambda, at top level and in routine, with doc and none.
+    let found = "let f* = proc(): int =  ## Make one.\n  block:\n    1\n"
+    check checkDocs("a.nim", found).len == 0
+    for keyword in ["proc", "func", "iterator"]:
+      let
+        body = if keyword == "iterator": "yield 1" else: "1"
+        global = "let f* = " & keyword & "(): int =\n  block:\n    " & body & "\n"
+        local = "proc g*() =\n  ## Do.\n  let f = " & keyword & "(): int =\n    block:\n      " &
+          body & "\n  discard f\n"
+      for source in [global, local, global.replace(" =\n", " =  ## Make one.\n")]:
+        checkpoint source
+        check source.isSettled
+      check global.documented == global.replace(" =\n", " =  ## TODO: Document.\n")
+      check local.isDocumented
+
+
   test "next-line doc of several lines, or under line holding comment, stands one level in":
     let breach = "const\n  N = 3\n      ## Size,\n      ##   in units.\n" &
       "  WHY = 1  # Reason.\n      ## Why.\n"
