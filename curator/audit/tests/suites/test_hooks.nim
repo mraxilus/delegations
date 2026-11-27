@@ -4431,8 +4431,8 @@ suite "Hooks":
     #   reflection with no such line, which takes no finding.
     const
       rule = "line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
-        "at `$`, each plain value after space, as cell holds it, and value of tokens holds no " &
-        "group after space (GUIDE.md, Prediction, critic and reflection); got `"
+        "at `$`, each one plain value after space, as cell holds it, and value of tokens holds " &
+        "no group after space (GUIDE.md, Prediction, critic and reflection); got `"
       figures = "39,100,000 tokens and $14.40"
       opening = "**Subagent:** builder of the weekly release check, "
     let whole = REFLECTION_TABLES_POSTED.mended
@@ -4489,6 +4489,43 @@ suite "Hooks":
     let bare = whole.replace(whole.splitLines[2] & "\n" & whole.splitLines[3], "")
     check opening notin bare
     check heldReflection(PREDICTION_TABLES, bare).len == 0
+
+
+  test "line `**Subagent:**` that gives two figures of tokens or two costs is refused (#1028)":
+    # Case as found (probe of line of critic of mends, rerun at head of mends): `builder at $3.00
+    #   per 1M tokens, 170,000 tokens and $1.10` gave 1,000,000 tokens and $3.00, with no finding.
+    #   Domain: one, two or no figure before ` tokens`, and one, two or no `$` that opens figure,
+    #   on line of subagent; mark that opens no figure, as `$` in code, counts none.
+    const
+      rule = "line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
+        "at `$`, each one plain value after space, as cell holds it, and value of tokens holds " &
+        "no group after space (GUIDE.md, Prediction, critic and reflection); got `"
+      figures = "39,100,000 tokens and $14.40"
+      opening = "**Subagent:** builder of the weekly release check, "
+    let whole = REFLECTION_TABLES_POSTED.mended
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
+    func refusal(written: string): seq[string] =
+      ## Write finding of line that gives figures written.
+      @[rule & opening & written & " at list price,`"]
+    const found = "at $3.00 per 1M tokens, 170,000 tokens and $1.10"
+    check lined(found) == refusal(found)  # case as found
+    for written in ["39,100,000 tokens, of them 12,000 tokens of output, and $14.40",
+        "39,100,000 tokens and $14.40, $0.50 of it cached",
+        "39,100,000 tokens and $14.40, as $3 per 1M tokens"]:
+      check lined(written) == refusal(written)
+    for written in ["39,100,000 tokens, of `$HOME`, and $14.40",
+        "of tokens, 39,100,000 tokens and $14.40", "39,100,000 tokens and $14.40 (US$ at list)",
+        "39,100,000 tokens (12,000 output tokens) and $14.40"]:
+      check lined(written).len == 0  # one figure of each; other mark opens none
+    check lined("of tokens and $14.40") == refusal("of tokens and $14.40")
+
+    # Log writes neither figure of such line, as hook refuses it.
+    let read = whole.replace(figures, found).figuresLine(LABELS_SUBAGENT)
+    check read.tokens.isNone and read.cost.isNone
+    check whole.replace(figures, "of tokens, 39,100,000 tokens and $14.40")
+      .figuresLine(LABELS_SUBAGENT).tokens == some(39_100_000)
 
 
   test "each refusal of bullets cites section that states its rule (#1028)":
