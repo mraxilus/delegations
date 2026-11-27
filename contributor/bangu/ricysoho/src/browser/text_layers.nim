@@ -1058,6 +1058,7 @@ func shifted*(model: Model, low, high: int, inserted: cstring, text: cstring): M
   ##   .i lo valsi poi lidne le nu cenba cu stali
   ##   .i lo valsi poi selkra le nu cenba cu muvdu
   ##   .i pa valsi poi le nu cenba cu pencu le fanmo .a le krasi be ke'a cu banro
+  ##   .i no valsi cu cfari ne'i lo valsi poi lidne ke'a
   ##   .i pa linji cu stali ro valsi poi stali
   let d = inserted.lengthUnits - (high - low)
   var is_solid = inserted.lengthUnits > 0
@@ -1067,16 +1068,20 @@ func shifted*(model: Model, low, high: int, inserted: cstring, text: cstring): M
       stop: (if model.stop < 0: -1 elif model.stop >= high: model.stop + d
         else: min(model.stop, low)),
       is_moved: true)
-  var index = newSeq[int](model.words.len)
+  var
+    index = newSeq[int](model.words.len)
+    after = 0
   for i, word in model.words:
     var
       s = if word.s >= high: word.s + d elif word.s < low: word.s else: low
       e = if word.e <= low: word.e elif word.e >= high: word.e + d else: low
     if is_solid and word.e == low: e = low + inserted.lengthUnits
     elif is_solid and word.s == high and not (i > 0 and model.words[i - 1].e == low): s = low
+    s = max(s, after)
     if e <= s:
       index[i] = -1
       continue
+    after = e
     index[i] = result.words.len
     result.words.add Word(s: s, e: e, group: word.group, gloss: word.gloss,
         text: text.slice(s, e))
