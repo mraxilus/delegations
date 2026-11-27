@@ -541,10 +541,10 @@ func priorLine*(line: string): Prior =
       of "count": tally.count = value.parseInt
       of "hits": tally.hits = value.parseInt
       of "hits_band": tally.hits_band = value.parseInt
-      of "confidence": tally.confidence.partials.add value.parseFloat
-      of "score": tally.score.partials.add value.parseFloat
+      of "confidence": tally.confidence.add value.parseFloat
+      of "score": tally.score.add value.parseFloat
       of "count_number": tally.count_number = value.parseInt
-      of "score_number": tally.score_number.partials.add value.parseFloat
+      of "score_number": tally.score_number.add value.parseFloat
       else: raise newException(ValueError, &"Tally of prior holds unknown field; got `{name}`.")
       continue
     case name
