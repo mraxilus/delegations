@@ -193,7 +193,9 @@ type
     has_point*: bool  ## Digits of value hold decimal point, as `170.000` or `39.1M` do.
 
   FiguresLine* = object  ## Define figures of line of reflection for one call, as line gives them.
-    line*: string  ## First line that opens with label, stripped; empty where text holds none.
+    line*: string
+      ## First line that opens with label, and each line that continues it, each stripped and
+      ##   joined by one space; empty where text holds none.
     tokens*: Option[int]  ## Tokens right before ` tokens`; none where no value or two read.
     cost*: Option[float]  ## Dollars at `$` after space; none where no value or two read.
 
@@ -2759,6 +2761,9 @@ func isFigureAt(line: string, at: int): bool =
 func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
   ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
+  ##   Line runs on over each line after it up to blank line, or line that opens with label in
+  ##     bold, as `**Critic:**`, so line that wraps gives its figures, and line of critic after it
+  ##     none (choice); line of other block after it with no blank line, as bullet, runs on too.
   ##   Tokens are whole value of count (`isCount`) that opens after space (`isFigureAt`) and ends
   ##     right before ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000, and
   ##     `170.000 tokens` none.
@@ -2772,10 +2777,25 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ##     170,000 (choice). Mark of emphasis or code around figure makes none, as no cell reads
   ##     value inside them.
   ##   Cost: word between value and ` tokens`, as `170,000 cached tokens`, gives none.
-  for line in text.splitLines:
-    let lower = line.strip(trailing = false).toLowerAscii
+
+  func isLabelBold(line: string): bool =
+    ## Decide whether line opens with label in bold: run in bold that colon or full stop closes, or
+    ##   that colon follows, as `**Critic:**`, `**Critic**:` or `**Judgements.**`.
+    let s = line.strip(trailing = false)
+    if not s.startsWith(BOLD): return false
+    let close = s.find(BOLD, BOLD.len)  # Mark that closes bold run; -1 where none.
+    close > BOLD.len and
+        (s[close - 1] in {':', FULL_STOP} or s.continuesWith(":", close + BOLD.len))
+
+  let lines = text.splitLines
+  for k, opening in lines:
+    let lower = opening.strip(trailing = false).toLowerAscii
     if not labels.anyIt(lower.startsWith(it)): continue
-    result.line = line.strip
+    var line = opening.strip
+    for next in lines[k + 1 .. ^1]:
+      if next.strip.len == 0 or next.isLabelBold: break
+      line.add " " & next.strip
+    result.line = line
     var
       values: seq[Value]  # Value right before each ` tokens` that one ends before.
       at = line.find(" " & WORD_TOKENS)
