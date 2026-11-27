@@ -61,7 +61,7 @@ proc searchLogged(
 suite "Notice":
   test "each release pin below pin of driver takes one line, under heading naming guide":
     # Case: five contributor projects pin `2.4.0` while curators pin `2.4.2`, 2026-11-26.
-    #   Domain: below by patch, below by minor with larger patch, equal, above by number but
+    # Domain: below by patch, below by minor with larger patch, equal, above by number but
     #   below as text, above by minor.
     let lines = noticesPin([
       Pinned(path: PATH_DRIVER, pin: "2.4.2"),
