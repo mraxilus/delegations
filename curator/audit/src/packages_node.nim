@@ -1,6 +1,6 @@
-## Hold scripts to base JavaScript, Node built-ins and tools of build that list names.
-##   Architect asked that code import nothing beyond base JavaScript where it can avoid it
-##     (#1045).
+## Hold scripts to base JavaScript, and read advisories and latest releases of each node lock.
+##   Architect asked that code import nothing beyond base JavaScript where it can avoid it, and
+##     that npm packages stay up to date, security fixes first, read weekly (#1045).
 ##   Static part refuses, in `koch check`, each package that script could do without:
 ##     Each name of `dependencies`, `optionalDependencies` or `peerDependencies` of node manifest
 ##       is finding, since page or tool ships it; tools of build alone stay, as dev dependencies.
@@ -11,20 +11,34 @@
 ##       package from there.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
+##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
+##     answer moves with no commit here, as `releases.nim` holds for nim-lang.org.
+##     `npm audit --package-lock-only --json` reads lock alone, with no install; each package it
+##       names is finding at lock, so exit is 1.
+##     `npm view <name> version` gives latest release of each dev dependency; one locked below it
+##       prints line that fails nothing.
+##     Answer that cannot stand exits 2: exit of npm other than 0 or 1, text JSON cannot read,
+##       `error` object, or exit that disagrees with count of advisories. Read as clean, it would
+##       close issue for work never done.
+##     Search is pure over answer of each ask (`checkAdvisories`), so suites run it offline.
 ##
+##   Rejected: `npm outdated`, which reads `node_modules` and prints `{}` over lock alone (npm
+##     10.9.9, 2026-11-27).
 ##   Rejected: list of Node built-ins for bare names, which moves with each Node release, where
 ##     `node:` form names built-in by itself.
 ##   Cost: imports read as text by line, never parsed: string or comment spanning lines ends at
 ##     each line, so text shaped as import inside it reads as import, and import built from
 ##     expression reads as none.
 ##   Cost: inline script of page reads as none; only `src` of `<script>` is read.
+##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, sequtils, strutils]
+import std/[json, options, os, osproc, sequtils, strutils]
 import ./[findings, layout]
-from ./dependencies import MANIFEST_NODE
+from ./dependencies import LOCK_NODE, MANIFEST_NODE
 from ./kinds import Kind
+from ./releases import isBelow
 
 
 const
@@ -42,8 +56,24 @@ const
   KEYWORDS_IMPORT = ["from", "import", "require"]
     ## Words whose quoted operand names module, as `from 'x'`, `import 'x'` and `require('x')`.
   QUOTES = {'\'', '"', '`'}  ## Marks that open and close specifier.
+  SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
   CITE_RULE = " (CONTRIBUTOR.md, TypeScript and Node)"  ## Rule each finding and line cites.
 
+
+type
+  Advisory* = object  ## Define one package that npm names vulnerable in lock.
+    name*: string  ## Package, as lock keys it.
+    severity*: string  ## Severity npm gives, as `high`.
+    range*: string  ## Versions advisory covers, as `<=4.17.23`.
+    notes*: seq[string]  ## Title and address of each advisory npm names for package.
+    fix*: string  ## Version npm names as fix; empty where it names none.
+
+  Locked* = object  ## Define project carrying node manifest beside its lock.
+    directory*: string  ## Project, repository-relative.
+    manifest*: string  ## Text of `package.json`.
+    lock*: string  ## Text of `package-lock.json`.
+
+  Answer* = tuple[code: int, output: string]  ## Define exit and standard output of one ask.
 
 
 
@@ -204,3 +234,132 @@ proc checkPackagesNode*(tree: Tree): seq[Finding] =
     if e.path.extractFilename == MANIFEST_NODE: result.add checkManifest(e.path, e.content)
     elif e.kind == some(Kind.TypeScript): result.add checkScript(e.path, e.content)
     elif e.kind in [some(Kind.Html), some(Kind.Svg)]: result.add checkPage(e.path, e.content)
+
+
+
+#[ Advisories ]#
+
+proc readAudit*(answer: Answer): tuple[advisories: seq[Advisory], failure: string] =
+  ## Read advisories of one `npm audit --json`; failure names why answer cannot stand.
+  if answer.code notin [0, 1]:
+    return (@[], "npm audit exited `" & $answer.code & "`, which names neither clean lock nor " &
+      "advisory")
+  let node =
+    try: parseJson(answer.output)
+    except JsonParsingError, ValueError: return (@[], "npm audit printed text JSON cannot read")
+  if node.kind != JObject or "error" in node:
+    return (@[], "npm audit answered with error")
+  let total = node{"metadata", "vulnerabilities", "total"}
+  if total.isNil or total.kind != JInt or "vulnerabilities" notin node:
+    return (@[], "npm audit gave no count of advisories")
+  for name, entry in node["vulnerabilities"]:
+    var advisory = Advisory(
+      name: name, severity: entry{"severity"}.getStr, range: entry{"range"}.getStr
+    )
+    for via in entry{"via"}.getElems:
+      if via.kind == JObject: advisory.notes.add via{"title"}.getStr & ", " & via{"url"}.getStr
+    let fix = entry{"fixAvailable"}
+    if not fix.isNil and fix.kind == JObject: advisory.fix = fix{"version"}.getStr
+    result.advisories.add advisory
+  # Exit that disagrees with count marks answer npm did not finish.
+  if (answer.code == 1) != (result.advisories.len > 0) or total.getInt != result.advisories.len:
+    return (@[], "npm audit exited `" & $answer.code & "` beside " & $total.getInt &
+      " advisories")
+
+
+proc versionLocked*(lock, name: string): Option[string] =
+  ## Read version lock holds for dependency of project; none where lock names none.
+  let node =
+    try: parseJson(lock)
+    except JsonParsingError, ValueError: return none(string)
+  let version = node{"packages", "node_modules/" & name, "version"}
+  if version.isNil or version.kind != JString: none(string) else: some(version.getStr)
+
+
+proc namesDev*(manifest: string): seq[string] =
+  ## Read each dev dependency node manifest names, in its order.
+  let node =
+    try: parseJson(manifest)
+    except JsonParsingError, ValueError: return
+  if node.kind == JObject and FIELD_DEV in node and node[FIELD_DEV].kind == JObject:
+    for name, _ in node[FIELD_DEV]: result.add name
+
+
+proc checkAdvisories*(
+  locked: openArray[Locked], audit, latest: proc(argument: string): Answer
+): tuple[lines: seq[string], found: seq[Finding], failure: string] {.effectsOf: [audit, latest].} =
+  ## Read advisories of each lock through `audit`, and latest release of each dev dependency
+  ##   through `latest`; return lines verb prints, finding for each advisory, and failure of
+  ##   search that cannot stand, which prints no line and finds nothing.
+  for project in locked:
+    let
+      path_lock = project.directory & "/" & LOCK_NODE
+      (advisories, failure) = readAudit(audit(project.directory))
+    if failure.len > 0:
+      return (@[], @[], failure & "; got `" & path_lock & "`.")
+
+    # Name each advisory, with its fix, then each dev dependency behind its latest release.
+    if advisories.len == 0:
+      result.lines.add "Advisories that npm names in `" & path_lock & "`: none."
+    else:
+      result.lines.add "Advisories that npm names in `" & path_lock & "`; move each package " &
+        "to its fix" & CITE_RULE & ":"
+    for advisory in advisories:
+      let fix = if advisory.fix.len > 0: "fix `" & advisory.fix & "`" else: "no fix"
+      result.lines.add "  `" & advisory.name & "`, " & advisory.severity & ", `" &
+        advisory.range & "`, " & fix & ":"
+      for note in advisory.notes: result.lines.add "    " & note & "."
+      result.found.add finding(
+        path_lock,
+        0,
+        "Lock holds package that npm names in advisory; move it to its fix" & CITE_RULE &
+          "; got `" & advisory.name & "`.",
+      )
+    var behind: seq[string]
+    for name in project.manifest.namesDev:
+      let
+        answer = latest(name)
+        release = answer.output.strip
+      if answer.code != 0 or release.len == 0 or release.contains({' ', '\n', '{', '['}):
+        return (@[], @[], "npm view gave no latest release of `" & name & "`; got `" &
+          path_lock & "`.")
+      let version = project.lock.versionLocked(name)
+      if version.isNone:
+        return (@[], @[], "Lock names no version of dev dependency `" & name & "`; got `" &
+          path_lock & "`.")
+      if version.get.isBelow(release):
+        behind.add "  `" & name & "`: locks `" & version.get & "` against `" & release & "`."
+    if behind.len > 0:
+      result.lines.add "Dev dependencies behind latest release; each moves with its project, " &
+        "and fails nothing" & CITE_RULE & ":"
+      result.lines.add behind
+
+
+proc askAudit*(directory: string): Answer =
+  ## Ask npm registry for advisories of lock in directory, reading lock alone.
+  let command = "npm audit --package-lock-only --json --fetch-retries=1 --fetch-timeout=" &
+    $(SECONDS_ASK * 1000)
+  let (output, code) =
+    try: execCmdEx(command, options = {poEvalCommand, poUsePath}, workingDir = directory)
+    except OSError: ("", 127)
+  (code: code, output: output)
+
+
+proc askLatest*(name: string): Answer =
+  ## Ask npm registry for latest release of package.
+  let command = "npm view " & quoteShell(name) & " version --fetch-retries=1 --fetch-timeout=" &
+    $(SECONDS_ASK * 1000)
+  let (output, code) =
+    try: execCmdEx(command, options = {poEvalCommand, poUsePath})
+    except OSError: ("", 127)
+  (code: code, output: output)
+
+
+proc readLocked*(root: string, directories: openArray[string]): seq[Locked] =
+  ## Read manifest and lock of each project directory, in given order.
+  for directory in directories:
+    result.add Locked(
+      directory: directory,
+      manifest: readFile(root / directory / MANIFEST_NODE),
+      lock: readFile(root / directory / LOCK_NODE),
+    )

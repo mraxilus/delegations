@@ -1,8 +1,9 @@
-## Replicate static check of `packages_node.nim` (CONTRIBUTOR.md, TypeScript and Node; #1045).
+## Replicate static check and search of advisories of `packages_node.nim` (CONTRIBUTOR.md,
+##   TypeScript and Node; #1045).
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[options, sequtils, strutils, unittest]
 import ../../src/[findings, packages_node]
 import ./fixtures
 
@@ -11,6 +12,8 @@ const
   PATH_SCRIPT = "contributor/ronri/pga_visualiser/tools/drive/main.ts"  ## Script of project.
   PATH_MANIFEST = "contributor/ronri/pga_visualiser/package.json"  ## Manifest of same project.
   PATH_PAGE = "contributor/ronri/pga_visualiser/pages/shell.html"  ## Page of same project.
+  DIRECTORY = "contributor/ronri/pga_benchmark"  ## Project whose lock suite asks of.
+  PATH_LOCK = DIRECTORY & "/package-lock.json"  ## Lock of that project.
   SPECIFIERS_PASSING = [
     "./report", "../shared/clock", "/scripts/app.js", "node:fs", "node:path", "@playwright/test",
     "@playwright/test/reporter", "typescript", "@types/node",
@@ -47,7 +50,142 @@ const
 }
 """
     ## Manifest of each of three node projects, 2026-11-27, `name` and `scripts` left out.
+  AUDIT_CLEAN = """{
+  "auditReportVersion": 2,
+  "vulnerabilities": {},
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 1,
+      "dev": 26,
+      "optional": 20,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 26
+    }
+  }
+}"""
+    ## Answer of `npm audit --package-lock-only --json` over lock of `pga_benchmark`, npm
+    ##   10.9.9, 2026-11-27.
+  AUDIT_LODASH = """{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "lodash": {
+      "name": "lodash",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1106913,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Command Injection in lodash",
+          "url": "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+          "severity": "high",
+          "cwe": [
+            "CWE-77",
+            "CWE-94"
+          ],
+          "cvss": {
+            "score": 7.2,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": "<4.17.21"
+        },
+        {
+          "source": 1106920,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Prototype Pollution in lodash",
+          "url": "https://github.com/advisories/GHSA-p6mc-m468-83gw",
+          "severity": "high",
+          "cwe": [
+            "CWE-770",
+            "CWE-1321"
+          ],
+          "cvss": {
+            "score": 7.4,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:H"
+          },
+          "range": ">=3.7.0 <4.17.19"
+        }
+      ],
+      "effects": [],
+      "range": "<=4.17.23",
+      "nodes": [
+        "node_modules/lodash"
+      ],
+      "fixAvailable": {
+        "name": "lodash",
+        "version": "4.18.1",
+        "isSemVerMajor": false
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 1,
+      "critical": 0,
+      "total": 1
+    },
+    "dependencies": {
+      "prod": 1,
+      "dev": 1,
+      "optional": 0,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 1
+    }
+  }
+}"""
+    ## Answer of same command over lock holding `lodash` `4.17.15`, npm 10.9.9, 2026-11-27,
+    ##   trimmed from five advisories to first two.
+  LOCK_LODASH = """{
+  "packages": {
+    "": {"devDependencies": {"lodash": "4.17.15"}},
+    "node_modules/lodash": {"version": "4.17.15"}
+  }
+}
+"""
+    ## Fields of lock that reader reads, as npm 10.9.9 wrote them for that `lodash`.
+  MANIFEST_LODASH = """{"devDependencies": {"lodash": "4.17.15"}}"""
+    ## Manifest beside that lock.
 
+
+func answering(answer: Answer): proc(argument: string): Answer =
+  ## Construct ask giving one answer for each argument.
+  result = proc(argument: string): Answer = answer
+
+
+func latestServing(versions: openArray[(string, string)]): proc(argument: string): Answer =
+  ## Construct ask of latest release, answering version of each name, and failure for others.
+  let held = @versions
+  result = proc(argument: string): Answer =
+    for (name, version) in held:
+      if name == argument: return (code: 0, output: version & "\n")
+    (code: 1, output: "")
+
+
+func lockNaming(versions: openArray[(string, string)]): string =
+  ## Construct lock naming version of each dependency, as `packages` of npm holds it.
+  let entries = versions.mapIt("\"node_modules/" & it[0] & "\": {\"version\": \"" & it[1] & "\"}")
+  "{\"packages\": {" & entries.join(", ") & "}}"
+
+
+func manifestNaming(names: openArray[string]): string =
+  ## Construct manifest naming each dev dependency.
+  let entries = names.mapIt("\"" & it & "\": \"1.0.0\"")
+  "{\"devDependencies\": {" & entries.join(", ") & "}}"
 
 
 
@@ -139,3 +277,118 @@ suite "Static check":
       PATH_MANIFEST, PATH_SCRIPT, PATH_PAGE, "contributor/ronri/pga_benchmark/pages/map.svg"
     ]
     check treeGood().checkPackagesNode.len == 0
+
+
+
+suite "Advisories":
+  test "clean answer of lock as found names no advisory":
+    # Case: lock of `pga_benchmark`, npm 10.9.9, 2026-11-27.
+    let (advisories, failure) = readAudit((code: 0, output: AUDIT_CLEAN))
+    check advisories.len == 0 and failure == ""
+
+  test "answer naming package reads severity, range, fix and each advisory":
+    # Case: lock holding `lodash` `4.17.15`, npm 10.9.9, 2026-11-27.
+    let (advisories, failure) = readAudit((code: 1, output: AUDIT_LODASH))
+    check failure == "" and advisories.len == 1
+    check advisories[0].name == "lodash" and advisories[0].severity == "high"
+    check advisories[0].range == "<=4.17.23" and advisories[0].fix == "4.18.1"
+    check advisories[0].notes == @[
+      "Command Injection in lodash, https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+      "Prototype Pollution in lodash, https://github.com/advisories/GHSA-p6mc-m468-83gw",
+    ]
+
+  test "answer that cannot stand is failure, never clean lock":
+    # Domain: exit of failure, text, error object, no count, exit against count, count against
+    #   packages; each would close issue for work never done if read as clean.
+    let lodash_cleared = AUDIT_LODASH.replace("\"total\": 1", "\"total\": 0")
+    for answer in [
+      (code: 2, output: AUDIT_CLEAN), (code: 127, output: ""), (code: 0, output: "not json"),
+      (code: 1, output: "{\"error\": {\"code\": \"ENOTFOUND\"}}"), (code: 0, output: "{}"),
+      (code: 1, output: AUDIT_CLEAN), (code: 0, output: AUDIT_LODASH),
+      (code: 1, output: lodash_cleared), (code: 0, output: "[]"),
+    ]:
+      let (advisories, failure) = readAudit(answer)
+      check advisories.len == 0 and failure.len > 0
+
+  test "fix that npm gives as flag reads as no fix":
+    let answer = AUDIT_LODASH.replace(
+      "\"fixAvailable\": {\n        \"name\": \"lodash\",\n        \"version\": \"4.18.1\",\n" &
+        "        \"isSemVerMajor\": false\n      }",
+      "\"fixAvailable\": false",
+    )
+    let (advisories, failure) = readAudit((code: 1, output: answer))
+    check failure == "" and advisories[0].fix == ""
+    let (lines, _, _) = checkAdvisories(
+      [Locked(directory: DIRECTORY, manifest: MANIFEST_LODASH, lock: LOCK_LODASH)],
+      answering((code: 1, output: answer)),
+      latestServing([("lodash", "4.18.1")]),
+    )
+    check "  `lodash`, high, `<=4.17.23`, no fix:" in lines
+
+  test "advisory is one finding at lock, and lines name package, fix and each advisory":
+    let (lines, found, failure) = checkAdvisories(
+      [Locked(directory: DIRECTORY, manifest: MANIFEST_LODASH, lock: LOCK_LODASH)],
+      answering((code: 1, output: AUDIT_LODASH)),
+      latestServing([("lodash", "4.18.1")]),
+    )
+    check failure == "" and found.len == 1
+    check found[0].path == PATH_LOCK and found[0].message.endsWith("got `lodash`.")
+    check lines[1] == "  `lodash`, high, `<=4.17.23`, fix `4.18.1`:"
+    check lines[^1] == "  `lodash`: locks `4.17.15` against `4.18.1`."
+
+  test "dev dependency below latest release is line alone, and one at it or above is none":
+    # Domain: below by patch, by minor with larger patch, equal, above, of two digits each side.
+    for (locked, latest, is_behind) in [
+      ("1.63.0", "1.65.1", true), ("1.9.9", "1.10.0", true), ("7.0.2", "7.0.2", false),
+      ("7.1.0", "7.0.2", false), ("22.20.10", "22.20.9", false),
+    ]:
+      let (lines, found, failure) = checkAdvisories(
+        [Locked(directory: DIRECTORY, manifest: manifestNaming(["typescript"]),
+          lock: lockNaming([("typescript", locked)]))],
+        answering((code: 0, output: AUDIT_CLEAN)),
+        latestServing([("typescript", latest)]),
+      )
+      check failure == "" and found.len == 0
+      check lines[0] == "Advisories that npm names in `" & PATH_LOCK & "`: none."
+      check (lines.len == 3) == is_behind
+
+  test "latest release npm cannot give, or lock lacking dev dependency, is failure":
+    # Domain: exit of failure, empty answer, list, and lock that names no version.
+    for (latest, lock) in [
+      (latestServing([]), lockNaming([("typescript", "7.0.2")])),
+      (answering((code: 0, output: "")), lockNaming([("typescript", "7.0.2")])),
+      (
+        answering((code: 0, output: "[\n  \"7.0.1\",\n  \"7.0.2\"\n]")),
+        lockNaming([("typescript", "7.0.2")]),
+      ),
+      (latestServing([("typescript", "7.0.2")]), lockNaming([])),
+    ]:
+      let (lines, found, failure) = checkAdvisories(
+        [Locked(directory: DIRECTORY, manifest: manifestNaming(["typescript"]), lock: lock)],
+        answering((code: 0, output: AUDIT_CLEAN)),
+        latest,
+      )
+      check lines.len == 0 and found.len == 0 and failure.endsWith("got `" & PATH_LOCK & "`.")
+
+  test "failure of later lock drops lines and findings of earlier one":
+    # Domain: advisory in first lock, then answer that cannot stand in second; no half search.
+    var asked = 0
+    let (lines, found, failure) = checkAdvisories(
+      [
+        Locked(directory: DIRECTORY, manifest: MANIFEST_LODASH, lock: LOCK_LODASH),
+        Locked(directory: "contributor/ronri/pga_visualiser", manifest: "{}", lock: "{}"),
+      ],
+      proc(argument: string): Answer =
+        inc asked
+        if asked == 1: (code: 1, output: AUDIT_LODASH) else: (code: 2, output: ""),
+      latestServing([("lodash", "4.18.1")]),
+    )
+    check lines.len == 0 and found.len == 0
+    check failure.endsWith("got `contributor/ronri/pga_visualiser/package-lock.json`.")
+
+  test "version lock holds is read from its packages, and absent or unreadable is none":
+    check LOCK_LODASH.versionLocked("lodash") == some("4.17.15")
+    check LOCK_LODASH.versionLocked("typescript").isNone
+    check "not json".versionLocked("lodash").isNone
+    check MANIFEST_FOUND.namesDev == @["@playwright/test", "@types/node", "typescript"]
+    check "not json".namesDev.len == 0
