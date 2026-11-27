@@ -322,7 +322,7 @@ func example(name: string): Example =
 
 func escapedSuite(text: string): string =
   ## Escape text for content of element, as server of tag page escapes it; sibling of
-  ##   `escapedHtml` of `app/suggester.nim`, written apart so test reads no code it tests.
+  ##   `escapeMarkup` of `suggestions.nim`, written apart so test reads no code it tests.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
@@ -975,8 +975,14 @@ suite "Internal: Suggester":
           headers = newHttpHeaders({"Content-Type": "application/x-www-form-urlencoded",
           "Origin": "http://127.0.0.1:" & $port}))
     check served.code == Http200
-    check served.body == shown.replace(MARK_MAIN, "<pre id=\"served\" hidden>" &
-        expected.report.escapedSuite & "</pre>" & MARK_MAIN)  # text in box, report of replay
+    check served.body == shown.replace(MARK_MAIN, "<pre id=\"served\" hidden data-code=\"0\">" &
+        expected.report.escapedSuite & "</pre><pre id=\"served-output\" hidden>" &
+        expected.output.escapedSuite & "</pre>" & MARK_MAIN)  # text in box, run of replay whole
+    check served.headers["content-security-policy"] == "frame-ancestors 'none'"  # no frame
+    check served.headers["x-frame-options"] == "DENY"  # nor in browser that reads no policy
+    let given = client.request(address, HttpPost, body = encodeQuery({"text": "purdi"}))
+    check "<pre id=\"served\" hidden data-code=\"0\">" in given.body  # tag given exits 0
+    check "<pre id=\"served-output\" hidden>purdi\n</pre>" in given.body  # its gismu shown
     check client.request(address).body == page  # page itself, as built
     check client.request(address, HttpPost, body = "text=mi",
         headers = newHttpHeaders({"Origin": "https://example.org"})).code ==
@@ -988,6 +994,34 @@ suite "Internal: Suggester":
     child.kill()
     discard child.waitForExit
     child.close()
+
+
+  test "server of tag page exits 2 before it listens where settings, replay or port refuse":
+    let
+      path_page = directory / "served_refused.html"
+      taken = newSocket()  # Port of loopback held, so server finds it taken.
+    writeFile(path_page, "<main>" & MARK_TEXT & MARK_MAIN)
+    taken.bindAddr(Port(0), "127.0.0.1")
+    taken.listen()
+    let
+      port = $int(taken.getLocalAddr[1])
+      directory_absent = directory / "absent"
+    for (environment, arguments, problem) in [
+      (@[(KEY_PAGE, path_page), (KEY_SERVICE, "nope")],
+          @["--replay:" & directory, "--serve:" & port],
+          "Service should be `claude`, `openrouter` or `chat`; got `nope`"),
+      (@[(KEY_PAGE, path_page), (KEY_SERVICE, $Service.Claude)],
+          @["--replay:" & directory_absent, "--serve:" & port],
+          "Directory of `--replay:` should exist; got `" & directory_absent & "`."),
+      (@[(KEY_PAGE, path_page), (KEY_SERVICE, $Service.Claude)],
+          @["--replay:" & directory, "--serve:" & port],
+          "Port `" & port & "` of loopback should be free; got `"),
+    ]:
+      let exited = binary.run(environment, arguments)
+      check exited.code == 2  # refused before any post runs
+      check exited.report.startsWith(problem)  # problem named first
+      check "Serving" notin exited.report  # never claims to serve
+    taken.close()
 
 
   test "flag `--serve` takes port in 1..65535 and no text, else exits 2 before any socket":
