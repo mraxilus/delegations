@@ -370,46 +370,59 @@ func valueName[E: enum](names: array[E, string], value: string): E =
   raise newException(ValueError, &"Row of log holds no known value of enum; got `{value}`.")
 
 
-func claimLine*(line: string): Claim =
-  ## Read claim of one row that `lineClaim` writes, each field by its name; `ValueError` for row
-  ##   that opens or closes otherwise, holds text after its closing brace, or holds unknown field
-  ##   or value.
-  if not (line.startsWith(OPENING_ROW) and line.endsWith(CLOSING_ROW)):
-    raise newException(ValueError, &"Row of log is no row of `lineClaim`; got `{line}`.")
+func fieldsLine(line, opening, nested: string): seq[tuple[block_at: int, name, value: string]] =
+  ## Read each field of one line of text format that opens with opening, in order, each with index
+  ##   from 0 of block `nested` that holds it, or -1 outside each; each block opens with field of
+  ##   empty name. `ValueError` for line that opens or closes otherwise, ends inside field, opens
+  ##   block of other field or block in block, names field with no colon, or holds text after its
+  ##   closing brace.
+  if not (line.startsWith(opening) and line.endsWith(CLOSING_ROW)):
+    raise newException(ValueError, &"Line of log opens or closes in no known way; got `{line}`.")
   var
-    cursor = Cursor(line: line, at: OPENING_ROW.len)
-    number = Number()
-    is_number = false
+    cursor = Cursor(line: line, at: opening.len)
+    block_at = -1
+    blocks = 0
   while true:
     cursor.skipSpaces
     if cursor.at >= line.len:
-      raise newException(ValueError, &"Row of log ends inside field; got `{line}`.")
+      raise newException(ValueError, &"Line of log ends inside field; got `{line}`.")
     if line[cursor.at] == '}':
       inc cursor.at
-      if not is_number: break
-      is_number = false
-      result.number = some(number)
+      if block_at < 0: break
+      block_at = -1
       continue
     let name = cursor.word
     cursor.skipSpaces
     if cursor.at < line.len and line[cursor.at] == '{':
-      if name != FIELD_NUMBER or is_number:
-        raise newException(ValueError, &"Row of log opens block of no known field; got `{name}`.")
-      is_number = true
+      if name != nested or block_at >= 0:
+        raise newException(ValueError, &"Line of log opens block of no known field; got `{name}`.")
+      block_at = blocks
+      inc blocks
       inc cursor.at
+      result.add (block_at, "", "")
       continue
     if cursor.at >= line.len or line[cursor.at] != ':':
-      raise newException(ValueError, &"Field of row has no colon after its name; got `{name}`.")
+      raise newException(ValueError, &"Field of log has no colon after its name; got `{name}`.")
     inc cursor.at
     cursor.skipSpaces
     let value = (if cursor.at < line.len and line[cursor.at] == '"': cursor.quoted
       else: cursor.word)
-    if is_number:
+    result.add (block_at, name, value)
+  if cursor.at != line.len:
+    raise newException(ValueError, &"Line of log holds text after its closing brace; got `{line}`.")
+
+
+func claimLine*(line: string): Claim =
+  ## Read claim of one row that `lineClaim` writes, each field by its name; `ValueError` for row
+  ##   that `fieldsLine` refuses, or that holds unknown field or value.
+  for (block_at, name, value) in line.fieldsLine(OPENING_ROW, FIELD_NUMBER):
+    if block_at >= 0:
       case name
-      of "low": number.low = value.parseFloat
-      of "median": number.median = value.parseFloat
-      of "high": number.high = value.parseFloat
-      of "outcome": number.outcome = some(value.parseFloat)
+      of "": result.number = some(Number())
+      of "low": result.number.get.low = value.parseFloat
+      of "median": result.number.get.median = value.parseFloat
+      of "high": result.number.get.high = value.parseFloat
+      of "outcome": result.number.get.outcome = some(value.parseFloat)
       else: raise newException(ValueError, &"Number of row holds unknown field; got `{name}`.")
       continue
     case name
@@ -430,8 +443,6 @@ func claimLine*(line: string): Claim =
     of "key": result.key = value
     of "result": result.result = value
     else: raise newException(ValueError, &"Row of log holds unknown field; got `{name}`.")
-  if cursor.at != line.len:
-    raise newException(ValueError, &"Row of log holds text after its closing brace; got `{line}`.")
 
 
 func claimsLog*(text: string): seq[Claim] =
