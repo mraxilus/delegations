@@ -2612,13 +2612,13 @@ another host.
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
   module, and an import inside `${}` names one. Cost: a regular expression after a word or `)`
   reads as division, so its quote can open a string or a template. A specifier on the line after
-  its keyword reads as none. Such a miss costs little: the manifest check holds each package, and
-  `types` is expected to refuse an import of an address. Rejected: a list of the built-ins of
-  Node, which moves with each release.
-- An address passes only as a path, with no scheme and no `//` at its head. It is read so once
-  each reference decodes, and each control and space leaves it. So the rule refuses wherever a
-  browser may load, inside an HTML comment too. Cost: `<svg:script>` reads as none, and a named
-  reference other than `&sol;` and `&colon;` stays as written.
+  its keyword reads as none. Such a miss can import a package that a listed tool pulls in, as
+  `playwright-core`. Rejected: a list of the built-ins of Node, which moves with each release.
+- An address passes only as a plain path. Before its query, it holds letters, digits, `.`, `-`,
+  `_`, `~`, `%` and `/` alone, and opens with no `//`. The rule decodes nothing, since each decode
+  copies the browser in part, and each part left out is a way past. `<base>` takes the same rule,
+  and `<!ENTITY` is a finding. Cost: a script inside an HTML comment is refused, and
+  `<svg:script>` reads as none.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
@@ -2634,8 +2634,8 @@ named project with no lock, so the issue never closes for work not done.
   its lock leaves the matrix, so a curator closes its open issue by hand.
 - Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
 - Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
-- Verified by `suites/test_packages_node.nim`, which each of 82 mutants of the module fails.
-  `nim r koch check-files` at `899c3558` gives 0 findings over the three node projects, 2026-11-27.
+- Verified by `suites/test_packages_node.nim`, which each of 83 mutants of the module fails.
+  `nim r koch check-files` at `154618f7` gives 0 findings over the three node projects, 2026-11-27.
   By hand with npm 10.9.9 that day, the verb exits 0 over the tree, and `list-projects --all
   --node` names the three. It exits 1 on a copy whose lock holds `lodash` 4.17.15. It exits 2 with
   the registry at a dead address, and on a named project with no lock. The issue step held in ten
