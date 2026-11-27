@@ -20,8 +20,9 @@ const
     ##   Beta of each band of each group costs most of suite, about 0.3 s each log.
   ROWS_SAMPLE = 150  ## Rows of each random log.
   CASES_HELD = 375  ## Cases of rule of row that stays: 5 states, 5 others, 5 days, 3 prefixes.
-  CASES_DAY = 1848  ## Cases of day in form of date: 4 years, 14 months from 0, 33 days from 0.
-  DAYS_REAL = 366 + 366 + 365 + 365  ## Of those, days calendar holds: 2000 and 2024 are leap.
+  CASES_DAY = 2772  ## Cases of day in form of date: 6 years, 14 months from 0, 33 days from 0.
+  DAYS_REAL = 366 + 365 + 366 + 366 + 365 + 365
+    ## Of those, days calendar holds: 0000, 2000 and 2024 are leap.
   DAYS_LATEST = 365 + 366 + 365 + 365  ## Latest days that law of cutoff reads: 2023 to 2026.
   PROJECT = "contributor/bangu/rictadni"  ## Project whose log suite rolls.
   BRANCH = PROJECT & "/roll"  ## Branch that owns log of `PROJECT`.
@@ -178,16 +179,17 @@ suite "Rows that stay":
 
   test "row whose day has form of date but names no day of calendar stays, as row of no day":
     # Case as found on #1049: `2026-13-45` reads as date, so it rolled, or raised as latest day.
-    #   Domain: each month from 0 to 13 and each day from 0 to 32 of four years, two of them leap;
-    #     `times.parse` is second method of which day calendar holds.
+    #   Then critic of #1049 found year `0000`, which pattern `yyyy` refuses, so roll raised.
+    #   Domain: each month from 0 to 13 and each day from 0 to 32 of six years, three of them leap;
+    #     `times.parse` with astronomical year `uuuu` is second method of which day calendar holds.
     var cases, real: int
-    for year in ["2000", "2024", "2026", "2100"]:
+    for year in ["0000", "0001", "2000", "2024", "2026", "2100"]:
       for month in 0 .. 13:
         for day in 0 .. 32:
           inc cases
           let date = year & "-" & ($month).align(2, '0') & "-" & ($day).align(2, '0')
           var is_real = true
-          try: discard date.parse("yyyy-MM-dd", utc())
+          try: discard date.parse("uuuu-MM-dd", utc())
           except TimeParseError: is_real = false
           if is_real: inc real
           check @[rowDated(date)].isHeld("9999-12-31", []) == @[not is_real]  # rolls if real
@@ -445,6 +447,21 @@ suite "Roll of branch":
     check rollLog(root, BRANCH, []) == (1, PATH_LOG)
     check readFile(root / PATH_LOG).logText.claims == rows[1 .. 2]
     removeDir(root)
+
+
+  test "verb rolls log of first two years of calendar, and keeps rows of their last 30 days":
+    # Case as found by critic of #1049: year `0000` raised, and `0001` formatted cutoff as year
+    #   `0001`, so it rolled rows of last 30 days. Domain: year 0, year 1 past its first month,
+    #   and first day of year 0, whose cutoff falls in year before it.
+    for (days, rolled) in [
+      (@["0000-01-01", "0000-06-01"], 1), (@["0001-01-01", "0001-01-20"], 0), (@["0000-01-01"], 0),
+    ]:
+      var rows: seq[Claim]
+      for index, day in days: rows.add rowDated(day, key = "s1/c/" & $(index + 1) & "/STATE_HIT")
+      let root = repoLog(rows)
+      check rollLog(root, BRANCH, []) == (rolled, PATH_LOG)
+      check readFile(root / PATH_LOG).logText.claims == rows[rolled .. ^1]
+      removeDir(root)
 
 
   test "verb refuses branch outside grammar, and rolls none where log is absent":
