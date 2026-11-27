@@ -394,9 +394,11 @@ suite "Advisories":
       check (lines.len == 3) == is_behind
 
   test "latest release npm cannot give, or lock lacking dev dependency, is failure":
-    # Domain: exit of failure, empty answer, list, and lock that names no version.
+    # Domain: exit of failure, exit of failure beside version, empty answer, list, and lock that
+    #   names no version; second as review of #1069 found it untested.
     for (latest, lock) in [
       (latestServing([]), lockNaming([("typescript", "7.0.2")])),
+      (answering((code: 1, output: "7.0.2\n")), lockNaming([("typescript", "7.0.2")])),
       (answering((code: 0, output: "")), lockNaming([("typescript", "7.0.2")])),
       (
         answering((code: 0, output: "[\n  \"7.0.1\",\n  \"7.0.2\"\n]")),
