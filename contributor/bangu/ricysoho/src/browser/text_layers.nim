@@ -766,9 +766,9 @@ proc viewed(host: JsObject, model: Model): View =
     view.clicked = if key == view.clicked: none(Key) else: key
     if not host.hasClass("no-bars"): view.named(view.clicked)
     view.highlighted(if view.hovered.isSome: view.hovered else: view.clicked))
-  view.width = view.box.rect.width.to(float).int
+  view.width = int(view.box.rect.width.to(float))
   view.observer = view.box.observed(proc() =
-    let width = view.box.rect.width.to(float).int
+    let width = int(view.box.rect.width.to(float))
     if width != view.width:
       view.width = width
       view.reset)
@@ -1125,8 +1125,8 @@ proc drawn*(model: Model, keep: Option[(int, int, bool)]) =
   EDITOR.toggled("empty", model.text.lengthUnits == 0)
   if not model.is_moved: model.status
   for button in DOCUMENT_PAGE.queryAll("[data-sample]"):
-    button.attribute("aria-pressed", if button.attributeOf("data-sample") == model.text: "true"
-        else: "false")
+    button.attribute("aria-pressed", if button.attributeOf("data-sample") == model.text:
+        cstring("true") else: cstring("false"))
   if keep.isSome and DOCUMENT_PAGE.activeElement == EDITOR:
     let (a, f, is_early) = keep.get
     selected(a, f, is_early)
