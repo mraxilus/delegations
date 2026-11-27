@@ -1078,7 +1078,9 @@ func movesBlock(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
     let docs = if b.inside >= 0: toSeq(b.inside .. b.ends) else: toSeq(b.above ..< b.line)
     for k in docs:
       let text = if k == b.line: lines[k][b.offset .. ^1].strip else: lines[k].strip
-      move.lines.add margin & (if text.startsWith("##"): text[1 .. ^1] else: text)
+      move.lines.add margin & (
+        if text.startsWith("##"): "#" & text.strip(trailing = false, chars = {'#'}) else: text
+      )
       move.origins.add k
     if b.inside >= 0:
       move.lines.add(
