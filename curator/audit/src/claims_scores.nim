@@ -26,9 +26,16 @@
 ##   Group holds claims whose named fields agree, sorted by key; each figure names its count.
 ##   Mass of Beta comes from continued fraction of incomplete Beta (Numerical Recipes, 3rd
 ##     edition, 6.4), by modified Lentz method, and percentile from bisection on that mass.
+##   Figures sum tallies: each claim is tally of one row (`toTally`), and prior of log holds
+##     tallies of rows rolled out of it (#1049). Each sum of floats is exact, as partials that
+##     share no bit (Shewchuk, 1997; `msum` of Python's `math.fsum`), and rounds once, to nearest
+##     float; so sum takes no order, and roll leaves each figure of each group to last bit.
+##     Prior keeps no session, so group by delegate reads its tallies as one delegate, `prior`.
 ##
 ##   Cost: each percentile takes `ITERATIONS_BISECTION` masses of up to `ITERATIONS_FRACTION`
 ##     terms each.
+##   Cost: each value added to exact sum meets each of its partials, as few as bits of sum span
+##     allow; naive sum would meet one.
 
 {.experimental: "strictFuncs".}
 
@@ -76,9 +83,10 @@ type
     percent: float  ## Percent of mass at or below place.
     place: float  ## Place in range, from 0 at lower bound to 1 at upper.
 
-  Group* = object  ## Define claims whose named fields agree.
+  Group* = object  ## Define claims, and tallies of prior, whose named fields agree.
     key*: string  ## Values of named fields, in order of `Field`, by `SEPARATOR_KEY`.
     claims*: seq[Claim]  ## Claims of group, in order of log.
+    tallies*: seq[Tally]  ## Tallies of prior of group, in order of tree.
 
 const
   CONFIDENCE_EVEN = 0.5  ## Confidence of coin, against which baseline score counts.
@@ -97,7 +105,9 @@ const
   SEPARATOR_KEY* = " / "  ## Mark between values of key of group.
   KEY_ALL = "all"  ## Key that line of figures gives group of all claims.
   KIND_NONE = "call of no kind"  ## Name that base rate gives kind of call that names none.
-  LINE_NO_ROW = "No log of claims in tree holds row."  ## Line of verb `figures` with no row.
+  DELEGATE_PRIOR* = "prior"  ## Delegate of each tally of prior, which keeps no session.
+  LINE_NO_ROW = "No log of claims in tree holds row."
+    ## Line of verb `figures` where no log holds row, or tally of prior.
   LINE_NO_RATE = "Logs of claims give no base rate; "  ## Opening of line of fault of rates.
   NAMES_FIELD: array[Field, string] = ["delegate", "model", "effort", "project", "kind", "marker"]
     ## Name of each field, as verb `figures` reads it.
@@ -362,6 +372,57 @@ func scoreNumber*(claim: Claim): Option[float] =
   some(SCALE_SCORE * ln(masses[bucket] / baseline) / DIVISOR_NUMBER)
 
 
+func add*(sum: var SumExact, value: float) =
+  ## Add value to exact sum: each partial meets value as sum and its error, both exact, and partial
+  ##   of error zero drops (Shewchuk, 1997; `msum` of Python's `math.fsum`). Partials then share no
+  ##   bit, smallest first; exact compare of floats is point of each step.
+  var
+    x = value
+    kept = 0
+  for i in 0 ..< sum.partials.len:
+    var y = sum.partials[i]
+    if abs(x) < abs(y): swap(x, y)
+    let
+      high = x + y
+      low = y - (high - x)
+    if low != 0:
+      sum.partials[kept] = low
+      inc kept
+    x = high
+  sum.partials.setLen(kept)
+  if x != 0: sum.partials.add x
+
+
+func add*(sum: var SumExact, other: SumExact) =
+  ## Add each partial of other exact sum, so sum holds both exactly.
+  for partial in other.partials: sum.add partial
+
+
+func toFloat*(sum: SumExact): float =
+  ## Round exact sum once, to nearest float, half to even, as Python's `math.fsum` rounds partials.
+  ##   Sum runs down from largest partial until it turns inexact; partial below then breaks tie of
+  ##     half way, as `fsum` gives `1e16 + 2` for `1e16`, `1` and `1e-16`.
+  var at = sum.partials.len
+  if at == 0: return 0
+  dec at
+  var
+    high = sum.partials[at]
+    low = 0.0
+  while at > 0:
+    let x = high
+    dec at
+    let y = sum.partials[at]
+    high = x + y
+    low = y - (high - x)
+    if low != 0: break
+  if at > 0 and ((low < 0 and sum.partials[at-1] < 0) or (low > 0 and sum.partials[at-1] > 0)):
+    let
+      y = low * 2
+      x = high + y
+    if y == x - high: high = x
+  high
+
+
 func indexBand(confidence: float): int =
   ## Index of band of confidence in `BANDS_PERCENT`, by percentage rounded; nearest band where it
   ##   falls outside each.
@@ -371,61 +432,100 @@ func indexBand(confidence: float): int =
   BANDS_PERCENT.high
 
 
-func bands*(claims: openArray[Claim]): seq[Band] =
-  ## Bands of confidence of claims that take score, each that holds claim, from lowest, with
-  ##   share of hits and its credible band (#964); claim under 50% counts as its other side, at one
-  ##   minus its confidence, with hit and miss swapped (`D3 c`), which keeps its baseline score.
-  var
-    counts: array[BANDS_PERCENT.len, int]
-    hits: array[BANDS_PERCENT.len, int]
-    sums: array[BANDS_PERCENT.len, float]
-  for claim in claims:
-    if claim.scoreBaseline.isNone: continue
+func toTally*(claim: Claim): Tally =
+  ## Tally of claim as one row: its fields, and its band, count, hits and sums where it takes
+  ##   baseline score (#964); claim under 50% turns to its other side for its band, at one minus its
+  ##   confidence, with hit and miss swapped (`D3 c`), which keeps its baseline score.
+  result = Tally(
+    model: claim.model,
+    effort: claim.effort,
+    project: claim.project,
+    kind: claim.kind,
+    marker: (if claim.marker == Marker.Resolver: Marker.Resolver else: Marker.Delegate),
+    rows: 1,
+  )
+  let score = claim.scoreBaseline
+  if score.isSome:
     let
       is_turned = claim.confidence < CONFIDENCE_EVEN
       confidence = (if is_turned: 1 - claim.confidence else: claim.confidence)
-      i = confidence.indexBand
-    counts[i] += 1
-    sums[i] += confidence
-    if (claim.state == State.Hit) != is_turned: hits[i] += 1
+    result.band = BANDS_PERCENT[confidence.indexBand][0]
+    result.count = 1
+    result.hits = ord(claim.state == State.Hit)
+    result.hits_band = ord((claim.state == State.Hit) != is_turned)
+    result.confidence.add confidence
+    result.score.add score.get
+  let number = claim.scoreNumber
+  if number.isSome:
+    result.count_number = 1
+    result.score_number.add number.get
+
+
+func add*(tally: var Tally, other: Tally) =
+  ## Add counts and exact sums of other tally; fields and band stay those of tally.
+  tally.rows += other.rows
+  tally.count += other.count
+  tally.hits += other.hits
+  tally.hits_band += other.hits_band
+  tally.confidence.add other.confidence
+  tally.score.add other.score
+  tally.count_number += other.count_number
+  tally.score_number.add other.score_number
+
+
+func bands*(tallies: openArray[Tally]): seq[Band] =
+  ## Bands of confidence of tallies that take score, each that holds claim, from lowest, with share
+  ##   of hits on side of band and its credible band (#964); band of no lowest percentage of
+  ##   `BANDS_PERCENT` falls in nearest, as confidence does.
+  var sums: array[BANDS_PERCENT.len, Tally]
+  for tally in tallies:
+    if tally.count > 0: sums[indexBand(float(tally.band) / PERCENT)].add tally
   let tail = (1 - MASS_CREDIBLE) / 2
   for i, (low, high) in BANDS_PERCENT:
-    if counts[i] == 0: continue
+    let (count, hits) = (sums[i].count, sums[i].hits_band)
+    if count == 0: continue
     let
-      a = float(hits[i]) + PRIOR_HITS
-      b = float(counts[i] - hits[i]) + PRIOR_MISSES
+      a = float(hits) + PRIOR_HITS
+      b = float(count - hits) + PRIOR_MISSES
     result.add Band(
       low: low,
       high: high,
-      count: counts[i],
-      hits: hits[i],
-      confidence: sums[i] / float(counts[i]),
-      share: float(hits[i]) / float(counts[i]),
+      count: count,
+      hits: hits,
+      confidence: sums[i].confidence.toFloat / float(count),
+      share: float(hits) / float(count),
       share_low: percentileBeta(tail, a, b),
       share_high: percentileBeta(1 - tail, a, b),
     )
 
 
+func bands*(claims: openArray[Claim]): seq[Band] =
+  ## Bands of confidence of claims that take score, as their tallies give them.
+  claims.mapIt(it.toTally).bands
+
+
+func figures*(tallies: openArray[Tally]): Figures =
+  ## Figures of tallies: count and hits of claims that take score, their mean baseline score, their
+  ##   bands of confidence, and count and mean score of numbers, each from exact sum.
+  var total: Tally
+  for tally in tallies: total.add tally
+  result.count = total.count
+  result.hits = total.hits
+  result.score = (if total.count > 0: total.score.toFloat / float(total.count) else: NaN)
+  result.bands = tallies.bands
+  result.count_number = total.count_number
+  result.score_number = (if total.count_number > 0:
+    total.score_number.toFloat / float(total.count_number) else: NaN)
+
+
 func figures*(claims: openArray[Claim]): Figures =
-  ## Figures of claims: count and hits of those that take score, their mean baseline score, and
-  ##   their bands of confidence.
-  var sum = 0.0
-  for claim in claims:
-    let score = claim.scoreBaseline
-    if score.isNone: continue
-    result.count += 1
-    sum += score.get
-    if claim.state == State.Hit: result.hits += 1
-  result.score = (if result.count > 0: sum / float(result.count) else: NaN)
-  result.bands = claims.bands
-  var sum_number = 0.0
-  for claim in claims:
-    let score = claim.scoreNumber
-    if score.isNone: continue
-    result.count_number += 1
-    sum_number += score.get
-  result.score_number = (if result.count_number > 0: sum_number / float(result.count_number)
-    else: NaN)
+  ## Figures of claims, as their tallies give them.
+  claims.mapIt(it.toTally).figures
+
+
+func figures*(group: Group): Figures =
+  ## Figures of group: tally of each of its claims, and each tally of prior it holds.
+  (group.claims.mapIt(it.toTally) & group.tallies).figures
 
 
 func value*(claim: Claim, field: Field): string =
@@ -439,16 +539,32 @@ func value*(claim: Claim, field: Field): string =
   of Field.Marker: (if claim.marker == Marker.Resolver: "resolver" else: "delegate")
 
 
-func groups*(claims: openArray[Claim], fields: set[Field]): seq[Group] =
-  ## Groups of claims whose named fields agree, sorted by key; one group of all claims where no
-  ##   field is named.
-  var by_key: Table[string, seq[Claim]]
+func value*(tally: Tally, field: Field): string =
+  ## Value of field of tally of prior; delegate is `DELEGATE_PRIOR`, since prior keeps no session.
+  case field
+  of Field.Delegate: DELEGATE_PRIOR
+  of Field.Model: tally.model
+  of Field.Effort: tally.effort
+  of Field.Project: tally.project
+  of Field.Kind: tally.kind
+  of Field.Marker: (if tally.marker == Marker.Resolver: "resolver" else: "delegate")
+
+
+func groups*(
+  claims: openArray[Claim], fields: set[Field], tallies: openArray[Tally] = []
+): seq[Group] =
+  ## Groups of claims and tallies of prior whose named fields agree, sorted by key; one group of
+  ##   all where no field is named.
+  var by_key: Table[string, Group]
   for claim in claims:
     let key = fields.toSeq.mapIt(claim.value(it)).join(SEPARATOR_KEY)
-    by_key.mgetOrPut(key, @[]).add claim
+    by_key.mgetOrPut(key, Group(key: key)).claims.add claim
+  for tally in tallies:
+    let key = fields.toSeq.mapIt(tally.value(it)).join(SEPARATOR_KEY)
+    by_key.mgetOrPut(key, Group(key: key)).tallies.add tally
   var keys = by_key.keys.toSeq
   keys.sort
-  for key in keys: result.add Group(key: key, claims: by_key[key])
+  for key in keys: result.add by_key[key]
 
 
 func fieldsNamed*(text: string): set[Field] =
@@ -481,7 +597,7 @@ func linesFigures*(groups: openArray[Group]): seq[string] =
   ## Lines of figures of each group, as verb `figures` prints them: line of group, then each band
   ##   of confidence with its hits and credible band.
   for group in groups:
-    let figures = group.claims.figures
+    let figures = group.figures
     result.add lineFigures((if group.key.len > 0: group.key else: KEY_ALL), figures)
     for band in figures.bands:
       result.add "  " & $band.low & "% to " & $band.high & "%: " & $band.hits & " of " &
@@ -489,34 +605,45 @@ func linesFigures*(groups: openArray[Group]): seq[string] =
           band.share_high.formatFloat(ffDecimal, 2)
 
 
-func linesBase*(claims: openArray[Claim]): seq[string] =
+func linesBase*(claims: openArray[Claim], tallies: openArray[Tally] = []): seq[string] =
   ## Line of base rate of each kind whose claims take score, as start hook prints it (GUIDE.md),
-  ##   from marks of delegate: rows `stop` writes, one for each claim. Call whose input names no
-  ##   `subagent_type` gives kind of none.
-  let delegate = claims.filterIt(it.marker != Marker.Resolver)
-  for group in delegate.groups({Field.Kind}):
-    let figures = group.claims.figures
+  ##   from marks of delegate: rows `stop` writes, one for each claim, and tallies of prior of
+  ##   such rows. Call whose input names no `subagent_type` gives kind of none.
+  let
+    delegate = claims.filterIt(it.marker != Marker.Resolver)
+    prior = tallies.filterIt(it.marker != Marker.Resolver)
+  for group in delegate.groups({Field.Kind}, prior):
+    let figures = group.figures
     if figures.count + figures.count_number == 0: continue
     let name = (if group.key.len > 0: "`" & group.key & "`" else: KIND_NONE)
     result.add lineFigures("Base rate of " & name, figures)
 
 
+proc readLogs(root: string): tuple[claims: seq[Claim], tallies: seq[Tally]] =
+  ## Read claim of each row, and each tally of each prior, of each log of tree at root (#1049).
+  for log in root.logsTree:
+    result.claims.add log.claims
+    if log.prior.isSome: result.tallies.add log.prior.get.tallies
+
+
 proc linesTree*(root, names: string): seq[string] =
-  ## Lines of verb `figures` over each log of tree at root: marks of delegate and of resolver apart,
-  ##   then groups of fields that names give, as `kind,effort`, with marks apart too; one line where
-  ##   no log holds row. `ValueError` for row or name that reads no way, and `IOError` where root
-  ##   holds no repository.
+  ## Lines of verb `figures` over each log of tree at root, prior of each included: marks of
+  ##   delegate and of resolver apart, then groups of fields that names give, as `kind,effort`,
+  ##   with marks apart too; one line where no log holds row or tally. `ValueError` for row or name
+  ##   that reads no way, and `IOError` where root holds no repository.
   let
-    claims = root.claimsTree
+    (claims, tallies) = root.readLogs
     fields = names.fieldsNamed
-  if claims.len == 0: return @[LINE_NO_ROW]
+  if claims.len + tallies.len == 0: return @[LINE_NO_ROW]
   # Marks of delegate and of resolver stay apart, so that figures compare them (#964).
-  result = claims.groups({Field.Marker}).linesFigures
-  if fields.card > 0: result.add claims.groups(fields + {Field.Marker}).linesFigures
+  result = claims.groups({Field.Marker}, tallies).linesFigures
+  if fields.card > 0: result.add claims.groups(fields + {Field.Marker}, tallies).linesFigures
 
 
 proc ratesTree*(root: string): seq[string] =
-  ## Base rate of each kind over logs of tree at root, as `start` prints it (`linesBase`); one line
-  ##   that names fault where tree or its log reads no way.
-  try: root.claimsTree.linesBase
+  ## Base rate of each kind over logs of tree at root, prior of each included, as `start` prints it
+  ##   (`linesBase`); one line that names fault where tree or its log reads no way.
+  try:
+    let (claims, tallies) = root.readLogs
+    claims.linesBase(tallies)
   except CatchableError as error: @[LINE_NO_RATE & error.msg]

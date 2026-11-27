@@ -7,10 +7,12 @@
 ##   Each expected score of number comes from copy by hand in Python of method of Metaculus, at
 ##     its source `8e413fb`, run apart; outcome beyond range checks against mass 0.001 by hand.
 ##     Second copy, made apart in review of #1012, gives each score of number to last digit.
+##   Each expected exact sum is case of `test_fsum` of `Lib/test/test_math.py` of CPython, whose
+##     `math.fsum` rounds partials as `toFloat` does; Python 3 here gives each to last bit.
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import std/[bitops, math, options, os, osproc, random, sequtils, strutils, tempfiles, unittest]
 import ../../src/[claims_log, claims_scores]
 
 
@@ -26,6 +28,7 @@ const
   TEXT_TIME = "Time: time to its report, in minutes: 5, 12 and 30"
     ## Text of number of time, as sample of `GUIDE.md` gives it.
   COUNT_STEPS = 200  ## Steps of curve, one for each inner bucket of Metaculus.
+  SAMPLES_SUM = 200  ## Random lists each law of exact sum reads.
 
 
 func isNear(value, expected: float): bool =
@@ -50,6 +53,25 @@ func initNumber(
 func isNearNumber(score: Option[float], expected: float): bool =
   ## Whether score of number is some, within `TOLERANCE_NUMBER` of expected one.
   score.isSome and abs(score.get - expected) <= TOLERANCE_NUMBER
+
+
+func sumExact(values: openArray[float]): SumExact =
+  ## Exact sum of values, added in order.
+  for value in values: result.add value
+
+
+func bits(value: float): uint64 =
+  ## Bits of float, so that compare holds to last bit, and `-0.0` stands apart from `0.0`.
+  cast[uint64](value)
+
+
+func bitLowest(value: float): float =
+  ## Value of lowest bit that float sets: `value = fraction × 2^exponent`, and fraction holds
+  ##   53 bits from 0.5.
+  let
+    (fraction, exponent) = frexp(abs(value))
+    mantissa = uint64(fraction * pow(2.0, 53))
+  pow(2.0, float(exponent - 53 + countTrailingZeroBits(mantissa)))
 
 
 func curveStep(at: int, step: float): seq[float] =
@@ -238,6 +260,105 @@ suite "numbers as Metaculus":
     check found.count_number == 2
     check abs(found.score_number - (77.69379682749334 - 37.12769173601439) / 2) <= TOLERANCE_NUMBER
     check found.bands.mapIt(it.count) == @[1]
+
+
+
+suite "exact sum":
+  test "sum rounds once to nearest float, as `math.fsum` of CPython gives each case of its suite":
+    let two = 2.0
+    check sumExact([]).toFloat.bits == 0.0.bits
+    check sumExact([0.0]).toFloat.bits == 0.0.bits
+    check sumExact([1e100, 1.0, -1e100, 1e-100, 1e50, -1.0, -1e50]).toFloat == 1e-100
+    check sumExact([two^53, -0.5, -pow(two, -54)]).toFloat == two^53 - 1
+    check sumExact([two^53, 1.0, pow(two, -100)]).toFloat == two^53 + 2  # tie breaks up
+    check sumExact([two^53 + 10, 1.0, pow(two, -100)]).toFloat == two^53 + 12
+    check sumExact([two^53 - 4, 0.5, pow(two, -54)]).toFloat == two^53 - 3
+    check sumExact(toSeq(1..1000).mapIt(1 / float(it))).toFloat == 7.485470860550345
+    check sumExact(toSeq(1..1000).mapIt(pow(-1.0, float(it)) / float(it))).toFloat ==
+      -0.6926474305598203
+    check sumExact([1e16, 1.0, 1e-16]).toFloat == 10000000000000002.0
+    check sumExact([1e16 - 2, 1 - pow(two, -53), -(1e16 - 2), -(1 - pow(two, -53))]).toFloat == 0
+    var values = toSeq(countup(-1074, 970, 2)).mapIt(
+      pow(two, float(it)) - pow(two, float(it + 50)) + pow(two, float(it + 52)))
+    values.add -pow(two, 1022)
+    check sumExact(values).toFloat == 1.3305602063564798e+292  # many partials at once
+    check sumExact(newSeqWith(10, 0.1)).toFloat == 1.0  # where naive sum gives 0.9999999999999999
+
+
+  test "sum takes no order, and sum of two parts added equals sum of whole, to last bit":
+    randomize(2026)
+    for sample in 0 ..< SAMPLES_SUM:
+      var values = newSeqWith(rand(1 .. 60), (rand(2.0) - 1) * pow(10.0, float(rand(-20 .. 20))))
+      let
+        whole = sumExact(values).toFloat
+        cut = rand(values.len)
+      var joined = sumExact(values[0 ..< cut])
+      joined.add sumExact(values[cut .. ^1])
+      check joined.toFloat.bits == whole.bits
+      values.shuffle
+      check sumExact(values).toFloat.bits == whole.bits
+
+
+  test "partials share no bit, smallest first, and none is zero":
+    randomize(2027)
+    for sample in 0 ..< SAMPLES_SUM:
+      let partials = sumExact(newSeqWith(rand(1 .. 60), (rand(2.0) - 1) *
+        pow(10.0, float(rand(-20 .. 20))))).partials
+      for i, partial in partials:
+        check partial != 0
+        if i > 0: check abs(partials[i-1]) < partial.bitLowest  # below each bit partial sets
+
+
+
+suite "tallies":
+  test "claim is tally of one row, with band, hits and sums where it takes baseline score":
+    # Domain: each state, confidence of each side of 50% and outside 0 to 1, each marker, number.
+    for state in State:
+      for confidence in [0.0, 0.2, 0.45, 0.5, 0.55, 0.75, 0.99, 1.0]:
+        for marker in Marker:
+          var claim = initClaim(confidence, state)
+          claim.marker = marker
+          let
+            tally = claim.toTally
+            score = claim.scoreBaseline
+            is_turned = confidence < 0.5
+          check tally.rows == 1
+          check tally.marker ==
+            (if marker == Marker.Resolver: Marker.Resolver else: Marker.Delegate)
+          check (tally.kind, tally.effort) == (claim.kind, claim.effort)
+          check tally.count == ord(score.isSome)
+          check tally.count_number == 0
+          if score.isNone:
+            check (tally.band, tally.hits, tally.hits_band) == (0, 0, 0)
+            check tally.score.partials.len == 0
+            continue
+          let turned = (if is_turned: 1 - confidence else: confidence)
+          check tally.band == {0.2: 71, 0.45: 51, 0.5: 51, 0.55: 51, 0.75: 71, 0.99: 91}
+            .toSeq.filterIt(it[0] == confidence)[0][1]
+          check tally.hits == ord(state == State.Hit)
+          check tally.hits_band == ord((state == State.Hit) != is_turned)  # `D3 c`
+          check tally.confidence.toFloat.bits == turned.bits
+          check tally.score.toFloat.bits == score.get.bits
+    let number = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421).toTally
+    check (number.count, number.band, number.count_number) == (0, 0, 1)
+    check some(number.score_number.toFloat).isNearNumber(77.69379682749334)
+
+
+  test "figures of tallies summed by fields equal figures of their claims, to last bit":
+    let claims = @[
+      initClaim(0.55, State.Hit), initClaim(0.2, State.Hit), initClaim(0.58, State.Miss),
+      initClaim(0.75, State.Hit), initClaim(0.9, State.Annulled), initClaim(0.95, State.Waiting),
+      initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421), initNumber(TEXT_COST, 0.15, 0.45, 1.2, 0.1),
+    ]
+    var by_band: seq[Tally]
+    for claim in claims:
+      let
+        tally = claim.toTally
+        at = by_band.mapIt(it.band).find(tally.band)
+      if at < 0: by_band.add tally
+      else: by_band[at].add tally
+    check by_band.len < claims.len
+    check $by_band.figures == $claims.figures  # `$` of float gives each bit back
 
 
 

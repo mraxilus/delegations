@@ -368,6 +368,58 @@ suite "Log of claims":
     check claimsLog(HEADER_LOG & claims.mapIt(it.lineClaim & "\n").join & "\n") == claims
 
 
+  test "prior writes one line, and protoc and reader read each field of it back (#1049)":
+    let
+      prior = Prior(date_first: "2026-11-20", date_last: "2026-11-21", commit: "abc123",
+        tallies: @[
+          Tally(model: "model-a", effort: "high", project: "curator", kind: "reviewer",
+            marker: Marker.Resolver, band: 71, rows: 5, count: 4, hits: 3, hits_band: 2,
+            confidence: SumExact(partials: @[2.9e-17, 3.05]),
+            score: SumExact(partials: @[-1.25e-14, 120.5]), count_number: 1,
+            score_number: SumExact(partials: @[77.69379682749334])),
+          Tally(kind: "quote \" kind", marker: Marker.Delegate, rows: 1),
+        ])
+      line = prior.linePrior
+      (encoded, code) = protoc("--encode", HEADER_LOG & line & "\n" &
+        transcript().claimsRead.mapIt(it.lineClaim & "\n").join)
+    check '\n' notin line
+    check code == 0
+    let (decoded, back) = protoc("--decode", encoded)
+    check back == 0
+    for field in [  # as `protoc` prints each field of prior it read, by name
+      "date_first: \"2026-11-20\"", "date_last: \"2026-11-21\"", "commit: \"abc123\"",
+      "model: \"model-a\"", "effort: \"high\"", "project: \"curator\"", "kind: \"reviewer\"",
+      "marker: MARKER_RESOLVER", "band: 71", "rows: 5", "count: 4", "hits: 3", "hits_band: 2",
+      "confidence: 2.9e-17", "confidence: 3.05", "score: -1.25e-14", "score: 120.5",
+      "count_number: 1", "kind: \"quote \\\" kind\"",
+      "score_number: 77.693796827493344",  # `protoc` prints 17 digits where 15 read no way back
+      "marker: MARKER_DELEGATE", "rows: 1",
+    ]:
+      check decoded.splitLines.anyIt(it.strip == field)
+    check line.priorLine == prior  # each partial to last bit
+    check Prior().linePrior.priorLine == Prior()
+    check protoc("--encode", "prior { tallies { hit: 1 } }\n").code != 0  # misspelt field
+
+
+  test "log reads prior at its head, and refuses prior after row and second prior":
+    let
+      rows = transcript().claimsRead.mapIt(it.lineClaim & "\n").join
+      prior = Prior(commit: "abc123", tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior
+    check (HEADER_LOG & rows).logText == Log(claims: transcript().claimsRead)
+    check (HEADER_LOG & prior & "\n" & rows).logText.prior.get.commit == "abc123"
+    check (HEADER_LOG & prior & "\n" & rows).claimsLog == transcript().claimsRead
+    check (HEADER_LOG & prior & "\n" & rows).rowsLog == transcript().claimsRead.len
+    expect ValueError: discard (HEADER_LOG & rows & prior & "\n").logText  # after row
+    expect ValueError: discard (HEADER_LOG & prior & "\n" & prior & "\n").logText  # twice
+    expect ValueError: discard priorLine("prior { tallies { tallies { rows: 1 } } }")
+    expect ValueError: discard priorLine("prior { claims { rows: 1 } }")  # block of no tally
+    expect ValueError: discard priorLine("prior { tallies { hit: 1 } }")
+    expect ValueError: discard priorLine("prior { rows: 1 }")  # field of tally outside it
+    expect ValueError: discard priorLine("prior { tallies { marker: MARKER_GOOD } }")
+    expect ValueError: discard priorLine("prior { tallies { band: \"a\" } }")
+    expect ValueError: discard priorLine("prior { commit: \"a\" } x }")
+
+
   test "claim that names no marker reads back as marked by delegate, as its line writes it":
     check Claim(text: "a").lineClaim.claimLine == Claim(text: "a", marker: Marker.Delegate)
 
@@ -376,6 +428,9 @@ suite "Log of claims":
     let schema = readFile(currentSourcePath().parentDir / "../../src/claims.proto")
     check schema.fieldsMessage("Claim") == @FIELDS_CLAIM
     check schema.fieldsMessage("Number") == @FIELDS_NUMBER
+    check schema.fieldsMessage("Log") == @["claims", "prior"]
+    check schema.fieldsMessage("Prior") == @FIELDS_PRIOR
+    check schema.fieldsMessage("Tally") == @FIELDS_TALLY
 
 
   test "reader refuses row that writer writes no way, and unknown field, value or block":
@@ -410,6 +465,10 @@ suite "Log of claims":
     writeFile(project, HEADER_LOG & claims[1 .. ^1].mapIt(it.lineClaim & "\n").join)
     writeFile(root / "curator/other.txtpb", "rows { text: \"none\" }\n")
     check root.claimsTree == claims[1 .. ^1] & claims[0..0]  # `contributor/` sorts first
+    let prior = Prior(commit: "abc123",
+      tallies: @[Tally(kind: "reviewer", marker: Marker.Delegate, rows: 2)])
+    writeFile(project, HEADER_LOG & prior.linePrior & "\n")
+    check root.logsTree == @[Log(prior: some(prior)), Log(claims: claims[0..0])]
     writeFile(curator, HEADER_LOG & "claims { text: \"open }\n")
     expect ValueError: discard root.claimsTree
     removeDir(root)
