@@ -370,7 +370,8 @@ suite "Log of claims":
 
   test "prior writes one line, and protoc and reader read each field of it back (#1049)":
     let
-      prior = Prior(date_first: "2026-11-20", date_last: "2026-11-21", commit: "abc123",
+      prior = Prior(date_first: "2026-11-20", date_last: "2026-11-21",
+        keys: @[3'u64, 14695981039346656037'u64],
         tallies: @[
           Tally(model: "model-a", effort: "high", project: "curator", kind: "reviewer",
             marker: Marker.Resolver, band: 71, rows: 5, count: 4, hits: 3, hits_band: 2,
@@ -387,7 +388,8 @@ suite "Log of claims":
     let (decoded, back) = protoc("--decode", encoded)
     check back == 0
     for field in [  # as `protoc` prints each field of prior it read, by name
-      "date_first: \"2026-11-20\"", "date_last: \"2026-11-21\"", "commit: \"abc123\"",
+      "date_first: \"2026-11-20\"", "date_last: \"2026-11-21\"", "keys: 3",
+      "keys: 14695981039346656037",
       "model: \"model-a\"", "effort: \"high\"", "project: \"curator\"", "kind: \"reviewer\"",
       "marker: MARKER_RESOLVER", "band: 71", "rows: 5", "count: 4", "hits: 3", "hits_band: 2",
       "confidence: 2.9e-17", "confidence: 3.05", "score: -2.5e-15", "score: 120.5",
@@ -404,9 +406,10 @@ suite "Log of claims":
   test "log reads prior at its head, and refuses prior after row and second prior":
     let
       rows = transcript().claimsRead.mapIt(it.lineClaim & "\n").join
-      prior = Prior(commit: "abc123", tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior
+      prior = Prior(date_first: "2026-11-20",
+        tallies: @[Tally(kind: "reviewer", rows: 2)]).linePrior
     check (HEADER_LOG & rows).logText == Log(claims: transcript().claimsRead)
-    check (HEADER_LOG & prior & "\n" & rows).logText.prior.get.commit == "abc123"
+    check (HEADER_LOG & prior & "\n" & rows).logText.prior.get.date_first == "2026-11-20"
     check (HEADER_LOG & prior & "\n" & rows).claimsLog == transcript().claimsRead
     check (HEADER_LOG & prior & "\n" & rows).rowsLog == transcript().claimsRead.len
     expect ValueError: discard (HEADER_LOG & rows & prior & "\n").logText  # after row
@@ -417,7 +420,7 @@ suite "Log of claims":
     expect ValueError: discard priorLine("prior { rows: 1 }")  # field of tally outside it
     expect ValueError: discard priorLine("prior { tallies { marker: MARKER_GOOD } }")
     expect ValueError: discard priorLine("prior { tallies { band: \"a\" } }")
-    expect ValueError: discard priorLine("prior { commit: \"a\" } x }")
+    expect ValueError: discard priorLine("prior { date_first: \"a\" } x }")
 
 
   test "claim that names no marker reads back as marked by delegate, as its line writes it":
@@ -465,7 +468,7 @@ suite "Log of claims":
     writeFile(project, HEADER_LOG & claims[1 .. ^1].mapIt(it.lineClaim & "\n").join)
     writeFile(root / "curator/other.txtpb", "rows { text: \"none\" }\n")
     check root.claimsTree == claims[1 .. ^1] & claims[0..0]  # `contributor/` sorts first
-    let prior = Prior(commit: "abc123",
+    let prior = Prior(date_first: "2026-11-20",
       tallies: @[Tally(kind: "reviewer", marker: Marker.Delegate, rows: 2)])
     writeFile(project, HEADER_LOG & prior.linePrior & "\n")
     check root.logsTree == @[Log(prior: some(prior)), Log(claims: claims[0..0])]

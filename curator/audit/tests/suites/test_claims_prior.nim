@@ -8,7 +8,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, random, sequtils, sets, strutils, times, unittest]
+import std/[algorithm, options, os, random, sequtils, sets, strutils, times, unittest]
 import ../../src/[audit, claims_log, claims_prior, claims_scores, findings]
 import ./fixtures
 
@@ -19,9 +19,10 @@ const
     ## Random logs that law of figures reads: each takes 16 sets of fields at 4 states, and Beta of
     ##   each band of each group costs most of suite, about 0.3 s each log.
   ROWS_SAMPLE = 150  ## Rows of each random log.
-  CASES_HELD = 300  ## Cases of rule of row that stays: 5 states, 4 others, 5 days, 3 prefixes.
+  CASES_HELD = 375  ## Cases of rule of row that stays: 5 states, 5 others, 5 days, 3 prefixes.
   CASES_DAY = 1848  ## Cases of day in form of date: 4 years, 14 months from 0, 33 days from 0.
   DAYS_REAL = 366 + 366 + 365 + 365  ## Of those, days calendar holds: 2000 and 2024 are leap.
+  DAYS_LATEST = 365 + 366 + 365 + 365  ## Latest days that law of cutoff reads: 2023 to 2026.
   PROJECT = "contributor/bangu/rictadni"  ## Project whose log suite rolls.
   BRANCH = PROJECT & "/roll"  ## Branch that owns log of `PROJECT`.
   PATH_LOG = PROJECT & "/" & FILE_LOG  ## Log branch rolls.
@@ -136,7 +137,8 @@ suite "Rows that stay":
     var cases = 0
     let others = [none(Claim), some(rowDated("2026-01-01", State.Hit, "s1/c/1/STATE_HIT")),
       some(rowDated("2026-01-01", State.Waiting, "s1/c/1/STATE_WAITING/MARKER_RESOLVER")),
-      some(rowDated("2026-01-01", State.Miss, "s1/c/1/STATE_MISS/MARKER_RESOLVER"))]
+      some(rowDated("2026-01-01", State.Miss, "s1/c/1/STATE_MISS/MARKER_RESOLVER")),
+      some(rowDated(CUTOFF, State.Hit, "s1/c/1/STATE_HIT"))]  # mark of cutoff or later settles none
     for state in State:
       for k, other in others:
         for date in ["", "2026-13", "2026-09-30", CUTOFF, "2026-10-02"]:
@@ -196,12 +198,12 @@ suite "Prior":
       let other = textRandom()
       var text = textRandom()
       let before = linesPrinted([text, other])
-      for (cutoff, commit) in [("2026-09-01", "c1"), ("2026-10-15", "c2"), ("2026-12-31", "c3")]:
-        text = textRolled(text, commit, cutoff, []).text
+      for cutoff in ["2026-09-01", "2026-10-15", "2026-12-31"]:
+        text = textRolled(text, cutoff, []).text
         check linesPrinted([text, other]) == before
 
 
-  test "prior holds each rolled row once, names last commit, and spans first and last day rolled":
+  test "prior holds each rolled row once, and spans first and last day rolled":
     randomize(1051)
     for sample in 0 ..< SAMPLES_LOG:
       let first = textRandom()
@@ -209,11 +211,11 @@ suite "Prior":
         text = first
         rolled = 0
         dates: seq[string]
-      for (cutoff, commit) in [("2026-09-01", "c1"), ("2026-10-15", "c2")]:
+      for cutoff in ["2026-09-01", "2026-10-15"]:
         let
           claims = text.logText.claims
           held = claims.isHeld(cutoff, ["s4"])
-          (written, count) = textRolled(text, commit, cutoff, ["s4"])
+          (written, count) = textRolled(text, cutoff, ["s4"])
         for k, claim in claims:
           if not held[k]: dates.add claim.date
         rolled += count
@@ -221,7 +223,6 @@ suite "Prior":
         check written.logText.claims == toSeq(0 ..< claims.len).filterIt(held[it]).mapIt(claims[it])
         check written.rowsHeld == first.rowsHeld  # conservation: no row lost, none twice
         check written.logText.prior.get.tallies.mapIt(it.rows).foldl(a + b, 0) == rolled
-        check written.logText.prior.get.commit == commit
         check written.logText.prior.get.date_first == dates.min
         check written.logText.prior.get.date_last == dates.max
         check written.splitLines.filterIt(it.startsWith(OPENING_ROW)).allIt(it in first)
@@ -231,45 +232,137 @@ suite "Prior":
   test "prior stands after comments of head, and text stays as it is where no row rolls":
     let text = HEADER_LOG & [rowDated("2026-01-01"),
       rowDated("2026-10-09", key = "s2/c/1/STATE_HIT")].mapIt(it.lineClaim & "\n").join
-    check textRolled(text, "c1", "", []) == (text, 0)  # each day is cutoff or later
-    let (written, count) = textRolled(text, "c1", CUTOFF, [])
+    check textRolled(text, "", []) == (text, 0)  # each day is cutoff or later
+    let (written, count) = textRolled(text, CUTOFF, [])
     check count == 1
     let lines = written.splitLines
     check lines[0 .. 1] == HEADER_LOG.splitLines[0 .. 1]
     check lines[2].startsWith(OPENING_PRIOR)
     check lines[3] == rowDated("2026-10-09", key = "s2/c/1/STATE_HIT").lineClaim
     check lines.len == 5 and lines[4] == ""
-    check textRolled(written, "c2", CUTOFF, []) == (written, 0)  # roll again rolls none
+    check textRolled(written, CUTOFF, []) == (written, 0)  # roll again rolls none
 
 
   test "group by delegate reads rows prior holds as one delegate, `prior`, which is cost of roll":
     let
       text = HEADER_LOG & [rowDated("2026-01-01"),
         rowDated("2026-10-09", key = "s2/c/1/STATE_HIT")].mapIt(it.lineClaim & "\n").join
-      log = textRolled(text, "c1", CUTOFF, []).text.logText
+      log = textRolled(text, CUTOFF, []).text.logText
     check log.claims.groups({Field.Delegate}, log.prior.get.tallies).mapIt(it.key) ==
       @[DELEGATE_PRIOR, "s2"]
 
 
+  test "line of prior is one function of rows it rolls, in any order of log and split into rolls":
+    # Prior names no field of branch, its tallies sort, and each sum writes canonical partials; so
+    #   two branches that roll same rows write same line, which git merges as one change (#1049).
+    randomize(1052)
+    for sample in 0 ..< SAMPLES_LOG:
+      let text = textRandom()
+      var rows = text.splitLines.filterIt(it.startsWith(OPENING_ROW))
+      rows.shuffle
+      let
+        whole = textRolled(text, "2026-10-15", ["s4"]).text
+        line = whole.splitLines.filterIt(it.startsWith(OPENING_PRIOR))
+        reordered = textRolled(HEADER_LOG & rows.mapIt(it & "\n").join, "2026-10-15", ["s4"]).text
+        split = textRolled(textRolled(text, "2026-09-01", ["s4"]).text, "2026-10-15", ["s4"]).text
+      check line.len == 1
+      check reordered.splitLines.filterIt(it.startsWith(OPENING_PRIOR)) == line
+      check split.splitLines.filterIt(it.startsWith(OPENING_PRIOR)) == line
+
+
+  test "prior names hash of key of each row it rolls, so rolls of other rows write other lines":
+    # Two rolls of rows that differ, as of two branches, then never write one line, though their
+    #   tallies agree; `union` keeps both lines, and reader refuses them (#1049).
+    check ["", "a", "foobar"].mapIt(it.hashKey) ==
+      @[0xcbf29ce484222325'u64, 0xaf63dc4c8601ec8c'u64, 0x85944171f73967e8'u64]  # FNV-1a, 64 bits
+    randomize(1053)
+    for sample in 0 ..< SAMPLES_LOG:
+      let
+        text = textRandom()
+        claims = text.logText.claims
+        held = claims.isHeld("2026-10-15", ["s4"])
+        prior = textRolled(text, "2026-10-15", ["s4"]).text.logText.prior.get
+        other = textRolled(text, "2026-10-15", []).text.logText.prior.get
+        rolled = toSeq(0 ..< claims.len).filterIt(not held[it]).mapIt(claims[it].key.hashKey)
+      check prior.keys == rolled.sorted.deduplicate(isSorted = true)  # ascending, each once
+      check (prior.keys == other.keys) == (prior.linePrior == other.linePrior)
+      check prior.keys != other.keys  # rows of `s4` roll too
+    let keyless = Claim(date: "2026-01-01", kind: "reviewer", confidence: 0.7, state: State.Hit)
+    check @[keyless].isHeld(CUTOFF, []) == @[true]  # prior names no row of no key
+
+
 
 suite "Roll of branch":
-  test "verb rolls log of branch alone, names `HEAD`, and keeps last days of log":
-    # Latest day 2026-03-01, so cutoff is 30 days before, 2026-01-30, across month of 28 days.
+  test "verb rolls log of branch alone, before first day of month 30 days before its latest day":
+    # Latest day 2026-03-01; 30 days before it is 2026-01-30, across month of 28 days, so cutoff is
+    #   first day of that month, 2026-01-01, across year.
     let
-      rows = @[rowDated("2026-01-28", key = "s1/c/1/STATE_HIT"),
-        rowDated("2026-01-29", key = "s1/c/2/STATE_HIT"),
-        rowDated("2026-01-30", key = "s1/c/3/STATE_HIT"),
+      rows = @[rowDated("2025-12-30", key = "s1/c/1/STATE_HIT"),
+        rowDated("2025-12-31", key = "s1/c/2/STATE_HIT"),
+        rowDated("2026-01-01", key = "s1/c/3/STATE_HIT"),
         rowDated("2026-03-01", key = "s1/c/4/STATE_HIT")]
       root = repoLog(rows)
-      head = root.git("rev-parse HEAD").strip
       before = (linesTree(root, "kind,effort,project,model"), ratesTree(root))
     check DAYS_OPEN == 30
     check rollLog(root, BRANCH, []) == (2, PATH_LOG)
     let log = readFile(root / PATH_LOG).logText
     check log.claims == rows[2 .. 3]
-    check log.prior.get.commit == head
-    check (log.prior.get.date_first, log.prior.get.date_last) == ("2026-01-28", "2026-01-29")
+    check (log.prior.get.date_first, log.prior.get.date_last) == ("2025-12-30", "2025-12-31")
     check (linesTree(root, "kind,effort,project,model"), ratesTree(root)) == before
+    removeDir(root)
+
+
+  test "cutoff is first day of month that holds day 30 days before latest day, for each day":
+    # Two branches whose latest days fall 30 days after one month take one cutoff, so they roll
+    #   same rows. Domain: each latest day from 2023 to 2026, beside row of day calendar lacks.
+    var
+      day = "2023-01-01".parse("yyyy-MM-dd", utc())
+      cases = 0
+      before = ""
+    while day.year <= 2026:
+      let
+        back = (day - initDuration(days = DAYS_OPEN)).format("yyyy-MM-dd")
+        cutoff = dateCutoff([rowDated(day.format("yyyy-MM-dd")), rowDated("2026-13-45")])
+      check cutoff[0 .. 7] == back[0 .. 7]  # month of day 30 days before
+      check cutoff[8 .. 9] == "01"  # first day of that month
+      check cutoff >= before  # cutoff never moves back as latest day moves on
+      before = cutoff
+      inc cases
+      day = day + initDuration(days = 1)
+    check cases == DAYS_LATEST
+    check dateCutoff([rowDated(""), rowDated("2026-13-45")]) == ""  # no day that calendar holds
+
+
+  test "two branches that roll same rows write one line of prior, which git merges as one change":
+    # Case as found on #1049: cutoff counted back from latest day of each branch, and prior named
+    #   `HEAD`, so two rolls of same rows wrote two lines, which `union` joined into two priors.
+    #   Claim that waits settles on branch `a` alone, by its mark after cutoff, so it stays on each.
+    let
+      base = @[rowDated("2026-01-01", key = "s1/c/1/STATE_HIT"),
+        rowDated("2026-01-02", key = "s1/c/2/STATE_HIT"),
+        rowDated("2026-01-03", State.Waiting, "s1/c/5/STATE_WAITING"),
+        rowDated("2026-05-10", key = "s1/c/3/STATE_HIT"),
+        rowDated("2026-06-01", key = "s1/c/4/STATE_HIT")]
+      root = repoLog(base)
+    var lines: seq[string]
+    for (name, rows) in [("a", @[rowDated("2026-06-05", key = "sa/c/1/STATE_HIT"),
+        rowDated("2026-06-05", key = "s1/c/5/STATE_HIT")]),
+        ("b", @[rowDated("2026-06-15", key = "sb/c/1/STATE_HIT")])]:
+      let branch = PROJECT & "/" & name
+      discard root.git("checkout -q -b " & branch & " " & BRANCH)
+      writeFile(root / PATH_LOG, readFile(root / PATH_LOG) & rows.mapIt(it.lineClaim & "\n").join)
+      discard root.git("commit -q -am 'chore(rictadni): log the claims'")
+      check rollLog(root, branch, []).rolled == 2  # rows before 2026-05-01 that settle
+      discard root.git("commit -q -am 'chore(rictadni): roll the log'")
+      lines.add readFile(root / PATH_LOG).splitLines.filterIt(it.startsWith(OPENING_PRIOR))
+    check lines.len == 2 and lines[0] == lines[1]
+    discard root.git("merge -q " & PROJECT & "/a -m 'chore(rictadni): merge a'")
+    let merged = readFile(root / PATH_LOG)
+    check merged.splitLines.filterIt(it.startsWith(OPENING_PRIOR)) == lines[0 .. 0]
+    check merged.logText.claims.mapIt(it.key).toHashSet == ["s1/c/5/STATE_WAITING",
+      "s1/c/3/STATE_HIT", "s1/c/4/STATE_HIT", "sa/c/1/STATE_HIT", "s1/c/5/STATE_HIT",
+      "sb/c/1/STATE_HIT"].toHashSet
+    check merged.rowsLog == 6  # each row once
     removeDir(root)
 
 
@@ -332,8 +425,8 @@ suite "Roll of branch":
     expect IOError: discard rollLog(root, BRANCH, [])
     check readFile(root / PATH_LOG).logText.prior.isNone  # refused roll writes nothing
     # Merge of stale branch after roll is what guard refuses: its rows come back, beside prior.
-    #   Cutoff is that of verb: 30 days before latest day, 2026-06-01.
-    let rolled = textRolled(readFile(root / PATH_LOG), "c1", "2026-05-02", []).text
+    #   Cutoff is that of verb: first day of month 30 days before latest day, 2026-06-01.
+    let rolled = textRolled(readFile(root / PATH_LOG), "2026-05-01", []).text
     writeFile(root / PATH_LOG, rolled)
     discard root.git("commit -q -am 'chore(rictadni): roll the log'")
     discard root.git("merge -q stale -m 'chore(rictadni): merge stale'")
@@ -353,7 +446,7 @@ suite "Cap of log":
     let path = PATH_LOG
     for rows in [0, 1, ROWS_LOG - 1, ROWS_LOG, ROWS_LOG + 1, ROWS_LOG + 2]:
       let
-        text = HEADER_LOG & Prior(commit: "c1").linePrior & "\n\n" &
+        text = HEADER_LOG & Prior(date_first: "2026-01-01").linePrior & "\n\n" &
           (Claim(text: "a").lineClaim & "\n").repeat(rows)
         found = checkCap(path, text)
       check found.len == ord(rows > ROWS_LOG)
