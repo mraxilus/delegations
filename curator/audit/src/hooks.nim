@@ -462,11 +462,13 @@ const
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
     ##   (7017902016).
+  CITATION_BULLETS = "(curator/audit/PROVENANCE.md, Quotes of claims)"
+    ## Text that states rules of block of bullets and of table with column `Predicted`, which
+    ##   hook still reads (choice), since GUIDE.md states tables alone (#1028).
   RULE_CELL = "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" &
     HEADING_PREDICTION & "` block that call took, up to its confidence, percentiles or " &
     "resolution criterion, or before final full stop of bullet with none, with or without its " &
-    "label of one word that opens with capital, or `" & NO_PREDICTION & "` (GUIDE.md, " &
-    "Prediction, critic and reflection)"
+    "label of one word that opens with capital, or `" & NO_PREDICTION & "` " & CITATION_BULLETS
     ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
     ##   each names `No prediction` as form of miss (7015791554).
   COLUMN_NUMBER* = "#"  ## Column of table of claims that numbers each claim (7200557915).
@@ -2748,8 +2750,9 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
       0,
       Check.TableReflection,
       "Reflection holds table of claims: table of judgements or estimates whose header has " &
-        "column `" & COLUMN_NUMBER & "`, or table whose header has column `" &
-        COLUMN_PREDICTED & "` (GUIDE.md, Prediction, critic and reflection)."
+        "column `" & COLUMN_NUMBER & "` (GUIDE.md, Prediction, critic and reflection), or table " &
+        "whose header has column `" & COLUMN_PREDICTED & "`, as block of bullets takes it " &
+        CITATION_BULLETS & "."
     )]
   for table in tables:
     let rows = table.rowsTable
