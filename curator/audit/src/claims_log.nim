@@ -39,6 +39,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, sets, strformat, strutils, tables]
+from std/unicode import runeLen
 import ./[commits, domains, hooks, tree]
 
 
@@ -570,10 +571,12 @@ func phraseKinds(kinds: openArray[string]): string =
 func messageClaims(path: string, kinds: openArray[string]): (string, string) =
   ## Render subject and body of commit of log at path that adds rows of kinds; scope is folder
   ##   holding log, as `audit` for log of root branch of curator.
-  (
-    &"chore({path.parentDir.extractFilename}): log the claims of the {kinds.phraseKinds}",
-    "The `stop` hook commits the rows of each reflection, by the path of the log alone.",
-  )
+  ##   Subject wider than `SUBJECT_MAX` names subagents, since commit hook refuses it otherwise.
+  let
+    opening = &"chore({path.parentDir.extractFilename}): log the claims of the "
+    named = opening & kinds.phraseKinds
+    subject = if named.runeLen <= SUBJECT_MAX: named else: opening & "subagents"
+  (subject, "The `stop` hook commits the rows of each reflection, by the path of the log alone.")
 
 
 proc isOperationGit(root: string): bool =
