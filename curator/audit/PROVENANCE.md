@@ -2021,7 +2021,7 @@ lags, and a project leaves the series only when the Architect asks.
   unterminated `\u{` escape at the end of the buffer, and each compile and each proof of knoller
   reaches it. On Windows, `osproc` refuses an unsafe argument to a batch file (CVE-2024-24576).
   `npm`, the one batch file that a curator project starts, takes constant arguments, and the
-  quoted name of each dev dependency of a lock.
+  quoted name of each dev dependency that a manifest names.
 - Verified by `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites of `curator/audit`,
   `curator/knoller`, `curator/assayer` and `curator/probe` pass on 2.4.2. `nim r koch check` on
   2.4.2 gives 0 findings, and knoller prints the same 4,434 lines over the tree on both releases.
@@ -2609,12 +2609,13 @@ nothing else, because what a check needs differs for each project, while the nam
 and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package,
 and each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:`
 built-in or a listed package. A page or an SVG refuses a `<script>` whose `src`, `href` or
-`xlink:href` names another host, read across lines in any case.
+`xlink:href` names another host, as a browser reads its address.
 
 - A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
-  module, and an import inside `${}` names one. Cost: a regular expression after a word, as after
-  `return`, reads as division, and a specifier on the line after its keyword reads as none.
+  module, and an import inside `${}` names one. Cost: a regular expression after a word or `)`
+  reads as division, so its quote can open a string or a template. A specifier on the line after
+  its keyword reads as none, as do `<svg:script>` and most named entities of an address.
   Rejected: a list of the built-ins of Node, which moves with each release.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
@@ -2627,11 +2628,12 @@ named project with no lock, so the issue never closes for work not done.
 
 - Each project takes one issue, labelled with its role and `curator`, as `head` does. Exit 1 opens
   it only beside the count of findings, since a crash of koch exits 1 too. The issue leaves out
-  the lines of tools behind, so a new release of a tool never comments.
+  the lines of tools behind, so a new release of a tool never comments. Cost: a project that drops
+  its lock leaves the matrix, so a curator closes its open issue by hand.
 - Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
 - Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
-- Verified by `suites/test_packages_node.nim`, which each of 57 mutants of the module fails.
-  `nim r koch check-files` at `25c67d88` gives 0 findings over the three node projects, 2026-11-27.
+- Verified by `suites/test_packages_node.nim`, which each of 81 mutants of the module fails.
+  `nim r koch check-files` at `98ca4585` gives 0 findings over the three node projects, 2026-11-27.
   By hand with npm 10.9.9 that day, the verb exits 0 over the tree, and `list-projects --all
   --node` names the three. It exits 1 on a copy whose lock holds `lodash` 4.17.15. It exits 2 with
   the registry at a dead address, and on a named project with no lock. The issue step held in ten
@@ -2715,7 +2717,7 @@ issue, and the next failure opens a new one. The finding is the output from the 
   push, and a mark that never blocks is read by nobody.
 - Rejected: a read of head inside `drive`. One commit then passes and later fails, and each merge
   of that project waits on a bump.
-- Cost: the reference is read daily, so a pin may lag its head for a day before the issue says so.
+- Cost: the reference is read daily, so a pin may lag its head up to a day before the issue says so.
 - Cost: the compiler arms, packages and Atlas cache of `head.yml` copy those of `drive` in
   `check.yml`. A workflow shares steps only through an action of its own.
 - Verified by `suites/test_plan.nim` and `suites/test_projects.nim`: the filter, and a real
@@ -3237,8 +3239,7 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 - The parser of the compiler read each changed file to the same tree as before, once
   normalised. To the normalisation of the layout proof, it adds four steps. It drops a pair of
   parentheses and the profiler import, reads `x.f` as `f(x)`, and drops backticks in a string.
-- `nim check` read each changed file with the same result before and after, on its own pin and
-  config.
+- `nim check` read each changed file with one result before and after, on its own pin and config.
 
 ## Semantic pass
 
@@ -3716,8 +3717,7 @@ each symbolic link through the nearest part of the path that exists.
 - Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
   and `..` from a folder of the branch reaches each file of the repository.
 - Two forms read as outside: a symbolic link to a file not yet written, and a hard link.
-  `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
-  request.
+  `koch check` refuses such a file before the push, and `check-scope` on the pull request.
 - Cost: on each write, up to two `stat` calls for each part that `pathReal` tries, then one
   `realpath`. A file in no repository takes a second `realpath`, in the fallback of `checkoutAt`.
 - Measured by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon
@@ -4410,8 +4410,7 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
   from the working tree, or from `HEAD` in a bare repository, and never from the merged commits.
   Verified by hand with git 2.43.0 in scratch repositories, on 2026-11-20.
 - Verified by `suites/test_claims_log.nim`, in scratch roots.
-- Cost: the log of the audit project holds the rows of the root curator too, each with its own
-  project.
+- Cost: the log of the audit project holds the rows of the root curator too, each with its project.
 
 **The log of the root curator holds the 372 claims of the effort study of #963.** They ran before
 the log merged, so D3 a of #964 (comment 7065645801) filled them once. A script in scratch read
@@ -4720,7 +4719,7 @@ the checkout itself.
 Traps of the merge process:
 
 - **A re-run reuses its original merge commit and workflow file**, so a fix on `main` reaches
-  an open pull request only through a new head. Merge `main` into the branch, and never re-run.
+  an open pull request only through a new head. Merge `main` into the branch, never re-run and hope.
 - **Two stamped changes in flight produce a third stamp that neither one carries.** Each
   re-stamps every project against its own `CONTRIBUTOR.md`. Git merges their edits cleanly
   where they touch different sections, but the merged document digests to a value that matches
