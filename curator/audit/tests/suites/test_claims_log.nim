@@ -142,6 +142,27 @@ proc claimsRead(text: string): seq[Claim] =
   text.parseTurn.subagents.claimsTurn(KINDS, {"critic": "xhigh"}.toTable, PROJECT)
 
 
+proc rowKind(kind: string, n: int): string =
+  ## Render row `n` of first claim of transcript under kind, one line of log, key unique to `n`.
+  var each = transcript().claimsRead[0]
+  each.kind = kind
+  each.key = &"{each.key}/{n}"
+  each.lineClaim & "\n"
+
+
+proc repoBranch(branch: string): string =
+  ## Make throwaway repository on branch, with identity commit of hook takes from config.
+  result = repoTemp()
+  for setting in ["user.name Test", "user.email test@example.invalid", "commit.gpgsign false"]:
+    discard result.git("config " & setting)
+  discard result.git("checkout -q -b " & branch)
+
+
+proc subject(root: string): string =
+  ## Read subject of last commit.
+  root.git("log -1 --format=%s").strip
+
+
 proc rootTemplates(): string =
   ## Make scratch root whose templates name each of `KINDS`, critic with effort `xhigh`.
   result = createTempDir("claims_", "_root")
@@ -502,27 +523,12 @@ suite "Log of claims":
     #   Domain: branch of contributor, of curator project and of root curator; change staged for
     #   other path; rows of one, two and three kinds; log new and tracked; no new row; row lost;
     #   detached checkout, branch outside grammar, and merge, cherry-pick, revert and rebase.
-    let claim = transcript().claimsRead[0]
     var count = 0  # Rows rendered, so each row is new.
 
     proc row(kind: string): string =
-      ## Render new row of `claim` under kind, one line of log.
+      ## Render new row of claim of transcript under kind.
       inc count
-      var each = claim
-      each.kind = kind
-      each.key = &"{claim.key}/{count}"
-      each.lineClaim & "\n"
-
-    proc repoBranch(branch: string): string =
-      ## Make throwaway repository on branch, with identity commit of hook takes from config.
-      result = repoTemp()
-      for setting in ["user.name Test", "user.email test@example.invalid", "commit.gpgsign false"]:
-        discard result.git("config " & setting)
-      discard result.git("checkout -q -b " & branch)
-
-    proc subject(root: string): string =
-      ## Read subject of last commit.
-      root.git("log -1 --format=%s").strip
+      kind.rowKind(count)
 
     # Branch of contributor: log new to git, then tracked, with change staged for other path.
     let
@@ -577,6 +583,35 @@ suite "Log of claims":
       check not commitClaims(busy, BRANCH)
       check busy.subject == "chore(curator): init"
       removeDir(busy)
+
+
+  test "stop commits no log right after test commit, so fix can follow it, and commits after fix":
+    # Case held: review of #1059's build, whose `ladder.sh` committed `test(rictadni)`, then a
+    #   row, which hook committed, so commit hook refused `fix(rictadni)` after it.
+    #   Domain: `test` of scope of branch and of other scope, then `fix`, `docs` and `chore`.
+    let
+      root = repoBranch(BRANCH)
+      path = pathLog(BRANCH)
+    for (n, scope) in [(1, "rictadni"), (2, "audit")]:
+      root.writeInto(&"probe{n}.txt", "probe\n")
+      discard root.git(&"add probe{n}.txt")
+      discard root.git(&"commit -q -m 'test({scope}): hold the probe'")
+      root.writeInto(path, (if n == 1: HEADER_LOG else: readFile(root / path)) &
+          rowKind("reviewer", n))
+      checkpoint scope
+      check not commitClaims(root, BRANCH)
+      check root.subject == &"test({scope}): hold the probe"
+      root.writeInto(&"probe{n}.txt", "fixed\n")
+      discard root.git(&"add probe{n}.txt")
+      discard root.git(&"commit -q -m 'fix({scope}): mend the probe'")
+      check commitClaims(root, BRANCH)
+      check root.subject == "chore(rictadni): log the claims of the reviewer"
+    for kind in ["docs", "chore"]:
+      root.writeInto(path, readFile(root / path) & rowKind("critic", 10 + kind.len))
+      discard root.git(&"commit -q --allow-empty -m '{kind}(rictadni): mark the probe'")
+      checkpoint kind
+      check commitClaims(root, BRANCH)
+    removeDir(root)
 
 
   test "rows waiting outside tree move into log of root branch once each, and file goes":
