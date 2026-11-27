@@ -20,6 +20,8 @@ const
     ##   each band of each group costs most of suite, about 0.3 s each log.
   ROWS_SAMPLE = 150  ## Rows of each random log.
   CASES_HELD = 300  ## Cases of rule of row that stays: 5 states, 4 others, 5 days, 3 prefixes.
+  CASES_DAY = 1848  ## Cases of day in form of date: 4 years, 14 months from 0, 33 days from 0.
+  DAYS_REAL = 366 + 366 + 365 + 365  ## Of those, days calendar holds: 2000 and 2024 are leap.
   PROJECT = "contributor/bangu/rictadni"  ## Project whose log suite rolls.
   BRANCH = PROJECT & "/roll"  ## Branch that owns log of `PROJECT`.
   PATH_LOG = PROJECT & "/" & FILE_LOG  ## Log branch rolls.
@@ -165,6 +167,25 @@ suite "Rows that stay":
     check @[waiting, waiting].isHeld(CUTOFF, []) == @[true, true]  # wait twice settles none
 
 
+  test "row whose day has form of date but names no day of calendar stays, as row of no day":
+    # Case as found on #1049: `2026-13-45` reads as date, so it rolled, or raised as latest day.
+    #   Domain: each month from 0 to 13 and each day from 0 to 32 of four years, two of them leap;
+    #     `times.parse` is second method of which day calendar holds.
+    var cases, real: int
+    for year in ["2000", "2024", "2026", "2100"]:
+      for month in 0 .. 13:
+        for day in 0 .. 32:
+          inc cases
+          let date = year & "-" & ($month).align(2, '0') & "-" & ($day).align(2, '0')
+          var is_real = true
+          try: discard date.parse("yyyy-MM-dd", utc())
+          except TimeParseError: is_real = false
+          if is_real: inc real
+          check @[rowDated(date)].isHeld("9999-12-31", []) == @[not is_real]  # rolls if real
+    check cases == CASES_DAY
+    check real == DAYS_REAL
+
+
 
 suite "Prior":
   test "roll leaves each figure of each group but delegate, and each base rate, to last bit":
@@ -261,6 +282,19 @@ suite "Roll of branch":
     expect IOError: discard rollLog(root, BRANCH, [])  # row no commit holds
     discard root.git("checkout -q -- " & PATH_LOG)
     check rollLog(root, BRANCH, ["s2"]) == (1, PATH_LOG)
+    check readFile(root / PATH_LOG).logText.claims == rows[1 .. 2]
+    removeDir(root)
+
+
+  test "verb rolls log whose latest day by text names no day of calendar, and keeps its row":
+    # Case as found on #1049: `2026-13-45` sorts after each real day, so `dateCutoff` parsed it,
+    #   raised, and `koch roll` exited 1.
+    let
+      rows = @[rowDated("2026-01-01", key = "s1/c/1/STATE_HIT"),
+        rowDated("2026-13-45", key = "s1/c/2/STATE_HIT"),
+        rowDated("2026-06-01", key = "s1/c/3/STATE_HIT")]
+      root = repoLog(rows)
+    check rollLog(root, BRANCH, []) == (1, PATH_LOG)
     check readFile(root / PATH_LOG).logText.claims == rows[1 .. 2]
     removeDir(root)
 
