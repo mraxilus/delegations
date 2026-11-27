@@ -90,9 +90,11 @@ job labels the pull request with the role that the branch names. Its second job 
 opening role line and the labels to that role. It also holds the title to the grammar of a
 commit, and the body to the form of the template.
 
-Six more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
+Seven more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
 on `main` concludes failure. `head.yml` runs the `head` verb of each project daily, and keeps
-one issue open for each project while that verb fails.
+one issue open for each project while that verb fails. `nim.yml` asks nim-lang.org weekly for
+each later release of Nim. It keeps one issue open while the pin of `curator/audit` lags the
+latest release of its series.
 
 `draft.yml` returns a ready pull request to draft when a push lands on it. `architect.yml`
 removes the label `architect` from an issue or pull request that closes. `posts.yml` comments
