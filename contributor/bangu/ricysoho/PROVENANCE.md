@@ -18,7 +18,7 @@ ni'o le vi selgu'a cu tcidu lo jbovla .e lo porsi be lo jbovla ja'i lo javni pe 
     tcidu lo selci'a ja'i le gerna pe `CLL 21.1`
   .i pu lo nu le gerna cu tcidu kei lo javni pe `CLL 19.16` galfi lo valsi
 
-ni'o ci pagbu be le genturfa'i cu ponse lo tunba ne'i `rictadni`
+ni'o ci pagbu be le vi selgu'a cu ponse lo tunba ne'i `rictadni`
   .i lo stedu be ro le ci pagbu cu cusku lo cmene be le tunba ja'i `Article II.9`
 
 ni'o le pamoi pagbu cu du `tools/lists.nim`
@@ -56,7 +56,6 @@ ni'o `CLL 5 7 9 12 15` cusku lo du'u lo cmavo cu jorne ma kau valsi
       valsi pu lo nu le gerna cu tcidu
 
 ni'o lo cmene be la lojban. cu vasru lo cmalu lerfu po'o mu'u zo lojban.
-  .i `Architect` jdice di'u
   .i ne'i la lojban. lo brale'u cu sinxa lo nu basna poi na fadni to `CLL 3.9` toi
   .i lo cmene be la lojban. cu vasru no brale'u
   .i ku'i lo cmene be lo cukta be'o .e lo vlaste .e lo notci pe `Logical Language Group` ge'u .e lo
@@ -210,6 +209,7 @@ ni'o `hyphensRafsi` .e `score` pilno le mitpau
   .i se ki'u bo ro javni cu pa roi selci'a
   .i le pagbu cu stali lo ka sivni
   .i `tanru.nim` .e lo cipra cu cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu
+  .i se ki'u bo le ralju samtci pagbu cu dunda no nincme lo pilno
       Verified by `suites/test_lujvo.nim`.
 
 ni'o le cipra cu tcidu lo mupli poi lo tsiju cu jdice ke'a
@@ -311,7 +311,8 @@ ni'o se to'e cuxna fa lo nu ralte le se ciska datnyvei ta'i lo nu na galfi kei k
   .i se to'e cuxna fa lo nu tcidu le bakfu ca lo nu fanva kei kei ki'u lo nu le nu tcidu cu rinka lo
       nu ro nu zbasu cu nitcu le bakfu
 
-ni'o `Architect` jdice lo du'u le liste cu so'u roi cenba
+ni'o le liste cu so'u roi cenba
+  .i `head` zgana lo nu cenba
   .i se ki'u bo lo nu ralte le liste cu drani
 
 ni'o **le jvoste cu datselci'a
