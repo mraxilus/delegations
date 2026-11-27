@@ -3332,33 +3332,11 @@ rules where `knoller --check <project>` reports it, with the same counts. Both r
 again on `curator/audit` and `curator/knoller`, whose files differ there. A script outside the
 tree matched each report of the two outputs by rule, path and line.
 
-| Rule | Project | Rewrites | Left for hand |
-| --- | --- | --- | --- |
-| 7 | `pga_visualiser` | 1 | 0 |
-| 8 | `knoller` | 3 | 0 |
-| 8 | `pga_benchmark` | 0 | 5 |
-| 8 | `pga_visualiser` | 0 | 1 |
-| 8 | `dance_ontology` | 0 | 1 |
-| 9 | `pga_benchmark` | 2 | 0 |
-| 9 | `pga_visualiser` | 1 | 0 |
-| 11 | `pga_visualiser` | 33 | 1 warning |
-| 11 | `dance_ontology` | 13 | 0 |
-| 11 | `rictadni` | 3 | 0 |
-| 11 | `pga_benchmark` | 1 | 1 warning |
-| 11 | `knoller` | 1 | 0 |
-| 15, constructor | `pga_visualiser` | 0 | 1 |
-
-- Each other project takes none of these rules. The compound argument of rule 15 gives the same
-  counts as before the wiring.
-- The rewrites of rule 11 in `pga_benchmark` and `knoller` are `mergeAllocations` and
-  `initToolchains`, at the code of `cbf1e68b`. The code of D1 a of #980 (2026-11-20) and of D6 a
-  (2026-11-21) keeps each a `proc`, as `## Pure routines` of knoller gives.
-- The run read the code before `4998481a` and `ea179bdf`. The first changes no count, since the run
-  left no index of rule 9 for hand. The second changes only the warning of a refused rename, and
-  the table counts that rename as one site.
+- The run read the code before `4998481a` and `ea179bdf`. Neither changes a count, and the second
+  changes only the warning of a refused rename.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
-  it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
-  proves nothing of, and each tool prints it once.
+  it once. Each warning of rule 11 is of a whole file that the compiler proves nothing of, and
+  each tool prints it once.
 - Cost: over the files of `curator/knoller` at `2d496af8`, `koch fix --dry-run --branch:main` takes
   65.4 s built there, and 34.9 s built at `8a7b2f61`. That build fixes each entry on the pool, and
   reads the names and the renames once (the profile on #1001). Each figure is the median of three
@@ -4397,6 +4375,26 @@ root of the project. A root branch `curator/<name>` writes `curator/audit/claims
   Verified by hand with git 2.43.0 in scratch repositories, on 2026-11-20.
 - Verified by `suites/test_claims_log.nim`, in scratch roots.
 - Cost: the log of the audit project holds the rows of the root curator too, each with its project.
+
+**`stop` commits each new row of the log of the branch, as D1 a of #1059 rules.** After
+`logStop`, `commitClaims` commits the log alone, by its path, where the log holds rows that `HEAD`
+lacks and lost none of its rows. Its subject, `chore(<project>): log the claims of the <kinds>`,
+names each new kind where it fits `SUBJECT_MAX`, and else the subagents.
+
+- A detached checkout, a branch outside the grammar, and a merge, cherry-pick, revert or rebase in
+  progress commit nothing. Nor does a `HEAD` that is a `test` commit, since its `fix` must come
+  right after it. The rows then wait in the tree, and a later stop commits them.
+- The commit takes the path alone (`--only`), so a change staged for another path stays staged. A
+  commit that git refuses prints its error, refuses no turn, and unstages the log that it staged.
+- During a merge, git refuses the partial commit too, so no test tells that guard from git.
+- Verified by `suites/test_claims_log.nim`, in scratch repositories, with the checks that the
+  commit hook runs on the message. Verified by hand on
+  2026-11-27 too, with `koch hook stop` of this change in a scratch worktree on a branch of
+  `rictadni`. It wrote the 8 rows of a `reviewer`, and committed the log alone.
+- Cost: a commit appears that the delegate did not type, and its subject names it. It moves the
+  tree, so a push after it needs `koch check` again, as each commit does.
+- Rejected: a tree hash that skips the log (proposal 2 of #1059), since a push could then carry
+  rows that no check judged.
 
 **The log of the root curator holds the 372 claims of the effort study of #963.** D3 a of #964
 (comment 7065645801) filled them by a script, which read each reflection and report of a resolver.

@@ -359,6 +359,8 @@ proc runHook(root, event, input: string): int =
         turn = readFile(data{"transcript_path"}.getStr).parseTurn
         kinds = readKinds(root)
       discard logStop(root, branch_root, pathWaiting(), turn.subagents)
+      # Log that holds new rows commits alone, by its path, where guards allow (`commitClaims`).
+      discard commitClaims(root, branch_root)
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       var found = checkNumbersBare(turn.text)
