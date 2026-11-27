@@ -510,6 +510,17 @@ suite "Log of claims":
           check claims[0].number.get.outcome == outcome
           check claims[0].key.split('/')[2] == $(k + 2)
 
+    # Number whose text names no unit takes value of any mark, and no unit, so it takes no score.
+    const unnamed = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
+      "- Cost: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.\n"
+    for (cell, outcome) in [("$1.10, inside", 1.1), ("1.10", 1.1), ("15m", 15.0), ("1.1k", 1100.0)]:
+      let claims = transcriptOne(unnamed, "reviewer", "## Reflection\n\n| State | Confidence | " &
+        "Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " &
+        cell & " |\n").claimsRead
+      check claims.len == 1
+      check claims[0].number.get == Number(low: 0.4, median: 0.9, high: 2, outcome: some(outcome),
+        unit: UnitNumber.Unspecified)
+
 
   test "result with space before scale or between groups logs whole value (#1028)":
     # Case as found: `39.1 M, inside`, `39.1 million, inside` and `39 100 000, inside` logged 39.1

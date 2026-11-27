@@ -3894,6 +3894,15 @@ suite "Hooks":
     check heldBlock(two) == @[rule & "Work: a`", rule & "Work: b`"]
     check heldBlock(PREDICTION).len == 0  # bullets alone, as block of running session
 
+    # Table of claims that reads no row of claims, as one of criteria alone or one character off
+    #   its form, still makes bullet beside it refused, as its rows share numbers too.
+    let criteria = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+      "- Work: four to eight findings (60%).\n\n| # | Resolution criterion |\n| --- | --- |\n" &
+      "| 1 | The line. |\n"
+    check heldBlock(criteria)[0] == rule & "Work: four to eight findings`"
+    check heldBlock(criteria.replace("| # | Resolution criterion |",
+      "| # | Resolution criteria |"))[0] == rule & "Work: four to eight findings`"
+
 
   test "block is held at stop of its own turn, and its mend of later turn serves call (#1028)":
     # Delegate mends block in reply, which is later turn, so block of that turn serves call.
@@ -4099,6 +4108,15 @@ suite "Hooks":
               inc count
             else: check found.len == 0
     check count == 2 * 2 * (2 + 1 + 1 + 2)  # two states and two tables of each refused cell
+
+    # Number whose text names no unit, as `Cost: $0.40, …`, takes value of any mark, as it takes no
+    #   score (GUIDE.md before tables: label names no unit but `Count:`).
+    let unnamed = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n- Cost: " &
+      "$0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.\n"
+    for cell in ["$1.10, inside", "1.10, inside", "15m, inside", "1.1k"]:
+      check heldReflection(unnamed, "## Reflection\n\n| State | Confidence | Predicted | Result " &
+        "|\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " & cell & " |\n")
+        .len == 0
 
 
   test "value reads scale and groups after one space, and result refuses what space leaves (#1028)":
