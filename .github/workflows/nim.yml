@@ -1,0 +1,147 @@
+# Ask nim-lang.org weekly for each later release of Nim, and keep one issue open while pin of
+#   `curator/audit` lags latest release of its series.
+#   Each project keeps up with patch releases of its series, and newer series waits on Architect
+#   (GUIDE.md, Toolchain). `koch releases` asks by HEAD request for tarball koch fetches, and
+#   exits 1 where pin of `curator/audit` lags, and 2 where nim-lang.org answers so that search
+#   cannot stand (`releases.nim`). Curators then move their pins and `NIM_VERSION` of each
+#   workflow together (CURATOR.md, duty 8), and `koch check` names each contributor pin that lags.
+#   Verdict varies with nim-lang.org rather than with code, so it never runs where merge waits,
+#   as `head.yml` holds for `head`.
+#
+#   One issue, never one per run. Open issue carrying marker is edited to latest run, so it always
+#   says what is, and gains comment only where finding changed: subscriber hears of new release
+#   once. Run where verb exits 0 closes open issue, so next lag opens fresh one.
+#   Finding is not red run: exit 1 is what issue is for, and job stays green. Any other exit,
+#   such as failure of search or usage error, turns job red, as failure to set up or post does,
+#   and `watch.yml` reads that. So issue names lag alone, and failure of one week never edits it.
+#   Koch builds in step of its own, so compile failure turns job red rather than opening issue,
+#   and finding holds output of verb alone.
+#   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
+#   it, so nobody reads it as delegate having judged anything. Label is `curator`, since move of
+#   curator pins is curator work.
+#   `concurrency` holds one run at time, so two runs cannot both find no issue and open two.
+#   `permissions` block is whole grant: `contents: read` for checkout, `issues: write` for
+#   `gh issue`, and `actions: read` since run's own link spells `/actions/`, which
+#   `workflows.nim` reads as reach.
+#   Weekly, as Architect asked, so fixes of new patch release wait one week at most.
+#   Cost: nim-lang.org read weekly, so pin may lag release by up to week before issue says so.
+#   Cost: comment reads whole output, so project that moves its pin while issue is open adds
+#     comment too, though no release changed.
+
+name: nim
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: nim
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+env:
+  NIM_VERSION: '2.4.2'
+
+jobs:
+  releases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - run: nim c koch
+
+      # Exit is read rather than obeyed: exit 1 is finding for issue, never red job.
+      - id: run
+        run: |
+          code=0
+          ./koch releases > "$RUNNER_TEMP/releases.txt" 2>&1 || code=$?
+          cat "$RUNNER_TEMP/releases.txt"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Edit, open or close issue standing for Nim releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CODE: ${{ steps.run.outputs.code }}
+          NUMBER: ${{ github.run_number }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          marker="<!-- nim:releases -->"
+          today="$(date -u +%F)"
+          at="**Run [$NUMBER]($URL)** on $today, at \`${SHA:0:7}\`."
+
+          # Exit other than 0 and 1 is failure of run rather than finding, so job goes red.
+          if [ "$CODE" != 0 ] && [ "$CODE" != 1 ]; then
+            echo "Verb exited $CODE, which names neither clean run nor finding."
+            exit 1
+          fi
+
+          # Dispatch from other branch reads pins of that branch, so it prints verdict and edits no
+          #   issue; check above still turns its job red.
+          if [ "${GITHUB_REF:-}" != refs/heads/main ]; then
+            echo "Run on ${GITHUB_REF:-no ref} edits no issue, since issue holds verdict of main."
+            exit 0
+          fi
+
+          # Read open issues rather than search: search indexing lags, and duplicate opened
+          #   because index was cold is exactly noise this avoids.
+          existing="$(gh issue list --repo "$REPO" --label curator --state open \
+            --limit 100 --json number,body \
+            --jq "[.[] | select(.body | contains(\"$marker\")) | .number] | first // empty")"
+
+          if [ "$CODE" = 0 ]; then
+            if [ -n "$existing" ]; then
+              passed="The \`releases\` verb exited 0, so this workflow closes the issue. A later"
+              passed="$passed lag opens a new one."
+              closing="$(printf '**Role:** curator\n\n%s %s\n' "$at" "$passed")"
+              gh issue close "$existing" --repo "$REPO" --reason completed --comment "$closing"
+              echo "Closed issue #$existing."
+            fi
+            exit 0
+          fi
+
+          finding="$(tail -c 20000 "$RUNNER_TEMP/releases.txt")"
+
+          # Paragraphs appended rather than written as heredoc: issue body renders each newline
+          #   as line break, so paragraph wrapped to width here would break mid-sentence there.
+          said="Opened by the \`nim\` workflow rather than by a delegate, so nothing here has"
+          said="$said been read or judged yet. The pin of \`curator/audit\` lags the latest"
+          said="$said release of its series, or names no release. Move the curator pins and"
+          said="$said \`NIM_VERSION\` of each workflow together (CURATOR.md, duty 8)."
+          next="Each week that the verb still exits 1, this issue is edited to the latest run. It"
+          next="$next gains a comment only where the finding changed. A run where the verb"
+          next="$next exits 0 closes this issue."
+          fence='````'
+          body="$(printf '%s\n\n**Role:** curator\n\n%s\n\n%s\n\n%stext\n%s\n%s\n\n%s\n' \
+            "$marker" "$said" "$at" "$fence" "$finding" "$fence" "$next")"
+
+          if [ -z "$existing" ]; then
+            opened="$(gh issue create --repo "$REPO" --label curator \
+              --title "\`curator/audit\` fails its check of Nim releases" --body "$body")"
+            echo "Opened $opened."
+            exit 0
+          fi
+
+          # Finding of last edit is text between fences; comment only where it moved.
+          before="$(gh issue view "$existing" --repo "$REPO" --json body --jq .body \
+            | tr -d '\r' | awk -v fence="$fence" '$0 == fence "text" {inside = 1; next}
+              $0 == fence {inside = 0} inside {print}')"
+          gh issue edit "$existing" --repo "$REPO" --body "$body"
+          echo "Edited issue #$existing."
+          if [ "$before" != "$finding" ]; then
+            changed="$(printf '**Role:** curator\n\n%s %s\n' "$at" \
+              "The finding changed, and the issue now holds it.")"
+            gh issue comment "$existing" --repo "$REPO" --body "$changed"
+            echo "Commented on issue #$existing."
+          fi

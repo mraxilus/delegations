@@ -378,6 +378,11 @@ it. `curator/audit/PROVENANCE.md`, Toolchain, says how.
   silence.
 - **A bump of the pin is your work.** Run the suites on the new version. Move the line.
   Record in `PROVENANCE.md` what moved and why.
+- **Keep up with each patch release of the 2.4 series, for its fixes.** Nothing fails while
+  your pin lags. `koch check` and the start hook name each release pin below the pin of
+  `curator/audit`. The `nim` workflow runs `koch releases` weekly. It keeps an issue open while
+  that pin lags its series, so the curators move first. A newer series waits until the Architect
+  asks for it.
 
 ## How to add a dependency
 

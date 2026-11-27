@@ -79,6 +79,7 @@ Every rule below serves it:
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
 | `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
+| `.github/workflows/nim.yml` | Weekly `releases`, into one issue while the driver lags | curator |
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | Skills, and the templates of subagents | curator |
@@ -145,8 +146,8 @@ and the shared allowance. This section adds only what differs for a curator.
 - **An answered issue that you close by hand** also says where the result differs from what
   was asked.
 - **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-  `curator` when `check`, `ledger` or `head` concludes failure on `main`, so a red `main` reaches
-  the queue. Read the run anyway, since a run cancelled, still queued or never triggered
+  `curator` when `check`, `ledger`, `head` or `nim` concludes failure on `main`, so a red `main`
+  reaches the queue. Read the run anyway, since a run cancelled, still queued or never triggered
   concludes nothing. A red `main` is the first work of the delegate.
 
 ## Duties
@@ -237,6 +238,12 @@ and the shared allowance. This section adds only what differs for a curator.
    disagrees. So bump the pin and every workflow together, with `nim r koch check` on the new
    version.
 
+   The `nim` workflow keeps an issue open while the pin of `curator/audit` lags a release of its
+   series. While it is open, move the curator pins and `NIM_VERSION` of each workflow together,
+   to the release that it names. The next run after the merge closes the issue. Each contributor
+   project then reads its lag in `koch check`, and moves its own pin as `GUIDE.md`, Toolchain,
+   asks.
+
    `curator/knoller` pins the same version, because the checker imports it by path, and
    `toolchain.nim` fails the audit where it disagrees. A sibling imported by path is not a
    package, so it needs no lock. Its pin moves with the pin of `curator/audit`.
@@ -266,8 +273,8 @@ and the shared allowance. This section adds only what differs for a curator.
    - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
      under Repository settings the Architect applies.
 
-   `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
-   workflow.
+   `watch.yml` watches `check`, `ledger`, `head` and `nim`, and opens or extends one issue for
+   each workflow.
 
 10. **Opening prompts.** `AGENTS.md`, `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open
     new delegates, so every paragraph is read on every start. Keep each self-contained.
@@ -458,6 +465,7 @@ alone.
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |
 | `head` | projects with a `head` verb, or one | fetch dependencies, then the verb, on its pin |
+| `releases` | Nim pins, and nim-lang.org | later releases; exit 1 where driver lags, 2 on failure |
 | `fix` | Nim files named, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
