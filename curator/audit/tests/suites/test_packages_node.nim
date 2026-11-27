@@ -476,6 +476,10 @@ suite "Static check":
         "<xsl:element name=\"script\"><xsl:attribute name=\"href\">https://cdn.example/a.js" &
         "</xsl:attribute></xsl:element></xsl:stylesheet></svg>",
       "<?xml-stylesheet type=\"text/xsl\" href=\"https://cdn.example/t.xsl\"?><svg/>",
+      # Domain: `=` that opens name and takes quote into it, as HTML reads it; then name of two
+      #   prefixes and quote that never closes, which browser drops, refused even so.
+      "<script =\" src=\"https://cdn.example/a.js\"></script>",
+      "<a:b:script src=\"https://cdn.example/a.js\"/>", "<script src=\"https://cdn.example/a.js",
     ]:
       check checkPage(PATH_PAGE, page).len == 1
     # Domain: each space of HTML, written out, before quoted value and after name of tag.
@@ -494,10 +498,12 @@ suite "Static check":
       "<script \vsrc=\"https://cdn.example/a.js\"></script>",
       "<script src \v=\"https://cdn.example/a.js\"></script>",
       # Case: sixth review of #1069; vertical tab after name of tag, which HTML reads as part of
-      #   name, gave false refusal, and no case held bare plain path. Domain: each, and plain
-      #   `xml:base`.
+      #   name, gave false refusal, and no case held bare plain path. Domain: each, quote after
+      #   name of tag, which HTML reads as part of name too, plain `xml:base`, and `srcdoc` of tag
+      #   other than frame, which browser ignores.
       "<script\v src=\"https://cdn.example/a.js\"></script>", "<script src=a.js></script>",
-      "<svg xml:base=\"/pages/\"><script href=\"a.js\"/></svg>",
+      "<script\"x src=\"https://cdn.example/a.js\"></script>",
+      "<svg xml:base=\"/pages/\"><script href=\"a.js\"/></svg>", "<div srcdoc=\"a\"></div>",
     ]:
       check checkPage(PATH_PAGE, page).len == 0
 
