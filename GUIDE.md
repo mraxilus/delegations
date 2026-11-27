@@ -305,8 +305,8 @@ Then the subagent runs, and these steps follow:
   `1.234.567`, `170_000` or `15:30`.
 - **The hook refuses a line `**Subagent:**` that gives no tokens right before ` tokens`, or no
   cost at `$`, or two of either.** The line runs on to the next blank line, or to the next line
-  that opens with a label in bold, as `**Critic:**`. So the line may wrap, and a line of a critic
-  after it adds no second figure.
+  that opens with a label in bold or another block. So the line may wrap, and a line `**Critic:**`,
+  a bullet or a table after it adds no figure.
 - **Each figure of the line is one plain value after a space, as a cell holds it.** So
   `**170k** tokens` gives none. A space parts the words of the line, so the tokens take no group
   after a space, as `170 000`. They also take no value after a digit and a space, as
