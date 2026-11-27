@@ -1650,8 +1650,8 @@ the other passes.
   knoller gives 16 of them, at the same places. It gives 1 more at `curator/audit/src/role.nim:80`,
   since it does not count the `#` doc above that value.
 - `fixDocs` alone keeps each token of code in each file that it writes there, and a second fix
-  writes nothing. `knoller --check` over each file that holds such a report fixes 39 of the 44.
-  It leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and `walk.nim` of
+  writes nothing. `knoller --check`, built at `9d6d168e`, fixes 40 of the 44 in those files. It
+  leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and `walk.nim` of
   `dance_ontology`, which neither knoller settles.
 
 ## Stages
