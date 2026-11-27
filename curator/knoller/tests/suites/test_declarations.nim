@@ -387,6 +387,25 @@ suite "Declarations":
     check (opening & "# Doc.\nconst A* = block:\n  1\n").docsRead.module == "Module."
 
 
+  test "doc of value opening `block` that opens on more than two `#` moves as one `#`":
+    # Case held: `### Doc.` above `const B`, which fix wrote as `## Doc.`, and second fix as
+    #   `# Doc.` (review of #1070, probe of `declarations` at `2ed7a769`).
+    #   Domain: three and four `#`, above declaration and first in body, with outline line.
+    let found = "const A* = 1  ## A.\n\n### Doc.\nconst B* = block:\n  2\n"
+    check found.fixed == "const A* = 1  ## A.\n\n# Doc.\nconst B* = block:\n  2\n"
+    for hashes in ["###", "####"]:
+      for breach in [
+        "const A* = 1  ## A.\n\n" & hashes & " Doc,\n" & hashes & "   of two lines.\n" &
+          "const B* = block:\n  2\n",
+        "const A* = 1  ## A.\n\nconst B* = block:\n  " & hashes & " Doc,\n  " & hashes &
+          "   of two lines.\n  2\n",
+      ]:
+        checkpoint breach
+        check breach.fixed ==
+          "const A* = 1  ## A.\n\n# Doc,\n#   of two lines.\nconst B* = block:\n  2\n"
+        check breach.fixed.isSettled
+
+
   test "each name of section reads as value opening `block`, past section nested in body":
     # Case held: `LUT_INITIAL_BY_PAIR` of `src/ricysoho/clusters.nim` of `ricysoho`, line 99,
     #   below value whose block nests `let` section, whose doc doc position read nowhere.
