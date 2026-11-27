@@ -95,7 +95,7 @@ func version(parts: openArray[int]): string =
   parts.mapIt($it).join(".")
 
 
-func isBelow(version, other: string): bool =
+func isBelow*(version, other: string): bool =
   ## Decide whether version comes before other, number by number; absent number reads as 0.
   let (a, b) = (version.partsVersion, other.partsVersion)
   for i in 0 ..< max(a.len, b.len):

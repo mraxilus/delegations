@@ -322,6 +322,16 @@ API of a test driver.
   call `types` rather than repeat it, and `drive` fetches and builds everything it needs
   itself. A driven check that first wants some other verb run by hand is a check that the
   runner will not run.
+- **Scripts take base JavaScript, Node built-ins and the tools of the build alone.** `koch check`
+  refuses each package that a page or a tool ships, as `dependencies` names it. It also refuses a
+  dev dependency, an import and a page script from another host that its list lacks. The list
+  of `curator/audit/src/packages_node.nim` holds `@playwright/test`, `typescript` and
+  `@types/node`. A Node built-in takes its `node:` form, as `node:fs`. A tool that base
+  JavaScript cannot replace joins the list through a process-change issue, with its reason.
+- **Keep each package up to date, security fixes first.** The `npm` workflow runs
+  `koch advisories` on each lock each week. Where npm names a package of your lock in an
+  advisory, one issue on your role stays open. Move that package to its fix, and the next run
+  closes the issue. A package behind its latest release prints a line that fails nothing.
 
 ## Data
 

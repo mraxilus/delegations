@@ -80,6 +80,7 @@ Every rule below serves it:
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
 | `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
 | `.github/workflows/nim.yml` | Weekly `releases`, into one issue while the driver lags | curator |
+| `.github/workflows/npm.yml` | Weekly `advisories`, into one issue for each lock | curator |
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | Skills, and the templates of subagents | curator |
@@ -273,8 +274,8 @@ and the shared allowance. This section adds only what differs for a curator.
    - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
      under Repository settings the Architect applies.
 
-   `watch.yml` watches `check`, `ledger`, `head` and `nim`, and opens or extends one issue for
-   each workflow.
+   `watch.yml` watches `check`, `ledger`, `head`, `nim` and `npm`, and opens or extends one issue
+   for each workflow.
 
 10. **Opening prompts.** `AGENTS.md`, `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open
     new delegates, so every paragraph is read on every start. Keep each self-contained.
@@ -466,6 +467,7 @@ alone.
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |
 | `head` | projects with a `head` verb, or one | fetch dependencies, then the verb, on its pin |
 | `releases` | Nim pins, and nim-lang.org | later releases; exit 1 where driver lags, 2 on failure |
+| `advisories` | node locks, and npm | advisories, packages behind; exit 1 on one, 2 on failure |
 | `fix` | Nim files named, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
