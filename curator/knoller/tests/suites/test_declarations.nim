@@ -203,6 +203,32 @@ suite "Declarations":
     check breach.fixed.isSettled
 
 
+  test "doc trailing line keeps each line lexer joins to it, so no fix splits it in two":
+    # Case held: source below, found by hand on `main` at `6905e55e`, which `koch fix` wrote as
+    #   `const Y* =  ## Doc of Y …` and `2  ##   And wraps here.`: one doc became two.
+    #   Domain: each line opening value over lines, at each reach, and doc holding design note,
+    #   each with doc line below it that lexer joins to doc trailing line above.
+    let found = "const Y* =  ## Doc of Y that runs on past one line,\n" &
+      "  ##   and wraps here.\n  2\n"
+    check found.docsRead.docs == @[("Y", "Doc of Y that runs on past one line, and wraps here.")]
+      # one doc, as lexer joins it
+    check checkDocs("a.nim", "## Module.\n\n{.experimental: \"strictFuncs\".}\n\n" & found).len == 0
+    check found.isSettled
+    for kept in [
+      "const T* = [  ## Table,\n  ##   of one.\n  1,\n]\n",
+      "const C* = max(  ## Call,\n  ##   of two.\n  1, 2)\n",
+      "const\n  Y* =  ## Doc,\n    ##   wraps.\n    2\n",  # in section
+      "proc f*() =\n  ## Do.\n  let y =  ## Doc,\n    ##   wraps.\n    2\n  discard y\n",  # local
+    ]:
+      checkpoint kept
+      check kept.isSettled
+      check kept.fixed.docsRead == kept.docsRead
+    let noted = "const N* = 3  ## TODO: Later.\n## Since it grows.\n"
+    check noted.docsRead.docs == @[("N", "TODO: Later. Since it grows.")]
+    check checkDocsMissing("a.nim", noted).len == 1
+    check noted.documented == noted  # note runs on below its line, so hand moves it whole
+
+
   test "doc inside value opening `block` reports, and stays for hand":
     # Case held: `lut_grade_by_basis` of `func grade*` in `pga/algebra.nim` of PGA library at
     #   `3d9696e`, line 343, whose doc opens body of `block:`, where `nim doc` reads none
