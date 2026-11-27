@@ -39,7 +39,7 @@ const
     "reimport('lodash');", "const said = 'it\\'s from \"lodash\"';",
     "$from('rxjs-like');", "this.#require('lodash');", "const v = from('lodash');",
     "go(); /* see import('lodash') */", "const t = `\nimport x from 'lodash'\n`;",
-    "const m = loader.require('lodash');",
+    "const m = loader.require('lodash');", "+x;", "-x;",
   ]
     ## Lines that hold word of import beside quote, and name no module; line of `report` as found
     ##   at line 223 of `chrome.ts` of `pga_visualiser`, 2026-11-27, where `from` inside string
@@ -226,7 +226,10 @@ suite "Static check":
     #   line ends; then division after expression, and after variable named `from`, expression
     #   after block, and line that backslash continues in string, as second review of #1069 found
     #   mutants of each pass; then comment and tab before specifier, spread before `require`, and
-    #   division after `++` and `--`, which that review found passing.
+    #   division after `++` and `--`, which that review found passing. Case with comment across
+    #   line holds count of lines past it, and its `lodash` stays cost of module. Then form feed,
+    #   vertical tab and space of no break before specifier, `+-` and `+++` before expression, and
+    #   comment `/*/ */`, as third review found.
     for (text, line) in [
       ("/* note */ import x from 'lodash';", 1),
       ("/* a\n b */ import x from 'lodash';", 2),
@@ -249,6 +252,12 @@ suite "Static check":
       ("const a = i++ / n; import x from 'lodash'; const b = c / d;", 1),
       ("const a = i-- / n; import x from 'lodash'; const b = c / d;", 1),
       ("import x from /* a\n b */ 'lodash';\nimport y from 'zod';", 3),
+      ("import x from\f'lodash';", 1),
+      ("import x from\v'lodash';", 1),
+      ("import x from\xC2\xA0'lodash';", 1),
+      ("a+-/'/.source; import x from 'lodash';", 1),
+      ("n = a+++/'/.source; import x from 'lodash';", 1),
+      ("import x from /*/ */ 'lodash';", 1),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
