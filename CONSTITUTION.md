@@ -334,9 +334,8 @@ CAYLEYS_WEDGE  # module constant
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
-   The two spaces count from where the sentence of the parent starts. A capitalised word with a
-   colon, as `TODO:` or `Cost:`, is a tag, and its sentence starts after it. A line two spaces
-   deeper that opens in lowercase continues the sentence above it, and is no claim of its own.
+   The two spaces count from where the text of the parent starts. A line two spaces deeper that
+   opens in lowercase continues the sentence above it, and is no claim of its own.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
    procedure that it forwards to carries one line. The length of a doc follows the weight of
    the concept, and not the size of the body.
