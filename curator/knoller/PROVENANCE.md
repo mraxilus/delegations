@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a8794ec28e0bd05d |
+| Rules   | b1598c3ad3ce7dfd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -2271,7 +2271,8 @@ comment form reads its names alone (`## Claims`). Every other rule runs.
 
 **A nuance stands two spaces past where the text of its parent starts (VI.2).** A tag such as
 `TODO:`, `Cost:` or `Rejected:` is text of its line. So a line below `# TODO: Implement …` stands
-two spaces past `TODO:`, as the Architect ruled on #1020. A summary may wrap two spaces deeper.
+two spaces past where `TODO:` starts, as the Architect ruled on #1020. A summary may wrap two
+spaces deeper.
 
 - Rejected: a nuance past each leading tag, as the ruling on tags of rule 3 of #443 read it. A
   nuance then hung off the width of its tag, and the Architect wants one step under any line.
@@ -2297,15 +2298,18 @@ two spaces past `TODO:`, as the Architect ruled on #1020. A summary may wrap two
   case names its cut.
 - Verified by run of `knoller --check --form:line .` on the PGA library at `3d9696e`, 2026-11-27.
   Knoller built at `8a7b2f61` gives 10 reports of this rule, and built at `4d7f3815` gives 2. The
-  8 that go are lines under tags, as the library writes them. Line 354 of `pga/algebra.nim` stays,
-  a nuance one space short. So does line 4 of `pga/operators.nim`, two spaces past `Implement`.
+  9 that go are lines under tags, as the library writes them. Line 354 of `pga/algebra.nim` stays,
+  a nuance one space short. Line 4 of `pga/operators.nim` comes, since it stands two spaces past
+  `Implement`.
 - Verified by run of `knoller --check --form:line contributor curator koch.nim` over the
   repository at `5cd47d47`, 2026-11-27. The two builds give 2,296 and 1,468 reports of this rule.
-  The rules differ only in the width of a tag, so each of the 836 that go and the 8 that come is
-  a line under a tag. Seven of the 8 stood in curator code, and this change moves them. Line 29 of
-  `design/record.nim` of `dance_ontology` stays for its contributor.
-- Each other report is the same with both builds, in each run. No check of `koch check` reads
-  this rule yet.
+  By path and line, 835 go and 7 come. The rules differ only in the width of a tag. So each line
+  that goes or comes stands under a tag.
+- The 7 that come stood in curator code, which now holds each of them two spaces past its tag.
+- Line 29 of `design/record.nim` of `dance_ontology` takes a report with both builds. The first
+  leaves it for hand, and the second fixes it. It stays for its contributor.
+- Each report of another rule is the same with both builds, in each run. No check of `koch check`
+  reads this rule yet.
 - Cost: a line of a table, a diagram or code stays where its parent moves.
 
 **A doc holds one summary line, and its sentence ends in a period (VI.1).** The first line of a
