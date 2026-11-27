@@ -302,6 +302,12 @@ suite "Advisories":
     let (advisories, failure) = readAudit((code: 0, output: AUDIT_CLEAN))
     check advisories.len == 0 and failure == ""
 
+  test "audit keeps dev dependencies where environment of run leaves them out":
+    # Case: review of #1069; `NODE_ENV=production`, or `omit=dev` in npmrc, read lock holding
+    #   `lodash` `4.17.15` as clean, npm 10.9.9, 2026-11-27, since each listed tool is dev
+    #   dependency; flag holds against each such setting.
+    check "--include=dev" in COMMAND_AUDIT.split(' ')
+
   test "answer naming package reads severity, range, fix and each advisory":
     # Case: lock holding `lodash` `4.17.15`, npm 10.9.9, 2026-11-27.
     let (advisories, failure) = readAudit((code: 1, output: AUDIT_LODASH))
