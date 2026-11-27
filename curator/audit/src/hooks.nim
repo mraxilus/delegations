@@ -536,12 +536,12 @@ const
     "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of result of estimate states, since log reads its outcome there.
-  RULE_OUTCOME_BULLETS = "Value that opens cell under `Result` of number of bullets marked ✅ or " &
-    "⬜ stands bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` " &
-    "or `h` for time " & CITATION_BULLETS
+  RULE_OUTCOME_BULLETS = "Cell under `Result` of number of bullets marked ✅ or ⬜ opens with its " &
+    "value, bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or " &
+    "`h` for time " & CITATION_BULLETS
     ## Rule that finding of result of number of bullets states: its percentiles stand bare in
-    ##   its text, so bare value reads in unit text names (`unitText`); cell that opens with no
-    ##   value takes none, as checks of bullets stay as they were (choice).
+    ##   its text, so bare value reads in unit text names (`outcomeBullets`); cell that opens with
+    ##   label, marker or word, or with no value, takes it too, as log reads no outcome there.
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
     "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of block with no number, or number of other row, states.
@@ -2717,6 +2717,14 @@ func figuresLine*(text: string, labels: openArray[string]): tuple[tokens: int, c
     return
 
 
+func outcomeBullets*(quoted, cell: string): Option[float] =
+  ## Read outcome of number of bullets whose text row quotes, from its cell under `Result`: value
+  ##   that opens cell, bare in unit text names (`unitText`), as its percentiles stand bare, or
+  ##   marked in it (`outcomeResult`); none where label, marker or word opens cell, as `r01: $0.16`
+  ##   or `✅ 170,000`, since no rule tells such text from value (choice); hook refuses that none.
+  cell.outcomeResult(quoted.unitText, as_bare = true)
+
+
 func isHolding(header, columns: openArray[string]): bool =
   ## Decide whether header holds each of columns, in any order, as hook reads columns by name.
   columns.allIt(it in header)
@@ -2781,8 +2789,8 @@ func forecastsTable(text: string): seq[Forecast] =
 func forecasts*(text: string): seq[Forecast] =
   ## Read each claim of block text: each bullet (`forecastsBullets`), then each row of its tables
   ##   of judgements and estimates (`forecastsTable`), so block of either form serves call.
-  ##   Bullets stay read while delegate that runs at merge may still write them (choice), and their
-  ##     checks stay as they were.
+  ##   Bullets stay read while delegate that runs at merge may still write them (choice); result of
+  ##     their number opens with its value, as that of estimate does (`outcomeBullets`).
   text.forecastsBullets & text.forecastsTable
 
 
@@ -2913,8 +2921,9 @@ func isQuoting*(row: RowReflection, forecast: Forecast): bool =
 
 func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Finding] =
   ## Report reflection with no table of claims, each such table with no row, each row of it that
-  ##   is empty or quotes no claim of block call took, and each result of estimate marked hit or
-  ##   miss that opens with no value in its unit (7200557915).
+  ##   is empty or quotes no claim of block call took, and each result of number marked hit or
+  ##   miss that opens with no value in its unit (7200557915): estimate of table, and number of
+  ##   bullets (`outcomeBullets`), whose outcome log then reads as none.
   ##   Table of claims is first one with column `Predicted`, and each one whose header holds form
   ##     of reflection whole (`tablesReflection`); text is fenced out already. Table of no column
   ##     `Predicted` that holds column of `COLUMNS_NAMING` and no form whole is finding of its
@@ -2981,8 +2990,8 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
       if forecast.estimate.isSome and
           row.result.outcomeResult(forecast.estimate.get.unit).isNone:
         result.add finding("", 0, Check.TableReflection, RULE_OUTCOME & got)
-      elif not forecast.is_row and forecast.is_number and row.result.valueAt.isSome and
-          row.result.outcomeResult(row.quoted.unitText, as_bare = true).isNone:
+      elif not forecast.is_row and forecast.is_number and
+          row.quoted.outcomeBullets(row.result).isNone:
         result.add finding("", 0, Check.TableReflection, RULE_OUTCOME_BULLETS & got)
 
 

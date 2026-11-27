@@ -253,13 +253,12 @@ func numberForecast(forecast: Forecast, row: RowReflection): Option[Number] =
       outcome: row.result.outcomeResult(estimate.unit), unit: estimate.unit))
   let numbers = row.quoted.numbersIn
   if not forecast.is_number or numbers.len < 3: return
-  let unit = row.quoted.unitText
   some(Number(
     low: numbers[^3],
     median: numbers[^2],
     high: numbers[^1],
-    outcome: row.result.outcomeResult(unit, as_bare = true),
-    unit: unit,
+    outcome: row.quoted.outcomeBullets(row.result),
+    unit: row.quoted.unitText,
   ))
 
 
