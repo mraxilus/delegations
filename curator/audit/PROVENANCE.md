@@ -2605,7 +2605,7 @@ nothing else, because what a check needs differs for each project, while the nam
 **Scripts take base JavaScript, Node built-ins and three tools alone** (CONTRIBUTOR.md, TypeScript
 and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package, and
 each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:` built-in or
-a listed package. A page or an SVG refuses each script that a browser may load from another host.
+a listed package. A page or SVG refuses each `<script>` from another host.
 
 - A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
@@ -2613,12 +2613,12 @@ a listed package. A page or an SVG refuses each script that a browser may load f
   reads as division, so its quote can open a string or a template. A specifier on the line after
   its keyword reads as none. Such a miss can import a package that a listed tool pulls in, as
   `playwright-core`. Rejected: a list of the built-ins of Node, which moves with each release.
-- An address passes only as a plain path, whose part before its query holds letters, digits and
-  `.-_~%/` alone, and opens with no `//`. The rule decodes nothing, since each decode copies the
-  browser in part, and each part left out is a way past. `<script>` and `<base>` take it under any
-  prefix, in an HTML comment too. A quote opens a value only past `=`, as HTML reads a tag.
-  `srcdoc`, `<!ENTITY` and `<!ATTLIST` are findings. Cost: a frame, an object or an embed of another
-  host reads as none, since its script runs in the origin of that host.
+- A plain path alone passes: before its query, it holds letters, digits and `.-_~%/` alone, and
+  opens with no `//`. The rule decodes nothing, since each decode copies the browser in part, and
+  each part left out is a way past. `<script>`, `<base>` and `xml:base` take it under any prefix, in
+  a comment too, and a tag reads as HTML reads it. `srcdoc`, `<!ENTITY`, `<!ATTLIST` and
+  `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: inline script reads as
+  none. So does a frame, object or embed at no plain path, whose script runs apart from the page.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
@@ -2634,12 +2634,12 @@ named project with no lock, so the issue never closes for work not done.
   its lock leaves the matrix, so a curator closes its open issue by hand.
 - Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
 - Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
-- Verified by `suites/test_packages_node.nim`, which 105 of 106 mutants of the curator and a review
-  fail, and the one left changes no verdict. `nim r koch check-files` at `38109308` gives 0 findings
-  over the three node projects, 2026-11-27. By hand with npm 10.9.9 that day, the verb exits 0 over
-  the tree, and `list-projects --all --node` names the three. It exits 1 on a copy whose lock holds
-  `lodash` 4.17.15. It exits 2 with the registry at a dead address, and on a named project with no
-  lock. The issue step held in ten cases under a stub `gh`, GNU bash 5.2.21.
+- Verified by `suites/test_packages_node.nim`, and by `nim r koch check-files` at `fd562645` with 0
+  findings over the three node projects, 2026-11-27. By hand that day, 131 of 132 mutants of the
+  curator and six reviews fail the suite, and the one left changes no verdict. With npm 10.9.9, the
+  verb exits 0 over the tree, and `list-projects --all --node` names the three. It exits 1 on a copy
+  whose lock holds `lodash` 4.17.15. It exits 2 with the registry at a dead address, and on a named
+  project with no lock. The issue step held in ten cases under a stub `gh`, GNU bash 5.2.21.
 
 ## Driven checks
 
