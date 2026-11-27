@@ -116,21 +116,29 @@ func isPath(specifier: string): bool =
 
 
 func keywordAt(text: string, at: int): string =
-  ## Read keyword of import that opens word at `at`, never after `.` or character of name; empty
-  ##   where none opens there.
+  ## Read keyword of import that opens word at `at`, never after `.` of member or character of
+  ##   name; empty where none opens there.
+  ##   Spread `...` is no member, so `...require('x')` names module.
   ##   End of word needs no test: `operand` reads only quote past spaces and `(`.
-  if at > 0 and (text[at - 1] in CHARS_WORD or text[at - 1] == '.'): return ""
+  let is_spread = at >= 3 and text[at - 3 ..< at] == "..."
+  if at > 0 and not is_spread and (text[at - 1] in CHARS_WORD or text[at - 1] == '.'): return ""
   for keyword in KEYWORDS_IMPORT:
     if text.continuesWith(keyword, at): return keyword
   ""
 
 
 func operand(text: string; at: int; is_call: bool): tuple[specifier: string, ending: int] =
-  ## Read quoted operand that opens at `at`, past spaces, and past `(` of call, with index past
-  ##   its closing quote on same line; empty, ending at `at`, where none opens there.
+  ## Read quoted operand that opens at `at`, past spaces, tabs and comment on same line, and past
+  ##   `(` of call, with index past its closing quote on same line; empty, ending at `at`, where
+  ##   none opens there.
   var cursor = at
-  while cursor < text.len and (text[cursor] == ' ' or (is_call and text[cursor] == '(')):
-    inc cursor
+  while cursor < text.len:
+    if text[cursor] in {' ', '\t'} or (is_call and text[cursor] == '('): inc cursor
+    elif text.continuesWith("/*", cursor):
+      let closing = text.find("*/", cursor + 2)
+      if closing < 0 or '\n' in text[cursor ..< closing]: return ("", at)
+      cursor = closing + 2
+    else: break
   if cursor >= text.len or text[cursor] notin QUOTES: return ("", at)
   let closing = text.find(text[cursor], cursor + 1)
   if closing < 0 or '\n' in text[cursor + 1 ..< closing]: return ("", at)
@@ -221,7 +229,9 @@ func specifiersScript*(text: string): seq[tuple[line: int, specifier: string]] =
       else:
         if c == '{': inc braces[^1]
         elif c == '}': braces[^1] = max(braces[^1] - 1, 0)
-        if c notin Whitespace: mark = c
+        # Postfix `++` or `--` ends operand, so `/` after it divides.
+        if c in {'+', '-'} and cursor > 0 and text[cursor - 1] == c: mark = 'x'
+        elif c notin Whitespace: mark = c
     inc cursor
   result = result.filterIt(it.specifier.len > 0)
 
