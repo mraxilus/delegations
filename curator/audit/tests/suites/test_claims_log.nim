@@ -395,6 +395,13 @@ suite "Log of claims":
       check claims[0 .. 1].allIt((it.tokens, it.cost) == (170_000, 1.1))
       check (claims[2].tokens, claims[2].cost) == (50_000, 0.35)
 
+    # Bullet right under line ends it, so figure of bullet gives none (probe of fourth builder).
+    let bulleted = transcript(REFLECTION.replace("170,000 tokens and $1.10 at list price, 57 " &
+      "calls, 15 min.", "$1.10 at list price.\n- **Not predicted:** the 39,000 tokens of the " &
+      "critic.")).claimsRead
+    check bulleted[0 .. 1].allIt((it.tokens, it.cost) == (0, 1.1))
+    check (bulleted[2].tokens, bulleted[2].cost) == (50_000, 0.35)
+
 
   test "critic that line `**Subagent:**` names reads that line, as replay of critic does":
     let

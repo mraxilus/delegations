@@ -4656,7 +4656,7 @@ suite "Hooks":
     # Case as found (finding 5 of third critic): sample line of GUIDE.md wrapped before `$1.10`
     #   took refusal, as `figuresLine` read first line alone. Domain: sample line wrapped at each
     #   space, and at each space at once; line that ends at blank line, or at each form of label
-    #   in bold, as line of critic; line that runs on past bold that is no label, or into bullet.
+    #   in bold, as line of critic; line that runs on past bold that is no label, not into bullet.
     const
       guide = staticRead("../../../../GUIDE.md")
       spaces = 17  ## Places where sample line wraps, one at each space.
@@ -4691,7 +4691,7 @@ suite "Hooks":
     check held(flat.replace(" ", "\n  ")).len == 0  # each word on line of its own, indented
 
     # Blank line ends line, so figure after it gives none; label in bold of each form ends it, so
-    #   line of critic after it adds no figure; bold that is no label, and bullet, run on.
+    #   line of critic after it adds no figure, as bullet does; bold that is no label runs on.
     let line = "**Subagent:** reviewer, 170,000 tokens and $1.10,"
     check (line & "\n\n57 calls.").figures == (some(170_000), some(1.1))
     check "**Subagent:** reviewer,\n\n170,000 tokens and $1.10.".figures ==
@@ -4704,11 +4704,45 @@ suite "Hooks":
         "**Subagent:** reviewer,\n**Critic** 170,000 tokens and $1.10."]:
       check text.figures == (some(170_000), some(1.1))  # bold that is no label runs on
     check (line & "\n50,000 tokens of the critic.").figures == (none(int), some(1.1))
-    check (line & "\n- **Not predicted:** a fee of $2.").figures == (some(170_000), none(float))
+    check (line & "\n- **Not predicted:** a fee of $2.").figures == (some(170_000), some(1.1))
     check held(flat.replace(" $1.10", "\n$1.10 and $2")) == @["line `**Subagent:**` of " &
       "reflection gives tokens right before ` tokens` and cost at `$`, each one plain value " &
       "after space, as cell holds it, and value of tokens holds no group after space (GUIDE.md, " &
       "Prediction, critic and reflection); got `" & flat.replace(" $1.10", " $1.10 and $2") & "`"]
+
+
+  test "line `**Subagent:**` ends at bullet, table, quote or heading under it (#1028)":
+    # Case as found (probe of fourth builder, after line ran on): line of no tokens with bullet
+    #   right under it that gives `39,000 tokens` gave 39,000 tokens with no finding. Domain: each
+    #   opening of other block under line that gives no figure, and under line that gives both;
+    #   text that opens no block, which runs on; and hook and log at case as found.
+    const
+      opening = "**Subagent:** builder of the fix, "
+      found = opening & "$1.10 at list price.\n- **Not predicted:** the 39,000 tokens of the " &
+        "critic."
+      blocks = ["- ", "* ", "+ ", "1. ", "2) ", "  - ", "| 5 | ", "> ", "# ", "## ", "###### "]
+    func figures(text: string): (Option[int], Option[float]) =
+      ## Read tokens and cost of line `**Subagent:**` of text.
+      let read = text.figuresLine(LABELS_SUBAGENT)
+      (read.tokens, read.cost)
+    check found.figures == (none(int), some(1.1))  # case as found
+    let whole = REFLECTION_TABLES_POSTED.mended
+    check heldReflection(PREDICTION_TABLES, whole.replace("39,100,000 tokens and $14.40 at list " &
+      "price,\n120 calls, 47 min.", "$14.40 at list price.\n- **Not predicted:** the 39,000 " &
+      "tokens of the critic.")).len == 1  # line gives no tokens
+
+    # Each opening of block ends line, so its figure adds none; text that opens none runs on.
+    var count = 0
+    for start in blocks:
+      check (opening & "57 calls.\n" & start & "170,000 tokens and $1.10.").figures ==
+        (none(int), none(float))
+      check (opening & "39,000 tokens and $0.35.\n" & start & "170,000 tokens and $1.10.")
+        .figures == (some(39_000), some(0.35))
+      inc count
+    check count == blocks.len
+    for text in ["#962 holds", "####### seven", "-x", "1.5 hours"]:
+      check (opening & "57 calls,\n" & text & " 170,000 tokens and $1.10.").figures ==
+        (some(170_000), some(1.1))
 
 
   test "each refusal of bullets cites section that states its rule (#1028)":
