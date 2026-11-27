@@ -7,11 +7,11 @@
 ##     Each dev dependency off `PACKAGES_ALLOWED` is finding, and so is each import of TypeScript
 ##       naming package off it. Specifier opening `.` or `/` is path, and `node:` is built-in.
 ##     Bare built-in, as `fs`, reads as package, and help names `node:fs`.
-##     Each `<script>` of page or SVG whose `src`, `href` or `xlink:href` may name other host is
-##       finding, since page loads package from there; tag reads across lines, in any case.
-##     Address passes only as path of project: no scheme, and no `//` at its head, once each
-##       reference decodes and each control and space leaves it. Rule refuses wherever browser may
-##       load, so script inside HTML comment is finding too.
+##     Each `<script>` of page or SVG, and each `<base>`, whose address is no plain path of
+##       project is finding, since page may load package from other host; so is each entity.
+##     Plain path holds `CHARS_PATH` alone before its query, and opens with no `//`. Rule decodes
+##       nothing, since each decode copies browser in part, and each part it leaves out is way past.
+##     Rule refuses wherever browser may load, so tag inside HTML comment is finding too.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
 ##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
@@ -33,12 +33,12 @@
 ##     parsed: regular expression after word or `)`, as after `return`, reads as division, and
 ##     its quote can open string, or template that runs across lines. Specifier on line after its
 ##     keyword reads as none, and so do `module.require('x')`, `require?.('x')` and import built
-##     from expression. Such miss costs little: package it names resolves only where manifest
-##     names it, which manifest check holds, and import of address is expected to fail type check
-##     of `types`, which resolves no address (unmeasured).
-##   Cost: inline script of page reads as none, and so does `<svg:script>`; named reference other
-##     than `&sol;` and `&colon;` stays as written. Script in comment, and path holding space
-##     before `//`, are refused, though browser loads neither from other host.
+##     from expression. Such miss can import package that listed tool pulls in and its lock
+##     hoists, as `playwright-core`; import of address is expected to fail type check of `types`,
+##     which resolves no address (unmeasured).
+##   Cost: inline script of page reads as none, and so does `<svg:script>`. Path holding query
+##     mark that reference encodes, or address of project in comment, is refused, though browser
+##     loads neither from other host.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
@@ -71,9 +71,17 @@ const
   }
     ## Last marks of code after which `/` opens regular expression rather than division.
   CHARS_WORD = IdentChars + {'$', '#'}  ## Characters of name of script, private name included.
-  DIGITS_REFERENCE_MAX = 7  ## Digits of character reference read at most; more names no ASCII.
-  SPACES_LINE = {' ', '\t', '\f', '\v'}  ## Spaces of script that end no line, but no-break space.
-  SPACE_NO_BREAK = "\xC2\xA0"  ## No-break space in UTF-8, which script reads as space.
+  CHARS_PATH = Letters + Digits + {'.', '-', '_', '~', '%', '/'}
+    ## Characters that plain path of project holds, before its query.
+  SPACES_HTML = {' ', '\t', '\n', '\f', '\r'}  ## Spaces that HTML strips at ends of address.
+  SPACES_WIDE = [
+    "\xC2\xA0", "\xE1\x9A\x80", "\xE2\x80\x80", "\xE2\x80\x81", "\xE2\x80\x82", "\xE2\x80\x83",
+    "\xE2\x80\x84", "\xE2\x80\x85", "\xE2\x80\x86", "\xE2\x80\x87", "\xE2\x80\x88", "\xE2\x80\x89",
+    "\xE2\x80\x8A", "\xE2\x80\xAF", "\xE2\x81\x9F", "\xE3\x80\x80", "\xEF\xBB\xBF",
+  ]
+    ## Spaces of script outside ASCII in UTF-8, as JavaScript reads `WhiteSpace`: U+00A0, U+1680,
+    ##   U+2000 to U+200A, U+202F, U+205F, U+3000 and U+FEFF.
+  SPACES_LINE = {' ', '\t', '\f', '\v'}  ## Spaces of script in ASCII that end no line.
   SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
   COMMAND_AUDIT* = "npm audit --package-lock-only --include=dev --json --fetch-retries=1 " &
     "--fetch-timeout=" & $(SECONDS_ASK * 1000)
@@ -139,6 +147,13 @@ func keywordAt(text: string, at: int): string =
   ""
 
 
+func widthSpaceWide(text: string, at: int): int =
+  ## Measure space of `SPACES_WIDE` that opens at `at`; `0` where none opens there.
+  for space in SPACES_WIDE:
+    if text.continuesWith(space, at): return space.len
+  0
+
+
 func operand(text: string; at: int; is_call: bool): tuple[specifier: string, ending: int] =
   ## Read quoted operand that opens at `at`, past spaces of line and comment on same line, and past
   ##   `(` of call, with index past its closing quote on same line; empty, ending at `at`, where
@@ -146,7 +161,7 @@ func operand(text: string; at: int; is_call: bool): tuple[specifier: string, end
   var cursor = at
   while cursor < text.len:
     if text[cursor] in SPACES_LINE or (is_call and text[cursor] == '('): inc cursor
-    elif text.continuesWith(SPACE_NO_BREAK, cursor): cursor += SPACE_NO_BREAK.len
+    elif text.widthSpaceWide(cursor) > 0: cursor += text.widthSpaceWide(cursor)
     elif text.continuesWith("/*", cursor):
       let closing = text.find("*/", cursor + 2)
       if closing < 0 or '\n' in text[cursor ..< closing]: return ("", at)
@@ -334,63 +349,29 @@ func attributes(tag: string): seq[tuple[name, value: string]] =
       result.add (name: name, value: tag[probe ..< cursor])
 
 
-func referenceAt(value: string, at: int): tuple[mark: Option[char], ending: int] =
-  ## Read character reference that opens at `at`, as browser decodes it, with index past it:
-  ##   decimal or hex digits after `&#`, its `;` optional, or `&sol;` and `&colon;`. None, ending at
-  ##   `at`, where none opens there, or where it names no character of ASCII.
-  ##   Only character of ASCII can form scheme or `/`, so others keep their text.
-  if value.continuesWith("&sol;", at): return (some('/'), at + "&sol;".len)
-  if value.continuesWith("&colon;", at): return (some(':'), at + "&colon;".len)
-  if not value.continuesWith("&#", at): return (none(char), at)
+func isPathPlain(value: string): bool =
+  ## Decide whether address names path of project alone: past spaces at its ends, its path before
+  ##   first `?` or `#` holds `CHARS_PATH` alone, and opens with no `//`.
+  ##   Rule decodes nothing, since each decode copies browser in part and leaves way past it; so
+  ##     reference, `\`, `:`, control, space and character outside ASCII in path are refused.
   let
-    is_hex = at + 2 < value.len and value[at + 2] in {'x', 'X'}
-    digits = if is_hex: HexDigits else: Digits
-    start = at + (if is_hex: 3 else: 2)
-  var cursor = start
-  while cursor < value.len and value[cursor] in digits: inc cursor
-  if cursor == start or cursor - start > DIGITS_REFERENCE_MAX: return (none(char), at)
-  let code =
-    if is_hex: parseHexInt(value[start ..< cursor])
-    else: parseInt(value[start ..< cursor])
-  if code > 127: return (none(char), at)
-  (some(char(code)), if cursor < value.len and value[cursor] == ';': cursor + 1 else: cursor)
+    address = value.strip(chars = SPACES_HTML)
+    ending = address.find({'?', '#'})
+    path = if ending < 0: address else: address[0 ..< ending]
+  path.allCharsInSet(CHARS_PATH) and not path.startsWith("//")
 
 
-func addressRead(value: string): string =
-  ## Read address of attribute as browser may read it: each reference of `referenceAt` decoded,
-  ##   each control and space dropped wherever it stands, and `\` read as `/`.
-  ##   Space inside path dropped too, which makes rule refuse more, never less.
-  var cursor = 0
-  while cursor < value.len:
-    let (mark, ending) = value.referenceAt(cursor)
-    if mark.isSome:
-      if mark.get > ' ': result.add mark.get
-      cursor = ending
-      continue
-    if value[cursor] > ' ': result.add value[cursor]
-    inc cursor
-  result = result.replace('\\', '/')
-
-
-func isOtherHost(address: string): bool =
-  ## Decide whether address may name other host: it opens with `//`, or with scheme, as `https:`.
-  ##   Path of project passes alone, so query or fragment that names host passes with it.
-  if address.startsWith("//"): return true
-  var cursor = 0
-  while cursor < address.len and (address[cursor] in Letters or
-      (cursor > 0 and address[cursor] in Digits + {'+', '-', '.'})):
-    inc cursor
-  cursor > 0 and cursor < address.len and address[cursor] == ':'
-
-
-func checkPage*(path, text: string): seq[Finding] =
-  ## Report each `<script>` whose `src`, `href` or `xlink:href` may name other host, at line of tag.
-  ##   Tag reads to first `>` outside quote, across lines, with no regard to case of letters.
-  ##   Tag inside HTML comment is finding too, since rule refuses wherever browser may load.
-  let lowered = text.toLowerAscii
-  var at = lowered.find("<script")
+func tagsNamed(
+  text, name: string
+): seq[tuple[line: int, attributes: seq[tuple[name, value: string]]]] =
+  ## Read each tag of text with name, with no regard to case of letters, as its line and attributes.
+  ##   Tag reads to first `>` outside quote, across lines.
+  let
+    lowered = text.toLowerAscii
+    opening = "<" & name
+  var at = lowered.find(opening)
   while at >= 0:
-    let after = at + "<script".len
+    let after = at + opening.len
     if after < text.len and text[after] in Whitespace + {'>', '/'}:
       var
         cursor = after
@@ -399,15 +380,41 @@ func checkPage*(path, text: string): seq[Finding] =
         if quote.isSome and text[cursor] == quote.get: quote = none(char)
         elif quote.isNone and text[cursor] in {'"', '\''}: quote = some(text[cursor])
         inc cursor
-      for (name, value) in text[after ..< cursor].attributes:
-        if name notin ["src", "href", "xlink:href"] or not value.addressRead.isOtherHost: continue
+      result.add (
+        line: text[0 ..< at].count('\n') + 1,
+        attributes: text[after ..< cursor].attributes,
+      )
+    at = lowered.find(opening, at + 1)
+
+
+func checkPage*(path, text: string): seq[Finding] =
+  ## Report each `<script>` and `<base>` whose address is no plain path of project, and each
+  ##   entity, which can name address; at line of each.
+  ##   Script takes address from `src`, or from `href` under any prefix, as `xlink:href` of SVG.
+  ##   Rule refuses wherever browser may load from other host, so tag inside comment is finding too.
+  for (name, is_base) in [("script", false), ("base", true)]:
+    for (line, attributes) in text.tagsNamed(name):
+      for (attribute, value) in attributes:
+        let is_address =
+          if is_base: attribute == "href"
+          else: attribute in ["src", "href"] or attribute.endsWith(":href")
+        if not is_address or value.isPathPlain: continue
         result.add finding(
           path,
-          text[0 ..< at].count('\n') + 1,
-          "Page loads script from other host; take base JavaScript, or script of project" &
-            CITE_RULE & "; got `" & value & "`.",
+          line,
+          "Page loads script from other host, or may; take base JavaScript, or script of " &
+            "project at plain path" & CITE_RULE & "; got `" & value.escape("", "") & "`.",
         )
-    at = lowered.find("<script", at + 1)
+  let lowered = text.toLowerAscii
+  var at = lowered.find("<!entity")
+  while at >= 0:
+    result.add finding(
+      path,
+      text[0 ..< at].count('\n') + 1,
+      "Page declares entity, which can name address of script from other host" & CITE_RULE &
+        "; got `<!ENTITY`.",
+    )
+    at = lowered.find("<!entity", at + 1)
 
 
 proc checkPackagesNode*(tree: Tree): seq[Finding] =
