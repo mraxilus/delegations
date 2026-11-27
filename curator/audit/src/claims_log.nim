@@ -263,11 +263,11 @@ func unitText*(text: string): UnitNumber =
 
 
 func callTaken(
-  subagents: Subagents;
-  taken: openArray[int];
-  forecasts: openArray[seq[Forecast]];
-  reflection: Block;
-  row: RowReflection;
+  subagents: Subagents,
+  taken: openArray[int],
+  forecasts: openArray[seq[Forecast]],
+  reflection: Block,
+  row: RowReflection,
   named: string
 ): Option[int] =
   ## Read index of latest call before reflection whose block holds claim row quotes
