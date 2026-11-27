@@ -506,10 +506,14 @@ const
     ## Columns of table of judgements of reflection, in any order (7200557915).
   COLUMNS_REFLECTION_ESTIMATES = [COLUMN_NUMBER, COLUMN_STATE, COLUMN_ESTIMATE, COLUMN_RESULT]
     ## Columns of table of estimates of reflection, in any order (7200557915).
-  COLUMNS_NAMING = [COLUMN_NUMBER, COLUMN_JUDGEMENT, COLUMN_ESTIMATE, COLUMN_CRITERION]
-    ## Columns that make table of block or reflection table of claims, whose header then holds
-    ##   each column of one form (choice); `%`, `State`, `Result` and percentiles stay out, as table
-    ##   of other figures may hold them.
+  COLUMNS_NAMING_BLOCK = [COLUMN_NUMBER, COLUMN_JUDGEMENT, COLUMN_ESTIMATE, COLUMN_CRITERION]
+    ## Columns that make table of block table of claims, whose header then holds each column of
+    ##   one form, as GUIDE.md states (choice); `%` and percentiles stay out, as table of other
+    ##   figures may hold them, and `#` stays in, so header one character off is refused.
+  COLUMNS_NAMING_REFLECTION = [COLUMN_NUMBER, COLUMN_JUDGEMENT, COLUMN_ESTIMATE]
+    ## Columns that make table of reflection table of claims, as GUIDE.md states (choice): column
+    ##   that names claim of form of reflection, and `#`; `Resolution criterion` names none there,
+    ##   and `State`, `%` and `Result` stay out, as table of other figures may hold them.
   CONFIDENCE_ESTIMATE* = 0.9  ## Confidence of estimate: mass between its 5th and 95th percentiles.
   MARKERS_SCORED = ["✅", "⬜"]
     ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
@@ -582,7 +586,8 @@ const
   RULE_CRITERION_ROW = "Row of table of criteria of block names, by its number under `#`, claim " &
     "of block that no other row names (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of criteria of number of no claim, or of claim named twice, states.
-  RULE_BULLET = "Block of tables holds no bullet beside them (GUIDE.md, Prediction, critic and " &
+  RULE_BULLET = "Block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+    "`Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
     "reflection)"
     ## Rule that finding of bullet of block that holds table of claims states.
   RULE_FORM_REFLECTION = "Table of reflection whose header holds `#`, `Judgement` or " &
@@ -2772,9 +2777,10 @@ func isHolding(header, columns: openArray[string]): bool =
   columns.allIt(it in header)
 
 
-func isClaims(header: openArray[string]): bool =
-  ## Decide whether header is of table of claims: it holds column of `COLUMNS_NAMING`.
-  COLUMNS_NAMING.anyIt(it in header)
+func isClaims(header, naming: openArray[string]): bool =
+  ## Decide whether header is of table of claims: it holds column of naming, as
+  ##   `COLUMNS_NAMING_BLOCK` or `COLUMNS_NAMING_REFLECTION`.
+  naming.anyIt(it in header)
 
 
 func rowsClaim(text: string): seq[RowClaim] =
@@ -2844,8 +2850,8 @@ func findingsPrediction*(text: string): seq[Finding] =
   ##   claim, or claim that other row names, and bullet beside tables (7200557915).
   ##   Bullet beside tables is refused (choice): GUIDE.md writes tables alone, and position of
   ##     bullet and number of row take one key of log, so log keeps one of two such rows.
-  ##   Table of claims holds column of `COLUMNS_NAMING`; one that holds no form whole takes that
-  ##     finding, since its rows read as none (choice).
+  ##   Table of claims holds column of `COLUMNS_NAMING_BLOCK`; one that holds no form whole takes
+  ##     that finding, since its rows read as none (choice).
   ##   Row with no number takes that finding alone, since others name it by its number. Bullets
   ##     take none, since check of their form reads only cell that quotes them.
   ##   Claims are held to criteria only where each table holds its form, and criteria to claims
@@ -2860,15 +2866,15 @@ func findingsPrediction*(text: string): seq[Finding] =
 
   # Refuse each bullet beside tables, whose position may be number of row.
   let tables = text.tablesMarkdown
-  if tables.anyIt(it.header.isClaims):
+  if tables.anyIt(it.header.isClaims(COLUMNS_NAMING_BLOCK)):
     for forecast in text.forecastsBullets:
       result.add finding("", 0, Check.TablesPrediction, RULE_BULLET & "; got `" &
         forecast.forms[0] & "`.")
 
   # Refuse table of claims that holds no form whole, since its rows read as none.
   for table in tables:
-    if not table.header.isClaims or [@COLUMNS_JUDGEMENTS, @COLUMNS_ESTIMATES,
-        @COLUMNS_CRITERIA].anyIt(table.header.isHolding(it)):
+    let forms = [@COLUMNS_JUDGEMENTS, @COLUMNS_ESTIMATES, @COLUMNS_CRITERIA]
+    if not table.header.isClaims(COLUMNS_NAMING_BLOCK) or forms.anyIt(table.header.isHolding(it)):
       continue
     is_formed = false
     result.add finding("", 0, Check.TablesPrediction, RULE_FORM & "; got `" & table.line & "`.")
@@ -2968,8 +2974,8 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
   ##   bullets (`outcomeBullets`), whose outcome log then reads as none.
   ##   Table of claims is first one with column `Predicted`, and each one whose header holds form
   ##     of reflection whole (`tablesReflection`); text is fenced out already. Table of no column
-  ##     `Predicted` that holds column of `COLUMNS_NAMING` and no form whole is finding of its
-  ##     own, since its rows read as none (choice).
+  ##     `Predicted` that holds column of `COLUMNS_NAMING_REFLECTION` and no form whole is finding
+  ##     of its own, since its rows read as none (choice).
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
   ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
   ##     so it names `No prediction`, which row of missed prediction holds.
@@ -2985,7 +2991,7 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
   let
     tables = text.tablesReflection
     misnamed = text.tablesMarkdown.filterIt(COLUMN_PREDICTED notin it.header and
-      it.header.isClaims and not it.header.isFormedReflection)
+      it.header.isClaims(COLUMNS_NAMING_REFLECTION) and not it.header.isFormedReflection)
   for table in misnamed:
     result.add finding("", 0, Check.TableReflection, RULE_FORM_REFLECTION & "; got `" &
       table.line & "`.")
@@ -2994,10 +3000,10 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
       "",
       0,
       Check.TableReflection,
-      "Reflection holds table of claims: table of judgements or estimates whose header has " &
-        "column `" & COLUMN_NUMBER & "` (GUIDE.md, Prediction, critic and reflection), or table " &
-        "whose header has column `" & COLUMN_PREDICTED & "`, as block of bullets takes it " &
-        CITATION_BULLETS & "."
+      "Reflection holds table of claims: table whose header holds `#`, `Judgement` or " &
+        "`Estimate @ 90%`, in form of judgements or estimates (GUIDE.md, Prediction, critic and " &
+        "reflection), or table whose header holds `" & COLUMN_PREDICTED & "`, as block of " &
+        "bullets takes it " & CITATION_BULLETS & "."
     )]
   for table in tables:
     let rows = table.rowsTable
