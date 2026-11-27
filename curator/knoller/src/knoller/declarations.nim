@@ -523,7 +523,8 @@ func sections(source: string): seq[string] =
           before.spelling(source) in KEYWORDS_CONTINUING:
         continue
 
-    # Declaration context: section keyword on line, or above it through enclosing lines.
+    # Declaration context: section keyword on line, or above it through enclosing lines; line
+    #   inside body of value, as of `block`, declares in no section.
     var
       section = if word in KEYWORDS_SECTION: word else: ""
       parent = d
@@ -534,6 +535,8 @@ func sections(source: string): seq[string] =
           (code[parent].strip.len == 0 or code[parent].indentWidth >= indent_parent):
         dec parent
       if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
+      let above = code[parent].strip
+      if above notin KEYWORDS_SECTION and (above.endsWith("=") or above.isOpeningBlock): break
       if code[parent].wordFirst in KEYWORDS_SECTION: section = code[parent].wordFirst
     result[d] = section
 
