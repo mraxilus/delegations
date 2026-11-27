@@ -68,8 +68,10 @@
 ##     cell under `Predicted` of reflection is one whole claim of block call took, with or
 ##     without its label, or `No prediction`. Block of tables, as `D1 a` of #1028 rules
 ##     (comment 7218520265), gives each claim number, text, confidence or rising percentiles,
-##     and criterion, at stop of its own turn; each row of reflection names claim by number and
-##     quotes it whole, and result of estimate opens with its value. Model turn ends where model
+##     and criterion, at stop of its own turn; each table of claims holds its form whole, each
+##     numbered criterion names claim no other names, and no bullet stands beside tables. Each
+##     row of reflection names claim by number and quotes it whole, in table that holds its form
+##     whole, and result of number opens with value in its unit. Model turn ends where model
 ##     stops, never at `user` entry, so block checks read model turns, and every other check
 ##     reads turn since message of person. Kinds are read from templates at each stop
 ##     (`readKinds`). `Agent` call whose result has `is_error` and no `agentId` is skipped

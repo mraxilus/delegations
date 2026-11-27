@@ -1,10 +1,10 @@
 ## Log each scored claim of each reflection, as text format of `claims.proto`, where role writes.
 ##   Claim is row of table of claims of `## Reflection` block of current model turn
 ##     (`rowsReflection`): first table with column `Predicted`, and each table of judgements or
-##     estimates with column `#`. Its cell quotes claim of block call took (`isQuoting`);
-##     `No prediction`, cell quoting no claim, and cell under `State` that no marker opens give
-##     none (#964). Reflection counts wherever it stands in turn, below sign-off too, since its
-##     marks hold there.
+##     estimates whose header holds its form whole (`isFormedReflection`). Its cell quotes claim
+##     of block call took (`isQuoting`); `No prediction`, cell quoting no claim, and cell under
+##     `State` that no marker opens give none (#964). Reflection counts wherever it stands in
+##     turn, below sign-off too, since its marks hold there.
 ##   Claim takes latest call before reflection whose block holds it, of kind line `**Subagent:**`
 ##     of reflection names, else of any kind, so claim of block of critic takes call of critic.
 ##   Kind is `subagent_type` of call, and effort is input `effort`, else `effort:` of its template
