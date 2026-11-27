@@ -989,8 +989,9 @@ func readPage*(url: string, reply: Reply): Paged =
 
 #[ Requests ]#
 
-func escapeMarkup(text: string): string =
-  ## Escape `&`, `<`, `>` and `"` as character references, so text can close no element.
+func escapeMarkup*(text: string): string =
+  ## Escape `&`, `<`, `>` and `"` as character references, so text can close no element; page
+  ##   that `suggester --serve` fills, and page build, escape with it too.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 

@@ -204,6 +204,7 @@ const
   KEY_PAGE = "RICTADNI_PAGE"  ## Environment name of built page `--serve` serves.
   PATH_PAGE_DEFAULT = "build" / "page" / "tagger.html"
     ## Page `--serve` serves where `KEY_PAGE` is empty: as verb `page` writes it, in project folder.
+    ##   Sibling: `PATH_PAGE` of `tools/page.nim`, which app may not import (II.9).
   MARK_TEXT = "<textarea id=\"text\" name=\"text\" spellcheck=\"false\"></textarea>"
     ## Empty text box of page, which served page fills with text posted.
   MARK_MAIN = "</main>"  ## End of main of page, before which served page puts report.
@@ -626,16 +627,13 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
 
 #[ Tag page ]#
 
-func escapedHtml(text: string): string =
-  ## Escape text for content of element, so text posted can close none.
-  text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
-
-
-func toPageServed(page, text, report: string): string =
-  ## Fill page with text posted, in its box, and report of run, in hidden element its script shows.
-  page.replace(MARK_TEXT, MARK_TEXT.replace("></textarea>", ">" & text.escapedHtml &
-      "</textarea>")).replace(MARK_MAIN, "<pre id=\"served\" hidden>" & report.escapedHtml &
-      "</pre>" & MARK_MAIN)
+func toPageServed(page, text, output, report: string, code: int): string =
+  ## Fill page with text posted, in its box, and run of child, in hidden elements its script
+  ##   shows: report in `served` with exit as `data-code`, and gismu printed in `served-output`.
+  page.replace(MARK_TEXT, MARK_TEXT.replace("></textarea>", ">" & text.escapeMarkup &
+      "</textarea>")).replace(MARK_MAIN, "<pre id=\"served\" hidden data-code=\"" & $code &
+      "\">" & report.escapeMarkup & "</pre><pre id=\"served-output\" hidden>" &
+      output.escapeMarkup & "</pre>" & MARK_MAIN)
 
 
 proc runChild(command: Command, text: string): tuple[output, report: string, code: int] =
@@ -664,7 +662,9 @@ proc answerPage(request: Request, page: string, port: int, command: Command) {.a
     hosts = ["127.0.0.1:" & $port, "localhost:" & $port]
     host = request.headers.getOrDefault("host")
     origin = request.headers.getOrDefault("origin")
-    headers = newHttpHeaders({"Content-Type": "text/html; charset=utf-8"})
+    headers = newHttpHeaders({"Content-Type": "text/html; charset=utf-8",
+        "Content-Security-Policy": "frame-ancestors 'none'", "X-Frame-Options": "DENY"})
+      # Page of other site may not frame this one, so no click on it posts text unseen.
   if $host notin hosts:
     await request.respond(Http403, "Host should be `127.0.0.1:" & $port & "`.\n")
     return
@@ -684,12 +684,25 @@ proc answerPage(request: Request, page: string, port: int, command: Command) {.a
   for (key, value) in request.body.decodeQuery:
     if key == "text": text = value
   let ran = command.runChild(text)
-  await request.respond(Http200, page.toPageServed(text, ran.report), headers)
+  await request.respond(Http200, page.toPageServed(text, ran.output, ran.report, ran.code),
+      headers)
+
+
+proc toProblemServed(command: Command, configured: Configured,
+    found: Option[Credentialed]): string =
+  ## Name what stops each post from running, before server listens: settings, credential where
+  ##   mode is not replay, or directory of replay; empty where none.
+  if not configured.is_valid: return configured.problem
+  if found.isSome and not found.get.is_read: return found.get.problem
+  if command.mode == Mode.Replay and not command.directory.dirExists:
+    return "Directory of `" & FLAG_REPLAY & "` should exist; got `" & command.directory & "`."
+  ""
 
 
 proc serve(command: Command): int =
   ## Serve tag page on loopback at port of command until stopped; exit 2 where page is absent or
-  ##   lacks text box or main, so nothing listens with page that cannot show report.
+  ##   lacks text box or main, where settings, credential or directory of replay would refuse each
+  ##   post, or where port is taken, so nothing listens that cannot run text posted.
   let
     path = (let named = getEnv(KEY_PAGE); if named.len > 0: named else: PATH_PAGE_DEFAULT)
     port = command.port_served.get
@@ -701,10 +714,31 @@ proc serve(command: Command): int =
   if MARK_TEXT notin page or MARK_MAIN notin page:
     stderr.writeLine "Page should hold empty text box and end of main; got `" & path & "`."
     return 2
+  let configured = readSettings(
+    readVariable(KEY_SERVICE),
+    readVariable(KEY_ENDPOINT),
+    readVariable(KEY_MODEL),
+    readVariable(KEY_EFFORT),
+    readVariable(KEY_WORKSPACE),
+  )
+  let
+    found =
+      if configured.is_valid and command.mode != Mode.Replay:
+        some(configured.settings.findCredential)
+      else: none(Credentialed)
+    problem = command.toProblemServed(configured, found)
+  if problem.len > 0:
+    stderr.writeLine problem
+    return 2
   let server = newAsyncHttpServer(maxBody = BYTES_PAGE_MAX + 4096)
+  try: server.listen(Port(port), "127.0.0.1")
+  except OSError as error:
+    stderr.writeLine "Port `" & $port & "` of loopback should be free; got `" &
+        error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
+    return 2
   stderr.writeLine "Serving tag page at http://127.0.0.1:" & $port & "/ until stopped."
   proc answer(request: Request) {.async.} = await request.answerPage(page, port, command)
-  waitFor server.serve(Port(port), answer, "127.0.0.1")
+  while true: waitFor server.acceptRequest(answer)
 
 
 
