@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-24 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 8c2726038e8b855a |
+| Rules   | d7c1b1970e4e5435 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a contributor project, from the brief of the Architect. A tag is a gismu or a lujvo that
@@ -413,8 +413,8 @@ Cost: the text goes with each request, and the cache helps only within its lifet
 bytes by one command on 2026-11-19:
 `nim r --hints:off --path:src --eval:'import rictadni/suggestions; echo PROMPT_SYSTEM.len'`.
 The list with cmavo gave 24,918 bytes at `bf9c82d8` on 2026-10-31, by the same command with the
-module `lojban_tagger/suggestions`. On `claude`, with Opus 5.5 at effort `medium`, one live
-reply on 2026-11-26 shows 12,977 tokens written to the cache. They count the whole prefix up
+module `lojban_tagger/suggestions`. On `claude`, at its default model and effort `medium`, one
+live reply on 2026-11-26 shows 12,977 tokens written to the cache. They count the whole prefix up
 to the mark on the system text, so they include what the API adds for the schema.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
@@ -445,32 +445,20 @@ under 0.1 ms in release (Figures).
 - `chat` speaks Chat Completions with standard fields alone, for any compatible server. Its
   body is a project choice, because no OpenAI reference of Chat Completions was read.
 
-**`claude` and `openrouter` ask Sonnet 5.5 at effort `xhigh` where the environment names none.**
-The Architect ruled it on #1047, from the grid of Live replies. It keeps as many gismu of Opus 5.5
-at `medium` as Opus keeps again, at about two thirds of the cost of Opus at `medium`.
-`LUT_MODEL_BY_SERVICE` and `EFFORT_DEFAULT` of `suggestions.nim` hold it. Rejected: Opus 5.5 at
-`high`, which keeps the most gismu at about 1.7 times the cost.
-
-Verified by hand with `binaries/suggester` on 2026-11-26. With no model and no effort set, the
-replay of an exchange of Sonnet at `xhigh` from the grid matched.
-
-Cost: Sonnet at `xhigh` spends thinking tokens, and Opus at `medium` spent none. So an answer of
-Sonnet at `xhigh` probably takes longer, and the time is unmeasured. Sonnet at `max` reached the
-limit of 16,000 output tokens on the article of the grid. Sonnet at `xhigh` stayed under it in 30
-answers, with at most 1,582 output tokens.
-
-Cost: the default effort also applies to a model that the environment names without an effort.
-So `RICTADNI_MODEL` alone now runs at `xhigh`, and spends more than at `medium`. On `openrouter`,
-the body asks each provider to take the effort, and no live run tried `xhigh` there.
-
-Cost: the fallback of Sonnet 5.5 goes to Sonnet 5, and it retries a refusal of `cyber` or
-`frontier_llm` alone. A refusal of `bio`, `reasoning_extraction` or `general_harms` comes back as
-a refusal. Verified by reading the reference of the Claude API in the skill `claude-api`, section
-Migrating to Claude Sonnet 5.5, Safeguards and fallback, on 2026-11-26.
-
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim` against documented shapes. One live reply of `claude`
-agrees (Live replies).
+agrees (below).
+
+**One live reply of `claude` reads as its documented shape.** One request under `--record:`
+reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
+`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
+read them back. The replay of that exchange file, with no key and no network, gave the same 14
+gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
+
+Cost: the request went to the default model of `claude` at effort `medium`. It took 56 input
+tokens, 12,977 tokens of cache write and 288 output tokens. The list price of 2026-11-26 is $4 for
+each million input tokens, and $20 for each million output tokens. A cache write of 5 minutes
+costs $5 for each million tokens. So the request cost about $0.071 at that price.
 
 **JSON appears only on the wire of each service, which forces it.** An exchange file holds those
 bytes unchanged. The rule of data keeps JSON on the wire of an outside service that speaks it alone
@@ -523,181 +511,6 @@ next meta. Verified by `suites/test_suggestions.nim`.
 **The tool decodes two groups of labels.** It decodes the UTF-8 group and the windows-1252 group,
 as the WHATWG Encoding Standard names them. A page cut at its cap drops the character that the
 cut split, and never counts it as ill-formed. Verified by `suites/test_suggestions.nim`.
-
-## Live replies
-
-**One live reply of `claude` reads as its documented shape.** One request under `--record:`
-reached the Messages API through the proxy of a cloud sandbox, and the service answered 200 with
-`end_turn`. The tool kept 14 gismu for a text of 125 bytes, and `tagger tag` and `tagger find`
-read them back. The replay of that exchange file, with no key and no network, gave the same 14
-gismu. Verified by hand with `binaries/suggester` on 2026-11-26.
-
-Cost: the request went to Opus 5.5 at effort `medium`. It took 56 input tokens, 12,977 tokens of
-cache write and 288 output tokens. The list price of 2026-11-26 is $4 for each million input tokens,
-and $20 for each million output tokens. A cache write of 5 minutes costs $5 for each million tokens.
-So the request cost about $0.071 at that price.
-
-**Sonnet 5.5 at effort `xhigh` keeps as many gismu of Opus 5.5 at `medium` as Opus keeps again.** It
-costs about two thirds of the cost of Opus at `medium`. Sonnet at lower efforts keeps almost as
-many, and gives more unrelated gismu. Haiku 5.5 keeps fewer, and at effort `low` only about half.
-
-On 2026-11-26, a live grid sent the same 10 texts to each configuration, through
-`binaries/suggester` built at `ed9fe6f`. The texts are these:
-
-- a garden plan;
-- a list of chores;
-- a recipe;
-- an email;
-- a commit message;
-- a news paragraph;
-- a lojban sentence;
-- a poem;
-- a technical paragraph on TCP;
-- the article of Wikipedia on Alice's Adventures in Wonderland, revision 1384221564.
-
-The tool cuts that article at 64 KiB. Each request set `RICTADNI_MODEL` and `RICTADNI_EFFORT`, and
-recorded its exchange into one directory for each sample:
-
-```sh
-binaries/suggester --record:<directory> - < <text>
-binaries/suggester --record:<directory> "<url of the article>"
-```
-
-The tree keeps neither the texts nor the exchange files.
-
-| Model, effort | Samples | Recall of 5 | Recall of 10 | Unrelated | Placeholder ends | Cost of 10 |
-|---|---|---|---|---|---|---|
-| Opus 5.5, `high` | 3 | 386 of 390 | 739 of 771 | 0 of 552 | 0 of 30 | $0.306 to $0.315 |
-| Opus 5.5, `medium` | 3 | 249 of 260 | 467 of 514 | 0 of 446 | 4 of 30 | $0.270 to $0.284 |
-| Opus 5.5, `low` | 1 | 128 of 130 | 242 of 257 | 0 of 152 | 2 of 10 | $0.276 |
-| Sonnet 5.5, `max` | 3 | 337 of 390 | 629 of 771 | 0 of 477 | 0 of 30 | $0.736 to $0.863 |
-| Sonnet 5.5, `xhigh` | 3 | 382 of 390 | 703 of 771 | 1 of 530 | 0 of 30 | $0.181 to $0.187 |
-| Sonnet 5.5, `high` | 3 | 362 of 390 | 660 of 771 | 18 of 551 | 0 of 30 | $0.149 |
-| Sonnet 5.5, `medium` | 3 | 366 of 390 | 656 of 771 | 12 of 527 | 0 of 30 | $0.146 |
-| Sonnet 5.5, `low` | 3 | 357 of 390 | 633 of 771 | 12 of 506 | 0 of 30 | $0.143 to $0.145 |
-| Haiku 5.5, `medium` | 1 | 100 of 130 | 156 of 257 | 18 of 132 | 0 of 10 | $0.009 |
-| Haiku 5.5, `low` | 1 | 72 of 130 | 120 of 257 | 65 of 164 | 0 of 10 | $0.008 |
-
-Each answer of Opus at `medium` that has no placeholder end and keeps 9 gismu or more is a
-reference, 26 in all. Recall counts each of the first 5 or 10 gismu of a reference that a sample
-also gives. Opus at `medium` reads only the references of its other samples. So its row shows how
-well two runs of it agree, which is the most that another configuration can expect.
-
-Recall of 5 for each sample falls in these ranges:
-
-- Opus at `high`: 0.98 to 0.99.
-- Opus at `medium`: 0.91 to 0.99.
-- Sonnet at `max`: 0.85 to 0.88.
-- Sonnet at `xhigh`: 0.97 to 0.98.
-- Sonnet at `high`: 0.91 to 0.95.
-- Sonnet at `medium`: 0.90 to 0.96.
-- Sonnet at `low`: 0.90 to 0.93.
-
-A gismu is related where another sample of Opus at `medium` gives it for the same text. So a
-sample of Opus at `medium` is marked against its other samples alone. Of the rest, the delegate
-marked a gismu unrelated where its keyword fits no thing of the text. An example is `sanli`, stand,
-for the paragraph on TCP. The marks are the judgement of one reader on 2026-11-26. That reader
-knew the configuration of each gismu, and the tree does not keep the list of marks.
-
-**Sonnet at `max` keeps no gismu for the article.** In each of its 3 samples, the answer for the
-article reached the limit of 16,000 output tokens, and the tool exits 1 with `max_tokens`. Over the
-other 9 texts, its recall of 5 is 337 of 345, the same as Sonnet at `xhigh`. So its row of recall
-counts no gismu for the article, and its cost holds the tokens of those 3 answers.
-
-Sonnet at `high` gave three gismu with a placeholder gloss, such as `xasli`, glossed unused
-placeholder. The reader marked each one unrelated.
-
-A placeholder end is an answer whose last element does not have the form of a gismu or a lujvo,
-such as `samtc` or `tevec`. Its gloss is `x` or `placeholder`, and the model ends the answer there.
-These answers kept 1 to 9 gismu, where the other answers for the same text kept 9 to 26. Two
-answers of Opus at `medium` for the article also end on `nolra`, glossed queen. It has the form of
-a gismu, and the reader drops it as unlisted, so those answers count as references.
-
-Each cost takes the list price of 2026-11-26 for each million tokens:
-
-- Opus 5.5: $4 for input, $20 for output and $0.20 for a cache read.
-- Sonnet 5.5: $2 for input, $10 for output and $0.10 for a cache read.
-- Haiku 5.5: $0.10 for input and $0.50 for output. Its cache read is assumed at $0.01.
-- A cache write of 5 minutes costs 1.25 times the input price.
-
-Each cost assumes a cold cache. Most samples read the system text from the cache that an earlier
-sample wrote. For those, the calculation counts one read as one write, so the figure is calculated
-and not billed. The article makes 39% to 48% of the cost of a sample, except Sonnet at `max`,
-where it makes 25% to 30%.
-
-Three configurations spent thinking tokens over their 30 answers. Sonnet at `max` spent 191,572,
-Sonnet at `xhigh` 10,240, and Opus at `high` 2,840. Each other configuration spent none. The time
-of each answer is unmeasured.
-
-A script outside the tree read the reports and the usage of the exchange files. It computed each
-recall, each count and each cost by the rules above. Verified by hand with `binaries/suggester`
-on 2026-11-26.
-
-Opus at `low` and Haiku have one sample of each text, so their spread is unmeasured.
-
-## Tag page
-
-**One page serves two front ends.** `pages/tagger.html` is the source, and the verb `page`
-inlines its script, each font face of the store and a worked example into
-`build/page/tagger.html`. The one script of the page is `app/page.nim`, compiled to JavaScript.
-It builds the prompt with `toPromptAlone`, and `app/shown.nim` reads each answer with
-`readAnswer` of `suggestions.nim`. So the page holds no second copy of the gismu list, of the
-check or of the format of the report (II.9). The Architect ruled two front ends from one source
-on #1058, as D1 b.
-
-**The tiles are the verdicts that the reader keeps.** `toShownAnswer` takes each gismu of each
-verdict kept, once and in order, with its gloss. The page never reads its report back, so a gloss
-that holds a backtick shows whole. Before the page asks anything, it shows the worked example
-`alice` of `tools/examples.nim`, read by the same reader. The page names each model and effort
-from the constants of the code, and its prose repeats none.
-
-**On claude.ai, the page asks Opus 5.5 at effort `high` through `sample`.** The runtime of an
-Artifact takes effort `low`, `medium` or `high` alone, and Opus at `high` kept the most gismu of
-the grid (Live replies). `sample` has no system role and no schema. So `toPromptAlone` puts the
-system text, the passage and the shape of the answer into one user turn. The reader then checks
-each element, as for `suggester`. The cost falls on the Claude usage of the viewer, and not on a
-key.
-
-Cost: the pattern of five letters is asked in words, not held by a schema, and the system text
-goes uncached with each call. So more elements can drop. Open questions names the gap.
-
-**On your machine, `suggester --serve` runs `suggester` itself for each text posted.** The child
-reads the text on standard input, under the mode of the server. So the page asks what the command
-line asks, with the same settings and key. The server writes the text into the box. It writes
-the report, the gismu that the child printed and its exit code into hidden elements, and the
-script of the page shows them. The status follows the exit code, so a refused run never reads as
-"no gismu".
-
-Cost: the child prints no gloss, so a served tile shows the gismu alone. The report beside it
-names each gloss. Rejected: a call into `main` from the server, which would need `main` split,
-and would give the server a second path to the service. Cost: one process for each text posted.
-
-**The server refuses before it listens what would refuse each post.** It reads the settings, the
-credential where the mode is not replay, and the directory of replay. A problem, or a port that
-is taken, exits 2 with its name, before the server claims to serve. The server binds `127.0.0.1`
-alone, and answers only requests whose host is its own address. It refuses a post whose origin is
-another site. Each answer forbids a frame by another site, so no click on a hidden frame posts a
-text.
-
-Cost: the server has no token, so any process or user of the machine can post to it and spend
-the key. It runs one child at a time, so a live run stalls each other request until it ends.
-
-**rictadni drives its own page.** `tools/page.nim` builds the page, and `tools/drive.nim` serves
-it on loopback to Chromium of the store. The verb `drive` runs `tests/browser/suite_page.nim` in
-the page, in three modes. With a stub of the runtime, the suite submits a text and checks the
-tiles, the command, the report and the request to `sample`. With a served run, it checks the
-exit and report. With neither, it checks the worked example.
-
-The suite runs inside a function of its own. Each program that Nim compiles to JavaScript declares
-the same global names, so a second program would replace those of the first. Then
-`tools/drive/collector.nim` reads each run of text with its font, and the drive writes
-`build/font-faces/written.json` for `koch drive`. The Architect ruled that each project drives
-its own pages, as D1 a on #1058. The files of the drive take their logic from `ricyso'o`, and each
-names its siblings, the collector of `pga_benchmark` among them.
-
-Cost: the page holds about 3.3 MB, nearly all font faces, under the limit of 16 MiB of an
-Artifact. Two builds of one tree differ, because `koch drive` compiles the script with its own
-compiler. So the digest of the page names its build, not its tree.
 
 ## Transport
 
@@ -1195,18 +1008,8 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   follow the documented shapes, and three replies of 401 to requests without a key, from
   2026-10-28. The record does not name the service of each reply of 401. A run under
   `--record:` into its own directory records one once a key of OpenRouter exists.
-- **The hits of the cache.** In the grid of Live replies, 115 of 120 requests read the system
-  text from the cache. Those requests came within minutes of each other. No run measured the hits
-  of requests that come hours apart.
-- **Answers of the tag page.** No grid measured Opus at `high` through `sample`, with no system
-  role and no schema.
-- **Line ends of text from the page.** A text area gives no final line break. So a text posted
-  through `--serve` misses an exchange that the command line recorded from a file that ends in
-  one. A review of #1062 saw this with the garden text of the grid. A form also sends each line
-  break as CR LF, which is assumed from the rules of HTML forms, and no run checked it. To
-  normalise line ends before the hash would change the key of each recorded exchange.
-- **The spread of Opus at `low` and of Haiku.** The grid of Live replies sent one request for
-  each text to these configurations. So it does not show how far a second request can differ.
+- **The hits of the cache.** No run measured how often a request reads the system text from the
+  cache. The quality of the answers at effort `low` against `medium` is unmeasured too.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
