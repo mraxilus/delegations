@@ -19,8 +19,9 @@
 ##     where Nim parses none. Value opening `block` on its first line stays for hand, since no
 ##     comment there gives doc `nim doc` reads (`nim jsondoc` of Nim 2.2.12 and 2.4.0).
 ##   Doc holding other TODO holds design note (VIII.3), never text: fixer moves note above
-##     declaration as `#` comment, and doc takes `## TODO: Document.`. Doc of several lines
-##     opening with note stays for hand, since its outline may elaborate note or text.
+##     declaration as `#` comment, and doc takes `## TODO: Document.`. Doc of several lines,
+##     which lexer joins at any indent, opening with note stays for hand, since its outline may
+##     elaborate note or text.
 ##   Missing doc passes one-line borrow or forward stacked under group comment (VI.1), code
 ##     inside `quote do:`, whose generator carries docs through parameter, and doc on line above
 ##     declaration that is no routine, at its indent, which stands out of place rather than
@@ -33,7 +34,8 @@
 ##     shape (STYLE.md §5). One-line doc of type, field, binding and enum member stands on
 ##     declaration's own line, two spaces before `##`, where joined line fits `LINE_MAX`;
 ##     otherwise on next line, one level in, as does next-line doc of several lines, or under
-##     line holding `#` comment. Doc trailing line keeps lines below that continue it.
+##     line holding `#` comment. Doc trailing line keeps lines below that continue it, which
+##     lexer joins to it as one doc, value over lines among them.
 ##   Doc above type, field, global binding or enum member moves where missing doc writes it
 ##     (`target`), where blank line or `#` comment stands above it. Doc right below other code,
 ##     or that declaration holds as its own, stays: either may own it. Doc that only blank lines
@@ -107,7 +109,7 @@ type
     doc: int  ## Zero-based line of doc standing in place; `-1` for none.
     offset: int  ## Byte offset of `##` on line `doc`, where doc trails code; else its indent.
     is_trailing: bool  ## Doc in place trails code of its line.
-    is_outlined: bool  ## Line below doc in place opens doc too, at deeper indent.
+    is_outlined: bool  ## Line below doc in place opens doc too, which lexer joins to it.
     is_stacked: bool  ## One-line borrow or forward standing under group comment (VI.1).
     is_above: bool
       ## Doc on line above, at declaration's indent, that neither block above nor module owns.
@@ -392,8 +394,7 @@ func placements(source: string): seq[Placement] =
       doc: line_doc,
       offset: offset,
       is_trailing: line_doc >= 0 and trailing[line_doc] >= 0,
-      is_outlined: line_doc >= 0 and outline < lines.len and opening[outline] and
-        lines[outline].indentWidth > indent,
+      is_outlined: line_doc >= 0 and outline < lines.len and opening[outline],
       is_stacked: d.kind == KindName.Routine and isStacked(i),
       is_above: d.kind != KindName.Routine and i > 0 and opening[i-1] and
         lines[i-1].indentWidth == indent and not is_owned,
@@ -616,7 +617,11 @@ func movesLine(source: string): seq[MoveDoc] =
     if section.len == 0: continue
 
     # One-line doc inside value over lines, which `nim doc` reads not: after `=` ending first
-    #   line where it fits, else after close; value opening `block` waits for hand.
+    #   line where it fits, else after close; value opening `block` waits for hand. Doc below
+    #   doc trailing first line runs on from it, one doc as lexer joins it, so it stays.
+    let
+      at = marker(d)
+      is_trailed = at >= 0 and kept[d][at .. ^1].startsWith("##")
     if is_opening:
       if docs != 1 or below >= lines.len or code[below].strip.len == 0 or
           lines[below].indentWidth <= indent:
@@ -630,6 +635,7 @@ func movesLine(source: string): seq[MoveDoc] =
       if code[d].isOpeningBlock:
         result.add MoveDoc(line: d, shape: Shape.Block, first: d, last: d + 1, got: shown)
         continue
+      if is_trailed: continue
       if text_ending == "=" and is_balanced and marker(d) < 0 and not joined(d, doc).isWide:
         result.add MoveDoc(
           line: d,
@@ -666,9 +672,6 @@ func movesLine(source: string): seq[MoveDoc] =
     # Doc right below declaration's line: one line joins where it fits, else stands one level
     #   in, as does doc of several lines or under `#` comment; doc trailing line keeps lines
     #   below that continue it; trailing doc too wide splits.
-    let
-      at = marker(d)
-      is_trailed = at >= 0 and kept[d][at .. ^1].startsWith("##")
     if at < 0 and docs == 1:
       let doc = lines[d + 1].strip
       if not (lines[d] & ' '.repeat(GAP_COMMENT) & doc).isWide:
