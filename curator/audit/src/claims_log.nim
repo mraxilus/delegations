@@ -95,10 +95,12 @@ type
     count_number*: int  ## Numbers that take score as continuous question.
     score_number*: SumExact  ## Exact sum of score of those numbers.
 
-  Prior* = object  ## Define prior at head of log: tallies of rows rolled out of it (#1049).
+  Prior* = object
+    ## Define prior at head of log: tallies of rows rolled out of it (#1049); no field names branch,
+    ##   so two rolls of same rows write same line.
     date_first*: string  ## Earliest day of row rolled, as `2026-11-20`.
     date_last*: string  ## Latest day of row rolled.
-    commit*: string  ## Last commit whose log held rows of last roll.
+    keys*: seq[uint64]  ## Hash of key of each row rolled (`hashKey`), ascending, each once.
     tallies*: seq[Tally]  ## One for each model, effort, project, kind, marker and band.
 
   Log* = object  ## Define log of claims: message `Log` of `claims.proto`.
@@ -131,7 +133,7 @@ const
     ## Fields of message `Number` of `claims.proto` that reader of row knows.
   FIELD_PRIOR = "prior"  ## Field of `Log` that holds message `Prior`.
   FIELD_TALLIES = "tallies"  ## Field of `Prior` that holds each message `Tally`.
-  FIELDS_PRIOR* = ["date_first", "date_last", "commit", FIELD_TALLIES]
+  FIELDS_PRIOR* = ["date_first", "date_last", "keys", FIELD_TALLIES]
     ## Fields of message `Prior` of `claims.proto` that reader of prior knows.
   FIELDS_TALLY* = ["model", "effort", "project", "kind", "marker", "band", "rows", "count", "hits",
     "hits_band", "confidence", "score", "count_number", "score_number"]
@@ -159,6 +161,8 @@ const
   COMMA = ','  ## Mark between groups of three digits of number, as in `170,000`.
   DIGITS_GROUP = 3  ## Digits of group after comma.
   LENGTH_DATE = 10  ## Characters of day of ISO 8601 timestamp, as `2026-11-20`.
+  OFFSET_FNV = 0xcbf29ce484222325'u64  ## Hash of FNV-1a, 64 bits, before first byte.
+  PRIME_FNV = 0x100000001b3'u64  ## Prime of FNV-1a, 64 bits, that each byte meets.
 
 
 func numbersIn*(text: string): seq[float] =
@@ -370,6 +374,14 @@ func lineClaim*(claim: Claim): string =
   FIELD_LOG & " { " & fields.join(" ") & " }"
 
 
+func hashKey*(key: string): uint64 =
+  ## Hash of key of row, by FNV-1a of 64 bits, as prior names each row it holds (#1049): each byte
+  ##   joins by xor, then meets prime of FNV, modulo `2^64`.
+  ##   Collision makes row prior holds of new one; expected chance about `n² / 2^65` for `n` keys.
+  result = OFFSET_FNV
+  for ch in key: result = (result xor uint64(ord(ch))) * PRIME_FNV
+
+
 func lineTally(tally: Tally): string =
   ## Write tally as block `tallies` of line of prior, fields in order of their numbers, each partial
   ##   of sum as one value; empty string and zero stay out, as `lineClaim` leaves them.
@@ -400,7 +412,7 @@ func linePrior*(prior: Prior): string =
   var fields: seq[string]
   if prior.date_first.len > 0: fields.add "date_first: " & prior.date_first.quotedText
   if prior.date_last.len > 0: fields.add "date_last: " & prior.date_last.quotedText
-  if prior.commit.len > 0: fields.add "commit: " & prior.commit.quotedText
+  for key in prior.keys: fields.add "keys: " & $key
   for tally in prior.tallies: fields.add tally.lineTally
   OPENING_PRIOR & fields.join(" ") & CLOSING_ROW
 
@@ -550,7 +562,7 @@ func priorLine*(line: string): Prior =
     case name
     of "date_first": result.date_first = value
     of "date_last": result.date_last = value
-    of "commit": result.commit = value
+    of "keys": result.keys.add value.parseBiggestUInt
     else: raise newException(ValueError, &"Prior of log holds unknown field; got `{name}`.")
   result.tallies = tallies
 

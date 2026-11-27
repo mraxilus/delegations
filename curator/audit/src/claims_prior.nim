@@ -9,16 +9,23 @@
 ##     roll, to last bit, since exact sum takes no order.
 ##   Rolled claim weighs as new one (`D4 a`); prior keeps first and last day it covers, for decay
 ##     of old claims that #1051 adds.
-##   Row stays in log where it can still change (`isHeld`):
-##     claim that waits, until other row of log marks same claim, by same marker, in other state;
-##     row of last `DAYS_OPEN` days of log, since its delegate may write its reflection again, or
-##       replay of its transcript may feed `stop` again, and `stop` writes each row whose key log
-##       lacks; row of no day, whose age reads no way, as day in form of date that calendar
-##       lacks, as `2026-13-45` (`isDay`);
+##   Row stays in log where it can still change, or where prior could name it no way (`isHeld`):
+##     claim that waits, until row of log before cutoff marks same claim, by same marker, in other
+##       state; and each mark of claim whose waiting row stays, so that rows of one claim roll
+##       together, and later roll still finds mark that settles it;
+##     row of no key, since prior names each row it holds by hash of its key;
+##     row of cutoff or later: first day of month that holds day `DAYS_OPEN` before latest day of
+##       log (`dateCutoff`), since its delegate may write its reflection again, or replay of its
+##       transcript may feed `stop` again, and `stop` writes each row whose key log lacks;
+##     row of no day, whose age reads no way, as day in form of date that calendar lacks, as
+##       `2026-13-45` (`isDay`);
 ##     row whose key opens with prefix verb names, as delegate of study that still reads its rows.
-##   Prior names last commit that held rolled rows, as `Pruned` row of record names commit before
-##     prune, so `git show` of that commit gives each rolled row; verb refuses log that differs from
-##     `HEAD`, since no commit holds row that tree alone holds.
+##   Two branches that roll same rows write same line of prior, so git merges two rolls as one
+##     change: cutoff falls on first day of month, and so does each branch whose latest day falls
+##     in one span of month; rule of row that stays reads rows before cutoff alone; prior names no
+##     field of branch, its keys and tallies sort, and each sum writes canonical partials. Rolls of
+##     other rows write other lines, since prior names hash of key of each row it holds.
+##   Verb refuses log that differs from `HEAD`, so commit before roll holds each row roll takes.
 ##   Verb refuses roll while branch stands that changed log since base it shares with `HEAD`, where
 ##     log of that base ends in row roll takes: merge by `union` then joins that row's hunk with
 ##     roll's, and brings each rolled row of base back, after prior or before it (`branchesStale`).
@@ -28,8 +35,13 @@
 ##
 ##   Rejected: one prior in `curator/audit` for whole tree, which would make curator roll rows of
 ##     contributor project, where curator writes only records (`D2 a`).
+##   Rejected: cutoff `DAYS_OPEN` days before latest day, and prior that names `HEAD`: latest day
+##     and `HEAD` differ on each branch, so two rolls of one log write two lines, which `union`
+##     joins into two priors.
 ##   Cost: group by delegate reads prior as one delegate, `DELEGATE_PRIOR`, since it keeps no
-##     session; rolled row stays in git, at commit prior names.
+##     session; rolled row stays in git, in each commit before roll that took it.
+##   Cost: row stays from `DAYS_OPEN` days to `DAYS_OPEN` and month after its day, and two branches
+##     whose latest days fall on each side of month roll at two cutoffs.
 ##   Cost: branch that other clone alone holds, or that no fetch brought, goes unread by guard.
 
 {.experimental: "strictFuncs".}
@@ -46,10 +58,13 @@ const
     ##     each log at each start, so cap bounds that read as well as file.
     ##   Same number of lines as `LINES_RECORD` gives record.
   DAYS_OPEN* = 30
-    ## Days before latest day of log whose rows stay at roll, since their delegate may still write.
+    ## Days before latest day of log whose month, and each later, stays at roll, since delegate of
+    ##   its rows may still write.
     ##   Expected, and never measured past one case: on #1049, log of audit project holds rows of
     ##     one delegate from 2026-11-21 to 2026-11-27, which still works; 30 days holds four such.
   FORMAT_DATE = "yyyy-MM-dd"  ## Form of day of row, as `2026-11-20`.
+  FORMAT_MONTH = "yyyy-MM"  ## Form of month of day, as `2026-11`.
+  DAY_FIRST = "-01"  ## First day of month, after its form.
   MARK_KEY = '/'  ## Mark between parts of key of row.
   PART_STATE = 3  ## Index of state among parts of key: delegate, call, position, then state.
 
@@ -74,23 +89,32 @@ func isDay(date: string): bool =
 
 
 func isHeld*(claims: openArray[Claim]; cutoff: string; prefixes: openArray[string]): seq[bool] =
-  ## Whether each row stays in log, since it can still change: claim that waits, until other row
-  ##   marks same claim by same marker in other state; row of no day that calendar holds (`isDay`),
-  ##   or of day `cutoff` or later; and row whose key opens with one of prefixes.
-  var marked: HashSet[string]
+  ## Whether each row stays in log, since it can still change, or since prior could name it no way:
+  ##   row of no key; row of no day that calendar holds (`isDay`), or of day `cutoff` or later; row
+  ##   whose key opens with one of prefixes; claim that waits, until row before cutoff marks same
+  ##   claim by same marker in other state; and each row of claim whose waiting row stays.
+  ##   So rows of one claim roll together, in any order of log, and rows before cutoff decide.
+  var
+    own: seq[bool]  # Whether row stays for reason of its own.
+    settled: HashSet[string]  # Claims and markers that row before cutoff marks.
+    waiting: HashSet[string]  # Claims and markers whose waiting row stays.
   for claim in claims:
-    if claim.state notin {State.Waiting, State.Unspecified}: marked.incl claim.key.claimMarked
-  for claim in claims:
-    let is_waiting = claim.state == State.Waiting and claim.key.claimMarked notin marked
-    result.add is_waiting or not claim.date.isDay or claim.date >= cutoff or
+    own.add claim.key.len == 0 or not claim.date.isDay or claim.date >= cutoff or
       prefixes.anyIt(claim.key.startsWith(it))
+    if claim.state notin {State.Waiting, State.Unspecified} and claim.date.isDay and
+        claim.date < cutoff:
+      settled.incl claim.key.claimMarked
+  for k, claim in claims:
+    if claim.state == State.Waiting and (own[k] or claim.key.claimMarked notin settled):
+      waiting.incl claim.key.claimMarked
+  for k, claim in claims: result.add own[k] or claim.key.claimMarked in waiting
 
 
 func textRolled*(
-  text, commit, cutoff: string; prefixes: openArray[string]
+  text, cutoff: string; prefixes: openArray[string]
 ): tuple[text: string, rolled: int] =
-  ## Roll each row of log text that can change no more (`isHeld`) into its prior, which then names
-  ##   commit, with tally of each such row added; text stays as it is where no row rolls.
+  ## Roll each row of log text that can change no more (`isHeld`) into its prior, with tally of each
+  ##   such row added; text stays as it is where no row rolls.
   ##   Comment lines of head stay first, prior follows, then each other line that stays, as written.
   let
     log = text.logText
@@ -98,13 +122,17 @@ func textRolled*(
   result.rolled = held.countIt(not it)
   if result.rolled == 0: return (text, 0)
 
-  # Sum tally of each rolled row into tally of prior whose fields and band agree.
+  # Sum tally of each rolled row into tally of prior whose fields and band agree, and name its key.
   var
     prior = log.prior.get(Prior())
     tallies = prior.tallies
     by_key: Table[(string, string, string, string, Marker, int), Tally]
+    hashes = prior.keys.toHashSet
   for k, claim in log.claims:
-    if not held[k]: tallies.add claim.toTally
+    if held[k]: continue
+    tallies.add claim.toTally
+    hashes.incl claim.key.hashKey
+  prior.keys = hashes.toSeq.sorted
   for tally in tallies:
     let key = (tally.model, tally.effort, tally.project, tally.kind, tally.marker, tally.band)
     if key in by_key: by_key[key].add tally
@@ -116,7 +144,6 @@ func textRolled*(
     if held[k]: continue  # Rolled row names its day, since row of no day stays.
     if prior.date_first.len == 0 or claim.date < prior.date_first: prior.date_first = claim.date
     if claim.date > prior.date_last: prior.date_last = claim.date
-  prior.commit = commit
 
   # Write head, prior, then each line that stays, in order, as `logText` reads them.
   var
@@ -138,14 +165,16 @@ func textRolled*(
   result.text = lines.join("\n") & "\n"
 
 
-proc dateCutoff(claims: openArray[Claim]): string =
-  ## Day `DAYS_OPEN` before latest day of claims that calendar holds (`isDay`), as `2026-10-28`;
-  ##   empty where no claim names such day, so parse never meets day that calendar lacks.
+proc dateCutoff*(claims: openArray[Claim]): string =
+  ## First day of month that holds day `DAYS_OPEN` before latest day of claims that calendar holds
+  ##   (`isDay`), as `2026-10-01` for latest day `2026-11-27`; empty where no claim names such day,
+  ##   so parse never meets day that calendar lacks.
   var latest = ""
   for claim in claims:
     if claim.date.isDay and claim.date > latest: latest = claim.date
   if latest.len == 0: return ""
-  (latest.parse(FORMAT_DATE, utc()) - initDuration(days = DAYS_OPEN)).format(FORMAT_DATE)
+  (latest.parse(FORMAT_DATE, utc()) - initDuration(days = DAYS_OPEN)).format(FORMAT_MONTH) &
+      DAY_FIRST
 
 
 proc branchesStale*(root, path: string; removed: HashSet[string]): seq[string] =
@@ -170,20 +199,20 @@ proc branchesStale*(root, path: string; removed: HashSet[string]): seq[string] =
 proc rollLog*(
   root, branch: string; prefixes: openArray[string]
 ): tuple[rolled: int, path: string] =
-  ## Roll each row of log of branch that can change no more into its prior, which names `HEAD`
-  ##   (`textRolled`); count rows rolled, with path of log from root. `IOError` for branch outside
-  ##   grammar, for log that differs from `HEAD`, and for roll that merge of other branch undoes.
+  ## Roll each row of log of branch that can change no more into its prior (`textRolled`), before
+  ##   cutoff of its rows (`dateCutoff`); count rows rolled, with path of log from root. `IOError`
+  ##   for branch outside grammar, for log that differs from `HEAD`, and for roll that merge of
+  ##   other branch undoes.
   result.path = branch.pathLog
   if result.path.len == 0:
     raise newException(IOError, &"Branch outside grammar owns no log of claims; got `{branch}`.")
   if not fileExists(root / result.path): return
   if fieldsGit(root, ["status", "--porcelain", "-z", "--", result.path]).len > 0:
-    raise newException(IOError, "Log differs from `HEAD`, whose commit prior names; commit it " &
-      &"first; got `{result.path}`.")
+    raise newException(IOError, "Log differs from `HEAD`, so no commit holds each row that roll " &
+      &"takes; commit it first; got `{result.path}`.")
   let
     text = readFile(root / result.path)
-    commit = fieldsGit(root, ["rev-parse", "HEAD"])[0].strip
-    (written, rolled) = textRolled(text, commit, text.claimsLog.dateCutoff, prefixes)
+    (written, rolled) = textRolled(text, text.claimsLog.dateCutoff, prefixes)
   if rolled == 0: return
   let
     removed = text.splitLines.mapIt(it.strip).toHashSet -

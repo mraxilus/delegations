@@ -9,7 +9,7 @@
 //     as zero, empty or unspecified where reflection gives none.
 //   Prior stands on one line at head of log, before each row, and role that writes log rolls it
 //     (`claims_prior.nim`), as `D2 a` of #1049 rules (comment 7200192998); each sum of tally is
-//     partials of exact sum, so figures read same sum in any order.
+//     canonical partials of exact sum (`sums_exact.nim`), so figures read same sum in any order.
 
 syntax = "proto3";
 
@@ -21,11 +21,12 @@ message Log {
   Prior prior = 2;  // Tallies of rows rolled out of log; absent until first roll (#1049).
 }
 
-// Define prior: tally of rows rolled out of log, by each field figures group by but delegate.
+// Define prior: tally of rows rolled out of log, by each field figures group by but delegate; no
+//   field names branch, so two rolls of same rows write same line, which git merges as one.
 message Prior {
   string date_first = 1;  // Earliest day of row rolled, as `2026-11-20`.
   string date_last = 2;  // Latest day of row rolled.
-  string commit = 3;  // Last commit whose log held rows of last roll, as `Pruned` row names one.
+  repeated fixed64 keys = 3;  // FNV-1a hash of key of each row rolled, ascending, each once.
   repeated Tally tallies = 4;  // One for each model, effort, project, kind, marker and band.
 }
 
