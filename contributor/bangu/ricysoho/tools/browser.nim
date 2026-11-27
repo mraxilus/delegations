@@ -104,7 +104,7 @@ const
     "mi klama le zarci .i do kla",  # pa valsi cu srera
     "mi klama le .i do cadzu",  # pa jufra cu lidne pa srera
     "mi klama\nle zarci",  # pa linji fanmo
-    "coi 😀 mi klama",  # pa lerfu poi zmadu `U+FFFF`
+    "coi \u{1F600} mi klama",  # pa lerfu poi zmadu `U+FFFF`
     "",
   ]
     ## lo selci'a poi le cipra pe le papri pe lo linji cu cipra ke'a ku'o jmina lo mupli pe le papri
