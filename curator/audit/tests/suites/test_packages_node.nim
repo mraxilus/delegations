@@ -323,8 +323,9 @@ suite "Static check":
   test "page script names its source in each form that HTML and SVG allow":
     # Case: review of #1069; forms two to eight gave no finding, and `data-src` and `scripting`
     #   each gave one. Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href`
-    #   and `xlink:href` of SVG, `>` inside quote, `/` after name of tag; then attribute that only
-    #   ends in `src`, and tag that only opens with `script`.
+    #   and `xlink:href` of SVG, `>` inside quote, `/` after name of tag, and space, backslash,
+    #   entity or line break in address, which browser reads; then attribute that only ends in
+    #   `src`, tag that only opens with `script`, and tag inside comment, which browser never loads.
     for tag in [
       "<script src=\"https://cdn.example/a.js\"></script>",
       "<script\n  src=\"https://cdn.example/a.js\"></script>",
@@ -335,12 +336,18 @@ suite "Static check":
       "<script xlink:href='//cdn.example/a.js'/>",
       "<script data-note=\"a>b\" src=\"https://cdn.example/a.js\"></script>",
       "<script/src=\"https://cdn.example/a.js\"></script>",
+      "<script src=\" //cdn.example/a.js\"></script>",
+      "<script src=\"\\\\cdn.example/a.js\"></script>",
+      "<script src=\"/\\cdn.example/a.js\"></script>",
+      "<script src=\"&#47;/cdn.example/a.js\"></script>",
+      "<script src=\"/\n/cdn.example/a.js\"></script>",
     ]:
       let found = checkPage(PATH_PAGE, "\n" & tag)
       check found.len == 1 and found[0].line == 2
     for tag in [
       "<script data-src=\"https://cdn.example/a.js\" src=\"a.js\"></script>",
       "<scripting src=\"https://cdn.example/a.js\"></scripting>",
+      "<!-- <script src=\"https://cdn.example/a.js\"></script> -->",
     ]:
       check checkPage(PATH_PAGE, tag).len == 0
 
