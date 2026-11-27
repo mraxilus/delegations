@@ -252,7 +252,8 @@ proc readAudit*(answer: Answer): tuple[advisories: seq[Advisory], failure: strin
   if node.kind != JObject or "error" in node:
     return (@[], "npm audit answered with error")
   let total = node{"metadata", "vulnerabilities", "total"}
-  if total.isNil or total.kind != JInt or "vulnerabilities" notin node:
+  if total.isNil or total.kind != JInt or "vulnerabilities" notin node or
+      node["vulnerabilities"].kind != JObject:
     return (@[], "npm audit gave no count of advisories")
   for name, entry in node["vulnerabilities"]:
     var advisory = Advisory(
