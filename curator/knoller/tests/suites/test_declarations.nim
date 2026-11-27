@@ -8,7 +8,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[json, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/knoller/[declarations, reports, tokens]
 
 
@@ -32,6 +32,22 @@ func documented(source: string): string =
 func isDocumented(source: string): bool =
   ## Decide whether source reports no missing doc, and fix writes nothing to it.
   checkDocsMissing("a.nim", source).len == 0 and source.documented == source
+
+
+proc docsRead(source: string): tuple[module: string, docs: seq[(string, string)]] =
+  ## Read doc of module and of each entry, as `nim jsondoc` of compiler building suite reads
+  ##   source under one-line doc of module.
+  let directory = createTempDir("docs", "")
+  defer: removeDir(directory)
+  writeFile(directory / "a.nim", "## Module.\n\n" & source)
+  let (output, code) = execCmdEx(getCurrentCompilerExe().quoteShell &
+    " jsondoc --hints:off --warnings:off -o:" & quoteShell(directory / "a.json") & " " &
+    quoteShell(directory / "a.nim"))
+  doAssert code == 0, "Compiler refused source; got `" & output & "`."
+  let page = parseFile(directory / "a.json")
+  result.module = page{"moduleDescription"}.getStr
+  for entry in page{"entries"}.getElems:
+    result.docs.add (entry{"name"}.getStr, entry{"description"}.getStr)
 
 
 func spellingsCode(source: string): seq[string] =
@@ -516,3 +532,32 @@ suite "Declarations":
       "  discard\n"
     check fix.origin == @[1, 2, 0, 3, 4]  # joined line keeps its input line
     check fix.fixed.mapIt(it.line) == @[1, 2]
+
+
+
+suite "What `nim doc` reads":
+  test "doc after value or on `=` line is read, and doc above, inside block or on keyword none":
+    # Case held: rulings of D1 c of #1020 write `#` where Nim reads no doc, and `##` again
+    #   where later Nim reads one; so this test fails once compiler building suite reads one
+    #   more place. Domain: each place doc of constant, binding, type or local can stand.
+    for (source, name, doc) in [
+      ("const A* = 1  ## Doc.\n", "A", "Doc."),  # after plain value
+      ("const\n  B* = 2  ## Doc.\n", "B", "Doc."),  # after plain value in section
+      ("var C* = 3  ## Doc.\n", "C", "Doc."),
+      ("type D* = object  ## Doc.\n", "D", "Doc."),
+      ("const E* =  ## Doc.\n  5\n", "E", "Doc."),  # on `=` line, value below
+      ("const F* =  ## Doc.\n  block:\n    6\n", "F", "Doc."),  # `block:` below, two indents
+      ("const G* = block:  ## Doc.\n  7\n", "G", ""),  # after `block:`
+      ("const H* = block:\n  ## Doc.\n  8\n", "H", ""),  # first in body of block
+      ("const  ## Doc.\n  I* = 9\n", "I", ""),  # on keyword line of section
+      ("let  ## Doc.\n  J* = 10\n", "J", ""),
+      ("type  ## Doc.\n  K* = object\n", "K", ""),
+      ("const\n  ## Doc.\n  L* = 12\n", "L", ""),  # above name in section
+    ]:
+      check source.docsRead == ("Module.", @[(name, doc)])
+    for source in ["## Doc.\nconst M* = 13\n", "\n## Doc.\nconst M* = 13\n"]:
+      check source.docsRead == ("Module.Doc.", @[("M", "")])  # above keyword joins module's
+    check "proc n*() =\n  ## Do.\n  ## Doc.\n  const O = 1\n  discard O\n".docsRead.docs ==
+      @[("n", "Do. Doc.")]  # above local with no blank line joins routine's
+    check "proc n*() =\n  ## Do.\n\n  ## Doc.\n  const O = 1\n  discard O\n".docsRead.docs ==
+      @[("n", "Do.")]
