@@ -486,6 +486,15 @@ suite "Advisories":
     check lines.len == 0 and found.len == 0
     check failure.endsWith("got `contributor/ronri/pga_visualiser/package-lock.json`.")
 
+  test "named project that carries no node lock is refused, and each other selection passes":
+    # Case: review of #1069; `koch advisories contributor/bangu/rictadni` exited 0 as clean lock.
+    #   Domain: named with lock, named with none, none named with locks, none named with none.
+    check failureNamed("contributor/bangu/rictadni", []) ==
+      "project carries no node manifest beside its lock; got `contributor/bangu/rictadni`."
+    check failureNamed(DIRECTORY, [DIRECTORY]) == ""
+    check failureNamed("", [DIRECTORY]) == ""
+    check failureNamed("", []) == ""
+
   test "version lock holds is read from its packages, and absent or unreadable is none":
     check LOCK_LODASH.versionLocked("lodash") == some("4.17.15")
     check LOCK_LODASH.versionLocked("typescript").isNone
