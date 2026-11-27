@@ -562,8 +562,14 @@ ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 | built file, under `build/` | published at |
 | --- | --- |
 | ricysoho.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+| layers.html | https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5 |
 
-ni'o lo minde po'u `page` zbasu le papri `pages/live.html`
+ni'o [`linji be lo selci'a`](https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5) skari ro valsi ja'i
+    le girzu be le selma'o be ke'a gi'e pixra lo linji pe le tricu ne'i le selci'a
+  .i lo prenu cu ciska ne'i le se ciska poi skari
+  .i pa sarji pe ro papri cu jorne le re papri
+
+ni'o lo minde po'u `page` zbasu le papri `pages/live.html` .e le papri `pages/layers.html`
   .i ko rapli gubgau le papri fi `build/ricysoho.html` ba ro cenba poi galfi lo selja'o be le papri
   .i ko punji `URL` ne'i `pull request` .e lo notci poi cusku lo du'u le selgu'a cu bredi
 
