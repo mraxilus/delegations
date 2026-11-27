@@ -348,20 +348,23 @@ suite "Advisories":
     let (advisories, failure) = readAudit((code: 1, output: AUDIT_ERROR))
     check advisories.len == 0 and failure == "npm audit answered with error"
 
-  test "fix that npm gives as flag reads as no fix":
-    let answer = AUDIT_LODASH.replace(
-      "\"fixAvailable\": {\n        \"name\": \"lodash\",\n        \"version\": \"4.18.1\",\n" &
-        "        \"isSemVerMajor\": false\n      }",
-      "\"fixAvailable\": false",
-    )
-    let (advisories, failure) = readAudit((code: 1, output: answer))
-    check failure == "" and advisories[0].fix == ""
-    let (lines, _, _) = checkAdvisories(
-      [Locked(directory: DIRECTORY, manifest: MANIFEST_LODASH, lock: LOCK_LODASH)],
-      answering((code: 1, output: answer)),
-      latestServing([("lodash", "4.18.1")]),
-    )
-    check "  `lodash`, high, `<=4.17.23`, no fix:" in lines
+  test "fix that npm gives as flag reads as no fix, or as fix by npm audit fix":
+    # Case: review of #1069; npm 10.9.9 gives `true` for `follow-redirects` `1.15.0` under `axios`
+    #   `1.6.0`, which `npm audit fix` mends, and verb printed no fix. Domain: `false` and `true`.
+    for (flag, said) in [("false", "no fix"), ("true", "fix by `npm audit fix`")]:
+      let answer = AUDIT_LODASH.replace(
+        "\"fixAvailable\": {\n        \"name\": \"lodash\",\n        \"version\": \"4.18.1\",\n" &
+          "        \"isSemVerMajor\": false\n      }",
+        "\"fixAvailable\": " & flag,
+      )
+      let (advisories, failure) = readAudit((code: 1, output: answer))
+      check failure == "" and advisories[0].fix == ""
+      let (lines, _, _) = checkAdvisories(
+        [Locked(directory: DIRECTORY, manifest: MANIFEST_LODASH, lock: LOCK_LODASH)],
+        answering((code: 1, output: answer)),
+        latestServing([("lodash", "4.18.1")]),
+      )
+      check ("  `lodash`, high, `<=4.17.23`, " & said & ":") in lines
 
   test "advisory is one finding at lock, and lines name package, fix and each advisory":
     let (lines, found, failure) = checkAdvisories(
