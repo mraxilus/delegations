@@ -450,6 +450,40 @@ suite "Log of claims":
       unit: UnitNumber.Count)
 
 
+  test "result of number of bullets reads its scale and its mark, in unit its text names (#1028)":
+    # Case as found: bullet of tokens took `170k, inside` as 170, and bullet of time took `1.5h,
+    #   inside` as 1.5 minutes, as first number of cell. Domain: each unit of bullet against each
+    #   form of value, bare, scaled and marked, in table with column `Predicted` and with `#`; mark
+    #   of other unit, or no value, gives no outcome.
+    const results = [
+      ("tokens summed over its requests: 100,000, 160,000 and 300,000", @[
+        ("170,000, inside", some(170_000.0)), ("170000", some(170_000.0)),
+        ("170k, inside", some(170_000.0)), ("0.17M, inside", some(170_000.0)),
+        ("$170k", none(float)), ("170m, inside", none(float)), ("inside", none(float))]),
+      ("cost at list price: $0.40, $0.90 and $2.00", @[("$1.10, inside", some(1.1)),
+        ("1.10, inside", some(1.1)), ("$1.1k", some(1100.0)), ("1.10m", none(float)),
+        ("about $1", none(float))]),
+      ("time to its report, in minutes: 5, 12 and 30", @[("15m, inside", some(15.0)),
+        ("15, inside", some(15.0)), ("1.5h, inside", some(90.0)), ("0.25h", some(15.0)),
+        ("$15", none(float))]),
+      ("Count: findings that the report ranks: 3, 6 and 11", @[
+        ("12, above the 95th", some(12.0)), ("1.2k", some(1200.0)), ("$12", none(float)),
+        ("12m", none(float))]),
+    ]
+    for k, (claim, cells) in results:
+      for (cell, outcome) in cells:
+        for table in ["| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n" &
+            "| ✅ | 90% | ", "| # | State | Estimate @ 90% | Result |\n| --- | --- | --- | --- |\n" &
+            "| " & $(k + 2) & " | ✅ | "]:
+          let
+            reflection = "## Reflection\n\n**Subagent:** reviewer of the diff, 170,000 tokens " &
+              "and $1.10 at list price.\n\n" & table & claim & " | " & cell & " |\n"
+            claims = transcriptOne(PREDICTION_BULLETS, "reviewer", reflection).claimsRead
+          check claims.len == 1
+          check claims[0].number.get.outcome == outcome
+          check claims[0].key.split('/')[2] == $(k + 2)
+
+
   test "each state writes its row, and estimate that waits or is annulled takes no outcome":
     var whole = REFLECTION_TABLES_POSTED
     for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)

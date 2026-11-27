@@ -4058,6 +4058,49 @@ suite "Hooks":
           else: check found.len == 0
 
 
+  test "result of number of bullets hit or missed opens with value in unit of its text (#1028)":
+    # Case as found: bullet of tokens took `170k, inside`, and bullet of time `1.5h, inside`, as
+    #   first number of cell, with no finding. Domain: each unit of bullet, each form of value,
+    #   each state, under `Predicted` and under `#`; bare value reads in unit text names, as its
+    #   percentiles stand bare, and value of other unit is refused. Cell that opens with no value
+    #   passes, as checks of bullets stay as they were (choice).
+    const
+      numbers = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+        "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
+        "50th and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as " &
+        "the 5th, 50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and " &
+        "30, as the 5th, 50th and 95th percentiles.\n- Count: findings that the report ranks: " &
+        "3, 6 and 11, as the 5th, 50th and 95th percentiles.\n"
+      rule = "value that opens cell under `Result` of number of bullets marked ✅ or ⬜ stands " &
+        "bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` or `h` " &
+        "for time (curator/audit/PROVENANCE.md, Quotes of claims); got `"
+      forms = [
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000",
+          @["170,000, inside", "170000", "170k, inside", "0.17M", "inside", "~170k"],
+          @["$170k", "170m, inside"]),
+        ("cost at list price: $0.40, $0.90 and $2.00",
+          @["$1.10, inside", "1.10", "$1.1k", "inside"], @["1.10m"]),
+        ("time to its report, in minutes: 5, 12 and 30",
+          @["15m, inside", "15, inside", "1.5h", "900s", "inside"], @["$15"]),
+        ("Count: findings that the report ranks: 3, 6 and 11", @["12, above the 95th", "1.2k"],
+          @["$12", "12m"]),
+      ]
+    var count = 0
+    for k, (claim, held, refused) in forms:
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        for cell in held & refused:
+          for table in ["| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n" &
+              "| " & state & " | 90% | ", "| # | State | Estimate @ 90% | Result |\n" &
+              "| --- | --- | --- | --- |\n| " & $(k + 1) & " | " & state & " | "]:
+            let found = heldReflection(numbers, "## Reflection\n\n" & table & claim & " | " & cell &
+              " |\n")
+            if cell in refused and state in ["✅", "⬜"]:
+              check found == @[rule & cell & "` for claim `" & $(k + 1) & "`"]
+              inc count
+            else: check found.len == 0
+    check count == 2 * 2 * (2 + 1 + 1 + 2)  # two states and two tables of each refused cell
+
+
   test "each refusal of bullets cites section that states its rule (#1028)":
     # Case as found: `RULE_CELL` of `hooks.nim` cited GUIDE.md, Prediction, critic and reflection,
     #   whose rules name tables alone since #1028, so refusal of bullets cited rule that is gone.
