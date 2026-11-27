@@ -439,6 +439,7 @@ const
   NO_PREDICTION* = "No prediction"
     ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
   MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
+  LEVELS_HEADING = 6  ## Levels of heading of Markdown, so `#` to `######` then space open one.
   MARKS_ITEM = {'.', ')'}  ## Marks after number of item of numbered list, as `1.` or `1)`.
   DIGITS_ITEM = 9  ## Digits that number of item holds at most, as CommonMark reads it.
   SPACES_INDENT = {' ', '\t'}  ## Characters of indent, and of gap after marker of item.
@@ -2761,9 +2762,9 @@ func isFigureAt(line: string, at: int): bool =
 func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
   ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
-  ##   Line runs on over each line after it up to blank line, or line that opens with label in
-  ##     bold, as `**Critic:**`, so line that wraps gives its figures, and line of critic after it
-  ##     none (choice); line of other block after it with no blank line, as bullet, runs on too.
+  ##   Line runs on over each line after it up to blank line, line that opens with label in bold,
+  ##     as `**Critic:**`, or line that opens other block (`isBlockStart`), so line that wraps
+  ##     gives its figures, and line of critic, bullet or table after it none (choice).
   ##   Tokens are whole value of count (`isCount`) that opens after space (`isFigureAt`) and ends
   ##     right before ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000, and
   ##     `170.000 tokens` none.
@@ -2787,13 +2788,22 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
     close > BOLD.len and
         (s[close - 1] in {':', FULL_STOP} or s.continuesWith(":", close + BOLD.len))
 
+  func isBlockStart(line: string): bool =
+    ## Decide whether line opens block that ends paragraph above it, as Markdown reads it: item of
+    ##   list (`isItem`), row of table, quote, or heading, as `#` run of one to six then space.
+    let s = line.strip(trailing = false)
+    var hashes = 0  # Marks `#` that open line.
+    while hashes < s.len and s[hashes] == '#': inc hashes
+    line.isItem or s.startsWith(PIPE) or s.startsWith('>') or
+        (hashes in 1..LEVELS_HEADING and (hashes == s.len or s[hashes] == ' '))
+
   let lines = text.splitLines
   for k, opening in lines:
     let lower = opening.strip(trailing = false).toLowerAscii
     if not labels.anyIt(lower.startsWith(it)): continue
     var line = opening.strip
     for next in lines[k + 1 .. ^1]:
-      if next.strip.len == 0 or next.isLabelBold: break
+      if next.strip.len == 0 or next.isLabelBold or next.isBlockStart: break
       line.add " " & next.strip
     result.line = line
     var
