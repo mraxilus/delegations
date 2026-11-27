@@ -27,9 +27,11 @@
 ##   Rejected: list of Node built-ins for bare names, which moves with each Node release, where
 ##     `node:` form names built-in by itself.
 ##   Cost: imports read by scanner of strings, templates, comments and regular expressions, never
-##     parsed: regular expression after word, as after `return`, reads as division, specifier on
-##     line after its keyword reads as none, and so does import built from expression.
-##   Cost: inline script of page reads as none; only `src` of `<script>` is read.
+##     parsed: regular expression after word or `)`, as after `return`, reads as division, and
+##     its quote can open string, or template that runs across lines. Specifier on line after its
+##     keyword reads as none, and so does import built from expression.
+##   Cost: inline script of page reads as none, and so does `<svg:script>`; address reads as
+##     browser reads it, but named entity other than `&sol;` and `&colon;` stays as written.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
@@ -319,27 +321,77 @@ func attributes(tag: string): seq[tuple[name, value: string]] =
       result.add (name: name, value: tag[probe ..< cursor])
 
 
+func markupVisible(text: string): string =
+  ## Blank each HTML comment of text, its line ends kept, so script inside it reads as none, and
+  ##   each index and line stays.
+  result = text
+  var at = result.find("<!--")
+  while at >= 0:
+    let
+      closing = result.find("-->", at + 4)
+      ending = if closing < 0: result.len else: closing + 3
+    for i in at ..< ending:
+      if result[i] != '\n': result[i] = ' '
+    at = result.find("<!--", ending)
+
+
+func entityChar(entity: string): Option[char] =
+  ## Read character of ASCII that entity between `&` and `;` names, as `#47`, `#x2F`, `sol` or
+  ##   `colon`; none for any other.
+  try:
+    let code =
+      if entity == "sol": ord('/')
+      elif entity == "colon": ord(':')
+      elif entity.len > 2 and entity[0] == '#' and entity[1] in {'x', 'X'}:
+        fromHex[int](entity[2 .. ^1])
+      elif entity.len > 1 and entity[0] == '#': parseInt(entity[1 .. ^1])
+      else: -1
+    if code in 0 .. 127: some(char(code)) else: none(char)
+  except ValueError: none(char)
+
+
+func addressRead(value: string): string =
+  ## Read address of attribute as browser reads it: entity of `entityChar` decoded, tab and line
+  ##   end dropped, spaces at each end stripped, and `\` read as `/`.
+  var cursor = 0
+  while cursor < value.len:
+    let
+      closing = if value[cursor] == '&': value.find(';', cursor) else: -1
+      decoded = if closing > cursor: value[cursor + 1 ..< closing].entityChar else: none(char)
+    if decoded.isSome:
+      result.add decoded.get
+      cursor = closing + 1
+      continue
+    if value[cursor] notin {'\t', '\n', '\r'}: result.add value[cursor]
+    inc cursor
+  result = result.strip.replace('\\', '/')
+
+
 func checkPage*(path, text: string): seq[Finding] =
   ## Report each `<script>` whose `src`, `href` or `xlink:href` names other host, at line of tag.
   ##   Tag reads to first `>` outside quote, across lines, with no regard to case of letters.
-  let lowered = text.toLowerAscii
+  ##   Tag inside HTML comment reads as none, since browser never loads it.
+  let
+    visible = text.markupVisible
+    lowered = visible.toLowerAscii
   var at = lowered.find("<script")
   while at >= 0:
     let after = at + "<script".len
-    if after < text.len and text[after] in Whitespace + {'>', '/'}:
+    if after < visible.len and visible[after] in Whitespace + {'>', '/'}:
       var
         cursor = after
         quote = none(char)
-      while cursor < text.len and (quote.isSome or text[cursor] != '>'):
-        if quote.isSome and text[cursor] == quote.get: quote = none(char)
-        elif quote.isNone and text[cursor] in {'"', '\''}: quote = some(text[cursor])
+      while cursor < visible.len and (quote.isSome or visible[cursor] != '>'):
+        if quote.isSome and visible[cursor] == quote.get: quote = none(char)
+        elif quote.isNone and visible[cursor] in {'"', '\''}: quote = some(visible[cursor])
         inc cursor
-      for (name, source) in text[after ..< cursor].attributes:
+      for (name, value) in visible[after ..< cursor].attributes:
+        let source = value.addressRead
         if name notin ["src", "href", "xlink:href"]: continue
         if "://" notin source and not source.startsWith("//"): continue
         result.add finding(
           path,
-          text[0 ..< at].count('\n') + 1,
+          visible[0 ..< at].count('\n') + 1,
           "Page loads script from other host; take base JavaScript, or script of project" &
             CITE_RULE & "; got `" & source & "`.",
         )
