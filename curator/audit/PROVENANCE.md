@@ -4367,10 +4367,10 @@ transcript, so another copy gives its own figures.
   value at `$`. Each reads as a cell reads it, after a space and in no mark of emphasis or code. The
   tokens take no group after a space. A `critic` that the line does not name reads `**Critic:**`.
 - The hook refuses a line `**Subagent:**` of no tokens or no cost, or two of either, as the log
-  writes neither. The line runs on to a blank line or a bold label. Rejected: groups after a space,
-  as `round 2 170 000 tokens` reads 2,170,000. Cost: `1,000 cached tokens` gives none, and a bullet
-  right under the line is part of it. It passes the line `**Critic:**` and a reflection with none,
-  as the guide asks neither. Verified by `suites/test_hooks.nim` and `suites/test_claims_log.nim`.
+  writes neither. The line runs on to a blank line, a bold label or another block, as a bullet.
+  Rejected: groups after a space, as `round 2 170 000 tokens` reads 2,170,000. Cost:
+  `1,000 cached tokens` gives none. It passes the line `**Critic:**` and a reflection with none, as
+  the guide asks neither. Verified by `suites/test_hooks.nim` and `suites/test_claims_log.nim`.
 - An estimate takes the percentiles and the unit of its cells, and the value that opens its result.
   `Number` holds the unit under field 5, as the design gives it to the cells (comment 7194411522),
   and the text need not name it. A number of bullets takes the last three numbers and unit of its
