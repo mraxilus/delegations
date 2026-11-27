@@ -483,6 +483,16 @@ const
   COLUMN_CONFIDENCE_PREDICTED* = "Confidence"
     ## Column of confidence of table with column `Predicted`, as block of bullets takes it.
   COLUMN_RESULT* = "Result"  ## Column of reflection that gives result of claim.
+  COLUMNS_JUDGEMENTS = [COLUMN_NUMBER, COLUMN_CONFIDENCE, COLUMN_JUDGEMENT]
+    ## Columns of table of judgements of block, in any order (7196051993).
+  COLUMNS_ESTIMATES = [COLUMN_NUMBER, COLUMN_ESTIMATE, COLUMNS_PERCENTILE[0],
+    COLUMNS_PERCENTILE[1], COLUMNS_PERCENTILE[2]]
+    ## Columns of table of estimates of block, in any order (7194411522).
+  COLUMNS_CRITERIA = [COLUMN_NUMBER, COLUMN_CRITERION]
+    ## Columns of table of criteria of block, in any order (7196051993).
+  COLUMNS_NAMING = [COLUMN_NUMBER, COLUMN_JUDGEMENT, COLUMN_ESTIMATE, COLUMN_CRITERION]
+    ## Columns that make table of block table of claims, whose header then holds each column of
+    ##   one form (choice); `%` and percentiles stay out, as table of other figures may hold them.
   CONFIDENCE_ESTIMATE* = 0.9  ## Confidence of estimate: mass between its 5th and 95th percentiles.
   MARKERS_SCORED = ["✅", "⬜"]
     ## Markers under `State` of claim that takes score, hit and miss, so estimate takes outcome.
@@ -521,6 +531,14 @@ const
   RULE_CRITERION = "Claim takes its resolution criterion in row of its number of table with " &
     "column `" & COLUMN_CRITERION & "` (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of claim with no criterion states.
+  RULE_FORM = "Table of block whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+    "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
+    "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` (GUIDE.md, " &
+    "Prediction, critic and reflection)"
+    ## Rule that finding of table of claims of block whose header holds no form whole states.
+  RULE_CRITERION_ROW = "Row of table of criteria of block names, by its number under `#`, claim " &
+    "of block that no other row names (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of row of criteria of number of no claim, or of claim named twice, states.
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each block of this turn that lacks " &
@@ -2586,21 +2604,27 @@ func outcomeResult*(cell: string, unit: UnitNumber): Option[float] =
   if value.get.unit == marked: some(value.get.amount) else: none(float)
 
 
+func isHolding(header, columns: openArray[string]): bool =
+  ## Decide whether header holds each of columns, in any order, as hook reads columns by name.
+  columns.allIt(it in header)
+
+
 func rowsClaim(text: string): seq[RowClaim] =
   ## Read each row of each table of judgements or estimates of block text, in order: table whose
-  ##   header holds `#`, then `Judgement` or `Estimate @ 90%` (7200557915). Bold label and
-  ##   sentence above table read as none, as each line that opens no table does.
-  ##   Table whose header holds both reads as judgements.
+  ##   header holds each column of `COLUMNS_JUDGEMENTS` or of `COLUMNS_ESTIMATES`, in any order
+  ##   (7200557915). Bold label and sentence above table read as none, as each line that opens no
+  ##   table does.
+  ##   Table whose header holds both reads as judgements; table that holds part of form reads as
+  ##     none, which `findingsPrediction` refuses.
   for table in text.tablesMarkdown:
+    let is_estimate = not table.header.isHolding(COLUMNS_JUDGEMENTS)
+    if is_estimate and not table.header.isHolding(COLUMNS_ESTIMATES): continue
     let
       at_number = table.header.find(COLUMN_NUMBER)
-      at_judgement = table.header.find(COLUMN_JUDGEMENT)
-      at_estimate = table.header.find(COLUMN_ESTIMATE)
-      is_estimate = at_judgement < 0
-    if at_number < 0 or (is_estimate and at_estimate < 0): continue
+      at_text = table.header.find(if is_estimate: COLUMN_ESTIMATE else: COLUMN_JUDGEMENT)
     for row in table.rows:
       var claim = RowClaim(cell_number: row.cellAt(at_number), is_estimate: is_estimate,
-        text: row.cellAt(if is_estimate: at_estimate else: at_judgement))
+        text: row.cellAt(at_text))
       if is_estimate:
         for k, column in COLUMNS_PERCENTILE:
           claim.percentiles[k] = row.cellAt(table.header.find(column))
@@ -2608,17 +2632,15 @@ func rowsClaim(text: string): seq[RowClaim] =
       result.add claim
 
 
-func criteriaBlock(text: string): seq[tuple[number: int, criterion: string]] =
+func criteriaBlock(text: string): seq[tuple[number: Option[int], criterion: string]] =
   ## Read number and criterion of each row of each table of criteria of block text: header holds
-  ##   `#` and `Resolution criterion` (7196051993); row with no number gives none.
+  ##   each column of `COLUMNS_CRITERIA` (7196051993); number is none where `#` holds none.
   for table in text.tablesMarkdown:
+    if not table.header.isHolding(COLUMNS_CRITERIA): continue
     let
       at_number = table.header.find(COLUMN_NUMBER)
       at_criterion = table.header.find(COLUMN_CRITERION)
-    if at_number < 0 or at_criterion < 0: continue
-    for row in table.rows:
-      let number = row.cellAt(at_number).numberCell
-      if number.isSome: result.add (number.get, row.cellAt(at_criterion))
+    for row in table.rows: result.add (row.cellAt(at_number).numberCell, row.cellAt(at_criterion))
 
 
 func forecastsTable(text: string): seq[Forecast] =
@@ -2647,18 +2669,41 @@ func forecasts*(text: string): seq[Forecast] =
 
 
 func findingsPrediction*(text: string): seq[Finding] =
-  ## Report each row of table of claims of block text whose `#` holds no number of its own,
-  ##   whose text is empty, judgement whose `%` holds no percentage alone, estimate whose cells
-  ##   are no rising values of one unit, and claim whose number takes no criterion (7200557915).
+  ## Report each table of claims of block text whose header holds no form whole, each row of
+  ##   table of judgements or estimates whose `#` holds no number of its own, whose text is empty,
+  ##   judgement whose `%` holds no percentage alone, estimate whose cells are no rising values of
+  ##   one unit, claim whose number takes no criterion, and row of criteria whose number names no
+  ##   claim, or claim that other row names (7200557915).
+  ##   Table of claims holds column of `COLUMNS_NAMING`; one that holds no form whole takes that
+  ##     finding, since its rows read as none (choice).
   ##   Row with no number takes that finding alone, since others name it by its number. Bullets
   ##     take none, since check of their form reads only cell that quotes them.
+  ##   Claims are held to criteria only where each table holds its form, and criteria to claims
+  ##     only where each row of claims has number of its own too, since claim or criterion of row
+  ##     that reads as none reads as missing. Row of criteria with no number is none, since claim
+  ##     it misses takes finding of its own.
   let criteria = text.criteriaBlock
-  var seen: seq[int]
+  var
+    seen: seq[int]
+    is_formed = true  # Each table of claims holds each column of its form.
+    is_numbered = true  # Each row of claims holds number of its own.
+
+  # Refuse table of claims that holds no form whole, since its rows read as none.
+  for table in text.tablesMarkdown:
+    if not COLUMNS_NAMING.anyIt(it in table.header) or
+        [@COLUMNS_JUDGEMENTS, @COLUMNS_ESTIMATES, @COLUMNS_CRITERIA].anyIt(
+          table.header.isHolding(it)):
+      continue
+    is_formed = false
+    result.add finding("", 0, Check.TablesPrediction, RULE_FORM & "; got `" & table.line & "`.")
+
+  # Refuse each row of claims that lacks part of its claim.
   for row in text.rowsClaim:
     let number = row.cell_number.numberCell
     if number.isNone or number.get in seen:
       result.add finding("", 0, Check.TablesPrediction, RULE_NUMBER & "; got `" &
         row.cell_number & "`.")
+      is_numbered = false
       continue
     seen.add number.get
     let named = " for claim `" & $number.get & "`."
@@ -2670,8 +2715,18 @@ func findingsPrediction*(text: string): seq[Finding] =
     if not row.is_estimate and row.confidence.percentageCell.isNone:
       result.add finding("", 0, Check.TablesPrediction, RULE_CONFIDENCE & "; got `" &
         row.confidence & "`" & named)
-    if not criteria.anyIt(it.number == number.get and it.criterion.len > 0):
+    if is_formed and not criteria.anyIt(it.number == number and it.criterion.len > 0):
       result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION & "; got none" & named)
+
+  # Refuse each row of criteria that names no claim, or claim that row before it names.
+  if not (is_formed and is_numbered): return
+  var named: seq[int]
+  for (number, _) in criteria:
+    if number.isNone: continue
+    if number.get notin seen or number.get in named:
+      result.add finding("", 0, Check.TablesPrediction, RULE_CRITERION_ROW & "; got `" &
+        $number.get & "`.")
+    named.add number.get
 
 
 func tablesReflection(text: string): seq[TableMarkdown] =
