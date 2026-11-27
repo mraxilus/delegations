@@ -3659,6 +3659,32 @@ suite "Hooks":
       @[refusalCell("the hook reads `. **Resolution criterion:**` as mark")]
 
 
+  test "costs of read of value and of tables of claims stay as record names them (#1028)":
+    # Record, Quotes of claims, names these costs, which builder of mends measured by probe and
+    #   critic of mends (finding 6) found no suite to hold; each holds here so that change shows.
+    # Scale that value does not name, as `bn` or `Mio`, reads as text, so result reads digits
+    #   before it, and logs that wrong value with no finding.
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      line = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    for cell in ["39.1 bn, inside", "39.1 Mio, inside"]:
+      check cell.valueAt.get.amount == 39.1
+      check heldReflection(PREDICTION_TABLES, whole.replace(line,
+        line.replace("39.1M, inside", cell))).len == 0
+
+    # Three digits of other figure after one space read as group, as `5 100-line files` reads
+    #   5,100, and result of count takes it with no finding.
+    check "5 100-line files".valueAt.get.amount == 5100.0
+    check "5 100-line files".outcomeResult(UnitNumber.Count).get == 5100.0
+
+    # Header with none of columns that make table of claims, as `| No. | % | Judgements |`, reads
+    #   as no table, so block reads 3 claims of 8, and takes 5 findings, from its criteria alone.
+    let off = PREDICTION_TABLES.replace("| # | % | Judgement |", "| No. | % | Judgements |")
+    check off.forecasts.len == 3
+    check heldBlock(off).len == 5
+    check heldBlock(off).allIt(it.startsWith("row of table of criteria of block names"))
+
+
   test "block of tables reads each claim from its row, by its number (7200557915 of #1028)":
     # Case as found: example of comment 7200557915, which `D1 a` of comment 7218520265 rules.
     let read = PREDICTION_TABLES.forecasts
