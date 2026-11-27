@@ -43,7 +43,8 @@ const
   ]
     ## Lines that hold word of import beside quote, and name no module; line of `report` as found
     ##   at line 223 of `chrome.ts` of `pga_visualiser`, 2026-11-27, where `from` inside string
-    ##   read next quote as specifier; last five as review of #1069 found them refused.
+    ##   read next quote as specifier; five before last as review of #1069 found them refused,
+    ##   and last holds keyword after `.`.
   MANIFEST_FOUND = """{
   "private": true,
   "devDependencies": {
@@ -222,7 +223,9 @@ suite "Static check":
     #   Domain: comment before import on its line and on line above, line opening `*` in code,
     #   regular expression holding quote, `${}` on one line, on line below, and holding braces;
     #   then operand across line, `/` in class, division before `/` in string, and string that
-    #   line ends.
+    #   line ends; then division after expression, and after variable named `from`, expression
+    #   after block, and line that backslash continues in string, as second review of #1069 found
+    #   mutants of each pass.
     for (text, line) in [
       ("/* note */ import x from 'lodash';", 1),
       ("/* a\n b */ import x from 'lodash';", 2),
@@ -235,6 +238,10 @@ suite "Static check":
       ("s.split(/[/']/); import x from 'lodash';", 1),
       ("const r = a / 2, s = \"/\"; import x from 'lodash';", 1),
       ("const s = 'oops\nimport x from 'lodash';", 2),
+      ("const r = /a/ / 2, s = \"/\"; import x from 'lodash';", 1),
+      ("const half = from / 2, s = \"/\"; import x from 'lodash';", 1),
+      ("if (a) { b(); } /\"/.test(s); import x from 'lodash';", 1),
+      ("const s = 'a\\\nb';\nimport x from 'lodash';", 3),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
@@ -308,10 +315,10 @@ suite "Static check":
     check found[1].message.endsWith("got `//cdn.example/b.js`.")
 
   test "page script names its source in each form that HTML and SVG allow":
-    # Case: review of #1069; each form below but first gave no finding, and `data-src` gave one.
-    #   Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href` and `xlink:href`
-    #   of SVG, `>` inside quote; then attribute that only ends in `src`, and tag that only opens
-    #   with `script`.
+    # Case: review of #1069; forms two to eight gave no finding, and `data-src` and `scripting`
+    #   each gave one. Domain: one line, two lines, no quotes, spaces round `=`, capitals, `href`
+    #   and `xlink:href` of SVG, `>` inside quote, `/` after name of tag; then attribute that only
+    #   ends in `src`, and tag that only opens with `script`.
     for tag in [
       "<script src=\"https://cdn.example/a.js\"></script>",
       "<script\n  src=\"https://cdn.example/a.js\"></script>",
@@ -321,6 +328,7 @@ suite "Static check":
       "<script href=\"https://cdn.example/a.js\"/>",
       "<script xlink:href='//cdn.example/a.js'/>",
       "<script data-note=\"a>b\" src=\"https://cdn.example/a.js\"></script>",
+      "<script/src=\"https://cdn.example/a.js\"></script>",
     ]:
       let found = checkPage(PATH_PAGE, "\n" & tag)
       check found.len == 1 and found[0].line == 2
