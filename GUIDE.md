@@ -300,9 +300,9 @@ Then the subagent runs, and these steps follow:
   lacks a column of its form. It refuses a hit or missed estimate whose cell under `Result` opens
   with no value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
 - **The hook refuses a line `**Subagent:**` that gives no tokens right before ` tokens`, or no
-  cost at `$`.** Each figure there is a plain value after a space, as a cell holds it, so
-  `**170k** tokens` gives none. A space parts the words of the line, so the tokens take no group
-  after a space, as `170 000`.
+  cost at `$`, or two of either.** Each figure there is one plain value after a space, as a cell
+  holds it, so `**170k** tokens` gives none. A space parts the words of the line, so the tokens
+  take no group after a space, as `170 000`.
 - **The `stop` hook adds each row of a reflection to the log of claims of your project.** The
   log is `claims.txtpb` beside your record, and each row is one `Claim` of
   `curator/audit/src/claims.proto` (#964). A row takes the call whose block holds its claim.
