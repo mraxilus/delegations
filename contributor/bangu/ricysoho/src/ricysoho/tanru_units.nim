@@ -14,7 +14,7 @@
 ##   | `tanruUnits` | fendi lo pagbu be lo tanru fi lo taurpau                              |
 ##   |--------------|---------------------------------------------------------------------------|
 ##
-## ni'o `ending` noi sivni cu tunba `ending` pe `rictadni/src/lojban_tagger/runs.nim` to
+## ni'o `ending` noi sivni cu tunba `ending` pe `rictadni/src/rictadni/runs.nim` to
 ##     `Article II.9` toi
 ##   .i `ending` pe le vi datnyvei cu tcidu lo pagbu pu lo nu fendi
 ##   .i `ending` pe `runs.nim` tcidu lo taurpau ba lo nu fendi ta'i lo simsa
@@ -130,10 +130,6 @@
 ##   .i ba bo zo ke'e zvati va'o lo nu selci'a
 ##   .i se ki'u bo le taurpau pe le girzu cu stali lo ka mulno ta'i lo nu lo ga'ivla ne'i lo girzu
 ##       poi selga'i cu stali lo ka mulno
-##
-## ni'o jdima fa lo nu lo tanru poi `readTanru` tcidu ke'a fi lo selci'a cu se fendi ja'i
-##     `CLL 12.11` ji'a
-##   .i ku'i `CLL 12.11` tcidu lo lujvo
 ##
 ## ni'o jdima fa lo nu zo pe'a .e lo teirma'o cu jorne no da vi
 ##   .i ku'i ja'i `CLL 13.13` zo pe'a srana lo muljvo
