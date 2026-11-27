@@ -17,9 +17,9 @@
 ##     reads line `**Critic:**`.
 ##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
 ##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
-##     end it, takes last three numbers of its text, unit its text names (`unitText`), and first
-##     number of its cell under `Result`, as GUIDE.md asked; so one claim in either form gives
-##     same row but its text.
+##     end it, takes last three numbers of its text, unit its text names (`unitText`), and value
+##     that opens its cell under `Result`, bare in that unit or marked in it; so one claim in
+##     either form gives same row but its text.
 ##   Date, delegate and address come from entry of reflection: `timestamp`, `sessionId`, `uuid`.
 ##   Key is delegate, id of call, number or position of claim in its block, and state:
 ##     reflection written again adds no row, and later mark of claim that waits adds one
@@ -265,20 +265,21 @@ func numberForecast(forecast: Forecast, row: RowReflection): Option[Number] =
   ## Read number of claim that row of reflection quotes: percentiles and unit of cells of
   ##   estimate, with outcome of value of its result (`outcomeResult`); else, for bullet that
   ##   percentiles end, last three numbers of its text, unit its text names (`unitText`), and
-  ##   first number of its result; none for judgement, or bullet whose text holds fewer numbers.
+  ##   value its result opens with, bare in that unit or marked in it; none for judgement, or
+  ##   bullet whose text holds fewer numbers.
   if forecast.estimate.isSome:
     let estimate = forecast.estimate.get
     return some(Number(low: estimate.low, median: estimate.median, high: estimate.high,
       outcome: row.result.outcomeResult(estimate.unit), unit: estimate.unit))
   let numbers = row.quoted.numbersIn
   if not forecast.is_number or numbers.len < 3: return
-  let outcome = row.result.numbersIn
+  let unit = row.quoted.unitText
   some(Number(
     low: numbers[^3],
     median: numbers[^2],
     high: numbers[^1],
-    outcome: (if outcome.len > 0: some(outcome[0]) else: none(float)),
-    unit: row.quoted.unitText,
+    outcome: row.result.outcomeResult(unit, as_bare = true),
+    unit: unit,
   ))
 
 

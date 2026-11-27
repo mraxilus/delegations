@@ -524,6 +524,12 @@ const
     "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of result of estimate states, since log reads its outcome there.
+  RULE_OUTCOME_BULLETS = "Value that opens cell under `Result` of number of bullets marked ✅ or " &
+    "⬜ stands bare in unit its text names, or with mark of that unit: `$` for cost, `s`, `m` " &
+    "or `h` for time " & CITATION_BULLETS
+    ## Rule that finding of result of number of bullets states: its percentiles stand bare in
+    ##   its text, so bare value reads in unit text names (`unitText`); cell that opens with no
+    ##   value takes none, as checks of bullets stay as they were (choice).
   RULE_NUMBER = "Row of table of judgements or estimates of block opens with number of its own " &
     "under `#`, from 1 (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of block with no number, or number of other row, states.
@@ -2627,14 +2633,19 @@ func estimateCells(text: string, cells: array[3, string]): Option[Estimate] =
     unit: unit.get))
 
 
-func outcomeResult*(cell: string, unit: UnitNumber): Option[float] =
-  ## Read outcome that opens cell under `Result` of estimate of unit: amount of value at its start
+func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[float] =
+  ## Read outcome that opens cell under `Result` of number of unit: amount of value at its start
   ##   (`valueAt`) whose marks give unit, bare for `Tokens` and `Count`; none otherwise, so
-  ##   `15, inside` gives no minutes, and `$1.10` no count.
+  ##   `15, inside` gives no minutes of estimate, and `$1.10` no count.
+  ##   Where `as_bare`, as number of bullets writes its percentiles bare, bare value reads in unit
+  ##     too, and value of any mark reads for `Unspecified`, whose number takes no score.
   let value = cell.valueAt
   if value.isNone: return
-  let marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
-  if value.get.unit == marked: some(value.get.amount) else: none(float)
+  let
+    marked = (if unit in {UnitNumber.Tokens, UnitNumber.Count}: UnitNumber.Unspecified else: unit)
+    is_read = value.get.unit == marked or
+      (as_bare and UnitNumber.Unspecified in {value.get.unit, unit})
+  if is_read: some(value.get.amount) else: none(float)
 
 
 func isHolding(header, columns: openArray[string]): bool =
@@ -2894,11 +2905,16 @@ func findingsReflection(text: string, forecasts: openArray[Forecast]): seq[Findi
           else: "`" & row.quoted & "`")
         result.add finding("", 0, Check.TableReflection, rule & "; got " & got & ".")
         continue
-      let estimate = quoting[0].estimate
-      if estimate.isSome and MARKERS_SCORED.anyIt(row.state.startsWith(it)) and
-          row.result.outcomeResult(estimate.get.unit).isNone:
-        result.add finding("", 0, Check.TableReflection, RULE_OUTCOME & "; got `" & row.result &
-          "` for claim `" & $quoting[0].position & "`.")
+      let
+        forecast = quoting[0]
+        got = "; got `" & row.result & "` for claim `" & $forecast.position & "`."
+      if not MARKERS_SCORED.anyIt(row.state.startsWith(it)): continue
+      if forecast.estimate.isSome and
+          row.result.outcomeResult(forecast.estimate.get.unit).isNone:
+        result.add finding("", 0, Check.TableReflection, RULE_OUTCOME & got)
+      elif not forecast.is_row and forecast.is_number and row.result.valueAt.isSome and
+          row.result.outcomeResult(row.quoted.unitText, as_bare = true).isNone:
+        result.add finding("", 0, Check.TableReflection, RULE_OUTCOME_BULLETS & got)
 
 
 func checkTables(subagents: Subagents): seq[Finding] =
