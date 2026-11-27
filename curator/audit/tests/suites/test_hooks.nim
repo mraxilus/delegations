@@ -4745,6 +4745,46 @@ suite "Hooks":
         (some(170_000), some(1.1))
 
 
+  test "line `**Subagent:**` ends at full stop, label of each form, break or HTML (#1028)":
+    # Case as found (fourth critic, R2, R3, S2 to S5 and K2): line that gives no tokens ran on
+    #   into line under it that gives `39,000 tokens`, as `__Critic:__ …`, break and sentence,
+    #   comment of HTML or plain sentence, and logged that figure with no finding; line
+    #   `**Critic:**` ran on too. Domain: line that ends with full stop above each such line; line
+    #   with no full stop above each form of label, each break and each HTML block; line of
+    #   critic; right read of plain label under full line; and wrap, which still runs on.
+    const
+      ended = "**Subagent:** builder of the fix, $1.10 at list price, 57 calls."
+      open = "**Subagent:** builder of the fix, $1.10 at list price, 57 calls,"
+      unders = ["__Critic:__ critic of the report, 39,000 tokens, 12 calls.",
+        "***Critic:*** critic of the report, 39,000 tokens.", "Critic: critic, 39,000 tokens.",
+        "The critic used 39,000 tokens.", "<!-- critic: 39,000 tokens -->"]
+      breaks = ["***", "___", "---", "- - -", "<!-- critic -->", "<details>"]
+    func figures(text: string, labels = LABELS_SUBAGENT): (Option[int], Option[float]) =
+      ## Read tokens and cost of line of labels of text.
+      let read = text.figuresLine(labels)
+      (read.tokens, read.cost)
+    check (ended & "\n" & unders[0]).figures == (none(int), some(1.1))  # case as found
+    var count = 0
+    for under in unders:
+      check (ended & "\n" & under).figures == (none(int), some(1.1))
+      inc count
+    for under in unders[0 .. 2]:
+      check (open & "\n" & under).figures == (none(int), some(1.1))  # label of each form
+      inc count
+    for mark in breaks:
+      check (open & "\n" & mark & "\nThe critic used 39,000 tokens.").figures ==
+        (none(int), some(1.1))
+      inc count
+    check count == unders.len + 3 + breaks.len
+    check ("**Critic:** critic of the report, $0.50 at list price, 12 calls, 4 min.\nIt read " &
+      "the 170,000 tokens of the report.").figures(LABELS_CRITIC) == (none(int), some(0.5))
+    check ("**Subagent:** reviewer, 170,000 tokens and $1.10 at list price, 57 calls, 15 min." &
+      "\nCritic: critic of the report, 39,000 tokens and $0.50, 12 calls.").figures ==
+      (some(170_000), some(1.1))  # right read stays
+    check "**Subagent:** builder of the fix,\n170,000 tokens and $1.10.".figures ==
+      (some(170_000), some(1.1))  # wrap runs on
+
+
   test "each refusal of bullets cites section that states its rule (#1028)":
     # Case as found: `RULE_CELL` of `hooks.nim` cited GUIDE.md, Prediction, critic and reflection,
     #   whose rules name tables alone since #1028, so refusal of bullets cited rule that is gone.
