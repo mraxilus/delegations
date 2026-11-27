@@ -8,6 +8,7 @@
 ##   .i lo nu ciska cu stali le selci'a .e le cuxna
 ##   .i pa gunka .a le papri cu tcidu le selci'a
 ##   .i ro valsi .e ro linji cu drani ba ro nu cenba poi selzba
+##   .i pa se tcidu pe pa pu selci'a cu na basti le se tcidu pe pa mupli
 
 {.experimental: "strictFuncs".}
 
@@ -192,6 +193,21 @@ proc runSuite() {.async.} =
   expectThat editor.shownText == TYPED[0 ..< ^1] & PASTED, "redo puts paste back"
   await settled()
   ended "Typing, erasing, paste, undo and redo keep text and caret, and page reads what was typed"
+
+  # lo se tcidu pe lo pu selci'a poi klama ba lo mupli cu basti no da
+  let
+    sample = DOCUMENT.querySelector("[data-sample]:nth-child(2)")
+    wanted = sample.getAttribute("data-sample").to(cstring)
+  selected(current().text.len, current().text.len)
+  editor.inputted("insertText", "a")
+  discard sample.click()
+  await settled()
+  for _ in 0 ..< 30: await nextFrame()
+  expectThat current().text == wanted, "sample stands after answer of text before it"
+  expectThat not current().is_moved, "page draws its own reading of sample"
+  expectThat current().described == expectations[1],
+      "page draws reading of sample, not of text before"
+  ended "Answer of text before a sample never stands in place of reading of sample"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))
