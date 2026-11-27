@@ -278,6 +278,57 @@ suite "Declarations":
       check settled.docsRead == breach.docsRead  # `nim doc` reads neither place
 
 
+  test "doc after `block:` moves above its declaration, as `#` comment":
+    # Case held: `const X* = block:  ## Doc of X.`, which knoller at `6905e55e` passed with no
+    #   finding, though `nim doc` reads none after `block:` (suite "What `nim doc` reads").
+    #   Domain: top level, section, local, label, doc lexer joins over lines, and other doc too.
+    let found = "const X* = block:  ## Doc of X.\n  1\n"
+    check checkDocs("a.nim", found).mapIt((it.line, it.brief)) == @[
+      (1, "doc of value opening `block` stands above its declaration, as `#` comment; got it " &
+        "after `block:` of `const X`"),
+    ]
+    check found.fixed == "# Doc of X.\nconst X* = block:\n  1\n"
+    check found.fixed.isSettled
+    check found.fixed.docsRead == found.docsRead  # `nim doc` reads neither place
+    for (breach, settled, name) in [
+      (
+        "const A* = 1  ## A.\nconst B* = block outer:  ## Doc,\n  ##   of two lines.\n  2\n",
+        "const A* = 1  ## A.\n\n# Doc,\n#   of two lines.\nconst B* = block outer:\n  2\n",
+        "const B",
+      ),  # lexer joins second line to doc after `block outer:`, so both move
+      (
+        "const\n  C* = block:  ## Doc.\n    3\n",
+        "const\n  # Doc.\n  C* = block:\n    3\n",
+        "const C",
+      ),
+      (
+        "proc f*() =\n  ## Do.\n  let d = block:  ## Doc.\n    4\n  discard d\n",
+        "proc f*() =\n  ## Do.\n\n  # Doc.\n  let d = block:\n    4\n  discard d\n",
+        "let d",
+      ),
+    ]:
+      checkpoint breach
+      check checkDocs("a.nim", breach).mapIt(it.brief) == @[
+        "doc of value opening `block` stands above its declaration, as `#` comment; got it " &
+          "after `block:` of `" & name & "`",
+      ]
+      check breach.fixed == settled
+      check settled.isSettled
+      check settled.spellingsCode == breach.spellingsCode
+      check settled.docsRead == breach.docsRead
+    for twice in [
+      "# Note.\nconst E* = block:  ## Doc.\n  5\n",
+      "# Note.\nconst E* = block:\n  ## Doc.\n  5\n",
+    ]:
+      checkpoint twice
+      check checkDocs("a.nim", twice).mapIt(it.brief) == @[
+        "doc of value opening `block` stands above its declaration, as one `#` comment; got " &
+          "comment above `const E` and other doc of it, which hand joins",
+      ]
+      check twice.fixed == twice
+      check twice.isDocumented
+
+
   test "doc above value opening `block` is `#` comment, blank line above where other line stands":
     # Ruling D1 c of #1020: `nim doc` reads no doc above keyword, and `##` above declaration at
     #   top level joins doc of module, which `#` avoids. Domain: `##` and `#`, at each reach,
