@@ -265,6 +265,15 @@ suite "Static check":
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
+    # Case: fifth review of #1069; mutant that dropped U+1680, U+2000 or U+205F passed. Domain:
+    #   each space of JavaScript `WhiteSpace` outside ASCII, written out.
+    for space in [
+      "\xC2\xA0", "\xE1\x9A\x80", "\xE2\x80\x80", "\xE2\x80\x81", "\xE2\x80\x82",
+      "\xE2\x80\x83", "\xE2\x80\x84", "\xE2\x80\x85", "\xE2\x80\x86", "\xE2\x80\x87",
+      "\xE2\x80\x88", "\xE2\x80\x89", "\xE2\x80\x8A", "\xE2\x80\xAF", "\xE2\x81\x9F",
+      "\xE3\x80\x80", "\xEF\xBB\xBF",
+    ]:
+      check checkScript(PATH_SCRIPT, "import x from" & space & "'lodash';").len == 1
 
   test "line that holds word of import beside quote names no module":
     # Domain: member call, binding, comment, word that holds keyword, keyword as text.
@@ -396,13 +405,12 @@ suite "Static check":
       "&#x0x2F;/cdn.example/a.js", "&#+47;/cdn.example/a.js", "&#4_7;/cdn.example/a.js",
     ]:
       let found = checkPage(PATH_PAGE, "\n<script src=\"" & address & "\"></script>")
-      check found.len == 1 and found[0].line == 2 and '\t' notin found[0].message and
-        '\n' notin found[0].message
+      check found.len == 1 and found[0].line == 2 and found[0].message.allIt(it >= ' ')
     # Domain: plain path of project, with spaces at its ends, with query that names host or holds
-    #   `&`, with `%2F`, and empty address of page itself.
+    #   `&`, with fragment, with `~` or `%2F`, and empty address of page itself.
     for address in [
-      "a.js", "/scripts/a.js", " a.js ", "./a.js?from=https://x.example", "./a.js?v=1&x=2",
-      "%2F%2Fcdn.example/a.js", "",
+      "a.js", "/scripts/a.js", " a.js ", "\ta.js\n", "./a.js?from=https://x.example",
+      "./a.js?v=1&x=2", "a.js#from=//x.example", "/~pages/a.js", "%2F%2Fcdn.example/a.js", "",
     ]:
       check checkPage(PATH_PAGE, "<script src=\"" & address & "\"></script>").len == 0
 
@@ -414,16 +422,53 @@ suite "Static check":
       "<base href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
       "<!DOCTYPE svg [<!ENTITY h \"https://cdn.example\">]><script href=\"&h;/a.js\"/>",
       "<script xmlns:x=\"http://www.w3.org/1999/xlink\" x:href=\"https://cdn.example/a.js\"/>",
+      "<script xmlns:q=\"http://www.w3.org/1999/xlink\" q:href=\"https://cdn.example/a.js\"/>",
     ]:
       check checkPage(PATH_PAGE, page).len == (if "&h;" in page: 2 else: 1)
+    for page in [
+      "<base href=\"/pages/\"><script src=\"a.js\"></script>",
+      "<base src=\"https://cdn.example/\"><script src=\"a.js\"></script>",
+    ]:
+      check checkPage(PATH_PAGE, page).len == 0
     # Case: mutant of #1069 that read no entity, none in capitals, or first alone, passed, since
     #   `&h;` in path was finding alone. Domain: entity in capitals, then in small letters, beside
-    #   plain path, each at its line.
+    #   plain path, each at its line; then as fifth review found, entity before tab, and entity in
+    #   small letters alone. Default of attribute can name address too, so it takes same rule.
     let found = checkPage(
       PATH_PAGE, "<svg>\n<!ENTITY h \"a.js\">\n<!entity g \"b.js\">\n<script href=\"a.js\"/>"
     )
     check found.mapIt(it.line) == @[2, 3] and found.allIt("entity" in it.message)
-    check checkPage(PATH_PAGE, "<base href=\"/pages/\"><script src=\"a.js\"></script>").len == 0
+    for page in [
+      "<!ENTITY\th \"a.js\"><script href=\"a.js\"/>", "<!entity h \"a.js\">",
+      "<!ATTLIST script href CDATA \"https://cdn.example/a.js\"><script/>",
+    ]:
+      check checkPage(PATH_PAGE, page).len == 1
+
+  test "tag reads as HTML reads it, under any prefix, and frame that holds document is finding":
+    # Case: fifth review of #1069; quote in name or in bare value ended tag at `>` that browser
+    #   reads inside later value, so each address after it passed. So did script under prefix
+    #   other than none, and `srcdoc` of frame, which browser decodes and loads in origin of page.
+    #   Domain: quote in name and in bare value, for script and base; quote after vertical tab,
+    #   which HTML reads as no space, so its value is bare; then each prefix, and `srcdoc`.
+    for page in [
+      "<script a\"b x=\"> \" src=\"https://cdn.example/a.js\"></script>",
+      "<script x=a'b y='> ' src=https://cdn.example/a.js></script>",
+      "<base x=a\"b y=\"> \" href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
+      "<script x=\v\" y=\"> \" src=\"https://cdn.example/a.js\"></script>",
+      "<s:script xmlns:s=\"http://www.w3.org/2000/svg\" href=\"https://cdn.example/a.js\"/>",
+      "<SVG:SCRIPT HREF=\"https://cdn.example/a.js\"/>",
+      "<x:base href=\"https://cdn.example/\"><script src=\"a.js\"></script>",
+      "<iframe srcdoc=\"&lt;script src=https://cdn.example/a.js&gt;&lt;/script&gt;\"></iframe>",
+      "<IFRAME SRCDOC='a'></IFRAME>",
+    ]:
+      check checkPage(PATH_PAGE, page).len == 1
+    # Domain: comment of plain path, which takes same rule, `>` in quoted value, frame of path,
+    #   and tag whose name only ends with `script`.
+    for page in [
+      "<!-- <script src=\"a.js\"></script> -->", "<script x=\"a>b\" src=\"a.js\"></script>",
+      "<iframe src=\"a.html\"></iframe>", "<noscript src=\"https://cdn.example/a.js\">",
+    ]:
+      check checkPage(PATH_PAGE, page).len == 0
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
