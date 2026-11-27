@@ -7,8 +7,8 @@
 ##     Each dev dependency off `PACKAGES_ALLOWED` is finding, and so is each import of TypeScript
 ##       naming package off it. Specifier opening `.` or `/` is path, and `node:` is built-in.
 ##     Bare built-in, as `fs`, reads as package, and help names `node:fs`.
-##     Each `<script>` of page or SVG whose `src` names other host is finding, since page loads
-##       package from there.
+##     Each `<script>` of page or SVG whose `src`, `href` or `xlink:href` names other host is
+##       finding, since page loads package from there; tag reads across lines, in any case.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
 ##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
@@ -206,29 +206,61 @@ proc checkManifest*(path, text: string): seq[Finding] =
       )
 
 
-func checkPage*(path, text: string): seq[Finding] =
-  ## Report each `<script>` whose `src` names other host, at its line.
-  let lines = text.splitLines
-  for i, line in lines:
-    var at = line.find("<script")
-    while at >= 0:
+func attributes(tag: string): seq[tuple[name, value: string]] =
+  ## Read each attribute of text of tag past its name, as `a="v"`, `a='v'`, `a=v` or bare `a`,
+  ##   spaces round `=` allowed; name lowercase, as HTML reads it.
+  var cursor = 0
+  while cursor < tag.len:
+    while cursor < tag.len and tag[cursor] in Whitespace + {'/'}: inc cursor
+    let start = cursor
+    while cursor < tag.len and tag[cursor] notin Whitespace + {'=', '/'}: inc cursor
+    let name = tag[start ..< cursor].toLowerAscii
+    var probe = cursor
+    while probe < tag.len and tag[probe] in Whitespace: inc probe
+    if probe >= tag.len or tag[probe] != '=':
+      if name.len > 0: result.add (name: name, value: "")
+      continue
+
+    # Read value past `=`, quoted to its closing quote, or bare to next space.
+    inc probe
+    while probe < tag.len and tag[probe] in Whitespace: inc probe
+    if probe < tag.len and tag[probe] in {'"', '\''}:
       let
-        ending = line.find('>', at)
-        tag = if ending > at: line[at .. ending] else: line[at .. ^1]
-        key = tag.find("src=")
-      if key >= 0 and key + 4 < tag.len and tag[key + 4] in {'"', '\''}:
-        let
-          opening = key + 4
-          closing = tag.find(tag[opening], opening + 1)
-          source = if closing > opening: tag[opening + 1 ..< closing] else: ""
-        if "://" in source or source.startsWith("//"):
-          result.add finding(
-            path,
-            i + 1,
-            "Page loads script from other host; take base JavaScript, or script of project" &
-              CITE_RULE & "; got `" & source & "`.",
-          )
-      at = line.find("<script", at + 1)
+        closing = tag.find(tag[probe], probe + 1)
+        ending = if closing < 0: tag.len else: closing
+      result.add (name: name, value: tag[probe + 1 ..< ending])
+      cursor = ending + 1
+    else:
+      cursor = probe
+      while cursor < tag.len and tag[cursor] notin Whitespace: inc cursor
+      result.add (name: name, value: tag[probe ..< cursor])
+
+
+func checkPage*(path, text: string): seq[Finding] =
+  ## Report each `<script>` whose `src`, `href` or `xlink:href` names other host, at line of tag.
+  ##   Tag reads to first `>` outside quote, across lines, with no regard to case of letters.
+  let lowered = text.toLowerAscii
+  var at = lowered.find("<script")
+  while at >= 0:
+    let after = at + "<script".len
+    if after < text.len and text[after] in Whitespace + {'>', '/'}:
+      var
+        cursor = after
+        quote = none(char)
+      while cursor < text.len and (quote.isSome or text[cursor] != '>'):
+        if quote.isSome and text[cursor] == quote.get: quote = none(char)
+        elif quote.isNone and text[cursor] in {'"', '\''}: quote = some(text[cursor])
+        inc cursor
+      for (name, source) in text[after ..< cursor].attributes:
+        if name notin ["src", "href", "xlink:href"]: continue
+        if "://" notin source and not source.startsWith("//"): continue
+        result.add finding(
+          path,
+          text[0 ..< at].count('\n') + 1,
+          "Page loads script from other host; take base JavaScript, or script of project" &
+            CITE_RULE & "; got `" & source & "`.",
+        )
+    at = lowered.find("<script", at + 1)
 
 
 proc checkPackagesNode*(tree: Tree): seq[Finding] =
