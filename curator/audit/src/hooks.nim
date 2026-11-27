@@ -2762,9 +2762,11 @@ func isFigureAt(line: string, at: int): bool =
 func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
   ## Read tokens and cost of first line of text that opens with one of labels, in any case, each
   ##   value as cell reads it (`valueAt`), with groups after comma alone, and above zero.
-  ##   Line runs on over each line after it up to blank line, line that opens with label in bold,
-  ##     as `**Critic:**`, or line that opens other block (`isBlockStart`), so line that wraps
-  ##     gives its figures, and line of critic, bullet or table after it none (choice).
+  ##   Line runs on over each line after it until it ends with full stop, up to blank line, line
+  ##     that opens with label in bold, as `**Critic:**`, or with label of claim (`labelClaim`),
+  ##     or line that opens other block (`isBlockStart`), so line that wraps gives its figures,
+  ##     and line of critic, sentence, bullet or table after it none (choice).
+  ##   Cost: line with no full stop runs on into plain sentence under it with no blank line.
   ##   Tokens are whole value of count (`isCount`) that opens after space (`isFigureAt`) and ends
   ##     right before ` tokens`, so `39.1M tokens` and `39100k tokens` read 39,100,000, and
   ##     `170.000 tokens` none.
@@ -2789,13 +2791,17 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
         (s[close - 1] in {':', FULL_STOP} or s.continuesWith(":", close + BOLD.len))
 
   func isBlockStart(line: string): bool =
-    ## Decide whether line opens block that ends paragraph above it, as Markdown reads it: item of
-    ##   list (`isItem`), row of table, quote, or heading, as `#` run of one to six then space.
-    let s = line.strip(trailing = false)
+    ## Decide whether line opens block that ends paragraph above it: item of list (`isItem`), row
+    ##   of table, quote, heading, as `#` run of one to six then space, block of HTML, as `<`, or
+    ##   break, as three or more of one of `*`, `-` or `_`, spaces between.
+    let
+      s = line.strip(trailing = false)
+      marks = s.strip.replace(" ", "")  # Line with no space, for break.
     var hashes = 0  # Marks `#` that open line.
     while hashes < s.len and s[hashes] == '#': inc hashes
-    line.isItem or s.startsWith(PIPE) or s.startsWith('>') or
-        (hashes in 1..LEVELS_HEADING and (hashes == s.len or s[hashes] == ' '))
+    line.isItem or s.startsWith(PIPE) or s.startsWith('>') or s.startsWith('<') or
+        (hashes in 1..LEVELS_HEADING and (hashes == s.len or s[hashes] == ' ')) or
+        (marks.len >= 3 and marks[0] in {'*', '-', '_'} and marks.allIt(it == marks[0]))
 
   let lines = text.splitLines
   for k, opening in lines:
@@ -2803,7 +2809,8 @@ func figuresLine*(text: string, labels: openArray[string]): FiguresLine =
     if not labels.anyIt(lower.startsWith(it)): continue
     var line = opening.strip
     for next in lines[k + 1 .. ^1]:
-      if next.strip.len == 0 or next.isLabelBold or next.isBlockStart: break
+      if line.endsWith(FULL_STOP) or next.strip.len == 0 or next.isLabelBold or
+          next.strip.labelClaim.len > 0 or next.isBlockStart: break
       line.add " " & next.strip
     result.line = line
     var
