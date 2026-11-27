@@ -45,6 +45,9 @@
 ##   .i `Chromium` zmicu'a le canko
 ##   .i se ki'u bo no da tcidu lo lerpoi .a lo porsi be lo lertai vu'o poi `@media` curmi ke'a va'o
 ##       lo ni ganra poi drata po'o
+##
+## ni'o `contributor/bangu/rictadni/tools/drive/collector.nim` cu fukpi le vi datnyvei
+##   .i se ki'u bo lo nu cikre le vi datnyvei cu mulno va'o lo nu cipra le fukpi to `II.9` toi
 
 {.experimental: "strictFuncs".}
 
