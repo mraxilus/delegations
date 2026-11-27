@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | eb2c575088bd31a7 |
+| Rules   | 8c2726038e8b855a |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | 35efc2a7a342cb839167be1e1800031e4bff9e9e |
 
@@ -214,8 +214,7 @@ delegate may not rewrite it. A finding on it could never be fixed. A record may 
 word, the acknowledgement that a source such as the NASA Exoplanet Archive asks for. Such a quote
 can pass 25 words.
 
-- Rejected: an allowlist of exact sentences, which is the grandfathering that curator duty 3
-  forbids.
+- Rejected: an allowlist of exact sentences, the grandfathering that curator duty 3 forbids.
 - Cost: the worked example inside the quotation in `GUIDE.md` goes unchecked. It holds by
   reading, as the rest of the guide does.
 - Cost: a sentence ends at a stop after a letter, a digit or a closing bracket. A stop after a
@@ -565,8 +564,7 @@ line of Claude Code, `@` and a path alone on a line, is skipped too, because it 
 - A path holds `/` or `.` before its last character, as `AGENTS.md` does. So a word alone after
   `@`, as `@agents`, names no file, and the check reads it as prose. Verified by
   `suites/test_glossary.nim`. Cost: an import of a file at the root with no extension reads as
-  prose. Rejected: a test that the named file exists, since the check reads one file and never
-  the tree.
+  prose. Rejected: a test that the named file exists, since the check reads one file, not the tree.
 
 ## Prompts
 
@@ -619,8 +617,7 @@ pass runs it over every file that the audit reads.
   The word `and` and a capital name a second section beside the first.
 - The longest heading that opens the text after the comma wins, because a heading can hold a
   comma, as (`GUIDE.md`, Prune, never narrate) does.
-- Verified by `suites/test_citations_section.nim`, for each form of the name, the section and
-  the quote.
+- Verified by `suites/test_citations_section.nim`, for each form of the name, section and quote.
 
 **The match is lenient, as the Architect ruled on #892 with option b.** It does not compare
 case, or the articles `a`, `an` and `the`, because a telegraphic comment drops its articles
@@ -725,8 +722,7 @@ viewer may lack.
   drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
   well as from `pages/` and `mockups/`, read 2026-10-04. The static pass cannot trace which file
   a build reads. A test fixture holds a character to prove its absence, so the tests stay out.
-- Cost: a character in a file that no page reads is reported too, such as a message that a tool
-  prints.
+- Cost: a character in a file that no page reads is reported too, as a message that a tool prints.
 - **A character that a comment alone holds is set aside, line by line**, because it never
   reaches a page. The comments come from `comments.nim`, so the blind spots of that module are
   the blind spots of this check.
@@ -1293,8 +1289,7 @@ that can write, as `watch.yml` and `ledger.yml` hold for their own events.
   and `check-scope` still fails it.
 - Cost: no suite reads the pattern of the branch in `label`, or the condition `!cancelled()` of
   `check-role`. The runner and the hand check below hold both.
-- Cost: a pull request from a fork gets a token that can only read, so its label stays a task
-  by hand.
+- Cost: a pull request from a fork gets a token that only reads, so a person adds its label.
 - Cost: `workflows.nim` reads the `permissions` block at the top of a workflow alone. So no check
   reads the grant of `label`, and no check holds that `check-role` writes nothing.
 - Verified by hand on 2026-11-15. The step of `label`, read from the workflow file, ran under
@@ -2013,11 +2008,10 @@ second copy drifts. `check.yml` must state it, and a commit pin is one finding, 
 workflows state a version. Verified by `suites/test_toolchain.nim` over both paths.
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** Nim assigns
-no CVE, so no release carries one. So the reason to move is what the release notes carry, or a
-ruling. The curator projects pin 2.4.2, the first patch release of the 2.4 series. On
-2026-11-26 the Architect asked each project to keep up with the patch releases of that series,
-for their fixes. Security fixes come first, nothing fails while a pin lags, and a project leaves
-the series only when the Architect asks.
+no CVE, so the reason to move is what the release notes carry, or a ruling. The curator projects
+pin 2.4.2, the first patch release of 2.4. Each project keeps up with the patch releases of that
+series, security fixes first, as the Architect asked on 2026-11-26. Nothing fails while a pin
+lags, and a project leaves the series only when the Architect asks.
 
 - The notes of 2.4.2 fix 23 bugs of 2.4.0. Among them are a segfault of destructors under
   `-d:release`, and parsers that raise on bad input. No suite sets `-d:release`, but the build of
@@ -2025,17 +2019,14 @@ the series only when the Architect asks.
 - The sources of 2.4.2 also harden two places that the notes do not list. The lexer stops an
   unterminated `\u{` escape at the end of the buffer, and each compile and each proof of knoller
   reaches it. On Windows, `osproc` refuses an unsafe argument to a batch file (CVE-2024-24576).
-  The one batch file that a curator project starts, `npm`, takes the constant `ci --no-audit
-  --no-fund`.
+  `npm`, the one batch file that a curator project starts, takes constant arguments, and the
+  quoted name of each dev dependency that a manifest names.
 - Verified by `check.yml` on the runner at `d4f7e2b1`, 2026-11-26: the suites of `curator/audit`,
   `curator/knoller`, `curator/assayer` and `curator/probe` pass on 2.4.2. `nim r koch check` on
   2.4.2 gives 0 findings, and knoller prints the same 4,434 lines over the tree on both releases.
 - Atlas moved with the toolchain, from 0.14.7 to 0.16.3. Its claims below were verified on 0.14.7.
   On 0.16.3 a restore of assayer joins `srcDir` to the root of the clone, warns that the remote
   differs, and `atlas changed` exits 0, 2026-11-26.
-- Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
-  assigned gets an int register for it. To write `result = 0.0` first avoids it. `dance_ontology`
-  diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by hand, 2026-10-29.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
@@ -2062,11 +2053,13 @@ the series only when the Architect asks.
 
 **The `nim` workflow runs the verb each Monday, as the Architect asked, and keeps one issue open
 while it exits 1.** The issue is labelled `curator`, edited to the latest run, and commented where
-the output changed. Exit 0 closes it, other exits turn the job red, and a branch run edits no issue.
+the output changed. Exit 0 closes it, and a branch run edits no issue. Each other exit turns the job
+red, and so does exit 1 with no count of findings, which a crash of koch gives.
 
 - Cost: a pin may lag a release for a week, and a project that moves its pin while the issue is open
-  adds a comment. Verified by hand against a stub `gh`, GNU bash 5.2, 2026-11-26. A lag opens the
-  issue, a repeat adds no comment, a new lag adds one, 0 closes, and 2 or a branch run posts none.
+  adds a comment. Verified by hand against a stub `gh`, GNU bash 5.2.21, 2026-11-27. A lag opens the
+  issue, a repeat adds no comment, and a new lag adds one. Exit 0 closes it, and 2, a trace, or a
+  branch run posts none.
 
 **Koch runs each project on the compiler of its pin, and knoller serves that compiler.** Koch
 imports the resolution of knoller: `PATH` where that already serves, then
@@ -2074,8 +2067,7 @@ imports the resolution of knoller: `PATH` where that already serves, then
 of knoller holds that design, under Compilers. `plan.nim`, `symbols.nim` and `koch fix` each
 hold one `Toolchains` of knoller, which resolves each pin once.
 
-So `nim r koch check` stays green as one command over a changed set that spans pins. These
-points hold here.
+So `nim r koch check` stays green as one command over a changed set that spans pins.
 
 - So a delegate need not install a compiler. GUIDE.md, Toolchain, says that, how to install one
   by hand, and how to bump a pin, and this record says how koch serves it. Testament and Atlas
@@ -2150,8 +2142,7 @@ before koch reads the exit of `atlas changed`.
 - A checkout at another commit is a finding that names the lock, the item and both commits. A
   directory where git reads no commit is a finding too, since nothing shows that it matches. An item
   that names no commit is a finding too, as `atlas changed` warns `commit differs` there
-  (`lockfiles.nim` of Atlas 0.14.7, line 215). An absent checkout reads no commit, so it stays one
-  finding.
+  (`lockfiles.nim`, Atlas 0.14.7, line 215). An absent checkout reads no commit, so is one finding.
 - Git reads the `.git` of the directory alone. A plain directory under the project would read the
   `HEAD` of the repository that holds it. For knoller, that is the repository of the package.
 - Rejected: the verdict of `atlas changed` alone, which exits 0 while it warns `commit differs`.
@@ -2290,8 +2281,7 @@ a long string name nothing.
   Figures, with Nim 2.4.0, on 2026-11-16.
 - Cost: a block comment, and `"""` inside a string of one line, mislead the reader. A path that a
   macro builds names nothing.
-- Verified by `suites/test_imports.nim`, for each form of statement and each text that names
-  nothing.
+- Verified by `suites/test_imports.nim`, for each form of statement, and each text that names none.
 
 **An import by path from one project into another is a finding at its line.** The finding names the
 project that the import reaches, and asks for a package that `atlas.lock` pins (`CONTRIBUTOR.md`,
@@ -2336,8 +2326,7 @@ package and the module that imports it.
   clone.
 - Verified by `suites/test_imports.nim`, for the case as found and its domain. The domain is the
   standard library, and modules of the project by path, by bare name and by `include`. It is also a
-  cycle, the name of a package, a `pkg/` name, a file that the tree lacks, and a module of another
-  project.
+  cycle, a name of a package, a `pkg/` name, a file the tree lacks, and a module of another project.
 - Cost: inside one process, the check of drivers took 47 ms, 40 ms and 40 ms over the tree, as
   Figures gives. Figures also gives the pair for the static pass.
 
@@ -2543,8 +2532,7 @@ declaration is the only statement and nothing can drift from it.
   repository still answering its own question in prose.
 - Cost: the packages of koch itself are unconditional, so a machine that needs none of them
   still installs them.
-- Verified by `suites/test_plan.nim`: koch declares what it needs, as the rule asks of every
-  project.
+- Verified by `suites/test_plan.nim`: koch declares what it needs, as the rule asks of each project.
 
 ## Tests
 
@@ -2611,6 +2599,47 @@ nothing else, because what a check needs differs for each project, while the nam
   `nimSceneHandles` to `nimSceneSlots`, with nothing else touched, reports one finding over
   `TS2304` at four sites in `construct_section.ts`. Reverted, it reports 0 findings.
 - Cost, unmeasured on the current pin: the whole verb, with `npm ci` included.
+
+## Node packages
+
+**Scripts take base JavaScript, Node built-ins and three tools alone** (CONTRIBUTOR.md, TypeScript
+and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package, and
+each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:` built-in or
+a listed package. A page or SVG refuses each `<script>` from another host.
+
+- A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
+  strings, templates, comments and regular expressions, so `'stands to start from'` names no
+  module, and an import inside `${}` names one. Cost: a regular expression after a word or `)`
+  reads as division, so its quote can open a string or a template. A specifier on the line after
+  its keyword reads as none. Such a miss can import a package that a listed tool pulls in, as
+  `playwright-core`. Rejected: a list of the built-ins of Node, which moves with each release.
+- A plain path alone passes: before its query, it holds letters, digits and `.-_~%/` alone, and
+  opens with no `//`. The rule decodes nothing, since each decode copies the browser in part, and
+  each part left out is a way past. `<script>`, `<base>` and `xml:base` take it under any prefix, in
+  a comment too, and a tag reads as HTML reads it. `srcdoc`, `<!ENTITY`, `<!ATTLIST` and
+  `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: inline script reads as
+  none. So does a frame, object or embed at no plain path, whose script runs apart from the page.
+
+**`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
+answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
+--include=dev --json` reads the lock alone, and each package that it names is a finding at the
+lock, so the verb exits 1. Without `--include=dev`, `NODE_ENV=production` or `omit=dev` reads a
+lock of tools as clean. `npm view` gives the latest release of each dev dependency, and one locked
+below it prints a line that fails nothing. An answer that cannot stand exits 2, and so does a
+named project with no lock, so the issue never closes for work not done.
+
+- Each project takes one issue, labelled with its role and `curator`, as `head` does. Exit 1 opens
+  it only beside the count of findings, since a crash of koch exits 1 too. The issue leaves out
+  the lines of tools behind, so a new release of a tool never comments. Cost: a project that drops
+  its lock leaves the matrix, so a curator closes its open issue by hand.
+- Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
+- Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
+- Verified by `suites/test_packages_node.nim`, and by `nim r koch check-files` at `fd562645` with 0
+  findings over the three node projects, 2026-11-27. By hand that day, 131 of 132 mutants of the
+  curator and six reviews fail the suite, and the one left changes no verdict. With npm 10.9.9, the
+  verb exits 0 over the tree, and `list-projects --all --node` names the three. It exits 1 on a copy
+  whose lock holds `lodash` 4.17.15. It exits 2 with the registry at a dead address, and on a named
+  project with no lock. The issue step held in ten cases under a stub `gh`, GNU bash 5.2.21.
 
 ## Driven checks
 
@@ -2690,8 +2719,7 @@ issue, and the next failure opens a new one. The finding is the output from the 
   push, and a mark that never blocks is read by nobody.
 - Rejected: a read of head inside `drive`. One commit then passes and later fails, and each merge
   of that project waits on a bump.
-- Cost: the reference is read daily, so a pin may lag its head for up to a day before the issue
-  says so.
+- Cost: the reference is read daily, so a pin may lag its head up to a day before the issue says so.
 - Cost: the compiler arms, packages and Atlas cache of `head.yml` copy those of `drive` in
   `check.yml`. A workflow shares steps only through an action of its own.
 - Verified by `suites/test_plan.nim` and `suites/test_projects.nim`: the filter, and a real
@@ -2930,7 +2958,7 @@ shell among them. The checks still read every kind, and a finding there stays fo
 
 - Verified by `suites/test_fixes.nim`: a Markdown, TypeScript, JSON, YAML, cfg and shell source
   with trailing whitespace passes through, and its check still reports the whitespace. A Nim and
-  a nimble source are fixed. The scope test no longer writes a contributor `README.md`.
+  a nimble source are fixed.
 
 **The fixers run in one order, and the chain runs again until the source settles.** First come
 the fixers that read more than one file: the renames and conversions of the semantic pass, then
@@ -3029,11 +3057,9 @@ string has no fixer, because its width is a guess. A lone CR is a line break or 
 reflow, a wrap or a rename each fixes a long line that holds no call and no operator to break
 after. An empty file has no fixer either.
 
-- An import ranked low across lines that are not imports has no fixer, because where it lands is a
-  choice.
+- An import ranked low across lines of other code has no fixer, since where it lands is a choice.
 - A bracket that holds a comment has no fixer, because the comment belongs to an item or to a slot.
-- A run whose last binding opens a long string has no fixer, because a new indent changes the
-  string.
+- A run whose last binding opens a long string has no fixer, since a new indent changes the string.
 - A rule that needs a fact the text does not hold has no fixer. That covers the consumer of
   `{.used.}`, the reach of `{.push.}`, a seed and a missing stub header. It also covers debug
   output, a path of one machine and the flags of TypeScript.
@@ -3215,8 +3241,7 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 - The parser of the compiler read each changed file to the same tree as before, once
   normalised. To the normalisation of the layout proof, it adds four steps. It drops a pair of
   parentheses and the profiler import, reads `x.f` as `f(x)`, and drops backticks in a string.
-- `nim check` read each changed file with the same result before and after, on its own pin and
-  config.
+- `nim check` gave each changed file the same result before and after, on its own pin and config.
 
 ## Semantic pass
 
@@ -3294,8 +3319,7 @@ traces back to the line as given (`originApplied`).
 - Cost: two markers or two `func` on one line match their edits by line and rule alone. So where one
   of them stays, the finding left can name the other one. How often a line holds two is unmeasured.
 - A fenced landmark index or constructor call counts in the warning of its fence, which reads the
-  names. A fenced marker or `proc` prints as left, since the fence warning reads no uses and no
-  pures.
+  names. A fenced marker or `proc` prints as left, since the fence warning reads no use or pure.
 - A file whose uses or pures the compiler resolved none prints a warning with its reason.
 - Verified by `suites/test_fixes.nim`, with uses and pures written by hand, and with the names of
   a tree. It holds an index of several aliases before and after a written one, and a fenced call
@@ -3695,8 +3719,7 @@ each symbolic link through the nearest part of the path that exists.
 - Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
   and `..` from a folder of the branch reaches each file of the repository.
 - Two forms read as outside: a symbolic link to a file not yet written, and a hard link.
-  `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
-  request.
+  `koch check` refuses such a file before the push, and `check-scope` on the pull request.
 - Cost: on each write, up to two `stat` calls for each part that `pathReal` tries, then one
   `realpath`. A file in no repository takes a second `realpath`, in the fallback of `checkoutAt`.
 - Measured by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon
@@ -3783,8 +3806,7 @@ a turn that pushed or posted, because the rule binds every message. Each number 
   definition line is a link too. A bracket with no definition is text, as GitHub shows it.
 - Fenced code and code spans are skipped. A code span closes at the next run of backticks of the
   same length, as CommonMark reads it.
-- A `#` after a word character, `&` or `/` opens no number. So `&#169;` and a fragment of a URL
-  pass.
+- A `#` after a word character, `&` or `/` opens no number, so `&#169;` and a URL fragment pass.
 - Cost: `owner/repo#12` passes too, though it names an item of another repository bare.
 - Cost: the hook reads the closing message of a turn alone, and no earlier message of the turn.
 - Verified by `suites/test_hooks.nim`: three kinds of link, code, an undefined bracket, a
@@ -3809,8 +3831,7 @@ has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet t
 Architect reads the block first: who the delegate is and what it works on, then what happened.
 Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
 a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
-The coordinator, once the Architect trials it, lifts each decision onto a card without a change
-of words.
+The coordinator, once the Architect trials it, lifts each decision onto a card, its words unchanged.
 
 The block carries seven parts in order: `Role`, `Context`, the work, `Summary`, `State`,
 `Decisions` and `Next step`. The Architect set the order of the parts on 2026-10-04, and the
@@ -3838,8 +3859,7 @@ refuses work before the context, a state before the summary, and a block with no
   sets them. The check reads each item of a decision with bold taken out, since bold changes no
   word that it reads.
 - Rejected: a fenced block of YAML, which renders as no table and skips the `english` check.
-- Cost: the check reads shape, and never whether a decision says anything, or whether an option
-  is honest.
+- Cost: the check reads shape, and never whether a decision says anything or an option is honest.
 - Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
   runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
   sign-off. The second stop passes.
@@ -4209,8 +4229,7 @@ read. It is the form of the samples of `GUIDE.md`, where each claim is a bullet 
 - Verified by hand with pandoc 3.1.3 of GFM, on 2026-11-19, for each form at each indent up to six
   columns. On 2026-11-20, pandoc gives the verdict of the law for each of its cases, which the test
   counts as `lines`. Verified by `suites/test_hooks.nim`, for each form at each indent up to five
-  columns, a tab as four. The law runs under a claim on one line, and under one that wraps once. It
-  holds probes F08 and F09 of the critic of the claim build.
+  columns, a tab as four. The law runs under a claim on one line, and under one that wraps once.
 - Cost: from an indent of six columns, Markdown reads such a line as text of the claim. Yet it
   ends the claim there, as a bullet at any indent does. Verified by `suites/test_hooks.nim`.
 - Cost: an indent of one to three spaces, `1.`, or a tab after the marker opens no claim.
@@ -4238,8 +4257,7 @@ confidence stays in the claim. Where no percentage stands there, the claim ends 
 - Choice: other text in brackets is no percentage, as `(70 %)`, `(about 70%)` or `(.5%)`. The
   guide writes a confidence as `(70%)`, and a looser read would end a claim at a figure of its text.
 - Choice: the words `, as the 5th` open percentiles, as the samples of `GUIDE.md` write them at
-  90% (comment 7191274618). The words `, as the 10th` still open them, since a block written at
-  80% ends there.
+  90% (comment 7191274618). The words `, as the 10th` open them too, for a block written at 80%.
 - The words `. Resolution criterion` of the samples open a criterion plain, or in italics, bold
   or both, as `. *Resolution criterion:*` (comment 7027197745). Up to three marks of emphasis
   stand between the full stop and the words.
@@ -4287,23 +4305,9 @@ separator row, and a reflection below the sign-off. It holds each claim with and
 and refuses each other run of its words. It holds each mark, a wrap, each marker, and each form that
 opens no claim. It holds `No prediction` with and without a block, and the samples of `GUIDE.md`.
 
-- For the end at a full stop: a bullet with no mark, with no final full stop, with one, and with
-  two. It also holds a full stop before a mark, and entry 882.
-- For the confidence: one to three percentages before each end, a mark between two of them, and
-  a mark twice in a bullet. It holds a decimal percentage, and text in brackets that is none. It
-  holds the probes M1, M2 and M6 of the critic of the build of D5 b, as each was found.
-- For the percentiles: probe F11 of the critic of the claim build, and the example of the ruling.
-  It holds a percentage after them, a criterion before them, and both sets of words. It holds
-  `, As the 10th` too, which opens none.
-- For the criterion: probes F02, F03 and F07. It holds each case of its words, plain and in each
-  form of italics, bold or both, as the bullets that `marks` counts. It holds two forms in one
-  bullet, each form left out, and a claim that quotes the words.
-- For the label: probes M3 to M5, F21 and F22. It holds a capital with each class of character
-  after it, plain and in each form of bold. It holds each capital from `A` to `Z`, each other text
-  before `: `, and a capital word inside a claim. It holds another label before a claim, and a
-  flip of the case of each letter.
-- For the pipe: one to three pipes, each bare or escaped in the block, and two backslashes.
-- For the empty cell: an empty cell in each row, a short row, and a cell of whitespace alone.
+Each part above takes its domain in that suite, with each probe of a critic as found. The probes
+F02, F03 and F07 hold the criterion, and F11 the percentiles. M1, M2 and M6 hold the confidence,
+and M3 to M5, F21 and F22 the label.
 
 ## Runs of the block check
 
@@ -4407,8 +4411,7 @@ root of its project. A root branch `curator/<name>` writes `curator/audit/claims
   from the working tree, or from `HEAD` in a bare repository, and never from the merged commits.
   Verified by hand with git 2.43.0 in scratch repositories, on 2026-11-20.
 - Verified by `suites/test_claims_log.nim`, in scratch roots.
-- Cost: the log of the audit project holds the rows of the root curator too, each with its own
-  project.
+- Cost: the log of the audit project holds the rows of the root curator too, each with its project.
 
 **The log of the root curator holds the 372 claims of the effort study of #963.** They ran before
 the log merged, so D3 a of #964 (comment 7065645801) filled them once. A script in scratch read
@@ -4557,8 +4560,7 @@ is a hint, and it refuses nothing.
   each skill to the section that it points at.
 - Cost: Claude Code ignores a key of the front matter that its documentation does not list, as
   it ignores `invokeAs` of `steward`.
-- Cost: `prompt` runs before each message of the Architect, so each message costs one run of
-  the hook.
+- Cost: `prompt` runs before each message of the Architect, so each costs one run of the hook.
 - The keys of the front matter are those that the Skills page of Claude Code lists, read on
   2026-11-11.
 - Verified by hand in Claude Code at `main`, 2026-11-11: it listed `explain` among its skills,
@@ -4718,8 +4720,7 @@ the checkout itself.
 Traps of the merge process:
 
 - **A re-run reuses its original merge commit and workflow file**, so a fix on `main` reaches
-  an open pull request only through a new head. Merge `main` into the branch, and never re-run
-  and hope.
+  an open pull request only through a new head. Merge `main` into the branch, never re-run and hope.
 - **Two stamped changes in flight produce a third stamp that neither one carries.** Each
   re-stamps every project against its own `CONTRIBUTOR.md`. Git merges their edits cleanly
   where they touch different sections, but the merged document digests to a value that matches
@@ -4884,8 +4885,7 @@ seconds, where a build from source is fifteen minutes. Every other cache is nois
 `npm ci` runs in 2 s cached, and the font faces of one project take 1.5 s uncached. Measured on the
 runner, recorded 2026-09-07.
 
-- Unmeasured: npm cold on the runner, which needs a key poisoned on purpose. That figure is not
-  owed.
+- Unmeasured, and not owed: npm cold on the runner, which needs a key poisoned on purpose.
 - The Atlas cache sits at the folder that `atlas.config` names, else at `deps`, the default of
   Atlas. The step before the cache reads that folder, so the cache restores where Atlas
   restores. Verified by hand on 2026-10-02, by the step run under `bash -e` for each project.

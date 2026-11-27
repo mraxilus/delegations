@@ -76,6 +76,7 @@ import ./curator/audit/src/[
   hooks,
   lags,
   merge,
+  packages_node,
   plan,
   projects,
   releases,
@@ -107,6 +108,7 @@ Verbs:
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
   head           fetch deps, then project's own `head` verb, on project's own pin
   releases       ask nim-lang.org for later Nim releases; exit 1 where driver lags, 2 on failure
+  advisories     ask npm for advisories of each node lock; exit 1 on one, 2 on failure
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
@@ -122,6 +124,7 @@ Options:
   --recent         projects whose code merged within last week
   --drive          list-projects keeps projects carrying `drive` verb
   --head           list-projects keeps projects carrying `head` verb
+  --node           list-projects keeps projects carrying node manifest beside its lock
   --write          stamp writes every Rules row rather than printing
   --dry-run        fix prints each change it would make, writes none, exits 1 where any
   --form:<form>    finding form, `terminal` or `line` (default terminal at terminal, else line)
@@ -136,7 +139,7 @@ const
 
 type
   Flag = enum  ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun, FormFinding
+    Root, Branch, Base, All, Recent, Drive, Head, Node, Write, DryRun, FormFinding
 
   Options = object  ## Define parsed command line.
     command: string
@@ -149,6 +152,7 @@ type
     is_recent: bool
     is_drive: bool
     is_head: bool
+    is_node: bool
     is_write: bool
     is_dry_run: bool
     form: string  ## Form `--form` names, as given; empty where none.
@@ -176,6 +180,7 @@ proc parseOptions(): Option[Options] =
       of "recent": options.is_recent = true
       of "drive": options.is_drive = true
       of "head": options.is_head = true
+      of "node": options.is_node = true
       of "write": options.is_write = true
       of "dry-run": options.is_dry_run = true
       of "form": options.form = value
@@ -195,6 +200,7 @@ func given(options: Options): set[Flag] =
   if options.is_recent: result.incl Recent
   if options.is_drive: result.incl Drive
   if options.is_head: result.incl Head
+  if options.is_node: result.incl Node
   if options.is_write: result.incl Write
   if options.is_dry_run: result.incl DryRun
   if options.form.len > 0: result.incl FormFinding
@@ -658,6 +664,26 @@ proc run(options: Options): int =
       stderr.write "koch releases: " & failure & "\n"
       return 2
     found = named
+  of "advisories":
+    # Asks reach npm registry, whose answer moves with no commit here, so `npm.yml` runs verb
+    #   weekly and `check` never does; search and lines are `packages_node.nim`'s, offline in
+    #   suite. Failure of search exits 2, so `npm.yml` reads exit 1 as advisory alone.
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
+      return options.refused
+    let
+      tree = options.root.readTree
+      directories = tree.directoriesNode(options.directoriesScoped(tree))
+    let failure_named = failureNamed(options.project, directories)
+    if failure_named.len > 0:
+      stderr.write "koch advisories: " & failure_named & "\n"
+      return 2
+    let (lines, named, failure) =
+      checkAdvisories(readLocked(options.root, directories), askAudit, askLatest)
+    for line in lines: echo line
+    if failure.len > 0:
+      stderr.write "koch advisories: " & failure & "\n"
+      return 2
+    found = named
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
@@ -759,12 +785,13 @@ proc run(options: Options): int =
     for line in failed.rendered(form, is_colored): stderr.write line & "\n"
     return if failed.len > 0: 1 else: 0
   of "list-projects":
-    if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, Drive, Head, Node}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     var jobs = options.jobsPlanned(tree)
     if options.is_drive: jobs = tree.drivenOnly(jobs)
     if options.is_head: jobs = tree.carryingOnly(jobs, VERB_HEAD)
+    if options.is_node: jobs = jobs.filterIt(tree.directoriesNode([it.directory]).len > 0)
     echo render(jobs)
     return 0
   of "stamp":
