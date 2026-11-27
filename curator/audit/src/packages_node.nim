@@ -57,6 +57,9 @@ const
     ## Words whose quoted operand names module, as `from 'x'`, `import 'x'` and `require('x')`.
   QUOTES = {'\'', '"', '`'}  ## Marks that open and close specifier.
   SECONDS_ASK = 60  ## Seconds npm waits on registry at most for one fetch.
+  COMMAND_AUDIT* = "npm audit --package-lock-only --json --fetch-retries=1 --fetch-timeout=" &
+    $(SECONDS_ASK * 1000)
+    ## Command `askAudit` runs in directory of lock, which reads lock alone.
   CITE_RULE = " (CONTRIBUTOR.md, TypeScript and Node)"  ## Rule each finding and line cites.
 
 
@@ -335,10 +338,8 @@ proc checkAdvisories*(
 
 proc askAudit*(directory: string): Answer =
   ## Ask npm registry for advisories of lock in directory, reading lock alone.
-  let command = "npm audit --package-lock-only --json --fetch-retries=1 --fetch-timeout=" &
-    $(SECONDS_ASK * 1000)
   let (output, code) =
-    try: execCmdEx(command, options = {poEvalCommand, poUsePath}, workingDir = directory)
+    try: execCmdEx(COMMAND_AUDIT, options = {poEvalCommand, poUsePath}, workingDir = directory)
     except OSError: ("", 127)
   (code: code, output: output)
 
