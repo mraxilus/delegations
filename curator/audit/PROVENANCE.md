@@ -564,8 +564,7 @@ line of Claude Code, `@` and a path alone on a line, is skipped too, because it 
 - A path holds `/` or `.` before its last character, as `AGENTS.md` does. So a word alone after
   `@`, as `@agents`, names no file, and the check reads it as prose. Verified by
   `suites/test_glossary.nim`. Cost: an import of a file at the root with no extension reads as
-  prose. Rejected: a test that the named file exists, since the check reads one file and never
-  the tree.
+  prose. Rejected: a test that the named file exists, since the check reads one file, not the tree.
 
 ## Prompts
 
@@ -2143,8 +2142,7 @@ before koch reads the exit of `atlas changed`.
 - A checkout at another commit is a finding that names the lock, the item and both commits. A
   directory where git reads no commit is a finding too, since nothing shows that it matches. An item
   that names no commit is a finding too, as `atlas changed` warns `commit differs` there
-  (`lockfiles.nim` of Atlas 0.14.7, line 215). An absent checkout reads no commit, so it stays one
-  finding.
+  (`lockfiles.nim`, Atlas 0.14.7, line 215). An absent checkout reads no commit, so is one finding.
 - Git reads the `.git` of the directory alone. A plain directory under the project would read the
   `HEAD` of the repository that holds it. For knoller, that is the repository of the package.
 - Rejected: the verdict of `atlas changed` alone, which exits 0 while it warns `commit differs`.
@@ -2328,8 +2326,7 @@ package and the module that imports it.
   clone.
 - Verified by `suites/test_imports.nim`, for the case as found and its domain. The domain is the
   standard library, and modules of the project by path, by bare name and by `include`. It is also a
-  cycle, the name of a package, a `pkg/` name, a file that the tree lacks, and a module of another
-  project.
+  cycle, a name of a package, a `pkg/` name, a file the tree lacks, and a module of another project.
 - Cost: inside one process, the check of drivers took 47 ms, 40 ms and 40 ms over the tree, as
   Figures gives. Figures also gives the pair for the static pass.
 
@@ -2608,15 +2605,20 @@ nothing else, because what a check needs differs for each project, while the nam
 **Scripts take base JavaScript, Node built-ins and three tools alone** (CONTRIBUTOR.md, TypeScript
 and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package,
 and each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:`
-built-in or a listed package. A page or an SVG refuses a `<script>` whose `src`, `href` or
-`xlink:href` names another host, as a browser reads its address.
+built-in or a listed package. A page or an SVG refuses a `<script>` that a browser may load from
+another host.
 
 - A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
   module, and an import inside `${}` names one. Cost: a regular expression after a word or `)`
   reads as division, so its quote can open a string or a template. A specifier on the line after
-  its keyword reads as none, as do `<svg:script>` and most named entities of an address.
-  Rejected: a list of the built-ins of Node, which moves with each release.
+  its keyword reads as none. Such a miss costs little: the manifest check holds each package, and
+  `types` is expected to refuse an import of an address. Rejected: a list of the built-ins of
+  Node, which moves with each release.
+- An address passes only as a path, with no scheme and no `//` at its head. It is read so once
+  each reference decodes, and each control and space leaves it. So the rule refuses wherever a
+  browser may load, inside an HTML comment too. Cost: `<svg:script>` reads as none, and a named
+  reference other than `&sol;` and `&colon;` stays as written.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
@@ -2632,8 +2634,8 @@ named project with no lock, so the issue never closes for work not done.
   its lock leaves the matrix, so a curator closes its open issue by hand.
 - Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
 - Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
-- Verified by `suites/test_packages_node.nim`, which each of 81 mutants of the module fails.
-  `nim r koch check-files` at `98ca4585` gives 0 findings over the three node projects, 2026-11-27.
+- Verified by `suites/test_packages_node.nim`, which each of 82 mutants of the module fails.
+  `nim r koch check-files` at `899c3558` gives 0 findings over the three node projects, 2026-11-27.
   By hand with npm 10.9.9 that day, the verb exits 0 over the tree, and `list-projects --all
   --node` names the three. It exits 1 on a copy whose lock holds `lodash` 4.17.15. It exits 2 with
   the registry at a dead address, and on a named project with no lock. The issue step held in ten
@@ -3239,7 +3241,7 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 - The parser of the compiler read each changed file to the same tree as before, once
   normalised. To the normalisation of the layout proof, it adds four steps. It drops a pair of
   parentheses and the profiler import, reads `x.f` as `f(x)`, and drops backticks in a string.
-- `nim check` read each changed file with one result before and after, on its own pin and config.
+- `nim check` gave each changed file the same result before and after, on its own pin and config.
 
 ## Semantic pass
 
@@ -3829,8 +3831,7 @@ has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet t
 Architect reads the block first: who the delegate is and what it works on, then what happened.
 Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
 a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
-The coordinator, once the Architect trials it, lifts each decision onto a card without a change
-of words.
+The coordinator, once the Architect trials it, lifts each decision onto a card, its words unchanged.
 
 The block carries seven parts in order: `Role`, `Context`, the work, `Summary`, `State`,
 `Decisions` and `Next step`. The Architect set the order of the parts on 2026-10-04, and the
