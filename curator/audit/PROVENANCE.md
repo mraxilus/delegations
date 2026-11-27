@@ -4356,15 +4356,14 @@ the role of the branch that wrote it, and the `sessionId` of its delegate.
 - The key is the `sessionId`, the call, the position of the claim in its block, and the state. So a
   later mark of a claim that waits adds a row, and the same mark adds none.
 - Verified by `suites/test_claims_log.nim`, over transcripts of a `reviewer` and `critic`, a
-  `critic`, and three calls of one claim. By hand on 2026-11-20, `koch hook stop` read the input
-  `effort` of a call in the background on #963. Assumed: so does a call in the foreground.
+  `critic`, and three calls of one claim. By hand on 2026-11-20, `koch hook stop` at `176d9e7a` read
+  the input `effort` of a background call on #963. Assumed: so does a foreground call.
 
-**The branch of the checkout names the log, in the scope that its role may write.** A branch
-`contributor/<domain>/<project>/<name>` or `curator/<project>/<name>` writes `claims.txtpb` at the
-root of its project. A root branch `curator/<name>` writes `curator/audit/claims.txtpb`, since
-`checkLayout` takes only the index directly under `curator/`. Each other checkout writes
-`~/.cache/koch/claims/waiting.txtpb`, with the project `curator`, and `nim r koch claims` in the
-worktree of a root branch moves those rows into its log.
+**The branch of the checkout names the log, in the scope that its role may write.**
+`contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` write `claims.txtpb` at the
+root of the project. A root branch `curator/<name>` writes `curator/audit/claims.txtpb`, as
+`checkLayout` takes only the index right under `curator/`. Each other checkout writes
+`~/.cache/koch/claims/waiting.txtpb`, which `nim r koch claims` on a root branch moves into its log.
 
 - A new log opens with a comment that names its schema. At each stop, `stop` reads the current turn,
   and writes no row whose key the log or the waiting file holds. A failed write refuses no turn.
@@ -4377,9 +4376,9 @@ worktree of a root branch moves those rows into its log.
   project.
 
 **The log of the root curator holds the 372 claims of the effort study of #963.** D3 a of #964
-(comment 7065645801) filled them by `lineClaim`, one row for each marker. A row takes the tokens,
-the cost and the outcome of its run. No row names a model (#1025), so no figure groups by it. By
-hand on 2026-11-26, `protoc` and `koch figures` read each of the 767 rows, and no key repeats. On
+(comment 7065645801) filled them by a script, which read each reflection and report of a resolver.
+It wrote a row by `lineClaim` for each marker. No row names a model (#1025), and each run used one.
+By hand on 2026-11-26, `protoc` and `koch figures` read each of the 767 rows, and no key repeats. On
 2026-11-21, each count of a batch agrees with #963, and each of 150 outcomes with its usage.
 
 **`lineClaim` writes the text format, and `protoc` reads it back in the suite.** This is an
@@ -4396,9 +4395,10 @@ hook needs no library and no `protoc` at each stop, and one row stays one line, 
 - Rejected: bytes, then `protoc --decode`, as Data asks. By hand on 2026-11-21, `protoc` 3.21.12
   prints a row over 14 lines, and `union` joins two such rows into one block that it refuses.
   Rejected: tokens summed from the transcript of a subagent, whose cost needs a price in code.
-- Cost: a cell that `stop` refuses gives no row until a reflection quotes its claim whole. One claim
-  in blocks of several calls of one kind takes the latest such call. Rows outside the tree are lost
-  where the machine ends before `koch claims`. Whether GitHub merges by `union` is unmeasured.
+- Cost: a cell that `stop` refuses gives no row until a reflection quotes its claim whole. A claim
+  in blocks of several calls of one kind takes the latest, so each replay at another level needs its
+  own reflection. Rows outside the tree are lost where the machine ends before `koch claims`.
+  Whether GitHub merges by `union` is unmeasured, so a branch that it refuses merges `main` itself.
 
 **`claimLine` reads each row back by hand, as D1 a of #964 rules (comment 7189788889).** It reads
 each field by its name, undoes each escape of `lineClaim`, and refuses a field that the schema
@@ -4408,32 +4408,32 @@ each field. Rejected: `protobuf_serialization`, the first dependency that the au
 
 **`nim r koch roll` rolls each row that can change no more into the prior at the head of the log.**
 The role that writes a log rolls it, as D2 a of #1049 rules (comment 7200192998). The prior names
-the first and last day of its rows, and the FNV-1a hash of the key of each. It holds a tally for
-each model, effort, project, kind, marker and band. Each sum of a tally is exact, so each figure but
-those by `delegate` stays to the last bit. A rolled claim weighs as a new one, as D4 a rules.
+the first and last day of its rows, for the decay of #1051, and the FNV-1a hash of each key. It
+holds a tally for each model, effort, project, kind, marker and band. Each sum of a tally is exact,
+so each figure but those by `delegate` stays to the last bit. A rolled claim weighs as a new one, as
+D4 a rules.
 
 - A log holds at most 5,000 rows, as D3 a rules, and `koch check` names a log past that cap. That is
   about 3 MB, at the 606 bytes of a mean row of the audit log on 2026-11-27.
-- A claim that waits stays with its other rows until a row before the cutoff marks it. So does a row
-  from the cutoff on, of a named prefix, of no key, or of no real day, as `2026-13-45`.
+- A claim that waits stays with its rows until a row before the cutoff marks it. So does a row from
+  the cutoff on, of no key, of no real day, or of a prefix for an open study.
 - The cutoff is the first day of the month that holds the day 30 days before the latest day of the
-  log. So each row of the last 30 to 60 days stays. The prior names no field of a branch, its keys
-  and tallies sort, and each sum writes canonical partials. So two rolls of the same rows write one
-  line, which git merges as one change.
+  log. So each row of the last 30 to 60 days stays. The prior names no field of a branch, and its
+  keys, tallies and partials are canonical. So two rolls of one set of rows write one line.
 - Each key counts once, in the prior that names it, else in its first row. So a row that `union`
-  brings back after the prior or before it, or that `stop` writes again on a replay, counts none.
-  The next roll drops it. Cost: until then, it counts toward the cap.
+  brings back, or that a replay writes again, counts none, and the next roll drops it.
 - Two priors read as the one whose keys hold those of the other. Where none does, `koch check` names
-  the log, so the merge fails its branch: revert one roll, merge again, and roll.
-- A rolled row stays in git, in each commit before its roll, and `git log -S` of its key names that
-  roll. The verb refuses a log that differs from `HEAD`, so a commit holds each row that it takes.
-  Verified by hand with git 2.43.0 on 2026-11-27, with the merges above.
+  the log, so a merge of `main` fails its branch. Since branches need not be up to date, two green
+  pull requests can still put such a log on `main`. Then revert one roll, merge, and roll.
+- A rolled row stays in each commit before its roll, and `git log -S` of its key names that roll.
+  The verb refuses a log that differs from `HEAD`. Verified by hand with git 2.43.0 on 2026-11-27.
 - An exact sum is one integer in units of `2^-1074`, and rounds once, as `math.fsum` rounds. Past
-  the largest float it gives an infinity, and NaN or an infinity of each sign gives NaN. Measured on
-  2026-11-27: `koch figures` took 0.023 to 0.024 s with partials, 0.024 to 0.027 s now.
+  the largest float it gives an infinity, and NaN or an infinity of each sign gives NaN. The header
+  of `sums_exact.nim` gives its cost in time.
 - Cost: figures by `delegate` read the prior as one delegate, `prior`. Two keys whose hashes agree
-  count as one, at a chance near n² / 2^65 for n keys. A key takes 26 bytes. Measured on 2026-11-27,
-  a roll of the 791 rows of the log of the audit project writes a prior of 52,465 bytes.
+  count as one, at an expected chance near n² / 2^65. A copy counts toward the cap until the next
+  roll. A probe in scratch measured 26 bytes for the key that each rolled row leaves, 2026-11-27. So
+  the prior and its read at each start grow with no bound.
 - Rejected: a cutoff 30 days back, and a prior that names `HEAD`, which differ on each branch.
 - Verified by `suites/test_claims_prior.nim`, `suites/test_sums_exact.nim` against `test_fsum` of
   CPython and exact rationals of Python 3.13.18, and `suites/test_claims_log.nim`. Expected: a
