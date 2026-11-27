@@ -220,9 +220,29 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
   take it after them on the same line, where the joined line fits. Otherwise the doc takes the
   next line, indented one level. Names that one line declares share one doc, which describes
-  each.
+  each. A binding whose value opens `block` takes a `#` comment instead (below).
 - A one-line routine takes its doc on the next line, indented to the body. A longer routine
   takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
+- A `const`, `let` or `var` whose value opens `block` keeps `block:` on its `=` line, so its
+  body takes one indent. This holds at top level and inside a routine. Its doc stands on its own
+  lines above the declaration, and a long doc wraps there as an outline (VI.2). In a section,
+  the doc stands above the name. Nim reads no doc there, so the doc is a `#` comment, and an
+  empty one is `# TODO: Document.` (VI.9).
+
+  A blank line stands above the doc, unless the line above opens the body that holds it, as
+  `if` does. The keyword of a section opens a body too:
+
+  ```nim
+  const STEPS_MAX* = 3  ## Count steps of walk at most.
+
+  # Construct LUT for grade of basis element.
+  #   Count set bits of each basis, once at compile time.
+  const LUT_GRADE_BY_BASIS = block:
+    var lut: array[Basis, Grade]
+    for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
+    lut
+  ```
+
 - Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
   `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
