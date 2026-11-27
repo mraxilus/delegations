@@ -374,9 +374,9 @@ suite "Log of claims":
         tallies: @[
           Tally(model: "model-a", effort: "high", project: "curator", kind: "reviewer",
             marker: Marker.Resolver, band: 71, rows: 5, count: 4, hits: 3, hits_band: 2,
-            confidence: SumExact(partials: @[2.9e-17, 3.05]),
-            score: SumExact(partials: @[-1.25e-14, 120.5]), count_number: 1,
-            score_number: SumExact(partials: @[77.69379682749334])),
+            confidence: [2.9e-17, 3.05].toSumExact,
+            score: [-2.5e-15, 120.5].toSumExact, count_number: 1,
+            score_number: [77.69379682749334].toSumExact),
           Tally(kind: "quote \" kind", marker: Marker.Delegate, rows: 1),
         ])
       line = prior.linePrior
@@ -390,7 +390,7 @@ suite "Log of claims":
       "date_first: \"2026-11-20\"", "date_last: \"2026-11-21\"", "commit: \"abc123\"",
       "model: \"model-a\"", "effort: \"high\"", "project: \"curator\"", "kind: \"reviewer\"",
       "marker: MARKER_RESOLVER", "band: 71", "rows: 5", "count: 4", "hits: 3", "hits_band: 2",
-      "confidence: 2.9e-17", "confidence: 3.05", "score: -1.25e-14", "score: 120.5",
+      "confidence: 2.9e-17", "confidence: 3.05", "score: -2.5e-15", "score: 120.5",
       "count_number: 1", "kind: \"quote \\\" kind\"",
       "score_number: 77.693796827493344",  # `protoc` prints 17 digits where 15 read no way back
       "marker: MARKER_DELEGATE", "rows: 1",

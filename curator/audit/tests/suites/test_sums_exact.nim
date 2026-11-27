@@ -1,16 +1,35 @@
 ## Replicate exact sum of floats: rounding once to nearest float, as `math.fsum` of CPython rounds,
-##   sum that takes no order, and partials that share no bit (#1049).
+##   sum that takes no order, partials that share no bit, and each special value (#1049).
 ##   Each expected exact sum is case of `test_fsum` of `Lib/test/test_math.py` of CPython, whose
 ##     `math.fsum` rounds partials as `toFloat` does; Python 3 here gives each to last bit.
+##   Each special value takes policy of `sums_exact.nim` (Article IV.8): each pair against sum of
+##     two floats in hardware, which rounds their exact sum once; each triple in each order; and
+##     each sum past largest float against exact rationals of Python 3.13.18, computed apart on
+##     2026-11-27, where `math.fsum` raises.
 
 {.experimental: "strictFuncs".}
 
-import std/[bitops, math, random, sequtils, unittest]
+import std/[algorithm, bitops, math, random, sequtils, unittest]
 import ../../src/sums_exact
 import ./fixtures
 
 
-const SAMPLES_SUM = 200  ## Random lists each law of exact sum reads.
+const
+  SAMPLES_SUM = 200  ## Random lists each law of exact sum reads.
+  MAX = 1.7976931348623157e308  ## Largest float, `(2^53 − 1) × 2^971`.
+  HALF = 9.9792015476736e291  ## Half of last bit of largest float, `2^970`.
+  BIG = 8.98846567431158e307  ## Largest power of two that float holds, `2^1023`.
+  TINY = 5e-324  ## Least float above zero, `2^-1074`.
+  VALUES_SPECIAL = [NaN, Inf, -Inf, MAX, -MAX, BIG, -BIG, HALF, -HALF, 1.0, -1.0, TINY, -TINY, 0.0,
+    -0.0]
+    ## Values whose sums meet each policy: NaN, each infinity, overflow, its tie, and each zero.
+  CASES_PAIR = VALUES_SPECIAL.len * VALUES_SPECIAL.len  ## Ordered pairs of `VALUES_SPECIAL`.
+  CASES_TRIPLE = CASES_PAIR * VALUES_SPECIAL.len  ## Ordered triples of `VALUES_SPECIAL`.
+
+
+func isSame(value, expected: float): bool =
+  ## Whether floats agree to last bit, or both are NaN, whatever bits NaN carries.
+  (value.isNaN and expected.isNaN) or value.bits == expected.bits
 
 
 func bitLowest(value: float): float =
@@ -67,3 +86,76 @@ suite "exact sum":
       for i, partial in partials:
         check partial != 0
         if i > 0: check abs(partials[i-1]) < partial.bitLowest  # below each bit partial sets
+
+
+
+suite "special values":
+  test "each value and each pair sum as hardware adds two floats, which rounds exact sum once":
+    # Case as found on #1049: `[Inf, 1.0]` and `[1e308, 1e308]` gave NaN, where `math.fsum` gives
+    #   `inf` and raises; Article IV.8. Domain: each pair of `VALUES_SPECIAL`. Exact zero is `0.0`,
+    #   as `math.fsum` gives, where hardware gives `-0.0` for `-0.0 + -0.0`.
+    var cases = 0
+    for x in VALUES_SPECIAL:
+      check toSumExact([x]).toFloat.isSame (if x == 0: 0.0 else: x)
+      for y in VALUES_SPECIAL:
+        inc cases
+        check toSumExact([x, y]).toFloat.isSame (if x + y == 0: 0.0 else: x + y)
+    check toSumExact([Inf, 1.0]).toFloat == Inf
+    check toSumExact([1e308, 1e308]).toFloat == Inf
+    check cases == CASES_PAIR
+
+
+  test "each triple takes no order; NaN, or both infinities, give NaN, and one infinity itself":
+    var cases = 0
+    for x in VALUES_SPECIAL:
+      for y in VALUES_SPECIAL:
+        for z in VALUES_SPECIAL:
+          inc cases
+          let
+            whole = toSumExact([x, y, z]).toFloat
+            is_nan = [x, y, z].anyIt(it.isNaN)
+            has_inf = [x, y, z].anyIt(it == Inf)
+            has_inf_negative = [x, y, z].anyIt(it == -Inf)
+          for order in [[x, z, y], [y, x, z], [y, z, x], [z, x, y], [z, y, x]]:
+            check toSumExact(order).toFloat.isSame whole
+          if is_nan or (has_inf and has_inf_negative): check whole.isNaN
+          elif has_inf: check whole == Inf
+          elif has_inf_negative: check whole == -Inf
+          else: check not whole.isNaN  # finite values sum to float, or to infinity past range
+    check cases == CASES_TRIPLE
+
+
+  test "exact sum past largest float rounds to infinity of its sign, and comes back exactly":
+    for (values, expected) in [
+      (@[MAX, MAX, -MAX], MAX),
+      (@[1e308, 1e308, -1e308], 1e308),
+      (@[MAX, HALF, -TINY], MAX),  # below tie of largest float and `2^1024`
+      (@[MAX, HALF / 2, HALF / 2], Inf),  # at that tie, which rounds to even
+      (@[MAX, -HALF, TINY], MAX),
+      (@[-MAX, -HALF, TINY], -MAX),
+      (@[BIG, BIG, -BIG], BIG),
+      (newSeqWith(1000, MAX) & newSeqWith(999, -MAX), MAX),
+      (@[BIG, BIG, -MAX], 1.99584030953472e292),  # `2^971`
+      (@[Inf, MAX, MAX], Inf),
+      (@[-Inf, -MAX, -MAX], -Inf),
+      (@[-MAX, -MAX, MAX, HALF], -1.7976931348623155e308),  # tie, to even
+      (@[MAX, MAX, MAX, -MAX, -MAX, -HALF], 1.7976931348623155e308),
+      (@[TINY, TINY, TINY], 1.5e-323),
+    ]:
+      check toSumExact(values).toFloat.isSame expected
+      check toSumExact(values.reversed).toFloat.isSame expected
+
+
+  test "partials of each sum read back as same sum, past largest float and at each special value":
+    # Prior writes partials of each sum, and next roll adds to what it reads (#1049).
+    for values in [@[MAX, MAX], @[MAX, MAX, MAX], @[MAX, HALF], @[Inf], @[-Inf], @[NaN],
+        @[Inf, -Inf], @[1.0, NaN], @[-0.0], @[TINY, -TINY]]:
+      let sum = toSumExact(values)
+      check sum.partials.toSumExact.toFloat.isSame sum.toFloat
+    var back = toSumExact([MAX, MAX]).partials.toSumExact
+    back.add -MAX
+    check back.toFloat == MAX  # sum past range stays exact through its partials
+    # Sums of one value compare equal, as prior read back compares with prior written.
+    check toSumExact([Inf, 1.0]) == toSumExact([Inf])
+    check toSumExact([1.0, NaN, -Inf]) == toSumExact([NaN])
+    check toSumExact([0.5, 0.25, -0.0]) == toSumExact([0.25, 0.5])
