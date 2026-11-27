@@ -415,7 +415,14 @@ suite "Static check":
       "<!DOCTYPE svg [<!ENTITY h \"https://cdn.example\">]><script href=\"&h;/a.js\"/>",
       "<script xmlns:x=\"http://www.w3.org/1999/xlink\" x:href=\"https://cdn.example/a.js\"/>",
     ]:
-      check checkPage(PATH_PAGE, page).len >= 1
+      check checkPage(PATH_PAGE, page).len == (if "&h;" in page: 2 else: 1)
+    # Case: mutant of #1069 that read no entity, none in capitals, or first alone, passed, since
+    #   `&h;` in path was finding alone. Domain: entity in capitals, then in small letters, beside
+    #   plain path, each at its line.
+    let found = checkPage(
+      PATH_PAGE, "<svg>\n<!ENTITY h \"a.js\">\n<!entity g \"b.js\">\n<script href=\"a.js\"/>"
+    )
+    check found.mapIt(it.line) == @[2, 3] and found.allIt("entity" in it.message)
     check checkPage(PATH_PAGE, "<base href=\"/pages/\"><script src=\"a.js\"></script>").len == 0
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
