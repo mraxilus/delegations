@@ -384,6 +384,18 @@ suite "Log of claims":
       check (critic.tokens, critic.cost) == figures
 
 
+  test "wrapped line of subagent writes its figures, and line of critic after it its own (#1028)":
+    # Case as found (finding 5 of third critic): line read first line alone, so figure after wrap
+    #   gave none. Domain: line wrapped before each figure, and line of critic right after it.
+    const line = "**Subagent:** reviewer of the diff, 170,000 tokens and $1.10 at list price,"
+    for wrap in [" 170,000", " tokens", " $1.10", " at"]:
+      let claims = transcript(REFLECTION.replace(line, line.replace(wrap, "\n" & wrap.strip)))
+        .claimsRead
+      check claims.len == 3
+      check claims[0 .. 1].allIt((it.tokens, it.cost) == (170_000, 1.1))
+      check (claims[2].tokens, claims[2].cost) == (50_000, 0.35)
+
+
   test "critic that line `**Subagent:**` names reads that line, as replay of critic does":
     let
       reflection = "## Reflection\n\n**Subagent:** critic of replay C2, 12,709,459 tokens and " &

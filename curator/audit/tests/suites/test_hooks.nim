@@ -4536,13 +4536,13 @@ suite "Hooks":
       heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
     func refusal(written: string): seq[string] =
       ## Write finding of line that gives figures written.
-      @[rule & opening & written & " at list price,`"]
+      @[rule & opening & written & " at list price, 120 calls, 47 min.`"]
     for written in ["**170,000** tokens and $14.40", "`170,000` tokens and $14.40",
         "39.1 K tokens and $14.40"]:
       check lined(written) == refusal(written)  # case as found
     check heldReflection(PREDICTION_TABLES, whole.replace(opening & "39,100,000 tokens",
       "**Subagent:** builder of round 2 170 000 tokens")) == @[rule & "**Subagent:** builder " &
-      "of round 2 170 000 tokens and $14.40 at list price,`"]
+      "of round 2 170 000 tokens and $14.40 at list price, 120 calls, 47 min.`"]
     check lined(figures).len == 0
     let flow = lineUser("Build it.", "human") & lineSaid(PREDICTION_TABLES) &
       lineUser("<task-notification>timer</task-notification>", "task-notification") &
@@ -4603,7 +4603,7 @@ suite "Hooks":
       heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
     func refusal(written: string): seq[string] =
       ## Write finding of line that gives figures written.
-      @[rule & opening & written & " at list price,`"]
+      @[rule & opening & written & " at list price, 120 calls, 47 min.`"]
     const found = "at $3.00 per 1M tokens, 170,000 tokens and $1.10"
     check lined(found) == refusal(found)  # case as found
     for written in ["39,100,000 tokens, of them 12,000 tokens of output, and $14.40",
@@ -4621,6 +4621,65 @@ suite "Hooks":
     check read.tokens.isNone and read.cost.isNone
     check whole.replace(figures, "of tokens, 39,100,000 tokens and $14.40")
       .figuresLine(LABELS_SUBAGENT).tokens == some(39_100_000)
+
+
+  test "line `**Subagent:**` runs on to blank line or label in bold, so wrap gives figures (#1028)":
+    # Case as found (finding 5 of third critic): sample line of GUIDE.md wrapped before `$1.10`
+    #   took refusal, as `figuresLine` read first line alone. Domain: sample line wrapped at each
+    #   space, and at each space at once; line that ends at blank line, or at each form of label
+    #   in bold, as line of critic; line that runs on past bold that is no label, or into bullet.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      spaces = 17  ## Places where sample line wraps, one at each space.
+    let
+      start = guide.find("```md\n" & HEADING_PREDICTION & "\n")
+      prediction = guide[start + "```md\n".len ..< guide.find("\n```", start)] & "\n"
+      opening = guide.find("```md\n" & HEADING_REFLECTION & "\n")
+      reflection = guide[opening + "```md\n".len ..< guide.find("\n```", opening)] & "\n"
+      at = reflection.find("**Subagent:**")
+      paragraph = reflection[at ..< reflection.find("\n\n", at)]
+      flat = paragraph.splitLines.mapIt(it.strip).join(" ")
+    proc held(line: string): seq[string] =
+      ## Read findings of samples of GUIDE.md whose line of reflection is line.
+      blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
+        lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+        lineSaid(reflection.replace(paragraph, line)))
+    func figures(text: string): (Option[int], Option[float]) =
+      ## Read tokens and cost of line `**Subagent:**` of text.
+      let read = text.figuresLine(LABELS_SUBAGENT)
+      (read.tokens, read.cost)
+    check held(flat.replace(" $1.10", "\n$1.10")).len == 0  # case as found
+    var count = 0
+    for i, c in flat:
+      if c != ' ': continue
+      let wrapped = flat[0 ..< i] & "\n" & flat[i + 1 .. ^1]
+      check held(wrapped).len == 0
+      check wrapped.figures == (some(170_000), some(1.1))
+      check wrapped.figuresLine(LABELS_SUBAGENT).line == flat
+      inc count
+    check count == spaces
+    check held(flat.replace(" ", "\n  ")).len == 0  # each word on line of its own, indented
+
+    # Blank line ends line, so figure after it gives none; label in bold of each form ends it, so
+    #   line of critic after it adds no figure; bold that is no label, and bullet, run on.
+    let line = "**Subagent:** reviewer, 170,000 tokens and $1.10,"
+    check (line & "\n\n57 calls.").figures == (some(170_000), some(1.1))
+    check "**Subagent:** reviewer,\n\n170,000 tokens and $1.10.".figures ==
+      (none(int), none(float))
+    for label in ["**Critic:**", "**Critic**:", "**critic:**", "**Judgements.**",
+        "**Not predicted:**", "  **Critic:**"]:
+      check (line & "\n" & label & " 50,000 tokens and $0.35.").figures ==
+        (some(170_000), some(1.1))
+    for text in ["**Subagent:** reviewer,\n**fresh** context, 170,000 tokens and $1.10.",
+        "**Subagent:** reviewer,\n**Critic** 170,000 tokens and $1.10."]:
+      check text.figures == (some(170_000), some(1.1))  # bold that is no label runs on
+    check (line & "\n50,000 tokens of the critic.").figures == (none(int), some(1.1))
+    check (line & "\n- **Not predicted:** a fee of $2.").figures == (some(170_000), none(float))
+    check held(flat.replace(" $1.10", "\n$1.10 and $2")) == @["line `**Subagent:**` of " &
+      "reflection gives tokens right before ` tokens` and cost at `$`, each one plain value " &
+      "after space, as cell holds it, and value of tokens holds no group after space (GUIDE.md, " &
+      "Prediction, critic and reflection); got `" & flat.replace(" $1.10", " $1.10 and $2") & "`"]
 
 
   test "each refusal of bullets cites section that states its rule (#1028)":
