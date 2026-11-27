@@ -225,7 +225,8 @@ suite "Static check":
     #   then operand across line, `/` in class, division before `/` in string, and string that
     #   line ends; then division after expression, and after variable named `from`, expression
     #   after block, and line that backslash continues in string, as second review of #1069 found
-    #   mutants of each pass.
+    #   mutants of each pass; then comment and tab before specifier, spread before `require`, and
+    #   division after `++` and `--`, which that review found passing.
     for (text, line) in [
       ("/* note */ import x from 'lodash';", 1),
       ("/* a\n b */ import x from 'lodash';", 2),
@@ -242,6 +243,11 @@ suite "Static check":
       ("const half = from / 2, s = \"/\"; import x from 'lodash';", 1),
       ("if (a) { b(); } /\"/.test(s); import x from 'lodash';", 1),
       ("const s = 'a\\\nb';\nimport x from 'lodash';", 3),
+      ("await import(/* c */ 'lodash');", 1),
+      ("import x from\t'lodash';", 1),
+      ("const a = {...require('lodash')};", 1),
+      ("const a = i++ / n; import x from 'lodash'; const b = c / d;", 1),
+      ("const a = i-- / n; import x from 'lodash'; const b = c / d;", 1),
     ]:
       let found = checkScript(PATH_SCRIPT, text)
       check found.len == 1 and found[0].line == line
