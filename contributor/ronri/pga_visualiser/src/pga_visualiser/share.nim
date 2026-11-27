@@ -51,7 +51,11 @@ type
     ##   Bucket whose second has passed out of window is skipped, never cleared ahead of time,
     ##   so second with no samples costs nothing.
     counts: array[SECONDS_SHARE, T]
-    seconds: array[SECONDS_SHARE, int]  ## Whole second each bucket counts; -1 for none yet.
+    seconds: array[SECONDS_SHARE, Natural]
+      ## Whole second each bucket counts.
+      ##   Bucket that counts none yet is empty value, as IV.4 asks: its zero counts add nothing
+      ##     to any pool, whatever second it names, so no mark in range of second stands for it.
+      ##   Rejected: `Option` for each second, which JS backend copies on each read of ring.
 
 
 
@@ -154,8 +158,8 @@ func ownerOfName*(name: string): Owner =
 #[ Pooling ]#
 
 func initRingShare*[T](): RingShare[T] =
-  ## Construct ring holding no counts.
-  for i in 0..<SECONDS_SHARE: result.seconds[i] = -1
+  ## Construct ring holding no counts: default value of its type, each bucket empty.
+  discard
 
 
 func add*[T](ring: var RingShare[T], second: Natural, counts: T) =
@@ -171,8 +175,7 @@ func add*[T](ring: var RingShare[T], second: Natural, counts: T) =
 
 func pooled*[T](ring: RingShare[T], second: Natural): T =
   ## Sum every bucket inside `SECONDS_SHARE` up to and including whole `second`.
-  ##   `Natural`, as `add` takes it: no bucket holds second before start, and -1 would read
-  ##     as ring's own mark of empty bucket.
+  ##   `Natural`, as `add` takes it: no bucket holds second before start.
   for at in 0..<SECONDS_SHARE:
     if ring.seconds[at] > second - SECONDS_SHARE and ring.seconds[at] <= second:
       for i in low(T)..high(T): result[i] += ring.counts[at][i]

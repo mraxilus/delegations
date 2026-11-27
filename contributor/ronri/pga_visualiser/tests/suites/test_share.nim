@@ -120,6 +120,51 @@ suite "Share":
     check initRingShare[CountsShare]().pooled(0).percent(Owner.Pga) == 0.0
 
 
+  test "an empty bucket of the ring is an empty value, and no mark in the range of its second":
+    # Fault: fresh ring marked each bucket's second -1, sentinel in range of `int`, where empty
+    #   bucket's zero counts already add nothing to any pool (Article IV.4, review of pull
+    #   request 1036).
+    # Domain: fresh ring against default value of its type, for both counts it pools; its pool
+    #   at each second of first two windows, before and after one sample at second 0; and
+    #   `count_sequences` seeded runs of adds, each pool against direct sum of its window.
+    const
+      count_sequences = 100
+      count_adds = 40
+    check initRingShare[CountsShare]() == default(RingShare[CountsShare])
+    check initRingShare[CountsCrossing]() == default(RingShare[CountsCrossing])
+    var ring = initRingShare[CountsShare]()
+    for second in 0 ..< 2 * SECONDS_SHARE:
+      checkpoint $second
+      check ring.pooled(second) == default(CountsShare)
+    let sample = [Owner.Rest: 1, Owner.Pga: 2, Owner.Algebra: 0, Owner.Boundary: 0,
+      Owner.Euclidean: 0]
+    ring.add(0, sample)
+    for second in 0 ..< 2 * SECONDS_SHARE:
+      checkpoint $second
+      check ring.pooled(second) == (if second < SECONDS_SHARE: sample else: default(CountsShare))
+    # Seconds climb by 0 to 3, or by whole window, so buckets that still name second 0 stand
+    #   beside one used again; each pool is read from last second added to one window past it.
+    var random_seeded = initRand(1060)
+    for run in 0 ..< count_sequences:
+      var
+        ring_run = initRingShare[CountsShare]()
+        added: seq[(int, CountsShare)]
+        second = 0
+      for _ in 0 ..< count_adds:
+        second += (if random_seeded.rand(9) == 0: SECONDS_SHARE else: random_seeded.rand(3))
+        var counts: CountsShare
+        for owner in Owner: counts[owner] = random_seeded.rand(2)
+        ring_run.add(second, counts)
+        added.add((second, counts))
+        for read in second .. second + SECONDS_SHARE:
+          var expected: CountsShare
+          for (at, sampled) in added:
+            if at > read - SECONDS_SHARE and at <= read:
+              for owner in Owner: expected[owner] += sampled[owner]
+          checkpoint &"run {run}, second {second}, read {read}"
+          check ring_run.pooled(read) == expected
+
+
   test "a second before the start has no bucket, so the ring refuses it by its type":
     # Fault: negative second indexed ring below its first bucket and stopped, or, as multiple of
     #   `SECONDS_SHARE`, wrote into one in silence. `pooled` read -1 as ring's own mark of empty

@@ -54,7 +54,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   FormComment = "comment form"
     ## Claim of comment opens with capital and closes with period; each name stands in backticks.
-  OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's sentence starts.
+  OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's text starts.
   SummaryDoc = "doc summary"  ## Doc holds one summary line, whose sentence ends in period.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
   BracesInterpolation = "interpolation braces"

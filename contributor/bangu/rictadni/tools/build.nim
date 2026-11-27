@@ -12,6 +12,9 @@
 ##   |           | `binaries/suggester`                                                     |
 ##   | examples  | write worked examples of `suggester` as exchange files under             |
 ##   |           | `build/examples/`, and print command replaying each                      |
+##   | page      | build tag page into `build/page/tagger.html` (`tools/page.nim`)          |
+##   | drive     | build tag page, run its suite and collect what it draws in Chromium,     |
+##   |           | and write `build/font-faces/written.json`, which `koch drive` judges     |
 ##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
 ##   |           | `openssl` and `protoc` commands among them, which `test_exchanges` runs  |
 ##   |-----------|--------------------------------------------------------------------------|
@@ -28,7 +31,8 @@
 ##     watches upstream.
 ##   `head` holds no check of language model service: CI gives project jobs no secret, and live
 ##     call would cost money every day.
-##   `lists`, `head` and `examples` run as own programs, so driver imports no package:
+##   `lists`, `head`, `examples`, `page` and `drive` run as own programs, so driver imports no
+##     package:
 ##     `koch list-packages` compiles and runs driver before Atlas restores any, and CI installs
 ##     what `system` prints (`suites/test_build.nim`).
 ##   Cost: driver runs from project directory, since every path here is relative to it.
@@ -42,7 +46,8 @@ import std/[os, osproc]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|tagger|suggester|examples|system>\n"
+  USAGE = "Usage: nim r tools/build.nim <lists|head|tagger|suggester|examples|page|drive|" &
+      "system>\n"
     ## Text printed on usage error.
   PATH_TAGGER = "binaries" / "tagger"  ## Binary `tagger` compiles to; root `.gitignore` covers it.
   PATH_SUGGESTER = "binaries" / "suggester"  ## Binary `suggester` compiles to; git ignores it.
@@ -53,6 +58,8 @@ const
     ("ca-certificates", "roots `suggester` checks services and pages against"),
     ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
     ("protobuf-compiler", "`protoc`, which `test_exchanges` encodes text format file with"),
+    ("unzip", "unpacks Chromium of store, which `drive` runs tag page in"),
+    ("libbrotli1", "`koch drive` reads `woff2` font face of tag page through it"),
   ]
     ## Packages verbs, `suggester` and suites need, each with reason (Article II.8); `system`
     ##   prints names alone.
@@ -88,6 +95,8 @@ proc main(): int =
   of "tagger": compileTagger()
   of "suggester": compileSuggester()
   of "examples": execCmd("nim r --hints:off tools/examples.nim")
+  of "page": execCmd("nim r --hints:off tools/page.nim page")
+  of "drive": execCmd("nim r --hints:off tools/page.nim drive")
   of "system":
     for (name, _) in SYSTEM: echo name
     0
