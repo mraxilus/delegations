@@ -387,6 +387,22 @@ suite "Declarations":
     check (opening & "# Doc.\nconst A* = block:\n  1\n").docsRead.module == "Module."
 
 
+  test "doc of routine named in backticks stays its own, above value opening `block`":
+    # Case held: `∪` of `pga/operators.nim` of PGA library at `3d9696e`, line 401, whose doc doc
+    #   position read as doc of `const 𝐞̄ₙ` right below it, and wrote as `#`.
+    #   Domain: operator of each routine kind, under `when`, and doc after blank line.
+    for kept in [
+      "when true:\n  func `∪`*(m: int): int =\n    ## Get antisupport.\n    const e = block:\n" &
+        "      1\n    m + e\n",
+      "proc `+`*(a, b: int): int =\n  ## Add.\n  let s = block:\n    a + b\n  s\n",
+      "template `-`*(a: int): int =\n  ## Negate.\n  let s = block:\n    -a\n  s\n",
+      "func `*`*(a, b: int): int =\n\n  ## Scale.\n  let s = block:\n    a * b\n  s\n",
+    ]:
+      checkpoint kept
+      check checkDocs("a.nim", kept).len == 0
+      check kept.fixed == kept
+
+
   test "value whose `block` opens below its `=` reports, and stays for hand to dedent":
     # Case held: `FACINGS` of `simulation/words.nim` of `dance_ontology`, whose doc stands below
     #   body; ruling D1 c of #1020 keeps `block:` on `=` line, so fix would dedent body.
