@@ -458,7 +458,8 @@ suite "Fixes":
       )
       calling = entry(
         DIRECTORY_AUDIT & "/src/b.nim",
-        head & "let\n  NORTH* = X.initPoint  ## North.\n  SOUTH* = Y.initPoint  ## South.\n" &
+        head & "let  # Points.\n  NORTH* = X.initPoint  ## North.\n" &
+        "  SOUTH* = Y.initPoint  ## South.\n" &
         "  WEST* = initPoint(Z)  ## West.\n  FIRST* = Grade(1)  ## First.\n\n" & FENCE_OFF &
         "\nlet SECOND* = Grade(2)  ## Second.\n" & FENCE_ON & "\n",
       )

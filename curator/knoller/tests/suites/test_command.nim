@@ -198,9 +198,11 @@ suite "Command line":
     let
       source = "let A = 1  ## One.\nlet B = not x == y  ## Same.\n"
       outcome = outcome([("a.nim", source)], [], is_check = true)
-    check outcome.lines.len == 4
-    check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
-    check outcome.lines[2].startsWith("a.nim:2: not-over-binary: ")  # fix moves it to 5
+    check outcome.lines.len == 5
+    check outcome.lines[0..2] == @[
+      "a.nim: missing-doc to fix", "a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix",
+    ]  # keyword line that bindings share is new, so its doc traces to no line as given
+    check outcome.lines[3].startsWith("a.nim:2: not-over-binary: ")  # fix moves it to 5
 
 
   test "check exits 1 on each finding fixers leave, fence or none, and fence counts it":

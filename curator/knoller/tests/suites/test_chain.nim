@@ -195,8 +195,8 @@ suite "Chain":
       check Rule.PushForeign in rules  # no fixer reaches it
       check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
-        "let\n  A = 1  ## One.\n  B = 2  ## Two.\n",
-      )  # bindings share keyword in every dialect
+        "let  # TODO: Document.\n  A = 1  ## One.\n  B = 2  ## Two.\n",
+      )  # bindings share keyword in every dialect, and section they open takes its doc
     let
       script = checkSource("tests/a.nims", "echo x\n", Dialect.Script, nimble = "a.nimble")
       stub = checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script, nimble = "a.nimble")
@@ -352,10 +352,12 @@ suite "Repair that widens its line":
 
 
   test "doc gap past `LINE_MAX` moves doc to next line, one round after gap widens":
-    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed == STRICT_FUNCS & "\n\nvar\n" &
+    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed == STRICT_FUNCS &
+        "\n\nvar  # TODO: Document.\n" &
         "  READINGS_KEPT*: Readings  ## Readings report renders from.\n" &
         "  SWEEPS_WANTED: seq[SweepAsk]\n    ## Sweeps render asked for and `READINGS_KEPT` " &
-        "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]  ## TODO: Document.\n"
+        "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]\n"
+      # section takes its doc, and name inside it none (D1 c of #1020)
     check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed.isSettled
 
 
@@ -412,8 +414,9 @@ suite "Repair that widens its line":
 
   test "value after `=` with line no wrap fits keeps its indent whole, with its findings":
     let source = STRICT_FUNCS & "\n\n" & RANGES
-    check source.fixed == source
-    check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
+    check source.fixed == source.replace("const\n", "const  # TODO: Document.\n")
+      # section takes its doc (D1 c of #1020)
+    check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7, 3]
 
 
   test "dotted call statement drops its double bracket, and call layout keeps its lines":

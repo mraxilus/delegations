@@ -105,6 +105,34 @@ type Space {.pure.} = enum
     check source.declarations.filterIt(it.kind != KindName.Type).allIt(it.value.len == 0)
 
 
+  test "bare keyword opens section, which keeps reach its names take":
+    # Reach of section reads as `reach` reads binding on keyword's line: `when` opens no scope,
+    #   routine, block and entry block do (V.1, V.10).
+    const source = """
+const
+  A = 1
+type  # Doc.
+  B = int
+when true:
+  var
+    c = 2
+proc f() =
+  let
+    d = 3
+when isMainModule:
+  let
+    e = 4
+const G = 5
+block:
+  type
+    H = int
+"""
+    check source.sectionsBare.mapIt((it.line, it.keyword, it.reach)) == @[
+      (1, "const", Reach.Global), (3, "type", Reach.Global), (6, "var", Reach.Global),
+      (9, "let", Reach.Local), (12, "let", Reach.Entry), (16, "type", Reach.Local),
+    ]
+
+
   test "operator is backticked and never read as name":
     let found = OPERATORS.names
     check "∧" notin found and "[]" notin found  # III.5

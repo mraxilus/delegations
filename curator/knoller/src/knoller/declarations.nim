@@ -1,8 +1,9 @@
 ## Enforce that declaration carries doc (Article VI.1), and where it states its doc and its type
 ##   (VI.9, X.12; STYLE.md §5), and fix it (`koch fix`).
 ##   Missing doc: each declaration `declared.nim` reads takes doc, but parameter, generic
-##     placeholder and local binding, which take none (VI.1). Names one line declares share one
-##     doc, enum members it lists among them, so that line reports once. Name on line opening
+##     placeholder and local binding, which take none (VI.1), and field, enum member and name
+##     inside section, whose doc is optional (`is_optional`; D1 c and `D2 a` of #1020). Names
+##     one line declares share one doc, so that line reports once. Name on line opening
 ##     inside bracket, as field of tuple type or parameter of routine type, is part of
 ##     expression, and takes none; routine declared there, as in `compiles(block: …)`, takes its
 ##     own. Doc counts where it trails declaration's line or last line of
@@ -10,6 +11,12 @@
 ##     signature. Value of binding runs on over each line of code below it at deeper indent, as
 ##     branch of `when`; line of enum members ends on itself, since `,` closing it opens next
 ##     member.
+##   Section, i.e. `const`, `let`, `var` or `type` alone on its line, takes one doc at global
+##     reach (`declared.sectionsBare`), even where each name inside it holds doc (`D3 a` of
+##     #1020); inside routine, block or entry block it is local, and takes none. Comment trailing
+##     keyword counts, so does comment right above keyword at its indent, and so does `##` doc
+##     right below it, which doc position moves (`sectionsGlobal`). Fixer writes
+##     `# TODO: Document.` joined to keyword line, as `#` since `nim doc` reads none there.
 ##   Fixer writes `## TODO: Document.` where doc position puts doc and `nim doc` reads it:
 ##     joined to declaration's one line where joined line fits and holds no comment, else on
 ##     next line, one level in; routine's as first line of its body. Value or type over lines
@@ -58,8 +65,15 @@
 ##     body needs dedent, wait for hand. `##` above that routine, module or other declaration
 ##     holds, or lexer joins to doc trailing code above, stays its owner's (`movesBlock`).
 ##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
-##     after blank line or off that indent moves there. One-line doc under bare `type` joins
-##     keyword line, as group doc of block.
+##     after blank line or off that indent moves there.
+##   Doc of section at global reach stands on keyword line, as `#` comment, else on own lines
+##     above keyword where joined line is too long, or doc runs over lines (D1 c of #1020):
+##     `nim doc` reads none there, and `##` above keyword joins module's (suite "Article VI.9").
+##     So `##` on keyword line or above it takes `#`; doc lexer joins over lines below keyword
+##     line moves above it; one-line doc above keyword or right below it joins keyword line where
+##     it fits; doc right below it else moves above it (`movesSection`). `#` comment below keyword
+##     stays, since it may head first group of names; and so does `##` there where section holds
+##     doc on keyword line or above it, or name below it opens `block`, which owns it.
 ##   Doc position reads declaration as line of code inside `type`, `const`, `let` or `var`
 ##     section, at any depth of object, enum or branch, or such keyword's own line holding one
 ##     declaration (`sections`), so value opening `block` too; line that continues expression,
@@ -72,10 +86,12 @@
 ##     there literal fixes another type, or none.
 ##   Default read in routine, routine type and lambda; template and macro stay, since their
 ##     parameter without type reads otherwise.
-##   Checks and fixers share one reading (`placements`, `blocks`, `movesDoc`, `defaults`), so
-##     each rule is written once (Article II.1): `placements` reads where doc of each declaration
-##     stands and where `nim doc` reads it (`target`), `blocks` where doc of value opening `block`
-##     stands, and missing doc writes from both (`writesDoc`).
+##   Checks and fixers share one reading (`placements`, `blocks`, `sectionsGlobal`, `movesDoc`,
+##     `defaults`), so each rule is written once (Article II.1): `placements` reads where doc of
+##     each declaration stands and where `nim doc` reads it (`target`), `blocks` where doc of value
+##     opening `block` stands, `sectionsGlobal` where doc of section stands, and missing doc
+##     writes from each (`writesDoc`). `blocks` and `sectionsGlobal` read comment above through
+##     one helper (`commentAbove`).
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: doc opening line right below declaration's counts though value runs on past it, as
@@ -83,7 +99,8 @@
 ##     2.4.0).
 ##   Cost: doc trailing first line of value over brackets, or of signature, stays unread there.
 ##   Cost: `#` comment right above value opening `block`, at its indent, reads as its doc, though
-##     it may remark on line above it.
+##     it may remark on line above it; so does comment right above keyword of section, and doc
+##     position joins one-line such comment to keyword line.
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of
@@ -104,6 +121,7 @@ type
     Hand  ## Doc of several lines opens with design note, so fix leaves it for hand.
     Forward  ## Forward declaration with no doc, whose routine follows: move stays for hand.
     Above  ## Value opens `block`: doc takes own line above declaration, as `#` comment.
+    Keyword  ## Section takes doc joined to its keyword line, as `#` comment.
 
   WriteDoc = object
     ## Define one doc to write: declaration with none in its place, or with note as its doc.
@@ -126,6 +144,8 @@ type
     is_trailing: bool  ## Doc in place trails code of its line.
     is_outlined: bool  ## Line below doc in place opens doc too, which lexer joins to it.
     is_stacked: bool  ## One-line borrow or forward standing under group comment (VI.1).
+    is_optional: bool
+      ## Field, enum member, or name inside section, whose doc is optional (D1 c, `D2 a` of #1020).
     is_above: bool
       ## Doc on line above, at declaration's indent, that neither block above nor module owns.
     is_forward: bool  ## Forward declaration with no body, whose routine follows.
@@ -155,7 +175,11 @@ type
     Signature  ## Doc on routine's signature line takes line after it.
     Blank  ## Blank line between routine's signature and its doc goes.
     Body  ## Routine's doc takes indent of body.
-    Group  ## One-line doc under bare `type` joins keyword line.
+    SectionHash  ## `##` doc on keyword line of section takes `#`, since `nim doc` reads none there.
+    SectionOutline  ## Doc on keyword line that lexer joins over lines moves above keyword, as `#`.
+    SectionAbove  ## One-line doc above keyword of section joins keyword line, as `#`.
+    SectionHashAbove  ## `##` doc above keyword of section takes `#`, as `nim doc` reads none there.
+    SectionBelow  ## `##` doc right below keyword joins its line, else moves above it, as `#`.
 
   MoveDoc = object
     ## Define one doc to move: declaration line, shape, lines replacing span that holds both.
@@ -182,6 +206,22 @@ type
     ends: int  ## Zero-based last line of that doc, as lexer joins it.
     offset: int  ## Byte offset of `##` of doc trailing `block:`; `-1` where doc opens own line.
     shown: string  ## Declaration as message echoes it, e.g. `const LUT`.
+
+  Section = object
+    ## Define section bare keyword opens at global reach, and where its doc stands: on keyword
+    ##   line, as `#` comment, else on own lines above keyword where that line is too long (D1 c
+    ##   and `D3 a` of #1020).
+    line: int  ## Zero-based line of keyword.
+    keyword: string  ## Keyword opening section, e.g. `const`.
+    offset: int  ## Byte offset of comment trailing keyword; `-1` for none.
+    joined: int  ## Zero-based last line lexer joins to `##` doc trailing keyword; else `line`.
+    above: int
+      ## Zero-based first line of comment right above keyword, at its indent; `line` for none.
+    is_hashed: bool  ## Comment above holds `##` doc.
+    below: int
+      ## Zero-based first line of `##` doc right below keyword, where section holds no other; `-1`
+      ##   for none, and for doc above name whose value opens `block`, which is that name's.
+    ends: int  ## Zero-based last line of doc right below keyword.
 
   Default = object
     ## Define type to drop from parameter: byte span from name's end to `=`, and type read.
@@ -263,6 +303,12 @@ func section(code: openArray[string], i: int): string =
 func isJoinable(line: string; is_commented: bool; doc: string): bool =
   ## Decide whether doc joins line: line holds no comment, and joined line fits.
   not is_commented and not (line.strip(leading = false) & ' '.repeat(GAP_COMMENT) & doc).isWide
+
+
+func hashed(text: string): string =
+  ## Write doc line as `#` comment, where `nim doc` reads none: run of `#` opening `##` doc
+  ##   becomes one, and its outline keeps its indent past it.
+  if text.startsWith("##"): "#" & text.strip(trailing = false, chars = {'#'}) else: text
 
 
 func placements(source: string): seq[Placement] =
@@ -451,6 +497,8 @@ func placements(source: string): seq[Placement] =
       is_trailing: line_doc >= 0 and trailing[line_doc] >= 0,
       is_outlined: line_doc >= 0 and outline < lines.len and opening[outline],
       is_stacked: d.kind == KindName.Routine and isStacked(i),
+      is_optional: d.kind in {KindName.Field, KindName.Member} or
+          (d.kind != KindName.Routine and code[i].wordFirst notin KEYWORDS_SECTION),
       is_above: d.kind != KindName.Routine and i > 0 and opening[i-1] and
         lines[i-1].indentWidth == indent and not is_owned,
       is_forward: d.kind == KindName.Routine and not is_bodied and
@@ -677,6 +725,41 @@ func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[
         (opener.endsWith(":") or opener.endsWith("=") or opener in KEYWORDS_SECTION))
 
 
+func sectionsGlobal(source: string, found: seq[Placement]): seq[Section] =
+  ## Read each section bare keyword opens at global reach (`declared.sectionsBare`), and where its
+  ##   doc stands: comment trailing keyword, with `##` lines lexer joins to it; comment right above
+  ##   keyword at its indent (`commentAbove`); else `##` doc right below keyword at deeper indent,
+  ##   but above name whose value opens `block`, which owns it.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    kept = source.codeAndComments.split('\n')
+    (owned, heading) = source.ownership(found)
+
+  func isLineDoc(k: int): bool =
+    ## Decide whether line `k` holds `##` doc alone.
+    k >= 0 and k < lines.len and isDoc(code[k], kept[k])
+
+  # Read comment trailing keyword, with lines lexer joins to its `##` doc, and comment above it.
+  for bare in source.sectionsBare:
+    let i = bare.line - 1
+    if bare.reach != Reach.Global or i < 0 or i >= lines.len: continue
+    var s = Section(line: i, keyword: bare.keyword, offset: -1, joined: i, below: -1, ends: -1)
+    let at = kept[i].find('#', code[i].strip(leading = false).len)
+    if at >= 0: s.offset = at
+    if at >= 0 and kept[i][at .. ^1].startsWith("##"):
+      while isLineDoc(s.joined + 1): inc s.joined
+    (s.above, s.is_hashed) = commentAbove(lines, code, kept, owned, heading, i)
+
+    # Doc right below keyword, where section holds none on its line or above it.
+    var k = i + 1
+    while isLineDoc(k) and lines[k].indentWidth > lines[i].indentWidth: inc k
+    if s.offset < 0 and s.above == i and k > i + 1 and
+        not (k < lines.len and (code[k].isOpeningBlock or code.isBlockBelow(k))):
+      (s.below, s.ends) = (i + 1, k - 1)
+    result.add s
+
+
 func target(p: Placement, doc: string): (int, ShapeWrite) =
   ## Read line doc of placement takes, and how, where `nim doc` reads it: below routine's
   ##   signature; on declaration's one line, else below it; for value or type over lines, after
@@ -703,7 +786,23 @@ func writesDoc(source: string): seq[WriteDoc] =
     lines = source.split('\n')
     found = source.placements
     valued = source.blocks(found, source.sections)
+
+  # Section at global reach takes doc on its keyword line: comment there, above keyword, or `##`
+  #   doc right below it that doc position moves there, counts.
+  for s in source.sectionsGlobal(found):
+    if s.offset >= 0 or s.above < s.line or s.below >= 0: continue
+    result.add WriteDoc(
+      line: s.line,
+      shape: ShapeWrite.Keyword,
+      at: s.line,
+      offset: -1,
+      got: s.keyword,
+    )
+
   for p in found:
+    # Pass name whose doc is optional: field, enum member, and name inside section.
+    if p.is_optional: continue
+
     # Pass value opening `block` that holds comment above it, or doc that doc position moves there;
     #   any doc near value whose `block` opens below `=`, which hand moves.
     if p.is_block:
@@ -747,6 +846,7 @@ func writesDoc(source: string): seq[WriteDoc] =
       indent: p.indent_body,
       got: p.shown,
     )
+  result = result.sortedByIt(it.line)
 
 
 func checkDocsMissing*(path, source: string): seq[Report] =
@@ -757,6 +857,8 @@ func checkDocsMissing*(path, source: string): seq[Report] =
       case write.shape
       of ShapeWrite.Join, ShapeWrite.Below, ShapeWrite.Above:
         "Declaration takes doc comment; got `" & write.got & "`."
+      of ShapeWrite.Keyword:
+        "Section takes doc on its keyword line, as `#` comment; got bare `" & write.got & "`."
       of ShapeWrite.Note, ShapeWrite.Hand:
         "Doc holds `TODO: Document.` and nothing else; got `" & write.got & "`."
       of ShapeWrite.Forward:
@@ -791,6 +893,9 @@ func fixDocsMissing*(path, source: string): Fix =
       if not write.is_clear:
         lines.insert("", write.at)
         origin.insert(0, write.at)
+    of ShapeWrite.Keyword:
+      lines[write.at] = lines[write.at].strip(leading = false) & ' '.repeat(GAP_COMMENT) &
+          COMMENT_EMPTY
     of ShapeWrite.Hand, ShapeWrite.Forward: discard
   result.source = lines.join("\n")
   for write in writes: result.fixed.add initReport(path, write.line + 1, Rule.DocMissing)
@@ -852,18 +957,8 @@ func movesLine(source: string; valued: seq[ValueBlock]; declaring: seq[string]):
       inc below
     let docs = below - d - 1  # Doc lines below at deeper indent.
 
-    # Group doc of bare `type` joins keyword line, where it fits.
-    if stripped == "type":
-      if docs == 1 and marker(d) < 0 and not joined(d, lines[d + 1].strip).isWide:
-        result.add MoveDoc(
-          line: d,
-          shape: Shape.Group,
-          first: d,
-          last: d + 1,
-          lines: @[joined(d, lines[d + 1].strip)],
-          origins: @[d],
-        )
-      continue
+    # Bare keyword of section is `movesSection`'s.
+    if stripped in KEYWORDS_SECTION: continue
     let section = declaring[d]
     if section.len == 0 or valued.anyIt(it.line == d): continue
     let is_opening = text_ending == "=" or code[d].isOpeningBlock or ending.kind == KindToken.Open
@@ -1102,15 +1197,71 @@ func movesBlock(source: string, valued: seq[ValueBlock]): seq[MoveDoc] =
     let docs = if b.inside >= 0: toSeq(b.inside .. b.ends) else: toSeq(b.above ..< b.line)
     for k in docs:
       let text = if k == b.line: lines[k][b.offset .. ^1].strip else: lines[k].strip
-      move.lines.add margin & (
-        if text.startsWith("##"): "#" & text.strip(trailing = false, chars = {'#'}) else: text
-      )
+      move.lines.add margin & text.hashed
       move.origins.add k
     if b.inside >= 0:
       move.lines.add(
         if b.offset >= 0: lines[b.line][0 ..< b.offset].strip(leading = false) else: lines[b.line]
       )
       move.origins.add b.line
+    result.add move
+
+
+func movesSection(source: string, sections: seq[Section]): seq[MoveDoc] =
+  ## Find each doc of section of `sections` out of its position, on keyword line as `#` comment,
+  ##   else on own lines above keyword where that line is too long (D1 c of #1020): `##` there takes
+  ##   `#`, doc lexer joins over lines below keyword line moves above it, one-line doc above or
+  ##   right below keyword joins keyword line where it fits, and doc below else moves above it.
+  let lines = source.split('\n')
+  for s in sections:
+    let
+      margin = ' '.repeat(lines[s.line].indentWidth)
+      bare =
+        if s.offset >= 0: lines[s.line][0..<s.offset].strip(leading = false)
+        else: lines[s.line].strip(leading = false)
+
+    func joined(text: string): string =
+      ## Join doc line to keyword line, as `#` comment, two spaces before its marker.
+      bare & ' '.repeat(GAP_COMMENT) & text.hashed
+
+    var move = MoveDoc(line: s.line, first: s.line, last: s.line, got: s.keyword)
+    if s.offset >= 0:
+      # Doc on keyword line: `##` takes `#`, and outline lexer joins below moves above keyword.
+      let text = lines[s.line][s.offset .. ^1].strip
+      if not text.startsWith("##"): continue
+      if s.joined == s.line:
+        (move.shape, move.lines, move.origins) = (Shape.SectionHash, @[text.joined], @[s.line])
+      else:
+        (move.shape, move.last) = (Shape.SectionOutline, s.joined)
+        for k in s.line..s.joined:
+          move.lines.add margin & (if k == s.line: text else: lines[k].strip).hashed
+          move.origins.add k
+        move.lines.add bare
+        move.origins.add s.line
+    elif s.above < s.line:
+      # Doc above keyword: one line joins keyword line where it fits, else `##` there takes `#`.
+      let docs = toSeq(s.above..<s.line)
+      if docs.len == 1 and not lines[s.above].strip.joined.isWide:
+        (move.shape, move.first) = (Shape.SectionAbove, s.above)
+        (move.lines, move.origins) = (@[lines[s.above].strip.joined], @[s.line])
+      elif s.is_hashed:
+        (move.shape, move.first, move.last) = (Shape.SectionHashAbove, s.above, s.line - 1)
+        for k in docs:
+          move.lines.add margin & lines[k].strip.hashed
+          move.origins.add k
+      else: continue
+    elif s.below >= 0:
+      # Doc right below keyword: one line joins keyword line where it fits, else moves above it.
+      (move.shape, move.last) = (Shape.SectionBelow, s.ends)
+      if s.ends == s.below and not lines[s.below].strip.joined.isWide:
+        (move.lines, move.origins) = (@[lines[s.below].strip.joined], @[s.line])
+      else:
+        for k in s.below..s.ends:
+          move.lines.add margin & lines[k].strip.hashed
+          move.origins.add k
+        move.lines.add lines[s.line]
+        move.origins.add s.line
+    else: continue
     result.add move
 
 
@@ -1121,13 +1272,15 @@ func movesDoc(source: string): seq[MoveDoc] =
     found = source.placements
     declaring = source.sections
     valued = source.blocks(found, declaring)
-  (source.movesLine(valued, declaring) & source.movesPlaced(found) & source.movesBlock(valued)).
-    sortedByIt((it.first, it.line))
+  (
+    source.movesLine(valued, declaring) & source.movesPlaced(found) &
+    source.movesBlock(valued) & source.movesSection(source.sectionsGlobal(found))
+  ).sortedByIt((it.first, it.line))
 
 
 func checkDocs*(path, source: string): seq[Report] =
-  ## Report doc of type, field, binding, enum member, routine or `type` section out of its
-  ##   position (VI.9; STYLE.md §5).
+  ## Report doc of type, field, binding, enum member, routine or section out of its position
+  ##   (VI.9; STYLE.md §5).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for move in source.movesDoc:
     let message =
@@ -1172,7 +1325,21 @@ func checkDocs*(path, source: string): seq[Report] =
       of Shape.Body:
         "Doc of routine stands at indent of its body; got indent `" & $move.indent & "` in `" &
           move.got & "`."
-      of Shape.Group: "Group doc of `type` section stands on keyword line; got it on next line."
+      of Shape.SectionHash:
+        "Doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
+          "`##` on `" & move.got & "`."
+      of Shape.SectionOutline:
+        "Doc of section over lines stands above its keyword, as `#` comment; got it on " &
+          "keyword line of `" & move.got & "`."
+      of Shape.SectionAbove:
+        "One-line doc of section stands on its keyword line where it fits, as `#` comment; got " &
+          "it above `" & move.got & "`."
+      of Shape.SectionHashAbove:
+        "Doc above keyword of section is `#` comment, since `nim doc` reads none there; got " &
+          "`##` above `" & move.got & "`."
+      of Shape.SectionBelow:
+        "Doc of section stands on its keyword line, or above it where that line is too long; " &
+          "got it below `" & move.got & "`."
     result.add initReport(path, move.line + 1, Rule.PositionDoc, message)
 
 
