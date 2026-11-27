@@ -4367,8 +4367,8 @@ transcript, so another copy gives its own figures.
 - The tokens are the value right before ` tokens` on the line `**Subagent:**`, and the cost the
   value at `$`. Each reads as a cell reads it, after a space and in no mark of emphasis or code. The
   tokens take no group after a space. A `critic` that the line does not name reads `**Critic:**`.
-- The hook refuses a line `**Subagent:**` of no tokens or no cost, as the log writes neither.
-  Rejected: groups after a space, as `round 2 170 000 tokens` reads 2,170,000. Cost:
+- The hook refuses a line `**Subagent:**` of no tokens or no cost, or two of either, as the log
+  writes neither. Rejected: groups after a space, as `round 2 170 000 tokens` reads 2,170,000. Cost:
   `1,000 cached tokens` gives none. The line `**Critic:**` and a missing line take no finding, as
   the guide asks neither. Verified by `suites/test_hooks.nim` and `suites/test_claims_log.nim`.
 - An estimate takes the percentiles and the unit of its cells, and the value that opens its result.
