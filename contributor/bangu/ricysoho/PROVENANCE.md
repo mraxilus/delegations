@@ -299,8 +299,7 @@ ni'o se to'e cuxna fa lo nu ralte le se ciska datnyvei ta'i lo nu na galfi kei k
   .i se to'e cuxna fa lo nu tcidu le bakfu ca lo nu fanva kei kei ki'u lo nu le nu tcidu cu rinka lo
       nu ro nu zbasu cu nitcu le bakfu
 
-ni'o le liste cu so'u roi cenba
-  .i `head` zgana lo nu cenba
+ni'o `head` zgana lo nu le liste cu cenba
   .i se ki'u bo lo nu ralte le liste cu drani
 
 ni'o **le jvoste cu datselci'a
