@@ -12,9 +12,9 @@
 ##     model out of each file it pushes.
 ##   State is marker opening cell under `State`. Confidence is what row of table of block states,
 ##     `%` of judgement or 90% of estimate (7200557915), else percentage of cell under
-##     `Confidence` or `%` of reflection, since bullet states none apart. Tokens and cost are first
-##     `<n> tokens` and `$<x>` of line `**Subagent:**`; call of critic that line does not name
-##     reads line `**Critic:**`.
+##     `Confidence` or `%` of reflection, since bullet states none apart. Tokens and cost are value
+##     right before first ` tokens` and value at first `$` of line `**Subagent:**`, as cell reads
+##     each (`figuresLine`); call of critic that line does not name reads line `**Critic:**`.
 ##   Estimate takes percentiles and unit of its cells (`estimateCells`), and outcome of value
 ##     that opens its cell under `Result` (`outcomeResult`). Number of bullet, whose percentiles
 ##     end it, takes last three numbers of its text, unit its text names (`unitText`), and value
@@ -212,18 +212,25 @@ func numbersIn*(text: string): seq[float] =
 
 
 func figuresLine(text: string, labels: openArray[string]): tuple[tokens: int, cost: float] =
-  ## Read tokens and cost of first line of text that opens with one of labels, in any case:
-  ##   number before first ` tokens`, and number right after first `$`; zero where none.
+  ## Read tokens and cost of first line of text that opens with one of labels, in any case: bare
+  ##   value that ends right before first ` tokens`, longest first, and value of cost at first `$`,
+  ##   each as cell reads it (`valueAt`), so `39.1M tokens` and `39100k tokens` read 39,100,000;
+  ##   zero where none.
+  ##   Cost: word between value and ` tokens`, as `170,000 cached tokens`, gives none.
   for line in text.splitLines:
     let lower = line.strip(trailing = false).toLowerAscii
     if not labels.anyIt(lower.startsWith(it)): continue
     let at = line.find(WORD_TOKENS)
-    if at > 0:
-      let before = line[0 ..< at].numbersIn
-      if before.len > 0: result.tokens = int(before[^1])
+    for start in 0 ..< max(at, 0):
+      if line[start] notin Digits or (start > 0 and line[start - 1] in Digits + {POINT}): continue
+      let value = line.valueAt(start)
+      if value.isSome and value.get.stop == at and value.get.unit == UnitNumber.Unspecified:
+        result.tokens = int(value.get.amount)
+        break
     let dollar = line.find(MARK_DOLLAR)
-    if dollar >= 0 and dollar + 1 < line.len and line[dollar + 1] in Digits:
-      result.cost = line[dollar + 1 .. ^1].numbersIn[0]
+    if dollar >= 0:
+      let value = line.valueAt(dollar)
+      if value.isSome and value.get.unit == UnitNumber.Cost: result.cost = value.get.amount
     return
 
 
