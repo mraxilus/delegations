@@ -3667,8 +3667,11 @@ suite "Hooks":
     let
       whole = REFLECTION_TABLES_POSTED.mended
       line = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    #   Point before such scale makes no count, so cell of tokens takes refusal there.
     for cell in ["39.1 bn, inside", "39.1 Mio, inside"]:
       check cell.valueAt.get.amount == 39.1
+    for cell in ["39 bn, inside", "39 Mio, inside"]:
+      check cell.valueAt.get.amount == 39.0
       check heldReflection(PREDICTION_TABLES, whole.replace(line,
         line.replace("39.1M, inside", cell))).len == 0
 
@@ -4421,6 +4424,98 @@ suite "Hooks":
       check bullet(2, "15" & space & "inside").len == 0  # word after space ends value
     check count == 4 * 5
     check estimate("39.1 M, inside").len == 0  # one ASCII space reads scale
+
+
+  test "value reads none where mark but space joins its digits, or point opens count (#1028)":
+    # Case as found (finding 1 of third critic): cell of tokens logged 1.234 for `1.234.567,
+    #   inside`, and 170 for `170_000, inside` and `170'000, inside`; bullets logged 1.234 for
+    #   `1.234.567`, 170 for `170.000`, and 15 for `15:30, inside` of time; line gave 170 tokens
+    #   for `170.000 tokens`, and `39.1` with zero-width space before `M` gave 39.1. Domain: each
+    #   ASCII mark but `|`, and marks of group of Unicode, glued between digits, in cell, bullets
+    #   and line; each rune of no width before group, scale or mark of time; point in each unit.
+    proc bullet(k: int, cell: string): seq[string] =
+      ## Read findings of reflection whose one row quotes number `k` of `NUMBERS_BULLETS`.
+      heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | Predicted | " &
+        "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & CLAIMS_BULLETS[k] & " | " & cell &
+        " |\n")
+    func refusal(k: int, cell: string): seq[string] =
+      ## Write finding of result of number `k` of `NUMBERS_BULLETS` that reads no value.
+      @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"]
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      row = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    proc estimate(cell: string): seq[string] =
+      ## Read findings of mended reflection whose result of estimate 6, of tokens, is cell.
+      heldReflection(PREDICTION_TABLES, whole.replace(row, row.replace("39.1M, inside", cell)))
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace("39,100,000 tokens and $14.40", written))
+    for cell in ["1.234.567, inside", "170_000, inside", "170'000, inside"]:
+      check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]  # case as found
+    for (k, cell) in [(0, "1.234.567"), (0, "170.000"), (2, "15:30, inside"),
+        (0, "39.1\u200BM, inside")]:
+      check bullet(k, cell) == refusal(k, cell)  # case as found
+    check "**Subagent:** builder, 170.000 tokens and $1.10".figuresLine(LABELS_SUBAGENT).tokens
+      .isNone  # case as found
+    check lined("170.000 tokens and $14.40").len == 1
+
+    # Mark glued between value and digit makes none, as it groups digits or parts two values; comma
+    #   before three digits reads as group, and point as decimal part, which count refuses.
+    const marks = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{}~"
+    var count = 0
+    for mark in marks:
+      let (thousands, part) = ("170" & mark & "000", "170" & mark & "5")
+      if mark == ',':
+        check thousands.valueAt.get.amount == 170_000.0 and part.valueAt.isNone
+      elif mark == '.':
+        check thousands.valueAt.get.amount == 170.0 and part.valueAt.get.amount == 170.5
+      else:
+        check thousands.valueAt.isNone and part.valueAt.isNone
+        check estimate(thousands & ", inside") ==
+          @[REFUSAL_OUTCOME & thousands & ", inside` for claim `6`"]
+        for k in 0 .. 3: check bullet(k, thousands) == refusal(k, thousands)
+        check lined(thousands & " tokens and $14.40").len == 1
+        check lined("39,100,000 tokens and $" & thousands).len == 1
+        inc count
+    check count == marks.len - 2
+    for mark in ["\u2019", "\u02BC", "\u00B7", "\u066C", "\u2032"]:  # marks of group of Unicode
+      let thousands = "170" & mark & "000"
+      check thousands.valueAt.isNone
+      check estimate(thousands & ", inside") ==
+        @[REFUSAL_OUTCOME & thousands & ", inside` for claim `6`"]
+      check bullet(0, thousands) == refusal(0, thousands)
+      check lined(thousands & " tokens and $14.40").len == 1
+
+    # Rune of no width after value runs on as space does, so group, scale or mark of time after it
+    #   reads none; mark that ends value after it reads value.
+    count = 0
+    for rune in ["\u00AD", "\u200B", "\u200C", "\u200D", "\u2060", "\uFEFF"]:
+      for (written, after) in [("39.1", "M"), ("39.1", "k"), ("39", "100,000"), ("39", "5"),
+          ("0.0391", "billion")]:
+        let cell = written & rune & after & ", inside"
+        check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+        check bullet(0, cell) == refusal(0, cell)
+        inc count
+      check bullet(2, "1.5" & rune & "h") == refusal(2, "1.5" & rune & "h")
+      check lined("39.1" & rune & "M tokens and $14.40").len == 1
+      check lined("39,100,000 tokens and $14.40" & rune & "k").len == 1
+      check estimate("39,100,000" & rune & ", inside").len == 0
+      check bullet(1, "$1.10" & rune & ", inside").len == 0
+    check count == 6 * 5
+
+    # Tokens and count read point only where scale moves it, as each is count; cost and time read
+    #   it as decimal part, as `$1.10` and `1.5h`.
+    for cell in ["170.000", "170.5", "39.1 bn", "1.0"]:
+      check estimate(cell & ", inside") == @[REFUSAL_OUTCOME & cell & ", inside` for claim `6`"]
+      for k in [0, 3]: check bullet(k, cell) == refusal(k, cell)
+      check lined(cell & " tokens and $14.40").len == 1
+    for cell in ["39.1M", "39100k", "0.0391 billion", "39,100,000"]:
+      check estimate(cell & ", inside").len == 0
+      check lined(cell & " tokens and $14.40").len == 0
+    for (k, cell) in [(0, "0.17M"), (3, "1.2k"), (1, "1.10"), (1, "$1.10"), (2, "1.5"),
+        (2, "1.5h")]:
+      check bullet(k, cell).len == 0
+    check lined("39,100,000 tokens and $14.405").len == 0
 
 
   test "line `**Subagent:**` gives tokens and cost as cell reads value, or is refused (#1028)":
