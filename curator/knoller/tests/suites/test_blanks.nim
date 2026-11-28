@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, reports]
 
 
-const
+const  # TODO: Document.
   PATH_TEST = "curator/audit/tests/suites/test_a.nim"
     ## Path under `tests/` of its package, where suite and test rules hold.
   NIMBLE_TEST = "curator/audit/audit.nimble"  ## Nimble file nearest `PATH_TEST`.

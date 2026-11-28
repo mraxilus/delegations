@@ -41,7 +41,7 @@ import ../../knoller/src/knoller
 import ./[findings, markdown, toolchain]
 
 
-const
+const  # TODO: Document.
   PATH_KOCH* = "koch.nim"  ## Driver whose dispatch names every verb.
   PATH_CURATOR* = "CURATOR.md"  ## Document tabling verbs for curator sessions.
   DIRECTORY_CHECK* = "curator/audit/src/"  ## Modules these rules cover.

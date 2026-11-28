@@ -32,7 +32,7 @@ import knoller/[compilers, pins]
 import ./[headers, plans, reports, runs]
 
 
-const
+const  # TODO: Document.
   SYNOPSIS = "Usage: assayer [--jobs:n] [--nim:path] file..."  ## First line of usage.
   USAGE = SYNOPSIS & """
 

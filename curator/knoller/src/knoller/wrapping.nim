@@ -67,7 +67,7 @@ import std/[algorithm, options, sequtils, strutils, unicode]
 import ./[form, precedence, reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   Scan = object
     ## Define source as wrapping rules read it: lines, tokens, brackets, line each token ends.
     source: string
@@ -108,7 +108,7 @@ type
     base: int  ## Indent of first line of head.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_BLOCK = [
     "block", "case", "converter", "do", "for", "func", "if", "iterator", "macro", "method",
     "proc", "template", "try", "when", "while",

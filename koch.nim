@@ -134,12 +134,12 @@ Options:
   ## Text `./koch` prints alone and on usage error; `checker.nim` reads verbs and options here.
 
 
-const
+const  # TODO: Document.
   FORM_TERMINAL = "terminal"  ## Value of `--form` that prints each finding in terminal form.
   FORM_LINE = "line"  ## Value of `--form` that prints each finding on one line.
 
 
-type
+type  # TODO: Document.
   Flag = enum  ## Name option verb may read.
     Root, Branch, Base, All, Recent, Drive, Head, Node, Write, DryRun, FormFinding
 

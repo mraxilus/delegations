@@ -8,7 +8,7 @@ import ../../src/[lags, layout]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   LOCK = "curator/assayer/atlas.lock"  ## Lock that names knoller, as assayer holds it.
   LOCK_TAGGER = "contributor/bangu/lojban_tagger/atlas.lock"  ## Lock that names lojban_parser.
   COMMIT_KNOLLER = "11403468a97c0d3ae922182d894606e2688504e9"  ## Commit assayer locks, at #899.

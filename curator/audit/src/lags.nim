@@ -35,7 +35,7 @@ import ../../knoller/src/knoller
 import ./[layout, tree]
 
 
-const
+const  # TODO: Document.
   ADDRESS_REPOSITORY* = "https://github.com/mraxilus/delegations"
     ## Address of this repository, as lock names package that one of its folders holds.
   KEY_FOLDER = "subdir="  ## Key of query naming folder of repository that package stands in.
@@ -43,7 +43,7 @@ const
   WIDTH_COMMIT = 9  ## Characters of commit that line shows, as records of this repository do.
 
 
-type
+type  # TODO: Document.
   Locked* = object  ## Define one item of lock that names folder of this repository.
     lock*: string  ## Lock holding item, repository-relative.
     name*: string  ## Name of item, as lock keys it.

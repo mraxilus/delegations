@@ -37,7 +37,7 @@ import std/[sequtils, strutils]
 import ./[edits, form, reports, rules, tokens, views]
 
 
-type
+type  # TODO: Document.
   Alias = object  ## Define template or routine naming landmark of type by its one `typedesc`.
     name: string  ## Name of alias, as `vector`.
     types: seq[string]  ## Each type it applies to: placeholder's constraint, or type itself.
@@ -59,7 +59,7 @@ type
     landmark: Landmark
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ALIAS = ["func", "proc", "template"]  ## Keywords declaring alias.
   ALIASES_PREFERRED = ["low", "high"]
     ## Alias fix writes where several name one index, as library writes grade (#443).

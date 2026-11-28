@@ -25,7 +25,7 @@ import std/[options, sequtils, strutils]
 import ./findings
 
 
-const
+const  # TODO: Document.
   DIRECTORY_WORKFLOW* = ".github/workflows/"  ## Directory every workflow lives in.
   KEY_PERMISSIONS* = "permissions:"
     ## Line opening grant, at column zero; job-level block is indented and left to its job.

@@ -64,7 +64,7 @@ from std/unicode import runeLen
 import ./[commits, domains, hooks, sums_exact, tree]
 
 
-type
+type  # TODO: Document.
   State* {.pure.} = enum  ## Define state of claim, in order of enum `State` of `claims.proto`.
     Unspecified, Hit, Miss, Annulled, Waiting
 
@@ -133,7 +133,7 @@ type
     line: string  ## Line of row.
     at: int  ## Index of next character to read.
 
-const
+const  # TODO: Document.
   FILE_LOG* = "claims.txtpb"  ## Log of each project, beside its record (#964).
   PATH_LOG_CURATOR* = CURATOR & "/audit/" & FILE_LOG
     ## Log of root branch of curator: `checkLayout` takes only index directly under `curator/`,

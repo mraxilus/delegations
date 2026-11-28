@@ -24,7 +24,7 @@ import std/strutils
 import ./[reports, views]
 
 
-const
+const  # TODO: Document.
   WAITS = [
     ("waitForTimeout", "wait on condition, or move page's clock with `clock.runFor`"),
     ("sleep", "wait on condition, or advance clock check moves"),

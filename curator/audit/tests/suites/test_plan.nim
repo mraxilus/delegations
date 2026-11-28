@@ -7,7 +7,7 @@ import ../../src/[domains, findings, layout, plan, projects, toolchain]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
     ## Unlisted project directories fixture tree holds, in sorted order selection returns them:
     ## `contributor` sorts before `curator`.

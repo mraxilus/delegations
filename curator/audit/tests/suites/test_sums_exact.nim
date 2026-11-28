@@ -15,7 +15,7 @@ import ../../src/sums_exact
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   SAMPLES_SUM = 200  ## Random lists each law of exact sum reads.
   MAX = 1.7976931348623157e308  ## Largest float, `(2^53 − 1) × 2^971`.
   HALF = 9.9792015476736e291  ## Half of last bit of largest float, `2^970`.

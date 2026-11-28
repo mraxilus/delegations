@@ -9,7 +9,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[outlines, reports, tokens]
 
 
-const
+const  # TODO: Document.
   PRIMITIVES =
     "## Define fundamental geometric types of PGA.\n\n" &
     "# TODO: Represent multivector primitives using more compact data types.\n" &

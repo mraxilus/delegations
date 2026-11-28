@@ -12,7 +12,7 @@ import std/[sequtils, unittest]
 import ../../src/knoller/[cuts, names, reports, rules]
 
 
-const
+const  # TODO: Document.
   WRAPPERS =
     "type\n" &
     "  Chiral*[T] = object\n" &

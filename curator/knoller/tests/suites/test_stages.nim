@@ -10,7 +10,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[reports, stages]
 
 
-const
+const  # TODO: Document.
   PLACEHOLDER = "# TODO: Describe stage's purpose."  ## Text VI.4 gives stage comment waiting.
   OPERATOR =
     "macro defineOperator(\n  symbols, docs: static[string];\n  cayley: static[Cayley1D];\n" &

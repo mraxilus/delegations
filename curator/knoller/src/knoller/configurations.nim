@@ -36,7 +36,7 @@ import std/[algorithm, sequtils, strutils, tables]
 import ./[reports, views]
 
 
-const
+const  # TODO: Document.
   GUARDS_UNREAD = ["isMainModule", "compileOption"]  ## Words of condition naming no configuration.
   PRAGMAS_DEFINE = ["booldefine", "define"]  ## Pragmas giving value of constant from define.
   MESSAGE_ORDER = "Configuration build gets by default comes first; got `"
@@ -44,7 +44,7 @@ const
     "Definitions of one configuration standing next to each other share one block; got `"
 
 
-type
+type  # TODO: Document.
   KindSite {.pure.} = enum  ## Define how site breaks rule.
     Join  ## Block of configuration standing next to block of same one.
     Order  ## Two-way branch putting default last.

@@ -29,7 +29,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[form, reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   Body = object  ## Define body of routine or test, by lines it spans.
     head: int  ## Zero-based line of routine's keyword, or of `test`.
     first: int  ## Zero-based first line below `=` or `:` opening body.
@@ -41,7 +41,7 @@ type
     got: string  ## First line as message echoes it, trailing comment left out.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine, whose body holds stages.
   PLACEHOLDER = "# TODO: Describe stage's purpose."

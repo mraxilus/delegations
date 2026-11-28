@@ -28,7 +28,7 @@ type Generation = object  ## Define one dotted call of `define…` or `emit…` 
   got: string  ## Call as written, receiver to name.
 
 
-const
+const  # TODO: Document.
   VERBS_PREFIX = ["define", "emit"]
     ## Verbs of generation whose call is prefix call (STYLE.md §5); `construct` is free.
   PASSES_MAX = 8  ## Passes fixer takes at most; each writes calls whose receivers hold none.

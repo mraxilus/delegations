@@ -39,7 +39,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   Target {.pure.} = enum  ## Define what run stands beside, which decides its count and its message.
     Suite  ## Run before suite.
     Test  ## Run before test.
@@ -97,7 +97,7 @@ type
     line: int  ## Zero-based head line of definition run stands before.
 
 
-const
+const  # TODO: Document.
   LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1, 0]  ## Blank lines each target takes.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.

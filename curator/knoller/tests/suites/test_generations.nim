@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[generations, reports, rules]
 
 
-const
+const  # TODO: Document.
   CALLS_FIXED = [
     ("discard MESHES.emitObject(placed, tint, scale)\n",
       "discard emitObject(MESHES, placed, tint, scale)\n"),

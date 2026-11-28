@@ -32,7 +32,7 @@ import std/[cmdline, hashes, options, os, sequtils, strutils]
 import ./headers
 
 
-const
+const  # TODO: Document.
   DIRECTORY_RUNS* = "nimcache/assayer"
     ## Directory, below working directory, holding cache of each run; ignored at any depth.
   FILE_LOG* = "output.log"  ## Log of failed run, beside its program: each command, whole output.

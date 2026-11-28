@@ -22,7 +22,7 @@ import std/[algorithm, sequtils, sets, strutils]
 import ./[conversions {.all.}, declared, reports, rules, targets {.all.}, tokens]
 
 
-type
+type  # TODO: Document.
   FormCall {.pure.} = enum  ## Define form of call of constructor on plain first argument.
     Dotted  ## Dot on plain receiver: `b.initElement(1)`.
     Prefixed  ## Prefix call on plain first argument: `initElement(Basis.origin)`.

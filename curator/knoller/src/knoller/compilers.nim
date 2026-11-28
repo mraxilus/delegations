@@ -43,7 +43,7 @@ import std/[options, os, osproc, strutils, tables]
 import ./pins
 
 
-const
+const  # TODO: Document.
   KEY_HASH = "git hash:"  ## Line `nim --version` reports its commit under.
   KEY_CACHE* = "KNOLLER_NIM_DIR"  ## Environment name overriding where toolchains are cached.
   DIRECTORY_CACHE* = ".cache/knoller/nim"
@@ -63,7 +63,7 @@ const
     ## Anything absent here is built from source, which serves every platform Nim serves.
 
 
-type
+type  # TODO: Document.
   Compiler* = object  ## Define what `nim --version` says about compiler on PATH.
     version*: string  ## Dotted release version it names.
     commit*: string  ## Git hash it reports; empty when it reports none.

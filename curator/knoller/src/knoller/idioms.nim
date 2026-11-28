@@ -90,7 +90,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[declared, entry, form, reports, tokens, views]
 
 
-type
+type  # TODO: Document.
   SpanImport = object
     ## Define one import statement as code view holds it: lines it spans, what it imports.
     first: int  ## Zero-based line `import` opens.
@@ -137,7 +137,7 @@ type
     got: string  ## Items as written.
 
 
-const
+const  # TODO: Document.
   STRICT_FUNCS* = "{.experimental: \"strictFuncs\".}"
     ## Pragma line every module carries, in this exact form (STYLE.md §2).
   KEYWORDS_BINDING = ["const", "let", "var"]  ## Keywords opening binding.

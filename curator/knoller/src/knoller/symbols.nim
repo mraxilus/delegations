@@ -57,7 +57,7 @@ import std/[options, os, osproc, sequtils, strutils, tables, tempfiles]
 import ./views
 
 
-type
+type  # TODO: Document.
   Symbol* = object  ## Define symbol name resolves to: kind, qualified name, definition.
     kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
                    ##   whose own name pass answers with its result, kind unread.
@@ -115,7 +115,7 @@ type
     missing: string  ## Why no run started, since toolchain holds no `nimsuggest`; empty if one did.
 
 
-const
+const  # TODO: Document.
   NIMSUGGEST = "nimsuggest"  ## Tool every toolchain ships beside compiler.
   PARALLEL = 4  ## Entries running at once at most.
   MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.

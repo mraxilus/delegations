@@ -11,7 +11,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, reports]
 
 
-const
+const  # TODO: Document.
   PATH = "pga/operators.nim"  ## Path of library module, outside `tests/`.
   TWO = "definition takes two blank lines before it; got `"
     ## Message opening for definition no other bullet of X.2 names.

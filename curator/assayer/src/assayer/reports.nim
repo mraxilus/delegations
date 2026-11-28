@@ -32,7 +32,7 @@ from std/unicode import runeLen
 import ./[plans, runs]
 
 
-const
+const  # TODO: Document.
   STATUS_PASS* = "PASS"  ## Status word of run that passed.
   STATUS_FAIL* = "FAIL"  ## Status word of run that failed.
   LINES_EXCERPT_MAX* = 20  ## Lines excerpt keeps at most, counted from end of output.

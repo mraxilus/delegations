@@ -11,7 +11,7 @@ import std/[sequtils, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, configurations, reports]
 
 
-const
+const  # TODO: Document.
   ALGEBRA =
     "const\n  DIMENSIONS* {.define: \"pga.dimensions\".} = 4\n" &
     "  IS_CONFORMAL* {.define: \"pga.is_conformal\".} = false\n  IS_RIGID* = not IS_CONFORMAL\n"

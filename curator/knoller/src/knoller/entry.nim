@@ -17,7 +17,7 @@ import std/strutils
 import ./[declared, reports, tokens, views]
 
 
-const
+const  # TODO: Document.
   GUARD_MAIN* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
   PRAGMAS_MODULE = @MARKS_FOREIGN & @["global", "threadvar"]
     ## Pragmas binding name at module level alone, or across foreign boundary (`MARKS_FOREIGN`),
@@ -28,7 +28,7 @@ const
   ROUTINE_ENTRY* = "main"  ## Routine entry block calls (V.10).
 
 
-type
+type  # TODO: Document.
   BlockEntry* = object
     ## Define entry block of module, bindings it holds, and why fix cannot move its body (V.10).
     head: int  ## Zero-based line of `when isMainModule:`; `-1` where none is read.
