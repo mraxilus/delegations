@@ -20,8 +20,9 @@
 ##   .i `word:part+part:gloss:places` sinxa lo tanru sepi'o lo jbovla
 ##   .i `word#keyword+keyword:gloss:places` sinxa lo tanru sepi'o lo glikikyvla
 ##   .i `:` poi zvati lo jbini be `[]` .a `()` cu fendi no datnypau
+##   .i le pagbu cu du le datnypau poi vasru `+`
+##   .i va'o lo nu no datnypau cu vasru `+` kei le pagbu cu du le remoi datnypau
 ##   .i le glico valsi cu du le datnypau poi lidne le pagbu
-##   .i ku'i lo datnypau poi vasru `+` cu ciska lo tanru gi'e na glico valsi
 ##   .i lo datnypau poi kunti gi'a cfari fi `$` cu na glico valsi
 ##   .i pa linji poi lo valsi pe ke'a na se gunma lo lojbo lerfu po'o cu na se tcidu
 ##   .i va'o lo nu re linji cu vasru pa valsi kei le pamoi linji cu se tcidu
@@ -72,18 +73,23 @@ func fieldsLujvo*(line: string): seq[string] =
 
 func toMeaningLujvo*(line: string): Option[(string, Meaning)] =
   ## le valsi .e le smuni be pa linji pe `lujvo.txt`
-  ##   .i le glico valsi cu du le datnypau poi lidne le pagbu gi'e vasru no lerfu po'u `+`
+  ##   .i le pagbu cu du le pamoi datnypau poi vasru `+` .a le glikikyvla pe le stedu
+  ##   .i le glico valsi cu du le datnypau poi lidne le pagbu
   ##   .i no da va'o lo nu le valsi na se gunma lo lojbo lerfu po'o
   let
     fields = line.fieldsLujvo
     head = fields[0].split('#', maxsplit = 1)
     is_english = head.len == 2
   if head[0].len == 0 or not head[0].allCharsInSet(LETTERS_LUJVO): return none((string, Meaning))
-  var at = if is_english: 1 else: 2
-  while at < fields.len and '+' in fields[at]: inc at
-  let gloss = if at < fields.len: fields[at].strip else: ""
+  var at = 1  # le datnypau pe le pagbu
+  if not is_english:
+    while at < fields.len and '+' notin fields[at]: inc at
+    if at == fields.len: at = 1
+  let
+    glossed = if is_english: 1 else: at + 1  # le datnypau pe le glico valsi
+    gloss = if glossed < fields.len: fields[glossed].strip else: ""
   some((head[0], Meaning(gloss: if gloss.startsWith('$'): "" else: gloss,
-      parts: if is_english: head[1] elif fields.len > 1: fields[1] else: "",
+      parts: if is_english: head[1] elif at < fields.len: fields[at] else: "",
       is_english: is_english)))
 
 
