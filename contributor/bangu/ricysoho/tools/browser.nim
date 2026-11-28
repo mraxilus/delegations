@@ -310,7 +310,8 @@ proc writeCasesLayers() =
   ##   .i ciska ji'a le smuni be ro valsi .e le ctuca be ro linji ja'i le liste
   removeDir(DIRECTORY_LAYERS)
   createDir(DIRECTORY_LAYERS)
-  let found = toMeanings(readSource("gismu.txt").text, readSource("cmavo.txt").text)
+  let found = toMeanings(readSource("gismu.txt").text, readSource("cmavo.txt").text,
+      readSource("lujvo.txt").text)
   var k = 0
   for text in SAMPLES.mapIt(it[1]) & @TEXTS_LAYERS:
     writeFile(DIRECTORY_LAYERS / $k & ".text", text)
