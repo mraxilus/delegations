@@ -237,13 +237,14 @@ const
     ## lo lerfu poi lo valsi cu vasru ke'a ne'i lo raltai
     ##   .i le lerfu cu du lo karsna .e `y` .e lo 17 zunsna .e zoi gy. ' .gy. to `CLL 3.1` .e
     ##       `CLL 3.6` toi
+
+  # lo lerfu poi sinxa lo porsi be lo valsi be'o .enai lo valsi
+  #   .i lo calyle'u cu zvati lo jbini be lo valsi
+  #   .i denpa bu cu sinxa lo denpa
+  #   .i slaka bu cu sinxa lo slaka korbi to `CLL 3.3` toi
+  #   .i lo brale'u cu sinxa lo nu basna to `CLL 3.9` toi
+  #   .i ro lerfu cu ponse pa brale'u
   MARKS_STREAM* = block:
-    ## lo lerfu poi sinxa lo porsi be lo valsi be'o .enai lo valsi
-    ##   .i lo calyle'u cu zvati lo jbini be lo valsi
-    ##   .i denpa bu cu sinxa lo denpa
-    ##   .i slaka bu cu sinxa lo slaka korbi to `CLL 3.3` toi
-    ##   .i lo brale'u cu sinxa lo nu basna to `CLL 3.9` toi
-    ##   .i ro lerfu cu ponse pa brale'u
     var marks = Whitespace + {',', '.'}
     for letter in LETTERS - {'\''}: marks.incl letter.toUpperAscii
     marks
