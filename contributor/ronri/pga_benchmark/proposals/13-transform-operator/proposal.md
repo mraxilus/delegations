@@ -8,8 +8,8 @@ bases that the terms reach. A full operator takes the three steps of pin, whatev
 
 **What it is for.** At pin a transform spells three steps, two antiproducts and an antireverse,
 which is gap cause D08. With this proposal the transform by a motor type is one function. At
-rga4d it spends ⟦82 multiplies and 113 adds and subtractions⟧, where the chain spends 384 and
-352. Each transform there then runs at ⟦×0.27⟧ of pin. A typed point and line at rga3d spend the
+rga4d it spends ⟦82 multiplies and 113 adds and subtractions⟧, where the chain spends 384
+and 352. Each transform there then runs at ⟦×0.27⟧ of pin. A typed point and line at rga3d spend the
 multiplies and adds of Lengyel's code. At rga4d a typed point and plane spend his multiplies and 3
 adds more, and a line 1 multiply and 16 adds more.
 
@@ -49,24 +49,27 @@ runtime baselines.
   chain. Code that needs speed types both the object and the operator.
 - **Two orders.** Each coefficient of the result is one sum of terms ±𝐧ᵢ𝐦ₖ𝐧ⱼ. The sum has two
   orders: multiply 𝐧 by 𝐧 first, or 𝐧 by 𝐦 first. The macro writes out both, counts the
-  multiplies, adds and subtractions of each, and keeps the order of fewer. A tie keeps the matrix.
+  multiplies and adds of each, and keeps the order of fewer. An add of a negated term is a
+  subtraction in C, and counts as one add. A tie keeps the matrix.
   The count reads the Cayley tables alone, so the choice reads no time and holds on every
   machine. So no order is written by hand for one object or one algebra, as the Architect ruled
   (D1 a on #1056).
 - **Matrix.** It multiplies 𝐧 by 𝐧 first. It names the product of each pair once, and a cross
   pair reads its second basis doubled, so each basis doubles once at most. In a coefficient, the
   factor of a basis of 𝐦 is an entry, a signed sum of products of pairs. The coefficient sums
-  each entry times its basis of 𝐦. The matrix pays one multiply for each entry, so it wins where
-  𝐦 holds few bases.
-- **Entries.** Where an entry holds more than one term, the macro names it once, up to its sign.
-  So two coefficients that read one entry compute it once, as Lengyel computes his matrix once.
-  The count then reads what the C computes, since the compiler merges no named entry again. The
-  macro finds an entry by its terms, written as one string with its first term positive.
+  each entry times its basis of 𝐦. So the matrix pays one product for each pair of 𝐧, and one
+  multiply for each entry.
+- **Entries.** Where an entry is more than one bare pair, the macro names it once, up to its
+  sign. So two coefficients that read one entry compute it once, as Lengyel computes his matrix
+  once, and the count reads each entry once. The macro finds an entry by its code, with its first
+  term positive.
 - **Chain.** It multiplies 𝐧 by 𝐦 first: 𝐭 = 𝐧 ⟇ 𝐦, then 𝐭 ⟇ 𝐧̰. It spells both antiproducts
   from `CAYLEYS_WEDGE_DOT.anti`, as `emitMultipliedByBasis` of P04 spells one. 𝐭 holds only the
   bases that some coefficient of the result reads, and the sign of the antireverse folds into
-  each term. One 𝐭 serves each coefficient, so the chain wins where 𝐦 holds many bases. It reads
-  each cross pair twice, so it loses where 𝐦 holds few.
+  each term. One 𝐭 serves each coefficient, but the chain reads each cross pair twice.
+- **Neither order wins on every pair.** Both the size of 𝐧 and the size of 𝐦 move the choice.
+  At cga6d a scalar by a motor keeps the matrix, at 556 operations against 1 040. A vector by the
+  same motor keeps the chain, at 1 108 against 1 755. So the count decides, pair by pair.
 - **Place.** The operator carries `inline` and `noinit`, as each form of P04 does. It stands in
   the typed section of `pga/operators.nim`, and edits no table of `pga/cayleys.nim`. Each order
   is a function of its own, beside `emitSum` and `emitBasis` of P04, and the macro calls both.
@@ -125,8 +128,8 @@ is counted from its two tables, and the operator as the evaluation reads its C:
   more. So [the gap of P13's table to Lengyel
   (#1015)](https://github.com/mraxilus/delegations/issues/1015) stays open, as the Architect ruled
   (D1 a on #1056).
-- **Dimensions.** The matrix grows with the entries of 𝐦, and the chain with 𝐭, so the chain
-  wins at more dimensions. For a full 𝐦 by a motor type, the macro keeps the matrix at cga5d:
+- **Dimensions.** The matrix grows with the pairs of 𝐧 and its entries, and the chain with 𝐭,
+  so the chain wins more pairs at more dimensions. For a full 𝐦 by a motor type, the macro keeps the matrix at cga5d:
   464 multiplies and 1 167 adds, against 2 048 and 1 984 of the chain at pin. At rga6d it keeps
   the chain: 3 072 and 2 944, against 6 144 and 6 016. At cga6d it keeps the chain: 4 096 and
   3 968, against 8 192 and 8 064.
@@ -173,4 +176,217 @@ so a full operator takes the chain, whatever the type of 𝐦 is.
 
 ## Evidence
 
-⟦EVIDENCE⟧
+`laws.nim` holds the operator equal to the chain on 256 seeded samples of ten pairs of types, at
+each of the nine algebras. The pairs take a full multivector by a motor part, a flector part and
+a vector. They take a vector, a bivector and a motor part by a motor part, and a vector by a
+vector. They take a vector, a motor part and a full multivector by a full multivector. Across the
+nine algebras they reach both orders: a bivector by a motor part takes the matrix at rga3d and
+rga4d, and the chain at cga5d.
+
+The laws also hold the type of each result to the bases that the chain reaches, and the alias
+equal to the chain. By a full multivector, they hold the result to the chain bit for bit, and its
+type to full. Ten count claims hold the multiplies and the adds of each transform measurand:
+⟦82 and 83⟧ at rga4d, and ⟦23 and 14⟧ at rga3d. The operator spends no zero fill, intermediate or
+error check there.
+
+⟦EVALUATION⟧
+
+**One example, from the macro to the assembly.** A point by a motor at rga3d is the smallest
+transform of Lengyel's reference. The motor 𝐧 = 0.25𝐞₁ + 0.5𝐞₂ + 0.6𝐞₃ + 0.8𝐞₃₂₁ rotates about a
+point, with cos θ = 0.28 and sin θ = 0.96. It moves the point 𝐦 = 𝐞₁ + 2𝐞₂ + 𝐞₃, at (1, 2), to
+(−0.54, 1.72).
+
+```nim
+const
+  POINT = {Basis.E1, Basis.E2, Basis.E3}
+  MOTOR = {Basis.E1, Basis.E2, Basis.E3, Basis.E321}
+
+proc transformPoint(p: ptr MultivectorOf[POINT], q: ptr MultivectorOf[MOTOR],
+                    r: ptr MultivectorOf[POINT]) {.noinline, exportc: "transform_point".} =
+  r[] = p[] ⟇⟇~∘ q[]
+```
+
+The macro writes out both orders and counts each. The matrix spends 14 multiplies and 10 adds,
+and the chain 18 and 11. So the macro keeps the matrix. Nim prints the code that it emits as
+below, where `Basis(1)`, `Basis(2)`, `Basis(3)` and `Basis(7)` are 𝐞₁, 𝐞₂, 𝐞₃ and 𝐞₃₂₁:
+
+```nim
+let
+  doubled_E3 = n[Basis(3)] + n[Basis(3)]
+  pair_E1_E3 = n[Basis(1)] * doubled_E3
+  doubled_E321 = n[Basis(7)] + n[Basis(7)]
+  pair_E2_E321 = n[Basis(2)] * doubled_E321
+  pair_E3_E3 = n[Basis(3)] * n[Basis(3)]
+  pair_E3_E321 = n[Basis(3)] * doubled_E321
+  pair_E321_E321 = n[Basis(7)] * n[Basis(7)]
+  pair_E1_E321 = n[Basis(1)] * doubled_E321
+  pair_E2_E3 = n[Basis(2)] * doubled_E3
+let
+  entry_0 = pair_E3_E3 + -pair_E321_E321
+  entry_1 = pair_E1_E3 + pair_E2_E321
+  entry_2 = pair_E1_E321 + -pair_E2_E3
+  entry_3 = pair_E3_E3 + pair_E321_E321
+result[Basis(1)] = -(entry_0 * m[Basis(1)]) +
+    -(pair_E3_E321 * m[Basis(2)]) +
+    entry_1 * m[Basis(3)]
+result[Basis(2)] = pair_E3_E321 * m[Basis(1)] +
+    -(entry_0 * m[Basis(2)]) +
+    -(entry_2 * m[Basis(3)])
+result[Basis(3)] = entry_3 * m[Basis(3)]
+```
+
+The chain that the macro drops reads 𝐭 = 𝐧 ⟇ 𝐦 first. Each coefficient of the result then
+multiplies 𝐭 by 𝐧 again, so it reads the pair of 𝐞₃ and 𝐞₃₂₁ twice, where the matrix names it once:
+
+```nim
+let
+  t_E1 = n[Basis(2)] * m[Basis(3)] + -(n[Basis(3)] * m[Basis(2)]) + n[Basis(7)] * m[Basis(1)]
+  t_E2 = -(n[Basis(1)] * m[Basis(3)]) + n[Basis(3)] * m[Basis(1)] + n[Basis(7)] * m[Basis(2)]
+  t_E3 = n[Basis(7)] * m[Basis(3)]
+  t_E321 = -(n[Basis(3)] * m[Basis(3)])
+result[Basis(1)] = t_E1 * n[Basis(7)] + -(t_E2 * n[Basis(3)]) + t_E3 * n[Basis(2)] +
+    -(t_E321 * n[Basis(1)])
+result[Basis(2)] = t_E1 * n[Basis(3)] + t_E2 * n[Basis(7)] + -(t_E3 * n[Basis(1)]) +
+    -(t_E321 * n[Basis(2)])
+result[Basis(3)] = t_E3 * n[Basis(7)] + -(t_E321 * n[Basis(3)])
+```
+
+On the example, the entries are the matrix of a rigid motion of the plane. Entry 0 is −cos θ, the
+pair of 𝐞₃ and 𝐞₃₂₁ is sin θ, and entries 1 and 2 are the translation:
+
+| Name | Value | Name | Value |
+|---|---|---|---|
+| `doubled_E3` | 1.2 | `entry_0` | −0.28 |
+| `doubled_E321` | 1.6 | `entry_1` | 1.1 |
+| `pair_E3_E3` | 0.36 | `entry_2` | −0.2 |
+| `pair_E321_E321` | 0.64 | `entry_3` | 1.0 |
+| `pair_E3_E321` | 0.96 | `result[E1]` | 0.28 − 1.92 + 1.1 = −0.54 |
+| `pair_E1_E321` | 0.4 | `result[E2]` | 0.96 + 0.56 + 0.2 = 1.72 |
+| `pair_E2_E3` | 0.6 | `result[E3]` | 1.0 |
+
+Nim writes the C below for gcc. Each `let` is a local, and each subscript is a constant index:
+
+```c
+doubled_E3_1 = (((NF) (*n_p1).elements[(((NI) 2) - 0)]) + ((NF) (*n_p1).elements[(((NI) 2) - 0)]));
+pair_E1_E3_1 = (((NF) (*n_p1).elements[(((NI) 0) - 0)]) * ((NF) doubled_E3_1));
+/* … the other seven products of pairs, one line each … */
+entry0_1 = (((NF) pair_E3_E3_1) + ((NF) (-(pair_E321_E321_1))));
+entry1_1 = (((NF) pair_E1_E3_1) + ((NF) pair_E2_E321_1));
+entry2_1 = (((NF) pair_E1_E321_1) + ((NF) (-(pair_E2_E3_1))));
+entry3_1 = (((NF) pair_E3_E3_1) + ((NF) pair_E321_E321_1));
+result.elements[(((NI) 2) - 0)] = (((NF) entry3_1) * ((NF) m_p0.elements[(((NI) 2) - 0)]));
+```
+
+gcc at `-O3` packs two lanes in each SSE2 register, so one instruction can compute two values.
+Each comment gives the low lane, then the high lane:
+
+```asm
+endbr64                       # landing pad of an indirect branch
+movapd 0x10(%rsi),%xmm0       # [n.E3, n.E321]
+movapd (%rsi),%xmm6           # [n.E1, n.E2]
+movsd  0x10(%rdi),%xmm3       # m.E3
+movsd  (%rdi),%xmm5           # m.E1
+movapd %xmm0,%xmm2            # [n.E3, n.E321]
+movapd %xmm0,%xmm7            # [n.E3, n.E321]
+movapd %xmm6,%xmm1            # [n.E1, n.E2]
+movupd (%rdi),%xmm4           # [m.E1, m.E2]
+addpd  %xmm0,%xmm2            # [doubled_E3, doubled_E321]
+movapd %xmm0,%xmm8            # [n.E3, n.E321]
+shufpd $0x1,%xmm0,%xmm0       # [n.E321, n.E3]
+unpckhpd %xmm7,%xmm7          # [n.E321, n.E321]
+addpd  %xmm0,%xmm0            # [doubled_E321, doubled_E3], the same doubles in the other lanes
+unpcklpd %xmm6,%xmm1          # [n.E1, n.E1]
+unpckhpd %xmm6,%xmm6          # [n.E2, n.E2]
+mov    $0xffffffffffffff98,%rax  # address of the error flag of Nim
+mulsd  %xmm7,%xmm7            # pair_E321_E321
+unpckhpd %xmm4,%xmm4          # [m.E2, m.E2]
+mulpd  %xmm2,%xmm1            # [pair_E1_E3, pair_E1_E321]
+unpckhpd %xmm2,%xmm2          # [doubled_E321, doubled_E321]
+cmpb   $0x0,%fs:(%rax)        # test the error flag
+mulpd  %xmm6,%xmm0            # [pair_E2_E321, pair_E2_E3]
+mulsd  %xmm8,%xmm2            # pair_E3_E321
+movapd %xmm1,%xmm6            # [pair_E1_E3, pair_E1_E321]
+addpd  %xmm0,%xmm6            # [entry_1, unused]
+subpd  %xmm0,%xmm1            # [unused, entry_2]
+movapd %xmm3,%xmm0            # m.E3
+unpcklpd %xmm0,%xmm0          # [m.E3, m.E3]
+movsd  %xmm6,%xmm1            # [entry_1, entry_2]
+movapd %xmm8,%xmm6            # [n.E3, n.E321]
+mulsd  %xmm8,%xmm6            # pair_E3_E3
+mulpd  %xmm0,%xmm1            # [entry_1 · m.E3, entry_2 · m.E3]
+movapd %xmm6,%xmm8            # pair_E3_E3
+addsd  %xmm7,%xmm6            # entry_3
+subsd  %xmm7,%xmm8            # entry_0
+mulsd  %xmm3,%xmm6            # result[E3] = entry_3 · m.E3
+movapd %xmm8,%xmm0            # entry_0
+mulsd  %xmm5,%xmm0            # entry_0 · m.E1
+mulsd  %xmm2,%xmm5            # pair_E3_E321 · m.E1
+unpcklpd %xmm8,%xmm2          # [pair_E3_E321, entry_0]
+xorpd  0x3a06(%rip),%xmm0     # −(entry_0 · m.E1), the one negation
+mulpd  %xmm2,%xmm4            # [pair_E3_E321 · m.E2, entry_0 · m.E2]
+unpcklpd %xmm5,%xmm0          # [−(entry_0 · m.E1), pair_E3_E321 · m.E1]
+subpd  %xmm4,%xmm0            # first two terms of result[E1] and of result[E2]
+movapd %xmm0,%xmm2            # copy of both
+subpd  %xmm1,%xmm0            # [unused, result[E2]], less entry_2 · m.E3
+addpd  %xmm1,%xmm2            # [result[E1], unused], plus entry_1 · m.E3
+movsd  %xmm2,%xmm0            # [result[E1], result[E2]]
+jne    11170 <transform_point+0xe0>  # error path of Nim, where the flag is set
+movups %xmm0,(%rdx)           # store result[E1] and result[E2]
+movsd  %xmm6,0x10(%rdx)       # store result[E3]
+ret
+```
+
+The 10 multiply instructions compute the 14 multiplies of the emitted code, since 4 of them fill
+both lanes. The 9 adds and subtractions compute its 10 adds, and one of them doubles 𝐞₃ and 𝐞₃₂₁
+again in the other lanes. One `xorpd` negates the first term of a coefficient, since the compiler
+keeps the order of each sum. The test of the error flag comes from the wrapper, since Nim tests
+its flag after each call that the wrapper makes.
+
+**Lengyel's five transforms.** A typed object by a typed motor reads the sum of its own two types.
+Each takes the matrix:
+
+| Algebra | Object | Operator: multiplies, adds | Lengyel: multiplies, adds | Of his time |
+|---|---|---|---|---|
+| rga4d | point | 35, 43 | 35, 40 | ×1.01 to ×1.09 |
+| rga4d | line | 53, 70 | 52, 54 | ×1.13 to ×1.14 |
+| rga4d | plane | 35, 43 | 35, 40 | ×1.06 to ×1.08 |
+| rga3d | point | 14, 10 | 14, 10 | ×1.11 to ×1.12 |
+| rga3d | line | 14, 10 | 14, 10 | ×1.00 |
+
+Each count reads the code that the macro emits. Each pair ran four times on 2026-11-28, on the
+Xeon of family 6 model 207, with seven passes in a copy of the timed loop of `measurements.nim`.
+Each ratio is the time of the operator against the time of Lengyel's code in the same run. Under
+the three forms of 2026-11-27, they read ×1.06 to ×1.10, ×1.00, ×1.00 to ×1.05, ×0.96 and ×1.01
+to ×1.08. The point at rga3d spends his counts, but gcc packs its lanes in other pairs, and it
+runs at ×1.12.
+
+**130 pairs of types.** The same loop timed 130 pairs of types at the nine algebras on 2026-11-28,
+twice each, on the same machine. They take each grade, a motor part and a flector part, by a
+motor type and by a flector type. In the same binary, it timed the operator, the three forms of
+2026-11-27, and each order alone. Each ratio below is against the fastest of six forms for that
+pair:
+
+| Rule | Median | 90th percentile | Worst | Within ×1.10 |
+|---|---|---|---|---|
+| Two orders, this proposal | ×1.005 | ×1.15 | ×1.27 | 110 of 130 |
+| Three forms of 2026-11-27 | ×1.03 | ×1.35 | ×1.66 | 90 of 130 |
+
+Against the three forms, the median reads ×0.99. A bivector by a motor at cga6d reads ×0.61,
+where the typed chain wrote out terms that no coefficient reads. A flector by a motor at rga5d
+reads ×1.27, where the cross form spent fewer operations than either order.
+
+llvm-mca 18 also models the cycles of each form, as the geometric mean of four x86 cores. Against
+the fastest of six forms, the 90th percentile reads ×1.19 for the two orders and ×1.47 for the
+three forms. With `-march=x86-64-v3`, it reads ×1.31 and ×1.45. For AArch64 under clang, on
+three cores, it reads ×1.43 and ×1.28, so the three forms fit that model better. No rule of the
+macro reads a target, so the operator keeps that cost.
+
+A full 𝐦 by a motor at rga6d keeps the chain, at 3 072 multiplies and 2 944 adds. The cross form
+spent 1 704 and 2 567 there, so this pair spends ×1.41 the operations of the three forms.
+
+The counts of the chain, of the other algebras and of the forms that lost come from scripts that
+read the tables of pin. The build of one call is the median of four builds of a program with the
+call, against four without it. The scripts are not committed, so these figures are assumed until
+a claim holds them. No claim holds the order that each pair keeps either. The laws hold each
+order equal to the chain, but they pass whichever order the macro keeps. So the order and the
+counts of each typed transform above are assumed too.
