@@ -3774,18 +3774,25 @@ ni'o pa sarji pe ro papri cu jorne le re papri to `D5` pe `#1055` toi
   .i le sarji cu cmene ro papri gi'e sinxa le papri poi ca zvati
 
 ni'o **le ctuca poi zvati le cnita be le se ciska cu skicu le valsi .a le linji poi le korbi cu
-    pencu ke'a to `D2` pe `#1055` toi**
+    pencu ke'a to `D2` .e `D1 c` pe `#1055` toi**
   .i pa nu samcu'a cu rinka lo nu le ctuca cu stali
-  .i pa valsi cu jarco le selma'o .e le glico smuni .e ro linji poi vasru ke'a
-  .i pa linji cu jarco le klesi .e ro linji poi vasru ke'a
-  .i ro linji cu porsi ja'i lo ni gapru gi'e ponse pa jboselci'a poi skicu le klesi
+  .i pa valsi cu jarco le selma'o .e le glico smuni
+  .i pa linji cu jarco le jbocme .e le glico cmene be le klesi to `D2 a` toi
+  .i ji'a pa linji cu jarco lo glico selci'a .e ro pagbu be vo'a
+  .i lo pagbu cu du lo linji poi le linji cu vasru ke'a ku'o .e lo valsi poi no drata linji cu vasru
+      ke'a
+  .i ro linji poi vasru le se cuxna cu zvati le pritu be le stedu
+  .i pa nu samcu'a pa pagbu .a pa linji pe le pritu cu cuxna ri
       Verified by `browser/suite_layers.nim`.
 
-ni'o **le ctuca cu jboselci'a gi'e jarco lo glico smuni to `D6 b` pe `#1055` toi**
-  .i le genturfa'i cu tcidu ro jboselci'a pe le ctuca Verified by `suites/test_layers.nim`.
-  .i no jboselci'a pe le ctuca cu vasru zo ri .a zo ra .a zo ru
-  .i ki'u bo lo tadni cu sisku le sumti poi le cmavo cu sinxa ke'a
+ni'o **le ctuca cu glico gi'e pilno lo smuni pe le liste ge'u va'o lo nu le liste cu vasru ke'a to
+    `D1 c` pe `#1055` toi**
+  .i pa klesi cu pilno le smuni be le jbocme be vo'a va'o lo nu le liste cu vasru ke'a
+  .i lo linji pe zo poi .e zo nu .e zo be .e lo tcita cu pilno le smuni be le pamoi valsi poi jarco
+      le klesi
+  .i le papri cu cliva lo valsi pe `SE` .a `NAhE` .a `BAhE` .a `PA` poi lidne le valsi
       Verified by `suites/test_layers.nim`.
+  .i ro drata klesi cu pilno lo glico selci'a pe le papri Verified by `suites/test_meanings.nim`.
   .i le smuni cu selzba fi `gismu.txt` .e `cmavo.txt` pe `1.5+dfsg.1-4` pe `lojban-common`
   .i le stosni pe `lists.nim` cu stodi le re datnyvei
   .i ro gismu .e ro cmavo pe le liste pe le genturfa'i cu ponse lo smuni
