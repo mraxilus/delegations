@@ -134,13 +134,13 @@ proc partKeys(): seq[string] =
         else: "b" & $bar.to(cstring))
 
 
-proc textOf(selector: cstring): string =
+proc shownLesson(selector: cstring): string =
   ## le selci'a pe le pamoi dacti pe le ctuca poi mapti `selector`
   let node = DOCUMENT.querySelector(cstring("#lesson " & $selector))
   if node.isNull: "" else: $node.textContent.to(cstring)
 
 
-func partsOf(model: Model, bar: int): seq[string] =
+func parted(model: Model, bar: int): seq[string] =
   ## ro pagbu be pa linji ta'i le porsi pe le se ciska
   ##   .i pa pagbu cu du pa linji poi le linji cu vasru ke'a .a pa valsi poi no ri cu vasru
   var starts: seq[(int, string)]
@@ -331,9 +331,9 @@ proc runSuite() {.async.} =
       DOCUMENT.querySelector(cstring("#editor [data-w=\"" & $i & "\"]")).hovered
       let expected = if found[i].len > 0: found[i] else: LESSON_NONE
       expectThat chosenKey() == "w" & $i, "lesson takes word under pointer: " & $word.text
-      expectThat textOf(".head b") == $word.text and textOf(".head .sel") == $word.gloss,
+      expectThat shownLesson(".head b") == $word.text and shownLesson(".head .sel") == $word.gloss,
           "lesson names word and its selma'o: " & $word.text
-      expectThat textOf(".meaning") == expected,
+      expectThat shownLesson(".meaning") == expected,
           "word takes meaning native build gives it: " & $word.text
       var holding: seq[int]
       for b, bar in model.bars:
@@ -362,12 +362,12 @@ proc runSuite() {.async.} =
         above.add parent
         parent = model.bars[parent].parent
       expectThat chosenKey() == "b" & $b, "lesson takes bar under pointer: " & text
-      expectThat textOf(".head .kind") == lesson_kind.lojban and
+      expectThat shownLesson(".head .kind") == lesson_kind.lojban and
           lesson_kind.lojban == b.nameDrawn, "bar takes Lojban name it takes under text: " & text
-      expectThat textOf(".head .en") == expected[0] and textOf(".meaning") == expected[1],
+      expectThat shownLesson(".head .en") == expected[0] and shownLesson(".meaning") == expected[1],
           "bar takes English name and text native build gives it: " & text
       expectThat pathBars() == above.reversed, "path names each bar that holds bar: " & text
-      expectThat partKeys() == model.partsOf(b), "lesson lists parts of bar in order: " & text
+      expectThat partKeys() == model.parted(b), "lesson lists parts of bar in order: " & text
       for item in queryAll("#lesson ol li"):
         let part = item.getAttribute("data-b")
         if part.isNull:
@@ -391,14 +391,14 @@ proc runSuite() {.async.} =
     deep = block:
       var found = -1
       for b, bar in model.bars:
-        if found < 0 and bar.parent >= 0 and model.partsOf(b).len > 1: found = b
+        if found < 0 and bar.parent >= 0 and model.parted(b).len > 1: found = b
       found
   drawn(model, none((int, int, bool)))
   await nextFrame()
   expectThat deep >= 0, "first case holds bar with parent and parts"
   discard DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $deep & "\"]")).click()
   editor.firstElementChild.left
-  let first_part = model.partsOf(deep)[0]
+  let first_part = model.parted(deep)[0]
   discard DOCUMENT.querySelector("#lesson ol li").click()
   expectThat chosenKey() == first_part, "click on part moves lesson to it"
   var root = deep
