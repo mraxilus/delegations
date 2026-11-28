@@ -264,6 +264,9 @@ Then the subagent runs, and these steps follow:
   The critic is a fresh subagent too. Its prompt holds the first prompt, the report, and the paths
   of the evidence, but never your prediction. It checks each claim against the evidence, and
   never does the work again. It runs the checks of a build again, and no critic checks a critic.
+- **A change takes one round of mends by a subagent after its first critic, and no more**
+  (#1083). The critic of that round runs as before. Make each minor follow-up after it yourself,
+  and start no subagent for it, since each further round costs more than it finds.
 - **A resolver marks each prediction whose subagent a critic checked, after the critic.** Its
   prompt holds each claim by its number with its resolution criterion, the report, and the report
   of the critic. It holds the percentiles of each estimate, and no confidence. Where no critic
