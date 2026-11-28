@@ -170,7 +170,7 @@ func decide*(gap: var Gap) =
       gap.metrics_over.add name
 
   template absolute(name: string, field: untyped) =
-    ## Mark metric over where library exceeds zero or reference, reference absent as zero.
+    ## Mark metric over where library exceeds reference, absent reference read as zero.
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
       gap.metrics_over.add name
 

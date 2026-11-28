@@ -54,7 +54,7 @@ type  # Define measurand, and row each kind of measurand is listed by.
     ## Define one catalogue row of unary map family of kinds carries, read by `addUnary`.
 
 
-const  # Name aliases of library that metric changes, and form of transform it declares.
+const  # Name aliases of library that metric changes, and form of transform library declares.
   ALIAS_BULK = when IS_RIGID: "bulk" else: "bulkRound"
     ## Library's name for `∙ m`, which conformal umbrella qualifies as round.
   ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"  ## Library's name for `∘ m`.

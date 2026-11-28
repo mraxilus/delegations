@@ -634,7 +634,7 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
   result.add "</div></section>"
 
 
-const  # Write fixed markup of docket page: legend, method and style.
+const  # Spell fixed markup of docket page: legend, method and style.
   LEGEND = """<div class="legend"><span class="mark-bar">library over what it is measured
 against, log scale</span><span class="mark-origin typed-off">×1: multivector lower bound for
 counts, dense form for time</span><span class="mark-origin typed-only">×1: reference on typed

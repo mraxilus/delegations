@@ -25,7 +25,7 @@ import pga
 import ./[bound, catalogue, inspector, kinds, report]
 
 
-const  # Name algebra this build inspects, its metric, and keys two shared functions take.
+const  # Name algebra this build inspects, its metric, and keys each pair of functions shares.
   NAME_ALGEBRA = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
   METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)

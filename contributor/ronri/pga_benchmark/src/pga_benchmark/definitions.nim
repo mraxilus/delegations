@@ -27,7 +27,7 @@ type  # Define definition of Nim source, and one definition as two versions hold
     before*, after*: int  ## Index in each version; -1 where version lacks it.
 
 
-const  # List words that open each kind of definition.
+const  # List words that open routines, sections, imports and blocks of definitions.
   KEYWORDS_ROUTINE = ["func", "proc", "iterator", "template", "macro", "method", "converter"]
     ## Words opening routine.
   KEYWORDS_SECTION = ["type", "const", "let", "var"]  ## Words opening section of members.

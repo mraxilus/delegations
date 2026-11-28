@@ -18,7 +18,7 @@ import std/[complex, fenv, math, options, random, strformat]
 import pga
 
 
-const  # Fix samples and floor of laws, seed, terms of series, and vector that printed NaN.
+const  # Fix samples and floor of laws, seed, terms of series, and vector whose roots printed NaN.
   SAMPLES = 4096  ## Seeded samples each law is checked on.
   SAMPLES_FLOOR = SAMPLES div 8  ## Fewest samples guarded law passes, so filtering guard fails.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
