@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "multivector-align",
   "path": "proposals/05-multivector-align",
-  "edits_digest": "9606dd7d0ab632db",
+  "edits_digest": "8c1ea8e3398fb25c",
   "taken": {
     "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
