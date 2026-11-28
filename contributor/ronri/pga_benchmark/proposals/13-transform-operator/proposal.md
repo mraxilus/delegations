@@ -120,8 +120,8 @@ is counted from its two tables, and the operator as the evaluation reads its C:
   2.9 s to the build of a program, and 86 MiB to the peak of the compiler. The three forms add
   3.6 s and 123 MiB there, on the same machine. At rga4d the call moves the build by less than the
   spread of the builds.
-- **Build of `import pga`.** It builds no sum. In the evaluation, it takes 9.46 s at cga6d against
-  8.65 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.6 MiB, against 210.5 MiB at
+- **Build of `import pga`.** It builds no sum. In the evaluation, it takes 9.81 s at cga6d against
+  8.74 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.6 MiB, against 210.5 MiB at
   pin.
 - **Size.** At rga4d the function holds 134 lines of C, inline in each caller. The macro holds
   142 lines of Nim, and runs only when the code compiles.

@@ -74,8 +74,8 @@ returns `Multivector1`.
   prints that type with its bases.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it.
-- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.4 MiB against 210.2 MiB at pin.
-  At cga6d it takes 14.68 s against 15.70 s, so ×0.94.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.7 MiB against 210.4 MiB at pin.
+  At cga6d it takes 9.45 s against 9.40 s, so ×1.00.
 - **Sum at rga4d.** In the bench, `+` of whole multivectors reads ×1.02 of pin at rga4d, about
   0.09 ns. Its loop holds the same 8 vector sums as the code of pin, and takes them in turn on
   three registers. The cause of the 0.09 ns is not isolated.
