@@ -37,10 +37,9 @@ Three proposals edit lines that this change quotes:
 - P04, `basis-set-forms`, adds `basis_sets` to the import line of `pga.nim`, which an edit of this
   change quotes and keeps. So P04 applies after this change as written. If P04 lands first, this
   change quotes that line again. P09 and P10 build on P04, so each meets this change as P04 does.
-- P10, `homogeneous-scalar`, replaces the doc and the body of `normRadius` in `pga.nim`. If P10
-  lands first, the edit of this change that adds a line to that doc is void. If this change lands
-  first, P10 applies with no misfit, but the conformal build stops. A doc line then stays under
-  the new body, so P10 quotes both doc lines.
+- P10, `homogeneous-scalar`, adds a line below the first doc line of `normRadius` in `pga.nim`,
+  and quotes that first line. This change adds its line below the same line, so either order
+  applies with no misfit.
 
 ## Edit `pga.nim`
 
