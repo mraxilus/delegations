@@ -149,8 +149,11 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
   internal of a sibling (I.6). The function stays private, and its doc names `pga/scalars.nim`.
 - **Callers of `|⊘`.** No function of the library calls it. Two tests do: the test of (4.45), and
   P04's test of typed norms. The catalogue of this project measures `|⊘`, and the bench folds the
-  value of an `Option` where it has one. So the bench counts no NaN for `|⊘`, where pin counts one
-  for about half of all multivectors.
+  value of an `Option` where it has one.
+- **Time of the radius norm.** In the evaluation, `|⊘` takes 13.47 ns at cga4d against 3.92 ns at
+  pin, so ×3.4, and 18.95 ns at cga5d against 8.35 ns, so ×2.3. The root of the pair spends 3
+  divides and 3 tests on its two parts, where pin takes one float root. In return its share of NaN
+  falls from 0.53 to 0 at cga4d, and from 0.50 to 0 at cga5d.
 - **An unwrap where a root always exists.** At cga4d and cga5d the root is never none, yet the
   caller unwraps it, since each function has one type in every algebra.
 - **Split-complex root.** At cga3d and cga6d a negative square has no root. So there the radius
@@ -257,18 +260,20 @@ A copy whose root takes the smaller part by its own root fails the law of the sm
 and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
 see the cancellation.
 
-The laws hold at each of the nine algebras in the evaluation of 2026-11-26. The table comes from a
-run of `laws.nim` on `linux amd64, 4 cores` on 2026-11-19, at library commit `3d9696e`. It counts
-the pairs with a root, of 4 114. It also counts the radius norms that are none, beside the float
-roots of `|⊘` that are NaN, on the same 4 096 multivectors.
+The laws hold at each of the nine algebras in the evaluation of 2026-11-28. The table comes from a
+run of `laws.nim` on `linux amd64, 4 cores`, a Xeon of family 6 model 207, on 2026-11-28, at
+library commit `7ef9f4d`. It counts the pairs with a root, of 4 114. It also counts the radius
+norms `|⊘` that are none, beside the float roots that pin takes that are NaN, on the same 4 096
+multivectors.
 
-| Algebra        | ε² | Pairs with a root | Float root NaN | `normRadius` none |
-|----------------|----|-------------------|----------------|-------------------|
-| rga2d to rga6d | 0  | 2 113             |                |                   |
-| cga3d          | +1 | 1 090             | 2 022          | 2 022             |
-| cga4d          | −1 | 4 114             | 2 095          | 0                 |
-| cga5d          | −1 | 4 114             | 2 043          | 0                 |
-| cga6d          | +1 | 1 090             | 2 061          | 2 061             |
+| Algebra        | ε² | Pairs with a root | Float root NaN | `\|⊘` none |
+|----------------|----|-------------------|----------------|------------|
+| rga2d to rga6d | 0  | 2 113             |                |            |
+| cga3d          | +1 | 1 090             | 2 066          | 2 066      |
+| cga4d          | −1 | 4 114             | 2 053          | 0          |
+| cga5d          | −1 | 4 114             | 2 098          | 0          |
+| cga6d          | +1 | 1 090             | 2 041          | 2 041      |
 
-No record times a function of this proposal, since the bench times the operators. Each function on
-a homogeneous scalar spends a few operations on two coefficients.
+The bench times one function of this proposal, `|⊘`, as `norm_radius` at cga4d and cga5d. Each
+other function on a homogeneous scalar spends a few operations on two coefficients, and no record
+times it.
