@@ -206,23 +206,26 @@ const
     ##     tcidu cu to'e curmi ke'a
     ##   .i ro le selci'avla cu vasru lo lerjo'e poi `CLL 4.6` to'e curmi ke'a ku'o gi'a du lo
     ##       ma'orgunma be re cmavo
+
+  # ro gismu pe le liste ta'i lo stuna'u
+  #   .i lo cmavo poi ponse lo rafsi cu na selvau
   WORDS_GISMU = block:
-    ## ro gismu pe le liste ta'i lo stuna'u
-    ##   .i lo cmavo poi ponse lo rafsi cu na selvau
     var words: seq[Word]
     for i, entry in LIST_GISMU:
       if entry.word.isGismu: words.add Word(i)
     words
+
+  # ro cmavo pe le liste ge'u zi'e poi ponse lo rafsi ku'o ta'i lo stuna'u
   WORDS_CMAVO = block:
-    ## ro cmavo pe le liste ge'u zi'e poi ponse lo rafsi ku'o ta'i lo stuna'u
     var words: seq[Word]
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: words.add Word(i)
     words
+
+  # ro cmavo pe le ma'oste ge'u zi'e poi selkra lo zunsna gi'e vasru no `y`
+  #   .i no javni pe `CLL 4.9` nitcu lo denpa poi lidne lo valsi poi selkra lo zunsna gi'e se
+  #       lidne le cmavo
   WORDS_CMAVO_JOINABLE = block:
-    ## ro cmavo pe le ma'oste ge'u zi'e poi selkra lo zunsna gi'e vasru no `y`
-    ##   .i no javni pe `CLL 4.9` nitcu lo denpa poi lidne lo valsi poi selkra lo zunsna gi'e se
-    ##       lidne le cmavo
     var words: seq[string]
     for entry in LIST_CMAVO:
       if entry.word[0] in CONSONANTS_LETTERS and 'y' notin entry.word: words.add entry.word

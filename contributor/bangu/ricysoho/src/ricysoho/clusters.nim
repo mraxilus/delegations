@@ -78,9 +78,9 @@ const
   TRIPLES_FORBIDDEN* = ["ndj", "ndz", "ntc", "nts"]
     ## lo zunsna cimei poi `CLL 3.7` cusku ke'a gi'e to'e curmi ke'a
 
+  # jdice ro zunsna remei ja'i le vo javni pe `CLL 3.6`
+  #   .i lo seljdi be fi ro lerfu remei poi na zunsna remei cu stali lo ka jitfa
   LUT_PERMISSIBLE_BY_PAIR = block:
-    ## jdice ro zunsna remei ja'i le vo javni pe `CLL 3.6`
-    ##   .i lo seljdi be fi ro lerfu remei poi na zunsna remei cu stali lo ka jitfa
     var lut: PairsJudged
     for a in CONSONANTS:
       for b in CONSONANTS:
@@ -96,8 +96,9 @@ const
           is_named = a & b in PAIRS_FORBIDDEN  # le vomoi javni
         lut[a][b] = not (is_doubled or is_voicing_mixed or is_sibilant_both or is_named)
     lut
+
+  # jdice ro boi remei ja'i le liste pe `CLL 3.7`
   LUT_INITIAL_BY_PAIR = block:
-    ## jdice ro boi remei ja'i le liste pe `CLL 3.7`
     var lut: PairsJudged
     for pair in PAIRS_INITIAL: lut[pair[0]][pair[1]] = true
     lut
