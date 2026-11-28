@@ -4,7 +4,9 @@
 ##   Chain is spelled through operators proposal leaves alone, ⟇ and ~∘, on full multivectors.
 ##   Laws, for each pair of types below: 𝐦 ⟇⟇~∘ 𝐧 equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ of widened operands; its type
 ##     holds exactly bases chain reaches over samples; alias `transform` reads same.
-##   Pairs hold motor and flector parts, single grades and full type, so each kind of table runs.
+##   Pairs hold motor and flector parts, single grades and full type, so each kind of sum runs.
+##     Across nine algebras they reach both orders that operator keeps: matrix and chain, as
+##     bivector by motor takes matrix at rga3d and rga4d, and chain at cga5d.
 ##   Full 𝐧 takes chain itself, whatever type 𝐦 has: result equals (𝐧 ⟇ 𝐦) ⟇ 𝐧̰ bit for bit, and
 ##     its type is full, as Architect ruled (D1 b of #990).
 ##   Samples are dense in their types, every coefficient drawn, so each law reads every term.
@@ -19,7 +21,7 @@ import std/[random, strformat]
 import pga
 
 
-const
+const  # Bound samples, seed and tolerance of each law.
   SAMPLES = 256  ## Seeded samples each law is checked on, for each pair of types.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   TOLERANCE_ZERO = 1e-12  ## Magnitude below which coefficient of chain counts as unreached.

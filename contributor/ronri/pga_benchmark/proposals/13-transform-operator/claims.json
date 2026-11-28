@@ -58,6 +58,41 @@
       "value": 23
     },
     {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_point_motor",
+      "metric": "adds",
+      "value": 113
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_line_motor",
+      "metric": "adds",
+      "value": 113
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_plane_motor",
+      "metric": "adds",
+      "value": 113
+    },
+    {
+      "kind": "count",
+      "algebra": "rga3d",
+      "measurand": "transform_point_motor",
+      "metric": "adds",
+      "value": 16
+    },
+    {
+      "kind": "count",
+      "algebra": "rga3d",
+      "measurand": "transform_line_motor",
+      "metric": "adds",
+      "value": 16
+    },
+    {
       "kind": "build",
       "algebra": "cga5d",
       "metric": "peak",

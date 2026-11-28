@@ -189,8 +189,8 @@ func emitSum(terms: seq[NimNode]): NimNode {.compileTime.} =
 
 
 func emitBasis(b: Basis): NimNode {.compileTime.} =
-  ## Emit basis as constant, so each subscript reads constant index.
-  newCall(ident"Basis", newLit(ord(b)))
+  ## Emit basis by its name, e.g. `Basis.E1`, which subscript reads as constant index.
+  nnkDotExpr.newTree(ident"Basis", ident($b))
 
 
 macro emitMappedByBasis(cayley: static Cayley1D, R, A: static Bases, r, m: untyped): untyped =

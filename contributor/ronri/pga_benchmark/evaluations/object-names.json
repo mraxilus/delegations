@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "object-names",
   "path": "proposals/09-object-names",
-  "edits_digest": "a972a8ef63d10de3",
+  "edits_digest": "f94e81f98475563e",
   "taken": {
     "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
