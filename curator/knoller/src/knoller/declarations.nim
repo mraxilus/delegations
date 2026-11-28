@@ -1,9 +1,9 @@
 ## Enforce that declaration carries doc (Article VI.1), and where it states its doc and its type
 ##   (VI.9, X.12; STYLE.md §5), and fix it (`koch fix`).
 ##   Missing doc: each declaration `declared.nim` reads takes doc, but parameter, generic
-##     placeholder and local binding, which take none (VI.1), and field, enum member and name
-##     inside section, whose doc is optional (`is_optional`; D1 c and `D2 a` of #1020). Names
-##     one line declares share one doc, so that line reports once. Name on line opening
+##     placeholder and binding off global reach, which take none (VI.1), and field, enum member
+##     and name inside section, whose doc is optional (`is_optional`; D1 c and `D2 a` of #1020).
+##     Names one line declares share one doc, so that line reports once. Name on line opening
 ##     inside bracket, as field of tuple type or parameter of routine type, is part of
 ##     expression, and takes none; routine declared there, as in `compiles(block: …)`, takes its
 ##     own. Doc counts where it trails declaration's line or last line of
@@ -11,11 +11,13 @@
 ##     signature. Value of binding runs on over each line of code below it at deeper indent, as
 ##     branch of `when`; line of enum members ends on itself, since `,` closing it opens next
 ##     member.
-##   Section, i.e. `const`, `let`, `var` or `type` alone on its line, takes one doc at global
-##     reach (`declared.sectionsBare`), even where each name inside it holds doc (`D3 a` of
-##     #1020); inside routine, block or entry block it is local, and takes none. Comment trailing
-##     keyword counts, so does comment right above keyword at its indent, and so does `##` doc
-##     right below it, which doc position moves (`sectionsDoc`). Fixer writes
+##   Section, i.e. `const`, `let`, `var` or `type` alone on its line, takes one doc wherever its
+##     names took one before D1 c of #1020 (`declared.sectionsBare`), even where each name inside
+##     it holds doc (`D3 a` of #1020): `type` at every reach, as each type does; `const`, `let` or
+##     `var` at global reach alone, since binding inside routine or block opening scope is local,
+##     and V.10 moves binding of entry block, which reaches whole module, into routine.
+##     Comment trailing keyword counts, so does comment right above keyword at its indent, and so
+##     does `##` doc right below it, which doc position moves (`sectionsDoc`). Fixer writes
 ##     `# TODO: Document.` joined to keyword line, as `#` since `nim doc` reads none there.
 ##   Fixer writes `## TODO: Document.` where doc position puts doc and `nim doc` reads it:
 ##     joined to declaration's one line where joined line fits and holds no comment, else on
@@ -825,10 +827,12 @@ func writesDoc(source: string): seq[WriteDoc] =
     found = source.placements
     valued = source.blocks(found, source.sections)
 
-  # Section at global reach takes doc on its keyword line: comment there, above keyword, or `##`
-  #   doc right below it that doc position moves there, counts.
+  # Section takes doc on its keyword line wherever its names took one: `type` at every reach,
+  #   binding at global reach alone (VI.1). Comment there, above keyword, or `##` doc right below
+  #   it that doc position moves there, counts.
   for s in source.sectionsDoc(found):
-    if s.reach != Reach.Global or s.offset >= 0 or s.above < s.line or s.below >= 0: continue
+    let is_required = s.keyword == "type" or s.reach == Reach.Global
+    if not is_required or s.offset >= 0 or s.above < s.line or s.below >= 0: continue
     result.add WriteDoc(
       line: s.line,
       shape: ShapeWrite.Keyword,
