@@ -39,7 +39,7 @@ from ../src/pga_benchmark/evaluations import
   binaryPristine, suitesPristine, readLibrary, runEvaluation
 
 
-const
+const  # Name directories, paths, entries, flags and titles every verb reads.
   BUILD = "build"
     ## Directory caches, binaries and fresh documents land in; root `.gitignore` covers it.
   BASELINE = "baseline"  ## Directory committed documents live in.

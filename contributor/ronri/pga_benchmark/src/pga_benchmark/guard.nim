@@ -30,7 +30,7 @@ const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
   ##   It moves only where derivation moves, which is change to read, not drift.
 
 
-type
+type  # Define finding of gate, and verdict of one comparison.
   Finding* = object  ## Define one gate failure, located at file and line.
     path*: string  ## File failing, project-relative.
     line*: int  ## Line failing, counted from one; zero where whole document fails.
@@ -40,7 +40,7 @@ type
     improvements*: seq[string]  ## Shrinks, reported and never failing.
 
 
-const
+const  # Name fields both documents must agree on, and counts gate holds.
   HEADER_CONFIG = ["name", "dimensions", "is_conformal", "sizeof_multivector"]
     ## Fields of `algebra` both documents must agree on.
   HEADER_TAKEN = ["nim", "flags"]

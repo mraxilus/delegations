@@ -25,7 +25,7 @@ import ../[guard, markdown]
 import ./shell
 
 
-type
+type  # Define boxes of map, and operations and library state they stand for.
   StateBox* {.pure.} = enum  ## Define how library at pin builds what box stands for.
     Tabled = "table"  ## From table of its own.
     Composed = "composite"  ## From other operators, with no table of its own.
@@ -46,7 +46,7 @@ type
     operations*: Table[string, Operation]  ## Catalogue id to operation, over every algebra.
 
 
-const
+const  # Name library files map reads, and marks of box in map.
   PATH_CAYLEYS* = "pga/cayleys.nim"  ## Library file declaring tables.
   PATH_OPERATORS* = "pga/operators.nim"  ## Library file building operators.
   MARK_FADED = "<g class=\"faded\">"  ## Group map wraps faded box in.

@@ -16,7 +16,7 @@
 import std/strutils
 
 
-type
+type  # Define gate of block of source, and open `when` block that holds one.
   Gate {.pure.} = enum  ## Define which algebras block of source applies to.
     Any, Rigid, Conformal
   Frame = object  ## Define one open `when` block: its indent and which algebra it admits.

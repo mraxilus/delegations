@@ -31,7 +31,7 @@ import ./[changes, guard, head, report]
 from ./proposals import commandBackend, extensionBackend, flagsDefine
 
 
-type
+type  # Define algebra, toolchain and candidate that evaluation reads.
   Algebra* = object  ## Define algebra evaluation measures: name, dimensions, metric.
     name*: string  ## Short name, as `rga4d`.
     dimensions*: int  ## Vector space dimensions.
@@ -52,7 +52,7 @@ type
     claims*: JsonNode  ## Claims proposal makes; empty array for change.
 
 
-const
+const  # Fix runs, entries and metrics of evaluation, and algebras it measures.
   RUNS_EVALUATION* = 41
     ## Timed runs of each binary per evaluation, alternating; ratio is median of paired ratios.
     ##   Enough that run machine slows as whole seldom moves median (`Internal: Evaluations`).

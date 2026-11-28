@@ -67,7 +67,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[os, osproc]
 
 
-const
+const  # Name program of verbs, configuration, browser, system dependencies and usage.
   PATH_VERBS = "tools" / "verbs.nim"
     ## Program every verb but `types` and `system` runs in, on compiler on PATH.
   PATH_TSCONFIG = "tsconfig.json"  ## Type-checker configuration of harness.

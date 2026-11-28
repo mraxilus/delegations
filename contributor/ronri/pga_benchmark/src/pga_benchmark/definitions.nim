@@ -16,7 +16,7 @@
 import std/strutils
 
 
-type
+type  # Define definition of Nim source, and one definition as two versions hold it.
   Definition* = object  ## Define one definition of Nim source.
     kind*: string  ## Word opening it, as `func` or `type`; `statement` for any other.
     name*: string  ## Name it declares, as `⊛`; head of statement for any other.
@@ -27,7 +27,7 @@ type
     before*, after*: int  ## Index in each version; -1 where version lacks it.
 
 
-const
+const  # List words that open each kind of definition.
   KEYWORDS_ROUTINE = ["func", "proc", "iterator", "template", "macro", "method", "converter"]
     ## Words opening routine.
   KEYWORDS_SECTION = ["type", "const", "let", "var"]  ## Words opening section of members.

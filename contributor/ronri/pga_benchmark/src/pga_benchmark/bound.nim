@@ -25,7 +25,7 @@
 import std/options
 
 
-type
+type  # Define blade, algebra and shape of operation, and lower bound derived from them.
   Blade* = uint32
     ## Define basis blade as bitmask, i.e. bit `i` set where basis vector `i` is factor.
   Metric* = object  ## Define which algebra lower bound is derived for.

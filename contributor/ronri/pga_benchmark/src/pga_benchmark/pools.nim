@@ -22,7 +22,7 @@ import ./[kinds, widening]
 export widening
 
 
-var
+var  # Hold dense pools of every algebra, mutable since sampling fills them at start.
   POOL_GENERAL* {.align(64).}: array[OBJECTS, Multivector]
     ## Dense multivectors, every component Gaussian.
   POOL_GRADED* {.align(64).}: array[0..DIMENSIONS, array[OBJECTS, Multivector]]
@@ -30,7 +30,7 @@ var
   POOL_SCALAR* {.align(64).}: array[OBJECTS, float]  ## Scalars, Gaussian.
 
 when IS_RIGID and DIMENSIONS == 4:
-  var
+  var  # Hold pools of objects at rga4d, and their dense and typed images.
     POOL_POINT* {.align(64).}: array[OBJECTS, Point]  ## Points with weight near one.
     POOL_LINE* {.align(64).}: array[OBJECTS, Line]  ## Lines joining two points.
     POOL_PLANE* {.align(64).}: array[OBJECTS, Plane]  ## Planes joining line and point.
@@ -44,7 +44,7 @@ when IS_RIGID and DIMENSIONS == 4:
       ## Images of `POOL_MOTOR` at library's type of motor, its antieven part.
 
 when IS_CONFORMAL and DIMENSIONS == 5:
-  var
+  var  # Hold pools of round objects at cga5d, and their dense images.
     POOL_POINTROUND* {.align(64).}: array[OBJECTS, PointRound]
       ## Round points with weight near one and Gaussian flat bulk.
     POOL_DIPOLE* {.align(64).}: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
@@ -60,7 +60,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       ## Dense images of `POOL_SPHERE`.
 
 when IS_RIGID and DIMENSIONS == 3:
-  var
+  var  # Hold pools of objects at rga3d, and their dense and typed images.
     POOL_POINT* {.align(64).}: array[OBJECTS, Point]  ## Points with weight near one.
     POOL_LINE* {.align(64).}: array[OBJECTS, Line]  ## Lines joining two points.
     POOL_MOTOR* {.align(64).}: array[OBJECTS, Motor]
@@ -72,7 +72,7 @@ when IS_RIGID and DIMENSIONS == 3:
       ## Images of `POOL_MOTOR` at library's type of motor, its antieven part.
 
 when IS_CONFORMAL and DIMENSIONS == 4:
-  var
+  var  # Hold pools of round objects at cga4d, and their dense images.
     POOL_POINTROUND* {.align(64).}: array[OBJECTS, PointRound]
       ## Round points with weight near one and Gaussian flat bulk.
     POOL_DIPOLE* {.align(64).}: array[OBJECTS, Dipole]  ## Dipoles joining two round points.

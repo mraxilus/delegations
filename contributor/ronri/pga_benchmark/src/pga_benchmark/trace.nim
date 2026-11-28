@@ -25,7 +25,7 @@ const SYMBOL_DRIVER* = "machine_drive"
   ## C name of driver calling every wrapper, which `machine` exports and reader finds in symbols.
 
 
-type
+type  # Define functions listed and traced, work of each, and state of reader of trace.
   Entry* = object  ## Define one function `machine` lists, at its runtime address.
     name*: string  ## Id of measurand, or C name of driver.
     address*: uint  ## Runtime address of its first instruction.

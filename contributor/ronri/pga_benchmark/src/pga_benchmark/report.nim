@@ -13,7 +13,7 @@ import std/[algorithm, cpuinfo, json, math, sequtils, strutils, times]
 import ./[inspector, model]
 
 
-const
+const  # Fix schema, name build and implementations, and read processor where host names it.
   SCHEMA* = 1  ## Schema version written into every document; reader refuses another.
   COMMIT_NIM* {.strdefine: "pga_benchmark.commit_nim".} = "unmeasured"
     ## Compiler commit driver passes at build; "unmeasured" where built by hand.

@@ -41,7 +41,7 @@ import ./scalars
 export scalars
 
 
-type
+type  # Define round and flat objects of 2D CGA by their components.
   PointRound* = object
     ## Define round point 𝐚 with position x y, weight w and flat bulk u; grade 1.
     x*, y*, w*, u*: float

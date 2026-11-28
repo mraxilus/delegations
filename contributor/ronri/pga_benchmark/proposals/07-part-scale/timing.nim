@@ -29,7 +29,7 @@ import std/[algorithm, math, monotimes, options, random, strutils, times]
 import pga
 
 
-const
+const  # Fix pairs each round walks, rounds timed, and seed that draws objects.
   OBJECTS = 1024  ## Pairs each round walks.
   ROUNDS = 41  ## Rounds timed; median is reported.
   SEED = 0  ## Seed of sample generator, so every run reads same objects.

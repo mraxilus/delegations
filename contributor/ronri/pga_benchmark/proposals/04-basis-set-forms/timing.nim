@@ -22,7 +22,7 @@ when compileOption("profiler"):
 import std/[algorithm, monotimes, random, strutils, times]
 
 
-const
+const  # Fix objects each round walks, rounds timed, and seed that draws objects.
   OBJECTS = 1024  ## Objects each round walks.
   ROUNDS = 41  ## Rounds timed; median is reported.
   SEED = 0  ## Seed of sample generator, so every run reads same objects.

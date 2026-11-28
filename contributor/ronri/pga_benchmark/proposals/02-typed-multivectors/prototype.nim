@@ -22,7 +22,7 @@ type Parity {.pure.} = enum  ## Define halves of algebra by parity of grade.
   Even, Odd
 
 
-const
+const  # Fix samples each law checks, and seed that draws them.
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
 

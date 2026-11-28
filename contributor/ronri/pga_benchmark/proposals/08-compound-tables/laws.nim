@@ -18,12 +18,12 @@ import std/[random, strformat]
 import pga
 
 
-const
+const  # Fix dense samples each law checks, and seed that draws them.
   SAMPLES = 256  ## Seeded dense samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
 
 when IS_RIGID:
-  const
+  const  # Name origin and horizon of rigid metric, as pin derives them.
     ELEMENT_ORIGIN = initElement(Basis.origin)  ## Origin 𝐞ₙ, as pin's `∩` reads it.
     ELEMENT_HORIZON = complementRight(ELEMENT_ORIGIN)
       ## Horizon 𝐞̄ₙ, right complement of origin, as `horizon` of `cayleys.nim` derives it.

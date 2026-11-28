@@ -17,7 +17,7 @@ import std/strformat
 import pga
 
 
-const
+const  # Count bases of multivector, and places of tolerance at each width.
   COUNT_BASES = ord(Basis.high) + 1  ## Size of basis set of multivector, 2^D.
   PLACES = (when FLOAT_WIDTH == 32: 4 else: 9)
     ## Default comparison tolerance of each width, in places.

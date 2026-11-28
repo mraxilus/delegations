@@ -36,7 +36,7 @@ import ./shell
 from ../evaluations import RUNS_EVALUATION
 
 
-type
+type  # Define spread of time ratios, and lines of diff page shows.
   Spread* = object
     ## Define range that holds 99% of time ratios in evaluations over runs in use that change no
     ##   library function.
@@ -51,7 +51,7 @@ type
     number_after: int  ## Line in file after edit; zero where line is removed.
 
 
-const
+const  # Assume spread where few evaluations change nothing, and fix context of diff.
   SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
     ## Spread assumed where too few evaluations change nothing; page states it as assumed.
   CONTEXT = 3  ## Unchanged lines diff keeps beside each change; longer run folds.

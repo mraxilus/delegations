@@ -22,7 +22,7 @@ import std/[strutils, tables]
 import ./[changes, guard, markdown]
 
 
-type
+type  # Define note on library source, and whole notes file.
   Note* = object  ## Define one note on library source.
     title*: string  ## Heading of section.
     path*: string  ## Library-relative file quoted, as `pga/multivectors.nim`.

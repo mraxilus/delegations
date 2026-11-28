@@ -25,7 +25,7 @@ import std/[math, random, strformat]
 import pga
 
 
-const
+const  # Fix chains, tolerances, depths and frames of each limit, and name algebra.
   MOVES = 1_000_000  ## Moves in each chain.
   CHAINS = 4  ## Chains of each kind, each from its own objects.
   SEED = 0  ## Seed of sample generator, so every run reads same moves.

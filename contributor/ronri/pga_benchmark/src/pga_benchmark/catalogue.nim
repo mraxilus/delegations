@@ -23,7 +23,7 @@ import pga
 import ./[bound, kinds]
 
 
-type
+type  # Define measurand, and row each kind of measurand is listed by.
   Arity* = range[1..2]  ## Define operand count of measurand.
   Measurand* = object  ## Define one catalogued operation under measurement.
     id*: string  ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
@@ -54,7 +54,7 @@ type
     ## Define one catalogue row of unary map family of kinds carries, read by `addUnary`.
 
 
-const
+const  # Name aliases of library that metric changes, and form of transform it declares.
   ALIAS_BULK = when IS_RIGID: "bulk" else: "bulkRound"
     ## Library's name for `∙ m`, which conformal umbrella qualifies as round.
   ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"  ## Library's name for `∘ m`.
@@ -140,8 +140,8 @@ func isTypingSound(p: Measurand): bool =
     (p.typed == {1} and $p.operands[1] == "Motor" and p.expression == EXPRESSION_TRANSFORM)
 
 
+# List every operation library exports under this algebra, general measurands first.
 const CATALOGUE* = block:
-  ## Every operation library exports under this algebra, general measurands first.
   var catalogue: seq[Measurand]
 
   # Binary products over dense operands.
@@ -727,8 +727,8 @@ static:
     doAssert p.isTypingSound, "Catalogue types motor of transform alone; got `" & p.id & "`."
 
 
+# List operations reference carries and library lacks, each one gap; ids spelled alike.
 const MISSING* = block:
-  ## Operations reference carries and library lacks, each one gap; ids spelled alike.
   var missing: seq[Measurand]
   when IS_CONFORMAL:
     missing.addGeneral [

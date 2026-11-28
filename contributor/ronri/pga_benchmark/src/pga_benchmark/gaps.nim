@@ -19,14 +19,14 @@ import std/[algorithm, json, options, sequtils, strutils, tables, unicode]
 import ./report
 
 
-const
+const  # Bound time over reference and width of list, and name kind of docket.
   TOLERANCE* = 1.25
     ## Factor library median may exceed reference median by before gap opens on time.
   WIDTH* = 100  ## Runes per line rendered list stays within, since form check reads it.
   KIND_DOCKET = "docket"  ## Document kind of docket file.
 
 
-type
+type  # Define gap with its values and verdict, and docket, causes and decisions over gaps.
   Status* {.pure.} = enum  ## Define verdict of one gap or cause.
     Over, Met, Unmeasured
   Values* = object
@@ -164,11 +164,13 @@ func decide*(gap: var Gap) =
   gap.metrics_over = @[]
 
   template relative(name: string, field: untyped) =
+    ## Mark metric over where library exceeds reference, both measured.
     if gap.library.field.isSome and gap.reference.field.isSome and
         gap.library.field.get > gap.reference.field.get:
       gap.metrics_over.add name
 
   template absolute(name: string, field: untyped) =
+    ## Mark metric over where library exceeds zero or reference, reference absent as zero.
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
       gap.metrics_over.add name
 
