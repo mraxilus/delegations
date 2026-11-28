@@ -39,7 +39,10 @@ const
     ##   .i kunti va'o lo nu le klesi cu pilno le cmene be vo'a .a lo selci'a pe le papri
   MARKED = [("mi nelci lo se nu do klama", Category.Abstraction, "nu"),
       ("mi pa roi klama", Category.Tag, "roi"), ("lo zarci noi do klama ke'a", Category.Clause,
-      "noi"), ("mi klama fi lo zarci", Category.Tagged, "fi")]
+      "noi"), ("mi klama fi lo zarci", Category.Tagged, "fi"),
+      ("mi jai nu klama", Category.Abstraction, "nu"),
+      ("mi jai gau nu klama", Category.Abstraction, "nu"),
+      ("mi pa by roi klama", Category.Tag, "roi")]
     ## lo selci'a .e lo klesi be pa linji pe ke'a .e le valsi poi jarco le klesi
   GROUPS_SELMAHO = [
     (Selmaho.Koha, Group.Sumti),  # `CLL 7.1`
