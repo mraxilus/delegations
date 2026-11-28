@@ -15,7 +15,7 @@
 ##     reach (`declared.sectionsBare`), even where each name inside it holds doc (`D3 a` of
 ##     #1020); inside routine, block or entry block it is local, and takes none. Comment trailing
 ##     keyword counts, so does comment right above keyword at its indent, and so does `##` doc
-##     right below it, which doc position moves (`sectionsGlobal`). Fixer writes
+##     right below it, which doc position moves (`sectionsDoc`). Fixer writes
 ##     `# TODO: Document.` joined to keyword line, as `#` since `nim doc` reads none there.
 ##   Fixer writes `## TODO: Document.` where doc position puts doc and `nim doc` reads it:
 ##     joined to declaration's one line where joined line fits and holds no comment, else on
@@ -66,7 +66,7 @@
 ##     holds, or lexer joins to doc trailing code above, stays its owner's (`movesBlock`).
 ##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
 ##     after blank line or off that indent moves there.
-##   Doc of section at global reach stands on keyword line, as `#` comment, else on own lines
+##   Doc of section at any reach stands on keyword line, as `#` comment, else on own lines
 ##     above keyword where joined line is too long, or doc runs over lines (D1 c of #1020):
 ##     `nim doc` reads none there, and `##` above keyword joins module's (suite "Article VI.9").
 ##     So `##` on keyword line or above it takes `#`; doc lexer joins over lines below keyword
@@ -74,6 +74,11 @@
 ##     it fits; doc right below it else moves above it (`movesSection`). `#` comment below keyword
 ##     stays, since it may head first group of names; and so does `##` there where section holds
 ##     doc on keyword line or above it, or name below it opens `block`, which owns it.
+##   Comment above keyword of section inside routine, block or entry block stays where it
+##     stands, and `##` doc right below keyword is section's beside it: stage comment (VI.4), or
+##     doc of block holding section, as of `suite`, stands there too. Section in body of
+##     `quote do:` is generator's, whose reach is where macro expands, and section opening inside
+##     bracket is part of expression; neither rule reads either.
 ##   Doc position reads declaration as line of code inside `type`, `const`, `let` or `var`
 ##     section, at any depth of object, enum or branch, or such keyword's own line holding one
 ##     declaration (`sections`), so value opening `block` too; line that continues expression,
@@ -86,12 +91,13 @@
 ##     there literal fixes another type, or none.
 ##   Default read in routine, routine type and lambda; template and macro stay, since their
 ##     parameter without type reads otherwise.
-##   Checks and fixers share one reading (`placements`, `blocks`, `sectionsGlobal`, `movesDoc`,
+##   Checks and fixers share one reading (`placements`, `blocks`, `sectionsDoc`, `movesDoc`,
 ##     `defaults`), so each rule is written once (Article II.1): `placements` reads where doc of
 ##     each declaration stands and where `nim doc` reads it (`target`), `blocks` where doc of value
-##     opening `block` stands, `sectionsGlobal` where doc of section stands, and missing doc
-##     writes from each (`writesDoc`). `blocks` and `sectionsGlobal` read comment above through
-##     one helper (`commentAbove`).
+##     opening `block` stands, `sectionsDoc` where doc of section stands, and missing doc
+##     writes from each (`writesDoc`). `blocks` and `sectionsDoc` read comment above through
+##     one helper (`commentAbove`), and `placements` and `sectionsDoc` read generated code and
+##     lines inside bracket through two more (`generated`, `linesNested`).
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: doc opening line right below declaration's counts though value runs on past it, as
@@ -209,19 +215,21 @@ type  # TODO: Document.
     shown: string  ## Declaration as message echoes it, e.g. `const LUT`.
 
   Section = object
-    ## Define section bare keyword opens at global reach, and where its doc stands: on keyword
-    ##   line, as `#` comment, else on own lines above keyword where that line is too long (D1 c
-    ##   and `D3 a` of #1020).
+    ## Define section bare keyword opens, at any reach, and where its doc stands: on keyword line,
+    ##   as `#` comment, else on own lines above keyword where that line is too long (D1 c and
+    ##   `D3 a` of #1020).
     line: int  ## Zero-based line of keyword.
     keyword: string  ## Keyword opening section, e.g. `const`.
+    reach: Reach  ## Reach binding takes on keyword's line, which every name of section shares.
     offset: int  ## Byte offset of comment trailing keyword; `-1` for none.
     joined: int  ## Zero-based last line lexer joins to `##` doc trailing keyword; else `line`.
     above: int
       ## Zero-based first line of comment right above keyword, at its indent; `line` for none.
     is_hashed: bool  ## Comment above holds `##` doc.
     below: int
-      ## Zero-based first line of `##` doc right below keyword, where section holds no other; `-1`
-      ##   for none, and for doc above name whose value opens `block`, which is that name's.
+      ## Zero-based first line of `##` doc right below keyword, where section holds no other, or
+      ##   none on keyword line inside routine, block or entry block; `-1` for none, and for doc
+      ##   above name whose value opens `block`, which is that name's.
     ends: int  ## Zero-based last line of doc right below keyword.
 
   Default = object
@@ -312,6 +320,32 @@ func hashed(text: string): string =
   if text.startsWith("##"): "#" & text.strip(trailing = false, chars = {'#'}) else: text
 
 
+func generated(code: seq[string]): seq[bool] =
+  ## Mark each line of code inside body of `quote do:`, which generator writes (VI.1).
+  result = newSeq[bool](code.len)
+  for k, line in code:
+    if not line.strip.endsWith("quote do:"): continue
+    var below = k + 1
+    while below < code.len and
+        (code[below].strip.len == 0 or code[below].indentWidth > line.indentWidth):
+      result[below] = true
+      inc below
+
+
+func linesNested(source: string, tokens: seq[Token]): seq[bool] =
+  ## Mark each line whose first token of code stands inside bracket, so expression holds it.
+  result = newSeq[bool](source.count('\n') + 1)
+  var
+    ended = newSeq[bool](result.len)  # Line token of code ends on.
+    depth = 0  # Brackets open before token.
+  for t in tokens:
+    if t.kind == KindToken.Comment: continue
+    if not ended[t.line] and depth > 0: result[t.line] = true
+    ended[t.lineLast(source)] = true
+    if t.kind == KindToken.Open: inc depth
+    elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
+
+
 func placements(source: string): seq[Placement] =
   ## Read where doc of each declaration that takes one stands, once for each line, and what
   ##   decides where `nim doc` reads it.
@@ -321,6 +355,8 @@ func placements(source: string): seq[Placement] =
     tokens = source.tokens
     partners = tokens.partners
     starts = source.lineStarts
+    quoted = code.generated  # Line inside `quote do:` body, generated code.
+    nested = source.linesNested(tokens)  # Line whose first token of code stands inside bracket.
   var
     continues = newSeq[bool](lines.len)
       # Line whose statement runs on: string or comment spans past it, or last token is `,`, or
@@ -331,9 +367,7 @@ func placements(source: string): seq[Placement] =
     trailing = newSeqWith(lines.len, -1)  # Byte offset of `##` doc trailing code of each line.
     opening = newSeq[bool](lines.len)  # Line doc opens, line doc or block, with no code before.
     endings = newSeq[string](lines.len)  # Spelling of last token of code on each line.
-    nested = newSeq[bool](lines.len)  # Line whose first token of code stands inside bracket.
     keywords = newSeqWith(lines.len, -1)  # First routine keyword token on each line.
-    quoted = newSeq[bool](lines.len)  # Line inside `quote do:` body, generated code.
 
   func endPast(j: int): int =
     ## Read zero-based line string or comment spanning past line `j` closes on; `j` where none.
@@ -419,8 +453,8 @@ func placements(source: string): seq[Placement] =
         return (below, lines[below].indentWidth)
     (-1, -1)
 
-  # Mark lines statements run past or open inside brackets, docs trail or open, routine keywords,
-  #   and generated code.
+  # Mark lines statements run past or open inside brackets, docs trail or open, and routine
+  #   keywords.
   var depth = 0  # Brackets open before token.
   for k, t in tokens:
     let last = t.lineLast(source)
@@ -436,7 +470,6 @@ func placements(source: string): seq[Placement] =
       elif is_doc and not spanned[t.line]: opening[t.line] = true
       if last > t.line: commented[last] = true
       continue
-    if not ended[t.line] and depth > 0: nested[t.line] = true
     ended[last] = true
     let text = t.spelling(source)
     endings[last] = text
@@ -444,13 +477,6 @@ func placements(source: string): seq[Placement] =
     elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
     continues[last] = t.kind == KindToken.Comma or
         (t.kind == KindToken.Operator and (text.endsWith("=") or text.endsWith("&")))
-  for k, line in code:
-    if not line.strip.endsWith("quote do:"): continue
-    var below = k + 1
-    while below < code.len and
-        (code[below].strip.len == 0 or code[below].indentWidth > line.indentWidth):
-      quoted[below] = true
-      inc below
 
   # First line holding code or opening doc: doc whose run opens there is doc of module.
   var heading = lines.len
@@ -725,15 +751,18 @@ func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[
         (opener.endsWith(":") or opener.endsWith("=") or opener in KEYWORDS_SECTION))
 
 
-func sectionsGlobal(source: string, found: seq[Placement]): seq[Section] =
-  ## Read each section bare keyword opens at global reach (`declared.sectionsBare`), and where its
+func sectionsDoc(source: string, found: seq[Placement]): seq[Section] =
+  ## Read each section bare keyword opens, at any reach (`declared.sectionsBare`), and where its
   ##   doc stands: comment trailing keyword, with `##` lines lexer joins to it; comment right above
   ##   keyword at its indent (`commentAbove`); else `##` doc right below keyword at deeper indent,
-  ##   but above name whose value opens `block`, which owns it.
+  ##   but above name whose value opens `block`, which owns it. Section in body of `quote do:`,
+  ##   or opening inside bracket, is none of ours.
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
     kept = source.codeAndComments.split('\n')
+    quoted = code.generated
+    nested = source.linesNested(source.tokens)
     (owned, heading) = source.ownership(found)
 
   func isLineDoc(k: int): bool =
@@ -743,18 +772,27 @@ func sectionsGlobal(source: string, found: seq[Placement]): seq[Section] =
   # Read comment trailing keyword, with lines lexer joins to its `##` doc, and comment above it.
   for bare in source.sectionsBare:
     let i = bare.line - 1
-    if bare.reach != Reach.Global or i < 0 or i >= lines.len: continue
-    var s = Section(line: i, keyword: bare.keyword, offset: -1, joined: i, below: -1, ends: -1)
+    if i < 0 or i >= lines.len or quoted[i] or nested[i]: continue
+    var s = Section(
+      line: i,
+      keyword: bare.keyword,
+      reach: bare.reach,
+      offset: -1,
+      joined: i,
+      below: -1,
+      ends: -1,
+    )
     let at = kept[i].find('#', code[i].strip(leading = false).len)
     if at >= 0: s.offset = at
     if at >= 0 and kept[i][at .. ^1].startsWith("##"):
       while isLineDoc(s.joined + 1): inc s.joined
     (s.above, s.is_hashed) = commentAbove(lines, code, kept, owned, heading, i)
 
-    # Doc right below keyword, where section holds none on its line or above it.
+    # Doc right below keyword, where section holds none on its line, nor above it at global reach;
+    #   comment above local keyword may be stage comment or doc of block holding it (VI.4).
     var k = i + 1
     while isLineDoc(k) and lines[k].indentWidth > lines[i].indentWidth: inc k
-    if s.offset < 0 and s.above == i and k > i + 1 and
+    if s.offset < 0 and (s.above == i or s.reach != Reach.Global) and k > i + 1 and
         not (k < lines.len and (code[k].isOpeningBlock or code.isBlockBelow(k))):
       (s.below, s.ends) = (i + 1, k - 1)
     result.add s
@@ -789,8 +827,8 @@ func writesDoc(source: string): seq[WriteDoc] =
 
   # Section at global reach takes doc on its keyword line: comment there, above keyword, or `##`
   #   doc right below it that doc position moves there, counts.
-  for s in source.sectionsGlobal(found):
-    if s.offset >= 0 or s.above < s.line or s.below >= 0: continue
+  for s in source.sectionsDoc(found):
+    if s.reach != Reach.Global or s.offset >= 0 or s.above < s.line or s.below >= 0: continue
     result.add WriteDoc(
       line: s.line,
       shape: ShapeWrite.Keyword,
@@ -1212,6 +1250,8 @@ func movesSection(source: string, sections: seq[Section]): seq[MoveDoc] =
   ##   else on own lines above keyword where that line is too long (D1 c of #1020): `##` there takes
   ##   `#`, doc lexer joins over lines below keyword line moves above it, one-line doc above or
   ##   right below keyword joins keyword line where it fits, and doc below else moves above it.
+  ##   Comment above keyword moves at global reach alone, since stage comment (VI.4) or doc of
+  ##   block holding local section stands there too.
   let lines = source.split('\n')
   for s in sections:
     let
@@ -1238,7 +1278,7 @@ func movesSection(source: string, sections: seq[Section]): seq[MoveDoc] =
           move.origins.add k
         move.lines.add bare
         move.origins.add s.line
-    elif s.above < s.line:
+    elif s.reach == Reach.Global and s.above < s.line:
       # Doc above keyword: one line joins keyword line where it fits, else `##` there takes `#`.
       let docs = toSeq(s.above..<s.line)
       if docs.len == 1 and not lines[s.above].strip.joined.isWide:
@@ -1274,7 +1314,7 @@ func movesDoc(source: string): seq[MoveDoc] =
     valued = source.blocks(found, declaring)
   (
     source.movesLine(valued, declaring) & source.movesPlaced(found) &
-    source.movesBlock(valued) & source.movesSection(source.sectionsGlobal(found))
+    source.movesBlock(valued) & source.movesSection(source.sectionsDoc(found))
   ).sortedByIt((it.first, it.line))
 
 
