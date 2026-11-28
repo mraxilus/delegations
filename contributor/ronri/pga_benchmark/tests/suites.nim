@@ -476,6 +476,20 @@ suiteInProc "Internal: Measurements":
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
 
 
+  test "optional result folds its value, and none folds nothing and carries no NaN":
+    # Law: change whose operation returns `Option` marks absence by none, never by NaN.
+    var pair: MultivectorScalars
+    pair[Basis.scalar] = 2.0
+    pair[Basis.scalarAnti] = 3.0
+    check fold(some(pair)) == fold(pair)  # value folded as plain result folds
+    check fold(some(2.0)) == 2.0  # scalar value folded
+    check fold(none(MultivectorScalars)) == 0.0  # none folds nothing
+    check not isAnyNan(none(MultivectorScalars))  # none is absence, not NaN
+    check not isAnyNan(some(pair))  # finite value carries no NaN
+    pair[Basis.scalarAnti] = NaN
+    check isAnyNan(some(pair))  # NaN inside value still counts
+
+
   test "timing instrument reads clock and records finite, ordered measurements of every measurand":
     # Instrument reads real clock, as Article IX.12 lets its test do; no limit on time decides.
     measureCatalogue()
