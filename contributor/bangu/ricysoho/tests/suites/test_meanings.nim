@@ -9,19 +9,20 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tables, unittest]
+import std/[os, sequtils, strutils, tables, unittest]
 
 import ../../src/ricysoho/lists/[cmavo, gismu]
 import ../../tools/[lists, meanings]
 
 
-const  # lo traji cmalu klani .e lo mupli smuni
-  COUNT_GISMU_LEAST = 1400
-    ## lo du'u le gimste cu vasru su'o xo kau linji
-    ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 1436
-  COUNT_CMAVO_LEAST = 1050
-    ## lo du'u le ma'oste cu vasru su'o xo kau linji
-    ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 1091
+const  # lo klani .e lo mupli smuni
+  COUNT_GISMU = 1436  ## lo klani be lo linji be le gimste poi selpu'i ku'o poi vasru lo lerfu
+  COUNT_CMAVO = 1091  ## lo klani be lo linji be le ma'oste poi selpu'i ku'o poi vasru lo lerfu
+  COUNT_COMPOUND = 493
+    ## lo klani be lo linji be le ma'oste poi selpu'i ku'o poi skicu pa ma'orgunma .a pa jufpau
+  DEFINITION_BAKFU = "x1 is a bundle/package/cluster/clump/pack [shape/form] containing x2, " &
+      "held together by x3"
+    ## le smuni be zo bakfu ne'i `gismu.txt` poi selpu'i
   DEFINITION_BACRU = "x1 utters verbally/says/phonates/speaks [vocally makes sound] x2"
     ## le smuni be zo bacru ne'i `gismu.txt`
   DEFINITION_A = "logical connective: sumti afterthought or"
@@ -50,14 +51,27 @@ suite "Internal: Meanings of the wordlists":
 
   test "reader keeps gloss and definition of each line from their columns, header skipped":
     let
-      gismu = "header\n" & placed([(2, "bacru"), (16, "ba'u"), (21, "utter"),
+      gismu = "header\n" & placed([(2, "bacru"), (16, "ba'u"), (21, "utter"), (42, "'speak'"),
           (63, DEFINITION_BACRU), (161, "1h")])
-      cmavo = "header\n" & placed([(1, ".a"), (12, "A"), (21, "sumti or"), (63, DEFINITION_A)])
+      cmavo = "header\n" & placed([(1, ".a"), (12, "A"), (21, "sumti or"), (63, DEFINITION_A),
+          (160, "(cf. ja, je)")])
       found = toMeanings(gismu, cmavo)
     check found.len == 2  # le sedli'i cu na se tcidu
     check found["bacru"] == Meaning(gloss: "utter", definition: DEFINITION_BACRU)
     # lo lerfu po'u denpa bu cu selvi'u
     check found["a"] == Meaning(gloss: "sumti or", definition: DEFINITION_A)
+
+
+  test "line of compound of cmavo list gives no meaning, since parser reads each cmavo of it":
+    let
+      cmavo = "header\n" & placed([(1, ".a'anai"), (12, "UI*1"), (21, "disinterested"),
+          (63, "attitudinal: interest - disinterest")]) & "\n" & placed([(1, "ca ma"),
+          (12, "PU*"), (21, "when"), (63, "time question")]) & "\n" & placed([(1, ".a"),
+          (12, "A"), (21, "sumti or"), (63, DEFINITION_A)])
+      found = toMeanings("header\n", cmavo)
+    check found.len == 1
+    check "a'anai" notin found
+    check "ca ma" notin found
 
 
   test "word in both lists takes meaning of cmavo list":
@@ -90,8 +104,10 @@ suite "Internal: Meanings of the wordlists":
         gismu = readSource("gismu.txt").text
         cmavo = readSource("cmavo.txt").text
         found = toMeanings(gismu, cmavo)
-      check gismu.splitLines.len - 1 >= COUNT_GISMU_LEAST
-      check cmavo.splitLines.len - 1 >= COUNT_CMAVO_LEAST
+      check gismu.splitLines[1 .. ^1].countIt(it.strip.len > 0) == COUNT_GISMU
+      check cmavo.splitLines[1 .. ^1].countIt(it.strip.len > 0) == COUNT_CMAVO
+      check cmavo.splitLines[1 .. ^1].countIt('*' in it.field(12, 20)) == COUNT_COMPOUND
+      check found["bakfu"] == Meaning(gloss: "bundle", definition: DEFINITION_BAKFU)
       for entry in LIST_GISMU:
         check found.hasKey(entry.word)  # ro gismu ponse lo smuni
         check found.getOrDefault(entry.word).gloss.len > 0
