@@ -8,7 +8,7 @@
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 452957ec1aaaafc0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
-| Pruned  | 35efc2a7a342cb839167be1e1800031e4bff9e9e |
+| Pruned  | 522cae465e630326c32ead758188130c03803f3d |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
 provenance guide, all supplied by the Architect. Its shape is the direction of the Architect:
@@ -1382,8 +1382,6 @@ what `checkCommits` holds for each commit: the grammar, the scope that the branc
 `SUBJECT_MAX`. The job passes the title as `ROLE_TITLE`, from the event payload. The `edited`
 event runs the check again after a rename. The Architect ruled this check on 2026-10-04.
 
-- Before this check, the template alone held the title. The title of #463 broke it, and it is
-  the subject of `6d4606a` on `main`.
 - `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
 - Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
   few runes. `check-commits` skips merge commits, so no check reads that width.
@@ -2660,8 +2658,7 @@ passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `sys
 **It is a matrix, each project on its own pin, where `check-types` is one plain job.** `drive`
 calls `web`, which runs `nim js` over `bridge.nim`, and that compiles project code and
 everything it imports. So a project whose code only its own pin can compile fails on the
-compiler of koch. `pga_visualiser` failed so inside `multivectors.nim` of `pga`, while it pinned
-a commit whose syntax no release could lex.
+compiler of koch.
 
 The type check rests on a verb that compiles no project code, and `drive` breaks that condition.
 So `koch drive` is planned like `test`, and `list-projects --drive` filters what `list-projects`
