@@ -1254,6 +1254,36 @@ them, most of them renames that the record cites. A rename and its record then t
   commit lands. `check` and `check-commits` read each commit of the branch through `diff-tree`.
 - Verified by `suites/test_commits.nim` and `suites/test_hooks.nim`.
 
+**Each merge of the branch keeps each `##` section that one parent added to a record, as the
+Architect ruled D5 a on #1086.** A merge is each commit of two parents or more in
+`origin/main..HEAD`. A heading that a parent holds and no merge base holds is one that the parent
+added, so a heading that one parent removed passes. Where the merge lacks such a heading, the
+finding names the record, the heading and the merge (`sections_kept.nim`). The check reads no text
+inside a kept section, as the ruling asks.
+
+- Choice: where a parent deleted a record that the merge lacks, the merge takes that deletion. A
+  move of a project deletes the record at its old path. The merge carries the sections of the other
+  parent to the new path, which a check by path cannot follow. So a finding would refuse each move
+  that `main` touched. Cost: a section that the other parent added goes with such a record.
+- The finding names no path of the tree, so duty 3 holds none of it. In the case as found, a
+  curator branch lost sections of a contributor record, and a finding at that path is held.
+- Cost: the check reads the merge and not HEAD, so a later commit that restores the section clears
+  no finding. A run by hand with git 2.43.0 showed it on 2026-11-28. The remedy is an amend of the
+  merge while it is the head, before the push.
+- Assumed: the merge ref of the runner and the merge of the second tree pass. Each is clean, and a
+  clean three-way merge keeps each line that one side added.
+- Cost: a record is read only where a parent changed it since the merge base, and the merge
+  differs from that parent. Over the 14 merges of `curator/walk-rules-int` at `1c103001`,
+  `koch check-commits` took a median of 1.50 s before the check and 2.69 s with it. Each took
+  ten alternating runs on 2026-11-28, with `date +%s.%N` and git 2.43.0, on the machine of
+  Figures at a load average near 2.5. So `koch check` takes about 1.2 s more.
+- Verified by hand on 2026-11-28: at `5ffcb104`, against `5068b537`, `koch check-commits` names
+  `## Live replies` and `## Tag page` of `rictadni`, and `## Node packages` of the audit.
+- Verified by `suites/test_sections_kept.nim`, over real git. It holds the case as found, each
+  state of one heading at the merge base, each parent and the merge, and merges of other branches.
+  By hand on 2026-11-28, two breaks of `sections_kept.nim` each fail it. One puts the finding at
+  the path of the record, and one takes no deletion.
+
 ## Role
 
 **The opening line of a pull request and its labels are the role that its branch names.** The
@@ -1381,7 +1411,7 @@ event runs the check again after a rename. The Architect ruled this check on 202
 
 - `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
 - Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
-  few runes. `check-commits` skips merge commits, so no check reads that width.
+  few runes. `check-commits` reads no subject of a merge commit, so no check reads that width.
 - Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
   grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
   branch, and a width over the limit.
