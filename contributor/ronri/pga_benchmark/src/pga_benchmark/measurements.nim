@@ -102,12 +102,13 @@ func fold*[B: static Bases](m: MultivectorOf[B]): float =
   for b in B: result += m[b]
 
 func fold*[T: object](x: T): float =
-  ## Fold every field of typed object into sink, recursively.
-  for _, value in x.fieldPairs: result += fold(value)
-
-func fold*[T](x: Option[T]): float =
-  ## Fold value of optional result into sink, and nothing where it is none.
-  if x.isSome: fold(x.get) else: 0.0
+  ## Fold every field of typed object into sink, recursively; optional result folds its value.
+  ##   None folds nothing. Branch rather than overload, so build of pin numbers its symbols as
+  ##     its baselines were timed on.
+  when T is Option:
+    if x.isSome: fold(x.get) else: 0.0
+  else:
+    for _, value in x.fieldPairs: result += fold(value)
 
 func isAnyNan*(x: float): bool {.inline.} =
   ## Decide whether scalar is NaN.
@@ -123,13 +124,13 @@ func isAnyNan*[B: static Bases](m: MultivectorOf[B]): bool =
     if m[b].isNaN: return true
 
 func isAnyNan*[T: object](x: T): bool =
-  ## Decide whether any field of typed object is NaN, recursively.
-  for _, value in x.fieldPairs:
-    if isAnyNan(value): return true
-
-func isAnyNan*[T](x: Option[T]): bool =
-  ## Decide whether value of optional result is NaN; none marks absence, and is never NaN.
-  x.isSome and isAnyNan(x.get)
+  ## Decide whether any field of typed object is NaN, recursively; optional result reads its value.
+  ##   None marks absence, and is never NaN.
+  when T is Option:
+    x.isSome and isAnyNan(x.get)
+  else:
+    for _, value in x.fieldPairs:
+      if isAnyNan(value): return true
 
 
 
