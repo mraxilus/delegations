@@ -1208,3 +1208,8 @@ suite "Article VI.9":
       @[("n", "Do. Doc.")]  # above local with no blank line joins routine's
     check "proc n*() =\n  ## Do.\n\n  ## Doc.\n  const O = 1\n  discard O\n".docsRead.docs ==
       @[("n", "Do.")]
+    for source in [
+      "proc f*() =\n  ## Do.\n  const  ## Doc.\n    a = 1\n  discard a\n",  # on keyword line
+      "proc f*() =\n  ## Do.\n  const\n    ## Doc.\n    a = 1\n  discard a\n",  # below keyword
+    ]:
+      check source.docsRead.docs == @[("f", "Do.")]  # no doc of local section
