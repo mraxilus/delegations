@@ -138,7 +138,11 @@ type Check* {.pure.} = enum  ## Define one check of koch, by rule it holds.
   EndTurn = "turn end"  ## Turn that pushed or posted ends with sign-off or working line.
   ReadIssues = "issue read"  ## Sign-off follows read of open issues of role.
   Prediction = "prediction"  ## Call of subagent follows block of prediction.
+  TablesPrediction = "prediction tables"
+    ## Tables of prediction give each claim number, text, confidence or rising percentiles, and
+    ##   criterion.
   TableReflection = "reflection table"  ## Reflection holds table of each claim predicted.
+  LineReflection = "reflection line"  ## Line `**Subagent:**` of reflection gives tokens and cost.
   Reflection = "reflection"  ## Report of critic takes reflection of its own.
   CheckPush = "push check"  ## Commit pushed is one `koch check` passed.
 

@@ -57,24 +57,34 @@ message Claim {
   string call = 5;  // Id of tool use of call that claim takes.
   string model = 6;  // Model harness ran subagent on; `stop` leaves it empty (`D1 b` of #1025).
   string effort = 7;  // Effort of call, else of template of its kind, as `high`.
-  string text = 8;  // Claim, as cell under `Predicted` quotes it.
-  double confidence = 9;  // Confidence of claim, from 0.51 to 0.98; 0.8 for number.
+  string text = 8;  // Claim, as cell of reflection quotes it.
+  double confidence = 9;  // Confidence of claim, from 0.51 to 0.98; 0.9 or 0.8 for number.
   State state = 10;  // State reflection marks.
   Marker marker = 11;  // Who marked state.
   int64 tokens = 12;  // Tokens of subagent, summed over its requests, as reflection gives them.
   double cost = 13;  // Cost of subagent in dollars, at list price, as reflection gives it.
   string address = 14;  // Id of delegate, `uuid` of entry of reflection, and row, by `/`.
-  string key = 15;  // Delegate, call, position of claim in its block, and state, by `/`.
+  string key = 15;  // Delegate, call, number or position of claim in its block, and state, by `/`.
   Number number = 16;  // Percentiles and outcome of claim that is number; absent otherwise.
   string result = 17;  // Cell under `Result`.
 }
 
-// Define number claim: its three percentiles, and value its result gives.
+// Define number claim: its three percentiles, value its result gives, and unit that fixes range.
 message Number {
   double low = 1;  // Lowest percentile: 5th at confidence 0.9, 10th at 0.8.
   double median = 2;  // 50th percentile.
   double high = 3;  // Highest percentile: 95th at confidence 0.9, 90th at 0.8.
-  optional double outcome = 4;  // First number of cell under `Result`; absent where none.
+  optional double outcome = 4;  // Value cell under `Result` opens with; absent where none.
+  Unit unit = 5;  // Unit cells of estimate give, or text of bullet names; absent in older row.
+}
+
+// Define unit of number, which fixes its range (GUIDE.md, Prediction, critic and reflection).
+enum Unit {
+  UNIT_UNSPECIFIED = 0;
+  UNIT_TOKENS = 1;  // Tokens of subagent, summed over its requests.
+  UNIT_COST = 2;  // Dollars at list price.
+  UNIT_TIME = 3;  // Minutes.
+  UNIT_COUNT = 4;  // Count of things.
 }
 
 // Define state of claim, as marker of first cell of row gives it.
