@@ -20,10 +20,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[jsffi, options, sugar, unicode]
+import std/[algorithm, jsffi, options, sugar, unicode]
 
 import ../ricysoho/[grammar, layers, prose, stream]
-import ./samples_layers
+import ./[lessons, samples_layers]
 
 
 const
@@ -44,9 +44,6 @@ const
   CLASS_MARK: array[Category, cstring] = ["thin", "dot", "", "", "", "half", "", "", "half", "",
       "half", "", "dash"]
     ## lo klesi pe `CSS` pe le tarmi be ro klesi be lo linji
-  NAME_CATEGORY: array[Category, cstring] = ["bridi", "romoi", "sumti", "selbri", "tanru",
-      "tanru pagbu", "poi", "nu", "be", "tcita sumti", "tcita", "namcu", "zmadu"]
-    ## le cmene be ro klesi be lo linji be'o poi le papri cu ciska ke'a
   HUE_CATEGORY: array[Category, cstring] = ["var(--c-bridi)", "var(--c-bridi)",
       "var(--c-sumti)", "var(--c-pred)", "var(--c-pred)", "var(--c-pred)", "var(--c-link)",
       "var(--c-link)", "var(--c-link)", "var(--c-tag)", "var(--c-tag)", "var(--c-num)",
@@ -129,6 +126,7 @@ type
     raf: int
     hovered: Option[Key]
     clicked: Option[Key]
+    picked: proc(key: Key)  ## cuxna pa valsi .a pa linji poi le ctuca cu jarco ke'a
     width: int
     observer: JsObject
 
@@ -423,7 +421,7 @@ proc columns(model: Model, chains: seq[seq[int]]): JsObject =
         let piece = spanned("i", cstring(marks))
         piece.styled("--k", HUE_CATEGORY[category])
         piece.attribute("data-b", cstring($k))
-        piece.attribute("data-n", NAME_CATEGORY[category])
+        piece.attribute("data-n", cstring(LESSON_KIND[category].lojban))
         cell_word.append piece
         if bar.last > i and row < next.len and next[row] == k:
           let joint = spanned("i", CLASS_MARK[category])
@@ -493,6 +491,212 @@ proc built(view: View) =
         width: right - left)
 
 
+var MEANINGS: JsObject
+  ## lo smuni be ro valsi pe le liste ge'u ta'i `JSON` poi le papri cu vasru ke'a
+
+
+proc parsed(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
+  ## le se tcidu be lo selci'a pe `JSON`
+proc owns(node: JsObject, key: cstring): bool
+    {.importjs: "Object.prototype.hasOwnProperty.call(#, #)".}
+  ## jdice lo du'u `node` ponse `key` ne'i vo'a
+  ##   .i lo ckaji be ro dacti pe `JavaScript` po'u zoi gy. constructor .gy. cu na se jdice
+
+
+proc toMeaning(text: cstring): Option[(cstring, cstring)] =
+  ## le glico valsi .e le smuni be pa valsi pe le liste
+  ##   .i le valsi cu du le lerfu poi le genturfa'i cu tcidu ke'a to `Occurrence.text` toi
+  ##   .i se ki'u bo le valsi cu se ciska ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e
+  ##       no lerfu po'u slaka bu
+  if MEANINGS.isNil:
+    let node = byId("meanings")
+    MEANINGS = if node.isNull: emptyObject() else: parsed(node.textContent.to(cstring))
+  if not MEANINGS.owns(text): return none((cstring, cstring))
+  let entry = MEANINGS[text]
+  some((entry[0].to(cstring), entry[1].to(cstring)))
+
+
+proc taughtKind(view: View, bar: int): (cstring, cstring) =
+  ## le glico cmene .e le glico selci'a be pa linji
+  ##   .i le selci'a cu du lo smuni pe le liste va'o lo nu le liste cu vasru ke'a to `D1 c` toi
+  let
+    model = view.model
+    seen = model.bars[bar]
+    lesson = LESSON_KIND[Category(seen.category)]
+  case lesson.basis
+  of Basis.Name:
+    let found = cstring(lesson.lojban).toMeaning
+    if found.isSome: return found.get
+    (cstring(lesson.english), cstring(lesson.text))
+  of Basis.Marker:
+    var glosses: seq[string]
+    for k in seen.first .. seen.last: glosses.add $model.words[k].gloss
+    let
+      word = model.words[seen.first + glosses.marking(Category(seen.category), 0, glosses.high)]
+      found = word.text.toMeaning
+    if found.isNone: return (cstring(lesson.english), cstring(LESSON_NONE))
+    (cstring(lesson.english), cstring(shownMarker($word.text, $found.get[0], $found.get[1])))
+  of Basis.Own: (cstring(lesson.english), cstring(lesson.text))
+
+
+proc picking(view: View, node: JsObject, key: Key) =
+  ## rinka lo nu pa nu samcu'a `node` cu cuxna `key`
+  ##   .i le nu samcu'a cu na klama le papri
+  ##   .i ki'u bo le papri cu vimcu ro cuxna va'o lo nu samcu'a lo drata be le pixra
+  node.listened("click", proc(event: JsObject) =
+    discard event.stopPropagation()
+    view.picked(key))
+
+
+proc rowed(view: View, row: JsObject, key: Key) =
+  ## rinka lo nu pa pagbu cu se cuxna ta'i lo nu samcu'a .a lo nu danre zoi gy. Enter .gy. .a
+  ##     lo kunti batke
+  row.attribute("tabindex", "0")
+  row.attribute("role", "button")
+  view.picking(row, key)
+  row.listened("keydown", proc(event: JsObject) =
+    let pressed = event.key.to(cstring)
+    if pressed == "Enter" or pressed == " ":
+      discard event.preventDefault()
+      view.picked(key))
+
+
+proc lojbanic(node: JsObject): JsObject =
+  ## `node` poi se ciska ta'i la lojban. ne'i le glico ctuca
+  node.attribute("lang", "jbo")
+  node
+
+
+proc listed(view: View, bar: int): JsObject =
+  ## pa linji poi le ctuca cu skicu ke'a
+  ##   .i ciska le klesi .e le glico cmene .e le valsi pe le linji .e le glico selci'a
+  let
+    model = view.model
+    seen = model.bars[bar]
+    category = Category(seen.category)
+    swatch = spanned("i", cstring("sw " & $CLASS_MARK[category]))
+    top = spanned("span", "top")
+    body = created("span")
+    (english, text) = view.taughtKind(bar)
+  result = created("li")
+  result.attribute("data-b", cstring($bar))
+  swatch.styled("--k", HUE_CATEGORY[category])
+  top.append spanned("span", "kind", cstring(LESSON_KIND[category].lojban)).lojbanic
+  top.append spanned("span", "en", english)
+  top.append spanned("q", "",
+      model.text.slice(model.words[seen.first].s, model.words[seen.last].e)).lojbanic
+  body.append top
+  body.append spanned("span", "what", text)
+  result.append swatch
+  result.append body
+  view.rowed(result, Key(is_word: false, index: bar))
+
+
+proc worded(view: View, index: int): JsObject =
+  ## pa valsi poi le ctuca cu skicu ke'a ne'i le liste be ro pagbu
+  let
+    word = view.model.words[index]
+    top = spanned("span", "top")
+    body = created("span")
+    found = word.text.toMeaning
+  result = created("li")
+  result.attribute("data-p", cstring($index))
+  top.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]), word.text).lojbanic
+  top.append spanned("span", "sel", word.gloss)
+  top.append spanned("span", "en", if found.isSome: found.get[0] else: cstring(LESSON_NONE))
+  body.append top
+  result.append spanned("i", "sw dotted")
+  result.append body
+  view.rowed(result, Key(is_word: true, index: index))
+
+
+proc pathed(view: View, bars: seq[int]): JsObject =
+  ## ro linji poi vasru le se cuxna ku'o ta'i lo porsi poi le traji barda cu pamoi
+  ##   .i ro linji cu cuxna vo'a ca lo nu samcu'a
+  result = spanned("span", "path")
+  if bars.len == 0: return
+  result.append spanned("span", "", cstring(LESSON_IN))
+  for n, bar in bars:
+    if n > 0: result.append spanned("span", "", "›")
+    let button = spanned("button", "",
+        cstring(LESSON_KIND[Category(view.model.bars[bar].category)].lojban))
+    button.attribute("type", "button")
+    button.attribute("data-b", cstring($bar))
+    view.picking(button, Key(is_word: false, index: bar))
+    result.append button.lojbanic
+
+
+proc parted(view: View, bar: int): seq[Key] =
+  ## ro pagbu be pa linji ta'i le porsi pe le se ciska
+  ##   .i pa pagbu cu du pa linji poi le linji cu vasru ke'a .a pa valsi poi no ri cu vasru
+  let model = view.model
+  var starts: seq[(int, Key)]
+  for kid in view.kids[bar]: starts.add (model.bars[kid].first, Key(is_word: false, index: kid))
+  for word in model.bars[bar].first .. model.bars[bar].last:
+    var is_held = false
+    for kid in view.kids[bar]:
+      if model.bars[kid].first <= word and word <= model.bars[kid].last: is_held = true
+    if not is_held: starts.add (word, Key(is_word: true, index: word))
+  starts.sort(proc(a, b: (int, Key)): int = cmp(a[0], b[0]))
+  for (_, key) in starts: result.add key
+
+
+proc taught(view: View, key: Option[Key]) =
+  ## ctuca le valsi .a le linji poi le cuxna cu sinxa ke'a to `D1 c` .e `D2 a` pe `#1055` toi
+  ##   .i le stedu cu jarco le se cuxna gi'e jarco ro linji poi vasru ke'a ne'i le pritu
+  ##   .i pa valsi cu jarco le glico smuni
+  ##   .i pa linji cu jarco le glico selci'a .e ro pagbu be vo'a
+  let host = byId("lesson")
+  if host.isNull: return
+  if key.isNone:
+    host.replaced spanned("p", "start", cstring(LESSON_START))
+    return
+  let
+    chosen = key.get
+    model = view.model
+    sheet = created("div")
+    line = spanned("div", "headline")
+    head = spanned("p", "head")
+  var above: seq[int]
+  if chosen.is_word:
+    above = view.chains[chosen.index]
+  else:
+    var parent = model.bars[chosen.index].parent
+    while parent >= 0:
+      above.add parent
+      parent = model.bars[parent].parent
+  above.sort(proc(a, b: int): int = cmp(model.bars[b].height, model.bars[a].height))
+  head.attribute("data-chosen", cstring((if chosen.is_word: "w" else: "b") & $chosen.index))
+  line.append head
+  line.append view.pathed(above)
+  sheet.append line
+  if chosen.is_word:
+    let
+      word = model.words[chosen.index]
+      found = word.text.toMeaning
+    head.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]), word.text).lojbanic
+    head.append spanned("span", "sel", word.gloss)
+    if found.isSome:
+      sheet.append spanned("p", "meaning", cstring($found.get[0] & " · " & $found.get[1]))
+    else: sheet.append spanned("p", "meaning none", cstring(LESSON_NONE))
+  else:
+    let
+      seen = model.bars[chosen.index]
+      category = Category(seen.category)
+      (english, text) = view.taughtKind(chosen.index)
+      list = created("ol")
+    head.append spanned("b", "kind", cstring(LESSON_KIND[category].lojban)).lojbanic
+    head.append spanned("span", "en", english)
+    sheet.append spanned("p", "meaning", text)
+    sheet.append spanned("q", "words",
+        model.text.slice(model.words[seen.first].s, model.words[seen.last].e)).lojbanic
+    sheet.append spanned("p", "title", cstring(LESSON_PARTS))
+    for part in view.parted(chosen.index):
+      list.append(if part.is_word: view.worded(part.index) else: view.listed(part.index))
+    sheet.append list
+  host.replaced sheet
+
+
 func reach(view: View, key: Option[Key]): (seq[int], int, int) =
   ## ro linji poi le cuxna cu vasru ke'a ku'o .e le pamoi valsi .e le romoi valsi
   ##   .i pa valsi cu vasru ro linji poi vasru le valsi
@@ -518,6 +722,7 @@ proc highlighted(view: View, key: Option[Key]) =
     for node in view.box.queryAll(cstring("[data-b=\"" & $bar & "\"]")): node.toggled("hl", true)
   for word in first .. last:
     for node in view.box.queryAll(cstring("[data-w=\"" & $word & "\"]")): node.toggled("hl", true)
+  view.taught(key)
 
 
 func eased(t: float): float =
@@ -766,12 +971,18 @@ proc viewed(host: JsObject, model: Model): View =
     view.clicked = if key == view.clicked: none(Key) else: key
     if not host.hasClass("no-bars"): view.named(view.clicked)
     view.highlighted(if view.hovered.isSome: view.hovered else: view.clicked))
+  view.picked = proc(key: Key) =
+    view.hovered = none(Key)
+    view.clicked = some(key)
+    if not host.hasClass("no-bars"): view.named(view.clicked)
+    view.highlighted(view.clicked)
   view.width = int(view.box.rect.width.to(float))
   view.observer = view.box.observed(proc() =
     let width = int(view.box.rect.width.to(float))
     if width != view.width:
       view.width = width
       view.reset)
+  view.taught(none(Key))
   view
 
 
@@ -1415,7 +1626,9 @@ proc wiredEditor() =
   DOCUMENT_PAGE.listened("selectionchange", proc(event: JsObject) =
     if not IS_COMPOSING: settled())
   DOCUMENT_PAGE.listened("click", proc(event: JsObject) =
-    if not DRAWING.isNil and not DRAWING.box.contains(event.target).to(bool): DRAWING.closed)
+    # pa nu samcu'a ne'i le ctuca cu na vimcu le cuxna
+    if not DRAWING.isNil and not DRAWING.box.contains(event.target).to(bool) and
+        event.target.closest(".lesson").isNull: DRAWING.closed)
   DOCUMENT_PAGE.listened("keydown", proc(event: JsObject) =
     if event.key.to(cstring) == "Escape" and not DRAWING.isNil: DRAWING.closed)
 

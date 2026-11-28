@@ -3773,6 +3773,44 @@ ni'o **re batke cu jitro le selma'o .e le linji to `D4` pe `#1055` toi**
 ni'o pa sarji pe ro papri cu jorne le re papri to `D5` pe `#1055` toi
   .i le sarji cu cmene ro papri gi'e sinxa le papri poi ca zvati
 
+ni'o **le ctuca poi zvati le cnita be le se ciska cu skicu le valsi .a le linji poi le korbi cu
+    pencu ke'a to `D2` .e `D1 c` pe `#1055` toi**
+  .i pa nu samcu'a cu rinka lo nu le ctuca cu stali
+  .i pa valsi cu jarco le selma'o .e le glico smuni
+  .i pa linji cu jarco le jbocme .e le glico cmene be le klesi to `D2 a` toi
+  .i ji'a pa linji cu jarco lo glico selci'a .e ro pagbu be vo'a
+  .i lo pagbu cu du lo linji poi le linji cu vasru ke'a ku'o .e lo valsi poi no drata linji cu vasru
+      ke'a
+  .i ro linji poi vasru le se cuxna cu zvati le pritu be le stedu
+  .i pa nu samcu'a pa pagbu .a pa linji pe le pritu cu cuxna ri
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **le ctuca cu glico gi'e pilno lo smuni pe le liste ge'u va'o lo nu le liste cu vasru ke'a to
+    le romoi `D1 c` pe `#1055` toi**
+  .i pa klesi pe `Basis.Name` cu pilno le smuni be le jbocme be vo'a
+  .i lo linji pe zo poi .e zo nu .e zo be .e lo tcita cu pilno le smuni be le pamoi valsi poi
+      ponse lo selma'o pe le klesi
+  .i se ki'u bo le papri cu cliva lo valsi pe `SE` .a `NAhE` .a `BAhE` .a `JAI` ge'u ku .e lo namcu
+      Verified by `suites/test_layers.nim`.
+  .i ro klesi pe `Basis.Own` cu pilno lo glico selci'a pe le papri
+      Verified by `suites/test_meanings.nim`.
+  .i le smuni cu selzba fi `gismu.txt` .e `cmavo.txt` pe `1.5+dfsg.1-4` pe `lojban-common`
+  .i le stosni pe `lists.nim` cu stodi le re datnyvei
+  .i ro gismu .e ro cmavo pe le liste pe le genturfa'i cu ponse lo smuni
+      Verified by `suites/test_meanings.nim`.
+  .i pa linji pe `cmavo.txt` poi skicu pa ma'orgunma .a pa jufpau cu na se tcidu
+  .i ki'u bo le genturfa'i cu tcidu ro cmavo pe le gunma Verified by `suites/test_meanings.nim`.
+  .i le genturfa'i cu ralte no smuni
+  .i se ki'u bo le smuni cu zvati le papri po'o gi'e se zbasu ca lo nu zbasu le papri
+  .i le papri cu sisku le smuni be le valsi poi le genturfa'i cu tcidu ke'a ne'i le liste po'o
+  .i se ki'u bo le cmene po'u zoi gy. constructor .gy. cu ponse no smuni
+      Verified by `browser/suite_layers.nim`.
+  .i lo lujvo .e lo lerfu pe lo namcu cu ponse no smuni to `#1101` toi
+  .i `Logical Language Group` rinka lo nu le datni cu zifre fi ro da
+  .i le girzu cu cpedu lo nu lo selzba be fi le datni cu cusku le krasi .e lo du'u le datni cu na
+      mulno kei .e le cmene .e le judri be le girzu noi krasi lo zmadu datni
+  .i le papri cu cusku ro di'u Verified by `browser/suite_layers.nim`.
+
 ## ni'o ni'o ni'o lo cipra
 
 ni'o **pa cmalu samtci cu jitro ro cipra ta'i pa samtci**
@@ -4123,8 +4161,8 @@ ni'o **le fanva cu selsto ta'i lo nu satci**
   .i le vi selgu'a cu nitcu le fadni samtci pe `Nim` po'o
   .i se ki'u bo le vi selgu'a cu ponse no stela
 
-ni'o lo minde po'u `lists` .e `head` ge'u .e lo cipra pe lo datselci'a cu nitcu ji'a `lojban-common`
-    .e `sha256sum` vu'o noi lo minde po'u `system` cusku ke'a
+ni'o lo minde po'u `lists` .e `head` .e `page` .e `drive` ge'u .e lo cipra pe lo datselci'a cu nitcu
+    ji'a `lojban-common` .e `sha256sum` vu'o noi lo minde po'u `system` cusku ke'a
   .i lo minde po'u `cll` .e `tatoeba` .e `wikipedia` nitcu `sha256sum`
   .i lo minde po'u `translations` nitcu `curl` noi `system` cusku ke'a
   .i lo minde po'u `drive` nitcu `Chromium` to lu lo cipra ne'i `Chromium` li'u toi gi'e nitcu
@@ -4918,7 +4956,12 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
 
 ## Open questions
 
-- ni'o ni'o ni'o ny.mai **zoi gy. brod .gy. noi rafsi gi'e vasru vo lerfu**
+- ni'o ni'o ni'o ny.mai **lo selbri poi lo jorne cu jorne ke'a**
+  .i le papri cu pixra pa selbri poi zo je jorne re pagbu be ke'a ta'i pa tanru
+  .i se ki'u bo le ctuca cu jarco le smuni be zo tanru pe le liste
+  .i ku'i lo selbri poi lo jorne cu jorne ke'a cu na tanru
+  .i `Architect` jdice no da
+- ny.mai **zoi gy. brod .gy. noi rafsi gi'e vasru vo lerfu**
   .i mu gismu cu ponse zoi gy. brod .gy.
   .i `CLL` na cusku lo du'u zoi gy. brod .gy. sinxa ma kau poi gismu
   .i le genturfa'i cu tcidu zoi gy. brod .gy. ta'i pa pagbu poi vasru le lerfu po'u zoi gy. brod
@@ -4953,6 +4996,3 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
-- ny.mai **le bangu be le ctuca poi zvati le cnita be le selci'a**
-  .i le papri ka'e ctuca le smuni be pa valsi .e pa linji
-  .i `D6` pe `#1055` cu cuxna le bangu

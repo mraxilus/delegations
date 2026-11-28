@@ -3,11 +3,14 @@
 ##   .i ro linji cu zvati lo jbini be le linji poi vasru ke'a
 ##   .i ro valsi cu skari ja'i le girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
 ##   .i le selci'a cu du ro selci'a pe le selci'agri to `corpora.nim` toi
+##   .i le pamoi valsi poi jarco le klesi be ro linji pe `Basis.Marker` cu ponse lo selma'o pe le
+##       klesi
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets, strutils, unittest]
+import std/[options, sequtils, sets, strutils, unittest]
 
+import ../../src/browser/lessons
 import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru]
 import ./corpora
 
@@ -23,6 +26,16 @@ const
     ## lo klani be lo selci'a poi le gerna cu sisti bu'u ke'a
     ##   .i le selci'a cu se tcidu ta'i lo nu sinxa lo srera
     ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 82
+  COUNT_MARKING_LEAST = 2000
+    ## lo klani be lo linji poi lo valsi cu jarco le klesi be ke'a
+    ##   .i le selci'agri cu vasru 2127 linji be lo ri klesi
+  MARKED = [("mi nelci lo se nu do klama", Category.Abstraction, "nu"),
+      ("mi pa roi klama", Category.Tag, "roi"), ("lo zarci noi do klama ke'a", Category.Clause,
+      "noi"), ("mi klama fi lo zarci", Category.Tagged, "fi"),
+      ("mi jai nu klama", Category.Abstraction, "nu"),
+      ("mi jai gau nu klama", Category.Abstraction, "nu"),
+      ("mi pa by roi klama", Category.Tag, "roi")]
+    ## lo selci'a .e lo klesi be pa linji pe ke'a .e le valsi poi jarco le klesi
   GROUPS_SELMAHO = [
     (Selmaho.Koha, Group.Sumti),  # `CLL 7.1`
     (Selmaho.Le, Group.Sumti),  # `CLL 6.2`
@@ -138,6 +151,38 @@ suite "Internal: Bars of text":
         of Category.Tag: check family == "tag"
         of Category.Number: check family in ["quantifier", "number", "mex"]
         of Category.Free: check family == "free"
+
+
+  test "Marking word of each clause, abstraction, link and tag bar takes selma'o of its kind":
+    var count = 0
+    for (name, text) in textsCorpora():
+      let
+        reading = text.readTextMarked
+        glosses = reading.occurrences.mapIt(it.reading.toGloss)
+      for bar in reading.toLayers.bars:
+        if LESSON_KIND[bar.category].basis != Basis.Marker: continue
+        inc count
+        let
+          at = glosses.marking(bar.category, bar.first, bar.last)
+          marker = reading.occurrences[at].reading
+        checkpoint name & ": " & $bar.category
+        check marker.is_word and marker.selmaho.isSome
+        check marker.selmaho.get in MARKERS[bar.category]
+    check count >= COUNT_MARKING_LEAST
+    for (text, category, expected) in MARKED:
+      let
+        reading = text.readTextMarked
+        glosses = reading.occurrences.mapIt(it.reading.toGloss)
+        bars = reading.toLayers.bars.filterIt(it.category == category)
+      checkpoint text
+      check bars.len == 1
+      let at = glosses.marking(category, bars[0].first, bars[0].last)
+      check reading.occurrences[at].text == expected
+
+
+  test "Text of marking word names word, then its gloss, then its definition":
+    check shownMarker("noi", "incidental clause", "non-restrictive relative clause") ==
+        "noi · incidental clause · non-restrictive relative clause"
 
 
 suite "Chapter 20":

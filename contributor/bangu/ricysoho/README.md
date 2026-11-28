@@ -522,8 +522,8 @@ nim r tools/build.nim system                      # print packages verbs and sui
 
 ni'o lo nu zbasu cu nitcu lo fanva poi `ricysoho.nimble` stodi ke'a ku'o .e lo fadni samtci pe `Nim`
     po'o
-  .i lo minde po'u `lists` .e `head` ge'u .e lo cipra be lo datselci'a cu nitcu ji'a `lojban-common`
-      noi bakfu ku'o .e `sha256sum` pe `coreutils`
+  .i lo minde po'u `lists` .e `head` .e `page` .e `drive` ge'u .e lo cipra be lo datselci'a cu
+      nitcu ji'a `lojban-common` noi bakfu ku'o .e `sha256sum` pe `coreutils`
   .i lo minde po'u `system` cusku le re bakfu
 
 ni'o lo minde po'u `cll` nitcu `sha256sum` .e lo papri be `CLL 1.1` be'o noi selra'e ne'i pa vasru
@@ -567,6 +567,8 @@ ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 ni'o [`linji be lo selci'a`](https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5) skari ro valsi ja'i
     le girzu be le selma'o be ke'a gi'e pixra lo linji pe le tricu ne'i le selci'a
   .i lo prenu cu ciska ne'i le se ciska poi skari
+  .i le ctuca poi zvati le cnita be le se ciska cu glico
+  .i le ctuca cu skicu le valsi .a le linji poi le korbi cu pencu ke'a
   .i pa sarji pe ro papri cu jorne le re papri
 
 ni'o lo minde po'u `page` zbasu le papri `pages/live.html` .e le papri `pages/layers.html`
