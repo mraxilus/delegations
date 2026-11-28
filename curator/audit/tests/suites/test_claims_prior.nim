@@ -13,7 +13,7 @@ import ../../src/[audit, claims_log, claims_prior, claims_scores, findings]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   SAMPLES_LOG = 40  ## Random logs that law of rows prior holds reads.
   SAMPLES_FIGURES = 10
     ## Random logs that each law of figures reads: each takes 16 sets of fields at 4 states, and

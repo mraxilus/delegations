@@ -18,14 +18,14 @@ import std/[sequtils, strutils]
 import ./[reports, tokens, views]
 
 
-const
+const  # TODO: Document.
   FENCE_OFF* = "#!fix off"  ## Marker line opening fence (Article X.1).
   FENCE_ON* = "#!fix on"  ## Marker line closing fence.
   FENCED = "#!fix fenced"
     ## Text each fenced line reads as while fixers run: whole-line comment, which no fixer writes.
 
 
-type
+type  # TODO: Document.
   Fence* = object  ## Define lines fence leaves alone, and line where fence cannot be read, if any.
     lines*: seq[int]  ## Zero-based fenced lines, markers included, in order.
     fault*: int

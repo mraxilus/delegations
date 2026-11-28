@@ -38,7 +38,7 @@ type ProjectProseOwn* = object
   should_demand_suite* {.requiresInit.}: bool  ## Audit reports suite where tree lacks it.
 
 
-const
+const  # TODO: Document.
   DOMAIN_PROSE_OWN* = "bangu"
     ## Folder of domain whose project alone may keep its own prose, since its subject is language.
   PROJECTS_PROSE_OWN* = [

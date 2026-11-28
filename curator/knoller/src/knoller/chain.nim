@@ -107,7 +107,7 @@ import ./[
 ]
 
 
-const
+const  # TODO: Document.
   ROUNDS_MAX = 3
     ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
   ATTEMPTS_MAX = 4

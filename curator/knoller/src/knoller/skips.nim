@@ -25,7 +25,7 @@ import std/[sequtils, strutils]
 import ./[reports, views]
 
 
-const
+const  # TODO: Document.
   CALL_SKIP = "skip()"  ## Call marking test skipped, which run prints as `[SKIPPED]`.
   WORD_GAP = "TODO"  ## Word of comment naming gap of coverage.
   PREFIX_PLACEHOLDER = "TODO:"  ## Opening of name of placeholder test, which gives its reason.

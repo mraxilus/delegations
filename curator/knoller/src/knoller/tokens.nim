@@ -24,7 +24,7 @@ import std/strutils
 import ./views
 
 
-type
+type  # TODO: Document.
   KindToken* {.pure.} = enum  ## Define what one token is, as layout rules tell tokens apart.
     Word  ## Identifier or keyword, e.g. `proc`, `x`.
     Quoted  ## Name in backticks, e.g. `` `+` ``.
@@ -45,7 +45,7 @@ type
     line*: int  ## Zero-based line token opens on.
 
 
-const
+const  # TODO: Document.
   CHARS_OPERATOR = {
     '!', '$', '%', '&', '*', '+', '-', '.', '/', ':', '<', '=', '>', '?', '@', '\\', '^', '|', '~',
   }

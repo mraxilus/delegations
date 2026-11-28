@@ -87,7 +87,7 @@ type FontFace = object  ## Define one `@font-face` rule page declares, with code
   codepoints: HashSet[int]  ## Codepoints its file maps to glyph other than `.notdef`.
 
 
-const
+const  # TODO: Document.
   WEIGHT_NORMAL = 400  ## Weight keyword `normal` names, and weight of rule setting none.
   WEIGHT_BOLD = 700  ## Weight keyword `bold` names.
   WEIGHTS_UPWARD = 400 .. 500

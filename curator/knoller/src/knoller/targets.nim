@@ -16,7 +16,7 @@ import std/[algorithm, sequtils, strutils]
 import ./[reports, tokens]
 
 
-type
+type  # TODO: Document.
   Target = object  ## Define one `to<Target>` call to write subject first.
     line: int  ## Zero-based line.
     first: int  ## Byte offset of callee.
@@ -25,7 +25,7 @@ type
     got: string  ## Call as written.
 
 
-const
+const  # TODO: Document.
   PASSES_MAX = 8  ## Passes target fixer takes at most; each writes calls nesting none.
 
 

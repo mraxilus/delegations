@@ -9,7 +9,7 @@ import ../../src/knoller/compilers
 when not defined(windows): import ../../src/knoller/proofs  # prover of pin, on POSIX alone
 
 
-const
+const  # TODO: Document.
   PIN = "2.2.4"  ## Compiler version suite resolves.
   COMMIT = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where suite resolves commit, not version.

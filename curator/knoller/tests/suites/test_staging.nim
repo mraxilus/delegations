@@ -8,7 +8,7 @@ import std/[sequtils, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, reports, staging]
 
 
-const
+const  # TODO: Document.
   LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
   STAGED = "func anchor(): int {.compileTime.} = 0\n"
     ## Member carrying its own `compileTime`, which stages family of its module.

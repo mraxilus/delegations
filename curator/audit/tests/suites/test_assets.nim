@@ -14,7 +14,7 @@ import ../../src/[assets, findings, font_files]
 from ../../../knoller/src/knoller import DIRECTORY_CACHE
 
 
-const
+const  # TODO: Document.
   DIGEST_ABC = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     ## SHA-256 of `abc`, i.e. FIPS 180-2 Appendix B.1.
   DIGEST_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

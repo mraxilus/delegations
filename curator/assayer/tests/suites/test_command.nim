@@ -8,7 +8,7 @@ import knoller/compilers
 import ../../src/assayer/[command, headers, plans]
 
 
-const
+const  # TODO: Document.
   QUOTES = "\"\"\""  ## Triple quote closing header, and opening it after `discard `.
   PIN_FAKE = "9.9.9"  ## Pin compiler cached by suite serves, which no release names.
   SOURCE_MATRIX =

@@ -46,7 +46,7 @@ type Character* = object  ## Define one character page source uses: where, which
   spelling*: string  ## As source writes it: character itself, or reference such as `&uarr;`.
 
 
-const
+const  # TODO: Document.
   ASCII_MAX = 0x7F  ## Last codepoint of ASCII, which check never reads.
   CODEPOINT_MAX = 0x10FFFF  ## Last codepoint Unicode defines; reference past it names none.
   REFERENCE_MAX = 10  ## Bytes `&` to `;` span at most, as in `&#x10FFFF;` and `&thetasym;`.

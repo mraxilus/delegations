@@ -36,7 +36,7 @@ import std/[
 import ./[headers, plans]
 
 
-type
+type  # TODO: Document.
   Step* = object  ## Define what one command did.
     command*: string  ## Command as run.
     output*: string  ## Its stdout and stderr together.

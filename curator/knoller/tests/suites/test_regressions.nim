@@ -15,7 +15,7 @@ import ../../src/knoller/[chain, command, proofs, reports]
 import ./sources
 
 
-const
+const  # TODO: Document.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, at pin, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =
@@ -556,7 +556,8 @@ suite "Regressions":
     holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧")  # after prefix
     holds MASK, MASK.replace("2'u^(DIMENSIONS)", "2'u^DIMENSIONS")  # beside binary operator
     holds LINKS, LINKS  # `@PAIRS[task.pair][0]` reads `(@PAIRS)[task.pair][0]` (#539)
-    holds SIGILS, SIGILS.replace("@(x)  ##", "@x  ##")  # bare operand alone goes
+    holds SIGILS, SIGILS.replace("@(x)  ##", "@x  ##").replace("let\n", "let  # TODO: Document.\n")
+      # bare operand alone goes; section takes its doc (D1 c of #1020)
     holds FLAGS, FLAGS.replace("1 .. DIM", "1..DIM").replace("'0')+i", "'0') + i").replace(
       "(i-1)", "(i - 1)",
     ).replace("toBasisFlags(flags)", "flags.toBasisFlags")  # `1'u shl (i-1)` group stays
@@ -569,8 +570,8 @@ suite "Regressions":
 
 
   test "10. power operator is tight, and exponent that would merge takes parentheses (ruling 12)":
-    holds POWERS, HEAD & "let\n  p = -1^k  ## Sign.\n  q = -1^(a * b)  ## Sign.\n" &
-      "  r = a^(-b)  ## Power.\n"
+    holds POWERS, HEAD & "let  # TODO: Document.\n  p = -1^k  ## Sign.\n" &
+        "  q = -1^(a * b)  ## Sign.\n  r = a^(-b)  ## Power.\n"  # section takes its doc
     holds ANTISCALAR, ANTISCALAR  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
 
 

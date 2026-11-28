@@ -7,7 +7,7 @@ import ../../src/[domains, findings, imports, layout, projects, toolchain]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   TAGGER = CONTRIBUTOR & "/bangu/lojban_tagger"
     ## Folder of tagger as found at `0d6eaaeb`, which imported parser by path until #934.
   PARSER = CONTRIBUTOR & "/bangu/lojban_parser"  ## Folder of parser as found there.

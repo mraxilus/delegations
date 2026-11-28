@@ -39,7 +39,7 @@ import std/[options, sequtils, sets, strutils, tables]
 import ./[findings, markdown]
 
 
-const
+const  # TODO: Document.
   RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md", "EXAMPLES.md", "GUIDE.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
   SECTIONS_PROCESS* = [

@@ -8,7 +8,7 @@ import ../../src/[findings, packages_node]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   PATH_SCRIPT = "contributor/ronri/pga_visualiser/tools/drive/main.ts"  ## Script of project.
   PATH_MANIFEST = "contributor/ronri/pga_visualiser/package.json"  ## Manifest of same project.
   PATH_PAGE = "contributor/ronri/pga_visualiser/pages/shell.html"  ## Page of same project.

@@ -7,7 +7,7 @@ import std/[algorithm, options, os, sequtils, strutils, tempfiles, times, unitte
 import ../../src/assayer/[headers, plans, runs]
 
 
-const
+const  # TODO: Document.
   FILE = "tests/test_k.nim"  ## Test file each judged run names.
   CODES_COMPILE = [0, 1, 2]  ## Exit codes of compile law enumerates.
   ERRORS = [none(string), some("test_k.nim"), some("other.nim"), some("")]

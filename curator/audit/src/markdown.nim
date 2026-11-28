@@ -19,7 +19,7 @@
 import std/[sequtils, strutils]
 
 
-type
+type  # TODO: Document.
   Section* = object  ## Define one part of document, cut at `## ` line outside fenced code.
     heading*: string  ## Heading line, line end cut; empty for part before first heading.
     text*: string  ## Every line of part, heading included, line ends kept.

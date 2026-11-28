@@ -6,7 +6,7 @@ import std/[options, random, sequtils, unittest]
 import ../../src/[claims_log, comments, kinds]
 
 
-const
+const  # TODO: Document.
   SEED_TEXTS = 7  ## Seed of random texts that rows of log quote.
   COUNT_TEXTS = 2_000  ## Rows of log written, one for each random text.
   CHARS_TEXT = ['"', '\\', '\'', '#', ' ', 'a', '\t', '\n']

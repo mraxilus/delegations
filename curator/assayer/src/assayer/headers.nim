@@ -21,7 +21,7 @@
 import std/[options, parsecfg, streams, strutils]
 
 
-const
+const  # TODO: Document.
   OPENING = "discard \"\"\""  ## Text opening header.
   QUOTES = "\"\"\""  ## Text closing header.
   LINE_OPENING_MAX* = 10  ## Last line header may open on, as testament has it.
@@ -33,7 +33,7 @@ const
     ## Compile command testament takes where header names none, word for word.
 
 
-type
+type  # TODO: Document.
   Action* {.pure.} = enum  ## Define what run must do to pass, i.e. value of `action`.
     Compile = "compile"  ## Compile, printing no error.
     Reject = "reject"  ## Fail to compile, error naming test file.
