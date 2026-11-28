@@ -6,40 +6,17 @@
 | Author  | Claude |
 | Date    | 2026-11-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | b1598c3ad3ce7dfd |
+| Rules   | d7c1b1970e4e5435 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be `Architect` be'o .e
-    lo genturfa'i pagbu be `rictadni`
+ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be `Architect`
   .i le selmi'e cu dunda pa se zukte po'o le vi selgu'a
   .i le selzu'e cu nu zbasu lo mulno genturfa'i be la lojban. be'o noi ka'e tcidu ro drajbovla .e ro
       drajboselci'a
-  .i ja'i le selmi'e `rictadni` tcidu la lojban. sepi'o le genturfa'i noi na pagbu `rictadni`
 
 ni'o le vi selgu'a cu tcidu lo jbovla .e lo porsi be lo jbovla ja'i lo javni pe `CLL` po'o gi'e
     tcidu lo selci'a ja'i le gerna pe `CLL 21.1`
   .i pu lo nu le gerna cu tcidu kei lo javni pe `CLL 19.16` galfi lo valsi
-
-ni'o `rictadni` tcidu la lojban. sepi'o le ralju samtci pagbu be le genturfa'i gi'e ralte no fukpi
-    be lo samtci pagbu be le genturfa'i
-  .i ci pagbu be le genturfa'i cu ponse lo tunba ne'i `rictadni`
-  .i lo stedu be ro le ci pagbu cu cusku lo cmene be le tunba ja'i `Article II.9`
-
-ni'o le pamoi pagbu cu du `tools/lists.nim`
-  .i le remoi pagbu cu du le re minde pe `tools/build.nim` zi'e po'u `lists` jo'u `head`
-  .i le cimoi pagbu cu du `ending` noi sivyfancu ne'i `tanru_units.nim`
-  .i lo nu cikre pa tunba cu mulno va'o lo nu cipra fi le datytunba kei po'o
-
-ni'o lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
-  .i lo stedu be le samtci cu cusku le xa cmene
-  .i `rictadni` cu fanva le cenba pe le vi selgu'a zi'e poi `atlas.lock` pe `rictadni` cu sinxa ke'a
-  .i se ki'u bo lo nu galfi `src` .a `tools` vu'o pe le vi selgu'a cu rinka no lo nu lo cipra pe
-      `rictadni` cu fliba
-  .i se ki'u bo lo nu galfi poi spofu `rictadni` cu se facki ca lo nu `rictadni` cu galfi
-      `atlas.lock` pe vo'a
-  .i `koch check` cusku le cenba ne'i pa linji noi rinka no lo nu fliba to `#948` toi
-  .i lo xancipra be di'u de'i li 2026 pi'e 11 pi'e 17 cu pilno `nim r koch check` gi'e tcidu
-      `curator/audit/src/plan.nim` .e `curator/audit/src/lags.nim`
 
 ni'o le turni be le vi selgu'a cu du `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
   .i `CLL` selci'a `John Woldemar Cowan` gi'e seldu'a `Logical Language Group`
@@ -67,7 +44,6 @@ ni'o `CLL 5 7 9 12 15` cusku lo du'u lo cmavo cu jorne ma kau valsi
       valsi pu lo nu le gerna cu tcidu
 
 ni'o lo cmene be la lojban. cu vasru lo cmalu lerfu po'o mu'u zo lojban.
-  .i `Architect` jdice di'u fi `rictadni`
   .i ne'i la lojban. lo brale'u cu sinxa lo nu basna poi na fadni to `CLL 3.9` toi
   .i lo cmene be la lojban. cu vasru no brale'u
   .i ku'i lo cmene be lo cukta be'o .e lo vlaste .e lo notci pe `Logical Language Group` ge'u .e lo
@@ -91,12 +67,9 @@ ni'o **ro datni poi le genturfa'i cu ralte ke'a seltcu le javni pe `CLL`**
   .i `CLL 4.11` .e `CLL 4.12` pilno lo rafsi be ro valsi pe lo tanru be'o lo nu jmina gi'e dunda lo
       namcu
   .i se ki'u bo le gimste cu ralte ro gismu .e lo rafsi be ro gismu
-  .i `rictadni` ralte lo glipau be le gimste be'o .e le mulno ke jvoste ki'u lo nu `rictadni` sisku
-      sepi'o le glipau .e le jvoste
 
 ni'o le ma'oste cu ralte ro cmavo .e lo selma'o be ro cmavo
   .i le gerna cu nitcu le cmavo .e le selma'o
-  .i lo nu pilno lo pa valsi po'o .e lo gismu po'o cu selcu'a `rictadni` gi'e selra'e `rictadni`
 
 ## ni'o ni'o ni'o lo zunsna gunma .e lo tarmi
 
@@ -224,7 +197,7 @@ ni'o `hyphensRafsi` .e `score` pilno le mitpau
   .i se ki'u bo ro javni cu pa roi selci'a
   .i le pagbu cu stali lo ka sivni
   .i `tanru.nim` .e lo cipra cu cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu
-  .i se ki'u bo le ralju samtci pagbu cu dunda no nincme `rictadni` to `#832` toi
+  .i se ki'u bo le ralju samtci pagbu cu dunda no nincme lo pilno
       Verified by `suites/test_lujvo.nim`.
 
 ni'o le cipra cu tcidu lo mupli poi lo tsiju cu jdice ke'a
@@ -326,9 +299,8 @@ ni'o se to'e cuxna fa lo nu ralte le se ciska datnyvei ta'i lo nu na galfi kei k
   .i se to'e cuxna fa lo nu tcidu le bakfu ca lo nu fanva kei kei ki'u lo nu le nu tcidu cu rinka lo
       nu ro nu zbasu cu nitcu le bakfu
 
-ni'o `Architect` jdice fi `rictadni` fe lo du'u le liste cu so'u roi cenba
+ni'o `head` zgana lo nu le liste cu cenba
   .i se ki'u bo lo nu ralte le liste cu drani
-  .i di'u jetnu ji'a ne'i le vi selgu'a
 
 ni'o **le jvoste cu datselci'a
   .i le mulno ke ma'oste cu drata se ciska ji'a**
@@ -628,10 +600,6 @@ ni'o **va'o lo nu pa tanru cu ponse no jvotai kei le genturfa'i cu ciska lo pagb
     punji pa calyle'u lo jbini be re pagbu ta'i lo nu `CLL` ciska lo tanru to `CLL 5.1` toi**
   .i le tanru cu selfa'o lo cmavo poi ponse no rafsi poi seltai `CCV` .a `CVV` ku'o ku'o mu'u
       `cusku se` gi'a vasru lo cmavo poi ponse no rafsi Verified by `suites/test_tanru.nim`.
-
-ni'o `rictadni` ralte lo sinxa po'u `+` pe le jvoste
-  .i `readTanru` pe `tags.nim` pe `rictadni` tcidu le sinxa
-  .i `toTanru` pe `tags.nim` ciska le sinxa
 
 ## ni'o ni'o ni'o lo porsi be lo valsi
 
@@ -1680,7 +1648,7 @@ ni'o **lo tanru cu se fendi fi lo taurpau
   .i ro taurpau cu vasru pa pagbu be le tanru be'o .e lo cmavo poi jorne le pagbu**
   .i zoi gy. tanru-unit .gy. cmene lo taurpau le gerna pe `CLL` to `CLL 21.1` .e le javni pe li
       152 toi
-  .i `Architect` cuxna le cmene tezu'e `rictadni` bu'u `#768`
+  .i `Architect` cuxna le cmene bu'u `#768`
 
 ni'o lo cmavo be zoi gy. SE .gy. cu jorne lo bavla'i brivla .a lo bavla'i pagbu poi selcme zoi gy.
     equivalent unit .gy. `CLL 9.4`
@@ -3768,6 +3736,43 @@ ni'o **le papri cu se gubgau
   .i se ki'u bo lo cenba poi galfi le papri cu se rapli gubgau ta'i lo xance to
       `CONTRIBUTOR.md, Before you open a pull request` toi
 
+## ni'o ni'o ni'o lo linji be lo selci'a
+
+ni'o **le papri po'u `pages/layers.html` cu skari ro valsi ja'i le girzu be le selma'o be ke'a gi'e
+    pixra lo linji pe le tricu ne'i le selci'a**
+  .i ro linji cu sinxa pa porsi be lo jgena poi pa ckini be lo javni cu cmene ke'a
+  .i lo jgena poi vasru re jgena pe le ckini cu cfari pa cnino linji
+  .i ro valsi cu skari ja'i lo girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
+      Verified by `suites/test_layers.nim`.
+
+ni'o **ro linji cu vasru ro valsi pe le jgena poi le linji cu sinxa ke'a gi'e zvati lo jbini be le
+    linji poi vasru ke'a**
+  .i le cipra cu tcidu 1944 selci'a pe le selci'agri gi'e cipra 20599 linji
+  .i le gerna cu sisti pu le fanmo be 82 le selci'a Verified by `suites/test_layers.nim`.
+
+ni'o **le papri cu tcidu le selci'a ta'i `readTextMarked`**
+  .i lo srejge cu se cmene no da
+  .i se ki'u bo lo jufra poi lidne pa srera cu ponse lo linji pe vo'a
+  .i pa gunka cu tcidu le selci'a
+  .i va'o lo nu le papri cu ponse no gunka kei le papri cu tcidu ba lo nu le nu ciska cu denpa
+  .i pa se tcidu pe pa pu selci'a cu muvdu ja'i ro nu cenba poi ba fasnu
+  .i ku'i ri na basti pa se tcidu pe le selci'a poi ca zvati
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **le stuzi be lo nu ciska cu du le se ciska poi skari to `D2` pe `#1055` toi**
+  .i ro nu cenba cu cenba le selci'a gi'e rinka lo nu le papri cu pixra le selci'a
+  .i ro valsi cu du pa tanxe be lo selci'a
+  .i ro selma'o .e ro linji cu zvati lo bartu be le se ciska gi'e se ciska fi `CSS` po'o
+  .i se ki'u bo lo samtci pe lo jbobatke cu tcidu le selci'a po'o
+  .i le papri cu pixra lo valsi .e lo linji poi le jbezba cu gunma ke'a
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **re batke cu jitro le selma'o .e le linji to `D4` pe `#1055` toi**
+  .i ro batke cu jetnu ca lo nu le papri cu cfari Verified by `browser/suite_layers.nim`.
+
+ni'o pa sarji pe ro papri cu jorne le re papri to `D5` pe `#1055` toi
+  .i le sarji cu cmene ro papri gi'e sinxa le papri poi ca zvati
+
 ## ni'o ni'o ni'o lo cipra
 
 ni'o **pa cmalu samtci cu jitro ro cipra ta'i pa samtci**
@@ -3820,10 +3825,6 @@ ni'o se to'e cuxna fa lo nu ro flalu cu tcidu lo selci'agri
 ni'o `suites/test_tanru.nim` cipra le tcidu
   .i `suites/test_stream.nim` cipra le tcidu be lo porsi be lo valsi
   .i `suites/test_tanru_units.nim` cipra lo nu fendi lo tanru lo taurpau
-
-ni'o no cipra pe le vi selgu'a cu selfu'i ne'i `rictadni`
-  .i lo cipra pe `rictadni` cipra lo samtci pagbu pe `rictadni` po'o
-  .i lo javni be lo nu tcita .e lo nu sisku cu selvau le samtci pagbu
 
 ni'o ro xusra cu sitna lo krasi be vo'a
   .i le krasi cu du pa pagbu be `CLL` .a pa pagbu be le raljva be'o poi pa bandu cu jgari ke'a
@@ -4952,3 +4953,6 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
+- ny.mai **le bangu be le ctuca poi zvati le cnita be le selci'a**
+  .i le papri ka'e ctuca le smuni be pa valsi .e pa linji
+  .i `D6` pe `#1055` cu cuxna le bangu

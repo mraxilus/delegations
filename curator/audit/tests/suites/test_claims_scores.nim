@@ -11,7 +11,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[math, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[claims_log, claims_scores]
+import ../../src/[claims_log, claims_scores, hooks, sums_exact]
+import ./fixtures
 
 
 const
@@ -93,6 +94,23 @@ suite "numbers as Metaculus":
     check initNumber("count of findings: 3, 6 and 11", 3, 6, 11, 9).unitClaim.isNone  # no label
     check initNumber("tool calls: 12, 30 and 60", 12, 30, 60, 20).unitClaim.isNone
     check initNumber("Cost: $0.80, $1 and $2", 0.8, 1, 2, 1).unitClaim.isNone  # label, not `Count:`
+
+
+  test "unit of number that its row names comes first, as cells of estimate give it (#1028)":
+    # Text of estimate names no unit at its start, so row holds unit its cells give; row written
+    #   before unit joined `Number` reads unit its text names, as test above holds.
+    for (unit, name) in [(UnitNumber.Tokens, "tokens"), (UnitNumber.Cost, "cost"),
+        (UnitNumber.Time, "time"), (UnitNumber.Count, "count")]:
+      for text in ["The builder takes ~50m.", TEXT_TOKENS, "Cost: $0.80, $1 and $2"]:
+        var claim = initNumber(text, 1, 2, 3, 2)
+        claim.number.get.unit = unit
+        check claim.unitClaim.get.name == name
+    check initNumber("The builder takes ~50m.", 20, 50, 120, 47).unitClaim.isNone
+    var time = initNumber("The builder takes ~50m.", 20, 50, 120, 47, confidence = 0.9)
+    time.number.get.unit = UnitNumber.Time
+    check time.scoreNumber == initNumber("Time: time to its report, in minutes: 20, 50 and 120",
+      20, 50, 120, 47, confidence = 0.9).scoreNumber
+    check time.scoreNumber.isSome
 
 
   test "number inside its range scores as copy in Python of method of Metaculus gives it":
@@ -238,6 +256,58 @@ suite "numbers as Metaculus":
     check found.count_number == 2
     check abs(found.score_number - (77.69379682749334 - 37.12769173601439) / 2) <= TOLERANCE_NUMBER
     check found.bands.mapIt(it.count) == @[1]
+
+
+
+suite "tallies":
+  test "claim is tally of one row, with band, hits and sums where it takes baseline score":
+    # Domain: each state, confidence of each side of 50% and outside 0 to 1, each marker, number.
+    for state in State:
+      for confidence in [0.0, 0.2, 0.45, 0.5, 0.55, 0.75, 0.99, 1.0]:
+        for marker in Marker:
+          var claim = initClaim(confidence, state)
+          claim.marker = marker
+          let
+            tally = claim.toTally
+            score = claim.scoreBaseline
+            is_turned = confidence < 0.5
+          check tally.rows == 1
+          check tally.marker ==
+            (if marker == Marker.Resolver: Marker.Resolver else: Marker.Delegate)
+          check (tally.kind, tally.effort) == (claim.kind, claim.effort)
+          check tally.count == ord(score.isSome)
+          check tally.count_number == 0
+          if score.isNone:
+            check (tally.band, tally.hits, tally.hits_band) == (0, 0, 0)
+            check tally.score.partials.len == 0
+            continue
+          let turned = (if is_turned: 1 - confidence else: confidence)
+          check tally.band == {0.2: 71, 0.45: 51, 0.5: 51, 0.55: 51, 0.75: 71, 0.99: 91}
+            .toSeq.filterIt(it[0] == confidence)[0][1]
+          check tally.hits == ord(state == State.Hit)
+          check tally.hits_band == ord((state == State.Hit) != is_turned)  # `D3 c`
+          check tally.confidence.toFloat.bits == turned.bits
+          check tally.score.toFloat.bits == score.get.bits
+    let number = initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421).toTally
+    check (number.count, number.band, number.count_number) == (0, 0, 1)
+    check some(number.score_number.toFloat).isNearNumber(77.69379682749334)
+
+
+  test "figures of tallies summed by fields equal figures of their claims, to last bit":
+    let claims = @[
+      initClaim(0.55, State.Hit), initClaim(0.2, State.Hit), initClaim(0.58, State.Miss),
+      initClaim(0.75, State.Hit), initClaim(0.9, State.Annulled), initClaim(0.95, State.Waiting),
+      initNumber(TEXT_TOKENS, 1e6, 3e6, 7e6, 1101421), initNumber(TEXT_COST, 0.15, 0.45, 1.2, 0.1),
+    ]
+    var by_band: seq[Tally]
+    for claim in claims:
+      let
+        tally = claim.toTally
+        at = by_band.mapIt(it.band).find(tally.band)
+      if at < 0: by_band.add tally
+      else: by_band[at].add tally
+    check by_band.len < claims.len
+    check $by_band.figures == $claims.figures  # `$` of float gives each bit back
 
 
 
