@@ -182,12 +182,12 @@ type  # TODO: Document.
     Unspecified  ## No cell or text names unit.
     Tokens  ## Tokens of subagent: bare cells of estimate whose text holds word `tokens`.
     Cost  ## Dollars at list price: `$` before each cell.
-    Time  ## Minutes: `s`, `m` or `h` after each cell, read as minutes.
+    Time  ## Minutes: `s`, `min` or `h` after one space in each cell, read as minutes.
     Count  ## Count of things: bare cells of estimate whose text holds no word `tokens`.
 
   Value* = object  ## Define value that opens text of cell: amount, and unit its marks give.
     amount*: float  ## Dollars, minutes or count, after scale of `k` or `M`.
-    unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `m` or `h`; `Unspecified` for bare.
+    unit*: UnitNumber  ## `Cost` after `$`, `Time` before `s`, `min` or `h`; `Unspecified` for bare.
     stop*: int  ## Index after value in its text.
     is_scaled*: bool  ## Scale moves point of value, as `k`, `M` or `million` does.
     has_point*: bool  ## Digits of value hold decimal point, as `170.000` or `39.1M` do.
@@ -530,18 +530,22 @@ const  # TODO: Document.
   LENGTH_GROUP = 3  ## Digits of group after mark of `MARKS_GROUP`.
   SCALES_VALUE = [('k', 3), ('M', 6)]
     ## Mark after digits of value that scales it, with places it moves point: thousand and
-    ##   million (7194411522); case tells `M` of million from `m` of minutes.
+    ##   million (7194411522); case tells `M` of million from `m`, metre of SI, which value
+    ##   refuses.
   WORDS_SCALE = [("k", 3), ("M", 6), ("thousand", 3), ("million", 6), ("billion", 9)]
     ## Word after value and one space that scales it, with places it moves point: mark in its case,
     ##   and name in any case (choice).
-  MINUTES_TIME = [('s', 1.0 / 60), ('m', 1.0), ('h', 60.0)]
-    ## Mark after value of time, with minutes in one of it, as range of time is in minutes.
+  UNITS_TIME = [("s", 1.0 / 60), ("min", 1.0), ("h", 60.0)]
+    ## Symbol of time after value and one space, as SI writes it (SI Brochure, 5.4.3; D2 b on
+    ##   #1090), with minutes in one of it, as range of time is in minutes.
+  SYMBOL_METRE = "m"
+    ## Symbol SI gives metre, which value refuses after space, so `12 m` gives no minutes.
   WORD_TOKENS = "tokens"
     ## Word of estimate whose cells are bare that marks tokens; other bare cells mark count.
-  WORDS_TIME = ["sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "hr", "hrs",
+  WORDS_TIME = ["sec", "secs", "second", "seconds", "mins", "minute", "minutes", "hr", "hrs",
     "hour", "hours"]
-    ## Words of time, in lower case, that result refuses after value and space, as mark of time
-    ##   stands glued to its value.
+    ## Words of time, in lower case, that result refuses after value and space, as value takes
+    ##   symbol of `UNITS_TIME` alone there.
   RUNES_WIDTH_ZERO = [Rune(0x00AD), Rune(0x200B), Rune(0x200C), Rune(0x200D), Rune(0x2060),
     Rune(0xFEFF)]
     ## Runes of no width, which Unicode counts as no space: soft hyphen, zero-width space,
@@ -556,12 +560,13 @@ const  # TODO: Document.
     "claim whole, or holds `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of row of table with column `#` states, empty or quoting no claim.
   RULE_OUTCOME = "Cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
-    "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+    "of its cells: `$` for cost, `s`, `min` or `h` after space for time, bare number for tokens " &
+    "or count " &
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of result of estimate states, since log reads its outcome there.
   RULE_OUTCOME_BULLETS = "Cell under `Result` of number of bullets marked ✅ or ⬜ opens with its " &
     "value, bare in unit its text names, with no scale for cost or time, or with mark of that " &
-    "unit: `$` for cost, `s`, `m` or `h` for time " & CITATION_BULLETS
+    "unit: `$` for cost, `s`, `min` or `h` after space for time " & CITATION_BULLETS
     ## Rule that finding of result of number of bullets states: its percentiles stand bare in
     ##   its text, so bare value reads in unit text names (`outcomeBullets`); cell that opens with
     ##   label, marker or word, or with no value, takes it too, as log reads no outcome there.
@@ -582,8 +587,8 @@ const  # TODO: Document.
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of judgement with no percentage states.
   RULE_ESTIMATE = "Estimate states its 5th, 50th and 95th percentiles under their columns, each " &
-    "cell one value, of one unit, each above one before: `$` for cost, `s`, `m` or `h` for " &
-    "time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
+    "cell one value, of one unit, each above one before: `$` for cost, `s`, `min` or `h` after " &
+    "space for time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
     "(GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of estimate whose cells are no rising values of one unit states.
   RULE_CRITERION = "Claim takes its resolution criterion in row of its number of table with " &
@@ -2596,18 +2601,18 @@ func percentageCell(cell: string): Option[float] =
 func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
   ## Read value that opens at `at` of text, as cell of estimate writes it (7194411522): `$` of
   ##   cost, digits with each group of three after one mark of `groups`, comma or one space, and
-  ##   decimal part, scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then `s`, `m`
-  ##   or `h` of time; none where no digit opens it after any `$`, both marks of cost and time
-  ##   stand, or letter, digit, or mark and digit follow it.
+  ##   decimal part, scale glued, as `k` or `M`, or after one space (`WORDS_SCALE`), then one
+  ##   space and `s`, `min` or `h` of time (`UNITS_TIME`); none where no digit opens it after any
+  ##   `$`, both marks of cost and time stand, `m` follows space, or letter, digit, or mark and
+  ##   digit follow it, so glued mark of time, as `12m`, gives none (D2 b on #1090).
   ##   Mark other than space glued between value and digit makes none (choice): group of other
   ##     mark, as in `39 100,000`, `1.234.567`, `170_000` or `170'000`, decimal comma, as in
-  ##     `1,5h`, or time of clock, as in `15:30`, would read part of value.
+  ##     `1,5 h`, or time of clock, as in `15:30`, would read part of value.
   ##   Scale moves point in digits before they parse, so `39.1M` reads 39,100,000 exactly, as
   ##     `39,100,000`, `39.1 M` and `39 100 000` do; time reads in minutes, since range of time is
   ##     in minutes.
   ##   Space before scale and between groups reads (choice): result that hook refuses keeps row of
-  ##     its first write with no outcome, which its mend never replaces. Mark of time after space
-  ##     reads as none, so `5 m` is no whole value.
+  ##     its first write with no outcome, which its mend never replaces.
   var
     i = at
     unit = UnitNumber.Unspecified
@@ -2655,14 +2660,19 @@ func valueAt*(text: string, at = 0, groups = MARKS_GROUP): Option[Value] =
   fraction = fraction[moved .. ^1]
   var amount = (whole & (if fraction.len > 0: "." & fraction else: "")).parseFloat
 
-  # Read mark of time, which value of cost refuses, and refuse value that runs on.
-  for (mark, minutes) in MINUTES_TIME:
-    if i < text.len and text[i] == mark:
-      if unit == UnitNumber.Cost: return
-      unit = UnitNumber.Time
-      amount *= minutes
-      inc i
-      break
+  # Read symbol of time after one space, which value of cost refuses, and refuse metre of SI.
+  if i + 1 < text.len and text[i] == ' ':
+    var stop = i + 1
+    while stop < text.len and text[stop] in Letters: inc stop
+    let symbol = text[i + 1 ..< stop]
+    if symbol == SYMBOL_METRE: return
+    for (name, minutes) in UNITS_TIME:
+      if symbol == name:
+        if unit == UnitNumber.Cost: return
+        unit = UnitNumber.Time
+        amount *= minutes
+        i = stop
+        break
   if i < text.len and text[i] in Letters + Digits: return
   if i < text.len and not text.runeAt(i).isWhiteSpace and i + text.runeLenAt(i) < text.len and
       text[i + text.runeLenAt(i)] in Digits:
@@ -2715,7 +2725,7 @@ func isRunOn(text: string, at: int): bool =
   ## Decide whether value that ends at `at` of text runs on past whitespace, ASCII or Unicode, or
   ##   rune of `RUNES_WIDTH_ZERO`, into digit, word of one letter, word of `WORDS_TIME`, or word
   ##   of `WORDS_SCALE` in any case: group, scale or mark of time that value cannot read there, as
-  ##   in `39 1`, `39.1 K`, `1.5 h`, or `39.1 M` after no-break space, which value reads as no
+  ##   in `39 1`, `39.1 K`, `1.5 m`, or `39.1 M` after no-break space, which value reads as no
   ##   space (choice).
   var i = at
   while i < text.len and (text.runeAt(i).isWhiteSpace or text.runeAt(i) in RUNES_WIDTH_ZERO):
@@ -2734,8 +2744,8 @@ func outcomeResult*(cell: string, unit: UnitNumber, as_bare = false): Option[flo
   ##   `15, inside` gives no minutes of estimate, and `$1.10` no count.
   ##   Where `as_bare`, as number of bullets writes its percentiles bare, bare value with no scale
   ##     reads in unit too, and value of any mark reads for `Unspecified`, whose number takes no
-  ##     score; so `15 M` gives no minutes, as `M` of million and `m` of minutes differ by case.
-  ##   Value that runs on past space (`isRunOn`) gives none, so `1.5 h` gives no 1.5 minutes.
+  ##     score; so `15 M` gives no minutes, as `M` is million.
+  ##   Value that runs on past space (`isRunOn`) gives none, so `1.5 m` gives no 1.5 minutes.
   ##   Tokens and count read only value that may be count (`isCount`), so `170.000` gives none.
   let value = cell.valueAt
   if value.isNone or cell.isRunOn(value.get.stop): return

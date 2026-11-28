@@ -4163,10 +4163,11 @@ A table of judgements takes `#`, `%` and `Judgement`, and one of estimates takes
   samples of `GUIDE.md`, and each order. It holds each column of a form dropped or a character off
   and each that makes a table of claims or none. It holds each cell under `#` and each cost above.
 
-**A value is `$` of cost, digits, `k` or `M` of scale, then `s`, `m` or `h` of time** (comment
-7194411522). `valueAt` reads it, and refuses both marks of cost and time, or a letter or a digit
-after it. The scale moves the point before the digits parse, so `39.1M` reads 39,100,000 exactly.
-Time reads in minutes. Bare cells are tokens where the text holds `tokens`, else a count.
+**A value is `$` of cost, digits, `k` or `M` of scale, then `s`, `min` or `h` of time** (comment
+7194411522). A space stands before that symbol, as SI writes it (#1090). `valueAt` reads it, and
+refuses both marks of cost and time, or a letter or a digit after it. The scale moves the point
+before the digits parse, so `39.1M` reads 39,100,000 exactly. Time reads in minutes. Bare cells are
+tokens where the text holds `tokens`, else a count.
 
 - A group of three digits follows a comma or one space, and a scale may follow one space, as `M` or
   `million`. Choice: `39.1 M` and `39 100 000` read whole, as a refused result keeps its first row
@@ -4174,8 +4175,9 @@ Time reads in minutes. Bare cells are tokens where the text holds `tokens`, else
   digit, or a word of one letter, of time or scale, follow. A rune of no width reads as a space.
 - Choice: a mark and a digit after a value make none, as `39 100,000` or `1.234.567`, and a space of
   Unicode opens no group or scale. Tokens and counts take a point only where a scale moves it, so
-  `170.000` gives none. Case tells `M` of a million from `m` of minutes. Cost: a scale it lacks, as
-  `bn`, is text, and a space joins three digits of another figure as a group, as `5 100-line files`.
+  `170.000` gives none. A glued mark of time, as `12m`, gives none (SI Brochure, 5.4.3). So does `m`
+  after a space, the metre of SI. Cost: a scale it lacks, as `bn`, is text, and a space joins three
+  digits of another figure as a group, as `5 100-line files`.
 - Verified by `suites/test_hooks.nim`: each mark, form of digits and scale, glued or after a space,
   and a letter, digit or mark after it. It holds each unit, mix and order of the cells of an
   estimate, and each cost above. It holds four spaces of Unicode and six runes of no width.
