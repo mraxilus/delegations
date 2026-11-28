@@ -50,16 +50,17 @@ const  # lo klani .e lo mupli smuni
         "ci'ersmitai", Meaning(parts: "system+similar+shape", is_english: true)),
     ("jgeterjo'e#knot+3rd-place-of+joined", "jgeterjo'e",
         Meaning(parts: "knot+3rd-place-of+joined", is_english: true)),
-    ("cimnalsra:foldi::cilmo+na'e+srasu foldi marsh", "cimnalsra", Meaning(parts: "foldi")),
+    ("cimnalsra:foldi::cilmo+na'e+srasu foldi marsh", "cimnalsra",
+        Meaning(parts: "cilmo+na'e+srasu foldi marsh")),
     ("jairtai:denmi:xance jgari+tarmi denmi xance:fist:$tarmi1 (omit $tarmi2 $=jgari3)",
-        "jairtai", Meaning(gloss: "fist", parts: "denmi")),
+        "jairtai", Meaning(gloss: "fist", parts: "xance jgari+tarmi denmi xance")),
     ("febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1", "febjicla",
         Meaning(gloss: "roil", parts: "boil+stir", is_english: true)),
   ]
     ## lo mupli linji pe ro tarmi pe `lujvo.txt` .e le valsi .e le smuni be ri
     ##   .i ro mupli linji cu fukpi pa linji pe `lujvo.txt` noi selpu'i
     ##   .i `:` poi zvati lo jbini be `[]` .a `()` cu fendi no datnypau
-    ##   .i lo datnypau poi lidne lo glico valsi gi'e vasru `+` cu ciska lo tanru
+    ##   .i le pagbu cu du le datnypau poi vasru `+` gi'e lidne le glico valsi
 
 
 func placed(fields: openArray[(int, string)]): string =
@@ -200,6 +201,8 @@ suite "Internal: Meanings of the wordlists":
         check meaning.gloss.len == 0 or meaning.gloss in line.fieldsLujvo.mapIt(it.strip)
         check not meaning.gloss.startsWith('$')  # le stuzi be le datnypau cu na glico valsi
         check meaning.parts.len > 0
+        # ro linji pe lo jbovla cu vasru pa datnypau poi vasru `+` gi'e ciska le pagbu
+        check meaning.is_english or '+' in meaning.parts
         check found.hasKey(word)
       for meaning in found.values:
         inc words
