@@ -154,7 +154,7 @@ its 90% range.
 | --- | --- | ---: | ---: | ---: |
 | 6 | The builder uses ~15M tokens. | 5M | 15M | 45M |
 | 7 | The builder costs ~$7.00. | $2.50 | $7.00 | $20.00 |
-| 8 | The builder takes ~50m. | 20m | 50m | 120m |
+| 8 | The builder takes ~50 min. | 20 min | 50 min | 120 min |
 
 **Criteria.** How a reader decides each claim above, by its number.
 
@@ -192,7 +192,7 @@ its 90% range.
 | --- | :---: | --- | --- |
 | 6 | ✅ | The builder uses ~15M tokens. | 39.1M, inside |
 | 7 | ✅ | The builder costs ~$7.00. | $14.40, inside |
-| 8 | ✅ | The builder takes ~50m. | 47m, inside |
+| 8 | ✅ | The builder takes ~50 min. | 47 min, inside |
 """
     ## Reflection on `PREDICTION_TABLES` as comment 7200557915 posts it, with line of subagent:
     ##   rows 2, 4 and 5 quote part of their claim.

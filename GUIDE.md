@@ -223,10 +223,11 @@ return it confirmed.
 - **Each claim takes a number of its own, from 1, across the judgements and the estimates.** The
   number is digits alone, as `6`, and never `6.` or `#6`. The hook reads each claim from its row,
   and its criterion from the row of the same number.
-- **Each cell of a percentile holds one value with its unit.** `$` marks cost, as `$2.50`, and
-  `s`, `m` or `h` marks time, as `50s` or `20m`. The word `tokens` in the estimate marks tokens,
-  and a bare number is a count. `k` scales a number by a thousand, and `M` by a million, as
-  `160k` or `15M`.
+- **Each cell of a percentile holds one value with its unit.** `$` marks cost, as `$2.50`.
+  `s`, `min` or `h` after one space marks time, as `50 s` or `20 min`, as SI writes it (#1090).
+  A glued mark of time, as `20m`, takes a refusal, and so does `m`, the metre of SI. The word
+  `tokens` in the estimate marks tokens, and a bare number is a count. `k` scales a number by a
+  thousand, and `M` by a million, as `160k` or `15M`.
 - **The three cells of an estimate take one unit, and each cell is above the cell before it.**
 
 Each claim follows these rules for forecasting:
@@ -238,7 +239,7 @@ Each claim follows these rules for forecasting:
   mass between its 5th and 95th percentiles, as the header `Estimate @ 90%` says. Its state is ✅
   where the result falls between them, and a result on either percentile counts as inside.
 - **The cell under `Result` of a number opens with its value in the unit of its cells**, as
-  `170k, inside` or `15m, inside`. The log of claims reads that value.
+  `170k, inside` or `15 min, inside`. The log of claims reads that value.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
@@ -303,7 +304,8 @@ Then the subagent runs, and these steps follow:
 - **The hook refuses a row of a reflection that quotes no whole claim of a block that a call
   took.** A row that holds `No prediction` passes. It also refuses a table of claims whose header
   lacks a column of its form. It refuses a hit or missed estimate whose cell under `Result` opens
-  with no value in its unit. A mark of time takes no space before it, so the hook refuses `15 m`.
+  with no value in its unit. A symbol of time takes one space before it, so the hook refuses
+  `15min`, `15m` and `15 m`.
   Each mark between digits but a comma of a group and one decimal point makes no value, as
   `1.234.567`, `170_000` or `15:30`.
 - **The hook refuses a line `**Subagent:**` that gives no tokens right before ` tokens`, or no
@@ -349,7 +351,7 @@ Then the subagent runs, and these steps follow:
 | --- | --- | ---: | ---: | ---: |
 | 4 | The reviewer uses ~160k tokens. | 100k | 160k | 300k |
 | 5 | The reviewer costs ~$0.90. | $0.40 | $0.90 | $2.00 |
-| 6 | The reviewer takes ~12m. | 5m | 12m | 30m |
+| 6 | The reviewer takes ~12 min. | 5 min | 12 min | 30 min |
 
 **Criteria.** How a reader decides each claim above, by its number.
 
@@ -385,7 +387,7 @@ price, 57 calls, 15 min.
 | --- | :---: | --- | --- |
 | 4 | ✅ | The reviewer uses ~160k tokens. | 170k, inside |
 | 5 | ✅ | The reviewer costs ~$0.90. | $1.10, inside |
-| 6 | ✅ | The reviewer takes ~12m. | 15m, inside |
+| 6 | ✅ | The reviewer takes ~12 min. | 15 min, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.

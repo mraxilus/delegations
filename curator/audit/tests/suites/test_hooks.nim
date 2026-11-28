@@ -157,12 +157,12 @@ The gap list reads the baseline of each algebra.
     ## Finding of reflection with no table of claims: each form cites text that states it.
   REFUSAL_OUTCOME_BULLETS = "cell under `Result` of number of bullets marked ✅ or ⬜ opens with " &
     "its value, bare in unit its text names, with no scale for cost or time, or with mark of " &
-    "that unit: `$` for cost, `s`, `m` or `h` for time (curator/audit/PROVENANCE.md, Quotes of " &
-    "claims); got `"
+    "that unit: `$` for cost, `s`, `min` or `h` after space for time " &
+    "(curator/audit/PROVENANCE.md, Quotes of claims); got `"
     ## Start of finding of result of number of bullets that reads no value in unit of its text.
   REFUSAL_OUTCOME = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
-    "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
-    "(GUIDE.md, Prediction, critic and reflection); got `"
+    "of its cells: `$` for cost, `s`, `min` or `h` after space for time, bare number for tokens " &
+    "or count (GUIDE.md, Prediction, critic and reflection); got `"
     ## Start of finding of result of estimate of table that reads no value in unit of its cells.
   NUMBERS_BULLETS = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
     "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th " &
@@ -3694,7 +3694,7 @@ suite "Hooks":
     check read.mapIt(it.position) == toSeq(1..8)
     check read.allIt(it.is_row and it.forms.len == 1)
     check read[0].forms == @["Its last commit passes `nim r koch check` with 0 findings."]
-    check read[7].forms == @["The builder takes ~50m."]
+    check read[7].forms == @["The builder takes ~50 min."]
     check read.mapIt(it.is_number) == @[false, false, false, false, false, true, true, true]
     check read.mapIt(it.confidence.get) == @[0.8, 0.8, 0.75, 0.75, 0.55, 0.9, 0.9, 0.9]
     check read[0 .. 4].allIt(it.estimate.isNone)
@@ -3733,7 +3733,7 @@ suite "Hooks":
       costs = ["", "$"]
       digits = [("5", 5.0), ("0.5", 0.5), ("1,500", 1500.0), ("12.25", 12.25)]
       scales = [("", 1.0), ("k", 1e3), ("M", 1e6)]
-      times = [("", 1.0), ("s", 1.0 / 60), ("m", 1.0), ("h", 60.0)]
+      times = [("", 1.0), (" s", 1.0 / 60), (" min", 1.0), (" h", 60.0)]
     var count = 0
     for cost in costs:
       for (written, amount) in digits:
@@ -3749,7 +3749,8 @@ suite "Hooks":
             check value.get.unit == (if cost.len > 0: UnitNumber.Cost
               elif time.len > 0: UnitNumber.Time else: UnitNumber.Unspecified)
             check (cell & ", inside").valueAt == value  # result opens with value
-            check (cell & "x").valueAt.isNone  # letter runs on
+            if time.len == 0: check (cell & "x").valueAt.isNone  # letter runs on
+            else: check (cell & "x").valueAt.get.stop == cell.len - time.len  # word, no symbol
             if scale.len + time.len > 0: check (cell & "0").valueAt.isNone  # digit runs on
             inc count
     check count == 2 * 4 * 3 * 4 - 4 * 3 * 3  # each form but those of cost and time at once
@@ -3758,7 +3759,7 @@ suite "Hooks":
     check "1.2345k".valueAt.get.amount == 1234.5
     for cell in ["", "$", "k", "m", "~5", "-5", " 5", "$m5", "five"]:
       check cell.valueAt.isNone
-    check "5 m".valueAt.get.stop == 1  # space ends value, so cell `5 m` is no whole value
+    check "5 m".valueAt.isNone  # `m` after space is metre of SI, so cell `5 m` has no value
     check "1,23".valueAt.isNone  # comma before digit that opens no group runs on (#1028)
 
 
@@ -3773,20 +3774,22 @@ suite "Hooks":
     check estimate("~2 tokenset.", ["1", "2", "3"]).get.unit == UnitNumber.Count  # no word
     check estimate("~2 token.", ["1", "2", "3"]).get.unit == UnitNumber.Count
     check estimate("~$2 in tokens.", ["$1", "$2", "$3"]).get.unit == UnitNumber.Cost  # cell first
-    check estimate("~2m.", ["1s", "2m", "3h"]) == some(Estimate(low: 1.0 / 60, median: 2,
-      high: 180, unit: UnitNumber.Time))
+    check estimate("~2 min.", ["1 s", "2 min", "3 h"]) == some(Estimate(low: 1.0 / 60,
+      median: 2, high: 180, unit: UnitNumber.Time))
     check estimate("~1M tokens.", ["500k", "1M", "1.5M"]) == some(Estimate(low: 5e5,
       median: 1e6, high: 1.5e6, unit: UnitNumber.Tokens))
 
     # Cells of two units, cells that do not rise, and cells that are no whole value are each
     #   refused, as finding of block, and give no estimate.
     let rule = "estimate states its 5th, 50th and 95th percentiles under their columns, each " &
-      "cell one value, of one unit, each above one before: `$` for cost, `s`, `m` or `h` for " &
-      "time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
+      "cell one value, of one unit, each above one before: `$` for cost, `s`, `min` or `h` after " &
+      "space for time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
       "(GUIDE.md, Prediction, critic and reflection)"
-    var refused: seq[array[3, string]] = @[["$1", "2", "3"], ["1m", "2", "3"], ["$1", "2m", "3h"],
+    var refused: seq[array[3, string]] = @[["$1", "2", "3"], ["1 min", "2", "3"],
+      ["$1", "2 min", "3 h"],
       ["1", "1", "2"], ["1", "2", "2"], ["2", "2", "2"], ["2k", "1M", "900"],
-      ["~1", "2", "3"], ["1 m", "2m", "3m"], ["", "2", "3"], ["one", "2", "3"]]
+      ["~1", "2", "3"], ["1 m", "2 min", "3 min"], ["", "2", "3"], ["one", "2", "3"],
+      ["1s", "2min", "3h"], ["1m", "2m", "3m"], ["1 min", "2 mins", "3 min"]]
     for cells in [["1 m", "2 m", "3 m"], ["1", "2", "3 findings"], ["$1", "$2", "$3 each"]]:
       refused.add cells  # value of one unit opens each cell, and text runs on past it
     for order in [[1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]:
@@ -4047,8 +4050,8 @@ suite "Hooks":
       @[refusal("3", "It adds no network call.")]
     check heldReflection(PREDICTION_TABLES, whole.replace(three,
       three.replace(" ", "   "))).len == 0  # each run of whitespace reads as one space
-    check heldReflection(PREDICTION_TABLES, whole.replace("| 8 | ✅ | The builder takes ~50m.",
-      "| 7 | ✅ | The builder takes ~50m.")) == @[refusal("7", "The builder takes ~50m.")]
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 8 | ✅ | The builder takes ~50 min.",
+      "| 7 | ✅ | The builder takes ~50 min.")) == @[refusal("7", "The builder takes ~50 min.")]
     check heldReflection(PREDICTION_TABLES, whole.replace("| 3 | ✅ | 75% | " & three,
       "| 3 | ✅ | 75% | ")) == @["row of table of judgements or estimates of reflection names " &
       "claim of `## Prediction` block that call took by its number under `#`, and quotes that " &
@@ -4197,20 +4200,39 @@ suite "Hooks":
       check ("`Resolution criterion`" in named) == ("Resolution criterion" in naming)
 
 
+  test "value of time takes symbol of SI after one space, and refuses glued mark and `m` (#1090)":
+    # Case as found: D2 b on #1090 rules marks of SI, as SI Brochure (5.4.3) writes them, so `12m`,
+    #   which SI reads as metre, takes refusal. Domain: each symbol after space, each glued, `m`
+    #   after space, word of time, cost with time, and each in result of estimate of time.
+    for (cell, minutes) in [("30 s", 0.5), ("12 min", 12.0), ("2 h", 120.0),
+        ("1.5 h, inside", 90.0)]:
+      let value = cell.valueAt
+      check value.get.unit == UnitNumber.Time
+      check abs(value.get.amount - minutes) < 1e-9
+      check abs(cell.outcomeResult(UnitNumber.Time).get - minutes) < 1e-9
+    check "12 min".valueAt.get.stop == "12 min".len
+    for cell in ["30s", "12m", "12min", "2h", "12 m", "$1.10 min", "12 mins", "12 minutes",
+        "12 min5"]:
+      check cell.outcomeResult(UnitNumber.Time).isNone
+    check "$1.10 min".valueAt.isNone  # cost takes no time
+
+
   test "result of estimate hit or missed opens with its value in unit of its cells (#1028)":
     # Domain: each state, against each form of result of each unit of case as found.
     let whole = REFLECTION_TABLES_POSTED.mended
     const
       rule = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit of " &
-        "its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+        "its cells: `$` for cost, `s`, `min` or `h` after space for time, bare number for tokens " &
+        "or count " &
         "(GUIDE.md, Prediction, critic and reflection)"
       forms = [
         ("| 6 |", "39.1M, inside", @["39.1M, inside", "39,100,000, inside", "39100000"],
           @["inside", "$39.1M, inside", "39.1m, inside", "~39.1M"]),
         ("| 7 |", "$14.40, inside", @["$14.40, inside", "$14.4"],
           @["14.40, inside", "inside", "$14.40m", "14.40$"]),
-        ("| 8 |", "47m, inside", @["47m, inside", "2820s, inside", "0.8h"],
-          @["47, inside", "47 min, inside", "47M, inside", "$47m"]),
+        ("| 8 |", "47 min, inside", @["47 min, inside", "2820 s, inside", "0.8 h"],
+          @["47, inside", "47min, inside", "47m, inside", "47 m, inside", "47M, inside",
+          "$47 min"]),
       ]
     for (row, written, held, refused) in forms:
       for state in ["✅", "⬜", "➖", "⏸️"]:
@@ -4245,9 +4267,10 @@ suite "Hooks":
         ("cost at list price: $0.40, $0.90 and $2.00",
           @["$1.10, inside", "1.10", "$1.1k"], @["1.10m", "inside"]),
         ("time to its report, in minutes: 5, 12 and 30",
-          @["15m, inside", "15, inside", "1.5h", "900s"], @["$15", "inside"]),
+          @["15 min, inside", "15, inside", "1.5 h", "900 s"],
+          @["$15", "inside", "15m, inside", "1.5h", "15 m"]),
         ("Count: findings that the report ranks: 3, 6 and 11", @["12, above the 95th", "1.2k"],
-          @["$12", "12m"]),
+          @["$12", "12m", "12 min"]),
       ]
     var count = 0
     for k, (claim, held, refused) in forms:
@@ -4262,13 +4285,13 @@ suite "Hooks":
               check found == @[rule & cell & "` for claim `" & $(k + 1) & "`"]
               inc count
             else: check found.len == 0
-    check count == 2 * 2 * (4 + 2 + 2 + 2)  # two states and two tables of each refused cell
+    check count == 2 * 2 * (4 + 2 + 5 + 3)  # two states and two tables of each refused cell
 
     # Number whose text names no unit, as `Cost: $0.40, …`, takes value of any mark, as it takes no
     #   score (GUIDE.md before tables: label names no unit but `Count:`).
     let unnamed = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n- Cost: " &
       "$0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.\n"
-    for cell in ["$1.10, inside", "1.10, inside", "15m, inside", "1.1k"]:
+    for cell in ["$1.10, inside", "1.10, inside", "15 min, inside", "1.1k"]:
       check heldReflection(unnamed, "## Reflection\n\n| State | Confidence | Predicted | Result " &
         "|\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " & cell & " |\n")
         .len == 0
@@ -4342,22 +4365,24 @@ suite "Hooks":
     check "1,000 000".valueAt.get.stop == 5  # one mark of group to value; result refuses rest
     check "1 000,000".valueAt.isNone  # comma before digit runs on (#1028)
     check "1  000".valueAt.get.stop == 1  # one space alone
-    check "5 m".valueAt.get.stop == 1 and "5 K".valueAt.get.stop == 1  # no scale of these
+    check "5 m".valueAt.isNone  # metre of SI (#1090)
+    check "5 K".valueAt.get.stop == 1  # no scale of it
 
     # Result of estimate or of bullet refuses digit, letter or word of time after space, which
     #   value cannot read; each state but hit and miss passes.
     let whole = REFLECTION_TABLES_POSTED.mended
     const
       outcome = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit of " &
-        "its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+        "its cells: `$` for cost, `s`, `min` or `h` after space for time, bare number for tokens " &
+        "or count " &
         "(GUIDE.md, Prediction, critic and reflection); got `"
       forms = [
         ("| 6 |", "39.1M, inside", @["39.1 M, inside", "39.1 million, inside",
           "39 100 000, inside", "39 100 k", "0.0391 billion"],
           @["39 1, inside", "39.1 K, inside", "39.1 B", "39.1 h", "39 100 000 0"]),
         ("| 7 |", "$14.40, inside", @["$14.40 at list price", "$0.0144 k"], @["$14.40 m", "$14 4"]),
-        ("| 8 |", "47m, inside", @["47m, inside"],
-          @["47 m, inside", "0.8 h", "2820 s", "47 minutes", "1 Hour"]),
+        ("| 8 |", "47 min, inside", @["47 min, inside", "0.8 h", "2820 s"],
+          @["47 m, inside", "47m, inside", "47min", "47 minutes", "1 Hour"]),
       ]
     var count = 0
     for (row, written, held, refused) in forms:
@@ -4381,8 +4406,9 @@ suite "Hooks":
     for (k, claim, held, refused) in [
         (1, "tokens summed over its requests: 100,000, 160,000 and 300,000",
           @["170 k, inside", "170 000, inside"], @["170 K", "170 0, inside"]),
-        (2, "time to its report, in minutes: 5, 12 and 30", @["15, inside"],
-          @["1.5 h, inside", "15 min", "900 s"])]:
+        (2, "time to its report, in minutes: 5, 12 and 30",
+          @["15, inside", "1.5 h, inside", "15 min", "900 s"],
+          @["1.5 m, inside", "15 mins", "900 sec"])]:
       for cell in held & refused:
         let found = heldReflection(numbers, "## Reflection\n\n| State | Confidence | Predicted | " &
           "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n")
@@ -4430,10 +4456,10 @@ suite "Hooks":
         "39,1M, inside", "1,5"]:
       check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
       check bullet(0, cell) == refusal(0, cell)
-    for text in ["39 100,000", "1 000,000", "1,23", "1,5h", "$1,10", "12,5k"]:
+    for text in ["39 100,000", "1 000,000", "1,23", "1,5 h", "$1,10", "12,5k"]:
       check text.valueAt.isNone
     check bullet(1, "$1,10, inside") == refusal(1, "$1,10, inside")
-    check bullet(2, "1,5h, inside") == refusal(2, "1,5h, inside")
+    check bullet(2, "1,5 h, inside") == refusal(2, "1,5 h, inside")
     check bullet(0, "170,000, inside").len == 0 and estimate("39,100,000, inside").len == 0
 
     # Each space of Unicode before group, scale or mark of time runs on: no-break, figure,
@@ -4530,7 +4556,7 @@ suite "Hooks":
     check count == 6 * 5
 
     # Tokens and count read point only where scale moves it, as each is count; cost and time read
-    #   it as decimal part, as `$1.10` and `1.5h`.
+    #   it as decimal part, as `$1.10` and `1.5 h`.
     for cell in ["170.000", "170.5", "39.1 bn", "1.0"]:
       check estimate(cell & ", inside") == @[REFUSAL_OUTCOME & cell & ", inside` for claim `6`"]
       for k in [0, 3]: check bullet(k, cell) == refusal(k, cell)
@@ -4539,7 +4565,7 @@ suite "Hooks":
       check estimate(cell & ", inside").len == 0
       check lined(cell & " tokens and $14.40").len == 0
     for (k, cell) in [(0, "0.17M"), (3, "1.2k"), (1, "1.10"), (1, "$1.10"), (2, "1.5"),
-        (2, "1.5h")]:
+        (2, "1.5 h")]:
       check bullet(k, cell).len == 0
     check lined("39,100,000 tokens and $14.405").len == 0
 
