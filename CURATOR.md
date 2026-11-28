@@ -455,7 +455,7 @@ alone.
 | `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
-| `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
+| `check-commits` | commits since base | subject, scope; test then fix; body; record apart; merges |
 | `check-drift` | charter, stamp code base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
