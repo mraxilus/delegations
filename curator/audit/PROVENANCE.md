@@ -1270,17 +1270,15 @@ heading and the merge (`sections_kept.nim`). The check reads no text in a kept s
   so a branch that pushed one keeps its finding. No branch on GitHub held one on 2026-11-28.
 - Cost: an octopus merge takes the base of all its parents, so it can name a loss that two merges
   would not. A heading in a `~~~` fence reads as a section, as it does for the stamp.
-- Assumed: the merge ref of the runner and the merge of the second tree pass. Each is clean, and a
-  clean three-way merge keeps each line that one side added.
+- Assumed: the merge ref of the runner and the second tree pass, as a clean merge keeps added lines.
 - Over the 14 merges of `curator/walk-rules-int` at `1c103001` past `6c833a6b`, `koch check-commits`
   took a median of 1.50 s before the check and 2.69 s with it. Each took ten alternating runs, with
   `date +%s.%N`, git 2.43.0 and Nim 2.4.2 on 2026-11-28. The time `koch check` adds is unmeasured.
-- Verified by hand on 2026-11-28: at `5ffcb104`, against `5068b537`, `koch check-commits` names
-  `## Live replies` and `## Tag page` of `rictadni`, and `## Node packages` of the audit.
-- Verified by `suites/test_sections_kept.nim`, over real git. It holds the case as found, each
-  state of one heading at the merge base, each parent and the merge, and merges of other branches.
-  By hand on 2026-11-28, two breaks of `sections_kept.nim` each fail it. One puts the finding at
-  the path of the record, and one takes no deletion.
+- Verified by `suites/test_sections_kept.nim`, over real git. It holds the case as found, each state
+  of one heading at the merge base, each parent and the merge, and merges of other branches. By hand
+  on 2026-11-28, two breaks of `sections_kept.nim` each fail it. One puts the finding at the path of
+  the record, and one takes no deletion. At `5ffcb104`, against `5068b537`, `koch check-commits`
+  names `## Live replies` and `## Tag page` of `rictadni`, and `## Node packages` of the audit.
 
 ## Role
 
