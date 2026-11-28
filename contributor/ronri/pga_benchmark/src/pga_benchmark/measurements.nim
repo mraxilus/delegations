@@ -5,7 +5,7 @@
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
 ##   library's radius norm returns NaN where 𝐦 ∘ 𝐦 is negative and that is measured, not stated.
 ##   Optional result folds its value, and none folds nothing and counts as no NaN.
-##     So change whose operation returns `Option` builds and times as one of pin does.
+##     So change whose operation returns `Option` builds and times in bench, as pin's operations do.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool element and
 ##   writes result element: what moves is operation's own traffic.
 ##   Result elements start uninitialised (`noinit`): array filled with zeros would let C compiler
