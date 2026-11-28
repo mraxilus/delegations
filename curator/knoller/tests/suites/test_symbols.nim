@@ -9,7 +9,7 @@ import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[pools, symbols]
 
 
-const
+const  # TODO: Document.
   LINE_ANSWER = "def\tskType\tsystem.float\tfloat\t/lib/system/basic_types.nim\t15\t2\t\"\"\t100"
     ## One answer line of `def`, as `nimsuggest --v3` prints it.
   OUTPUT = "!EOF!\n!EOF!\n" & LINE_ANSWER & "\n!EOF!\n!EOF!\n"

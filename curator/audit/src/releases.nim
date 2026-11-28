@@ -41,7 +41,7 @@ import ../../knoller/src/knoller
 import ./[findings, layout, toolchain, tree]
 
 
-const
+const  # TODO: Document.
   ASKS_SERIES_MAX* = 50
     ## Patch numbers search asks after pin at most; longest series nim-lang.org serves, 1.6,
     ##   ends at `1.6.20`, so host answering published past bound answers for what it lacks.
@@ -64,7 +64,7 @@ const
     ## Failure of host answering published for each address, as captive page does.
 
 
-type
+type  # TODO: Document.
   Presence* {.pure.} = enum  ## Define what one ask of nim-lang.org says of release.
     Published  ## Host serves its tarball.
     Missing  ## Host answers that it holds none.

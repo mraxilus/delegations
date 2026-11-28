@@ -23,7 +23,7 @@ type DecodeBrotli = proc (
   ## Define `BrotliDecoderDecompress` of `libbrotlidec`: one-shot decode into sized buffer.
 
 
-const
+const  # TODO: Document.
   LIBRARY_BROTLI = "libbrotlidec.so(|.1)"  ## Library `libbrotli1` installs, as `dynlib` names it.
   SIGNATURE_WOFF2 = "wOF2"  ## Bytes `woff2` file opens with; OpenType and TrueType open otherwise.
   FLAG_CMAP = 0  ## Known-tag index `woff2` directory gives `cmap`.

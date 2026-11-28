@@ -19,7 +19,7 @@
 import std/[options, strutils]
 
 
-const
+const  # TODO: Document.
   NIM* = "nim"  ## Requirement name pin carries, and name of compiler in its `bin`.
   EXACT* = "=="  ## Operator exact pin uses; ranges are rejected.
   MARK_COMMIT = "#"  ## Mark opening commit nimble names after package, as `nim#<commit>`.

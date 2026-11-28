@@ -17,7 +17,7 @@ import ./findings
 
 
 
-const
+const  # TODO: Document.
   PATHS_MACHINE* = ["/home/", "/Users/", "C:\\"]
     ## Prefixes naming paths of one machine (CONTRIBUTOR.md, System).
   CHARS_RUNNING = {'a'..'z', 'A'..'Z', '0'..'9', '_', '.', '~'}

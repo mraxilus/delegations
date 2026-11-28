@@ -20,6 +20,9 @@
 ##     pragmas, parameters, placeholders, and compile time as above, so compile-time family reads
 ##     one nesting (`staging.nim`). Binding by `const` says so (`is_constant`), for branch on what
 ##     build fixes.
+##   Same walk reads each section bare keyword opens, i.e. `const`, `let`, `var` or `type` alone on
+##     its line, with reach binding there takes (`sectionsBare`), so doc of section reads where
+##     its names reach (`declarations.nim`).
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -38,7 +41,7 @@ import std/[sequtils, strutils]
 import ./views
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ROUTINE = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
   KEYWORDS_BINDING = ["let", "var", "const"]  ## Keywords opening binding, single or section.
@@ -58,7 +61,7 @@ const
     ##     (`idioms.nim`), and `curator/audit` renames no name they mark, nor `entry.nim` moves it.
 
 
-type
+type  # TODO: Document.
   KindName* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter, Member, Placeholder
 
@@ -99,6 +102,12 @@ type
     pragmas*: seq[string]  ## Words among its pragmas, values included (`wordsPragma`).
     parameters*: string  ## Text between parentheses of signature; empty where none.
     placeholders*: seq[string]  ## Placeholders of its generic brackets.
+
+  SectionBare* = object
+    ## Define section bare keyword opens: `const`, `let`, `var` or `type` alone on its line.
+    line*: int  ## One-based line of keyword.
+    keyword*: string  ## Keyword opening section, e.g. `const`.
+    reach*: Reach  ## Reach binding takes on keyword's line, which every name of section shares.
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -313,9 +322,11 @@ func reach(openers: openArray[Opener], is_scoped = false): Reach =
   Reach.Global
 
 
-func scanned(source: string): tuple[names: seq[Declared], heads: seq[Head]] =
-  ## Read every declared name of Nim source with its line, kind and reach, and head of each
-  ##   routine, in one walk, so both read one nesting.
+func scanned(
+  source: string
+): tuple[names: seq[Declared], heads: seq[Head], sections: seq[SectionBare]] =
+  ## Read every declared name of Nim source with its line, kind and reach, head of each routine,
+  ##   and each section bare keyword opens, in one walk, so each reads one nesting.
   let lines = source.codeOnly.splitLines
   var
     openers: seq[Opener]
@@ -451,6 +462,9 @@ func scanned(source: string): tuple[names: seq[Declared], heads: seq[Head]] =
         is_compile_time_body = word == "macro" or is_compile_time
         break reading
 
+      # Bare keyword opens section, whose names share reach binding takes on its line.
+      if word in KEYWORDS_SECTION and rest.strip.len == 0:
+        result.sections.add SectionBare(line: one, keyword: word, reach: openers.reach)
       if word == "type" and rest.strip.len == 0:
         indent_type = indent
         break reading
@@ -563,3 +577,8 @@ func declarations*(source: string): seq[Declared] =
 func heads*(source: string): seq[Head] =
   ## Read head of each routine of Nim source, operator among them, in order of its lines.
   source.scanned.heads
+
+
+func sectionsBare*(source: string): seq[SectionBare] =
+  ## Read each section bare keyword of Nim source opens, with its reach, in order of its lines.
+  source.scanned.sections

@@ -9,7 +9,7 @@ import std/[os, osproc, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[chain, parentheses, proofs, reports]
 
 
-const
+const  # TODO: Document.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
 

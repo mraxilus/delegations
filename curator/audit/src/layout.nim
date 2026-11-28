@@ -38,7 +38,7 @@ import ../../knoller/src/knoller
 import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
-type
+type  # TODO: Document.
   Entry* = object  ## Define one file git reports: path, kind when registered, content when read.
     path*: string  ## Repository-relative, `/` separated.
     kind*: Option[Kind]  ## Registered kind; `none` leaves content unread.
@@ -47,7 +47,7 @@ type
   Tree* = seq[Entry]  ## Define whole repository as git sees it.
 
 
-const
+const  # TODO: Document.
   FILE_README* = "README.md"
     ## Index every root, every domain and every project carries, named once for all three.
   FILE_ENTRY = "AGENTS.md"  ## Entry file: one file at root each harness reads first.

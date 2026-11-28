@@ -6,7 +6,7 @@ import std/[options, strutils, unittest]
 import ../../src/assayer/headers
 
 
-const
+const  # TODO: Document.
   QUOTES = "\"\"\""  ## Triple quote closing header, and opening it after `discard `.
   OPENING = "discard " & QUOTES  ## Line opening header.
   KEYS_GIVEN = [

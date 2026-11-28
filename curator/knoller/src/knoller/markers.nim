@@ -42,7 +42,7 @@ import std/[algorithm, os, sequtils, sets, strutils, tables]
 import ./[edits, form, reports, symbols, tokens, views]
 
 
-type
+type  # TODO: Document.
   UsePrivate* = object  ## Define where semantic pass finds private symbol used.
     siblings*: seq[string]
       ## File name of each sibling using it, outside `tests` of package, as `cayleys.nim`.
@@ -74,7 +74,7 @@ type
     after: int  ## Byte offset after `.}`.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.
   KEYWORDS_SECTION = ["const", "let", "type", "var"]  ## Keywords opening section or single one.

@@ -102,7 +102,7 @@ from std/unicode import isLower, isUpper, Rune, runes
 import ./[declared, entry, reports, rules, tokens, views]
 
 
-type
+type  # TODO: Document.
   Casing* {.pure.} = enum  ## Define case one kind of name takes (V.1, V.11, V.12).
     Pascal, Camel, Snake, Screaming, Letter
 
@@ -121,7 +121,7 @@ type CaseRename* = object
   is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
 
 
-const
+const  # TODO: Document.
   ABBREVIATIONS* = [
     ("ctx", "context"), ("tmp", "temporary"), ("buf", "buffer"), ("cfg", "configuration"),
     ("dir", "directory"), ("args", "arguments"), ("err", "error"), ("dest", "destination"),

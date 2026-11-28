@@ -30,7 +30,7 @@
 import std/[algorithm, bitops, math, sequtils]
 
 
-const
+const  # TODO: Document.
   LIMBS_SUM = 68
     ## Limbs of integer of sum: lead bit of largest float stands at `BIT_TOP`, in limb 65, so limbs
     ##   66 and signed 67 hold carry.
@@ -47,7 +47,7 @@ const
   MAX = 1.7976931348623157e308  ## Largest float, `(2^53 − 1) × 2^971`.
   TINY = 5e-324  ## Least float above zero, `2^-1074`.
 
-type
+type  # TODO: Document.
   Special {.pure.} = enum  ## Define what non-finite values added sum to, by policy of header.
     None  ## No NaN and no infinity added.
     Infinity  ## Infinity added, and no NaN or negative infinity.

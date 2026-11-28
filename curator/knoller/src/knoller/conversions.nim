@@ -29,7 +29,7 @@ import std/[algorithm, sequtils, sets, strutils, tables]
 import ./[edits, form, reports, rules, spacing, symbols, tokens]
 
 
-type
+type  # TODO: Document.
 
   Candidate = object  ## Define `x.T` text cannot settle: receiver, dot and type name tokens.
     first: int  ## Index of receiver's first token.
@@ -45,7 +45,7 @@ type
     is_global: bool  ## Receiver ends on name of global, which check passes over for now.
 
 
-const
+const  # TODO: Document.
   TYPES_BUILTIN = [
     "bool", "byte", "cchar", "cdouble", "cfloat", "char", "cint", "clong", "clonglong",
     "cshort", "csize_t", "cstring", "cuint", "culong", "float", "float32", "float64", "int",

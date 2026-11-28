@@ -462,26 +462,28 @@ func capitalized(word: string, span: Slice[int]): string =
 #[ ni'o ni'o ni'o lo se cipra ]#
 
 let
+  # lo stuzi be ro gismu pe le liste ne'i le liste
+  #   .i lo cmavo poi ponse lo rafsi cu selvi'u
   INDEXES_GISMU = block:
-    ## lo stuzi be ro gismu pe le liste ne'i le liste
-    ##   .i lo cmavo poi ponse lo rafsi cu selvi'u
     var indexes: seq[Word]
     for i, entry in LIST_GISMU:
       if entry.word.isGismu: indexes.add Word(i)
     indexes
   WORDS_GISMU = INDEXES_GISMU.mapIt(it.entry.word)  ## ro gismu pe le liste
+
+  # ro cmavo pe le ma'oste
+  #   .i ku'i lo cmavo pe `ZOI` ge'u .e lo cmavo pe `FAhO` selvi'u
+  #   .i `ZOI` sitna lo selci'a poi na lojbo to `CLL 19.10` toi
+  #   .i `FAhO` fanmo le se ciska to `CLL 19.15` toi
   WORDS_CMAVO = block:
-    ## ro cmavo pe le ma'oste
-    ##   .i ku'i lo cmavo pe `ZOI` ge'u .e lo cmavo pe `FAhO` selvi'u
-    ##   .i `ZOI` sitna lo selci'a poi na lojbo to `CLL 19.10` toi
-    ##   .i `FAhO` fanmo le se ciska to `CLL 19.15` toi
     var words: seq[string]
     for entry in LIST_CMAVO:
       if entry.selmaho notin {Selmaho.Zoi, Selmaho.Faho}: words.add entry.word
     words
+
+  # lo selma'o poi le ma'oste cu dunda ke'a lo cmavo
+  #   .i lo selma'o cu se tcidu fi le liste gi'e na se tcidu le genturfa'i to `CLL 20` toi
   LUT_SELMAHO_BY_CMAVO = block:
-    ## lo selma'o poi le ma'oste cu dunda ke'a lo cmavo
-    ##   .i lo selma'o cu se tcidu fi le liste gi'e na se tcidu le genturfa'i to `CLL 20` toi
     var lut: Table[string, Selmaho]
     for entry in LIST_CMAVO: lut[entry.word] = entry.selmaho
     lut
@@ -501,9 +503,10 @@ let
   WORDS_LUJVO = drawLujvo()
     ## lo cunjvo poi lo flalu cu tcidu ke'a
     ##   .i le lujvo cu selcu'a pa roi
+
+  # lo klesi pe ro valsi pe ro girzu ja'i le girzu poi le valsi cu selkra ke'a
+  #   .i le girzu cu du lo liste .a `$` to `CLL 4.2` bi'o `CLL 4.6` toi
   LUT_KIND_BY_WORD = block:
-    ## lo klesi pe ro valsi pe ro girzu ja'i le girzu poi le valsi cu selkra ke'a
-    ##   .i le girzu cu du lo liste .a `$` to `CLL 4.2` bi'o `CLL 4.6` toi
     var lut: Table[string, Kind]
     for word in WORDS_GISMU: lut[word] = Kind.Gismu
     for word in WORDS_CMAVO: lut[word] = Kind.Cmavo

@@ -53,7 +53,7 @@ from ./kinds import Kind
 from ./releases import isBelow
 
 
-const
+const  # TODO: Document.
   PACKAGES_ALLOWED* = [
     ("@playwright/test", "drives browser through real events for `drive`"),
     ("typescript", "type-checks scripts for `types`"),
@@ -93,7 +93,7 @@ const
   CITE_RULE = " (CONTRIBUTOR.md, TypeScript and Node)"  ## Rule each finding and line cites.
 
 
-type
+type  # TODO: Document.
   Advisory* = object  ## Define one package that npm names vulnerable in lock.
     name*: string  ## Package, as lock keys it.
     severity*: string  ## Severity npm gives, as `high`.

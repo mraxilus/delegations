@@ -119,7 +119,7 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    comment of the file, and keep every derived value behind an export.
 
 ```nim
-type
+type  # Define one representation of basis for each job.
   BasisDigits = distinct string  # Readable ordered factors.
   BasisFlags = distinct uint  # Bitwise membership and parity.
   Basis = enum  # Dense runtime index.
@@ -329,15 +329,26 @@ CAYLEYS_WEDGE  # module constant
 ## Article VI: Documentation is an outline
 
 1. Every declaration except a local, a parameter and a placeholder gets a doc comment, public or
-   not. The one other exception is a one-line mechanical delegation (a borrow, a forward) that
-   stands in a stack under one group comment. A doc is imperative and opens with a verb, and a
-   type opens with "Define …". It holds one summary line that ends in a period, and it cites
-   formal notation inline with `i.e.`. Where you cannot write honest text yet, write the doc
+   not. Another exception is a one-line mechanical delegation (a borrow, a forward) that stands in
+   a stack under one group comment. A doc is imperative and opens with a verb, and a type opens
+   with "Define …". It holds one summary line that ends in a period, and it cites formal
+   notation inline with `i.e.`. Where you cannot write honest text yet, write the doc
    `TODO: Document.`, and never leave the doc empty. A generator carries its docs through a
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 
-   The doc of a value that opens `block` is a `#` comment (VI.9). So such a doc that waits for
-   text is `# TODO: Document.`.
+   A `const`, `let`, `var` or `type` keyword alone on its line opens a section. The section gets
+   one doc in place of the docs of its names, at each reach where a declaration of its kind gets
+   one. So a `type` section gets one at every reach, and a `const`, `let` or `var` section at
+   global reach alone. A binding inside a routine, or inside another block that opens a scope, is
+   a local. A binding of the entry block can reach the whole module, but V.10 puts it in a
+   routine, so its section gets none either.
+
+   No name below the keyword of a section needs a doc. In the grammar of Nim, a field or a member
+   stands inside its type, in the form `type X = object` too, so neither needs a doc anywhere. A
+   doc that such a name holds is optional, and takes the position of its shape.
+
+   The doc of a section and the doc of a value that opens `block` are `#` comments (VI.9). So
+   such a doc that waits for text is `# TODO: Document.`.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
    The two spaces count from where the text of the parent starts, a tag such as `TODO:`
@@ -367,9 +378,14 @@ CAYLEYS_WEDGE  # module constant
    project.
 9. A doc has one position for each shape of declaration, and the expression guide of the
    language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
-   value whose `block:` stands on its `=` line, wherever the doc stands. So that doc is a `#`
-   comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads such a doc,
-   the doc takes `##` again.
+   value whose `block:` stands on its `=` line, wherever the doc stands. Nor does it read the doc
+   of a section at any reach, on its keyword line, right below it or above it. So each such doc
+   is a `#` comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads
+   such a doc, the doc takes `##` again.
+
+   Inside a routine, a block that opens a scope or the entry block, a comment above the keyword
+   of a section stays as it stands. A stage comment can stand there (VI.4), so that comment
+   counts as the doc of the section.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a

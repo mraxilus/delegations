@@ -32,7 +32,7 @@ import std/[options, os, osproc, sequtils, strutils, tables, tempfiles]
 import ./[compilers, parentheses, pins, reports]
 
 
-type
+type  # TODO: Document.
   Proving* = object  ## Define what one run of prover answered.
     answers*: seq[seq[int]]  ## Byte offset of `(` of each group proven, one list for each source.
     failure*: string  ## Why no compiler answered, ending with value; empty where one did.
@@ -44,7 +44,7 @@ type
     ## Define prover of each pin: parser of compiler serving it.
 
 
-const
+const  # TODO: Document.
   MARK = "knoller-proof "  ## Opening of each answer line probe prints.
   PROBE = """
 import std/[macros, strutils]

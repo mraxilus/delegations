@@ -60,7 +60,7 @@ import ./[report, rules]
 export rules
 
 
-type
+type  # TODO: Document.
   Report* = object  ## Define one rewrite or finding, located at path and line.
     path*: string  ## Path fixer read, `/` separated: repository-relative, or absolute.
     line*: int  ## One-based line; `0` when report concerns whole file.
@@ -136,7 +136,7 @@ type
     Package  ## `.nimble`.
 
 
-const
+const  # TODO: Document.
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
   DIRECTORY_SOURCE = "src"  ## Directory of package that nimble puts its umbrella in.
   DIRECTORY_TESTS = "tests"  ## Directory of package that testament reads its tests from.

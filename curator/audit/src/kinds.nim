@@ -57,7 +57,7 @@ import std/[options, os]
 from ../../knoller/src/knoller import Dialect
 
 
-type
+type  # TODO: Document.
   Syntax* {.pure.} = enum  ## Define how comments are found in file kind.
     None  ## No comments (JSON), or prose document (Markdown).
     Nim  ## `#` line, `#[ ]#` nesting block, outside string and char literals.

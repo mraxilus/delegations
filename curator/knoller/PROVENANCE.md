@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | fcd0c0d7055e7d4a |
+| Rules   | 8392467d15cf0859 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -1432,9 +1432,9 @@ configuration that a build gets by default comes first (X.11).** The Architect r
 
 **Each declaration takes a doc where its shape puts it, and `## TODO: Document.` waits for its
 text (VI.1).** The rule reads each name that `declared.nim` declares. A local, a parameter and a
-placeholder take none. Names that one line declares share one doc, so that line reports once.
-A line of enum members is such a line (D1 a of #752). The check and the fixer share one reading,
-`writesDoc` of `declarations.nim`.
+placeholder take none. Nor does a field, an enum member or a name inside a section, since each
+section takes one doc instead (Section docs). Names that one line declares share one doc, so that
+line reports once. The check and the fixer share one reading, `writesDoc` of `declarations.nim`.
 
 - A doc counts where it trails the line of the declaration, or the last line of its value or its
   type. A doc that opens the first line below either one, at a deeper indent, counts too. The doc
@@ -1511,9 +1511,9 @@ trails a line which opens a bracket holds apart a call that the wraps would join
   unsettled.
 
 - Verified by `suites/test_declarations.nim`: each kind and shape of declaration, and what passes.
-  It holds a shared line, a line of enum members, a design note, a forward declaration and the
-  lines that the fix traces. It holds a value over lines in each shape that takes its own place,
-  and a value that opens `block`.
+  It holds a shared line, a design note, a forward declaration and the lines that the fix
+  traces. It holds a value over lines in each shape that takes its own place, and a value that
+  opens `block`.
   It also holds cases of this repository whose value or signature runs past its first line, each
   named where it stands.
 - Verified by `suites/test_chain.nim`: a call that the wraps join takes the doc after them.
@@ -1545,11 +1545,10 @@ ruled so on rule 5 of #443. For most shapes that position is where `nim doc` rea
 position and missing doc read one place for each declaration (`placements`), and where its doc
 stands (`target`). So each doc that the fixer of one writes, the check of the other passes.
 
-- For the group doc of a bare `type` and for the doc of a routine, STYLE.md §5 alone sets the
-  position. `nim doc` reads the group doc on neither the keyword line nor the next line. It reads
-  the doc of a routine in each place that the fix moves it from. These places are the signature
-  line, the line after a blank line, and another indent. Verified by hand with `nim jsondoc` of
-  2.4.0, 2026-11-20, on one probe of each shape.
+- For the doc of a routine, STYLE.md §5 alone sets the position. `nim doc` reads the doc of a
+  routine in each place that the fix moves it from. These places are the signature line, the line
+  after a blank line, and another indent. Verified by hand with `nim jsondoc` of 2.4.0,
+  2026-11-20, on one probe of each shape. `## Section docs` gives the doc of a section.
 - A one-line doc of a type, a field, a binding or an enum member stands on its line, where the
   joined line fits `LINE_MAX`. Two spaces stand before its `##`. Otherwise it takes the next line,
   one level in. A trailing doc that widens its line past `LINE_MAX` moves there.
@@ -1586,7 +1585,6 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   first line, nor after `[` or `(` (above).
 - The doc of a routine opens the line after its signature, at the indent of its body. A doc on the
   signature line, after a blank line, or at another indent moves there.
-- A one-line doc under a bare `type` joins the keyword line, as the group doc of the block.
 - Doc position reads as a declaration each line of code in a `type`, `const`, `let` or `var`
   section, at any depth (`sections`). A keyword line that holds one declaration is one too. A
   line that continues an expression declares nothing.
@@ -1631,8 +1629,10 @@ fixer of one writes, the check of the other passes.
 - `sections` walks up from a line to the keyword of its section. It stops at an enclosing line
   that ends on `=` or opens `block`, other than the keyword alone. So a statement in the body of a
   value declares nothing, as a labelled `block` or an assignment that opens `block`.
-- Missing doc writes `# TODO: Document.` above a global such value, with the blank line where it
-  is due. A comment above counts as the doc, and so does a `##` that doc position moves there.
+- Missing doc writes `# TODO: Document.` above a global such value that its keyword line
+  declares, as `const V = block:`, with the blank line where it is due. Inside a section the doc
+  of such a value is optional, so missing doc writes none there (Section docs). A comment above
+  counts as the doc, and so does a `##` that doc position moves there.
 - Doc position moves a `##` doc that trails `block:` or stands first in the body. It moves the
   doc to the lines above the declaration, with each line that the lexer joins to it. Each run of
   `#` that opens a doc line there becomes one `#`, and the blank line comes where it is due.
@@ -1642,8 +1642,6 @@ fixer of one writes, the check of the other passes.
   binding takes its doc after that `=`.
 - Cost: a `#` comment right above such a value reads as its doc, though it may remark on the
   line above it.
-- Cost: missing doc reads its names from declarations, so such a name with no doc takes no
-  placeholder.
 - Cost: a binding of a routine type whose `block` opens below its `=`, as `let f: proc(): int =`,
   reads as the head of a lambda. So it takes no report of this section.
 - Verified by `suites/test_declarations.nim`. Its cases are `lut_grade_by_basis` and `∪` of the
@@ -1651,19 +1649,97 @@ fixer of one writes, the check of the other passes.
   `FACINGS` of `dance_ontology` and `LUT_INITIAL_BY_PAIR` of `ricysoho`, each with its domain. The
   review of #1070 found three more cases, and each is held with its domain. They are a statement
   in the body of such a value, a lambda whose body opens `block`, and a doc on `###`.
-- Verified by hand, 2026-11-27, with a driver that runs `checkDocs` and `checkDocsMissing` alone
-  on each Nim file that git tracks at `9d6d168e`. Knoller at `9d6d168e` gives 75 reports of doc
-  position and 1,082 of missing doc, and knoller at `6905e55e` gives 47 and 1,083. Knoller at
-  `672b76a3` gives the same 75 and 1,082 on the tree at that commit, with the same reports of a
-  value that opens `block`.
-- Of the later reports, 44 read a value that opens `block`, all in contributor projects. Of them,
-  39 hold a doc inside the block, 1 a `##` above, 2 a `block` below `=`, and 2 no doc. The earlier
-  knoller gives 16 of them, at the same places. It gives 1 more at `curator/audit/src/role.nim:80`,
-  since it does not count the `#` doc above that value.
-- `fixDocs` alone keeps each token of code in each file that it writes there, and a second fix
-  writes nothing. `knoller --check`, built at `9d6d168e`, reports 40 of the 44 as `to fix` in
-  those files. It leaves the 2 for hand, and the 2 in `mesh.nim` of `pga_visualiser` and
-  `walk.nim` of `dance_ontology`, which neither knoller settles.
+- Verified by hand, 2026-11-28, with the driver of `## Section docs`. Knoller at `3fd4d739` and
+  at `91afb878` give the same 42 reports of doc position on a value that opens `block`. Each one
+  stands in a contributor project, at the same place for both. Two of them open "Value opening",
+  at `words.nim:44` and `test_marks.nim:24` of `dance_ontology`, so a search for them ignores case.
+- `knoller --check`, built at `91afb878`, finds `mesh.nim` of `pga_visualiser` and `walk.nim` of
+  `dance_ontology` unsettled after its rounds. So it leaves each file as written, and the report
+  of a value that opens `block` in each stays. Verified by hand, 2026-11-28.
+
+## Section docs
+
+**A section takes one doc on its keyword line, as a `#` comment, and no name inside it needs
+one.** The Architect ruled so on
+[D1 c](https://github.com/mraxilus/delegations/issues/1020#issuecomment-7201142237),
+[D2 a](https://github.com/mraxilus/delegations/issues/1020#issuecomment-7227676514) and
+[D3 a](https://github.com/mraxilus/delegations/issues/1020#issuecomment-7227196529) of #1020. A
+`const`, `let`, `var` or `type` keyword alone on its line opens a section. `sectionsBare` of
+`declared.nim` reads each one in the walk that reads each name, with the reach of a binding on its
+line. `sectionsDoc` of `declarations.nim` reads where its doc stands, at any reach, and both rules
+read that.
+
+- A section takes a doc at each reach where a name of its kind took one before the rulings (VI.1).
+  The rulings move that doc to the section, and drop no reach where a doc was asked. So a `type`
+  section takes one at every reach, as each type did. A `const`, `let` or `var` section takes one
+  at global reach alone. A binding inside a routine, or a block that opens a scope, is a local. A
+  binding of the entry block can reach the whole module, but V.10 puts it in a routine.
+- Rejected: a doc of a section at global reach alone. It drops the doc of each type inside a
+  routine or the entry block, which knoller at `3fd4d739` asks for.
+- Doc position reads the doc of a section at every reach, since `nim doc` reads it at none (VI.9).
+  So a `##` on the keyword line of a local section takes `#`. A `##` right below it joins the
+  keyword line or moves above it, as at global reach.
+- A comment above the keyword of a local section stays where it stands, and doc position joins
+  none to the keyword line. Inside a routine, a stage comment stands there (VI.4). The doc of a
+  block, as of `suite`, stands there too. So a `##` right below a local keyword is the doc of the
+  section, even under such a comment. Missing doc counts that comment as the doc of a local `type`
+  section.
+- Cost: a call of a template whose body is `untyped` opens no scope at global reach. But `reach`
+  reads each block opener but `when` as a scope. So a section in such a body takes no doc, though
+  its names can be global.
+- Neither rule reads a section in the body of `quote do:`, whose reach is where the macro expands
+  (`generated`). Nor does either read a section that opens inside a bracket, which is part of an
+  expression (`linesNested`). Knoller at `3fd4d739` asks for no doc of a name in either place.
+- No name inside a section needs a doc, and no field and no enum member needs one anywhere
+  (`is_optional`). A doc that such a name holds keeps the position of its shape, so doc position
+  still reads it. A design note in such a doc stays too, since no text waits there.
+- A keyword line that holds one declaration, as `const N = 3`, opens no section here. Its doc
+  trails the declaration as `##`, since `nim doc` reads it there.
+- A comment that trails the keyword counts as the doc of the section. So does a comment right
+  above the keyword, at its indent. A `##` doc right below the keyword counts too, since doc
+  position moves it to the keyword line or above the keyword.
+- A `#` comment right below the keyword is no doc of the section, because it can head the first
+  group of names. A `##` doc there above a value that opens `block` is the doc of that value.
+- Missing doc writes `# TODO: Document.` joined to the keyword line, as `#`, since `nim doc` reads
+  no doc there. A doc of the module right above the keyword stays the doc of the module (#980). So
+  the placeholder goes on the keyword line below it.
+- Doc position writes `#` for a `##` on the keyword line, and for a `##` above a global keyword. A
+  doc that the lexer joins over lines below the keyword line moves above the keyword. A one-line
+  doc right below the keyword, or above a global one, joins the keyword line where it fits. A doc
+  right below the keyword that does not fit, or that runs over lines, moves above the keyword.
+- `nim jsondoc` reads no doc on the keyword line, none right below it and none above it, at
+  global reach and inside a routine. A `##` above the keyword past code joins the doc of the
+  module. Verified by
+  `suites/test_declarations.nim`, suite "Article VI.9", with the compiler that builds it.
+- Rejected: a doc of several lines on the keyword line as `#`, with its outline right below it. A
+  `#` comment right below the keyword can head the first group of names, so the two read alike.
+- Cost: a `#` comment right above the keyword reads as the doc of the section, though it may
+  remark on the line above it. Doc position joins such a comment of one line to the keyword line.
+- Cost: a `##` right above a local keyword stays, though `nim doc` reads no doc there. A stage
+  comment above a local `type` section stands as its doc. A one-line doc above a local keyword
+  stays there, though it fits the keyword line.
+- Cost: a keyword line that a fix writes, as `single-bindings` writes one, holds no line of the
+  source as given. So the report of its placeholder names no line, and prints at the path alone.
+  Verified by `suites/test_command.nim`.
+- Verified by `suites/test_declarations.nim` and `suites/test_declared.nim`. The case of the move is
+  the `const` at line 153 of `src/pga_visualiser/camera.nim` of `pga_visualiser`, with its domain.
+  The case of a local section is the `const` at line 739 of `tests/test_rigid.nim` of
+  `dance_ontology`. Its doc of several lines stands right below its keyword, under the doc of its
+  suite. The domain of reach is each block that opens a scope, and the entry block.
+- Verified by hand, 2026-11-28, with a driver that runs `checkDocs` and `checkDocsMissing` alone on
+  each file that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. Knoller at `3fd4d739` gives 78
+  reports of doc position and 1,086 of missing doc on its own tree. Knoller at `91afb878` gives 87
+  and 607 on its own tree.
+- Of the later reports, 442 read a section with no doc, and 9 the doc of a section out of its
+  position. All of them stand in contributor projects, since each section of curator code holds
+  its placeholder. Of the earlier reports, 921 go, each of a field, an enum member or a name
+  inside a section.
+- No bare `type` section of the tree stands off global reach, so the doc of such a section adds no
+  report. Verified by hand, 2026-11-28, with a driver that runs `sectionsBare` over the same files
+  at `91afb878`.
+  It reads 90 `const`, 2,835 `let` and 716 `var` sections off global reach, and no `type`.
+- Over the tree at `91afb878`, `fixDocs` and then `fixDocsMissing` keep each token of code in each
+  file that they write. A second run writes nothing. Verified by hand with a driver, 2026-11-28.
 
 ## Stages
 

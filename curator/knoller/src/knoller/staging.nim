@@ -53,7 +53,7 @@ import std/[sequtils, strutils]
 import ./[declared, form, reports, views]
 
 
-const
+const  # TODO: Document.
   PRAGMA_STAGE = "compileTime"  ## Pragma each member of compile-time family carries.
   PRAGMAS_RUNTIME = ["codegenDecl", "inline", "noinit", "noinline"]
     ## Pragmas acting on generated code alone, which compile-time routine has none of.
@@ -78,7 +78,7 @@ const
     ## Keywords declaring name, which `when` lets reach block around branch.
 
 
-type
+type  # TODO: Document.
   Extent = tuple[first, last: int]  ## Define one-based lines of block, both included.
 
   Member = object  ## Define routine of compile-time family, as check reads it.
@@ -429,7 +429,7 @@ func isDeclaring(lines: openArray[string], k: int, tail: string): bool =
   false
 
 
-type
+type  # TODO: Document.
   Branch = object  ## Define `if` on what build fixes, as fix reads it.
     line: int  ## One-based line of `if`.
     at: int  ## Index of `if` in its line.

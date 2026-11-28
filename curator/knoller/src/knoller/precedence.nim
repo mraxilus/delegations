@@ -34,7 +34,7 @@ import std/[algorithm, sequtils, strutils, unicode]
 import ./[form, reports, tokens]
 
 
-type
+type  # TODO: Document.
   KindElement* {.pure.} = enum  ## Define what one element of expression is to its neighbours.
     Operand  ## Name, literal or bracket group, with call, index and field glued after it.
     Binary  ## Operator between two operands.
@@ -56,7 +56,7 @@ type
     got: string  ## `not`, operand and operator, as written.
 
 
-const
+const  # TODO: Document.
   PRECEDENCE_OR = 3  ## Precedence of `or` and `xor` (Nim manual, Operators).
   PRECEDENCE_AND = 4  ## Precedence of `and`.
   PRECEDENCE_COMPARISON = 5  ## Precedence of `==`, `in`, `is` and `of`, tightest `not` misleads.

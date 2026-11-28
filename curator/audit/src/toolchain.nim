@@ -37,7 +37,7 @@ import ../../knoller/src/knoller
 import ./findings
 
 
-const
+const  # TODO: Document.
   DIRECTORY_DRIVER* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
   DIRECTORY_KNOLLER* = "curator/knoller"

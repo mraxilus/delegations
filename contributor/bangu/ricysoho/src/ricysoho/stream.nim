@@ -308,9 +308,10 @@ const
     ##   .i `Architect` jdice le cmavo bu'u `#1003` ta'i `D4 b`
     ##   .i `Architect` jdice le stuzi pe le sinxa bu'u `#1003` ta'i `D6 b`
     ##   .i lo mupli po'u `CLL 18.7` .e `CLL 18.15` .e `CLL 18.18` cu pilno le cmavo
+
+  # ro sinxa poi le genturfa'i cu tcidu ke'a
+  #   .i ro le sinxa cu fendi lo selci'avla
   SIGNS_STREAM = block:
-    ## ro sinxa poi le genturfa'i cu tcidu ke'a
-    ##   .i ro le sinxa cu fendi lo selci'avla
     var signs: seq[string]
     for (sign, _) in LUT_WORDS_BY_SIGN: signs.add sign
     for (sign, _) in LUT_CMAVO_BY_PREFIX: signs.add sign

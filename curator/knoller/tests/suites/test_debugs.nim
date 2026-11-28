@@ -9,7 +9,7 @@ import std/[sequtils, strutils, tables, unittest]
 import ../../src/knoller/[command, idioms, reports]
 
 
-const
+const  # TODO: Document.
   CLEAN = "## Do.\n\n{.experimental: \"strictFuncs\".}\n\nexpandMacros:\n  defineMultivectors()\n"
     ## Module whose build-time printer breaks no rule of knoller but debug output.
   MULTIVECTORS = "\nexpandMacros:\n  defineMultivectors()\n"

@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[reports, spacing, tokens]
 
 
-const
+const  # TODO: Document.
   STACKED =
     "let d = (|∙ ⊖(m ∧ n)) div (|∙ (⊖m ∧ ⊖n))\nlet x = - -y\nlet z = -  -y + (+ -1)\n"
     ## Prefix operator before operand opening with operator character, which glued would merge:

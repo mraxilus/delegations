@@ -46,7 +46,7 @@ from ../../knoller/src/knoller/command import runGit
 import ./[bufbuild, findings, tree]
 
 
-const
+const  # TODO: Document.
   EXT_SCHEMA = ".proto"  ## Extension of protobuf schema (`kinds.nim`).
   CONFIG_BREAKING =
     "version: v2\nbreaking:\n  use:\n    - WIRE_JSON\n    - FIELD_SAME_CARDINALITY\n"

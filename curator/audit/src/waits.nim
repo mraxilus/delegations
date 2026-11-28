@@ -19,7 +19,7 @@ import ../../knoller/src/knoller
 import ./[comments, findings, kinds, layout]
 
 
-const
+const  # TODO: Document.
   DIRECTORIES_DRIVE* = ["tests", "tools"]
     ## Project directories holding drive code, where fixed wait is read.
   KINDS_NIM = [Kind.Nim, Kind.NimScript, Kind.Nimble]

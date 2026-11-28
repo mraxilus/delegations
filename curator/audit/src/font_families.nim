@@ -46,7 +46,7 @@ import std/[sequtils, strutils]
 import ./findings
 
 
-const
+const  # TODO: Document.
   SERIF* = "Noto Serif"  ## Family X.8 gives headings and titles.
   SANS* = "Noto Sans"  ## Family X.8 gives body and interface text.
   MONO* = "Commit Mono"  ## Family X.8 gives code, data and figures.
