@@ -60,9 +60,9 @@ const
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu lo lertai ke'a
   TOKEN_EMBED = "@EMBED:"
-  TOKEN_MEANINGS = "@MEANINGS@"  ## le sinxa poi le smuni be ro valsi ta'i `JSON` cu basti ke'a
     ## lo krasi be lo sinxa poi pa lertai cu basti ke'a
     ##   .i `@` fanmo le sinxa
+  TOKEN_MEANINGS = "@MEANINGS@"  ## le sinxa poi le smuni be ro valsi ta'i `JSON` cu basti ke'a
   TOKENS = ["@SOURCE@", "@STATUS@", "@DIAGRAM@", "@NIF@", "@SCRIPT@"]
     ## lo sinxa pe le calku ge'u zi'e poi na sinxa lo lertai
     ##   .i ro sinxa cu se basti pa roi
