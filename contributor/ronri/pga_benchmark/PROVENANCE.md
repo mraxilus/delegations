@@ -251,6 +251,11 @@ moves only the traffic of the operation itself. Every result is folded into one 
 the timing, so nothing is dead. The share of results that carry NaN is counted. The radius norm
 of the library returns NaN where 𝐦 ∘ 𝐦 is negative, and that is measured rather than stated.
 
+**An optional result folds its value, and none folds nothing.** None marks a value that the
+operation lacks, so the share of NaN counts no none. So a change whose operation returns an
+`Option`, as P10 makes the radius norm, builds and times as one of pin does. Verified by
+`test_rga4d.nim` and the other stubs, suite `Internal: Measurements`.
+
 **Each timed loop has a procedure of its own**, one for each measurand of each implementation,
 as the function of a caller would call it. In one function that holds every loop, Nim puts an
 error check after each call, and gcc guesses that each check may be taken. Its estimate of
