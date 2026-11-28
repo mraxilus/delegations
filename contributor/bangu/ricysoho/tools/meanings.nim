@@ -27,7 +27,7 @@ type Meaning* = object  ## le smuni be pa valsi
   definition*: string  ## le glico smuni be le valsi
 
 
-const
+const  # le stuzi be ro datnypau ne'i le re liste
   COLUMNS_GISMU* = [(2, 6), (21, 40), (63, 158)]
     ## le stuzi be le valsi .e le glico valsi .e le smuni ne'i `gismu.txt`
   COLUMNS_CMAVO* = [(1, 11), (21, 61), (63, 158)]

@@ -7,7 +7,7 @@
 import ../ricysoho/layers
 
 
-const
+const  # ro jboselci'a pe le ctuca
   LESSON_CATEGORY*: array[Category, string] = [
     "le linji cu sinxa pa bridi .i pa bridi cu vasru pa selbri .e lo sumti poi le selbri cu " &
         "casnu ke'a",

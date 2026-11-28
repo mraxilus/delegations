@@ -15,7 +15,7 @@ import ../../src/ricysoho/lists/[cmavo, gismu]
 import ../../tools/[lists, meanings]
 
 
-const
+const  # lo traji cmalu klani .e lo mupli smuni
   COUNT_GISMU_LEAST = 1400
     ## lo du'u le gimste cu vasru su'o xo kau linji
     ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 1436
