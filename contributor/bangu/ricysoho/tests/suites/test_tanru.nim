@@ -77,7 +77,7 @@ import ../../src/ricysoho/lists/[cmavo, gismu]
 import ./[rafsi_random, texts_outside]
 
 
-const
+const  # lo stodi pe le cipra pe le tanru
   SAMPLES = 1000
     ## lo te kancu be lo cunso tanru poi lo javni cipra cu cuxna ke'a
     ##   .i lo tsiju cu jdice le tanru

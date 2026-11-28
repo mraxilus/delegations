@@ -50,7 +50,7 @@ import ../../src/ricysoho/[nif, prose, selmaho, stream, tanru]
 import ./[corpora, reader_nif]
 
 
-type
+type  # lo klesi pe le cipra pe lo srera sinxa
   Refused = tuple[key, text: string, strict: ReadingText, marked: ReadingMarked]
     ## lo selci'a poi `readText` to'e curmi ke'a ku'o .e le re se tcidu pe le selci'a
 
@@ -69,7 +69,7 @@ type
       ##       le re tricu to `isCovering` toi
 
 
-const
+const  # lo stodi pe le cipra pe lo srera sinxa
   COUNT_READ_LEAST = 1800
     ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi se tcidu
     ##   .i le selci'aste cu vasru 1941 selci'a

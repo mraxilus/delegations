@@ -79,7 +79,7 @@ import std/[options, os, sequtils, strutils]
 import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 
 
-type
+type  # lo klesi pe le tcidu be lo prosa
   Place* = object
     ## lo stuzi be pa lerfu ne'i lo datnyvei
     ##   .i le stuzi cu du lo namcu pe lo linji ge'u .e lo namcu pe lo lerfu ne'i le linji
@@ -125,7 +125,7 @@ type
   Piece = tuple[c: char, place: Place]  ## pa lerfu pe lo datnyvei ge'u .e lo stuzi pe le lerfu
 
 
-const
+const  # lo stodi pe le tcidu be lo prosa
   DELIMITERS = ["gy", "ky", "ty", "py", "dy", "by", "fy", "vy"]
     ## lo valsi poi zo la'o ka'e sitna lo samtci pagbu sepi'o ke'a
     ##   .i le pamoi valsi poi le samtci pagbu na vasru ke'a selcu'a
@@ -411,7 +411,7 @@ func textsRecord*(path, markdown: string): seq[Text] =
   flush()
 
 
-type
+type  # lo klesi pe lo pinka
   Comment = object
     ## pa pinka pe lo samtci ge'u .e le linji pe le pinka ge'u .e lo stuzi pe ro lerfu
     lines: seq[seq[Piece]]  ## lo selci'a pe ro linji poi se lidne lo sinxa be lo pinka

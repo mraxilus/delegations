@@ -84,7 +84,7 @@ import ../tests/sample_tatoeba/sentences
 import ./[drive, lists, meanings, page]
 
 
-const
+const  # lo stodi pe le sabji samtci .e le cipra pe le papri
   PATH_BRIDGE* = "src" / "javascript" / "bridge.nim"
     ## le datnyvei poi jarco le genturfa'i `JavaScript`
   PATH_SCRIPT* = "build" / "ricysoho.js"

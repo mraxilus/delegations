@@ -136,7 +136,7 @@ import std/[algorithm, options, sequtils]
 import ./[dictionary, forms, selmaho, tanru]
 
 
-type
+type  # lo klesi pe lo taurpau
   Places* = array[1..5, int]
     ## ro stuzi cu selzva pa sumti be le valsi ba lo nu galfi lo porsi be lo sumti
     ##   .i zo xe pilno lo mumoi sumti to `CLL 9.4` toi
@@ -161,7 +161,7 @@ type
       ##   .i le liste cu kunti va'o lo nu no da jorne le valsi
 
 
-const
+const  # lo stodi pe lo taurpau
   PLACES_SAME*: Places = [1, 2, 3, 4, 5]  ## no nu galfi to ro sumti cu zvati lo stuzi pe vo'a toi
   CONVERSIONS = ["se", "te", "ve", "xe"]
     ## lo cmavo be `SE` ta'i lo porsi

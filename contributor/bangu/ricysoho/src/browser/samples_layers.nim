@@ -4,7 +4,7 @@
 {.experimental: "strictFuncs".}
 
 
-const
+const  # lo mupli pe le papri pe lo linji
   SAMPLES* = [
     ("so'i", "coi la .alis. .i lo melbi zdani poi mi viska ke'a cu barda .i mi djica lo nu " &
         "klama fi lo zarci kei ui .i ko'a pu dunda lo pa plise do"),

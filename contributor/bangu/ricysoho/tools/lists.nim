@@ -49,7 +49,7 @@ import std/[enumutils, options, os, osproc, strutils]
 import ../src/ricysoho/[entries, selmaho]
 
 
-type
+type  # lo klesi pe lo liste
   Source* = object
     ## pa liste datnyvei poi se tcidu
     ##   .i le klesi cu vasru lo stuzi be le datnyvei be'o .e lo snina'u be le stuzi
@@ -61,7 +61,7 @@ type
       ##   .i le snina'u cu selci'a ta'i `hex` sepi'o lo cmale'u
 
 
-const
+const  # lo stodi pe le liste
   KEY_LISTS* = "RICYSOHO_LISTS"
     ## lo cmene be lo vabycne poi basti lo datnyveiste poi le liste cu se tcidu fi ke'a
   DIRECTORY_LISTS* = "/usr/share/lojban"

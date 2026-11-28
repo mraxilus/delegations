@@ -70,7 +70,7 @@ import std/[algorithm, os, osproc, parsexml, sequtils, strscans, strutils, xmlpa
 import ./literals
 
 
-type
+type  # lo klesi pe lo mupli pe `CLL`
   Example* = object
     ## pa mupli poi selna'u ku'o ta'i lo nu se lebna
     ##   .i le mupli cu vasru lo namcu .e lo jboli'i
@@ -102,7 +102,7 @@ type
       ##   .i `sha256sum` tcidu ro papri poi se tcidu ku'o ja'i le porsi be lo cmene
 
 
-const
+const  # lo stodi pe le papri pe `CLL`
   DIGEST_CLL* = "5baac481b4483b5efc2099de46b3cdc24f741db8ee6f6ed41b80a3aad659fa55"
     ## lo sinxa pe `SHA-256` zi'e poi sinxa le papri be `CLL 1.1` be'o poi selzba de'i `2016-08-26`
     ##   .i `lojban.org` benji le papri

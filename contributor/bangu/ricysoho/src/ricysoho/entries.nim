@@ -72,7 +72,7 @@
 import ./selmaho
 
 
-type
+type  # lo klesi pe lo linji pe le liste
   EntryGismu* = object
     ## pa linji pe le gimste
     ##   .i le linji cu vasru pa gismu .a pa cmavo poi ponse lo rafsi

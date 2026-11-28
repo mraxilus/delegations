@@ -165,7 +165,7 @@ import std/[algorithm, options, sequtils, strutils]
 import ./[clusters, forms, selmaho, tanru]
 
 
-type
+type  # lo klesi pe le porsi be lo valsi
   Pause* {.pure.} = enum  ## lo denpa poi lidne pa valsi pe lo porsi to `CLL 3.3` .e `CLL 4.9` toi
     Absent
       ## denpa bu na zvati
@@ -266,7 +266,7 @@ type
       ##   .i li 2 cu sinxa li su'o re
 
 
-const
+const  # lo lerfu .e lo sinxa pe le porsi be lo valsi
   DIGITS_STREAM = {'0'..'9'}
     ## lo lerfu pe `0` bi'o `9`
     ##   .i ro le lerfu cu sinxa pa cmavo pe `PA` to `CLL 18.2` toi

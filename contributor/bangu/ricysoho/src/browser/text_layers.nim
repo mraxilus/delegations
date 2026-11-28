@@ -27,7 +27,7 @@ import ../ricysoho/[grammar, layers, prose, stream]
 import ./[lessons, samples_layers]
 
 
-const
+const  # lo stodi pe le papri pe lo linji
   NAME_WORKER = "ricyso'o layers"  ## le cmene be le gunka
   ROW = 7.0  ## lo ni gapru be pa pagbu be lo linji ca lo nu surla to `px` toi
   ROW_OPEN = 14.0  ## lo ni gapru be pa pagbu be lo linji ca lo nu pa cmene cu zvati ke'a
@@ -52,7 +52,7 @@ const
     ## le skari be ro klesi be lo linji
 
 
-type
+type  # lo klesi pe le se tcidu pe le papri
   Word* = object  ## pa valsi pe lo se tcidu ge'u ta'i lo stuzi pe `UTF-16`
     s*: int  ## le stuzi pe le pamoi lerfu
     e*: int  ## le stuzi poi lidne le romoi lerfu
@@ -150,7 +150,7 @@ type
 
 #[ ni'o ni'o ni'o lo korbi be `JS` ]#
 
-let
+let  # lo dacti pe le samtci
   DOCUMENT_PAGE {.nodecl, importc: "(typeof document === 'undefined' ? null : document)".}:
       JsObject
     ## `document` pe le papri
@@ -1075,14 +1075,14 @@ proc viewed(host: JsObject, model: Model): View =
 
 #[ ni'o ni'o ni'o le stuzi be lo nu ciska ]#
 
-type
+type  # lo klesi pe lo nu cenba le selci'a
   Point = (JsObject, int)  ## pa stuzi pe le papri
   Edit = object  ## pa nu cenba le selci'a
     text: cstring
     a: int
     f: int
 
-var
+var  # lo selra'e pe le se ciska
   EDITOR: JsObject  ## le stuzi be lo nu ciska
   CURRENT: Model  ## le se tcidu pe le selci'a poi ca zvati
   DRAWING: View  ## le pixra pe le se tcidu

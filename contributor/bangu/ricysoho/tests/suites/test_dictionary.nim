@@ -37,7 +37,7 @@ import ../../src/ricysoho/[dictionary, forms]
 import ../../src/ricysoho/lists/gismu
 
 
-const
+const  # lo lerfu .e lo mupli pe le cipra
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
     ## le 17 zunsna poi zoi gy. C .gy. sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
   ORDER_VOWELS = "aeiou"

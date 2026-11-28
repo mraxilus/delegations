@@ -72,7 +72,7 @@ type Translation* = object
   encoding*: string  ## le tadji be lo nu le stuzi pe le papri cu sinxa lo lerfu
 
 
-const
+const  # lo stodi pe lo xe fanva
   DIRECTORY_TRANSLATIONS* = "build/translations"
     ## lo datnyveiste poi zvati ne'i le vi selgu'a gi'e vasru le papri
   TRANSLATIONS* = [

@@ -27,7 +27,7 @@ when compileOption("profiler"):
 import std/[strutils, unittest]
 
 
-const
+const  # lo stodi pe le cipra pe le jitro samtci
   TEXT_DRIVER = staticRead("../../tools/build.nim")  ## le jitro samtci poi selpu'i
   OPENING_DISPATCH = "case paramStr(1)"
     ## le linji poi le pagbu poi cuxna lo minde cu selkra ke'a to `CASE_DRIVER` pe `curator` toi

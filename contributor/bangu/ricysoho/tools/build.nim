@@ -76,7 +76,7 @@ import std/[algorithm, options, os, sequtils, tables]
 import ./[browser, cll, lists, page, tatoeba, translations, wikipedia]
 
 
-const
+const  # lo stodi pe lo minde
   USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|page|drive|system|translations>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &

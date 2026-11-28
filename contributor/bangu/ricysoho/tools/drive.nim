@@ -73,7 +73,7 @@ type RunPage* = object  ## lo selsku be lo papri ca pa nu cipra
   is_done*: bool  ## le papri pu cusku lo fanmo be vo'a
 
 
-const
+const  # lo stodi pe le minde po'u `drive`
   VARIABLE_CHROMIUM* = "LOJBAN_CHROMIUM"
     ## lo datnyvau poi cmene `Chromium` poi seltro
   TIMEOUT_PAGE = initDuration(seconds = 300)

@@ -57,7 +57,7 @@ import ../src/ricysoho/[grammar, lujvo, prose, stream]
 import ./literals
 
 
-type
+type  # lo klesi pe le vreji pe `Tatoeba`
   Sentence* = object
     ## pa jufra pe le vreji
     ##   .i le klesi cu vasru lo namcu .e lo selci'a .e lo ponse .e lo se tcidu pe le jufra
@@ -83,7 +83,7 @@ type
     digest*: string  ## `SHA-256` pe le vreji poi se tcidu
 
 
-const
+const  # lo stodi pe le vreji pe `Tatoeba`
   DIGEST_TATOEBA* = "bf91e751a78a5137ffa741b0971df3c4e7a5444e18b47545be51d0593629bb40"
     ## `SHA-256` pe `jbo_sentences_detailed.tsv` noi selcpa fi le vreji pe de'i `2026-10-31` ta'i lo
     ##     nu kalri

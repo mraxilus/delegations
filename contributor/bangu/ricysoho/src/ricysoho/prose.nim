@@ -138,7 +138,7 @@ import std/[algorithm, options, sequtils]
 import ./[grammar, selmaho, stream, tanru]
 
 
-type
+type  # lo klesi pe le prosa
   RefusalText* {.pure.} = enum
     ## lo krinu be lo nu lo prosa cu se to'e curmi be'o .a lo krinu be lo nu pa pagbu cu zvati no
     ##     genvla
@@ -303,7 +303,7 @@ type
       ##   .i se ki'u bo le me zo sa cu vimcu ro valsi poi lidne le me zo sa
 
 
-const
+const  # lo selma'o pe le prosa
   SELMAHO_INDICATORS = {
     Selmaho.Ui, Selmaho.Cai, Selmaho.Y, Selmaho.Daho, Selmaho.Fuho, Selmaho.Fuhe,
   }

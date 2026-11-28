@@ -45,7 +45,7 @@ import ../src/ricysoho/[nif, prose]
 import ./meanings
 
 
-const
+const  # lo stodi pe le zbasu be le papri
   PATH_SHELL* = "pages" / "live.html"  ## le calku poi le papri cu selzba ne'i ke'a
   PATH_ENTRY = "src" / "browser" / "page.nim"  ## le krasi datnyvei pe le samtci pe le papri
   PATH_COMPILED = "build" / "page" / "page.js"  ## le se fanva samtci pe le papri

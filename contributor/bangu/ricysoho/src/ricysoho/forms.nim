@@ -87,7 +87,7 @@ import std/[options, strutils]
 import ./clusters
 
 
-type
+type  # lo klesi pe lo tarmi be lo valsi
   Form* {.pure.} = enum  ## lo tarmi be lo rafsi ja'i lo sinxa pe `CLL 4.6`
     Cvc, Ccv, Cvv, Cvcc, Ccvc, Cvccv, Ccvcv
 
@@ -99,7 +99,7 @@ type
     Cmene  ## lo cmene poi selfa'o lo zunsna to `CLL 4.8` toi
 
 
-const
+const  # lo selcmi be lo tarmi .e lo karsna remei
   DIPHTHONGS* = ["ai", "ei", "oi", "au"]
     ## lo karsna remei poi `VV` sinxa ke'a zi'e poi na se fendi to le remoi javni pe `CLL 4.1` toi
     ##   .i lo rafsi poi seltai `CVV` ku'o to `CLL 4.6` toi .e lo cmavo to `CLL 4.2` toi cu vasru le

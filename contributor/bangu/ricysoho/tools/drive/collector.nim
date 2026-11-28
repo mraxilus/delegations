@@ -51,7 +51,7 @@
 import std/[asyncjs, jsffi, sets, strutils, unicode]
 
 
-const
+const  # lo stodi pe le samtci poi tcidu le papri
   SILENT = "script, style, title, desc, metadata, noscript"
     ## lo pagbu poi le papri cu pixra no selci'a pe ke'a
   TYPES_BUTTON = ["button", "reset", "submit"]
@@ -71,7 +71,7 @@ const
     ##     se tcidu be vo'a
 
 
-let
+let  # lo dacti pe le papri
   DOCUMENT {.nodecl, importc: "document".}: JsObject  ## `document` pe le papri
   SELF {.nodecl, importc: "self".}: JsObject  ## le mulvanbi pe le papri
 

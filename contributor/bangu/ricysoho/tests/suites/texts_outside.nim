@@ -39,7 +39,7 @@ import std/[options, os, sequtils, strutils]
 import ../../tools/lists
 
 
-type
+type  # lo klesi pe lo linji pe le liste
   LineLujvo* = object
     ## pa linji pe `lujvo.txt` zi'e poi lo valsi pe ke'a se gunma lo lojbo lerfu po'o
     word*: string  ## le lujvo ta'i le lerfu poi le linji cu ciska ke'a

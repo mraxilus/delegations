@@ -59,7 +59,7 @@ import ../suites/reader_nif
 import ./report
 
 
-const
+const  # lo stodi pe le cipra pe le samtci
   STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro boi vomoi jufra pe le mupli
   COUNT_TREES_LEAST = 40
     ## lo du'u xo kau lo 519 jufra poi le flalu cu cuxna ke'a se tcidu

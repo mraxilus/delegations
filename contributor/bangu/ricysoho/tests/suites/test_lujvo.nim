@@ -78,7 +78,7 @@ func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
     result[entry.word.form.get].add entry.word
 
 
-const
+const  # lo stodi pe le cipra pe lo lujvo
   SAMPLES = 10000
     ## lo te kancu be lo cunso porsi be lo rafsi be'o pe le girzu
     ##   .i ro cunjvacipra cu tcidu ro le porsi to `Article IX.4` toi

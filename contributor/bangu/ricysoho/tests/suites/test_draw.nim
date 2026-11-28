@@ -24,7 +24,7 @@ import ../../src/ricysoho/[live, nif, nif_read, prose]
 import ./corpora
 
 
-const
+const  # lo stodi pe le cipra pe le pixra
   STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro boi xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a

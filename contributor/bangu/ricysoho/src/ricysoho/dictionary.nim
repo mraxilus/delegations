@@ -44,7 +44,7 @@ import ./lists/[cmavo, gismu]
 const COUNT_ENTRIES = LIST_GISMU.len  ## lo te kancu be ro liste cmima pe le gismu liste
 
 
-type
+type  # lo klesi pe le valsi pe le gimste
   Word* = distinct range[0 .. COUNT_ENTRIES - 1]  ## lo namcu pe lo stecmi pe le gimste
 
 
@@ -88,7 +88,7 @@ func constructStems(): seq[(string, Word)] {.compileTime.} =
   result.sort(proc (a, b: (string, Word)): int = cmp(a[0], b[0]))
 
 
-const
+const  # lo porsi be lo rafsi .e lo valsi
   RAFSI = constructRafsi()  ## lo porsi be ro cmarafsi .e lo valsi pe ro le rafsi
   STEMS = constructStems()
     ## lo porsi be ro rafsi poi vasru vo lerfu ku'o .e lo gismu pe ro le rafsi

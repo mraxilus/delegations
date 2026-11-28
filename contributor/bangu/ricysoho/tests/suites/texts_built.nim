@@ -14,7 +14,7 @@
 import std/strutils
 
 
-const
+const  # lo valsi pe lo selci'a poi selzba
   WORDS_BUILT_MOST = 14  ## lo rairterkancu be lo valsi pe lo selci'a poi selzba
   WORDS_BUILT = [
     "mi", "do", "ko", "klama", "cadzu", "zarci", "broda", "le", "lo", "ku", "cu", "je", "bo", "nai",

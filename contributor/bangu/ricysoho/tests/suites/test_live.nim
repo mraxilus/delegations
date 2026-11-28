@@ -63,7 +63,7 @@ import ../sample_tatoeba/sentences
 import ./[corpora, reader_nif, texts_built]
 
 
-type
+type  # lo klesi pe le cipra pe lo mivyselci'a
   Change = tuple[at, start: int, text, tail: string]
     ## lo cenba poi pa spisa cu jarco ke'a ne'i `NIF`
 
@@ -92,7 +92,7 @@ type
     count_read: int  ## lo sumji be lo stuzi poi se tcidu ca ro nu tcidu
 
 
-const
+const  # lo stodi pe le cipra pe lo mivyselci'a
   SEED = 859  ## lo tsiju be lo cunso nu katna .e lo selci'a poi selzba
   COUNT_BUILT = 300  ## lo klani be lo selci'a poi selzba fi lo valsi poi galfi lo pu valsi
   DRAWS_NUMBERED = 40

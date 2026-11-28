@@ -266,7 +266,7 @@ indicator 413= (UI | CAI) [NAI] | Y | DAhO | FUhO
   ##   .i le javni cu pagbu le romoi jicmu gerna pe `EBNF` gi'e mintu le selci'a pe `CLL 1.1`
 
 
-type
+type  # lo klesi pe le gerna
   Terminal* = distinct int  ## lo selma'o .a `BRIVLA` .a `CMENE` vu'o noi genlei lo valsi
 
   Symbol = object
@@ -356,7 +356,7 @@ type
     ##     be'o .e le selcmi poi le cmima cu cfari ne'i ke'a
 
 
-const
+const  # lo stodi pe le gerna
   TERMINAL_BRIVLA* = Terminal(ord(Selmaho.high) + 1)  ## lo brivla noi gismu ja lujvo ja fu'ivla
   TERMINAL_CMENE* = Terminal(ord(Selmaho.high) + 2)  ## lo cmene
   REWRITES = [
@@ -783,7 +783,7 @@ func firsts(grammar: Grammar, head: int): seq[Terminal] {.compileTime.} =
         if not grammar.nullable[symbol.code]: break
 
 
-const
+const  # lo stodi pe lo namcu .e lo lerfu
   HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` noi ckini li 812
   HEAD_LERFU_STRING = GRAMMAR_EBNF.headNamed("lerfu-string")
     ## le jvasni pe `lerfu-string` noi ckini li 817
@@ -823,7 +823,7 @@ const WIDTH_KEY = high(int32) div GRAMMAR_EBNF.heads.len
   ##   .i `fillSets` cu cipra lo du'u lo te kancu be lo genvla pe ro pagbu cu mleca le namcu
 
 
-type
+type  # lo klesi pe le mulcmi
   Completions = seq[Table[int, seq[int]]]
     ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi to `keyCompleted` toi
 
@@ -1326,7 +1326,7 @@ func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
 
 #[ ni'o ni'o ni'o lo nu tcidu ro pagbu ]#
 
-const
+const  # lo selma'o poi krasi gi'a fanmo gi'a jorne lo selci'a
   OPENERS* = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
     ## lo selma'o poi krasi lo selci'a ne'i lo selci'a
     ##   .i le selma'o cu pagbu `statement-3` .e `sumti-6` .e `free` to le javni pe li 14 .e li

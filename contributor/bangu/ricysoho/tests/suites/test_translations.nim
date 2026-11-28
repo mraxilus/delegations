@@ -31,7 +31,7 @@ import std/[options, os, unittest]
 import ../../tools/[tatoeba, translations]
 
 
-const
+const  # lo stodi pe le cipra pe lo xe fanva
   ROOT = currentSourcePath().parentDir.parentDir.parentDir
     ## le vi selgu'a noi le papri cu cnita ke'a
   COUNTS = [("alis", 856, 780), ("oz", 173, 56)]

@@ -155,7 +155,7 @@ import std/[algorithm, options, sequtils, strutils]
 import ./[grammar, nif, prose, selmaho, stream, tanru]
 
 
-type
+type  # lo klesi pe le tcidu be lo mivyselci'a
   ChangeNif* = object
     ## lo cenba poi pa spisa be lo mivyselci'a cu rinka ke'a ne'i `NIF`
     at*: int
