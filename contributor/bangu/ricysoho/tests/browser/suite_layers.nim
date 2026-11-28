@@ -430,8 +430,9 @@ proc runSuite() {.async.} =
   expectThat outer >= 0, "first case holds bar with bar among its parts"
   discard DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $outer & "\"]")).click()
   editor.firstElementChild.left
-  let row = DOCUMENT.querySelector("#lesson ol li[data-b]")
-  let picked = "b" & $row.getAttribute("data-b").to(cstring)
+  let
+    row = DOCUMENT.querySelector("#lesson ol li[data-b]")
+    picked = "b" & $row.getAttribute("data-b").to(cstring)
   discard row.click()
   expectThat chosenKey() == picked, "click on bar part moves lesson to it"
   editor.firstElementChild.left
