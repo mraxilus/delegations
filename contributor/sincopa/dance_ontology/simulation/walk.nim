@@ -24,11 +24,9 @@
 ##     `should_plan`).
 ##     Cost: way plan carries less far than walk would ends there, since each moment it keeps
 ##       stands as still would.
-##     Plan carries same-name chain over crown to 2.5 both ways, and cross-name chain to
-##       1.5275 of turn, its upper arm riding plan's six degrees inside shoulder's edge.  Edge
-##       holds it near there: plan with edge's margin at 0 or 3 degrees stands no path past 1.540
-##       or 1.526, and plan with no edge term stands none past 1.4475, engine stopping each by
-##       swing where upper arm passes edge, measured 2026-10-12.
+##     Plan carries each chain over crown through swan its card draws (`replayedWay`), and no
+##       further than 1.71 of turn for cross-name chain, and +1.6625 for same-name chain, way
+##       that turns positive, measured 2026-11-19.
 
 {.experimental: "strictFuncs".}
 
@@ -563,6 +561,14 @@ func mirrored*(over: Option[Arm]): Option[Arm] =
   ## none is none.
   if over.isSome: some(otherArm(over.get)) else: over
 
+type Swan* = tuple[straight: Arm, turns: float]
+  ## Swan planned way winds through: lead's arm its card draws straight through other's hoop,
+  ## and turns from rest card stands at, signed as way turns (rule 31).
+
+func mirrored*(swan: Option[Swan]): Option[Swan] =
+  ## Swan seen in mirror: other arm straight, wound other way about; none is none.
+  if swan.isSome: some((otherArm(swan.get.straight), -swan.get.turns)) else: swan
+
 proc laysOver(couple: Couple, over: Arm): bool =
   ## Whether couple lay connection of lead's arm `over` on top at lead's crossing, as its card
   ## draws it: crossing nearest lead along both connections (`read.crossings`).
@@ -851,7 +857,8 @@ func turnsHeld*(walk: Walk): float =
 
 # Forward: way of sweep asks planned way, which planned turn's section defines.
 proc plannedWay*(
-  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body;
+  swan = none(Swan)
 ): Walk
 
 proc ways(
@@ -863,6 +870,7 @@ proc ways(
   is_away: bool;
   head: Body;
   is_raw, should_plan: bool;
+  swan: Option[Swan];
 ): tuple[positive, negative: Walk] =
   ## Both ways of sweep, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  Callers
@@ -877,11 +885,15 @@ proc ways(
   ##     carry it (`plannedWay`): each moment planned as still is (Architect, issue 375,
   ##     2026-10-04, D5), and every stop answered (pull request 629, 2026-10-12, D1 of its
   ##     notes).
+  ##   Planned way that turns positive winds `swan`, and way that turns negative winds mirror's
+  ##     swan, round other arm (`mirrored`).
 
   proc way(towards: float): Walk =
     ## One way, `towards` its own step: planned way where `should_plan`, engine's own walk
     ##   where raw, and walk alone otherwise.
-    if should_plan: plannedWay(rig, band, links, who, most, towards, is_away, head)
+    if should_plan:
+      plannedWay(rig, band, links, who, most, towards, is_away, head,
+                 (if towards >= 0.0: swan else: mirrored(swan)))
     elif apart > 0.0 and is_raw:
       walkedRaw(rig, band, links, who, apart, most, towards, is_away, head)
     elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
@@ -915,6 +927,7 @@ proc swept*(
   head = Body.Two,
   is_raw = false,
   should_plan = false,
+  swan = none(Swan),
 ): Swept =
   ## Sweep both ways, each from wherever that way carries furthest (`ways`).
   ##   Twin's sweep reflected answers mirror image: its way that turns positive is other
@@ -924,9 +937,14 @@ proc swept*(
   ##   Where `should_plan`, each way is planned way, at band of hold, however far walk would
   ##     carry it: what rig's recording keeps (`seen.shown`), where every other sweep is walk
   ##     alone (`ways`).
+  ##   Chain names swan its way that turns positive winds (`swan`), and plan winds it
+  ##     (`plannedWay`).  Only chain has swan, and chain is its own mirror image, so no twin
+  ##     carries it.
+  doAssert swan.isNone or (should_plan and isMirrorSame(links)),
+      "Swan is asked of planned chain alone; got `" & $swan & "`."
   if is_raw:
     let (positive, negative) =
-      ways(rig, band, links, who, most, step, apart, is_away, head, true, should_plan)
+      ways(rig, band, links, who, most, step, apart, is_away, head, true, should_plan, swan)
     return initSwept(positive, negative)
   let twin = twinAnswering(links, 1.0, is_away)
   if twin.is_reflected and not isMirrorSame(links):
@@ -934,7 +952,8 @@ proc swept*(
       SWEEPS,
       key(rig, twin.links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head,
           $should_plan),
-      ways(rig, band, twin.links, who, most, step, apart, is_away, head, false, should_plan),
+      ways(rig, band, twin.links, who, most, step, apart, is_away, head, false, should_plan,
+           none(Swan)),
     )
     let partners = partners(rig)
     return initSwept(
@@ -944,8 +963,8 @@ proc swept*(
   let (positive, negative) = kept(
     SWEEPS,
     key(rig, links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head,
-        $should_plan),
-    ways(rig, band, links, who, most, step, apart, is_away, head, false, should_plan),
+        $should_plan, $swan),
+    ways(rig, band, links, who, most, step, apart, is_away, head, false, should_plan, swan),
   )
   initSwept(positive, negative)
 
@@ -1264,20 +1283,36 @@ proc isPlannedReaching*(
 
   kept(PLANNED_REACHES, key(rig, links, $band, bits(turns), $is_away, $who, $head), asked())
 
+func atSwan(path: Path, swan: Option[Swan]): Option[float] =
+  ## Wind of path's moments nearest swan, or none where path winds no swan or stands no moment
+  ## within stride of it (`plan.STRIDE`).
+  ##   Wind, not moment: plan that poses arms again stands several moments at one wind.
+  if swan.isNone: return
+  for wind in path.winds:
+    let off = abs(wind - swan.get.turns)
+    if off <= STRIDE and (result.isNone or off < abs(result.get - swan.get.turns)):
+      result = some(wind)
+
 proc replayedWay(
-  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path,
+  swan: Option[Swan],
 ): Walk =
   ## Way of planned path as engine stands it, moment by moment (`replay`): each moment it
   ## holds, to first that gives, which is left out, and path cut there.
   ##   Judge is still's (`rigid.gives`), so every moment kept holds as still would: joined
   ##     hands over crown from quarter turn away, and from eighth coming back.
+  ##   Way through swan is cut likewise at any moment of wind nearest it (`atSwan`) that stands
+  ##     swan otherwise than its card draws it (`keepsStraight`): still of that card holds no
+  ##     such pose (`plannedStill`).
   if path.plans.len == 0: return
+  let at_swan = path.atSwan(swan)
   var couple = builtFor(rig, band, links, is_away, head, path)
   result = Walk(apart: path.plans[0][0], why: Stop.None, which: none(int))
   result.path = Path(problem: path.problem, direction: path.direction)
   for i in 0..<path.plans.len:
     couple.standMoment(path, i, is_away)
     if couple.gives != Stop.None: break
+    if at_swan == some(path.winds[i]) and not couple.keepsStraight(swan.get.straight): break
     result.moments.add toMoment(couple, path.winds[i]).moment
     result.path.winds.add path.winds[i]
     result.path.plans.add path.plans[i]
@@ -1286,7 +1321,8 @@ proc replayedWay(
   result.path.is_reached = path.is_reached and result.path.plans.len == path.plans.len
 
 proc plannedWay*(
-  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body;
+  swan = none(Swan)
 ): Walk =
   ## Furthest way any style plans toward `most`, own path or its mirror's
   ## (`pathsFor`), as engine stands it (`replayedWay`); earlier of two as far is kept.
@@ -1295,12 +1331,16 @@ proc plannedWay*(
   ##   Couple stand where plan has them at each moment: distance is plan's own, and free.
   ##   Way that ends short of `most` stops where its last moment stands, and names nothing that
   ##     gave: no planned pose stands further on.
-  let turns = (if step >= 0.0: abs(most) else: -abs(most))
-  planAhead(rig, band, links, is_away, @[turns], who)
+  ##   Way through `swan` plans hoop round its straight pair (`plan.Problem.straight`), and
+  ##     holds past swan only where it stands swan as its card draws it (`replayedWay`).
+  let
+    turns = (if step >= 0.0: abs(most) else: -abs(most))
+    straight = (if swan.isSome: some(swan.get.straight) else: none(Arm))
+  planAhead(rig, band, links, is_away, @[turns], who, straight)
   block search:
     for style in STYLES:
-      for path in pathsFor(rig, band, links, is_away, turns, style, who):
-        let got = replayedWay(rig, band, links, is_away, head, path)
+      for path in pathsFor(rig, band, links, is_away, turns, style, who, straight):
+        let got = replayedWay(rig, band, links, is_away, head, path, swan)
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
   # TODO: Name what ends planned way short of `most`: `Stop.None`, with no connection in

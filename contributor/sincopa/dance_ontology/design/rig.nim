@@ -34,7 +34,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, options, os, sequtils, strformat, strutils]
 
 import ../simulation/[body, hold, rig, seen]
-from ../simulation/walk import mirrored, twinAnswering
+from ../simulation/walk import mirrored, Swan, twinAnswering
 import ./[asks, stamps]
 
 
@@ -214,6 +214,14 @@ func jobs*(): seq[Job] =
   for i in 0..<SHOWN.len: result.add Job(cut: i, is_still: false)
   for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
+func sweptSwan(links: seq[Link]): Option[Swan] =
+  ## Swan of hold on way rig sweeps it, which turns positive (`shown`): pair its card draws
+  ## straight, and turns it stands at (`asks.StillAsk`), or none where no card draws swan.
+  ##   Read off card, so sweep and still cannot wind two different swans.
+  for ask in stillAsks():
+    if ask.straight.isSome and ask.turns > 0.0 and ask.links == links:
+      return some((ask.straight.get, ask.turns))
+
 func nameJob*(job: Job): string =
   ## Name of one job: still by its card's key, sweep by its hold and band.
   if job.is_still: job.ask.key
@@ -269,7 +277,8 @@ proc recorded*(job: Job): tuple[note, text: string] =
     var links: seq[Link] = @[]
     for (lead_arm, follow_arm) in cut.arms:
       links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
-    let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
+    let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away,
+                          swan = sweptSwan(links))
     result.note = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
         &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
     result.text = bodyOfSweep(recording)
