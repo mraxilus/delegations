@@ -1,6 +1,8 @@
-## Hold scripts to base JavaScript, and read advisories and latest releases of each node lock.
+## Hold scripts to TypeScript and base JavaScript, and read advisories and latest releases of each
+##   node lock.
 ##   Architect asked that code import nothing beyond base JavaScript where it can avoid it, and
-##     that npm packages stay up to date, security fixes first, read weekly (#1045).
+##     that npm packages stay up to date, security fixes first, read weekly (#1045); then ruled
+##     that `koch check` refuse JavaScript that `tsc` does not emit (D4 of #1078).
 ##   Static part refuses, in `koch check`, each package that script could do without:
 ##     Each name of `dependencies`, `optionalDependencies` or `peerDependencies` of node manifest
 ##       is finding, since page or tool ships it; tools of build alone stay, as dev dependencies.
@@ -15,6 +17,16 @@
 ##       nothing, since each decode copies browser in part, and each part it leaves out is way past.
 ##     Tag reads as HTML reads it, since quote outside value that ends it early hides address.
 ##     Tag inside HTML comment takes same rule, though browser loads none of it.
+##     Each `.js`, `.mjs` or `.cjs` file outside folder `build/`, at any depth and path of tree,
+##       extension in any case, is finding, since `tsc` emits under `build/` alone.
+##     Each `<script>` of page or SVG, under any prefix, is finding unless its body is `@SCRIPT@`
+##       between spaces of HTML, which build fills with compiled TypeScript; script naming address
+##       may keep blank body instead, and page rule reads that address.
+##       Body runs from `>` of tag to first end tag of its name as written, which space of HTML,
+##         `/` or `>` ends. Browser ends body later only where `<` of markup, as `<!--`, stands
+##         before that end tag, so body that browser reads longer is refused even so.
+##       `/>` closes no script, since HTML reads none; type changes nothing, `module`, `importmap`
+##         and JSON alike, since each body but placeholder is code or data no `tsc` checks.
 ##     Finding of project blocks branch of its role alone, as each finding inside project does
 ##       (CURATOR.md, duty 3).
 ##   Verb `advisories` asks npm registry, so `npm.yml` runs it weekly and `check` never does:
@@ -32,6 +44,8 @@
 ##     10.9.9, 2026-11-27).
 ##   Rejected: list of Node built-ins for bare names, which moves with each Node release, where
 ##     `node:` form names built-in by itself.
+##   Rejected: list of types of script that browser runs, which copies browser in part and moves
+##     with its releases; `importmap` and `speculationrules` came late, and each sends requests.
 ##   Cost: imports read by scanner of strings, templates, comments and regular expressions, never
 ##     parsed: regular expression after word or `)`, as after `return`, reads as division, and
 ##     its quote can open string, or template that runs across lines. Specifier on line after its
@@ -39,14 +53,19 @@
 ##     from expression. Such miss can import package that listed tool pulls in and its lock
 ##     hoists, as `playwright-core`; import of address is expected to fail type check of `types`,
 ##     which resolves no address (unmeasured).
-##   Cost: inline script of page reads as none, and so do frame, object and embed at no plain
-##     path, whose script runs apart from page. Path holding query mark that reference encodes,
-##     or address of other host in comment, is refused, though browser loads neither.
+##   Cost: frame, object and embed at no plain path read as none, whose script runs apart from
+##     page. Path holding query mark that reference encodes, or address of other host in comment,
+##     is refused, though browser loads neither.
+##   Cost: `<script href="a.js"/>` before more markup is refused, though XML closes it; `</script>`
+##     closes it as HTML and XML both read it. `<script>` in text or attribute is refused too.
+##   Cost: event handler attribute and `javascript:` address run JavaScript too, and read as none.
+##   Cost: `.js` file takes finding of unread file kind of `layout.nim` too, so one file gives two.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, osproc, sequtils, strutils]
+from std/unicode import runeLen, runeSubStr
 import ./[findings, layout]
 from ./dependencies import LOCK_NODE, MANIFEST_NODE
 from ./kinds import Kind
@@ -91,6 +110,12 @@ const  # TODO: Document.
     ## Command `askAudit` runs in directory of lock, which reads lock alone; `--include=dev` holds
     ##   over `NODE_ENV=production` and `omit=dev`, which drop each listed tool from audit.
   CITE_RULE = " (CONTRIBUTOR.md, TypeScript and Node)"  ## Rule each finding and line cites.
+  EXTENSIONS_JAVASCRIPT = [".js", ".mjs", ".cjs"]  ## Extensions of JavaScript source, lowercase.
+  DIRECTORY_BUILD = "build"  ## Folder, at any depth, that `tsc` emits JavaScript into.
+  PLACEHOLDER_SCRIPT = "@SCRIPT@"  ## Token of page that build fills with compiled TypeScript.
+  RUNES_EXCERPT = 60
+    ## Runes of first line of body that finding echoes at most, as excerpt of `commits.nim` does;
+    ##   body can run to hundreds of lines.
 
 
 type  # TODO: Document.
@@ -452,12 +477,71 @@ func checkPage*(path, text: string): seq[Finding] =
       at = lowered.find(marker, at + 1)
 
 
+func findEndTag(lowered, written: string; at: int): int =
+  ## Find `<` of first end tag of name as written, prefix included, at or past `at`, which space
+  ##   of HTML, `/` or `>` ends, as HTML ends script; length of text where none stands.
+  let marker = "</" & written
+  var found = lowered.find(marker, at)
+  while found >= 0:
+    let after = found + marker.len
+    if after < lowered.len and lowered[after] in SPACES_HTML + {'/', '>'}: return found
+    found = lowered.find(marker, found + 1)
+  lowered.len
+
+
+func excerpt(body: string): string =
+  ## Echo first line of body, cut to `RUNES_EXCERPT` runes, then escaped as address of page is.
+  let line = body.splitLines[0]
+  if line.runeLen <= RUNES_EXCERPT: line.escape("", "")
+  else: line.runeSubStr(0, RUNES_EXCERPT).escape("", "") & "…"
+
+
+func checkScriptInline(path, text: string): seq[Finding] =
+  ## Report each script of page or SVG whose body is other than `@SCRIPT@` between spaces of HTML,
+  ##   at its line; script naming address may keep blank body instead.
+  let lowered = text.toLowerAscii
+  for tag in text.tags:
+    if tag.name != "script": continue
+    let
+      opening = min(tag.ending + 1, text.len)
+      closing = lowered.findEndTag(tag.written, opening)
+      body = text[opening ..< closing].strip(chars = SPACES_HTML)
+    if body == PLACEHOLDER_SCRIPT: continue
+    if body.len == 0 and tag.attributes.anyIt(it.name.isAddressScript): continue
+    result.add finding(
+      path,
+      tag.line,
+      "Page holds script that `tsc` does not emit; write it in TypeScript, which build fills in " &
+        "at `" & PLACEHOLDER_SCRIPT & "`" & CITE_RULE & "; got `" & body.excerpt & "`.",
+      help = "Body of script is `" & PLACEHOLDER_SCRIPT & "` alone, or blank where script names " &
+        "address; `</script>` ends each, since HTML reads no `/>` of script.",
+    )
+
+
+func checkJavaScript(path: string): seq[Finding] =
+  ## Report file of JavaScript outside folder `build/` at any depth, its extension in any case.
+  let
+    parts = path.split('/')
+    extension = path.splitFile.ext
+  if extension.toLowerAscii notin EXTENSIONS_JAVASCRIPT: return
+  if DIRECTORY_BUILD in parts[0 ..< parts.high]: return
+  result.add finding(
+    path,
+    0,
+    "File is JavaScript that `tsc` does not emit; write it in TypeScript, whose JavaScript `tsc` " &
+      "emits under `build/`" & CITE_RULE & "; got `" & extension & "`.",
+  )
+
+
 proc checkPackagesNode*(tree: Tree): seq[Finding] =
-  ## Run each part of static check over tree: manifests, scripts, then pages.
+  ## Run each part of static check over tree: manifests, scripts, pages, then JavaScript files.
   for e in tree:
     if e.path.extractFilename == MANIFEST_NODE: result.add checkManifest(e.path, e.content)
     elif e.kind == some(Kind.TypeScript): result.add checkScript(e.path, e.content)
-    elif e.kind in [some(Kind.Html), some(Kind.Svg)]: result.add checkPage(e.path, e.content)
+    elif e.kind in [some(Kind.Html), some(Kind.Svg)]:
+      result.add checkPage(e.path, e.content)
+      result.add checkScriptInline(e.path, e.content)
+    result.add checkJavaScript(e.path)
 
 
 
