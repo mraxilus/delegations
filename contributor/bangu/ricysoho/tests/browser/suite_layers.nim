@@ -443,6 +443,33 @@ proc runSuite() {.async.} =
   discard DOCUMENT.querySelector(cstring("#lesson .path button[data-b=\"" & $root & "\"]")).click()
   expectThat chosenKey() == "b" & $root, "click on bar of path moves lesson to it"
   expectThat pathBars().len == 0, "bar that no bar holds takes no path"
+  let inner = block:
+    var found = -1
+    for b, bar in model.bars:
+      if found < 0 and bar.parent >= 0 and model.parted(b).anyIt(it[0] == 'b'): found = b
+    found
+  expectThat inner >= 0 and chosenKey() != "b" & $inner,
+      "first case holds bar with parent and bar among its parts"
+  discard DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $inner & "\"]")).click()
+  editor.firstElementChild.left
+  expectThat chosenKey() == "b" & $inner, "click on bar under text moves lesson to it"
+  for selector in ["#lesson .head .kind", "#lesson .path button", "#lesson li .kind",
+      "#lesson li q", "#lesson q.words"]:
+    let found = queryAll(cstring(selector))
+    expectThat found.len > 0 and found.allIt(not it.getAttribute("lang").isNull and
+        $it.getAttribute("lang").to(cstring) == "jbo"),
+        "Lojban of lesson takes its language: " & selector
+  let keyed = DOCUMENT.querySelector("#lesson ol li")
+  expectThat not keyed.isNull, "lesson of bar lists its parts"
+  if not keyed.isNull:
+    let pressed_key =
+      if keyed.getAttribute("data-b").isNull: "w" & $keyed.getAttribute("data-p").to(cstring)
+      else: "b" & $keyed.getAttribute("data-b").to(cstring)
+    keyed.pressed("Enter")
+    expectThat chosenKey() == pressed_key, "Enter on part moves lesson to it"
+  let kept = chosenKey()
+  discard DOCUMENT.querySelector("#lesson .meaning").click()
+  expectThat chosenKey() == kept, "click inside lesson keeps it"
   ended "Click on part or on bar of path moves lesson to it"
 
   # le ctuca cu stali ba lo nu samcu'a
