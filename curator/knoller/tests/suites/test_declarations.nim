@@ -663,8 +663,104 @@ suite "Declarations":
       "const\n  # Note.\n  N* = 3\n",  # `#` below keyword may head first group, so no doc of it
       "const  # Sizes.\n  ## Size of one.\n  N* = 3\n",  # section holds doc, so first name's
       "const\n  # Doc.\n  B* = block:\n    2\n",  # doc of value opening `block`
-      "proc f*() =\n  ## Do.\n  let\n    ## Local.\n    x = 1\n  discard x\n",  # local section
       "proc f*() =\n  ## Do.\n\n  # Read.\n  let\n    x = 1\n  discard x\n",  # stage comment
+    ]:
+      checkpoint kept
+      check kept.isSettled
+
+
+  test "doc of section at any reach stands where global section's does, but comment above stays":
+    # Doc of section inside routine, block opening scope or entry block takes position and form of
+    #   global section's (VI.9): `#` comment on keyword line, else above keyword. Comment above
+    #   local keyword stays, since stage comment (VI.4) or doc of block holding section stands
+    #   there too. Case held: `const` of suite "Internal: Couple stand for sweep" of
+    #   `tests/test_rigid.nim` of `dance_ontology` at `3fd4d739`, line 739, whose doc of several
+    #   lines stands right below keyword, under doc of suite; and `const  ## Doc.` inside routine,
+    #   which knoller at `e56d0fec` passes.
+    #   Domain: routine, template, `test`, `block`, `for` and entry block; each keyword; `##` on
+    #   keyword line, alone and with lines lexer joins to it; `##` right below keyword, of one
+    #   line, of several, too wide to join, and under stage comment.
+    let
+      rigid = "suite \"Internal: Couple stand for sweep\":\n" &
+          "  ## Where couple stand for sweep is chosen from every distance walked.\n" &
+          "  const\n    ## Same-name single hold at torso, walked 0.8 of turn.\n" &
+          "    ## L-l turning follow's positive way and R-r follow's negative are one hold.\n" &
+          "    left_to_left_positive: seq[Carry] = @[(0.44, 0.72, 0.125)]\n"
+            # lines 734 to 744 of `test_rigid.nim`, docs cut to one and two lines, names to one
+      wide = "x".repeat(92)
+    check checkDocs("a.nim", rigid).mapIt((it.line, it.brief)) == @[
+      (3, "doc of section stands on its keyword line, or above it where that line is too long; " &
+          "got it below `const`"),
+    ]
+    check rigid.fixed == "suite \"Internal: Couple stand for sweep\":\n" &
+        "  ## Where couple stand for sweep is chosen from every distance walked.\n" &
+        "  # Same-name single hold at torso, walked 0.8 of turn.\n" &
+        "  # L-l turning follow's positive way and R-r follow's negative are one hold.\n" &
+        "  const\n    left_to_left_positive: seq[Carry] = @[(0.44, 0.72, 0.125)]\n"
+    check rigid.fixed.isSettled
+    check rigid.fixed.spellingsCode == rigid.spellingsCode
+    for (breach, settled, brief) in [
+      (
+        "proc f*() =\n  ## Do.\n  const  ## Doc.\n    a = 1\n  discard a\n",
+        "proc f*() =\n  ## Do.\n  const  # Doc.\n    a = 1\n  discard a\n",
+        "doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
+        "`##` on `const`",
+      ),
+      (
+        "template t*() =\n  ## Do.\n  let  ## Doc,\n    ##   of two lines.\n    m = 1\n",
+        "template t*() =\n  ## Do.\n  # Doc,\n  #   of two lines.\n  let\n    m = 1\n",
+        "doc of section over lines stands above its keyword, as `#` comment; got it on keyword " &
+        "line of `let`",
+      ),  # lexer joins outline to doc on keyword line
+      (
+        "proc f*() =\n  ## Do.\n  let\n    ## Local.\n    x = 1\n  discard x\n",
+        "proc f*() =\n  ## Do.\n  let  # Local.\n    x = 1\n  discard x\n",
+        "doc of section stands on its keyword line, or above it where that line is too long; " &
+        "got it below `let`",
+      ),  # one line right below keyword joins it
+      (
+        "proc f*() =\n  ## Do.\n\n  # Read.\n  let\n    ## Local.\n    x = 1\n  discard x\n",
+        "proc f*() =\n  ## Do.\n\n  # Read.\n  let  # Local.\n    x = 1\n  discard x\n",
+        "doc of section stands on its keyword line, or above it where that line is too long; " &
+        "got it below `let`",
+      ),  # stage comment above stays, and doc below is section's
+      (
+        "test \"t\":\n  var\n    ## Count.\n    n = 0\n  check n == 0\n",
+        "test \"t\":\n  var  # Count.\n    n = 0\n  check n == 0\n",
+        "doc of section stands on its keyword line, or above it where that line is too long; " &
+        "got it below `var`",
+      ),
+      (
+        "block:\n  type\n    ## " & wide & ".\n    T = int\n  discard T(1)\n",
+        "block:\n  # " & wide & ".\n  type\n    T = int\n  discard T(1)\n",
+        "doc of section stands on its keyword line, or above it where that line is too long; " &
+        "got it below `type`",
+      ),  # too wide to join, so above
+      (
+        "for i in 0..1:\n  const  ## Doc.\n    a = 1\n  echo a + i\n",
+        "for i in 0..1:\n  const  # Doc.\n    a = 1\n  echo a + i\n",
+        "doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
+        "`##` on `const`",
+      ),
+      (
+        "when isMainModule:\n  type  ## Doc.\n    T = int\n  echo T(1)\n",
+        "when isMainModule:\n  type  # Doc.\n    T = int\n  echo T(1)\n",
+        "doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
+        "`##` on `type`",
+      ),  # entry block
+    ]:
+      checkpoint breach
+      check checkDocs("a.nim", breach).mapIt(it.brief) == @[brief]
+      check breach.fixed == settled
+      check settled.isSettled
+      check settled.spellingsCode == breach.spellingsCode
+    for kept in [
+      "proc f*() =\n  ## Do.\n  const  # Sizes.\n    N = 3\n  discard N\n",
+      "proc f*() =\n  ## Do.\n  discard 1\n  # Sizes.\n  const\n    N = 3\n  discard N\n",
+        # one line above local keyword stays above, as stage comment may
+      "proc f*() =\n  ## Do.\n  let\n    # Note.\n    x = 1\n  discard x\n",
+        # `#` below keyword may head first group, so no doc of it
+      "block:\n  # Doc,\n  #   of two lines.\n  type\n    T = int\n  discard T(1)\n",
     ]:
       checkpoint kept
       check kept.isSettled
