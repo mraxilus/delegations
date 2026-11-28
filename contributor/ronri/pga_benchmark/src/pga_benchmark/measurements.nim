@@ -4,6 +4,8 @@
 ##   so any heap use shows as count, and every result is folded into one sink after timing
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
 ##   library's radius norm returns NaN where 𝐦 ∘ 𝐦 is negative and that is measured, not stated.
+##   Optional result folds its value, and none folds nothing and counts as no NaN.
+##     So change whose operation returns `Option` builds and times in bench, as pin's operations do.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool element and
 ##   writes result element: what moves is operation's own traffic.
 ##   Result elements start uninitialised (`noinit`): array filled with zeros would let C compiler
@@ -34,7 +36,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, macros, math, monotimes, strutils, times]
+import std/[algorithm, macros, math, monotimes, options, strutils, times]
 
 # Typed references name objects that P09, `object-names`, names in `pga`; reference wins.
 import pga except Circle, Dipole, Flector, Line, Motor, Plane, Point, PointRound, Sphere
@@ -100,8 +102,13 @@ func fold*[B: static Bases](m: MultivectorOf[B]): float =
   for b in B: result += m[b]
 
 func fold*[T: object](x: T): float =
-  ## Fold every field of typed object into sink, recursively.
-  for _, value in x.fieldPairs: result += fold(value)
+  ## Fold every field of typed object into sink, recursively; optional result folds its value.
+  ##   None folds nothing. Branch rather than overload, so build of pin numbers its symbols as
+  ##     its baselines were timed on.
+  when T is Option:
+    if x.isSome: fold(x.get) else: 0.0
+  else:
+    for _, value in x.fieldPairs: result += fold(value)
 
 func isAnyNan*(x: float): bool {.inline.} =
   ## Decide whether scalar is NaN.
@@ -117,9 +124,13 @@ func isAnyNan*[B: static Bases](m: MultivectorOf[B]): bool =
     if m[b].isNaN: return true
 
 func isAnyNan*[T: object](x: T): bool =
-  ## Decide whether any field of typed object is NaN, recursively.
-  for _, value in x.fieldPairs:
-    if isAnyNan(value): return true
+  ## Decide whether any field of typed object is NaN, recursively; optional result reads its value.
+  ##   None marks absence, and is never NaN.
+  when T is Option:
+    x.isSome and isAnyNan(x.get)
+  else:
+    for _, value in x.fieldPairs:
+      if isAnyNan(value): return true
 
 
 

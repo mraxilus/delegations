@@ -235,7 +235,8 @@ are D6 a, D7 a, D8 a, D9 b, D10 b, D11 b, D12 b, D13 b and D51 b.
 - **P05, `multivector-align`.** It adds nothing once this proposal lands, since this proposal
   aligns the whole set by the same rule (D14 b, D15 b).
 - **P09, P10 and P13.** P09, `object-names`, names objects by the aliases at pin. P10,
-  `homogeneous-scalar`, multiplies its pairs through the `⟑` and `⟇` of this proposal. P13,
+  `homogeneous-scalar`, multiplies its pairs through the `⟑` and `⟇` of this proposal. It also
+  moves both forms of `|⊘` to `pga/scalars.nim`, as the root of the pair. P13,
   `transform-operator`, builds its sandwich from the types of both operands, beside the forms of
   this proposal. Each builds on it.
 - **P08, `compound-tables`.** It builds the supports, the cocarrier, the center and the container
