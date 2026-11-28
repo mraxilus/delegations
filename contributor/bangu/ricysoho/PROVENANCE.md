@@ -3786,13 +3786,14 @@ ni'o **le ctuca poi zvati le cnita be le se ciska cu skicu le valsi .a le linji 
       Verified by `browser/suite_layers.nim`.
 
 ni'o **le ctuca cu glico gi'e pilno lo smuni pe le liste ge'u va'o lo nu le liste cu vasru ke'a to
-    `D1 c` pe `#1055` toi**
-  .i pa klesi cu pilno le smuni be le jbocme be vo'a va'o lo nu le liste cu vasru ke'a
-  .i lo linji pe zo poi .e zo nu .e zo be .e lo tcita cu pilno le smuni be le pamoi valsi poi jarco
-      le klesi
-  .i le papri cu cliva lo valsi pe `SE` .a `NAhE` .a `BAhE` .a `PA` poi lidne le valsi
+    le romoi `D1 c` pe `#1055` toi**
+  .i pa klesi pe `Basis.Name` cu pilno le smuni be le jbocme be vo'a
+  .i lo linji pe zo poi .e zo nu .e zo be .e lo tcita cu pilno le smuni be le pamoi valsi poi
+      ponse lo selma'o pe le klesi
+  .i se ki'u bo le papri cu cliva lo valsi pe `SE` .a `NAhE` .a `BAhE` .a `JAI` ge'u ku .e lo namcu
       Verified by `suites/test_layers.nim`.
-  .i ro drata klesi cu pilno lo glico selci'a pe le papri Verified by `suites/test_meanings.nim`.
+  .i ro klesi pe `Basis.Own` cu pilno lo glico selci'a pe le papri
+      Verified by `suites/test_meanings.nim`.
   .i le smuni cu selzba fi `gismu.txt` .e `cmavo.txt` pe `1.5+dfsg.1-4` pe `lojban-common`
   .i le stosni pe `lists.nim` cu stodi le re datnyvei
   .i ro gismu .e ro cmavo pe le liste pe le genturfa'i cu ponse lo smuni
@@ -3804,7 +3805,7 @@ ni'o **le ctuca cu glico gi'e pilno lo smuni pe le liste ge'u va'o lo nu le list
   .i le papri cu sisku le smuni be le valsi poi le genturfa'i cu tcidu ke'a ne'i le liste po'o
   .i se ki'u bo le cmene po'u zoi gy. constructor .gy. cu ponse no smuni
       Verified by `browser/suite_layers.nim`.
-  .i lo lujvo .e lo lerfu pe lo namcu cu ponse no smuni to `Open questions` toi
+  .i lo lujvo .e lo lerfu pe lo namcu cu ponse no smuni to `#1101` toi
   .i `Logical Language Group` rinka lo nu le datni cu zifre fi ro da
   .i le girzu cu cpedu lo nu lo selzba be fi le datni cu cusku le krasi .e lo du'u le datni cu na
       mulno kei .e le cmene .e le judri be le girzu noi krasi lo zmadu datni
@@ -4955,13 +4956,10 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
 
 ## Open questions
 
-- ni'o ni'o ni'o ny.mai **lo smuni be lo lujvo .e lo lerfu pe lo namcu**
-  .i `lujvo.txt` pe `lojban-common` cu vasru lo glico valsi be zo prulamdei
-  .i ku'i le liste cu vasru lo glico valsi .e lo liste be lo kunti po'o gi'e vasru no smuni
-  .i ji'a 15 linji pe le liste cu pilno lo drata tarmi
-  .i pa lerfu pe lo namcu cu sinxa pa cmavo pe `PA`
-  .i ku'i denpa bu cu sinxa zo pi .a zo pi'e ja'i lo lerfu poi sruri ke'a
-  .i se ki'u bo le papri cu nitcu lo nu le porsi cu cusku le cmavo be ro lerfu
+- ni'o ni'o ni'o ny.mai **lo selbri poi lo jorne cu jorne ke'a**
+  .i le papri cu pixra pa selbri poi zo je jorne re pagbu be ke'a ta'i pa tanru
+  .i se ki'u bo le ctuca cu jarco le smuni be zo tanru pe le liste
+  .i ku'i lo selbri poi lo jorne cu jorne ke'a cu na tanru
   .i `Architect` jdice no da
 - ny.mai **zoi gy. brod .gy. noi rafsi gi'e vasru vo lerfu**
   .i mu gismu cu ponse zoi gy. brod .gy.
