@@ -499,18 +499,22 @@ var MEANINGS: JsObject
 
 proc parsed(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
   ## le se tcidu be lo selci'a pe `JSON`
-proc keyed(text: cstring): cstring {.importjs: "#.toLowerCase().replace(/[.,]/g, '')".}
-  ## le valsi poi se ciska ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e no lerfu po'u
-  ##     slaka bu
+proc owns(node: JsObject, key: cstring): bool
+    {.importjs: "Object.prototype.hasOwnProperty.call(#, #)".}
+  ## jdice lo du'u `node` ponse `key` ne'i vo'a
+  ##   .i lo ckaji be ro dacti pe `JavaScript` po'u zoi gy. constructor .gy. cu na se jdice
 
 
 proc toMeaning(text: cstring): Option[(cstring, cstring)] =
   ## le glico valsi .e le smuni be pa valsi pe le liste
+  ##   .i le valsi cu du le lerfu poi le genturfa'i cu tcidu ke'a to `Occurrence.text` toi
+  ##   .i se ki'u bo le valsi cu se ciska ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e
+  ##       no lerfu po'u slaka bu
   if MEANINGS.isNil:
     let node = byId("meanings")
     MEANINGS = if node.isNull: emptyObject() else: parsed(node.textContent.to(cstring))
-  let entry = MEANINGS[text.keyed]
-  if entry.isUndefined: return none((cstring, cstring))
+  if not MEANINGS.owns(text): return none((cstring, cstring))
+  let entry = MEANINGS[text]
   some((entry[0].to(cstring), entry[1].to(cstring)))
 
 
