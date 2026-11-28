@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 36e42c7b49e38d5b |
+| Rules   | 1ec04e69341a8e44 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It runs each test file under each
