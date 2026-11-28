@@ -62,9 +62,9 @@ type
     Zaho, Zei, Zeha, Zi, Zihe, Zo, Zoi, Zohu,
 
 
+# ciska ro selma'o ta'i lo nu `CLL 20` ciska
+#   .i ro lerfu poi na du `h` barda
 const LUT_NAME_BY_SELMAHO = block:
-  ## ciska ro selma'o ta'i lo nu `CLL 20` ciska
-  ##   .i ro lerfu poi na du `h` barda
   var lut: array[Selmaho, string]
   for selmaho in Selmaho:
     for letter in symbolName(selmaho):

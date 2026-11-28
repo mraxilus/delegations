@@ -10,7 +10,7 @@ import std/[os, osproc, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[edits, purity, reports, rules]
 
 
-const
+const  # TODO: Document.
   MODULE_ALGEBRA = """
 {.experimental: "strictFuncs".}
 

@@ -10,7 +10,7 @@ import ./fixtures
 import ../../src/[assets, findings, font_stacks]
 
 
-const
+const  # TODO: Document.
   OMEGA = 0x3A9  ## Greek capital omega, which Latin font faces lack.
   ARROW = 0x2192  ## Rightwards arrow, which text font faces often lack.
   E_ACUTE = 0xE9  ## Latin small e with acute, which Latin font faces hold.

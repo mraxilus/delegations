@@ -37,7 +37,7 @@ import std/[options, sets, strutils]
 import ./[domains, findings, layout, markdown, prose_own]
 
 
-const
+const  # TODO: Document.
   PATHS_ENGLISH* = [
     ".github/ISSUE_TEMPLATE/brief.md",
     ".github/ISSUE_TEMPLATE/process-change.md",

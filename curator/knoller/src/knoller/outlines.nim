@@ -39,7 +39,7 @@ import std/[sequtils, strutils]
 import ./[form, reports, tokens]
 
 
-type
+type  # TODO: Document.
   KindComment* {.pure.} = enum  ## Define kind of comment, which decides how its outline reads.
     Doc  ## `##` doc, as lexer joins it.
     Plain  ## `#` comment: run of own-line lines at one column, or trailing comment alone.
@@ -62,7 +62,7 @@ type
     steps: seq[int]  ## Step each line of comment takes once fixed.
 
 
-const
+const  # TODO: Document.
   MARKS_CLOSING* = {'.', '?', '!'}  ## Characters closing sentence (VIII.2 asks question as one).
   STEP_NUANCE = 2  ## Spaces nuance stands past where text of its parent starts (VI.2).
   STEP_WRAP_GENERATED = 2  ## Spaces wrap of generated summary stands past it.

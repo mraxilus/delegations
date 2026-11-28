@@ -11,7 +11,7 @@
 import std/strutils
 
 
-const
+const  # TODO: Document.
   CHARS_IDENT = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## ASCII characters identifier is built from; raw string prefix is one of them.
   CHARS_NAME* = CHARS_IDENT + {'\x80' .. '\xFF'}

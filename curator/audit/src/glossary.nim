@@ -25,7 +25,7 @@ import std/[strutils, tables]
 import ./[findings, markdown]
 
 
-const
+const  # TODO: Document.
   HEADING_STANDARDS* = "## Standards"
     ## Heading under which glossary names standards its symbols come from.
   HEADING_LANGUAGE* = "## Language"  ## Heading under which glossary defines its terms.

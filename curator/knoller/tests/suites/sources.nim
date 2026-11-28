@@ -4,7 +4,7 @@
 {.experimental: "strictFuncs".}
 
 
-const
+const  # TODO: Document.
   SOURCE* = """
 ## Module doc with `ctx` in it, which is comment and unread.
 

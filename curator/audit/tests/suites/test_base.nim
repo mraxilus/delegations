@@ -7,7 +7,7 @@ import ../../src/[base, findings, plan, provenance]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   GUIDE = "# Guide\n\nSteps.\n\n## Names\n\nWords.\n\n## Toolchain\n\nPin.\n\n" &
     "## Output contract\n\nSign off.\n"
     ## Guide holding sections of content, then one of process, as `GUIDE.md` does.

@@ -14,7 +14,7 @@
 import std/[os, sequtils, strutils, unittest]
 
 
-const
+const  # TODO: Document.
   DIRECTORY_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
     ## Project whose nimble file names each package it requires.
   DIRECTORY_SOURCE = DIRECTORY_PROJECT / "src"  ## Package sources each import of `src/` stays in.

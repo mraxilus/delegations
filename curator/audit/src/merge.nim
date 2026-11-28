@@ -49,7 +49,7 @@ import ../../knoller/src/knoller
 import ./[base, checker, compilers, findings, hooks, layout, plan, projects, toolchain, tree]
 
 
-const
+const  # TODO: Document.
   DIRECTORY_MERGE* = "koch-merge"
     ## Second tree, in git dir of checkout, where `koch check` judges branch as merged with base.
   DIRECTORY_MERGE_BUILD = "koch-merge-build"
@@ -60,7 +60,7 @@ const
     ## Author of merge commit, which never leaves second tree.
 
 
-type
+type  # TODO: Document.
   Merge* = object  ## Define merge of branch with base, as second tree holds it.
     directory*: string  ## Top of second tree, in git dir of checkout.
     base*: string  ## Commit of base, second parent of merge; koch of merge compares with it.

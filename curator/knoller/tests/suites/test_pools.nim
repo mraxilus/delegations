@@ -9,7 +9,7 @@ import ../../src/knoller/pools
 
 const BARRIER = 4  ## Jobs that must stand at barrier at once before any leaves it.
 
-var
+var  # TODO: Document.
   ARRIVED: Atomic[int]  ## Jobs that reached barrier of side-by-side test.
   STARTED: Atomic[int]  ## Jobs that started in test of exception.
 

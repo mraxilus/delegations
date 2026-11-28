@@ -73,7 +73,7 @@ import ../../knoller/src/knoller
 import ./findings
 
 
-const
+const  # TODO: Document.
   KEY_ASSETS* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
   DIRECTORY_ASSETS* = ".cache/koch/assets"
     ## Default store, under home and outside checkout, in koch's own directory.

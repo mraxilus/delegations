@@ -61,7 +61,7 @@ import std/[algorithm, sequtils, sets, strutils, tables]
 import ./[declared, edits, reports, symbols, tokens, views]
 
 
-type
+type  # TODO: Document.
   Pures* = object  ## Define what compiler tells pure routine rule of one file.
     reason*: string  ## Why compiler proved nothing for file; empty where it proved.
     sites*: seq[(int, int)]
@@ -86,7 +86,7 @@ type
     is_candidate: bool  ## Shape admits it: body, no foreign pragma, no routine taken, own code.
 
 
-const
+const  # TODO: Document.
   EFFECTS = [
     "echo", "debugEcho", "stdout", "stderr", "stdin", "write", "writeLine", "writeFile",
     "readLine", "readLines", "readAll", "readFile", "readChar", "open", "close", "flushFile",

@@ -42,7 +42,7 @@ import ./[
 ]
 
 
-const
+const  # TODO: Document.
   FILES_CHECKER* = ["koch.nim", "koch.nim.cfg"]  ## Root files driving every project's checks.
   DAYS_RECENT* = 7
     ## Window `--recent` looks back over, matching weekly cron in `check.yml`. Both are named

@@ -11,7 +11,7 @@ import ../../src/[bufbuild, findings, schemas]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   SHIPPED = """
 syntax = "proto3";
 

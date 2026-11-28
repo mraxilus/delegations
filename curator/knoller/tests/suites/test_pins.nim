@@ -6,7 +6,7 @@ import std/[options, strutils, unittest]
 import ../../src/knoller/pins
 
 
-const
+const  # TODO: Document.
   PIN = "2.2.4"  ## Compiler version nimble text pins.
   COMMIT = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where nimble text pins commit.

@@ -10,7 +10,7 @@ import ../../src/[citations_section, findings, layout]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   GUIDE = "# Guide\n\n## Work for subagents\n\nHand work off.\n\n## Output contract\n\n" &
     "### The sign-off\n\n#### The table\n\nRows.\n\n## Provenance guide\n\n" &
     "### Prune, never narrate\n\nCut.\n\n- **Verify by a run.** Claim needs run.\n"

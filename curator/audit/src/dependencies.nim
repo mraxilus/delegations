@@ -47,7 +47,7 @@ import ../../knoller/src/knoller
 import ./[findings, projects]
 
 
-const
+const  # TODO: Document.
   DIRECTORY_DEPS* = "deps"  ## Directory Atlas restores into when `atlas.config` names none.
   ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
   MANIFEST_NODE* = "package.json"  ## Node manifest, naming tools project type-checks with.

@@ -8,7 +8,7 @@ import ../../../knoller/src/knoller
 import ../../src/[findings, idioms]
 
 
-const
+const  # TODO: Document.
   LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
   NIMBLE = "x.nimble"  ## Nimble file of package at root, which each path `tests/` lies in.
 

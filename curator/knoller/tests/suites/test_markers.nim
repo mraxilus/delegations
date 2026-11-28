@@ -9,7 +9,7 @@ import std/[os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[edits, markers, reports, rules, symbols]
 
 
-const
+const  # TODO: Document.
   ALGEBRA = """
 {.experimental: "strictFuncs".}
 

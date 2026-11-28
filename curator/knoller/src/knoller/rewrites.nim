@@ -41,7 +41,7 @@ import std/[algorithm, sequtils, strutils, tables]
 import ./[edits, form, rules, symbols, tokens, views]
 
 
-type
+type  # TODO: Document.
   Rename* = object  ## Define rename to plan: declaration site, old and new name, rule.
     path*: string  ## Repository-relative path of declaring file.
     line*: int  ## One-based line of declared name.
@@ -58,7 +58,7 @@ type
     refusal*: string  ## Why rename is refused; empty where planned.
 
 
-const
+const  # TODO: Document.
   NAME_RESULT = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
 

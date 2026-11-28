@@ -8,7 +8,7 @@ import ../../src/releases
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   PATH_DRIVER = "curator/audit/audit.nimble"  ## Nimble file of driver, whose pin notice reads.
   PATH_KNOLLER = "curator/knoller/knoller.nimble"  ## Curator project pinned with driver.
   PATH_RICTADNI = "contributor/bangu/rictadni/rictadni.nimble"

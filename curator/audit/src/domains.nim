@@ -33,7 +33,7 @@
 import std/[options, strutils]
 
 
-type
+type  # TODO: Document.
   Domain* = object  ## Define one life area: folder slug, display name, one-line theme.
     folder*: string  ## Directory name under `contributor/`; also branch segment.
     name*: string  ## Display name, may hold characters git refs reject.
@@ -51,7 +51,7 @@ type
     name*: string  ## Free part after prefix.
 
 
-const
+const  # TODO: Document.
   DOMAINS* = [
     Domain(folder: "abstand", name: "abstand", theme: "Music."),
     Domain(folder: "bangu", name: "bangu", theme: "Language."),
