@@ -1254,12 +1254,11 @@ them, most of them renames that the record cites. A rename and its record then t
   commit lands. `check` and `check-commits` read each commit of the branch through `diff-tree`.
 - Verified by `suites/test_commits.nim` and `suites/test_hooks.nim`.
 
-**Each merge of the branch keeps each `##` section that one parent added to a `PROVENANCE.md`, as
-the Architect ruled D5 a on #1086.** A merge is each commit of two parents or more in
-`origin/main..HEAD`, and `check-commits` runs the check, which takes no verb of its own. A heading
-that a parent holds and no merge base holds is one that the parent added, so a heading that one
-parent removed passes. The finding names the record, the heading and the merge
-(`sections_kept.nim`). The check reads no text inside a kept section, as the ruling asks.
+**Each merge keeps each `##` section that one parent added to a `PROVENANCE.md`, as the Architect
+ruled D5 a on #1086.** A merge is each commit of two parents or more in `origin/main..HEAD`, and
+`check-commits` alone runs the check. A heading that a parent holds and no merge base holds is one
+that it added, so a heading that one parent removed passes. The finding names the record, the
+heading and the merge (`sections_kept.nim`). The check reads no text in a kept section.
 
 - Choice: where a parent deleted a record that the merge lacks, the merge takes that deletion. A
   move of a project deletes the record at its old path. Cost: a section that the other parent added
