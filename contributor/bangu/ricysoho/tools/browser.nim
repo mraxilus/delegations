@@ -78,8 +78,7 @@
 
 import std/[base64, json, os, osproc, sequtils, strutils, tables, unicode]
 
-import ../src/browser/draw
-import ../src/browser/samples_layers
+import ../src/browser/[draw, lessons, samples_layers]
 import ../src/ricysoho/[layers, live, nif, prose]
 import ../tests/sample_tatoeba/sentences
 import ./[drive, lists, meanings, page]
@@ -283,10 +282,32 @@ func meant(text: string, found: OrderedTable[string, Meaning]): string =
     result.add "\n"
 
 
+func kinded(text: string, found: OrderedTable[string, Meaning]): string =
+  ## ciska le glico cmene .e le glico selci'a be ro linji pe le se tcidu pe `text` ta'i pa linji
+  ##   .i lo tabmlu cu sepli le re datnypau
+  ##   .i le selci'a cu du lo smuni pe le liste va'o lo nu le liste cu vasru ke'a to `D1 c` toi
+  let
+    reading = text.readTextMarked
+    glosses = reading.occurrences.mapIt(it.reading.toGloss)
+  for bar in reading.toLayers.bars:
+    let lesson = LESSON_KIND[bar.category]
+    var (english, shown) = (lesson.english, lesson.text)
+    case lesson.basis
+    of Basis.Name:
+      if lesson.lojban in found:
+        (english, shown) = (found[lesson.lojban].gloss, found[lesson.lojban].definition)
+    of Basis.Marker:
+      let word = reading.occurrences[glosses.marking(bar.first, bar.last)].text
+      shown = if word in found: shownMarker(word, found[word].gloss, found[word].definition)
+          else: LESSON_NONE
+    of Basis.Own: discard
+    result.add english & "\t" & shown & "\n"
+
+
 proc writeCasesLayers() =
   ## ciska ro se cipra pe le cipra pe le papri pe lo linji
   ##   .i ciska le selci'a .e ro valsi .e ro linji poi le jbezba cu gunma ke'a
-  ##   .i ciska ji'a le smuni be ro valsi ja'i le liste
+  ##   .i ciska ji'a le smuni be ro valsi .e le ctuca be ro linji ja'i le liste
   removeDir(DIRECTORY_LAYERS)
   createDir(DIRECTORY_LAYERS)
   let found = toMeanings(readSource("gismu.txt").text, readSource("cmavo.txt").text)
@@ -295,6 +316,7 @@ proc writeCasesLayers() =
     writeFile(DIRECTORY_LAYERS / $k & ".text", text)
     writeFile(DIRECTORY_LAYERS / $k & ".layers", text.described)
     writeFile(DIRECTORY_LAYERS / $k & ".meanings", text.meant(found))
+    writeFile(DIRECTORY_LAYERS / $k & ".kinds", text.kinded(found))
     inc k
   writeFile(DIRECTORY_LAYERS / "count.text", $k)
 

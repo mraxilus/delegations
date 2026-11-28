@@ -35,8 +35,9 @@ const
   SEED = 1055  ## lo tsiju be lo nu cenba poi selzba
   COUNT_EDITS = 60  ## lo klani be lo nu cenba poi selzba ku'o pe ro se cipra
   CREDIT = ["Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA",
-      "le liste cu na mulno", "le girzu cu krasi lo zmadu datni be le liste .e la lojban."]
-    ## lo pagbu be le selci'a poi le javni pe le liste cu cpedu ke'a
+      "The lists are preliminary.",
+      "The group is a source of more information on the lists and on Lojban."]
+    ## lo pagbu be le selci'a pe le liste poi le javni pe le liste cu cpedu ke'a
     ##   .i le papri cu cusku le cmene .e le judri be le girzu
     ##   .i le papri cu cusku ji'a lo du'u le liste cu na mulno kei .e lo du'u le girzu cu krasi
     ##       lo zmadu datni
@@ -113,16 +114,45 @@ proc settled() {.async.} =
     await nextFrame()
 
 
-proc taughtBars(): seq[int] =
-  ## ro linji poi le ctuca cu skicu ke'a ta'i le porsi
+proc chosenKey(): string =
+  ## le valsi .a le linji poi le ctuca cu skicu ke'a ta'i zoi gy. w3 .gy. .a zoi gy. b5 .gy.
+  let head = DOCUMENT.querySelector("#lesson .head")
+  if head.isNull: "" else: $head.getAttribute("data-chosen").to(cstring)
+
+
+proc pathBars(): seq[int] =
+  ## ro linji poi le ctuca cu jarco ke'a ne'i le pritu be le stedu ta'i le porsi
+  for button in queryAll("#lesson .path button"):
+    result.add parseInt($button.getAttribute("data-b").to(cstring))
+
+
+proc partKeys(): seq[string] =
+  ## ro pagbu poi le ctuca cu jarco ke'a ta'i zoi gy. w3 .gy. .a zoi gy. b5 .gy.
   for item in queryAll("#lesson ol li"):
-    result.add parseInt($item.getAttribute("data-b").to(cstring))
+    let bar = item.getAttribute("data-b")
+    result.add(if bar.isNull: "w" & $item.getAttribute("data-p").to(cstring)
+        else: "b" & $bar.to(cstring))
 
 
-proc titled(): string =
-  ## le cmene be le liste be lo linji poi le ctuca cu skicu ke'a
-  let title = DOCUMENT.querySelector("#lesson .title")
-  if title.isNull: "" else: $title.textContent.to(cstring)
+proc textOf(selector: cstring): string =
+  ## le selci'a pe le pamoi dacti pe le ctuca poi mapti `selector`
+  let node = DOCUMENT.querySelector(cstring("#lesson " & $selector))
+  if node.isNull: "" else: $node.textContent.to(cstring)
+
+
+func partsOf(model: Model, bar: int): seq[string] =
+  ## ro pagbu be pa linji ta'i le porsi pe le se ciska
+  ##   .i pa pagbu cu du pa linji poi le linji cu vasru ke'a .a pa valsi poi no ri cu vasru
+  var starts: seq[(int, string)]
+  for k, kid in model.bars:
+    if kid.parent == bar: starts.add (kid.first, "b" & $k)
+  for word in model.bars[bar].first .. model.bars[bar].last:
+    var is_held = false
+    for kid in model.bars:
+      if kid.parent == bar and kid.first <= word and word <= kid.last: is_held = true
+    if not is_held: starts.add (word, "w" & $word)
+  starts.sort(proc(a, b: (int, string)): int = cmp(a[0], b[0]))
+  for (_, key) in starts: result.add key
 
 
 proc nameDrawn(bar: int): string =
@@ -162,11 +192,12 @@ proc runSuite() {.async.} =
   let
     editor = DOCUMENT.getElementById("editor")
     count = readServed(DIRECTORY_CASES & "count.text").strip.parseInt
-  var texts, expectations, meanings: seq[string]
+  var texts, expectations, meanings, kinds: seq[string]
   for k in 0 ..< count:
     texts.add readServed(DIRECTORY_CASES & $k & ".text")
     expectations.add readServed(DIRECTORY_CASES & $k & ".layers")
     meanings.add readServed(DIRECTORY_CASES & $k & ".meanings")
+    kinds.add readServed(DIRECTORY_CASES & $k & ".kinds")
   expectThat count >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
   for k, text in texts:
     let model = cstring(text).toModel
@@ -298,54 +329,84 @@ proc runSuite() {.async.} =
     await nextFrame()
     for i, word in model.words:
       DOCUMENT.querySelector(cstring("#editor [data-w=\"" & $i & "\"]")).hovered
-      let
-        head = lesson.querySelector(".head b")
-        meaning = lesson.querySelector(".meaning")
-        expected = if found[i].len > 0: found[i] else: LESSON_NONE
-      expectThat not head.isNull and $head.textContent.to(cstring) == $word.text,
-          "lesson names word under pointer: " & $word.text
-      expectThat not meaning.isNull and $meaning.textContent.to(cstring) == expected,
+      let expected = if found[i].len > 0: found[i] else: LESSON_NONE
+      expectThat chosenKey() == "w" & $i, "lesson takes word under pointer: " & $word.text
+      expectThat textOf(".head b") == $word.text and textOf(".head .sel") == $word.gloss,
+          "lesson names word and its selma'o: " & $word.text
+      expectThat textOf(".meaning") == expected,
           "word takes meaning native build gives it: " & $word.text
-      expectThat titled() == LESSON_BARS, "bars of word take their title: " & $word.text
-      let shown = taughtBars()
       var holding: seq[int]
       for b, bar in model.bars:
         if bar.first <= i and i <= bar.last: holding.add b
-      expectThat shown.sorted == holding, "lesson lists each bar that holds word: " & $word.text
-      for n in 1 ..< shown.len:
-        expectThat model.bars[shown[n - 1]].height <= model.bars[shown[n]].height,
-            "lesson lists smallest bar first: " & $word.text
-      for n, item in queryAll("#lesson ol li"):
-        let what = $item.querySelector(".what").textContent.to(cstring)
-        expectThat what == LESSON_CATEGORY[Category(model.bars[shown[n]].category)],
-            "each bar takes text of its kind: " & $word.text
-        expectThat $item.querySelector(".kind").textContent.to(cstring) == shown[n].nameDrawn,
-            "each bar takes name it takes under text: " & $word.text
-  ended "Lesson teaches word under pointer, with meaning native build gives it and each bar of it"
+      holding.sort(proc(a, b: int): int = cmp(model.bars[b].height, model.bars[a].height))
+      expectThat pathBars() == holding,
+          "path names each bar that holds word, largest first: " & $word.text
+      expectThat partKeys().len == 0, "word lists no parts: " & $word.text
+  ended "Lesson teaches word under pointer, its meaning and each bar that holds it as path"
 
   for k, text in texts:
-    let model = cstring(text).toModel
+    let
+      model = cstring(text).toModel
+      taught = kinds[k].split('\n')
     drawn(model, none((int, int, bool)))
     await nextFrame()
     for b, bar in model.bars:
       DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $b & "\"]")).hovered
+      let
+        lesson_kind = LESSON_KIND[Category(bar.category)]
+        expected = taught[b].split('\t')
       var
         above: seq[int]
         parent = bar.parent
       while parent >= 0:
         above.add parent
         parent = model.bars[parent].parent
-      expectThat taughtBars() == @[b] & above, "lesson lists bar, then each bar that holds it: " &
-          text
-      expectThat titled() == LESSON_HELD, "bars that hold bar take their title: " & text
-      for n, item in queryAll("#lesson ol li"):
-        let shown = (@[b] & above)[n]
-        expectThat $item.querySelector(".what").textContent.to(cstring) ==
-            LESSON_CATEGORY[Category(model.bars[shown].category)],
-            "each bar takes text of its kind: " & text
-        expectThat $item.querySelector(".kind").textContent.to(cstring) == shown.nameDrawn,
-            "each bar takes name it takes under text: " & text
-  ended "Lesson teaches bar under pointer, then each bar that holds it, smallest first"
+      expectThat chosenKey() == "b" & $b, "lesson takes bar under pointer: " & text
+      expectThat textOf(".head .kind") == lesson_kind.lojban and
+          lesson_kind.lojban == b.nameDrawn, "bar takes Lojban name it takes under text: " & text
+      expectThat textOf(".head .en") == expected[0] and textOf(".meaning") == expected[1],
+          "bar takes English name and text native build gives it: " & text
+      expectThat pathBars() == above.reversed, "path names each bar that holds bar: " & text
+      expectThat partKeys() == model.partsOf(b), "lesson lists parts of bar in order: " & text
+      for item in queryAll("#lesson ol li"):
+        let part = item.getAttribute("data-b")
+        if part.isNull:
+          let
+            w = parseInt($item.getAttribute("data-p").to(cstring))
+            meaning = meanings[k].split('\n')[w]
+          expectThat $item.querySelector(".en").textContent.to(cstring) ==
+              (if meaning.len > 0: meaning.split(" · ")[0] else: LESSON_NONE),
+              "word part takes gloss native build gives it: " & text
+        else:
+          let p = parseInt($part.to(cstring))
+          expectThat $item.querySelector(".kind").textContent.to(cstring) == p.nameDrawn and
+              $item.querySelector(".en").textContent.to(cstring) == taught[p].split('\t')[0] and
+              $item.querySelector(".what").textContent.to(cstring) == taught[p].split('\t')[1],
+              "bar part takes names and text native build gives it: " & text
+  ended "Lesson teaches bar under pointer, its text, each bar that holds it, and each part of it"
+
+  # pa nu samcu'a pa pagbu .a pa linji pe le pritu cu muvdu le ctuca
+  let
+    model = cstring(texts[0]).toModel
+    deep = block:
+      var found = -1
+      for b, bar in model.bars:
+        if found < 0 and bar.parent >= 0 and model.partsOf(b).len > 1: found = b
+      found
+  drawn(model, none((int, int, bool)))
+  await nextFrame()
+  expectThat deep >= 0, "first case holds bar with parent and parts"
+  discard DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $deep & "\"]")).click()
+  editor.firstElementChild.left
+  let first_part = model.partsOf(deep)[0]
+  discard DOCUMENT.querySelector("#lesson ol li").click()
+  expectThat chosenKey() == first_part, "click on part moves lesson to it"
+  var root = deep
+  while model.bars[root].parent >= 0: root = model.bars[root].parent
+  discard DOCUMENT.querySelector(cstring("#lesson .path button[data-b=\"" & $root & "\"]")).click()
+  expectThat chosenKey() == "b" & $root, "click on bar of path moves lesson to it"
+  expectThat pathBars().len == 0, "bar that no bar holds takes no path"
+  ended "Click on part or on bar of path moves lesson to it"
 
   # le ctuca cu stali ba lo nu samcu'a
   drawn(cstring(texts[0]).toModel, none((int, int, bool)))
@@ -354,9 +415,7 @@ proc runSuite() {.async.} =
   chosen.hovered
   discard chosen.click()
   editor.firstElementChild.left
-  let held = lesson.querySelector(".head b")
-  expectThat not held.isNull and $held.textContent.to(cstring) == $current().words[1].text,
-      "lesson stays on word clicked once pointer leaves"
+  expectThat chosenKey() == "w1", "lesson stays on word clicked once pointer leaves"
   discard chosen.click()
   editor.firstElementChild.left
   expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click lets lesson go"
@@ -364,8 +423,7 @@ proc runSuite() {.async.} =
   bar.hovered
   discard bar.click()
   editor.firstElementChild.left
-  expectThat taughtBars().len > 0 and taughtBars()[0] == 0,
-      "lesson stays on bar clicked once pointer leaves"
+  expectThat chosenKey() == "b0", "lesson stays on bar clicked once pointer leaves"
   discard bar.click()
   editor.firstElementChild.left
   expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click on bar lets lesson go"

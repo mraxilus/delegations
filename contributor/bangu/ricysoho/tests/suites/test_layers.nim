@@ -3,7 +3,7 @@
 ##   .i ro linji cu zvati lo jbini be le linji poi vasru ke'a
 ##   .i ro valsi cu skari ja'i le girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
 ##   .i le selci'a cu du ro selci'a pe le selci'agri to `corpora.nim` toi
-##   .i le genturfa'i cu tcidu ro selci'a pe le ctuca to `lessons.nim` toi
+##   .i le pamoi valsi poi jarco le klesi be ro linji cu ponse lo selma'o pe le klesi to `D1 c` toi
 
 {.experimental: "strictFuncs".}
 
@@ -12,7 +12,6 @@ import std/[options, sequtils, sets, strutils, unittest]
 import ../../src/browser/lessons
 import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru]
 import ./corpora
-from ./reader_prose import errorsMessage
 
 
 const
@@ -26,9 +25,22 @@ const
     ## lo klani be lo selci'a poi le gerna cu sisti bu'u ke'a
     ##   .i le selci'a cu se tcidu ta'i lo nu sinxa lo srera
     ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 82
-  WORDS_BACK = ["ri", "ra", "ru"]
-    ## lo cmavo pe `KOhA` poi sinxa pa sumti poi pu se cusku to `CLL 7.5` toi
-    ##   .i lo tadni cu sisku le sumti
+  COUNT_MARKING_LEAST = 2000
+    ## lo klani be lo linji poi lo valsi cu jarco le klesi be ke'a
+    ##   .i le selci'agri cu vasru 2127 linji be lo ri klesi
+  TAGS = {Selmaho.Bai, Selmaho.Caha, Selmaho.Cuhe, Selmaho.Faha, Selmaho.Fehe, Selmaho.Fiho,
+      Selmaho.Ki, Selmaho.Mohi, Selmaho.Pu, Selmaho.Roi, Selmaho.Tahe, Selmaho.Va, Selmaho.Veha,
+      Selmaho.Viha, Selmaho.Zaho, Selmaho.Zeha, Selmaho.Zi}
+    ## lo selma'o poi cfari pa tcita
+    ##   .i `simple-tense-modal` .e `interval-property` pe `CLL 21.1` cu jarco ri
+  MARKERS: array[Category, set[Selmaho]] = [{}, {}, {}, {}, {}, {}, {Selmaho.Noi, Selmaho.Goi},
+      {Selmaho.Nu}, {Selmaho.Be}, TAGS + {Selmaho.Fa}, TAGS, {}, {}]
+    ## lo selma'o poi jarco le klesi be pa linji
+    ##   .i kunti va'o lo nu le klesi cu pilno le cmene be vo'a .a lo selci'a pe le papri
+  MARKED = [("mi nelci lo se nu do klama", Category.Abstraction, "nu"),
+      ("mi pa roi klama", Category.Tag, "roi"), ("lo zarci noi do klama ke'a", Category.Clause,
+      "noi"), ("mi klama fi lo zarci", Category.Tagged, "fi")]
+    ## lo selci'a .e lo klesi be pa linji pe ke'a .e le valsi poi jarco le klesi
   GROUPS_SELMAHO = [
     (Selmaho.Koha, Group.Sumti),  # `CLL 7.1`
     (Selmaho.Le, Group.Sumti),  # `CLL 6.2`
@@ -146,18 +158,28 @@ suite "Internal: Bars of text":
         of Category.Free: check family == "free"
 
 
-  test "Each text of lesson under page reads as lojban":
-    for text in LESSONS:
+  test "Marking word of each clause, abstraction, link and tag bar takes selma'o of its kind":
+    var count = 0
+    for (name, text) in textsCorpora():
+      let
+        reading = text.readTextMarked
+        glosses = reading.occurrences.mapIt(it.reading.toGloss)
+      for bar in reading.toLayers.bars:
+        if LESSON_KIND[bar.category].basis != Basis.Marker: continue
+        inc count
+        let marker = reading.occurrences[glosses.marking(bar.first, bar.last)].reading
+        checkpoint name & ": " & $bar.category
+        check marker.is_word and marker.selmaho.isSome
+        check marker.selmaho.get in MARKERS[bar.category]
+    check count >= COUNT_MARKING_LEAST
+    for (text, category, expected) in MARKED:
+      let
+        reading = text.readTextMarked
+        glosses = reading.occurrences.mapIt(it.reading.toGloss)
+        bars = reading.toLayers.bars.filterIt(it.category == category)
       checkpoint text
-      check text.errorsMessage.len == 0  # le genturfa'i cu tcidu le selci'a
-    check "le linji cu cu sinxa".errorsMessage.len > 0  # le cipra cu facki lo srera
-
-
-  test "No text of lesson holds ri, ra or ru, whose sumti learner must find":
-    for text in LESSONS:
-      checkpoint text
-      check text.readStream.occurrences.allIt(it.text notin WORDS_BACK)
-    check not "ko samcu'a ri".readStream.occurrences.allIt(it.text notin WORDS_BACK)
+      check bars.len == 1
+      check reading.occurrences[glosses.marking(bars[0].first, bars[0].last)].text == expected
 
 
 suite "Chapter 20":

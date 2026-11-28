@@ -11,6 +11,7 @@
 
 import std/[os, sequtils, strutils, tables, unittest]
 
+import ../../src/browser/lessons
 import ../../src/ricysoho/lists/[cmavo, gismu]
 import ../../tools/[lists, meanings]
 
@@ -116,3 +117,19 @@ suite "Internal: Meanings of the wordlists":
         check found.hasKey(entry.word)  # ro cmavo ponse lo smuni
         check found.getOrDefault(entry.word).gloss.len > 0
         check found.getOrDefault(entry.word).definition.len > 0
+
+
+  test "each kind named from lists takes name they hold, and each kind of own text name they lack":
+    if not (isInstalled("gismu.txt", DIGEST_GISMU) and isInstalled("cmavo.txt", DIGEST_CMAVO)):
+      # `lojban-common` na zvati gi'a na ponse lo liste poi mapti le stosni
+      skip()
+    else:
+      let found = toMeanings(readSource("gismu.txt").text, readSource("cmavo.txt").text)
+      for lesson in LESSON_KIND:
+        checkpoint lesson.lojban
+        case lesson.basis
+        of Basis.Name: check lesson.lojban in found  # le liste cu vasru le cmene
+        of Basis.Own:
+          check lesson.lojban notin found  # le liste cu vasru no cmene
+          check lesson.english.len > 0 and lesson.text.len > 0
+        of Basis.Marker: check lesson.english.len > 0
