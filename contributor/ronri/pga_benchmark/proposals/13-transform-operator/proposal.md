@@ -8,15 +8,15 @@ bases that the terms reach. A full operator takes the three steps of pin, whatev
 
 **What it is for.** At pin a transform spells three steps, two antiproducts and an antireverse,
 which is gap cause D08. With this proposal the transform by a motor type is one function. At
-rga4d it spends ⟦82 multiplies and 113 adds and subtractions⟧, where the chain spends 384
-and 352. Each transform there then runs at ⟦×0.27⟧ of pin. A typed point and line at rga3d spend the
+rga4d it spends 82 multiplies and 113 adds and subtractions, where the chain spends 384
+and 352. Each transform there then runs at ×0.27 of pin. A typed point and line at rga3d spend the
 multiplies and adds of Lengyel's code. At rga4d a typed point and plane spend his multiplies and 3
 adds more, and a line 1 multiply and 16 adds more.
 
 **What it costs.** Each pair of types builds its sum when a program first calls it, so
 `import pga` builds none. The macro writes out two orders of each sum, and keeps the order of
-fewer operations. At cga6d a full multivector by a motor type then adds ⟦about 5 s⟧ to the build
-of a program. The macro holds ⟦150⟧ lines of Nim.
+fewer operations. At cga6d a full multivector by a motor type then adds about 3 s to the build
+of a program. The macro holds 142 lines of Nim, where three forms held 226.
 
 ## Problem
 
@@ -89,8 +89,8 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 
 | Algebra | Chain | This proposal | Reference, point | Time of transforms, of pin |
 |---------|-------|---------------|------------------|----------------------------|
-| rga3d | 96 and 80 | ⟦23 and 16⟧ | 14 and 10 | ⟦×0.27⟧ |
-| rga4d | 384 and 352 | ⟦82 and 113⟧ | 35 and 40 | ⟦×0.27⟧ |
+| rga3d | 96 and 80 | 23 and 16 | 14 and 10 | ×0.27 |
+| rga4d | 384 and 352 | 82 and 113 | 35 and 40 | ×0.27 |
 
 ## Alternatives
 
@@ -104,7 +104,7 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 | First basis of each pair doubled | More operations on 21 of 130 pairs of types, fewer on 1 |
 | Each entry where it is read | Count reads more than the C, so a line at rga4d takes the chain |
 | Matrix alone, or chain alone | Each is more than ×1.9 of the faster order on some pair of types |
-| Three forms of 2026-11-27 | Five rules where two orders serve, tails ⟦×1.33 and ×1.63⟧ (D1 a) |
+| Three forms of 2026-11-27 | Five rules where two orders serve, tails ×1.35 and ×1.66 (D1 a) |
 | Cross form or chain | Three of the five rules, and a line at rga4d of 52 and 52 (D1 a on #1056) |
 | Weight folded first | Same counts, but bulk comes first by convention (D1 a of 2026-11-27) |
 | Choice by time | It reads one machine, which the goal of the library keeps out |
@@ -116,23 +116,25 @@ is counted from its two tables, and the operator as the evaluation reads its C:
 
 - **Build of a call.** Each pair of types builds both orders once in the virtual machine of the
   compiler, the first time a program calls it. At cga6d a full multivector by a motor type adds
-  ⟦5.3 s⟧ to the build of a program, and ⟦122 MiB⟧ to the peak of the compiler. At rga4d the call
-  moves the build by less than the spread of the builds.
-- **Build of `import pga`.** It builds no sum. In the evaluation, it takes ⟦12.75 s⟧ at cga6d
-  against ⟦11.84 s⟧ at pin, with P04 and P14 under it. At cga5d it peaks at ⟦210.3 MiB⟧, against
-  ⟦210.2 MiB⟧ at pin.
-- **Size.** At rga4d the function holds ⟦96⟧ lines of C, inline in each caller. The macro holds
-  ⟦150⟧ lines of Nim, and runs only when the code compiles.
+  2.9 s to the build of a program, and 86 MiB to the peak of the compiler. The three forms add
+  3.6 s and 123 MiB there, on the same machine. At rga4d the call moves the build by less than the
+  spread of the builds.
+- **Build of `import pga`.** It builds no sum. In the evaluation, it takes 9.46 s at cga6d against
+  8.65 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.6 MiB, against 210.5 MiB at
+  pin.
+- **Size.** At rga4d the function holds 134 lines of C, inline in each caller. The macro holds
+  142 lines of Nim, and runs only when the code compiles.
 - **Lengyel's five.** The two orders spend more adds than three of the transforms of Lengyel's
   reference. A point and a plane at rga4d spend 3 adds more, and a line 1 multiply and 16 adds
-  more. So [the gap of P13's table to Lengyel
+  more. The line runs at ×1.13 of his time, and the point at rga3d at ×1.12, though it spends his
+  counts. So [the gap of P13's table to Lengyel
   (#1015)](https://github.com/mraxilus/delegations/issues/1015) stays open, as the Architect ruled
   (D1 a on #1056).
 - **Dimensions.** The matrix grows with the pairs of 𝐧 and its entries, and the chain with 𝐭,
-  so the chain wins more pairs at more dimensions. For a full 𝐦 by a motor type, the macro keeps the matrix at cga5d:
-  464 multiplies and 1 167 adds, against 2 048 and 1 984 of the chain at pin. At rga6d it keeps
-  the chain: 3 072 and 2 944, against 6 144 and 6 016. At cga6d it keeps the chain: 4 096 and
-  3 968, against 8 192 and 8 064.
+  so the chain wins more pairs at more dimensions. For a full 𝐦 by a motor type, the macro keeps
+  the matrix at cga5d: 464 multiplies and 1 167 adds, against 2 048 and 1 984 of the chain at pin.
+  At rga6d it keeps the chain: 3 072 and 2 944, against 6 144 and 6 016. At cga6d it keeps the
+  chain: 4 096 and 3 968, against 8 192 and 8 064.
 
 ## Open decisions
 
@@ -186,10 +188,14 @@ rga4d, and the chain at cga5d.
 The laws also hold the type of each result to the bases that the chain reaches, and the alias
 equal to the chain. By a full multivector, they hold the result to the chain bit for bit, and its
 type to full. Ten count claims hold the multiplies and the adds of each transform measurand:
-⟦82 and 83⟧ at rga4d, and ⟦23 and 14⟧ at rga3d. The operator spends no zero fill, intermediate or
+82 and 113 at rga4d, and 23 and 16 at rga3d. The operator spends no zero fill, intermediate or
 error check there.
 
-⟦EVALUATION⟧
+Its evaluation of 2026-11-28 times the transforms at ×0.27 of pin at rga4d, 19.05 ns against
+71.56 to 71.58 ns. At rga3d they take ×0.27, 4.79 to 4.85 ns against 17.86 to 17.92 ns. The other
+measurands read ×0.93 to ×1.09. The suites pass at the four algebras, with the two tests of this
+proposal. It ran on the Xeon of family 6 model 173, and pin ran in the same run, so each ratio
+compares one machine.
 
 **One example, from the macro to the assembly.** A point by a motor at rga3d is the smallest
 transform of Lengyel's reference. The motor 𝐧 = 0.25𝐞₁ + 0.5𝐞₂ + 0.6𝐞₃ + 0.8𝐞₃₂₁ rotates about a
@@ -354,11 +360,11 @@ Each takes the matrix:
 | rga3d | line | 14, 10 | 14, 10 | ×1.00 |
 
 Each count reads the code that the macro emits. Each pair ran four times on 2026-11-28, on the
-Xeon of family 6 model 207, with seven passes in a copy of the timed loop of `measurements.nim`.
-Each ratio is the time of the operator against the time of Lengyel's code in the same run. Under
-the three forms of 2026-11-27, they read ×1.06 to ×1.10, ×1.00, ×1.00 to ×1.05, ×0.96 and ×1.01
-to ×1.08. The point at rga3d spends his counts, but gcc packs its lanes in other pairs, and it
-runs at ×1.12.
+Xeon of family 6 model 173, with seven passes in a copy of the timed loop of `measurements.nim`.
+Each ratio is the time of the operator against the time of Lengyel's code in the same run. On the
+same machine, the three forms of 2026-11-27 read ×1.01 to ×1.06, ×1.00, ×0.98 to ×1.04, ×0.96
+and ×1.01 to ×1.02. The point at rga3d spends his counts, but gcc packs its lanes in other pairs,
+and it runs at ×1.12.
 
 **130 pairs of types.** The same loop timed 130 pairs of types at the nine algebras on 2026-11-28,
 twice each, on the same machine. They take each grade, a motor part and a flector part, by a
