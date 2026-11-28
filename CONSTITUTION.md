@@ -342,7 +342,7 @@ CAYLEYS_WEDGE  # module constant
 
    No name below the keyword of a section needs a doc. In the grammar of Nim, a field or a member
    stands inside its type, in the form `type X = object` too, so neither needs a doc anywhere. A
-   doc that such a name holds stays, and is optional.
+   doc that such a name holds is optional, and takes the position of its shape.
 
    The doc of a section and the doc of a value that opens `block` are `#` comments (VI.9). So
    such a doc that waits for text is `# TODO: Document.`.
@@ -380,8 +380,9 @@ CAYLEYS_WEDGE  # module constant
    is a `#` comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads
    such a doc, the doc takes `##` again.
 
-   Inside a routine or a block, a comment above the keyword of a section stays as it stands. A
-   stage comment can stand there (VI.4).
+   Inside a routine, a block that opens a scope or the entry block, a comment above the keyword
+   of a section stays as it stands. A stage comment can stand there (VI.4), so that comment
+   counts as the doc of the section.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a

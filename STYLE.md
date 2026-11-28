@@ -261,7 +261,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
       lut
   ```
 
-  Inside a routine or a block, a comment above the keyword stays as it stands (VI.9).
+  Inside a routine, a block that opens a scope or the entry block, a comment above the keyword
+  stays as it stands. It counts as the doc of the section (VI.9).
 
 - Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
