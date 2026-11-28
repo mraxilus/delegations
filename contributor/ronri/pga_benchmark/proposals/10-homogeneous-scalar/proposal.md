@@ -75,8 +75,9 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
 - **Suites.** At pin the suites of the library hold a stand-in root and antiroot, under a TODO
   that waits for this module, and they skip the test of (4.45). The tests of (2.87) to (2.90) call
   the root and the antiroot of this module in their place, and check that each exists. The test of
-  (4.45) holds `|⊘` under the conformal metric. The TODO keeps `abs` and `div`. P04's test of typed
-  norms checks first that both forms of `|⊘` have a value, then the value.
+  (4.45) holds `|⊘` under the conformal metric, and fixes which root it gives. The TODO keeps `abs`
+  and `div`. P04's test of typed norms checks first that both forms of `|⊘` have a value or have
+  none together, then compares the value.
 
 The sign of 𝟙 ⟑ 𝟙 is the determinant of the metric on vectors, times (−1)^(n(n − 1)/2) for the
 reverse of n vectors. The rigid metric is degenerate, so there the square is 0. The conformal

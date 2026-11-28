@@ -453,7 +453,7 @@ what the root gives.
 ```nim
   func normRadius*[A: static Bases](m: MultivectorOf[A]): auto {.inline.} = |⊘m
     ## Get radius norm of multivector.
-    ##   Root under antiproduct, real or imaginary, or none where 𝐦∘𝐦 has none.
+    ##   Unwrap it: none for imaginary object at cga3d and cga6d, where pair is split-complex.
 ```
 
 The constructor of the pair builds a value of a type of `pga/multivectors.nim`, so it stands
@@ -493,7 +493,8 @@ func initMultivectorScalars*(s, t: Coefficient): MultivectorScalars {.noinit.} =
 The suites of the library hold a stand-in root and antiroot, which wait for this module. The tests
 of (2.87) to (2.90) call the root and the antiroot of the module in their place, and check that
 each exists. The test of (4.45) holds the radius norm `|⊘` under the conformal metric. It has a
-value exactly where 𝐦 ∘ 𝐦 has a root, and it squares back to 𝐦 ∘ 𝐦 under ⟇.
+value exactly where 𝐦 ∘ 𝐦 has a root, and it squares back to 𝐦 ∘ 𝐦 under ⟇. Where 𝐦 ∘ 𝐦 is zero
+or more, it equals the float root on 𝟙, so the test also fixes which root `|⊘` gives.
 
 ## Edit `tests/suites.nim`
 
@@ -591,6 +592,8 @@ func abs(m: Multivector): Multivector =
         check radius.isSome == (SQUARES_WEDGE_DOT.anti == -1 or dot_anti[Basis.scalarAnti] >= 0)
         if radius.isNone: continue
         check (radius.get ⟇ radius.get) =~ dot_anti  # 4.45
+        if dot_anti[Basis.scalarAnti] >= 0:
+          check radius.get =~ initMultivectorScalars(0, sqrt(dot_anti[Basis.scalarAnti]))  # 4.45
 ```
 
 The suite of typed operators of P04 holds each typed norm equal to its whole form, through

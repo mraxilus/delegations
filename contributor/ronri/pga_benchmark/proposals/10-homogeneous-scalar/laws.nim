@@ -340,7 +340,8 @@ proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
 
 proc holdNorms(): tuple[nan_float, radius_none: int] =
   ## Hold norms of library against roots of pair: bulk and weight norms under rigid metric, and
-  ##   radius norm under conformal one; count float roots of 𝐦∘𝐦 that `|⊘` leaves NaN.
+  ##   radius norm under conformal one; count float roots of 𝐦∘𝐦 that are NaN, and radius norms
+  ##   that are none.
   doAssert sizeof(MultivectorScalars) == 2 * sizeof(Coefficient),
     &"Homogeneous scalar must hold two coefficients unpadded; got `{sizeof(MultivectorScalars)}`."
   doAssert (SQUARES_WEDGE_DOT.anti == 0) xor IS_CONFORMAL,
@@ -466,7 +467,7 @@ when IS_CONFORMAL:
     ## Hold typed and whole `|⊘` and alias `normRadius` to one root; count values compared.
     ##   Seeded vectors, then round points whose 𝐦∘𝐦 takes each sign half the time.
     ##   Typed vector reads table of its own bases, and widened one table of all.
-
+    ##   Exact, as typed and whole forms sum same terms in same order; P04's `checkSame` holds it.
     func holdForms(vector: MultivectorOf[VECTORS]): bool =
       ## Hold each form of radius norm to whole one on vector; whether whole one has value.
       let
