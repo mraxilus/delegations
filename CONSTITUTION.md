@@ -107,13 +107,16 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    library for every other need. An external concern (windowing, drivers, codecs, protocols)
    may be a dependency, and each one is justified where it is imported.
 9. Duplicate only what a real constraint forces: a target that cannot share the dependencies
-   of the original, or a boundary that cannot be crossed. Each copy names its siblings, and a
-   fix to one is finished only when you check every sibling. Where one language compiles to
-   another, write the source language and keep the crossing narrow. Reach for the target
-   language only where the source cannot reach at all, or where the crossing would forfeit
-   what the target gives free. That gift is a check its own compiler makes over a whole file,
-   or a cost the glue adds to a hot path. Say which one in the opening comment of the file,
-   and keep every derived value behind an export.
+   of the original, or a boundary that cannot be crossed. Each copy names its original. Where
+   both stand in one project, each names the other, and a fix to one is finished only when you
+   check both. A project that others depend on names none of their copies. A copy takes a fix of
+   its original when its project moves its pin.
+
+   Where one language compiles to another, write the source language and keep the crossing
+   narrow. Reach for the target language only where the source cannot reach at all, or where
+   the crossing would forfeit what the target gives free. That gift is a check its own compiler
+   makes over a whole file, or a cost the glue adds to a hot path. Say which one in the opening
+   comment of the file, and keep every derived value behind an export.
 
 ```nim
 type
