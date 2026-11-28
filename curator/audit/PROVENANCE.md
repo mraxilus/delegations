@@ -2603,8 +2603,7 @@ nothing else, because what a check needs differs for each project, while the nam
 **Scripts take base JavaScript, Node built-ins and three tools alone** (CONTRIBUTOR.md, TypeScript
 and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package, and
 each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:` built-in or
-a listed package. A page or SVG refuses each `<script>` from another host, and each body of a
-`<script>` but `@SCRIPT@`, which the build fills (D4 of #1078).
+a listed package. A page or SVG refuses each `<script>` from another host, or with a body (#1078).
 
 - A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
@@ -2619,9 +2618,8 @@ a listed package. A page or SVG refuses each `<script>` from another host, and e
   `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: a frame, object or embed at
   no plain path reads as none, since its script runs apart from the page.
 - A `.js`, `.mjs` or `.cjs` file outside a folder `build/` is a finding, beside that of an unread
-  kind. The body of a script runs to its first end tag as written, and `/>` closes none, as in HTML.
-  A script at an address may keep a blank body. A type changes nothing, since a list of the types
-  that a browser runs copies it in part. The doc of `packages_node.nim` names each cost of the rule.
+  kind. A body of a script but `@SCRIPT@` is one, a script at an address may keep a blank body, and
+  a type changes nothing. The doc of `packages_node.nim` names the end of a body and each cost.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
