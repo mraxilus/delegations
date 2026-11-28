@@ -253,14 +253,14 @@ of the library returns NaN where 𝐦 ∘ 𝐦 is negative, and that is measured
 
 **An optional result folds its value, and none folds nothing.** None marks a value that the
 operation lacks, so the share of NaN counts no none. So a change whose operation returns an
-`Option`, as P10 makes the radius norm, builds and times in the bench, as an operation at pin
-does. Rejected: none counted as NaN, which would report absence as a fault of floats. Rejected
-too: an overload for `Option`, since each new overload renumbers the symbols of the module. The
-bench of pin then emits C other than the C its baselines were timed on. So the fold of an object
-takes a branch for `Option` instead, and the bench of pin emits the same C.
-`fold` and `isAnyNan` are verified by `test_rga4d.nim` and the other stubs, suite `Internal:
-Measurements`. The build and the timing are verified by the evaluation of P10 on 2026-11-28,
-which timed `|⊘` at cga4d and cga5d.
+`Option` builds and times in the bench. P10 makes the radius norm such an operation. Rejected:
+none counted as NaN, which would report absence as a fault of floats.
+
+The fold of an object takes a branch for `Option`, and no overload. Each new overload renumbers
+the symbols of the module. The bench of pin would then emit C other than the C its baselines were
+timed on. With the branch, it emits the same C. `fold` and `isAnyNan` are verified by
+`test_rga4d.nim` and the other stubs, suite `Internal: Measurements`. The build and the timing
+are verified by the evaluation of P10 on 2026-11-28, at cga4d and cga5d.
 
 **Each timed loop has a procedure of its own**, one for each measurand of each implementation,
 as the function of a caller would call it. In one function that holds every loop, Nim puts an
