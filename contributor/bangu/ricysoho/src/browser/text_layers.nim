@@ -20,7 +20,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, jsffi, options, sequtils, sugar, unicode]
+import std/[algorithm, jsffi, options, sequtils, sets, sugar, unicode]
 from std/strutils import replace
 
 import ../ricysoho/[grammar, layers, prose, stream]
@@ -361,11 +361,15 @@ proc columns(model: Model, chains: seq[seq[int]]): JsObject =
     cut = if model.stop >= 0: model.stop else: text.lengthUnits + 1
   # ro sinxa poi zvati no valsi .e le pamoi valsi poi le sinxa cu sinxa ke'a
   #   .i le sinxa cu cuxna le valsi to `D3 a` pe `#1101` toi
-  var signs: seq[(int, int, int)]
+  #   .i ro le sinxa cu se porsi ta'i le se ciska
+  var
+    signs: seq[(int, int, int)]
+    spans = initHashSet[(int, int)]()  # le stuzi be ro valsi .e ro sinxa poi pu se jmina
+    cursor = 0  # le pamoi sinxa poi no gapru be ke'a cu pu se pixra
+  for word in model.words: spans.incl (word.s, word.e)
   for i, word in model.words:
-    if word.sign_s < 0 or signs.anyIt(it[0] == word.sign_s and it[1] == word.sign_e) or
-        model.words.anyIt(it.s == word.sign_s and it.e == word.sign_e): continue
-    signs.add (word.sign_s, word.sign_e, i)
+    if word.sign_s >= 0 and not spans.containsOrIncl((word.sign_s, word.sign_e)):
+      signs.add (word.sign_s, word.sign_e, i)
   proc piece(a, b: int): JsObject =
     ## pa stuzi be lo selci'a poi zvati no valsi
     result = spanned("span", if a >= cut: cstring("tx raw") else: cstring("tx"), text.slice(a, b))
@@ -373,15 +377,17 @@ proc columns(model: Model, chains: seq[seq[int]]): JsObject =
   proc pieces(a, b: int): seq[JsObject] =
     ## ro stuzi be pa linji poi zvati no valsi ku'o ta'i lo porsi
     ##   .i pa sinxa poi zvati no valsi cu ponse le klesi .e le stuna'u be le pamoi valsi pe vo'a
+    ##   .i ro stuzi poi se pixra cu se porsi ta'i le se ciska
     var at = a
-    for (first, last, i) in signs:
-      if first < a or last > b: continue
+    while cursor < signs.len and signs[cursor][0] < a: inc cursor
+    while cursor < signs.len and signs[cursor][1] <= b:
+      let (first, last, i) = signs[cursor]
       if first > at: result.add piece(at, first)
       let sign = piece(first, last)
       sign.className = cstring("tx sign w ") & CLASS_GROUP[Group(model.words[i].group)]
       sign.attribute("data-w", cstring($i))
       result.add sign
-      at = last
+      (at, cursor) = (last, cursor + 1)
     if at < b or result.len == 0: result.add piece(at, b)
   proc between(s, e: int, col: JsObject) =
     var at = s
@@ -1376,8 +1382,15 @@ func shifted*(model: Model, low, high: int, inserted: cstring, text: cstring): M
       continue
     after = e
     index[i] = result.words.len
+    # pa valsi poi zvati lo bartu be le cenba cu stali le sinxa .e le valsi poi ke'a se tcidu
+    #     ta'i ke'a
+    let
+      is_kept = word.sign_s >= 0 and (word.e < low or word.s > high)
+      shift = if word.s > high: d else: 0
     result.words.add Word(s: s, e: e, group: word.group, gloss: word.gloss,
-        text: text.slice(s, e), spoken: text.slice(s, e), sign_s: -1, sign_e: -1)
+        text: text.slice(s, e), spoken: if is_kept: word.spoken else: text.slice(s, e),
+        sign_s: if is_kept: word.sign_s + shift else: -1,
+        sign_e: if is_kept: word.sign_e + shift else: -1)
   var kept = newSeq[int](model.bars.len)
   for k, bar in model.bars:
     kept[k] = -1
