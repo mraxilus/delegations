@@ -34,7 +34,7 @@ const  # le stuzi be ro datnypau ne'i le re liste
     ## le stuzi be le valsi .e le glico valsi .e le smuni ne'i `cmavo.txt`
   COLUMN_SELMAHO = (12, 20)
     ## le stuzi be le selma'o ne'i `cmavo.txt`
-    ##   .i lo tarmi bu cu sinxa lo ma'orgunma .a lo jufpau
+    ##   .i lo lerfu po'u zoi gy. * .gy. cu sinxa lo ma'orgunma .a lo jufpau
 
 
 
