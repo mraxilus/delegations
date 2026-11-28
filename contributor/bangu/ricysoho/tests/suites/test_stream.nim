@@ -311,6 +311,37 @@ func isSpanned(text: string): bool =
   true
 
 
+func signsRead(text: string): Option[seq[string]] =
+  ## tcidu le porsi gi'e liste le lerfu .a le sinxa poi ro valsi cu sinxa ke'a
+  ##   .i lo kunti lerpoi cu sinxa lo valsi poi no lerfu .e no sinxa cu sinxa ke'a
+  ##   .i dunda no da va'o lo nu le porsi cu se to'e curmi
+  let reading = text.readStream
+  if not reading.is_read: return none(seq[string])
+  some(reading.occurrences.mapIt(if it.sign.isSome: text[it.sign.get] else: ""))
+
+
+func isSignNamed(text: string): bool =
+  ## jdice lo du'u ro valsi pe le porsi cu sinxa le lerfu .a le sinxa poi sinxa ke'a
+  ##   .i pa valsi poi vasru lo stuzi gi'e na se gunma lo jbole'u cu sinxa le stuzi pe vo'a
+  ##   .i pa valsi poi vasru lo stuzi gi'e se gunma lo jbole'u cu sinxa no da
+  ##   .i pa valsi poi vasru no stuzi cu sinxa pa sinxa poi ke'a cmima lo valsi pe le sinxa
+  ##   .i ja le valsi cu cmima lo valsi poi krasi gi'a fanmo lo jdini klani gi'e sinxa no da
+  ##   .i lo jalge cu jitfa va'o lo nu le porsi cu se to'e curmi
+  let reading = text.readStream
+  if not reading.is_read: return false
+  let named = @SIGNS_RULED & @CONSTANTS_RULED
+  for occurrence in reading.occurrences:
+    let sign = occurrence.sign
+    if occurrence.finish > occurrence.start:
+      if occurrence.text.allCharsInSet(tanru.LETTERS):
+        if sign.isSome: return false
+      elif sign != some(occurrence.start ..< occurrence.finish): return false
+    elif sign.isNone:
+      if occurrence.text notin ["lo", "be", "li", "be'o", "ku"]: return false
+    elif not named.anyIt(it[0] == text[sign.get] and occurrence.text in it[1]): return false
+  true
+
+
 func refusalNamed(text: string): Option[(string, int)] =
   ## tcidu le porsi gi'e dunda lo cmene be le javni poi to'e curmi le porsi ku'o .e le stuzi poi le
   ##     javni cu cusku ke'a
@@ -1144,6 +1175,7 @@ suite "Internal: Stream":
         else:
           check ("li " & text).wordsRead == some(@["li"] & words)  # `CLL 18.2`
           check ("li " & text).cmavoRead == some(@["li"] & cmavo)
+          check ("li " & text).isSignNamed  # ro valsi cu sinxa le lerfu poi sinxa ke'a
         inc count
         if text.len < LENGTH_NUMBERED_MOST:
           for mark in MARKS_NUMBERED: longer.add text & mark
@@ -1220,7 +1252,9 @@ suite "Internal: Stream":
           (words, refused) = pieces.signedRead
         checkpoint text
         if refused.isSome: check text.refusalNamed == some(("Sign", refused.get))
-        else: check text.cmavoRead == some(words)
+        else:
+          check text.cmavoRead == some(words)
+          check text.isSignNamed  # ro valsi cu sinxa le lerfu .a le sinxa poi sinxa ke'a
         inc count
         if pieces.len < LENGTH_SIGNED_MOST:
           for mark in MARKS_SIGNED: longer.add pieces & mark
@@ -1328,6 +1362,29 @@ suite "Internal: Stream":
     check "li 5.π".cmavoRead == some(@["li", "mu", "pai"])
 
 
+  test "Each word that a digit or a sign stands for names bytes of that digit or sign":
+    # le ctuca pe le papri cu jarco le smuni be ro valsi poi pa lerfu .a pa sinxa cu sinxa ke'a
+    #   .i `Architect` jdice di'u bu'u `#1101` ta'i `D3 a`
+    #   .i ro valsi pe le jdini klani poi na valsi pe le sinxa cu sinxa no da
+    for (text, signs) in [
+        ("mi klama", @["", ""]), ("10", @["1", "0"]), ("1.5", @["1", ".", "5"]),
+        ("1.2.3", @["1", ".", "2", ".", "3"]), ("1,000", @["1", ",", "0", "0", "0"]),
+        ("50%", @["5", "0", "%"]), ("-3", @["-", "3"]), ("½", @["½", "½", "½"]),
+        ("li π", @["", "π"]), ("$5", @["", "$", "", "", "5", "", ""]),
+        ("5€", @["", "€", "", "", "5", "", ""]),
+        ("¥5", @["", "¥", "¥", "¥", "¥", "", "", "5", "", ""]),
+        ("-$5", @["", "$", "", "", "-", "5", "", ""]),
+        ("$-5", @["", "$", "", "", "-", "5", "", ""]),
+        ("$½", @["", "$", "", "", "½", "½", "½", "", ""])]:
+      checkpoint text
+      check text.signsRead == some(signs)
+      check text.isSignNamed
+    for words in STREAMS_RANDOM:
+      let text = words.join(" ")
+      checkpoint text
+      if text.readStream.is_read: check text.isSignNamed  # lo valsi pe lo jbole'u cu sinxa no da
+
+
   test "Amount opens before the sign of its number":
     # `Architect` jdice `D2 a` bu'u `#1003` to le jdini klani cu vasru le namcu toi
     #   .i lo sinxa cu pagbu le namcu poi le sinxa cu lidne ke'a to `CLL 18.3` toi
@@ -1396,6 +1453,7 @@ suite "Internal: Stream":
         else:
           check text.cmavoRead == some(words)
           check text.isSpanned  # le flalu pe lo stuzi
+          check text.isSignNamed  # ro valsi cu sinxa le lerfu .a le sinxa poi sinxa ke'a
         inc count
         if pieces.len < LENGTH_PREFIXED_MOST:
           for mark in MARKS_PREFIXED: longer.add pieces & mark
