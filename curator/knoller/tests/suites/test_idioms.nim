@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[idioms, reports]
 
 
-const
+const  # TODO: Document.
   LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
   NIMBLE = "x.nimble"  ## Nimble file of package at root, which each path here lies in.
 

@@ -9,7 +9,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[messages, reports]
 
 
-const
+const  # TODO: Document.
   FLAGS =
     "  doAssert lut_basis_by_flags[b].isSome, &\"Found invalid basis flags: {int(b):b}\"\n"
     ## Line 243 of `pga/algebra.nim` of PGA library at `3d9696e`.

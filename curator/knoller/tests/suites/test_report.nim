@@ -9,7 +9,7 @@ import std/[options, strutils, unittest]
 import ../../src/knoller/[report, reports, rules]
 
 
-const
+const  # TODO: Document.
   NAME_CUT = Notice(
     path: "pga/algebra.nim", line: 186, column: 11, span: 10, rule: "name-cut",
     summary: "name puts `anti` after the word it qualifies", actual: some("antiscalar"),

@@ -9,7 +9,7 @@ import std/[sequtils, tables]
 import ../../src/knoller/[chain, parentheses, proofs, reports]
 
 
-const
+const  # TODO: Document.
   REJECTED* = [
     "(1)",  # `-1` lexes one literal
     "(■m)",  # `■m.x` reads `■(m.x)`

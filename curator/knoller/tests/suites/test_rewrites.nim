@@ -8,7 +8,7 @@ import std/[algorithm, strutils, tables, unittest]
 import ../../src/knoller/[edits, rewrites, rules, symbols, tokens]
 
 
-const
+const  # TODO: Document.
   DECLARING = "proc f*(ctx: int): int =\n  ## Read `ctx` back.\n  ctx + 1\n"
     ## File declaring parameter `ctx`, and naming it in its doc.
   USING = "import ./a\nlet ctx = 2\necho f(ctx)\n"

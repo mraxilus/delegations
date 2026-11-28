@@ -8,7 +8,7 @@ import std/[sequtils, unittest]
 import ../../src/[findings, kinds, waits]
 
 
-const
+const  # TODO: Document.
   DIRECTORIES = ["contributor/ronri/viewer"]
   DRIVE_NIM = """
 proc settle(page: Page) {.async.} =

@@ -7,7 +7,7 @@ import ../../src/[dependencies, findings, projects]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   LOCK = "curator/assayer/atlas.lock"  ## Lock of #947, which names knoller.
   COMMIT_LACKED = "0123456789abcdef0123456789abcdef01234567"
     ## Commit lock of #947 named, which clone of knoller lacked.

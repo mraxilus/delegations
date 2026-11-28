@@ -18,7 +18,7 @@ import std/[options, strutils]
 import ./[findings, markdown, provenance, record]
 
 
-const
+const  # TODO: Document.
   PATHS_PROMPT* = ["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
     ## Files that open new delegates: entry file each harness reads first, and file of each role.
   PATHS_ROLE* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]

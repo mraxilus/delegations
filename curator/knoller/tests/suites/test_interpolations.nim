@@ -10,7 +10,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[chain, messages, reports]
 
 
-const
+const  # TODO: Document.
   WRAPS =
     "  doAssert IS_RIGID or DIMENSIONS >= 3,\n" &
     "    &\"Conformal Geometric Algebras must have dimensionality of 3 or more \" &\n" &

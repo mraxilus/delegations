@@ -178,7 +178,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   entry that lacks it:
 
   ```nim
-  type
+  type  # Define entry person keeps for each claim.
     Claim* = object  ## Define one claim that evaluation checks.
       kind*: KindClaim
       path* {.requiresInit.}: string  ## Program that claim runs, relative to its proposal.
@@ -220,14 +220,14 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
   take it after them on the same line, where the joined line fits. Otherwise the doc takes the
   next line, indented one level. Names that one line declares share one doc, which describes
-  each. A binding whose value opens `block` takes a `#` comment instead (below).
+  each. A section, and a binding whose value opens `block`, take a `#` comment instead (below).
 - A one-line routine takes its doc on the next line, indented to the body. A longer routine
-  takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
+  takes it as the first line of the body.
 - A `const`, `let` or `var` whose value opens `block` keeps `block:` on its `=` line, so its
   body takes one indent. This holds at top level and inside a routine. Nim then reads no doc of
   the declaration, wherever the doc stands. So its doc is a `#` comment on its own lines above
-  the declaration, and a long doc wraps there as an outline (VI.2). In a section, the doc stands
-  above the name. A doc that waits for text is `# TODO: Document.` (VI.9).
+  the declaration, and a long doc wraps there as an outline (VI.2). In a section, its doc is
+  optional, and stands above the name. A doc that waits for text is `# TODO: Document.` (VI.9).
 
   A blank line stands above the doc. None stands where the doc opens the file, or where the line
   above opens the body that holds it, as `if` does. The keyword of a section opens a body too:
@@ -242,6 +242,27 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
     lut
   ```
+
+- A `const`, `let`, `var` or `type` keyword alone on its line opens a section, and VI.1 gives
+  each reach where it takes a doc. At any reach, its doc stands on its keyword line, two spaces
+  after the keyword. The doc is a `#` comment, since Nim reads no doc there. A doc that does not
+  fit there, or an outline of several lines, stands on its own lines above the keyword. A name
+  inside the section needs no doc, and a doc that it holds takes the position of its shape. A doc
+  that waits for text is `# TODO: Document.`, on the keyword line:
+
+  ```nim
+  const  # Bound each walk, and grade each basis.
+    STEPS_MAX* = 3
+
+    # Construct LUT for grade of basis element.
+    LUT_GRADE_BY_BASIS = block:
+      var lut: array[Basis, Grade]
+      for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
+      lut
+  ```
+
+  Inside a routine, a block that opens a scope or the entry block, a comment above the keyword
+  stays as it stands. It counts as the doc of the section (VI.9).
 
 - Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
@@ -313,7 +334,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     )
   )
 
-  const
+  const  # Name glyphs of math font, and step of twist.
     RANGES_NOTO_SANS_MATH =
         "20-7e a0 a7 33a 33f " &
         "346 34d 391-3a1 2016 " &

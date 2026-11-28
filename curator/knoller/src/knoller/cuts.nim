@@ -47,7 +47,7 @@ type KindCut {.pure.} = enum  ## Define shape breaking cut of V.2 that words dec
   Axis  ## Axis value before word it qualifies: `left_name`.
 
 
-const
+const  # TODO: Document.
   PROPERTIES = ["centroid", "grade", "norm", "order", "parity"]
     ## Properties that lead name of value they belong to (V.2, V.3, #443).
   PREFIX_ANTI = "anti"  ## Qualifier domain glues first, which goes after word it qualifies.

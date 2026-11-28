@@ -50,7 +50,7 @@ type Import* = object  ## Define one module statement of Nim source names, and l
   target*: string  ## Module as written, as `../src/x`, `std/os` or `knoller`; quotes dropped.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_IMPORT = ["import", "include", "from"]  ## Words opening statement that names modules.
   PREFIX_STANDARD = "std/"  ## Opening of module of standard library, as STYLE.md §5 writes it.
   STRING_LONG = "\"\"\""  ## Delimiter of string spanning lines.

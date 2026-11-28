@@ -74,7 +74,7 @@ import ./[
 ]
 
 
-const
+const  # TODO: Document.
   USAGE = """
 Usage: knoller [--check] [--nim:path] [--form:terminal|line] path...
 
@@ -98,7 +98,7 @@ Options:
     ## Configuration beside nimble file, whose search path names library package builds on.
 
 
-type
+type  # TODO: Document.
   Options* = object  ## Define parsed command line.
     is_check*: bool  ## Report changes due and write none.
     nim*: string  ## Compiler whose parser proves each removal of parentheses; empty: none named.

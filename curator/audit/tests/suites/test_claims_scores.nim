@@ -15,7 +15,7 @@ import ../../src/[claims_log, claims_scores, hooks, sums_exact]
 import ./fixtures
 
 
-const
+const  # TODO: Document.
   TOLERANCE = 1e-12  ## Most difference of value from that of second method.
   TOLERANCE_NUMBER = 1e-6  ## Most difference of score of number from that of copy in Python.
   TEXT_TOKENS = "tokens summed over its requests: 1,000,000, 3,000,000 and 7,000,000"

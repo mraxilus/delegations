@@ -7,7 +7,7 @@ import std/[random, sequtils, strutils, unittest]
 import ../../src/knoller/[articles, reports]
 
 
-const
+const  # TODO: Document.
   TELEGRAPHIC = ["Order", "files", "for", "reader", "learning", "subject,", "not", "compiler."]
     ## Word pool without articles.
   SAMPLES = 300  ## Random comments drawn per property.

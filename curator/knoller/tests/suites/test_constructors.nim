@@ -10,7 +10,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[constructors, reports, rules]
 
 
-const
+const  # TODO: Document.
   DECLARING = "func initElement*(b: Basis, scalar = 1.0): Multivector = discard\n"
     ## Module declaring constructor of package, as `pga/multivectors.nim` does.
   OPERATORS =

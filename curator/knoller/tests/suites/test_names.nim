@@ -10,7 +10,7 @@ import ../../src/knoller/[declared, entry, names, reports, rules]
 import ./sources
 
 
-const
+const  # TODO: Document.
   BLOCKS = """
 const TOP = 1
 when defined(js):

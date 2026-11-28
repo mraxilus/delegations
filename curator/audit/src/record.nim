@@ -24,7 +24,7 @@ import std/[options, strutils, tables]
 import ./[findings, markdown, provenance]
 
 
-const
+const  # TODO: Document.
   LINES_SECTION* = 200
     ## Lines one `##` section may hold before prune to log is asked.
     ##   Record's own ceiling is crude: it punishes wide project and lets narrow one narrate

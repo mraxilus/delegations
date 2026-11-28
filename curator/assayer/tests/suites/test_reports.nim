@@ -7,7 +7,7 @@ import std/[options, sequtils, strutils, times, unittest]
 import ../../src/assayer/[headers, plans, reports, runs]
 
 
-const
+const  # TODO: Document.
   ROOT = "/work"  ## Working directory each line of suite resolves against.
   FILE = "tests/test_k.nim"  ## Test file each run of suite names.
   PROGRAM = ROOT & "/nimcache/assayer/tests/test_k/c_2/test_k"  ## Program of run that failed.

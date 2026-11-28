@@ -29,7 +29,7 @@ type Command = object  ## Define one dotted call statement to write in command f
   got: string  ## Statement through head of its argument, as written.
 
 
-const
+const  # TODO: Document.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords whose head line, ending on `=`, opens body of statements.
   KEYWORDS_CONTINUING = [

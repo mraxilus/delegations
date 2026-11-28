@@ -10,7 +10,7 @@ import ../../src/knoller/[command, compilers, packages, rules]
 from ../../src/knoller/command {.all.} import modulesLibrary, nimblesNearest, pathConfigured
 
 
-const
+const  # TODO: Document.
   ALGEBRA =
     "{.experimental: \"strictFuncs\".}\n\n" &
     "type Chiral*[T] = object  ## Pair of sides.\n" &

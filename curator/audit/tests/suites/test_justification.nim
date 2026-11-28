@@ -6,7 +6,7 @@ import std/unittest
 import ../../src/[comments, justification, kinds]
 
 
-const
+const  # TODO: Document.
   REASON = "// Wire WebGL; " & MARKER & " browser host runs JavaScript only.\nexport {};\n"
     ## Gated file arguing for itself on its first line.
   SILENT = "// Wire WebGL and pointer events.\nexport {};\n"

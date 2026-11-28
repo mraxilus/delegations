@@ -55,7 +55,7 @@ import std/[algorithm, sequtils, strutils, unicode]
 import ./[declared, form, outlines, reports, tokens]
 
 
-type
+type  # TODO: Document.
   KindSpan {.pure.} = enum  ## Define what bare span is, which its message names.
     Path, Literal, Name
 
@@ -93,7 +93,7 @@ type
     spelling: string
 
 
-const
+const  # TODO: Document.
   EXTENSIONS_FILE = [
     "c", "cfg", "cpp", "css", "csv", "h", "html", "js", "json", "lock", "md", "mjs", "nim",
     "nimble", "nims", "png", "py", "sh", "svg", "toml", "ts", "txt", "wasm", "yaml", "yml",
