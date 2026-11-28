@@ -6,13 +6,15 @@
 ##     of #964 rules (comment 7189788889); so it takes no baseline score, and no band. Each step
 ##     copies step of source, and their join is choice (comment 7189682360): curve of form of
 ##     percentiles takes floor that Metaculus puts on slider alone.
-##   Unit opens text of number, as `tokens`, or labels it, as `Count:`, and fixes range on
-##     logarithm above zero point, with each bound open or closed: curve runs straight between
-##     percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor of 1% of even
-##     spread, least mass beyond each open bound and cap of 0.2 for each of 200 buckets
-##     (`standardizeCdf`), and scores `100 × ln(m / b) / 2` for mass `m` of bucket of outcome
-##     (`score_math.py`); outcome beyond closed bound takes none, and so does curve whose step
-##     lies under 0.01 / 200 or above 0.59, as form of percentiles refuses it
+##   Unit of number is one its row names, as cells of estimate give it, else one its text names,
+##     as `tokens` that opens it or `Count:` that labels it (`unitText`), for row written before
+##     row held unit.
+##   Unit fixes range on logarithm above zero point, with each bound open or closed: curve runs
+##     straight between percentiles at 201 places (`generateQuantileContinuousCdf`), takes floor
+##     of 1% of even spread, least mass beyond each open bound and cap of 0.2 for each of 200
+##     buckets (`standardizeCdf`), and scores `100 × ln(m / b) / 2` for mass `m` of bucket of
+##     outcome (`score_math.py`); outcome beyond closed bound takes none, and so does curve whose
+##     step lies under 0.01 / 200 or above 0.59, as form of percentiles refuses it
 ##     (`validateUserQuantileData`).
 ##   Confidence of number is mass between its outer two percentiles, so it places them: 5th and
 ##     95th at 0.9, as Architect asks on #964 (comment 7191274618), and 10th and 90th at 0.8 of
@@ -38,6 +40,7 @@
 
 import std/[algorithm, math, options, sequtils, strformat, strutils, tables]
 import ./[claims_log, sums_exact]
+from ./hooks import UnitNumber, unitText
 
 
 type
@@ -68,13 +71,12 @@ type
     bands*: seq[Band]  ## Bands of confidence that hold claims, from lowest.
 
   Unit* = object  ## Define unit of number, and range code fixes for it, as writer of question does.
-    name*: string  ## Word that opens text of number in unit, as `tokens`, or that labels it.
+    name*: string  ## Name of unit, as `tokens`.
     low*: float  ## Lower bound of range.
     high*: float  ## Upper bound of range.
     zero*: float  ## Zero point of logarithm, below lower bound, as Metaculus fixes it.
     is_open_low*: bool  ## Whether value may fall below lower bound.
     is_open_high*: bool  ## Whether value may rise above upper bound.
-    is_label*: bool  ## Whether name labels text, as `Count:`, rather than opening it.
 
   Point = object  ## Define point that curve of forecast passes through.
     percent: float  ## Percent of mass at or below place.
@@ -108,11 +110,11 @@ const
   LINE_NO_RATE = "Logs of claims give no base rate; "  ## Opening of line of fault of rates.
   NAMES_FIELD: array[Field, string] = ["delegate", "model", "effort", "project", "kind", "marker"]
     ## Name of each field, as verb `figures` reads it.
-  UNITS* = [
+  UNITS*: array[UnitNumber.Tokens .. UnitNumber.Count, Unit] = [
     Unit(name: "tokens", low: 1e4, high: 1e9, is_open_low: true, is_open_high: true),
     Unit(name: "cost", low: 0.01, high: 1000, is_open_low: true, is_open_high: true),
     Unit(name: "time", low: 0.1, high: 1e4, is_open_low: true, is_open_high: true),
-    Unit(name: "count", low: 0, high: 1e5, zero: -1, is_open_high: true, is_label: true),
+    Unit(name: "count", low: 0, high: 1e5, zero: -1, is_open_high: true),
   ]
     ## Range of each unit, on logarithm: tokens and cost with both bounds open (`D2 a` of #964),
     ##   time in minutes likewise (`D5 a`), and count from closed bound at 0, on logarithm of count
@@ -198,17 +200,13 @@ func percentileBeta*(mass, a, b: float): float =
 
 
 func unitClaim*(claim: Claim): Option[Unit] =
-  ## Unit of `UNITS` whose name labels text of claim, as `Count:`, or opens it, past its label;
-  ##   none where none does.
-  let
-    text = claim.text.toLowerAscii
-    colon = text.find(": ")
-  for unit in UNITS:
-    if unit.is_label and text.startsWith(unit.name & ": "): return some(unit)
-  for opening in [text, (if colon >= 0: text[colon+2 .. ^1] else: "")]:
-    for unit in UNITS:
-      if not unit.is_label and opening.startsWith(unit.name & " "): return some(unit)
-  none(Unit)
+  ## Unit of `UNITS` that number of claim names, as cells of its estimate give it, else that its
+  ##   text names, past its label (`unitText`); none where neither does.
+  let unit =
+    if claim.number.isSome and claim.number.get.unit != UnitNumber.Unspecified:
+      claim.number.get.unit
+    else: claim.text.unitText
+  if unit == UnitNumber.Unspecified: none(Unit) else: some(UNITS[unit])
 
 
 func countOpen(unit: Unit): int =

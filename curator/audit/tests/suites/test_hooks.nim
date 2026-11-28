@@ -2,9 +2,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks, lags, tree]
-import ./fixtures
+import std/[algorithm, json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import ../../src/[findings, hooks, lags, markdown, tree]
+import ./[fixtures, fixtures_claims]
 
 
 const
@@ -146,9 +146,35 @@ The gap list reads the baseline of each algebra.
   RULE_CELL = "cell under `Predicted` is one whole claim of `## Prediction` block that call " &
     "took, up to its confidence, percentiles or resolution criterion, or before final full " &
     "stop of bullet with none, with or without its label of one word that opens with capital, " &
-    "or `No prediction` (GUIDE.md, Prediction, critic and reflection)"
+    "or `No prediction` (curator/audit/PROVENANCE.md, Quotes of claims)"
     ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
-    ##   7017902016, 7018501890 and 7022872980 of #969 give it.
+    ##   7017902016, 7018501890 and 7022872980 of #969 give it; record states it, since GUIDE.md
+    ##   states tables alone (#1028).
+  REFUSAL_NO_TABLE = "reflection holds table of claims: table whose header holds `#`, " &
+    "`Judgement` or `Estimate @ 90%`, in form of judgements or estimates (GUIDE.md, Prediction, " &
+    "critic and reflection), or table whose header holds `Predicted`, as block of bullets takes " &
+    "it (curator/audit/PROVENANCE.md, Quotes of claims)"
+    ## Finding of reflection with no table of claims: each form cites text that states it.
+  REFUSAL_OUTCOME_BULLETS = "cell under `Result` of number of bullets marked ✅ or ⬜ opens with " &
+    "its value, bare in unit its text names, with no scale for cost or time, or with mark of " &
+    "that unit: `$` for cost, `s`, `m` or `h` for time (curator/audit/PROVENANCE.md, Quotes of " &
+    "claims); got `"
+    ## Start of finding of result of number of bullets that reads no value in unit of its text.
+  REFUSAL_OUTCOME = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit " &
+    "of its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+    "(GUIDE.md, Prediction, critic and reflection); got `"
+    ## Start of finding of result of estimate of table that reads no value in unit of its cells.
+  NUMBERS_BULLETS = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+    "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, 50th " &
+    "and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as the 5th, " &
+    "50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and 30, as the " &
+    "5th, 50th and 95th percentiles.\n- Count: findings that the report ranks: 3, 6 and 11, as " &
+    "the 5th, 50th and 95th percentiles.\n"
+    ## Block of bullets of number of each unit, as GUIDE.md wrote it before tables.
+  CLAIMS_BULLETS = ["tokens summed over its requests: 100,000, 160,000 and 300,000",
+    "cost at list price: $0.40, $0.90 and $2.00", "time to its report, in minutes: 5, 12 and 30",
+    "Count: findings that the report ranks: 3, 6 and 11"]
+    ## Claim of each number of `NUMBERS_BULLETS`, in order, as cell quotes it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -294,6 +320,7 @@ func predicting(kind: string): string =
 proc quoted(bullets, cell: string): seq[string] =
   ## Read findings of reflection whose one row holds cell under `Predicted`, after report of
   ##   critic, where block that call of `reviewer` took holds bullets alone.
+  ##   Its result opens with bare value, which number of bullets of each unit reads (#1028).
   let prediction = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
     bullets & "\n"
   blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
@@ -301,7 +328,58 @@ proc quoted(bullets, cell: string): seq[string] =
     linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
     linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
     lineSaid("## Reflection\n\n| State | Confidence | Predicted | Result |\n" &
-      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | it holds |\n"))
+      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | 1, it holds |\n"))
+
+
+proc heldReflection(prediction, reflection: string): seq[string] =
+  ## Read findings `checkBlocks` gives reflection after report of critic, where call of `builder`
+  ##   took block prediction of turn of its own.
+  blocksHeld(lineUser("Build it.", "human") & lineSaid(prediction) &
+    lineUser("<task-notification>timer</task-notification>", "task-notification") &
+    linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+    linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+    lineSaid(reflection))
+
+
+proc heldBlock(prediction: string): seq[string] =
+  ## Read findings `checkBlocks` gives turn whose last message is block prediction.
+  blocksHeld(lineUser("Build it.", "human") & lineSaid(prediction))
+
+
+func mended(reflection: string): string =
+  ## Write reflection with each part of claim of `QUOTES_PART` as whole claim.
+  result = reflection
+  for (part, whole) in QUOTES_PART: result = result.replace(part, whole)
+
+
+func blockEstimate(text: string, cells: array[3, string], has_criterion = true): string =
+  ## Write block of one estimate of text with cells, and its criterion where asked.
+  "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+    "**Estimates.** One estimate.\n\n| # | Estimate @ 90% | 5th | 50th | 95th |\n" &
+    "| --- | --- | ---: | ---: | ---: |\n| 1 | " & text & " | " & cells.join(" | ") & " |\n\n" &
+    (if has_criterion: "| # | Resolution criterion |\n| --- | --- |\n| 1 | The line. |\n" else: "")
+
+
+func isNear(value, expected: float): bool =
+  ## Decide whether value lies within one part in `10^12` of expected one, or of one near zero.
+  abs(value - expected) <= 1e-12 * max(1.0, abs(expected))
+
+
+func tableColumns(
+  text, header: string, columns: openArray[int], names: openArray[string] = []
+): string =
+  ## Write text whose table that line header opens holds its columns of indices given, in that
+  ##   order, each cell with them; header holds names in their place where given.
+  var lines = text.split('\n')
+  let start = lines.find(header)
+  doAssert start >= 0, header
+  var k = start
+  while k < lines.len and lines[k].startsWith("|"):
+    let cells = lines[k][1 ..< ^1].split('|').mapIt(it.strip)
+    lines[k] = "| " & (if k == start and names.len > 0: @names else: columns.mapIt(cells[it]))
+      .join(" | ") & " |"
+    inc k
+  lines.join("\n")
 
 
 
@@ -2701,8 +2779,8 @@ suite "Hooks":
       taken = asked & lineSaid(PREDICTION) & calls
     proc reflected(table: string, before = taken): seq[string] =
       ## Read findings of reflection holding table, after report of critic.
-      blocksHeld(before & lineSaid("## Reflection\n\n**Subagent:** builder.\n\n" & table &
-        "\n- **Change:** none.\n"))
+      blocksHeld(before & lineSaid("## Reflection\n\n**Subagent:** builder, 160,000 tokens and " &
+        "$2.10 at list price.\n\n" & table & "\n- **Change:** none.\n"))
     check blocksHeld(taken & lineSaid(REFLECTION)).len == 0
 
     # Whitespace collapses on both sides, and `\|` reads as `|`.
@@ -2735,10 +2813,11 @@ suite "Hooks":
         lineSaid("The critic runs.") & lineHandback("critic")
       check blocksHeld(critic & lineSaid(REFLECTION)).len == count
 
-    # Reflection quotes nothing with no table, no row, or empty cell.
-    check reflected("No table.").anyIt("column `Predicted` (GUIDE.md" in it)
-    check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |")
-      .anyIt("column `Predicted` (GUIDE.md" in it)
+    # Reflection quotes nothing with no table, no row, or empty cell; record states table of
+    #   bullets, since GUIDE.md states tables alone (#1028).
+    const bullets = "holds `Predicted`, as block of bullets takes it (curator/audit/PROVENANCE.md"
+    check reflected("No table.").anyIt(bullets in it)
+    check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |").anyIt(bullets in it)
     check reflected(header).anyIt("got none under `| State | Confidence | Predicted |" in it)
     check reflected(header & "| ✅ | 70% |  | it leads |").anyIt("empty cell in row `1`" in it)
     check reflected(header & "| ✅ | 70% |").anyIt("empty cell in row `1`" in it)  # short row
@@ -2809,7 +2888,7 @@ suite "Hooks":
       ## Read findings of reflection whose rows hold cells under `Predicted`, after report of
       ##   critic.
       var rows = ""
-      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | it holds |\n"
+      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | 1, it holds |\n"
       blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
     proc passes(bullets, cell: string): bool =
       ## Decide whether cell passes, where block that call took holds bullets alone, after line
@@ -2973,7 +3052,7 @@ suite "Hooks":
       blocksHeld(asked & lineSaid("## Prediction\n\n**Subagent:** researcher of forecasting " &
         "practice, fresh context.\n\n" & bullets & "\n") & calls & lineSaid("## Reflection\n\n" &
         "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 80% | " &
-        cell & " | it holds |\n"), ["critic", "researcher"]).len == 0
+        cell & " | 1, it holds |\n"), ["critic", "researcher"]).len == 0
 
     # Case as found: each cell drops final full stop of its bullet, and passes; cell that keeps
     #   it is refused. Text before `: ` of each bullet is several words, so it is no label, and
@@ -3435,7 +3514,7 @@ suite "Hooks":
           ("| ⬜ | 60% |  \t  | missed |\n", @[refusalEmpty(1)])]:
         let held = blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
         check held == found
-        check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
+        check held.allIt("`No prediction` (curator/audit/PROVENANCE.md, Quotes of claims)" in it)
 
 
   test "claim reads `\\|` as `|`, as cell does (7022872980 of #969)":
@@ -3580,6 +3659,1166 @@ suite "Hooks":
       @[refusalCell("the hook reads `. **Resolution criterion:**` as mark")]
 
 
+  test "costs of read of value and of tables of claims stay as record names them (#1028)":
+    # Record, Quotes of claims, names these costs, which builder of mends measured by probe and
+    #   critic of mends (finding 6) found no suite to hold; each holds here so that change shows.
+    # Scale that value does not name, as `bn` or `Mio`, reads as text, so result reads digits
+    #   before it, and logs that wrong value with no finding.
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      line = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    #   Point before such scale makes no count, so cell of tokens takes refusal there.
+    for cell in ["39.1 bn, inside", "39.1 Mio, inside"]:
+      check cell.valueAt.get.amount == 39.1
+    for cell in ["39 bn, inside", "39 Mio, inside"]:
+      check cell.valueAt.get.amount == 39.0
+      check heldReflection(PREDICTION_TABLES, whole.replace(line,
+        line.replace("39.1M, inside", cell))).len == 0
+
+    # Three digits of other figure after one space read as group, as `5 100-line files` reads
+    #   5,100, and result of count takes it with no finding.
+    check "5 100-line files".valueAt.get.amount == 5100.0
+    check "5 100-line files".outcomeResult(UnitNumber.Count).get == 5100.0
+
+    # Header with none of columns that make table of claims, as `| No. | % | Judgements |`, reads
+    #   as no table, so block reads 3 claims of 8, and takes 5 findings, from its criteria alone.
+    let off = PREDICTION_TABLES.replace("| # | % | Judgement |", "| No. | % | Judgements |")
+    check off.forecasts.len == 3
+    check heldBlock(off).len == 5
+    check heldBlock(off).allIt(it.startsWith("row of table of criteria of block names"))
+
+
+  test "block of tables reads each claim from its row, by its number (7200557915 of #1028)":
+    # Case as found: example of comment 7200557915, which `D1 a` of comment 7218520265 rules.
+    let read = PREDICTION_TABLES.forecasts
+    check read.mapIt(it.position) == toSeq(1..8)
+    check read.allIt(it.is_row and it.forms.len == 1)
+    check read[0].forms == @["Its last commit passes `nim r koch check` with 0 findings."]
+    check read[7].forms == @["The builder takes ~50m."]
+    check read.mapIt(it.is_number) == @[false, false, false, false, false, true, true, true]
+    check read.mapIt(it.confidence.get) == @[0.8, 0.8, 0.75, 0.75, 0.55, 0.9, 0.9, 0.9]
+    check read[0 .. 4].allIt(it.estimate.isNone)
+    check read[5].estimate == some(Estimate(low: 5e6, median: 15e6, high: 45e6,
+      unit: UnitNumber.Tokens))
+    check read[6].estimate == some(Estimate(low: 2.5, median: 7, high: 20, unit: UnitNumber.Cost))
+    check read[7].estimate == some(Estimate(low: 20, median: 50, high: 120, unit: UnitNumber.Time))
+    check PREDICTION_TABLES.findingsPrediction.len == 0  # each claim has its criterion
+    check heldBlock(PREDICTION_TABLES).len == 0
+
+    # Hook skips sentence above each table: block with no label or sentence reads same claims.
+    var bare = PREDICTION_TABLES
+    for line in PREDICTION_TABLES.splitLines:
+      if line.startsWith("**Judgements.**") or line.startsWith("**Estimates.**") or
+          line.startsWith("**Criteria.**") or line == "its 90% range.":
+        bare = bare.replace(line & "\n", "")
+    check bare != PREDICTION_TABLES
+    check bare.forecasts == read
+
+    # Rows 2, 4 and 5 of reflection as posted quote part of their claim, so each is refused, as
+    #   D5 b of #969 refuses part of claim; whole quotes pass.
+    let refusals = heldReflection(PREDICTION_TABLES, REFLECTION_TABLES_POSTED)
+    check refusals.len == 3
+    for k, (part, _) in QUOTES_PART:
+      check refusals[k] == "row of table of judgements or estimates of reflection names claim " &
+        "of `## Prediction` block that call took by its number under `#`, and quotes that " &
+        "claim whole, or holds `No prediction` (GUIDE.md, Prediction, critic and reflection); " &
+        "got `" & $[2, 4, 5][k] & "` and `" & part & "`"
+    check heldReflection(PREDICTION_TABLES, REFLECTION_TABLES_POSTED.mended).len == 0
+
+
+  test "value of cell reads its marks of unit and scale, and nothing past them (7194411522)":
+    # Domain: each mark of cost, form of digits, scale and mark of time, as cells of estimate
+    #   and opening of result write them; `M` of million and `m` of minutes differ by case.
+    const
+      costs = ["", "$"]
+      digits = [("5", 5.0), ("0.5", 0.5), ("1,500", 1500.0), ("12.25", 12.25)]
+      scales = [("", 1.0), ("k", 1e3), ("M", 1e6)]
+      times = [("", 1.0), ("s", 1.0 / 60), ("m", 1.0), ("h", 60.0)]
+    var count = 0
+    for cost in costs:
+      for (written, amount) in digits:
+        for (scale, factor) in scales:
+          for (time, minutes) in times:
+            let cell = cost & written & scale & time
+            if cost.len > 0 and time.len > 0:
+              check cell.valueAt.isNone  # cost and time at once
+              continue
+            let value = cell.valueAt
+            check value.isSome and value.get.stop == cell.len
+            check value.get.amount.isNear(amount * factor * minutes)
+            check value.get.unit == (if cost.len > 0: UnitNumber.Cost
+              elif time.len > 0: UnitNumber.Time else: UnitNumber.Unspecified)
+            check (cell & ", inside").valueAt == value  # result opens with value
+            check (cell & "x").valueAt.isNone  # letter runs on
+            if scale.len + time.len > 0: check (cell & "0").valueAt.isNone  # digit runs on
+            inc count
+    check count == 2 * 4 * 3 * 4 - 4 * 3 * 3  # each form but those of cost and time at once
+    check "39.1M".valueAt.get.amount == 39_100_000.0  # point moves before parse, so exact
+    check "39,100,000".valueAt.get.amount == "39.1M".valueAt.get.amount
+    check "1.2345k".valueAt.get.amount == 1234.5
+    for cell in ["", "$", "k", "m", "~5", "-5", " 5", "$m5", "five"]:
+      check cell.valueAt.isNone
+    check "5 m".valueAt.get.stop == 1  # space ends value, so cell `5 m` is no whole value
+    check "1,23".valueAt.isNone  # comma before digit that opens no group runs on (#1028)
+
+
+  test "estimate takes unit of its cells, in one unit, rising (7194411522 of #1028)":
+    func estimate(text: string, cells: array[3, string]): Option[Estimate] =
+      ## Read estimate of block of one estimate of text with cells.
+      blockEstimate(text, cells).forecasts[0].estimate
+    check estimate("~2 tokens.", ["1", "2", "3"]).get.unit == UnitNumber.Tokens
+    check estimate("~2 TOKENS.", ["1", "2", "3"]).get.unit == UnitNumber.Tokens  # any case
+    check estimate("Tokens: ~2.", ["1", "2", "3"]).get.unit == UnitNumber.Tokens
+    check estimate("~2 findings.", ["1", "2", "3"]).get.unit == UnitNumber.Count
+    check estimate("~2 tokenset.", ["1", "2", "3"]).get.unit == UnitNumber.Count  # no word
+    check estimate("~2 token.", ["1", "2", "3"]).get.unit == UnitNumber.Count
+    check estimate("~$2 in tokens.", ["$1", "$2", "$3"]).get.unit == UnitNumber.Cost  # cell first
+    check estimate("~2m.", ["1s", "2m", "3h"]) == some(Estimate(low: 1.0 / 60, median: 2,
+      high: 180, unit: UnitNumber.Time))
+    check estimate("~1M tokens.", ["500k", "1M", "1.5M"]) == some(Estimate(low: 5e5,
+      median: 1e6, high: 1.5e6, unit: UnitNumber.Tokens))
+
+    # Cells of two units, cells that do not rise, and cells that are no whole value are each
+    #   refused, as finding of block, and give no estimate.
+    let rule = "estimate states its 5th, 50th and 95th percentiles under their columns, each " &
+      "cell one value, of one unit, each above one before: `$` for cost, `s`, `m` or `h` for " &
+      "time, bare number for tokens or count, each scaled by `k` or `M` where it needs " &
+      "(GUIDE.md, Prediction, critic and reflection)"
+    var refused: seq[array[3, string]] = @[["$1", "2", "3"], ["1m", "2", "3"], ["$1", "2m", "3h"],
+      ["1", "1", "2"], ["1", "2", "2"], ["2", "2", "2"], ["2k", "1M", "900"],
+      ["~1", "2", "3"], ["1 m", "2m", "3m"], ["", "2", "3"], ["one", "2", "3"]]
+    for cells in [["1 m", "2 m", "3 m"], ["1", "2", "3 findings"], ["$1", "$2", "$3 each"]]:
+      refused.add cells  # value of one unit opens each cell, and text runs on past it
+    for order in [[1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]:
+      refused.add [$order[0], $order[1], $order[2]]  # each order of 1, 2 and 3 but rising
+    for cells in refused:
+      check estimate("~2 findings.", cells).isNone
+      check heldBlock(blockEstimate("~2 findings.", cells)) ==
+        @[rule & "; got `" & cells.join("`, `") & "` for claim `1`"]
+    check heldBlock(blockEstimate("~2 findings.", ["1", "2", "3"])).len == 0
+
+
+  test "each claim of tables takes number of its own, text, confidence and criterion (#1028)":
+    func without(text, line: string): string =
+      ## Write text with line, and its newline, taken out.
+      doAssert line & "\n" in text
+      text.replace(line & "\n", "")
+    func refusal(rule, got: string): string =
+      ## Write finding of block that rule states, with what it got.
+      rule & " (GUIDE.md, Prediction, critic and reflection); got " & got
+    const
+      criterion = "claim takes its resolution criterion in row of its number of table with " &
+        "column `Resolution criterion`"
+      number = "row of table of judgements or estimates of block opens with number of its own " &
+        "under `#`, as digits alone, from 1"
+      row_criteria = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names"
+      confidence = "judgement states its confidence alone under `%`, as `70%` or `62.5%`"
+      text = "claim of table states its text under `Judgement` or `Estimate @ 90%`"
+      row3 = "| 3 | The critic finds no HTTP request in the code that `start` runs. |"
+
+    # Missing criterion, empty one, and one of no number each leave claim with none.
+    check heldBlock(PREDICTION_TABLES.without(row3)) ==
+      @[refusal(criterion, "none for claim `3`")]
+    check rulesHeld(lineUser("Build it.", "human") & lineSaid(PREDICTION_TABLES.without(row3))) ==
+      @["koch.prediction-tables"]
+    check heldBlock(PREDICTION_TABLES.replace(row3, "| 3 |  |")) ==
+      @[refusal(criterion, "none for claim `3`")]
+    check heldBlock(PREDICTION_TABLES.replace(row3, row3.replace("| 3 |", "| 3. |"))) ==
+      @[refusal(criterion, "none for claim `3`"), refusal(row_criteria, "`3.`")]
+    let none = PREDICTION_TABLES[0 ..< PREDICTION_TABLES.find("**Criteria.**")]
+    check heldBlock(none) == toSeq(1..8).mapIt(refusal(criterion, "none for claim `" & $it & "`"))
+
+    # Number of row is whole number from 1, of its own across both tables.
+    const row1 = "| 1 | 80% | Its last commit passes `nim r koch check` with 0 findings. |"
+    for cell in ["", "0", "#1", "1.", "x", "1 2"]:
+      check heldBlock(PREDICTION_TABLES.replace(row1, row1.replace("| 1 |", "| " & cell & " |"))) ==
+        @[refusal(number, "`" & cell & "`")]
+    check heldBlock(PREDICTION_TABLES.replace("| 6 | The builder", "| 3 | The builder")) ==
+      @[refusal(number, "`3`")]
+
+    # Confidence of judgement is percentage alone; text of claim is never empty.
+    for cell in ["", "80", "80 %", "(80%)", "eighty", "80%."]:
+      check heldBlock(PREDICTION_TABLES.replace("| 1 | 80% |", "| 1 | " & cell & " |")) ==
+        @[refusal(confidence, "`" & cell & "` for claim `1`")]
+    check heldBlock(PREDICTION_TABLES.replace("| 1 | 80% |", "| 1 | 62.5% |")).len == 0
+    check PREDICTION_TABLES.replace("| 1 | 80% |", "| 1 | 62.5% |").forecasts[0].confidence ==
+      some(0.625)
+    check heldBlock(PREDICTION_TABLES.replace(row1, "| 1 | 80% |  |")) ==
+      @[refusal(text, "empty cell for claim `1`")]
+
+    # Block of bullets takes none of these, so block of delegate that runs at merge still serves.
+    check heldBlock(PREDICTION).len == 0
+
+
+  test "each table of claims of block holds its form whole, and each criterion names claim (#1028)":
+    # Case as found: header one character off its form read as no table and gave no finding at
+    #   stop of its own turn, so reflection was refused later, where no mend serves call. Domain:
+    #   each column of each form dropped or one character off, each order of columns, and each
+    #   criterion of no claim or of claim that other row names (GUIDE.md, Prediction, critic and
+    #   reflection).
+    const
+      forms = [
+        ("| # | % | Judgement |", @["#", "%", "Judgement"]),
+        ("| # | Estimate @ 90% | 5th | 50th | 95th |",
+          @["#", "Estimate @ 90%", "5th", "50th", "95th"]),
+        ("| # | Resolution criterion |", @["#", "Resolution criterion"]),
+      ]
+      rule = "table of block whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+        "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
+        "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      orphan = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
+    func header(names: openArray[string]): string =
+      ## Write header row of names, as table of fixture writes it.
+      "| " & names.join(" | ") & " |"
+    for (line, names) in [(forms[0][0], @["#", "%", "Judgements"]),
+        (forms[1][0], @["#", "Estimate @90%", "5th", "50th", "95th"])]:
+      let changed = PREDICTION_TABLES.tableColumns(line, toSeq(0 ..< names.len), names)
+      check heldBlock(changed) == @[rule & names.header & "`"]  # case as found
+      check heldReflection(changed, REFLECTION_TABLES_POSTED.mended).len > 0  # its rows read none
+
+    # Table that drops column of its form, or holds column one character off, takes one finding,
+    #   and its rows read as none; criteria are held to claims only once each table holds form.
+    var count = 0
+    for (line, names) in forms:
+      for k, column in names:
+        let kept = toSeq(0 ..< names.len).filterIt(it != k)
+        var offs = @[column & "s", column[0 ..< ^1]]
+        if column[0] in Letters: offs.add (if column[0].isUpperAscii: column.toLowerAscii
+          else: column.capitalizeAscii)
+        let dropped = PREDICTION_TABLES.tableColumns(line, kept)
+        check heldBlock(dropped) == @[rule & kept.mapIt(names[it]).header & "`"]
+        check dropped.forecasts.len == PREDICTION_TABLES.forecasts.len -
+          (if line == forms[0][0]: 5 elif line == forms[1][0]: 3 else: 0)
+        for off in offs:
+          var named = names
+          named[k] = off
+          check heldBlock(PREDICTION_TABLES.tableColumns(line, toSeq(0 ..< names.len), named)) ==
+            @[rule & named.header & "`"]
+          inc count
+    check count == 3 * 2 + 5 * 2 + 2 * 2 + 3  # added, dropped, and case of each opening letter
+
+    # Each order of columns of each form reads same claims, since hook reads columns by name; table
+    #   with extra column, or with no column that names form, reads too.
+    for (line, names) in forms:
+      var order = toSeq(0 ..< names.len)
+      while true:
+        let moved = PREDICTION_TABLES.tableColumns(line, order)
+        check heldBlock(moved).len == 0
+        check moved.forecasts == PREDICTION_TABLES.forecasts
+        if not order.nextPermutation: break
+    check heldBlock(blockEstimate("~2 findings.", ["1", "2", "3"], has_criterion = false) &
+      "\n| # | Resolution criterion | Note |\n| --- | --- | --- |\n| 1 | The line. | x |\n")
+      .len == 0
+    check heldBlock(PREDICTION_TABLES.replace("**Working:**",
+      "| Option | Cost |\n| --- | --- |\n| a | $1 |\n\n**Working:**")).len == 0
+
+    # Criterion of number of no claim, or of claim of other row, is refused, as is row of no
+    #   number (finding 5 of critic of mends).
+    const row8 = "| 8 | The minutes on the line `**Subagent:**` of the reflection. |"
+    for number in 0 .. 10:
+      let extra = PREDICTION_TABLES.replace(row8, row8 & "\n| " & $number & " | A criterion. |")
+      check heldBlock(extra) == @[orphan & $number & "`"]
+    check heldBlock(PREDICTION_TABLES.replace(row8, row8 & "\n| x | A note. |")) == @[orphan & "x`"]
+
+
+  test "number under `#` of each table of claims of block is digits alone, from 1 (#1028)":
+    # Case as found (finding 5 of critic of mends): row `6.` of criteria beside row `6`, and row
+    #   of criteria with no number, passed, so two criteria could name one claim. Domain: each
+    #   cell that is no digits alone, or 0, under `#` of each table of claims of block.
+    const
+      number = "row of table of judgements or estimates of block opens with number of its own " &
+        "under `#`, as digits alone, from 1 (GUIDE.md, Prediction, critic and reflection); got `"
+      row_criteria = "row of table of criteria of block names, by its number under `#` as digits " &
+        "alone, from 1, claim of block that no other row names (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
+      row6 = "| 6 | The tokens on the line `**Subagent:**` of the reflection. |"
+      row7 = "| 7 | The builder costs ~$7.00. | $2.50 | $7.00 | $20.00 |"
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| 6. | The line. |")) ==
+      @[row_criteria & "6.`"]  # case as found
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n|  | The line. |")) ==
+      @[row_criteria & "`"]
+    var count = 0
+    for cell in ["", "0", "6.", "#6", "x", "6 7", "-6", "+6", "6a", "(6)", "６"]:
+      check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| " & cell & " | The line. |")) ==
+        @[row_criteria & cell & "`"]
+      check heldBlock(PREDICTION_TABLES.replace(row7, row7.replace("| 7 |", "| " & cell & " |"))) ==
+        @[number & cell & "`"]
+      inc count
+    check count == 11
+    check heldBlock(PREDICTION_TABLES.replace(row6, row6 & "\n| 06 | The line. |")) ==
+      @[row_criteria & "6`"]  # digits alone read past leading zero, so claim is named twice
+    check heldBlock(PREDICTION_TABLES).len == 0
+
+
+  test "block of tables holds no bullet beside them, as bullet and row take one key (#1028)":
+    # Case as found: bullet at position 1 and row 1 of table of one block took one key of log,
+    #   so `appendClaims` dropped one row. Domain: bullet of each marker before, between and
+    #   after tables, with number of claim of table or none, and two bullets.
+    const rule = "block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` " &
+      "or `Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
+      "reflection); got `"
+    let found = PREDICTION_TABLES.replace("**Judgements.**",
+      "- Work: four to eight findings (60%).\n\n**Judgements.**")
+    check found.forecasts.mapIt(it.position).count(1) == 2  # bullet and row share one number
+    check heldBlock(found) == @[rule & "Work: four to eight findings`"]  # case as found
+    for marker in ["-", "*", "+"]:
+      for before in ["**Judgements.**", "**Estimates.**", "**Criteria.**", "**Working:**"]:
+        for (bullet, claim) in [("Work: four to eight findings (60%).",
+            "Work: four to eight findings"), ("the report ranks 9 findings (60%).",
+            "the report ranks 9 findings")]:
+          let text = PREDICTION_TABLES.replace(before, marker & " " & bullet & "\n\n" & before)
+          check heldBlock(text) == @[rule & claim & "`"]
+    let two = PREDICTION_TABLES.replace("**Criteria.**",
+      "- Work: a (60%).\n- Work: b (70%).\n\n**Criteria.**")
+    check heldBlock(two) == @[rule & "Work: a`", rule & "Work: b`"]
+    check heldBlock(PREDICTION).len == 0  # bullets alone, as block of delegate that runs at merge
+
+    # Table of claims that reads no row of claims, as one of criteria alone or one character off
+    #   its form, still makes bullet beside it refused, as its rows share numbers too.
+    let criteria = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+      "- Work: four to eight findings (60%).\n\n| # | Resolution criterion |\n| --- | --- |\n" &
+      "| 1 | The line. |\n"
+    check heldBlock(criteria)[0] == rule & "Work: four to eight findings`"
+    check heldBlock(criteria.replace("| # | Resolution criterion |",
+      "| # | Resolution criteria |"))[0] == rule & "Work: four to eight findings`"
+
+
+  test "bullet with indent, or item of number, under basis passes, as it holds no claim (#1028)":
+    # Case as found (finding 3 of third critic): bullet indented under `**Basis:**` passed, where
+    #   GUIDE.md said hook refuses bullet beside tables. Domain: each marker of bullet at each
+    #   indent of one to four spaces or tab, and item of number, under basis of block of tables;
+    #   none reads as claim, so none takes key of log that row takes; bullet with no indent does.
+    const
+      basis = "**Basis:** what this delegate knows, with no new read."
+      rule = "block that holds table whose header holds `#`, `Judgement`, `Estimate @ 90%` " &
+        "or `Resolution criterion` holds no bullet beside it (GUIDE.md, Prediction, critic and " &
+        "reflection); got `"
+    func listed(opening: string): string =
+      ## Write block of tables whose basis lists two items, each opening with opening.
+      PREDICTION_TABLES.replace(basis, "**Basis:** what this delegate knows:\n\n" & opening &
+        "the diff of `main`\n" & opening & "the report")
+    var count = 0
+    for marker in ["- ", "* ", "+ "]:
+      for indent in [" ", "  ", "   ", "    ", "\t"]:
+        check listed(indent & marker).forecasts.len == 8  # claims of tables alone
+        check heldBlock(listed(indent & marker)).len == 0
+        inc count
+      check heldBlock(listed(marker)) == @[rule & "the diff of `main``", rule & "the report`"]
+    check count == 3 * 5
+    for item in ["1. ", "1) ", "  1. "]:
+      check heldBlock(listed(item)).len == 0 and listed(item).forecasts.len == 8
+
+
+  test "block is held at stop of its own turn, and its mend of later turn serves call (#1028)":
+    # Delegate mends block in reply, which is later turn, so block of that turn serves call.
+    let
+      broken = PREDICTION_TABLES.replace("| 1 | 80% |", "| 1 | 80 |")
+      text = lineUser("Build it.", "human") & lineSaid(broken) &
+        lineSaid(PREDICTION_TABLES) &
+        lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("builder") & lineSaid("Started.")
+      subagents = text.parseTurn.subagents
+    check heldBlock(broken).len == 1
+    check subagents.predictions.len == 2
+    check subagents.blocksTaken(KINDS) == @[1]
+    check blocksHeld(text).len == 0  # broken block stands in earlier turn
+
+
+  test "row of reflection quotes claim by its number and its text (7200557915 of #1028)":
+    let whole = REFLECTION_TABLES_POSTED.mended
+    func refusal(number, text: string): string =
+      ## Write finding of row of table with `#` that quotes no claim.
+      "row of table of judgements or estimates of reflection names claim of `## Prediction` " &
+        "block that call took by its number under `#`, and quotes that claim whole, or holds " &
+        "`No prediction` (GUIDE.md, Prediction, critic and reflection); got `" & number &
+        "` and `" & text & "`"
+    const three = "It adds no network call to the start hook."
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 3 | ✅ |", "| 4 | ✅ |")) ==
+      @[refusal("4", three)]  # number of other claim
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 3 | ✅ |", "| 9 | ✅ |")) ==
+      @[refusal("9", three)]  # number of no claim
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 3 | ✅ |", "| three | ✅ |")) ==
+      @[refusal("three", three)]
+    check heldReflection(PREDICTION_TABLES, whole.replace(three, "It adds no network call.")) ==
+      @[refusal("3", "It adds no network call.")]
+    check heldReflection(PREDICTION_TABLES, whole.replace(three,
+      three.replace(" ", "   "))).len == 0  # each run of whitespace reads as one space
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 8 | ✅ | The builder takes ~50m.",
+      "| 7 | ✅ | The builder takes ~50m.")) == @[refusal("7", "The builder takes ~50m.")]
+    check heldReflection(PREDICTION_TABLES, whole.replace("| 3 | ✅ | 75% | " & three,
+      "| 3 | ✅ | 75% | ")) == @["row of table of judgements or estimates of reflection names " &
+      "claim of `## Prediction` block that call took by its number under `#`, and quotes that " &
+      "claim whole, or holds `No prediction` (GUIDE.md, Prediction, critic and reflection); " &
+      "got empty cell in row `3`"]
+
+    # Missed prediction holds `No prediction`, whatever its number; reflection with no table of
+    #   claims, and table with no row, are refused.
+    let missed = "## Reflection\n\n| # | State | % | Judgement | Result |\n" &
+      "| --- | --- | --- | --- | --- |\n| – | ⬜ | – | No prediction | started before it |\n"
+    check heldReflection(PREDICTION_TABLES, missed).len == 0
+    check heldReflection(PREDICTION_TABLES, "## Reflection\n\nNone.\n") == @[REFUSAL_NO_TABLE]
+    check heldReflection(PREDICTION_TABLES, "## Reflection\n\n| # | State | Estimate @ 90% | " &
+      "Result |\n| --- | --- | --- | --- |\n") == @["table of reflection holds row under its " &
+      "header; got none under `| # | State | Estimate @ 90% | Result |`"]
+
+    # Bullets of delegate that runs at merge quote either way: cell under `Predicted` quotes claim
+    #   of table, and row with `#` quotes bullet by its position, with or without its label.
+    check heldReflection(PREDICTION_TABLES, "## Reflection\n\n| State | Confidence | " &
+      "Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 75% | " & three & " | yes |\n").len ==
+      0
+    for (number, cell) in [("1", "the race to save one shared key leads the findings"),
+        ("1", "Judgement: the race to save one shared key leads the findings"),
+        ("2", "four to eight findings, each with `file:line`")]:
+      let reflection = "## Reflection\n\n| # | State | % | Judgement | Result |\n" &
+        "| --- | --- | --- | --- | --- |\n| " & number & " | ✅ | 70% | " & cell & " | yes |\n"
+      check heldReflection(PREDICTION, reflection).len == 0
+      check heldReflection(PREDICTION, reflection.replace("| " & number & " |", "| 3 |")) ==
+        @[refusal("3", cell)]
+
+    # Block that holds bullets and tables reads claims of both, so row quotes claim of either.
+    let
+      mixed = PREDICTION_TABLES.replace("**Judgements.**",
+        "- Work: four to eight findings (60%).\n\n**Judgements.**")
+      bullet = "## Reflection\n\n| # | State | % | Judgement | Result |\n" &
+        "| --- | --- | --- | --- | --- |\n| 1 | ✅ | 60% | four to eight findings | five |\n"
+    check mixed.forecasts.len == 9
+    check mixed.forecasts[0].forms == @["Work: four to eight findings", "four to eight findings"]
+    check heldReflection(mixed, whole).len == 0
+    check heldReflection(mixed, bullet).len == 0
+
+
+  test "each table of claims of reflection holds its form whole (7200557915 of #1028)":
+    # Case as found: `| # | State | Estimate | Result |` read as no table and gave no finding, so
+    #   log lost three estimates. Domain: each column of each form dropped or one character off,
+    #   each order of columns, and table that names no form (GUIDE.md, Prediction, critic and
+    #   reflection).
+    const
+      forms = [
+        ("| # | State | % | Judgement | Result |", @["#", "State", "%", "Judgement", "Result"]),
+        ("| # | State | Estimate @ 90% | Result |", @["#", "State", "Estimate @ 90%", "Result"]),
+      ]
+      rule = "table of reflection whose header holds `#`, `Judgement` or `Estimate @ 90%` holds " &
+        "each column of one form: `#`, `State`, `%`, `Judgement` and `Result`, or `#`, `State`, " &
+        "`Estimate @ 90%` and `Result` (GUIDE.md, Prediction, critic and reflection); got `"
+    func header(names: openArray[string]): string =
+      ## Write header row of names, as table of fixture writes it.
+      "| " & names.join(" | ") & " |"
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      found = whole.tableColumns(forms[1][0], toSeq(0 ..< 4), ["#", "State", "Estimate", "Result"])
+    check heldReflection(PREDICTION_TABLES, found) ==
+      @[rule & "| # | State | Estimate | Result |`"]  # case as found
+    check found.rowsReflection.len == 5  # its rows read as none
+    let alone = "## Reflection\n\n" & found[found.find("| # | State | Estimate |") .. ^1]
+    check heldReflection(PREDICTION_TABLES, alone) == @[rule & "| # | State | Estimate | Result |`"]
+
+    # Table that drops column of its form, or holds column one character off, takes one finding,
+    #   and its rows read as none.
+    var count = 0
+    for (line, names) in forms:
+      for k, column in names:
+        let kept = toSeq(0 ..< names.len).filterIt(it != k)
+        var offs = @[column & "s", column[0 ..< ^1]]
+        if column[0] in Letters: offs.add column.toLowerAscii
+        let dropped = whole.tableColumns(line, kept)
+        check heldReflection(PREDICTION_TABLES, dropped) == @[rule & kept.mapIt(names[it]).header &
+          "`"]
+        check dropped.rowsReflection.len == (if line == forms[0][0]: 3 else: 5)
+        for off in offs:
+          var named = names
+          named[k] = off
+          let changed = whole.tableColumns(line, toSeq(0 ..< names.len), named)
+          check heldReflection(PREDICTION_TABLES, changed) == @[rule & named.header & "`"]
+          inc count
+    check count == 5 * 2 + 4 * 2 + 3 + 3  # added, dropped, and case of each opening letter
+
+    # Each order of columns reads same rows, since hook reads columns by name; table with no
+    #   column that names form, and table with column `Predicted`, read as before.
+    for (line, names) in forms:
+      var order = toSeq(0 ..< names.len)
+      while true:
+        let moved = whole.tableColumns(line, order)
+        check heldReflection(PREDICTION_TABLES, moved).len == 0
+        check moved.rowsReflection == whole.rowsReflection
+        if not order.nextPermutation: break
+    check heldReflection(PREDICTION_TABLES, whole & "\n| Test | Result |\n| --- | --- |\n" &
+      "| suites | pass |\n").len == 0
+
+
+  test "table of claims is one whose header holds column GUIDE.md names for block or reflection":
+    # Case as found (finding 4 of critic of mends, #1028): reflection that adds `| # | Cause |` was
+    #   refused, though GUIDE.md named no table of claims by `#`, and `| Claim | Resolution
+    #   criterion | Met |` was refused by rule that names no `Resolution criterion`. Domain: each
+    #   column of each form, and column of none, with other column, added to block and reflection.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      block_naming = ["#", "Judgement", "Estimate @ 90%", "Resolution criterion"]
+      reflection_naming = ["#", "Judgement", "Estimate @ 90%"]
+      form_block = "table of block whose header holds `#`, `Judgement`, `Estimate @ 90%` or " &
+        "`Resolution criterion` holds each column of one form: `#`, `%` and `Judgement`, or `#`, " &
+        "`Estimate @ 90%`, `5th`, `50th` and `95th`, or `#` and `Resolution criterion` " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      form_reflection = "table of reflection whose header holds `#`, `Judgement` or " &
+        "`Estimate @ 90%` holds each column of one form: `#`, `State`, `%`, `Judgement` and " &
+        "`Result`, or `#`, `State`, `Estimate @ 90%` and `Result` (GUIDE.md, Prediction, critic " &
+        "and reflection); got `"
+    check "**A table of a block is a table of claims where its header holds `#`, `Judgement`, " &
+      "`Estimate @ 90%` or `Resolution criterion`.** A table of a reflection is one where its " &
+      "header holds `#`, `Judgement` or `Estimate @ 90%`." in guide.collapsed
+    let whole = REFLECTION_TABLES_POSTED.mended
+    check heldReflection(PREDICTION_TABLES, whole & "\n| # | Cause |\n| --- | --- |\n| 5 | The " &
+      "critic read the evidence. |\n") == @[form_reflection & "| # | Cause |`"]  # case as found
+    check heldReflection(PREDICTION_TABLES, whole & "\n| Claim | Resolution criterion | Met |\n" &
+      "| --- | --- | --- |\n| 5 | The report names such a claim. | yes |\n").len == 0
+    var count = 0
+    for column in ["#", "Judgement", "Estimate @ 90%", "Resolution criterion", "%", "State",
+        "Result", "5th", "Cause"]:
+      let
+        table = "| " & column & " | Note |\n| --- | --- |\n| 5 | A note. |\n"
+        in_block = heldBlock(PREDICTION_TABLES.replace("**Working:**", table & "\n**Working:**"))
+        in_reflection = heldReflection(PREDICTION_TABLES, whole & "\n" & table)
+      check in_block == (if column in block_naming: @[form_block & "| " & column & " | Note |`"]
+        else: @[])
+      check in_reflection == (if column in reflection_naming:
+        @[form_reflection & "| " & column & " | Note |`"] else: @[])
+      count += int(column in block_naming) + int(column in reflection_naming)
+    check count == 4 + 3
+
+    # Each refusal that turns on table of claims names each column that makes one there.
+    for (refusal, naming) in [(form_block, @block_naming), (form_reflection, @reflection_naming),
+        (REFUSAL_NO_TABLE, @reflection_naming), (heldBlock(PREDICTION_TABLES.replace(
+        "**Working:**", "- a (60%).\n\n**Working:**"))[0], @block_naming)]:
+      let named = refusal[0 ..< refusal.find("(GUIDE.md")]
+      check naming.allIt("`" & it & "`" in named)
+      check ("`Resolution criterion`" in named) == ("Resolution criterion" in naming)
+
+
+  test "result of estimate hit or missed opens with its value in unit of its cells (#1028)":
+    # Domain: each state, against each form of result of each unit of case as found.
+    let whole = REFLECTION_TABLES_POSTED.mended
+    const
+      rule = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit of " &
+        "its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+        "(GUIDE.md, Prediction, critic and reflection)"
+      forms = [
+        ("| 6 |", "39.1M, inside", @["39.1M, inside", "39,100,000, inside", "39100000"],
+          @["inside", "$39.1M, inside", "39.1m, inside", "~39.1M"]),
+        ("| 7 |", "$14.40, inside", @["$14.40, inside", "$14.4"],
+          @["14.40, inside", "inside", "$14.40m", "14.40$"]),
+        ("| 8 |", "47m, inside", @["47m, inside", "2820s, inside", "0.8h"],
+          @["47, inside", "47 min, inside", "47M, inside", "$47m"]),
+      ]
+    for (row, written, held, refused) in forms:
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        let line = whole.splitLines.filterIt(it.startsWith(row))[0]
+        for cell in held & refused:
+          let
+            changed = line.replace("| ✅ |", "| " & state & " |").replace(written, cell)
+            found = heldReflection(PREDICTION_TABLES, whole.replace(line, changed))
+          if cell in refused and state in ["✅", "⬜"]:
+            check found == @[rule & "; got `" & cell & "` for claim `" & row[2 .. ^3] & "`"]
+          else: check found.len == 0
+
+
+  test "result of number of bullets hit or missed opens with value in unit of its text (#1028)":
+    # Case as found: bullet of tokens took `170k, inside`, and bullet of time `1.5h, inside`, as
+    #   first number of cell, with no finding. Domain: each unit of bullet, each form of value,
+    #   each state, under `Predicted` and under `#`; bare value reads in unit text names, as its
+    #   percentiles stand bare, and value of other unit is refused, as is cell that opens with no
+    #   value (finding 1 of critic of mends).
+    const
+      numbers = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+        "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
+        "50th and 95th percentiles.\n- Cost: cost at list price: $0.40, $0.90 and $2.00, as " &
+        "the 5th, 50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and " &
+        "30, as the 5th, 50th and 95th percentiles.\n- Count: findings that the report ranks: " &
+        "3, 6 and 11, as the 5th, 50th and 95th percentiles.\n"
+      rule = REFUSAL_OUTCOME_BULLETS
+      forms = [
+        ("tokens summed over its requests: 100,000, 160,000 and 300,000",
+          @["170,000, inside", "170000", "170k, inside", "0.17M"],
+          @["$170k", "170m, inside", "inside", "~170k"]),
+        ("cost at list price: $0.40, $0.90 and $2.00",
+          @["$1.10, inside", "1.10", "$1.1k"], @["1.10m", "inside"]),
+        ("time to its report, in minutes: 5, 12 and 30",
+          @["15m, inside", "15, inside", "1.5h", "900s"], @["$15", "inside"]),
+        ("Count: findings that the report ranks: 3, 6 and 11", @["12, above the 95th", "1.2k"],
+          @["$12", "12m"]),
+      ]
+    var count = 0
+    for k, (claim, held, refused) in forms:
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        for cell in held & refused:
+          for table in ["| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n" &
+              "| " & state & " | 90% | ", "| # | State | Estimate @ 90% | Result |\n" &
+              "| --- | --- | --- | --- |\n| " & $(k + 1) & " | " & state & " | "]:
+            let found = heldReflection(numbers, "## Reflection\n\n" & table & claim & " | " & cell &
+              " |\n")
+            if cell in refused and state in ["✅", "⬜"]:
+              check found == @[rule & cell & "` for claim `" & $(k + 1) & "`"]
+              inc count
+            else: check found.len == 0
+    check count == 2 * 2 * (4 + 2 + 2 + 2)  # two states and two tables of each refused cell
+
+    # Number whose text names no unit, as `Cost: $0.40, …`, takes value of any mark, as it takes no
+    #   score (GUIDE.md before tables: label names no unit but `Count:`).
+    let unnamed = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n- Cost: " &
+      "$0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.\n"
+    for cell in ["$1.10, inside", "1.10, inside", "15m, inside", "1.1k"]:
+      check heldReflection(unnamed, "## Reflection\n\n| State | Confidence | Predicted | Result " &
+        "|\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " & cell & " |\n")
+        .len == 0
+
+
+  test "result of number of bullets that opens with no value is refused, as log reads none (#1028)":
+    # Case as found (finding 1 of critic of mends): each cell below logged no outcome with no
+    #   finding, as check read only cell that opens with value. Domain: each state of each case,
+    #   and each result of scored number of log of root curator (`RESULTS_LOGGED`), through hook
+    #   and through reader of log; hook refuses each result whose value log reads as none.
+    const found = [(0, "s08, 170,000, inside"), (1, "m01: $1.10, inside"), (0, "✅ 170,000"),
+      (1, "✅ $1.10, in $0.40–$2.00"), (2, "r1: 15"), (0, "~170k, inside"), (1, "about $1.10")]
+    for (k, cell) in found:
+      check cell.outcomeResult(CLAIMS_BULLETS[k].unitText, as_bare = true).isNone
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        let held = heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | " &
+          "Predicted | Result |\n| --- | --- | --- | --- |\n| " & state & " | 90% | " &
+          CLAIMS_BULLETS[k] & " | " & cell & " |\n")
+        check held == (if state in ["✅", "⬜"]:
+          @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"] else: @[])
+
+    # Of results logged, these read value row holds, these read other value, as cell of four
+    #   places of cost whose row of #963 logged cents, and hook refuses these, as label, marker
+    #   or word before value, or no value, as `r01: $0.16`, `✅ $0.35` or `⬜`.
+    const
+      read_same = 148  ## Results that read value row logged.
+      read_other = 17  ## Results that read value of four places, where row logged cents.
+      refused_logged = 186  ## Results that hook refuses, as they read no value.
+    var same, other, refused = 0
+    for (text, cell, logged) in RESULTS_LOGGED:
+      let
+        prediction = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n- " &
+          text & ", as the 5th, 50th and 95th percentiles.\n"
+        held = heldReflection(prediction, "## Reflection\n\n| State | Confidence | Predicted " &
+          "| Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & text & " | " & cell & " |\n")
+        outcome = cell.outcomeResult(text.unitText, as_bare = true)
+      check held == (if outcome.isNone: @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `1`"]
+        else: @[])
+      if outcome.isNone: inc refused
+      elif outcome.get == logged: inc same
+      else:
+        check abs(outcome.get - logged) < 0.005  # four places, where row logged cents
+        inc other
+    check (same, other, refused) == (read_same, read_other, refused_logged)
+    check RESULTS_LOGGED.len == read_same + read_other + refused_logged
+
+
+  test "value reads scale and groups after one space, and result refuses what space leaves (#1028)":
+    # Case as found: `39.1 M, inside`, `39.1 million, inside` and `39 100 000, inside` took 39.1 or
+    #   39, since space ended value. Choice: each reads whole, since result that hook refuses keeps
+    #   row of its first write with no outcome. Domain: each form of digits, each scale after one
+    #   space in each case, groups after spaces, and digit, letter or word of time after space.
+    for cell in ["39.1 M, inside", "39.1 million, inside", "39 100 000, inside"]:
+      check cell.valueAt.get.amount == 39_100_000.0  # case as found
+      check cell.valueAt.get.stop == cell.find(',')
+    const
+      digits = [("5", 5.0), ("0.5", 0.5), ("12.25", 12.25), ("1,500", 1500.0), ("1 500", 1500.0)]
+      scales = [("k", 1e3), ("M", 1e6), ("thousand", 1e3), ("Thousand", 1e3), ("million", 1e6),
+        ("MILLION", 1e6), ("billion", 1e9)]
+    for (written, amount) in digits:
+      check written.valueAt.get.amount == amount and written.valueAt.get.stop == written.len
+      for (scale, factor) in scales:
+        let cell = written & " " & scale
+        check cell.valueAt.get.amount.isNear(amount * factor)
+        check (cell & ", inside").valueAt.get.stop == cell.len
+        check ("$" & cell).valueAt.get.unit == UnitNumber.Cost
+        check (cell & "s").valueAt.get.stop == written.len  # word runs on, so no scale
+        check (cell & "0").valueAt.isNone  # digit runs on
+    check "1 00".valueAt.get.stop == 1  # group holds three digits
+    check "1 0000".valueAt.get.stop == 1
+    check "1,000 000".valueAt.get.stop == 5  # one mark of group to value; result refuses rest
+    check "1 000,000".valueAt.isNone  # comma before digit runs on (#1028)
+    check "1  000".valueAt.get.stop == 1  # one space alone
+    check "5 m".valueAt.get.stop == 1 and "5 K".valueAt.get.stop == 1  # no scale of these
+
+    # Result of estimate or of bullet refuses digit, letter or word of time after space, which
+    #   value cannot read; each state but hit and miss passes.
+    let whole = REFLECTION_TABLES_POSTED.mended
+    const
+      outcome = "cell under `Result` of estimate marked ✅ or ⬜ opens with its value in unit of " &
+        "its cells: `$` for cost, `s`, `m` or `h` for time, bare number for tokens or count " &
+        "(GUIDE.md, Prediction, critic and reflection); got `"
+      forms = [
+        ("| 6 |", "39.1M, inside", @["39.1 M, inside", "39.1 million, inside",
+          "39 100 000, inside", "39 100 k", "0.0391 billion"],
+          @["39 1, inside", "39.1 K, inside", "39.1 B", "39.1 h", "39 100 000 0"]),
+        ("| 7 |", "$14.40, inside", @["$14.40 at list price", "$0.0144 k"], @["$14.40 m", "$14 4"]),
+        ("| 8 |", "47m, inside", @["47m, inside"],
+          @["47 m, inside", "0.8 h", "2820 s", "47 minutes", "1 Hour"]),
+      ]
+    var count = 0
+    for (row, written, held, refused) in forms:
+      let line = whole.splitLines.filterIt(it.startsWith(row))[0]
+      for state in ["✅", "⬜", "➖", "⏸️"]:
+        for cell in held & refused:
+          let
+            changed = line.replace("| ✅ |", "| " & state & " |").replace(written, cell)
+            found = heldReflection(PREDICTION_TABLES, whole.replace(line, changed))
+          if cell in refused and state in ["✅", "⬜"]:
+            check found == @[outcome & cell & "` for claim `" & row[2 .. ^3] & "`"]
+            inc count
+          else: check found.len == 0
+    check count == 2 * (5 + 2 + 5)
+    const
+      numbers = "## Prediction\n\n**Subagent:** builder of the fix, fresh context.\n\n" &
+        "- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 5th, " &
+        "50th and 95th percentiles.\n- Time: time to its report, in minutes: 5, 12 and 30, as " &
+        "the 5th, 50th and 95th percentiles.\n"
+      bullets = REFUSAL_OUTCOME_BULLETS
+    for (k, claim, held, refused) in [
+        (1, "tokens summed over its requests: 100,000, 160,000 and 300,000",
+          @["170 k, inside", "170 000, inside"], @["170 K", "170 0, inside"]),
+        (2, "time to its report, in minutes: 5, 12 and 30", @["15, inside"],
+          @["1.5 h, inside", "15 min", "900 s"])]:
+      for cell in held & refused:
+        let found = heldReflection(numbers, "## Reflection\n\n| State | Confidence | Predicted | " &
+          "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & claim & " | " & cell & " |\n")
+        check found == (if cell in refused: @[bullets & cell & "` for claim `" & $k & "`"]
+          else: @[])
+
+
+  test "result refuses scale of bare cost or time, two marks of group, and other space (#1028)":
+    # Case as found (finding 2 of critic of mends): bullet of time took `15 M, inside` as
+    #   15,000,000 minutes, result `39 100,000, inside` took 39,100, and `39.1 M` with no-break
+    #   space took 39.1, each with no finding. Domain: each scale on bare value of each unit of
+    #   bullets, each order of two marks of group, comma before digit, and each space of Unicode
+    #   before group, scale or mark of time; cell reads each run of ASCII whitespace as one space.
+    proc bullet(k: int, cell: string): seq[string] =
+      ## Read findings of reflection whose one row quotes number `k` of `NUMBERS_BULLETS`.
+      heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | Predicted | " &
+        "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & CLAIMS_BULLETS[k] & " | " & cell &
+        " |\n")
+    func refusal(k: int, cell: string): seq[string] =
+      ## Write finding of result of number `k` of `NUMBERS_BULLETS` that reads no value.
+      @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"]
+    check bullet(2, "15 M, inside") == refusal(2, "15 M, inside")  # case as found
+
+    # Bare value takes unit of cost or time of its text with no scale alone, as `M` of million
+    #   and `m` of minutes differ by case alone; tokens and count read each scale.
+    var count = 0
+    for scale in ["k", " k", "M", " M", " thousand", " million"]:
+      for k in 0 .. 3:
+        let cell = "15" & scale & ", inside"
+        if k in [1, 2]:
+          check bullet(k, cell) == refusal(k, cell)
+          inc count
+        else: check bullet(k, cell).len == 0
+      check bullet(1, "$15" & scale).len == 0  # mark of cost reads its scale
+    check count == 6 * 2
+
+    # Value with two marks of group, or comma before digit that opens no group, reads none.
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      line = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    proc estimate(cell: string): seq[string] =
+      ## Read findings of mended reflection whose result of estimate 6, of tokens, is cell.
+      heldReflection(PREDICTION_TABLES, whole.replace(line, line.replace("39.1M, inside", cell)))
+    for cell in ["39 100,000, inside", "39,100 000, inside", "39 100 000,000", "39,100,000 000",
+        "39,1M, inside", "1,5"]:
+      check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+      check bullet(0, cell) == refusal(0, cell)
+    for text in ["39 100,000", "1 000,000", "1,23", "1,5h", "$1,10", "12,5k"]:
+      check text.valueAt.isNone
+    check bullet(1, "$1,10, inside") == refusal(1, "$1,10, inside")
+    check bullet(2, "1,5h, inside") == refusal(2, "1,5h, inside")
+    check bullet(0, "170,000, inside").len == 0 and estimate("39,100,000, inside").len == 0
+
+    # Each space of Unicode before group, scale or mark of time runs on: no-break, figure,
+    #   narrow no-break and thin space, as value reads group and scale after ASCII space alone.
+    count = 0
+    for space in ["\u00A0", "\u2007", "\u202F", "\u2009"]:
+      for (written, after) in [("39.1", "M"), ("39.1", "k"), ("39.1", "million"),
+          ("39", "100 000"), ("0.0391", "Billion")]:
+        let cell = written & space & after & ", inside"
+        check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+        check bullet(0, cell) == refusal(0, cell)
+        inc count
+      check bullet(2, "1.5" & space & "h") == refusal(2, "1.5" & space & "h")
+      check bullet(2, "15" & space & "inside").len == 0  # word after space ends value
+    check count == 4 * 5
+    check estimate("39.1 M, inside").len == 0  # one ASCII space reads scale
+
+
+  test "value reads none where mark but space joins its digits, or point opens count (#1028)":
+    # Case as found (finding 1 of third critic): cell of tokens logged 1.234 for `1.234.567,
+    #   inside`, and 170 for `170_000, inside` and `170'000, inside`; bullets logged 1.234 for
+    #   `1.234.567`, 170 for `170.000`, and 15 for `15:30, inside` of time; line gave 170 tokens
+    #   for `170.000 tokens`, and `39.1` with zero-width space before `M` gave 39.1. Domain: each
+    #   ASCII mark but `|`, and marks of group of Unicode, glued between digits, in cell, bullets
+    #   and line; each rune of no width before group, scale or mark of time; point in each unit.
+    proc bullet(k: int, cell: string): seq[string] =
+      ## Read findings of reflection whose one row quotes number `k` of `NUMBERS_BULLETS`.
+      heldReflection(NUMBERS_BULLETS, "## Reflection\n\n| State | Confidence | Predicted | " &
+        "Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | " & CLAIMS_BULLETS[k] & " | " & cell &
+        " |\n")
+    func refusal(k: int, cell: string): seq[string] =
+      ## Write finding of result of number `k` of `NUMBERS_BULLETS` that reads no value.
+      @[REFUSAL_OUTCOME_BULLETS & cell & "` for claim `" & $(k + 1) & "`"]
+    let
+      whole = REFLECTION_TABLES_POSTED.mended
+      row = whole.splitLines.filterIt(it.startsWith("| 6 |"))[0]
+    proc estimate(cell: string): seq[string] =
+      ## Read findings of mended reflection whose result of estimate 6, of tokens, is cell.
+      heldReflection(PREDICTION_TABLES, whole.replace(row, row.replace("39.1M, inside", cell)))
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace("39,100,000 tokens and $14.40", written))
+    for cell in ["1.234.567, inside", "170_000, inside", "170'000, inside"]:
+      check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]  # case as found
+    for (k, cell) in [(0, "1.234.567"), (0, "170.000"), (2, "15:30, inside"),
+        (0, "39.1\u200BM, inside")]:
+      check bullet(k, cell) == refusal(k, cell)  # case as found
+    check "**Subagent:** builder, 170.000 tokens and $1.10".figuresLine(LABELS_SUBAGENT).tokens
+      .isNone  # case as found
+    check lined("170.000 tokens and $14.40").len == 1
+
+    # Mark glued between value and digit makes none, as it groups digits or parts two values; comma
+    #   before three digits reads as group, and point as decimal part, which count refuses.
+    const marks = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{}~"
+    var count = 0
+    for mark in marks:
+      let (thousands, part) = ("170" & mark & "000", "170" & mark & "5")
+      if mark == ',':
+        check thousands.valueAt.get.amount == 170_000.0 and part.valueAt.isNone
+      elif mark == '.':
+        check thousands.valueAt.get.amount == 170.0 and part.valueAt.get.amount == 170.5
+      else:
+        check thousands.valueAt.isNone and part.valueAt.isNone
+        check estimate(thousands & ", inside") ==
+          @[REFUSAL_OUTCOME & thousands & ", inside` for claim `6`"]
+        for k in 0 .. 3: check bullet(k, thousands) == refusal(k, thousands)
+        check lined(thousands & " tokens and $14.40").len == 1
+        check lined("39,100,000 tokens and $" & thousands).len == 1
+        inc count
+    check count == marks.len - 2
+    for mark in ["\u2019", "\u02BC", "\u00B7", "\u066C", "\u2032"]:  # marks of group of Unicode
+      let thousands = "170" & mark & "000"
+      check thousands.valueAt.isNone
+      check estimate(thousands & ", inside") ==
+        @[REFUSAL_OUTCOME & thousands & ", inside` for claim `6`"]
+      check bullet(0, thousands) == refusal(0, thousands)
+      check lined(thousands & " tokens and $14.40").len == 1
+
+    # Rune of no width after value runs on as space does, so group, scale or mark of time after it
+    #   reads none; mark that ends value after it reads value.
+    count = 0
+    for rune in ["\u00AD", "\u200B", "\u200C", "\u200D", "\u2060", "\uFEFF"]:
+      for (written, after) in [("39.1", "M"), ("39.1", "k"), ("39", "100,000"), ("39", "5"),
+          ("0.0391", "billion")]:
+        let cell = written & rune & after & ", inside"
+        check estimate(cell) == @[REFUSAL_OUTCOME & cell & "` for claim `6`"]
+        check bullet(0, cell) == refusal(0, cell)
+        inc count
+      check bullet(2, "1.5" & rune & "h") == refusal(2, "1.5" & rune & "h")
+      check lined("39.1" & rune & "M tokens and $14.40").len == 1
+      check lined("39,100,000 tokens and $14.40" & rune & "k").len == 1
+      check estimate("39,100,000" & rune & ", inside").len == 0
+      check bullet(1, "$1.10" & rune & ", inside").len == 0
+    check count == 6 * 5
+
+    # Tokens and count read point only where scale moves it, as each is count; cost and time read
+    #   it as decimal part, as `$1.10` and `1.5h`.
+    for cell in ["170.000", "170.5", "39.1 bn", "1.0"]:
+      check estimate(cell & ", inside") == @[REFUSAL_OUTCOME & cell & ", inside` for claim `6`"]
+      for k in [0, 3]: check bullet(k, cell) == refusal(k, cell)
+      check lined(cell & " tokens and $14.40").len == 1
+    for cell in ["39.1M", "39100k", "0.0391 billion", "39,100,000"]:
+      check estimate(cell & ", inside").len == 0
+      check lined(cell & " tokens and $14.40").len == 0
+    for (k, cell) in [(0, "0.17M"), (3, "1.2k"), (1, "1.10"), (1, "$1.10"), (2, "1.5"),
+        (2, "1.5h")]:
+      check bullet(k, cell).len == 0
+    check lined("39,100,000 tokens and $14.405").len == 0
+
+
+  test "line `**Subagent:**` gives tokens and cost as cell reads value, or is refused (#1028)":
+    # Case as found (findings 2 and 3 of critic of mends): line gave 0 tokens with no finding for
+    #   `**170,000** tokens`, `` `170,000` tokens `` and `39.1 K tokens`, and 2,170,000 for
+    #   `builder of round 2 170 000 tokens`. Domain: each mark of emphasis or code around each
+    #   figure, each scale that cell reads or refuses, group after space, each form of cost, and
+    #   reflection with no such line, which takes no finding.
+    const
+      rule = "line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
+        "at `$`, each one plain value after space, as cell holds it, and value of tokens holds " &
+        "no group after space (GUIDE.md, Prediction, critic and reflection); got `"
+      figures = "39,100,000 tokens and $14.40"
+      opening = "**Subagent:** builder of the weekly release check, "
+    let whole = REFLECTION_TABLES_POSTED.mended
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
+    func refusal(written: string): seq[string] =
+      ## Write finding of line that gives figures written.
+      @[rule & opening & written & " at list price, 120 calls, 47 min.`"]
+    for written in ["**170,000** tokens and $14.40", "`170,000` tokens and $14.40",
+        "39.1 K tokens and $14.40"]:
+      check lined(written) == refusal(written)  # case as found
+    check heldReflection(PREDICTION_TABLES, whole.replace(opening & "39,100,000 tokens",
+      "**Subagent:** builder of round 2 170 000 tokens")) == @[rule & "**Subagent:** builder " &
+      "of round 2 170 000 tokens and $14.40 at list price, 120 calls, 47 min.`"]
+    check lined(figures).len == 0
+    let flow = lineUser("Build it.", "human") & lineSaid(PREDICTION_TABLES) &
+      lineUser("<task-notification>timer</task-notification>", "task-notification") &
+      linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+    check rulesHeld(flow & lineSaid(whole.replace(figures, "39.1 K tokens and $14.40"))) ==
+      @["koch.reflection-line"]  # check of its own, apart from table
+
+    # Mark of emphasis or code around figure makes none, as cell reads value with none; so does
+    #   any mark but space before figure, as `~`.
+    var count = 0
+    for mark in ["**", "*", "_", "__", "***", "`"]:
+      for written in [mark & "39,100,000" & mark & " tokens and $14.40",
+          "39,100,000 tokens and " & mark & "$14.40" & mark, mark & "39,100,000 tokens" & mark &
+          " and $14.40"]:
+        check lined(written) == refusal(written)
+        inc count
+    check count == 6 * 3
+
+    # Each scale that cell reads gives tokens, and each that cell refuses gives none; space
+    #   before group joins value to number before it, as `round 2 170 000`, so it gives none.
+    for written in ["39.1M", "39100k", "39.1 M", "39.1 million", "0.0391 billion", "39,100 k",
+        "39100000", "0.0391 Billion"]:
+      check lined(written & " tokens and $14.40").len == 0
+    for written in ["39.1 K", "39.1 Mio", "39.1m", "$39.1M", "39 100 000", "170 000",
+        "2 170,000", "39.1\u00A0M", "0", "39,100,000.5", "~39.1M", "39.1M-"]:
+      check lined(written & " tokens and $14.40") == refusal(written & " tokens and $14.40")
+    for space in ["\u00A0", "\u202F", "\t"]:  # space but ASCII space opens no word `tokens`
+      check lined("39,100,000" & space & "tokens and $14.40") ==
+        refusal("39,100,000" & space & "tokens and $14.40")
+
+    # Cost reads first `$` as cell reads value, with no group after space and nothing after it
+    #   that value cannot read.
+    for written in ["$14.40", "$0.0144k", "$0.0144 k", "$14.4"]:
+      check lined("39,100,000 tokens and " & written).len == 0
+    for written in ["$1,10", "$14 40", "14.40 dollars", "$0", "$14.40 m", "$ 14.40"]:
+      check lined("39,100,000 tokens and " & written) ==
+        refusal("39,100,000 tokens and " & written)
+
+    # Reflection with no line `**Subagent:**` takes no finding of line, as GUIDE.md asks line of
+    #   it and no rule of hook does.
+    let bare = whole.replace(whole.splitLines[2] & "\n" & whole.splitLines[3], "")
+    check opening notin bare
+    check heldReflection(PREDICTION_TABLES, bare).len == 0
+
+
+  test "line `**Subagent:**` that gives two figures of tokens or two costs is refused (#1028)":
+    # Case as found (probe of line of critic of mends, rerun at head of mends): `builder at $3.00
+    #   per 1M tokens, 170,000 tokens and $1.10` gave 1,000,000 tokens and $3.00, with no finding.
+    #   Domain: one, two or no figure before ` tokens`, and one, two or no `$` that opens figure,
+    #   on line of subagent; mark that opens no figure, as `$` in code, counts none.
+    const
+      rule = "line `**Subagent:**` of reflection gives tokens right before ` tokens` and cost " &
+        "at `$`, each one plain value after space, as cell holds it, and value of tokens holds " &
+        "no group after space (GUIDE.md, Prediction, critic and reflection); got `"
+      figures = "39,100,000 tokens and $14.40"
+      opening = "**Subagent:** builder of the weekly release check, "
+    let whole = REFLECTION_TABLES_POSTED.mended
+    proc lined(written: string): seq[string] =
+      ## Read findings of mended reflection whose line gives figures written.
+      heldReflection(PREDICTION_TABLES, whole.replace(figures, written))
+    func refusal(written: string): seq[string] =
+      ## Write finding of line that gives figures written.
+      @[rule & opening & written & " at list price, 120 calls, 47 min.`"]
+    const found = "at $3.00 per 1M tokens, 170,000 tokens and $1.10"
+    check lined(found) == refusal(found)  # case as found
+    for written in ["39,100,000 tokens, of them 12,000 tokens of output, and $14.40",
+        "39,100,000 tokens and $14.40, $0.50 of it cached",
+        "39,100,000 tokens and $14.40, as $3 per 1M tokens"]:
+      check lined(written) == refusal(written)
+    for written in ["39,100,000 tokens, of `$HOME`, and $14.40",
+        "of tokens, 39,100,000 tokens and $14.40", "39,100,000 tokens and $14.40 (US$ at list)",
+        "39,100,000 tokens (12,000 output tokens) and $14.40"]:
+      check lined(written).len == 0  # one figure of each; other mark opens none
+    check lined("of tokens and $14.40") == refusal("of tokens and $14.40")
+
+    # Log writes neither figure of such line, as hook refuses it.
+    let read = whole.replace(figures, found).figuresLine(LABELS_SUBAGENT)
+    check read.tokens.isNone and read.cost.isNone
+    check whole.replace(figures, "of tokens, 39,100,000 tokens and $14.40")
+      .figuresLine(LABELS_SUBAGENT).tokens == some(39_100_000)
+
+
+  test "line `**Subagent:**` runs on to blank line or label in bold, so wrap gives figures (#1028)":
+    # Case as found (finding 5 of third critic): sample line of GUIDE.md wrapped before `$1.10`
+    #   took refusal, as `figuresLine` read first line alone. Domain: sample line wrapped at each
+    #   space, and at each space at once; line that ends at blank line, or at each form of label
+    #   in bold, as line of critic; line that runs on past bold that is no label, not into bullet.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      spaces = 17  ## Places where sample line wraps, one at each space.
+    let
+      start = guide.find("```md\n" & HEADING_PREDICTION & "\n")
+      prediction = guide[start + "```md\n".len ..< guide.find("\n```", start)] & "\n"
+      opening = guide.find("```md\n" & HEADING_REFLECTION & "\n")
+      reflection = guide[opening + "```md\n".len ..< guide.find("\n```", opening)] & "\n"
+      at = reflection.find("**Subagent:**")
+      paragraph = reflection[at ..< reflection.find("\n\n", at)]
+      flat = paragraph.splitLines.mapIt(it.strip).join(" ")
+    proc held(line: string): seq[string] =
+      ## Read findings of samples of GUIDE.md whose line of reflection is line.
+      blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
+        lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+        lineSaid(reflection.replace(paragraph, line)))
+    func figures(text: string): (Option[int], Option[float]) =
+      ## Read tokens and cost of line `**Subagent:**` of text.
+      let read = text.figuresLine(LABELS_SUBAGENT)
+      (read.tokens, read.cost)
+    check held(flat.replace(" $1.10", "\n$1.10")).len == 0  # case as found
+    var count = 0
+    for i, c in flat:
+      if c != ' ': continue
+      let wrapped = flat[0 ..< i] & "\n" & flat[i + 1 .. ^1]
+      check held(wrapped).len == 0
+      check wrapped.figures == (some(170_000), some(1.1))
+      check wrapped.figuresLine(LABELS_SUBAGENT).line == flat
+      inc count
+    check count == spaces
+    check held(flat.replace(" ", "\n  ")).len == 0  # each word on line of its own, indented
+
+    # Blank line ends line, so figure after it gives none; label in bold of each form ends it, so
+    #   line of critic after it adds no figure, as bullet does; bold that is no label runs on.
+    let line = "**Subagent:** reviewer, 170,000 tokens and $1.10,"
+    check (line & "\n\n57 calls.").figures == (some(170_000), some(1.1))
+    check "**Subagent:** reviewer,\n\n170,000 tokens and $1.10.".figures ==
+      (none(int), none(float))
+    for label in ["**Critic:**", "**Critic**:", "**critic:**", "**Judgements.**",
+        "**Not predicted:**", "  **Critic:**"]:
+      check (line & "\n" & label & " 50,000 tokens and $0.35.").figures ==
+        (some(170_000), some(1.1))
+    for text in ["**Subagent:** reviewer,\n**fresh** context, 170,000 tokens and $1.10.",
+        "**Subagent:** reviewer,\n**Critic** 170,000 tokens and $1.10."]:
+      check text.figures == (some(170_000), some(1.1))  # bold that is no label runs on
+    check (line & "\n50,000 tokens of the critic.").figures == (none(int), some(1.1))
+    check (line & "\n- **Not predicted:** a fee of $2.").figures == (some(170_000), some(1.1))
+    check held(flat.replace(" $1.10", "\n$1.10 and $2")) == @["line `**Subagent:**` of " &
+      "reflection gives tokens right before ` tokens` and cost at `$`, each one plain value " &
+      "after space, as cell holds it, and value of tokens holds no group after space (GUIDE.md, " &
+      "Prediction, critic and reflection); got `" & flat.replace(" $1.10", " $1.10 and $2") & "`"]
+
+
+  test "line `**Subagent:**` ends at bullet, table, quote or heading under it (#1028)":
+    # Case as found (probe of fourth builder, after line ran on): line of no tokens with bullet
+    #   right under it that gives `39,000 tokens` gave 39,000 tokens with no finding. Domain: each
+    #   opening of other block under line that gives no figure, and under line that gives both;
+    #   text that opens no block, which runs on; and hook and log at case as found.
+    const
+      opening = "**Subagent:** builder of the fix, "
+      found = opening & "$1.10 at list price.\n- **Not predicted:** the 39,000 tokens of the " &
+        "critic."
+      blocks = ["- ", "* ", "+ ", "1. ", "2) ", "  - ", "| 5 | ", "> ", "# ", "## ", "###### "]
+    func figures(text: string): (Option[int], Option[float]) =
+      ## Read tokens and cost of line `**Subagent:**` of text.
+      let read = text.figuresLine(LABELS_SUBAGENT)
+      (read.tokens, read.cost)
+    check found.figures == (none(int), some(1.1))  # case as found
+    let whole = REFLECTION_TABLES_POSTED.mended
+    check heldReflection(PREDICTION_TABLES, whole.replace("39,100,000 tokens and $14.40 at list " &
+      "price,\n120 calls, 47 min.", "$14.40 at list price.\n- **Not predicted:** the 39,000 " &
+      "tokens of the critic.")).len == 1  # line gives no tokens
+
+    # Each opening of block ends line, so its figure adds none; text that opens none runs on.
+    var count = 0
+    for start in blocks:
+      check (opening & "57 calls.\n" & start & "170,000 tokens and $1.10.").figures ==
+        (none(int), none(float))
+      check (opening & "39,000 tokens and $0.35.\n" & start & "170,000 tokens and $1.10.")
+        .figures == (some(39_000), some(0.35))
+      inc count
+    check count == blocks.len
+    for text in ["#962 holds", "####### seven", "-x", "1.5 hours"]:
+      check (opening & "57 calls,\n" & text & " 170,000 tokens and $1.10.").figures ==
+        (some(170_000), some(1.1))
+
+
+  test "line `**Subagent:**` ends at full stop, label of each form, break or HTML (#1028)":
+    # Case as found (fourth critic, R2, R3, S2 to S5 and K2): line that gives no tokens ran on
+    #   into line under it that gives `39,000 tokens`, as `__Critic:__ …`, break and sentence,
+    #   comment of HTML or plain sentence, and logged that figure with no finding; line
+    #   `**Critic:**` ran on too. Domain: line that ends with full stop above each such line; line
+    #   with no full stop above each form of label, each break and each HTML block; line of
+    #   critic; right read of plain label under full line; and wrap, which still runs on.
+    const
+      ended = "**Subagent:** builder of the fix, $1.10 at list price, 57 calls."
+      open = "**Subagent:** builder of the fix, $1.10 at list price, 57 calls,"
+      unders = ["__Critic:__ critic of the report, 39,000 tokens, 12 calls.",
+        "***Critic:*** critic of the report, 39,000 tokens.", "Critic: critic, 39,000 tokens.",
+        "The critic used 39,000 tokens.", "<!-- critic: 39,000 tokens -->"]
+      breaks = ["***", "___", "---", "- - -", "<!-- critic -->", "<details>"]
+    func figures(text: string, labels = LABELS_SUBAGENT): (Option[int], Option[float]) =
+      ## Read tokens and cost of line of labels of text.
+      let read = text.figuresLine(labels)
+      (read.tokens, read.cost)
+    check (ended & "\n" & unders[0]).figures == (none(int), some(1.1))  # case as found
+    var count = 0
+    for under in unders:
+      check (ended & "\n" & under).figures == (none(int), some(1.1))
+      inc count
+    for under in unders[0 .. 2]:
+      check (open & "\n" & under).figures == (none(int), some(1.1))  # label of each form
+      inc count
+    for mark in breaks:
+      check (open & "\n" & mark & "\nThe critic used 39,000 tokens.").figures ==
+        (none(int), some(1.1))
+      inc count
+    check count == unders.len + 3 + breaks.len
+    check ("**Critic:** critic of the report, $0.50 at list price, 12 calls, 4 min.\nIt read " &
+      "the 170,000 tokens of the report.").figures(LABELS_CRITIC) == (none(int), some(0.5))
+    check ("**Subagent:** reviewer, 170,000 tokens and $1.10 at list price, 57 calls, 15 min." &
+      "\nCritic: critic of the report, 39,000 tokens and $0.50, 12 calls.").figures ==
+      (some(170_000), some(1.1))  # right read stays
+    check "**Subagent:** builder of the fix,\n170,000 tokens and $1.10.".figures ==
+      (some(170_000), some(1.1))  # wrap runs on
+
+
+  test "each refusal of bullets cites section that states its rule (#1028)":
+    # Case as found: `RULE_CELL` of `hooks.nim` cited GUIDE.md, Prediction, critic and reflection,
+    #   whose rules name tables alone since #1028, so refusal of bullets cited rule that is gone.
+    #   Domain: refusal of cell, of empty cell, and of reflection with no table, for bullets.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      record = staticRead("../../PROVENANCE.md")
+      heading = "### Prediction, critic and reflection"
+      cited = "(curator/audit/PROVENANCE.md, Quotes of claims)"
+    func textSection(text, heading: string): string =
+      ## Read `##` section of heading of text, fenced lines blank, each run of whitespace as one.
+      text.sections.filterIt(it.heading == heading)[0].text.fencedOut.collapsed
+    let
+      work = guide.textSection("## Work for subagents")
+      start = work.find(heading)
+      rules = work[start ..< work.find("### ", start + heading.len)]
+      quotes = record.textSection("## Quotes of claims")
+    check start >= 0
+    check rules.count("`" & COLUMN_PREDICTED & "`") == 1  # guide states tables alone (#1028)
+    check "The hook also reads the first table of a reflection whose header holds `" &
+      COLUMN_PREDICTED & "` as one, for a block of bullets." in rules  # as table of claims alone
+    check "A cell under `Predicted` is one whole claim of a block that a call took, or " &
+      "`No prediction`." in quotes  # record states rule of cell
+    check "**A claim of bullets is a bullet" in quotes  # and where claim of bullets ends
+
+    # Each refusal that rules of bullets alone state cites record, and never guide.
+    const bullet = "- Judgement: the race leads the findings (70%)."
+    let refusals = quoted(bullet, "the race") & quoted(bullet, "") &
+      heldReflection(PREDICTION, "## Reflection\n\nNone.\n")
+    check refusals == @[refusalCell("the race"), refusalEmpty(1), REFUSAL_NO_TABLE]
+    check refusals.allIt(cited in it)
+    check refusals[0 .. 1].allIt("GUIDE.md" notin it)  # cell is rule of bullets alone
+
+
   test "samples of GUIDE.md hold shape that block checks read (#962)":
     # Delegate copies form from samples, so sample reflection quotes sample prediction, which
     #   call takes, as section reads as committed; reviewer takes no critic (`D3 a` of #1024).
@@ -3596,3 +4835,17 @@ suite "Hooks":
       lineSaid(sample(HEADING_REFLECTION))
     check transcript.parseTurn.subagents.predictions.len == 1
     check blocksHeld(transcript).len == 0
+
+    # Samples take tables of claims of `D1 a` of #1028 (comment 7218520265): each claim stands in
+    #   row of its number, with its criterion, and each row of reflection names claim by number.
+    let read = sample(HEADING_PREDICTION).forecasts
+    check read.len == 6 and read.allIt(it.is_row)
+    check read.mapIt(it.position) == toSeq(1..6)
+    check sample(HEADING_PREDICTION).findingsPrediction.len == 0
+    check blocksHeld(lineUser("Review the diff.", "human") &
+      lineSaid(sample(HEADING_PREDICTION))).len == 0  # stop of turn of block
+    check read.filterIt(it.estimate.isSome).mapIt(it.estimate.get.unit) ==
+      @[UnitNumber.Tokens, UnitNumber.Cost, UnitNumber.Time]
+    let rows = sample(HEADING_REFLECTION).rowsReflection
+    check rows.len == 6 and rows.allIt(it.is_numbered)
+    check rows.mapIt(it.number.get) == toSeq(1..6)
