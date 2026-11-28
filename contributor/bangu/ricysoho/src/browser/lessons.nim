@@ -10,22 +10,24 @@ import ../ricysoho/layers
 const  # ro jboselci'a pe le ctuca
   LESSON_CATEGORY*: array[Category, string] = [
     "le linji cu sinxa pa bridi .i pa bridi cu vasru pa selbri .e lo sumti poi le selbri cu " &
-        "casnu ke'a",
+        "ckini ke'a",
     "le linji cu sinxa le fanmo be pa bridi",
-    "le linji cu sinxa pa sumti .i pa sumti cu sinxa pa da poi le selbri cu casnu ke'a",
-    "le linji cu sinxa pa selbri .i pa selbri cu sinxa le srana poi le bridi cu cusku ke'a",
+    "le linji cu sinxa pa sumti .i pa sumti cu sinxa pa da poi le selbri cu ckini ke'a",
+    "le linji cu sinxa pa selbri .i pa selbri cu sinxa le ve ckini poi le bridi cu cusku ke'a",
     "le linji cu sinxa pa tanru .i pa tanru cu vasru su'o re pagbu .i le romoi pagbu cu jicmu " &
         ".i lo drata pagbu cu galfi le smuni be le romoi pagbu",
     "le linji cu sinxa pa tanru pagbu .i pa tanru pagbu cu pagbu pa tanru",
-    "le linji cu sinxa pa jufra pe zo poi .a zo noi .i le jufra cu skicu pa sumti",
-    "le linji cu sinxa pa jufra pe zo nu .a zo du'u .a zo ka .i le jufra cu sinxa pa fasnu .a " &
-        "pa ckaji .a pa sidbo",
-    "le linji cu sinxa pa jufra pe zo be .i le jufra cu jorne pa sumti pa selbri",
-    "le linji cu sinxa pa tcita sumti .i pa tcita sumti cu vasru pa tcita .e pa sumti",
+    "le linji cu sinxa pa jufra pe zo poi .a zo noi .a zo pe .a zo ne .a lo simsa .i le jufra " &
+        "cu skicu pa sumti",
+    "le linji cu sinxa pa jufra pe zo nu .a zo ka .a zo du'u .a lo simsa .i le jufra cu sinxa " &
+        "pa fasnu .a pa ckaji .a pa bridi .a lo simsa",
+    "le linji cu sinxa pa jufra pe zo be .i le jufra cu rinka lo nu pa sumti cu jorne pa selbri",
+    "le linji cu sinxa pa tcita sumti .i pa tcita sumti cu vasru pa sumti .i pa tcita .a zo fa " &
+        ".a zo fe .a lo simsa cu lidne le sumti",
     "le linji cu sinxa pa tcita .i pa tcita cu cusku lo stuzi .a lo temci .a lo krinu be le bridi",
     "le linji cu sinxa pa namcu .i pa namcu cu klani",
     "le linji cu sinxa pa zifre valsi .i pa zifre valsi cu na pagbu le bridi .i le zifre valsi " &
-        "cu cusku lo se cinmo .a lo se cmene",
+        "cu cusku lo se cinmo .a lo se tavla",
   ]
     ## lo selci'a poi skicu ro klesi be lo linji
   LESSON_START* = "ko pencu pa valsi .a pa linji .i ko samcu'a le se pencu mu'i lo nu le ctuca " &
