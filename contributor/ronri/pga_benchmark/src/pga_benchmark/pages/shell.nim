@@ -28,7 +28,7 @@ from std/unicode import runeAt, runeLenAt
 import ../[changes, markdown]
 
 
-const
+const  # Name tokens, marks, letters and font faces shell fills page with, and its views.
   TOKEN_TITLE* = "@TITLE@"  ## Token page's title replaces.
   TOKEN_BODY* = "@BODY@"  ## Token rendered body replaces.
   TOKEN_EMBED* = "@EMBED:"  ## Opening of token one font face replaces, closed by `@`.

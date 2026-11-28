@@ -31,7 +31,7 @@ from ../gaps import TOLERANCE
 from ../report import isModuleLibrary, median
 
 
-type
+type  # Define rows of docket with their figures, and parts of page that shows them.
   Figures = object  ## Define one implementation's counts and movement for one measurand.
     multiplies, divides, bytes, read, written, zeroed, intermediates, copied: int
     fills, count_intermediates, copies, checks: int
@@ -87,7 +87,7 @@ type
       ## Algebra name to changed functions, as evaluation records them.
 
 
-const
+const  # List operand kinds, sorts and filters that docket page offers.
   KINDS = ["point", "line", "plane", "motor", "flector", "round_point", "dipole", "circle",
     "sphere", "flat_point", "flat_line", "flat_plane", "scalar"]
     ## Operand kinds as typed measurand's id spells them, in order operand dropdown lists them.
@@ -634,7 +634,7 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
   result.add "</div></section>"
 
 
-const
+const  # Spell fixed markup of docket page: legend, method and style.
   LEGEND = """<div class="legend"><span class="mark-bar">library over what it is measured
 against, log scale</span><span class="mark-origin typed-off">×1: multivector lower bound for
 counts, dense form for time</span><span class="mark-origin typed-only">×1: reference on typed

@@ -24,7 +24,7 @@
 import std/[algorithm, os, strutils, tables]
 
 
-type
+type  # Define function read from emitted C, and what its text spends.
   FunctionC* = object  ## Define one function read from emitted C.
     name*: string  ## Mangled name as emitted.
     symbol*: string  ## Demangled head, e.g. `∧`, `|∙`, `wedge`, `{}`.
@@ -49,7 +49,7 @@ type
     lines*: int  ## Lines of body.
 
 
-const
+const  # Spell names compiler gives operators, types and modules in emitted C.
   SPECIALS = [
     ("backslash", "\\"), ("percent", "%"), ("dollar", "$"), ("colon", ":"), ("emark", "!"),
     ("qmark", "?"), ("minus", "-"), ("slash", "/"), ("tilde", "~"), ("roof", "^"),
@@ -272,7 +272,7 @@ func countIntermediates(body: string): int =
       inc result
 
 
-const
+const  # Spell text that opens loop and its bound in emitted C.
   OPENING_LOOP = "while (1) {"
     ## Text every loop compiler emits opens with; bound is tested inside.
   OPENING_BOUND = "if ((!(("

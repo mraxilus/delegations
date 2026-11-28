@@ -16,7 +16,7 @@ import std/[math, random, strformat]
 import pga
 
 
-const
+const  # Fix samples each grade checks, and seed that draws them.
   SAMPLES = 256  ## Seeded samples each grade is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
 

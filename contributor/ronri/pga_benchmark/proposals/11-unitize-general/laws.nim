@@ -48,7 +48,7 @@ when IS_CONFORMAL:
     WeightFlat  ## Origin and infinity.
 
 
-const
+const  # Fix samples, scales, steps and sizes of each law, and name algebra.
   SAMPLES = 2000  ## Samples of each law.
   SEED = 0  ## Seed of sample generator, so every run reads same elements.
   SCALES = [1e-100, -1e-8, 3.0, -1e8, 1e100]  ## Factors homogeneity is checked under.

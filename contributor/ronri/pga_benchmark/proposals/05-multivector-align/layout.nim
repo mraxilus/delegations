@@ -18,7 +18,7 @@ import std/strformat
 import pga
 
 
-const
+const  # Size cache line and multivector, and derive alignment proposed from both.
   LINE = 64  ## Bytes of one cache line.
   SIZE = sizeof(default(Multivector)[Basis.scalar]) * (ord(Basis.high) + 1)
     ## Bytes of 2^D coefficients at width library gives them, multivector unpadded.

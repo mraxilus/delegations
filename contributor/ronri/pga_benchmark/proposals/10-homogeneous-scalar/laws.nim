@@ -18,7 +18,7 @@ import std/[complex, fenv, math, options, random, strformat]
 import pga
 
 
-const
+const  # Fix samples and floor of laws, seed, terms of series, and vector whose roots printed NaN.
   SAMPLES = 4096  ## Seeded samples each law is checked on.
   SAMPLES_FLOOR = SAMPLES div 8  ## Fewest samples guarded law passes, so filtering guard fails.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
@@ -73,7 +73,7 @@ func constructTerms(phase: static int): array[TERMS_SERIES, Coefficient] {.compi
       else: (if (k div 2) mod 2 == 0: 1.0 else: -1.0) / factorial
 
 
-const
+const  # Construct coefficients of power series of exp, sin and cos, once.
   TERMS_EXP = constructTerms(-1)  ## Coefficients of exp⟑𝐦.
   TERMS_SIN = constructTerms(1)  ## Coefficients of sin⟑𝐦.
   TERMS_COS = constructTerms(0)  ## Coefficients of cos⟑𝐦.

@@ -48,7 +48,7 @@ func basesAntieven(): Bases {.compileTime.} =
     if int(b.gradeAnti) mod 2 == 0: result.incl b
 
 
-const
+const  # Size pools and rounds, and name bases and stems of multivector and motor.
   OBJECTS* {.define: "pga_benchmark.objects".} = (when defined(testing): 64 else: 1024)
     ## Objects per sample pool; small under `-d:testing` so suites stay quick.
   ROUNDS* {.define: "pga_benchmark.rounds".} = (when defined(testing): 3 else: 40)

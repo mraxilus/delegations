@@ -24,7 +24,7 @@ import pga/[algebra {.all.}, cayleys {.all.}, multivectors]
 import ./[catalogue, kinds]
 
 
-type
+type  # Define terms of symbolic multivector, and state of its generation.
   Factor = tuple[source, index: int]
     ## Define one factor of term: operand or temporary, and its index.
     ##   Source `m` is 0, `n` is 1, and temporaries are 2 on.
@@ -39,7 +39,7 @@ type
     source_next: int
 
 
-const
+const  # Number sources of factors, and bound coefficient below which term vanishes.
   SOURCE_M = 0  ## Source of first operand.
   SOURCE_N = 1  ## Source of second operand.
   INDEX_WHOLE = -1  ## Index that reads source whole, as scalar.

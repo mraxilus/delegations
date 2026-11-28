@@ -27,7 +27,7 @@ static:
   doAssert declared(PointRound) == (DIMENSIONS == 5 and IS_CONFORMAL),
     &"`PointRound` must stand at cga5d alone; got `{DIMENSIONS=}`, `{IS_CONFORMAL=}`."
 
-const
+const  # Fix samples each law checks, and seed that draws them.
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
 

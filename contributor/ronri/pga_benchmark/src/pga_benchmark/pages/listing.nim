@@ -29,7 +29,7 @@ import ../[markdown, proposals]
 import ./[evaluation, proposal, shell]
 
 
-const
+const  # Size nodes and gaps of graph, and name tabs of page.
   WIDTH_NODE = 264  ## Width of one node of graph, in px.
   HEIGHT_NODE = 72  ## Height of one node, in px: citation and two lines of title.
   GAP_COLUMN = 84  ## Gap between columns, in px, where arrows run.

@@ -27,7 +27,7 @@ const NAMES = ["Multivector", "MultivectorEven", "MultivectorOdd", "MultivectorS
   "Multivector6"]
   ## Named types of any algebra; each one algebra lacks is skipped.
 
-var
+var  # Collect each operation that copies more than assignment, and count those held.
   FAILURES: seq[string]  ## Label of each operation that copies more than assignment.
   HELD = 0  ## Count of operations held.
 

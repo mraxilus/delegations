@@ -58,7 +58,7 @@ import std/[json, options, sequtils, strutils]
 import ./[changes, guard, markdown]
 
 
-type
+type  # Define proposal as read from its directory, its status, and figure it embeds.
   StatusProposal* {.pure.} = enum  ## Define where proposal stands.
     Proposed, Implemented, Withdrawn, Deferred
   Proposal* = object  ## Define one proposal exploration as read from its directory.
@@ -78,7 +78,7 @@ type
     line*: int  ## Line of `proposal.md` figure stands on, for findings.
 
 
-const
+const  # Name kinds of claim, backends, statuses, numbers and sections that proposal holds.
   KINDS_CLAIM* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
   KINDS_DEFINED = ["suites", "program"]  ## Claim kinds whose builds take defines of their own.

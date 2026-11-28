@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "partner-sign",
   "path": "proposals/03-partner-sign",
-  "edits_digest": "68dee8d249268157",
+  "edits_digest": "d225f4c45d564bd6",
   "taken": {
     "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",

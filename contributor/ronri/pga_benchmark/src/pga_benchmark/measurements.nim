@@ -48,7 +48,7 @@ const HAS_FORMS_DENSE* {.booldefine: "pga_benchmark.has_forms_dense".} = true
 when HAS_FORMS_DENSE: import ./dense
 
 
-type
+type  # Define measurement of one measurand, and implementation it belongs to.
   Implementation* {.pure.} = enum  ## Define which implementation measurement belongs to.
     Library, Reference, Dense
   Measurement* = object  ## Define measurements of one measurand in one implementation.
@@ -61,7 +61,7 @@ type
     share_nan*: float  ## Share of results carrying NaN in any component.
 
 
-var
+var  # Hold measurements and fold of results, mutable since bench fills them as it runs.
   MEASUREMENTS*: array[Implementation, array[CATALOGUE.len, Measurement]]
     ## Measurements of every measurand, filled by `measureCatalogue`.
   SINK*: float  ## Fold of every result, printed so no result is dead.

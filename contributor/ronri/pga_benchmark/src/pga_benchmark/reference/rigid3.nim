@@ -46,7 +46,7 @@ import ./scalars
 export scalars
 
 
-type
+type  # Define vector, point, line, plane and motor of 3D RGA by their components.
   Vector3* = object  ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
   Point* = object  ## Define point 𝐩 with homogeneous weight w; grade 1.

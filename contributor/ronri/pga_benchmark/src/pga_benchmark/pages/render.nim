@@ -37,7 +37,7 @@ type CardControl* = object  ## Define one card of control page.
   is_crowded*: bool  ## Second block of card sits on first, so pair must raise finding.
 
 
-const
+const  # Name control page, and options page harness reads.
   CONTROL* = "control_render"  ## Name control page renders under, beside every page.
   FLAG_LAYOUT_ONLY = "--layout-only"
     ## Option naming page harness reads for layout alone; twin in `tools/drive/main.ts`.

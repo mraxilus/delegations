@@ -40,7 +40,7 @@ import std/[fenv, math, options, random, strformat]
 import pga
 
 
-type
+type  # Define zero tests laws compare, and kinds of object they build.
   Test {.pure.} = enum  ## Define zero test that tells one grade from mixed.
     Pin = "pin"  ## Count coefficient at most tolerance as zero, as pin does.
     ScalePart = "part"  ## Scale tolerance by largest absolute value of its part, at least one.
@@ -54,7 +54,7 @@ type
     ## Define kind of object: points it wedges, and whether it is flat; in CGA flat one wedges
     ##   infinity too.
 
-const
+const  # Fix samples, distances, deviations and radii of laws, and name algebra and twin test.
   SAMPLES = 4096  ## Samples of each rigid law at each distance.
   DISTANCES = [1.0, 10.0, 100.0, 1e3, 1e4, 1e5, 1e6]  ## Distance of scene from origin, in units.
   SEED = 0  ## Seed of sample generator, so every run reads same objects.

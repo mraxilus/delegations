@@ -23,7 +23,7 @@ import pga
 import pga/multivectors {.all.}  # Private `alignment`, which laws hold.
 
 
-const
+const  # Fix samples, sweep and alignments of laws, and operators and aliases they reach.
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   DIMENSIONS_SWEPT = 5
@@ -38,8 +38,7 @@ const
     ## Operators of one operand that conformal metric adds.
   OPERATORS_NORMS = ["|∙", "|∘", "|", "^∙", "^∘", "^"]
     ## Norms and unitizing of every algebra, each read from squared norm of its form.
-  OPERATORS_NORMS_CONFORMAL = ["|■", "|□", "|⊘"]
-    ## Norms that conformal metric adds.
+  OPERATORS_NORMS_CONFORMAL = ["|■", "|□", "|⊘"]  ## Norms that conformal metric adds.
   OPERATORS_COMPOSED = when IS_RIGID: @["∩", "∪"] else: @["⊞", "⊙", "⊡"]
     ## Operators that metric builds from others; partner, which reads grade, stands apart.
   OPERATORS_PRODUCTS = ["∧", "∨", "⟑", "⟇", "∙", "∘", "∧★", "∧☆", "∨★", "∨☆"]

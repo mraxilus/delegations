@@ -101,6 +101,7 @@ template holdFull(r: var Rand, name: string, M: typedesc) =
 
 
 proc main() =
+  ## Hold operator to chain at each pair of types, and full by full; print count held.
   var
     r = initRand(SEED)
     held = 0

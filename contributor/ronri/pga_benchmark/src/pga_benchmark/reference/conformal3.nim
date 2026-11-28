@@ -44,7 +44,7 @@ import ./scalars
 export scalars
 
 
-type
+type  # Define round and flat objects of 3D CGA by their components.
   Vector3* = object  ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
   PointRound* = object

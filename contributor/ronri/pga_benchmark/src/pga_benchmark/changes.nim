@@ -29,7 +29,7 @@ import std/[hashes, strutils, tables]
 import ./[guard, markdown]
 
 
-type
+type  # Define edit of library file, and change that holds edits in order.
   KindEdit* {.pure.} = enum  ## Define how edit reaches its file.
     Quote, Replace, Add
   Edit* = object  ## Define one edit to one library file.
@@ -37,8 +37,7 @@ type
     path*: string  ## Library-relative path, as `pga/operators.nim`.
     quote*: string  ## Text at pin edit replaces; empty unless quote edit.
     replacement*: string  ## Text put in its place, whole file in its place, or new file.
-    digest*: string
-      ## Digest file at pin must have, for whole-file replacement; empty otherwise.
+    digest*: string  ## Digest file at pin must have, for whole-file replacement; empty otherwise.
     line*: int  ## Line of change file edit's section opens on, for findings.
   Change* = object  ## Define one proposed change: title, why, and edits in order.
     title*: string  ## Heading of change file.
@@ -46,7 +45,7 @@ type
     edits*: seq[Edit]  ## Edits applied in order.
 
 
-const
+const  # Spell openings of headings that name each kind of edit.
   OPENING_EDIT = "Edit `"  ## Opening of heading naming quote edit.
   OPENING_REPLACE = "Replace `"  ## Opening of heading naming whole-file replacement.
   OPENING_ADD = "Add `"  ## Opening of heading naming new file.

@@ -23,7 +23,7 @@ import std/[algorithm, math, random, strformat, strutils]
 import pga
 
 
-const
+const  # Fix samples of each law, distances of scene, and seed that draws objects.
   SAMPLES = 4096  ## Samples of each law at each distance.
   DISTANCES = [1.0, 10.0, 100.0, 1e3, 1e4, 1e5, 1e6]  ## Distance of scene from origin, in units.
   SEED = 0  ## Seed of sample generator, so every run reads same objects.

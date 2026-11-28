@@ -17,7 +17,7 @@ import std/[macros, random, strformat]
 import pga
 
 
-const
+const  # Fix samples and seed of laws, and named types they hold.
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   NAMES = ["Multivector0", "Multivector1", "Multivector2", "Multivector3", "Multivector4",
@@ -138,6 +138,7 @@ macro holdTypesNamed(): untyped =
 
 
 proc main() =
+  ## Hold laws at each pair of named types and beside scalar; print counts held.
   var
     r = initRand(SEED)
     pairs = 0

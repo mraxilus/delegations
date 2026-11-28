@@ -20,7 +20,7 @@ import std/[algorithm, monotimes, random, strutils, times]
 import pga
 
 
-const
+const  # Fix objects each round walks, rounds timed, and seed that draws objects.
   OBJECTS = 1024  ## Objects each round walks.
   ROUNDS = 41  ## Rounds timed; median is reported.
   SEED = 0  ## Seed of sample generator, so every run reads same objects.
@@ -46,7 +46,9 @@ template timeLibrary(label: string, body: untyped) =
         for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template m(): untyped {.used.} = pool[i]  # Read by `body`.
+            ## Alias element `i` of pool.
           template n(): untyped {.used.} = pool[j]  # Read by binary `body`.
+            ## Alias element `j` of pool.
           results[i] = body
     var
       pool = newSeq[Multivector](OBJECTS)

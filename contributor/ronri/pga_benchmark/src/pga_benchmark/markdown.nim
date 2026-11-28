@@ -21,7 +21,7 @@
 import std/strutils
 
 
-type
+type  # Define block of Markdown file, and kinds it can be.
   KindBlock* {.pure.} = enum  ## Define kinds of block file holds.
     Heading, Paragraph, Bullets, Numbers, Tasks, Table, Fence
   Block* = object  ## Define one block of file, with line it opens on for findings.
@@ -34,7 +34,7 @@ type
     line*: int  ## Line block opens on, counted from one.
 
 
-const
+const  # Spell marks of fences and tasks, and keywords of Nim that fence marks.
   MARK_FENCE = '`'  ## Character fence is run of.
   LENGTH_FENCE_MIN = 3  ## Shortest run opening fence.
   MARK_TASK_OPEN = "[ ] "  ## Marker of open task item.

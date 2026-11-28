@@ -35,12 +35,13 @@ template suiteInProc(name: static string, body: untyped) =
   ##   `suite` writes each test into function that runs module; that one function of every test
   ##     took gcc 31 s and count of its multiplies 51 s at rga4d, measured 2026-10-19.
   proc run() {.gensym.} =
+    ## Run body as suite inside function of its own.
     suite name:
       body
   run()
 
 
-const
+const  # Name library checkout and sources suites read, and floors that laws hold.
   LIBRARY =
     "../dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
     ## Library checkout Atlas restores, relative to this file.
@@ -441,6 +442,7 @@ suiteInProc "Internal: Measurements":
     # Pool off line puts 128-byte multivector across three lines, not two, and typed object
     #   across lines in other patterns, so library and reference read different layouts.
     template heldToLine(pool: untyped) =
+      ## Hold pool to start on cache line.
       checkpoint astToStr(pool) & " starts at " & $(cast[uint](addr pool[0]) mod 64)
       check cast[uint](addr pool[0]) mod 64 == 0  # first object starts on line
     heldToLine(POOL_GENERAL)

@@ -27,7 +27,7 @@ import std/[algorithm, json, math, monotimes, os, random, strformat, times]
 import ./report
 
 
-const
+const  # Fix passes, seed, sizes, rounds and alignment of pools timed.
   PASSES = 7  ## Alternating passes per pair; median of passes is figure.
   SEED = 0  ## Seed of pools, so every run times same operands.
   SIZES = [1024, 1_048_576]  ## Objects per pool: cache-resident, then streamed from memory.
@@ -35,7 +35,7 @@ const
   ALIGNMENT = 64  ## Bytes of cache line each pool starts on.
 
 
-type
+type  # Define each layout of point, and line, plane and motor that operations read.
   PointHomogeneous* {.byref.} = object  ## Define point x e1 + y e2 + z e3 + w e4, as `FlatPoint3D`.
     x*, y*, z*, w*: float
   PointUnitized* {.byref.} = object  ## Define point with implicit w = 1, as `Point3D`.
@@ -154,7 +154,7 @@ func unitizeCode*[U: Unitized](p: PointHomogeneous, unit: var U) {.noinline.} =
 
 #[ Pools ]#
 
-type
+type  # Define pool of objects that starts on cache line.
   Pool[T] = object  ## Define objects of one type, first on cache line, so no layout starts split.
     storage: seq[byte]
     items: ptr UncheckedArray[T]
@@ -174,7 +174,7 @@ template `[]`[T](pool: Pool[T], index: int): var T =
   pool.items[index]
 
 
-type
+type  # Define operands and results of timed calls, apart so Nim sees no alias.
   Operands = object  ## Define operands of every operation at one size, which timed calls read.
     homogeneous: Pool[PointHomogeneous]
     unitized: Pool[PointUnitized]
@@ -238,7 +238,7 @@ proc initOperands(count: int): Operands =
 
 #[ Timing ]#
 
-type
+type  # Define layouts each row times, and row of one operation.
   Layout {.pure.} = enum  ## Define what one figure of row times.
     Homogeneous, Null, Unitized, Padded
   Row = object  ## Define one operation: name, multiplies its unitized form saves, figures.
@@ -264,6 +264,7 @@ template timed(count, rounds: int, body: untyped): float =
 proc pass(operands: Operands, results: var Results, count, rounds, order: int, rows: var seq[Row]) =
   ## Time every operation once in each layout, layouts rotated by order.
   template each(index: int, name_row: string, saved_row: int, h, u, p: untyped) =
+    ## Time operation in each layout, rotated by order, and add figures to its row.
     if rows.len <= index: rows.add Row(name: name_row, saved: saved_row)
     for step in 0..3:
       case Layout((step + order) mod 4)

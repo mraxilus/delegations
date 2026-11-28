@@ -43,7 +43,7 @@ import ./scalars
 export scalars
 
 
-type
+type  # Define point, line and motor of 2D RGA by their components.
   Point* = object  ## Define point 𝐩 with position x y and homogeneous weight w; grade 1.
     x*, y*, w*: float
   Line* = object  ## Define line 𝐠 with normal x y and position w; grade 2.
