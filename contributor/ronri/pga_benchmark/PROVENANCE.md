@@ -70,8 +70,8 @@ expression compiles against the library. The set of symbols equals the set of ex
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
-Verified by the evaluation of P13 on 2026-11-27. Each transform counts `⟇⟇~∘` at a motor type: 82
-multiplies and 110 adds and subtractions at rga4d, and 23 and 16 at rga3d.
+Verified by the evaluation of P13 on 2026-11-28. Each transform counts `⟇⟇~∘` at a motor type: 82
+multiplies and 113 adds and subtractions at rga4d, and 23 and 16 at rga3d.
 
 ## Reference
 
@@ -1744,8 +1744,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   ran `wedge` at cga5d in 48.49 ns on a Xeon of family 6 model 173, as the stamps at `08a1c416`
   name. It ran it in 65.19 ns on model 207, as the stamps at `748033ef` name. Pin `7ef9f4d` runs
   it in 66.13 ns on model 207. A stamp from before the ruling of 2026-11-15 names no processor.
-- The baselines and each evaluation but those of P02 and P06 ran on one processor, a Xeon of
-  family 6 model 207. The evaluation of P13 ran on 2026-11-27, and the others on 2026-11-26.
+- The baselines and each evaluation but those of P02, P06 and P13 ran on one processor, a Xeon
+  of family 6 model 207, on 2026-11-26. The evaluation of P13 ran on 2026-11-28 on model 173,
+  and it timed pin in the same run, so its ratios compare one machine.
   The stamps of P02 and P06 name no processor, which leaves their machine unknown. So a time of
   P02 or P06 compares with another time only where the times of pin agree.
 - Movement is modelled from the bytes that the code names, and never measured as cache
