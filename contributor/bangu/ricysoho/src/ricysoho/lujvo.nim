@@ -45,7 +45,7 @@
 ##
 ## ni'o lo pagbu be lo namcu be'o .e lo pagbu be `step 5` cu stali lo ka sivni
 ##   .i `tanru.nim` .e `test_lujvo.nim` cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu
-##   .i se ki'u bo lo cmene poi le ralju samtci pagbu cu dunda ke'a stali to `#832` toi
+##   .i se ki'u bo le ralju samtci pagbu cu dunda no nincme lo pilno
 ##
 ## ni'o `step 4b` pe `CLL 4.11` casnu po'o lo zunsna remei poi na selcru
 ##   .i `CLL` na casnu lo terjo'e poi zbasu lo zunsna cimei po'u `ndj` .a `ndz` .a `ntc` .a `nts`
