@@ -1,10 +1,11 @@
 # One operator for the transform of a multivector, built from the types of its operands
 
 `⟇⟇~∘` transforms 𝐦 by 𝐧 in one call: the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, which pin spells in three steps. Its
-typed form builds the table of that sandwich from the types of both operands, when the code
-compiles. So each value of each type transforms exactly. A full operator takes the three steps of
-pin, whatever the type of 𝐦 is. `pga.nim` names the operator `transform`, and two tests of the
-suite `Typed operators` hold both to the chain. Every edit quotes text of P04.
+typed form builds the terms of that sandwich from the types of both operands, when the code
+compiles, and writes them out in the fewer of two orders. So each value of each type transforms
+exactly. A full operator takes the three steps of pin, whatever the type of 𝐦 is. `pga.nim` names
+the operator `transform`, and two tests of the suite `Typed operators` hold both to the chain.
+Every edit quotes text of P04.
 
 ## Edit `pga/operators.nim`
 
@@ -16,11 +17,13 @@ suite `Typed operators` hold both to the chain. Every edit quotes text of P04.
 ```nim
 #[ Sandwich ]#
 
-# Sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ reads table built from types of both operands, when code compiles:
-#   pairs of bases of 𝐧, both orders summed, against bases of 𝐦. So each value of each type
-#   transforms exactly, and motor type reads its antieven pairs alone. Full operator takes three
-#   steps of pin instead, whatever type 𝐦 has: table over every pair of 𝐧 grows past them with
-#   dimension, and code that needs speed types its operator.
+# Sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ sums terms ±𝐧ᵢ𝐦ₖ𝐧ⱼ that Cayley tables give for types of both operands,
+#   when code compiles. So each value of each type transforms exactly. Full operator takes three
+#   steps of pin instead, whatever type 𝐦 has.
+# Sum has two orders, each written out from Cayley tables, and typed form keeps one of fewer
+#   multiplies, adds and subtractions. So choice reads algebra alone, and holds on every machine.
+#   Matrix multiplies 𝐧 by 𝐧 first, as pairs commute: wins where 𝐦 holds few bases.
+#   Chain multiplies 𝐧 by 𝐦 first, as one product serves each output: wins where 𝐦 holds many.
 
 type
   TermSandwich = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
@@ -28,12 +31,6 @@ type
     pair: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads 2𝐧ᵢ𝐧ⱼ.
     coefficient: int  ## Signed weight of product of pair, halved for cross pair.
   CayleySandwich = array[Basis, seq[TermSandwich]]  ## Define terms of sandwich per output basis.
-  EntriesSandwich = object  ## Define entries of one form, by output and basis that multiplies each.
-    entries: array[Basis, array[Basis, seq[TermSandwich]]]  ## Terms of each entry.
-    keys: array[Basis, Bases]  ## Bases that multiply entries of each output.
-    found: array[Basis, array[Basis, int]]  ## Distinct entry that each coefficient reads.
-    firsts: seq[(Basis, Basis)]  ## Output and basis that first read each distinct entry.
-    readers: seq[int]  ## Coefficients that read each distinct entry.
 
 
 func constructSandwich(a, b: Bases): CayleySandwich {.compileTime.} =
@@ -81,238 +78,154 @@ func basesSandwiched(a, b: Bases): Bases {.compileTime.} =
     if table[output].len > 0: result.incl output
 
 
-macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
-  ## Emit one assignment per basis that table of bases `A` of `m` and pairs of `B` of `n` reaches.
-  ##   Builds table and cross forms, counts chain, and keeps form of fewest multiplies, adds and
-  ##     subtractions, each counted once, so choice reads Cayley tables alone and holds on every
-  ##     machine. Tie keeps earlier form: table, then cross.
-  ##   Table form names product of each pair once. Cross pair reads one of its bases doubled:
-  ##     basis in most cross pairs left, until each pair holds one, so few bases are doubled.
-  ##   Cross form reads each pair across bulk and weight of `n` as chain: bulk basis times `m`
-  ##     first, as bulk comes first, then weight basis. Its term keeps fold of bulk basis and
-  ##     basis of `m` as pair, and weight basis as operand. Its sum stands for both orders, so
-  ##     result adds it twice.
-  ##   Both forms name once each entry that several coefficients read, up to sign. Entry lists its
-  ##     terms in order of pairs, as table walks them, so equal entries compare term by term
-  ##     among entries of same first pair.
-  ##   Chain form spells 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ through typed antiproducts, counted term by term from their
-  ##     table. It wins where both operands hold many bases, as bivector by motor at cga5d does.
-  ##   Loops walk terms, pairs, or entries of one first pair, so table at six dimensions stays
-  ##     under loop bound of VM.
-  func nameDoubled(b: Basis): NimNode = ident("doubled_" & $b)
-  func namePair(pair: array[2, Basis]): NimNode = ident("pair_" & $pair[0] & "_" & $pair[1])
-  func nameFold(pair: array[2, Basis]): NimNode = ident("fold_" & $pair[0] & "_" & $pair[1])
-  func sign(terms: seq[TermSandwich]): int = (if terms[0].coefficient < 0: -1 else: 1)
+func countOperations(x: NimNode): int {.compileTime.} =
+  ## Count multiplies, adds and subtractions of emitted code, each once; negation counts none.
+  if x.kind == nnkInfix and x[0].repr in ["*", "+", "-"]: result = 1
+  for child in x: result += countOperations(child)
 
-  func isSame(a, b: seq[TermSandwich]): bool =
-    if a.len != b.len: return false
-    let s = sign(a) * sign(b)
-    for x in 0 ..< a.len:
-      if a[x].pair != b[x].pair or a[x].coefficient != s * b[x].coefficient: return false
-    true
 
-  func emitEntry(terms: seq[TermSandwich], factor: int, is_folded: bool): NimNode =
-    for term in terms:
+func emitSandwichMatrix(table: CayleySandwich, r, m, n: NimNode): NimNode {.compileTime.} =
+  ## Emit sandwich as matrix: product of each pair of `n` first, then each entry by basis of `m`.
+  ##   Cross pair reads its second basis doubled, so each basis doubles once at most.
+  ##   Entry of more than one term is named once, up to sign, so count reads what C computes.
+  var
+    products = newNimNode(nnkLetSection)
+    entries = newNimNode(nnkLetSection)
+    assignments = newStmtList()
+    doubled: Bases
+    paired: array[Basis, Bases]  # Bases that pair with each so far.
+    keys: seq[string]  # Terms of each named entry, first one positive.
+
+  # Name product of each pair once, in order table first reads it.
+  for output in Basis:
+    for term in table[output]:
       let
-        coefficient = factor * term.coefficient
-        product = if is_folded: nameFold(term.pair) else: namePair(term.pair)
-        magnitude =
-          case abs(coefficient)
-          of 1: product
-          of 2: infix(product, "+", product)
-          else: infix(newFloatLitNode(float(abs(coefficient))), "*", product)
-      result =
-        if result.isNil: (if coefficient < 0: prefix(magnitude, "-") else: magnitude)
-        else: infix(result, if coefficient < 0: "-" else: "+", magnitude)
+        (i, j) = (term.pair[0], term.pair[1])
+        (bi, bj, d) = (emitBasis(i), emitBasis(j), ident("doubled_" & $j))
+      if j in paired[i]: continue
+      paired[i].incl j
+      if i != j and j notin doubled:
+        doubled.incl j
+        products.add newIdentDefs(d, newEmptyNode(), quote do: `n`[`bj`] + `n`[`bj`])
+      products.add newIdentDefs(
+        ident("pair_" & $i & "_" & $j),
+        newEmptyNode(),
+        if i == j: quote do: `n`[`bi`] * `n`[`bj`] else: quote do: `n`[`bi`] * `d`,
+      )
 
-  func countOperations(x: NimNode): int =
-    if x.kind == nnkInfix and x[0].repr in ["*", "+", "-"]: result = 1
-    for child in x: result += countOperations(child)
-
-  func countChain(): int =
-    let product = CAYLEYS_WEDGE_DOT.anti
-    var
-      reached: Bases
-      first, second: array[Basis, int]  # Terms that each output of each antiproduct sums.
-    for x in B:
-      for y in A:
-        for term in product[x][y]:
-          inc first[term.basis]
-          reached.incl term.basis
-    for x in reached:
-      for y in B:
-        for term in product[x][y]: inc second[term.basis]
-    for b in Basis:
-      result += first[b] + second[b]
-      if first[b] > 0: result += first[b] - 1
-      if second[b] > 0: result += second[b] - 1
-
-  func share(terms: CayleySandwich): EntriesSandwich =
-    var starting: array[Basis, array[Basis, seq[int]]]  # Distinct entries by their first pair.
-    for output in Basis:
-      for term in terms[output]:
-        result.keys[output].incl term.operand
-        result.entries[output][term.operand].add term
-      for k in result.keys[output]:
+  # Sum each output over its entries, each entry a signed sum of pair products.
+  for output in Basis:
+    if table[output].len == 0: continue
+    var by_operand: array[Basis, seq[TermSandwich]]
+    for term in table[output]: by_operand[term.operand].add term
+    var summands: seq[NimNode]
+    for k in Basis:
+      let group = by_operand[k]
+      if group.len == 0: continue
+      let sign = if group[0].coefficient < 0: -1 else: 1
+      var
+        key = ""
+        terms: seq[NimNode]
+      for term in group:
         let
-          group = result.entries[output][k]
-          (i, j) = (group[0].pair[0], group[0].pair[1])
-        var index = -1
-        for x in starting[i][j]:
-          if isSame(result.entries[result.firsts[x][0]][result.firsts[x][1]], group):
-            index = x
-            break
+          coefficient = sign * term.coefficient
+          pair = ident("pair_" & $term.pair[0] & "_" & $term.pair[1])
+          magnitude =
+            if abs(coefficient) == 1: pair
+            else: infix(newCall(ident"Coefficient", newLit(abs(coefficient))), "*", pair)
+        key.add $term.pair & $coefficient
+        terms.add(if coefficient < 0: prefix(magnitude, "-") else: magnitude)
+      var entry = terms[0]
+      if terms.len > 1:
+        var index = keys.find(key)
         if index < 0:
-          index = result.firsts.len
-          result.firsts.add (output, k)
-          result.readers.add 0
-          starting[i][j].add index
-        inc result.readers[index]
-        result.found[output][k] = index
-
-  func readEntry(
-    s: EntriesSandwich, output, k: Basis, prefix: string, is_folded: bool,
-    is_named: var seq[bool], lets: NimNode,
-  ): NimNode =
+          index = keys.len
+          keys.add key
+          entries.add newIdentDefs(ident("entry_" & $index), newEmptyNode(), emitSum(terms))
+        entry = ident("entry_" & $index)
+      let
+        bk = emitBasis(k)
+        summand = infix(entry, "*", quote do: `m`[`bk`])
+      summands.add(if sign < 0: prefix(summand, "-") else: summand)
     let
-      terms = s.entries[output][k]
-      index = s.found[output][k]
-    if s.readers[index] > 1 and (terms.len > 1 or abs(terms[0].coefficient) > 1):
-      let name = ident(prefix & $index)
-      if not is_named[index]:
-        lets.add newIdentDefs(name, newEmptyNode(), emitEntry(terms, sign(terms), is_folded))
-        is_named[index] = true
-      if sign(terms) < 0: prefix(name, "-") else: name
-    else:
-      emitEntry(terms, 1, is_folded)
+      b = emitBasis(output)
+      value = emitSum(summands)
+    assignments.add quote do:
+      `r`[`b`] = `value`
 
-  func emitTable(table: CayleySandwich, weight: Bases, is_crossed: bool): NimNode =
-    var tabled, folded: CayleySandwich  # Terms that table reads, and cross terms read as chain.
-    for output in Basis:
-      for term in table[output]:
-        let (i, j) = (term.pair[0], term.pair[1])
-        if is_crossed and i != j and (i in weight) != (j in weight):
-          let (a, b) = if i in weight: (j, i) else: (i, j)
-          folded[output].add TermSandwich(
-            operand: b, pair: [a, term.operand], coefficient: term.coefficient
-          )
-        else:
-          tabled[output].add term
-    var
-      pairs, folds: seq[array[2, Basis]]
-      paired, folded_with: array[Basis, Bases]  # Bases that pair or fold with each so far.
-      open: seq[array[2, Basis]]  # Cross pairs that no doubled basis holds yet.
-      doubled: Bases
-    for output in Basis:
-      for term in tabled[output]:
-        let (i, j) = (term.pair[0], term.pair[1])
-        if j notin paired[i]:
-          paired[i].incl j
-          pairs.add term.pair
-          if i != j: open.add term.pair
-      for term in folded[output]:
-        let (a, k) = (term.pair[0], term.pair[1])
-        if k notin folded_with[a]:
-          folded_with[a].incl k
-          folds.add term.pair
-    while open.len > 0:
-      var count: array[Basis, int]  # Open cross pairs that hold each basis.
-      for pair in open:
-        inc count[pair[0]]
-        inc count[pair[1]]
-      var best = open[0][0]
-      for b in Basis:
-        if count[b] > count[best]: best = b
-      doubled.incl best
-      var rest: seq[array[2, Basis]]
-      for pair in open:
-        if best notin pair: rest.add pair
-      open = rest
-    let
-      entries_table = share(tabled)
-      entries_fold = share(folded)
-    result = newStmtList()
-    var products = newNimNode(nnkLetSection)
-    for x in doubled:
-      let bx = emitBasis(x)
-      products.add newIdentDefs(nameDoubled(x), newEmptyNode(), quote do: `n`[`bx`] + `n`[`bx`])
-    for pair in pairs:
-      let
-        b0 = emitBasis(pair[0])
-        b1 = emitBasis(pair[1])
-        product =
-          if pair[0] == pair[1]: quote do: `n`[`b0`] * `n`[`b1`]
-          elif pair[0] in doubled: (let d = nameDoubled(pair[0]); quote do: `d` * `n`[`b1`])
-          else: (let d = nameDoubled(pair[1]); quote do: `n`[`b0`] * `d`)
-      products.add newIdentDefs(namePair(pair), newEmptyNode(), product)
-    for fold in folds:
-      let
-        ba = emitBasis(fold[0])
-        bk = emitBasis(fold[1])
-      products.add newIdentDefs(nameFold(fold), newEmptyNode(), quote do: `n`[`ba`] * `m`[`bk`])
-    if products.len > 0: result.add products
-    var
-      shared = newNimNode(nnkLetSection)  # Entries that several coefficients read, named once.
-      sums = newNimNode(nnkLetSection)  # Cross part of each output, which result adds twice.
-      is_named_table = newSeq[bool](entries_table.firsts.len)
-      is_named_fold = newSeq[bool](entries_fold.firsts.len)
-      assignments = newStmtList()
-    for output in Basis:
-      if table[output].len == 0: continue
-      var summands: seq[NimNode]
-      for k in entries_table.keys[output]:
-        let
-          entry = readEntry(entries_table, output, k, "entry_", false, is_named_table, shared)
-          bk = emitBasis(k)
-        summands.add infix(entry, "*", quote do: `m`[`bk`])
-      if entries_fold.keys[output].card > 0:
-        var crossed: seq[NimNode]
-        for b in entries_fold.keys[output]:
-          let
-            entry = readEntry(entries_fold, output, b, "folded_", true, is_named_fold, shared)
-            bb = emitBasis(b)
-          crossed.add infix(entry, "*", quote do: `n`[`bb`])
-        let name = ident("crossed_" & $output)
-        sums.add newIdentDefs(name, newEmptyNode(), emitSum(crossed))
-        summands.add name
-        summands.add name
-      let
-        b = emitBasis(output)
-        value = emitSum(summands)
-      assignments.add quote do:
-        `r`[`b`] = `value`
-    if shared.len > 0: result.add shared
-    if sums.len > 0: result.add sums
-    result.add assignments
+  # Construct body: products, then named entries, then assignments.
+  result = newStmtList()
+  if products.len > 0: result.add products
+  if entries.len > 0: result.add entries
+  result.add assignments
 
-  func emitChain(table: CayleySandwich): NimNode =
-    let chained = genSym(nskLet, "chained")
-    result = newStmtList(quote do:
-      let `chained` = (`n` ⟇ `m`) ⟇ (~∘ `n`))
-    for output in Basis:
-      if table[output].len == 0: continue
-      let b = emitBasis(output)
-      result.add quote do:
-        `r`[`b`] = `chained`[`b`]
 
-  let table = constructSandwich(A, B)
-  var weight: Bases  # Bases of `n` in its weight, as library parts it.
-  for b in B:
-    if CAYLEYS_PARTS.weight.round[b].len > 0: weight.incl b
+func emitSandwichChain(
+  table: CayleySandwich, A, B: Bases, r, m, n: NimNode
+): NimNode {.compileTime.} =
+  ## Emit sandwich as chain: 𝐭 = 𝐧 ⟇ 𝐦 first, then 𝐭 ⟇ 𝐧̰ for each basis that `table` reaches.
+  ##   Both antiproducts are spelled from Cayley tables, so 𝐭 holds only bases that output reads.
+  ##   Sign of antireverse folds into each term of second antiproduct.
   let
-    tabled = emitTable(table, weight, false)
-    crossed = emitTable(table, weight, true)
-    counts = [countOperations(tabled), countOperations(crossed), countChain()]
-  result =
-    if counts[2] < counts[0] and counts[2] < counts[1]: emitChain(table)
-    elif counts[1] < counts[0]: crossed
-    else: tabled
+    product = CAYLEYS_WEDGE_DOT.anti
+    reverse = CAYLEYS_REVERSE.anti
+  var
+    first, second: array[Basis, seq[NimNode]]  # Terms of each basis of 𝐭, and of each output.
+    read: Bases  # Bases of 𝐭 that some output reads.
+
+  # Determine terms ±𝐭ₓ𝐧ᵧ of each output, and bases of 𝐭 that they read.
+  for x in basesMultiplied(product, B, A):
+    for y in B:
+      for reversed in reverse[y]:
+        for destination in product[x][reversed.basis]:
+          if table[destination.basis].len == 0: continue
+          read.incl x
+          let
+            (t, by) = (ident("t_" & $x), emitBasis(y))
+            term = quote do: `t` * `n`[`by`]
+          second[destination.basis].add(
+            if destination.is_negated xor reversed.is_negated: prefix(term, "-") else: term
+          )
+
+  # Determine terms ±𝐧ᵢ𝐦ₖ of each basis of 𝐭 that some output reads.
+  for i in B:
+    for k in A:
+      for destination in product[i][k]:
+        if destination.basis notin read: continue
+        let
+          (bi, bk) = (emitBasis(i), emitBasis(k))
+          term = quote do: `n`[`bi`] * `m`[`bk`]
+        first[destination.basis].add(if destination.is_negated: prefix(term, "-") else: term)
+
+  # Construct body: each basis of 𝐭 once, then each output from them.
+  var products = newNimNode(nnkLetSection)
+  for x in read:
+    products.add newIdentDefs(ident("t_" & $x), newEmptyNode(), emitSum(first[x]))
+  result = newStmtList()
+  if products.len > 0: result.add products
+  for output in Basis:
+    if table[output].len == 0: continue
+    let
+      b = emitBasis(output)
+      value = emitSum(second[output])
+    result.add quote do:
+      `r`[`b`] = `value`
+
+
+macro emitSandwichedByBasis(A, B: static Bases, r, m, n: untyped): untyped =
+  ## Emit one assignment per basis that sandwich of bases `A` of `m` by bases `B` of `n` reaches.
+  ##   Writes out matrix and chain, then keeps one of fewer operations; tie keeps matrix.
+  let
+    table = constructSandwich(A, B)
+    matrix = emitSandwichMatrix(table, r, m, n)
+    chain = emitSandwichChain(table, A, B, r, m, n)
+  if countOperations(chain) < countOperations(matrix): chain else: matrix
 
 
 func `⟇⟇~∘`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): typeof(zeroNamed[basesSandwiched(A, B)]()) {.inline, noinit.} =
-  ## Transform multivector by operator of any types, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, from table of both types.
+  ## Transform multivector by operator of any types, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, in fewer of two orders.
   emitSandwichedByBasis(A, B, result, m, n)
 
 
@@ -366,7 +279,7 @@ const EMPTY: Bases = {}
 ```nim
 template checkTypedSandwich(A, B: static Bases) =
   ## Check typed sandwich of samples over `A` by samples over `B` near chain of full forms.
-  ##   Table and chain sum their terms in other orders, so they agree within tolerance alone.
+  ##   Operator and chain sum their terms in other orders, so they agree within tolerance alone.
   ##   Also check its type holds each basis that chain reaches, and no other.
   block:
     var reached: Bases
