@@ -220,8 +220,10 @@ proc builtLayers*(script: string, faces: Table[string, string]): string =
   if TOKEN_EMBED in result:
     raise newException(ValueError, "Shell should hold no token build fills no more; got `" &
         TOKEN_EMBED & "`.")
-  # lo selci'a pe `JSON` cu vasru no lerpoi po'u zoi gy. </ .gy. gi'e na fanmo le dacti
-  result = result.replace(TOKEN_MEANINGS, meaningsJson().replace("</", "<\\/"))
+  # le selci'a pe `JSON` cu se ciska ta'i lo lerfu pe `HTML` ne'i pa dacti poi se mipri
+  #   .i ki'u bo pa dacti pe `script` cu vasru `@SCRIPT@` po'o to `#1102` toi
+  result = result.replace(TOKEN_MEANINGS,
+      meaningsJson().multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;")))
   result = result.replace(TOKENS[^1], script)
 
 
