@@ -297,7 +297,7 @@ func kinded(text: string, found: OrderedTable[string, Meaning]): string =
       if lesson.lojban in found:
         (english, shown) = (found[lesson.lojban].gloss, found[lesson.lojban].definition)
     of Basis.Marker:
-      let word = reading.occurrences[glosses.marking(bar.first, bar.last)].text
+      let word = reading.occurrences[glosses.marking(bar.category, bar.first, bar.last)].text
       shown = if word in found: shownMarker(word, found[word].gloss, found[word].definition)
           else: LESSON_NONE
     of Basis.Own: discard

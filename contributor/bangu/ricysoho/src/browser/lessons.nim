@@ -45,11 +45,16 @@ const  # ro glico selci'a .e ro javni pe le ctuca
     Lesson(lojban: "zifre", basis: Basis.Name),
   ]
     ## le ctuca be ro klesi be lo linji
-  PREFIXES* = {Selmaho.Se, Selmaho.Nahe, Selmaho.Bahe, Selmaho.Pa}
-    ## lo selma'o poi zvati le cfari be lo linji gi'e na jarco le klesi
-    ##   .i zo se .e zo na'e cu lidne lo tcita .a lo valsi pe `NU` to `CLL 21.1` toi
-    ##   .i zo ba'e cu lidne ro valsi
-    ##   .i lo namcu cu lidne lo valsi pe `ROI`
+  TAGS* = {Selmaho.Bai, Selmaho.Caha, Selmaho.Cuhe, Selmaho.Faha, Selmaho.Fehe, Selmaho.Fiho,
+      Selmaho.Ki, Selmaho.Mohi, Selmaho.Pu, Selmaho.Roi, Selmaho.Tahe, Selmaho.Va, Selmaho.Veha,
+      Selmaho.Viha, Selmaho.Zaho, Selmaho.Zeha, Selmaho.Zi}
+    ## lo selma'o poi cfari pa tcita
+    ##   .i `simple-tense-modal` .e `interval-property` pe `CLL 21.1` cu jarco ri
+  MARKERS*: array[Category, set[Selmaho]] = [{}, {}, {}, {}, {}, {},
+      {Selmaho.Noi, Selmaho.Goi}, {Selmaho.Nu}, {Selmaho.Be}, TAGS + {Selmaho.Fa}, TAGS, {}, {}]
+    ## lo selma'o poi jarco le klesi be pa linji pe `Basis.Marker`
+    ##   .i lo valsi pe `SE` .a `NAhE` .a `BAhE` .a `JAI` .a lo namcu cu lidne le valsi poi jarco
+    ##       le klesi
   LESSON_START* = "Point at a word or a bar to learn it. Click it to keep the lesson, and click " &
       "it again to let it go."
     ## le selci'a poi le ctuca cu jarco ke'a pu lo nu le prenu cu cuxna da
@@ -59,18 +64,19 @@ const  # ro glico selci'a .e ro javni pe le ctuca
     ## le selci'a poi le ctuca cu jarco ke'a va'o lo nu le liste cu vasru no smuni be pa valsi
 
 
-func isPrefix*(gloss: string): bool =
-  ## jdice lo du'u lo selma'o poi se cmene `gloss` cu pagbu `PREFIXES`
-  for selmaho in PREFIXES:
+func isMarker*(gloss: string, category: Category): bool =
+  ## jdice lo du'u lo selma'o poi se cmene `gloss` cu jarco le klesi be pa linji pe `category`
+  for selmaho in MARKERS[category]:
     if $selmaho == gloss: return true
 
 
-func marking*(glosses: openArray[string], first, last: int): int =
-  ## le stuna'u pe le pamoi valsi pe lo linji poi jarco le klesi
+func marking*(glosses: openArray[string], category: Category, first, last: int): int =
+  ## le stuna'u pe le pamoi valsi pe lo linji poi jarco le klesi to le romoi `D1 c` pe `#1055` toi
   ##   .i `glosses` cu du lo cmene be le selma'o be ro valsi to `toGloss` toi
-  ##   .i le valsi cu na pagbu `PREFIXES` gi'a romoi le linji
-  result = first
-  while result < last and glosses[result].isPrefix: inc result
+  ##   .i va'o lo nu no valsi cu jarco le klesi kei le pamoi valsi pe le linji cu se cuxna
+  for k in first .. last:
+    if glosses[k].isMarker(category): return k
+  first
 
 
 func shownMarker*(word, gloss, definition: string): string =

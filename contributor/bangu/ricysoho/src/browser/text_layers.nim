@@ -530,9 +530,9 @@ proc taughtKind(view: View, bar: int): (cstring, cstring) =
     (cstring(lesson.english), cstring(lesson.text))
   of Basis.Marker:
     var glosses: seq[string]
-    for word in model.words: glosses.add $word.gloss
+    for k in seen.first .. seen.last: glosses.add $model.words[k].gloss
     let
-      word = model.words[glosses.marking(seen.first, seen.last)]
+      word = model.words[seen.first + glosses.marking(Category(seen.category), 0, glosses.high)]
       found = word.text.toMeaning
     if found.isNone: return (cstring(lesson.english), cstring(LESSON_NONE))
     (cstring(lesson.english), cstring(shownMarker($word.text, $found.get[0], $found.get[1])))
