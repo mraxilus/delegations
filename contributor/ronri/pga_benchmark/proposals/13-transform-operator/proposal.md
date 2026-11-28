@@ -72,7 +72,8 @@ runtime baselines.
   same motor keeps the chain, at 1 108 against 1 755. So the count decides, pair by pair.
 - **Place.** The operator carries `inline` and `noinit`, as each form of P04 does. It stands in
   the typed section of `pga/operators.nim`, and edits no table of `pga/cayleys.nim`. Each order
-  is a function of its own, beside `emitSum` and `emitBasis` of P04, and the macro calls both.
+  is a function nested in the macro, since the macro alone calls it, and each reads `emitSum`
+  and `emitBasis` of P04.
 - **Symbol.** The compound operators of `pga.nim` join their steps outer first, as `∨∧★` stands
   for 𝐧 ∨ (𝐦 ∧ 𝐧★). So `⟇⟇~∘` stands for 𝐧 ⟇ (𝐦 ⟇ 𝐧̰), as the Architect ruled on 2026-11-15.
   Nim 2.4.0 reads `⟇`, `~` and `∘` as characters of one operator.
