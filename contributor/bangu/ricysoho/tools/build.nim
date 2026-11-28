@@ -83,7 +83,8 @@ const
       "       nim r tools/build.nim wikipedia <directory>\n"
     ## le selci'a poi selsku va'o lo nu lo nu pilno cu srera
   SYSTEM = [
-    ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
+    ("lojban-common",
+      "word lists of Logical Language Group, read by `lists`, `head`, `page`, `drive` and suites"),
     ("coreutils",
       "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with, and " &
       "`sleep`, which fake of Chromium of `test_drive.nim` blocks in"),
