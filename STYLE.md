@@ -246,7 +246,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A `const`, `let`, `var` or `type` keyword alone on its line opens a section, and VI.1 gives
   each reach where it takes a doc. At any reach, its doc stands on its keyword line, two spaces
   after the keyword. The doc is a `#` comment, since Nim reads no doc there. A doc that does not
-  fit there, or an outline of several lines, stands on its own lines above the keyword. A name
+  fit there, or an outline of several lines, stands on its own lines above the keyword. Inside a
+  routine or a block, a comment above the keyword stays as it stands (VI.9). A name
   inside the section needs no doc, and a doc that it holds takes the position of its shape. A doc
   that waits for text is `# TODO: Document.`, on the keyword line:
 

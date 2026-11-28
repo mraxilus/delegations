@@ -336,13 +336,13 @@ CAYLEYS_WEDGE  # module constant
    A `const`, `let`, `var` or `type` keyword alone on its line opens a section. The section gets
    one doc in place of the docs of its names, at each reach where a declaration of its kind gets
    one. So a `type` section gets one at every reach, and a `const`, `let` or `var` section at
-   module level alone. A binding inside a routine, or inside another block that opens a scope, is
+   global reach alone. A binding inside a routine, or inside another block that opens a scope, is
    a local. A binding of the entry block can reach the whole module, but V.10 puts it in a
    routine, so its section gets none either.
 
-   No name inside a section needs a doc. In the grammar of Nim, each type stands in a type
-   section, and so does the one-line form `type X = object`. So no field of an object and no
-   member of an enum needs a doc anywhere. A doc that such a name holds stays, and is optional.
+   No name below the keyword of a section needs a doc. In the grammar of Nim, a field or a member
+   stands inside its type, in the form `type X = object` too, so neither needs a doc anywhere. A
+   doc that such a name holds stays, and is optional.
 
    The doc of a section and the doc of a value that opens `block` are `#` comments (VI.9). So
    such a doc that waits for text is `# TODO: Document.`.
@@ -377,8 +377,9 @@ CAYLEYS_WEDGE  # module constant
    language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
    value whose `block:` stands on its `=` line, wherever the doc stands. Nor does it read the doc
    of a section at any reach, on its keyword line, right below it or above it. So each such doc
-   is a `#` comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads
-   such a doc, the doc takes `##` again.
+   is a `#` comment, and no comment claims to be a doc that Nim reads. Inside a routine or a
+   block, a comment above the keyword stays as it stands, since a stage comment can stand there
+   (VI.4). Where a later Nim reads such a doc, the doc takes `##` again.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
