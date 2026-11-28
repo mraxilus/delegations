@@ -521,6 +521,8 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
   reader.count_read += last - start
   for occurrence in result.reading.occurrences.mitems:
     (occurrence.start, occurrence.finish) = (occurrence.start + start, occurrence.finish + start)
+    if occurrence.sign.isSome:
+      occurrence.sign = some(occurrence.sign.get.a + start .. occurrence.sign.get.b + start)
   result.reading.size = ending
   for zoi in result.zois.mitems: zoi.start += start
   for lohu in result.lohus.mitems: lohu += start

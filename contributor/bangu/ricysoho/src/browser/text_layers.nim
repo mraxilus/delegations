@@ -20,7 +20,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, jsffi, options, sugar, unicode]
+import std/[algorithm, jsffi, options, sequtils, sets, sugar, unicode]
+from std/strutils import replace
 
 import ../ricysoho/[grammar, layers, prose, stream]
 import ./[lessons, samples_layers]
@@ -58,6 +59,13 @@ type
     group*: int  ## le girzu be le valsi to `Group` toi
     gloss*: cstring  ## le cmene be le selma'o
     text*: cstring  ## le lerfu pe le valsi
+    spoken*: cstring
+      ## le valsi poi le genturfa'i cu tcidu le valsi ta'i ke'a to `toSpoken` toi
+      ##   .i le ctuca cu sisku le smuni be le vi valsi
+    sign_s*: int
+      ## le stuzi pe le pamoi lerfu pe le lerfu .a le sinxa poi sinxa le valsi
+      ##   .i li -1 va'o lo nu no lerfu .e no sinxa cu sinxa le valsi
+    sign_e*: int  ## le stuzi poi lidne le romoi lerfu pe le sinxa
 
   BarView* = object  ## pa linji pe lo se tcidu
     category*: int
@@ -114,6 +122,14 @@ type
   Key = object  ## pa valsi .a pa linji poi le prenu cu cuxna ke'a
     is_word: bool
     index: int
+
+  Found = object  ## le smuni be pa valsi pe le liste to `toMeaning` toi
+    gloss: cstring
+    definition: cstring  ## kunti va'o lo lujvo
+    parts: cstring
+      ## ro pagbu be pa lujvo ta'i le selci'a pe `lujvo.txt`
+      ##   .i kunti va'o lo drata valsi
+    is_english: bool  ## le liste cu ciska le pagbu sepi'o lo glikikyvla
 
   View = ref object  ## le pixra pe pa se tcidu
     box: JsObject
@@ -264,9 +280,13 @@ proc toModel*(text: cstring): Model =
     units = source.unitsByByte
   result = Model(text: text, rows: layers.rows, nodes: reading.tree.counted, stop: -1)
   for occurrence in reading.occurrences:
+    let sign = occurrence.sign
     result.words.add Word(s: units[min(occurrence.start, source.len)],
         e: units[min(occurrence.finish, source.len)], group: ord(occurrence.reading.toGroup),
-        gloss: cstring(occurrence.reading.toGloss), text: cstring(occurrence.text))
+        gloss: cstring(occurrence.reading.toGloss), text: cstring(occurrence.text),
+        spoken: cstring(occurrence.toSpoken),
+        sign_s: if sign.isSome: units[min(sign.get.a, source.len)] else: -1,
+        sign_e: if sign.isSome: units[min(sign.get.b + 1, source.len)] else: -1)
   for bar in layers.bars:
     result.bars.add BarView(category: ord(bar.category), first: bar.first, last: bar.last,
         parent: bar.parent, height: bar.height, depth: bar.depth, rule: cstring(bar.rule))
@@ -339,6 +359,36 @@ proc columns(model: Model, chains: seq[seq[int]]): JsObject =
     box = spanned("div", "flow named anim")
     text = model.text
     cut = if model.stop >= 0: model.stop else: text.lengthUnits + 1
+  # ro sinxa poi zvati no valsi .e le pamoi valsi poi le sinxa cu sinxa ke'a
+  #   .i le sinxa cu cuxna le valsi to `D3 a` pe `#1101` toi
+  #   .i ro le sinxa cu se porsi ta'i le se ciska
+  var
+    signs: seq[(int, int, int)]
+    spans = initHashSet[(int, int)]()  # le stuzi be ro valsi .e ro sinxa poi pu se jmina
+    cursor = 0  # le pamoi sinxa poi no gapru be ke'a cu pu se pixra
+  for word in model.words: spans.incl (word.s, word.e)
+  for i, word in model.words:
+    if word.sign_s >= 0 and not spans.containsOrIncl((word.sign_s, word.sign_e)):
+      signs.add (word.sign_s, word.sign_e, i)
+  proc piece(a, b: int): JsObject =
+    ## pa stuzi be lo selci'a poi zvati no valsi
+    result = spanned("span", if a >= cut: cstring("tx raw") else: cstring("tx"), text.slice(a, b))
+    result.attribute("data-s", cstring($a))
+  proc pieces(a, b: int): seq[JsObject] =
+    ## ro stuzi be pa linji poi zvati no valsi ku'o ta'i lo porsi
+    ##   .i pa sinxa poi zvati no valsi cu ponse le klesi .e le stuna'u be le pamoi valsi pe vo'a
+    ##   .i ro stuzi poi se pixra cu se porsi ta'i le se ciska
+    var at = a
+    while cursor < signs.len and signs[cursor][0] < a: inc cursor
+    while cursor < signs.len and signs[cursor][1] <= b:
+      let (first, last, i) = signs[cursor]
+      if first > at: result.add piece(at, first)
+      let sign = piece(first, last)
+      sign.className = cstring("tx sign w ") & CLASS_GROUP[Group(model.words[i].group)]
+      sign.attribute("data-w", cstring($i))
+      result.add sign
+      (at, cursor) = (last, cursor + 1)
+    if at < b or result.len == 0: result.add piece(at, b)
   proc between(s, e: int, col: JsObject) =
     var at = s
     for k, line in text.slice(s, e).lines:
@@ -346,14 +396,14 @@ proc columns(model: Model, chains: seq[seq[int]]): JsObject =
         let mark = created("br")
         mark.attribute("data-s", cstring($(at - 1)))
         box.append mark
-      let host = spanned("span", if at >= cut: cstring("tx raw") else: cstring("tx"), line)
-      host.attribute("data-s", cstring($at))
-      if k == 0 and not col.isNull: col.prepend host
+      let hosts = pieces(at, at + line.lengthUnits)
+      if k == 0 and not col.isNull:
+        for n in countdown(hosts.high, 0): col.prepend hosts[n]
       elif line.lengthUnits > 0:
         let
           tk = spanned("span", "tk")
           alone = spanned("span", "col")
-        alone.append host
+        for host in hosts: alone.append host
         tk.append alone
         box.append tk
       at += line.lengthUnits + 1
@@ -503,17 +553,32 @@ proc owns(node: JsObject, key: cstring): bool
   ##   .i lo ckaji be ro dacti pe `JavaScript` po'u zoi gy. constructor .gy. cu na se jdice
 
 
-proc toMeaning(text: cstring): Option[(cstring, cstring)] =
-  ## le glico valsi .e le smuni be pa valsi pe le liste
-  ##   .i le valsi cu du le lerfu poi le genturfa'i cu tcidu ke'a to `Occurrence.text` toi
+proc toMeaning(text: cstring): Option[Found] =
+  ## le smuni be pa valsi pe le liste
+  ##   .i le valsi cu du le valsi poi le genturfa'i cu tcidu ke'a to `Word.spoken` toi
   ##   .i se ki'u bo le valsi cu se ciska ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e
   ##       no lerfu po'u slaka bu
+  ##   .i pa lujvo cu ponse ji'a lo pagbu .e `is_english` to `meaningsJson` toi
   if MEANINGS.isNil:
     let node = byId("meanings")
     MEANINGS = if node.isNull: emptyObject() else: parsed(node.textContent.to(cstring))
-  if not MEANINGS.owns(text): return none((cstring, cstring))
-  let entry = MEANINGS[text]
-  some((entry[0].to(cstring), entry[1].to(cstring)))
+  if not MEANINGS.owns(text): return none(Found)
+  let
+    entry = MEANINGS[text]
+    is_lujvo = entry["length"].to(int) > 2
+  some(Found(gloss: entry[0].to(cstring), definition: entry[1].to(cstring),
+      parts: if is_lujvo: entry[2].to(cstring) else: cstring(""),
+      is_english: is_lujvo and entry[3].to(bool)))
+
+
+func glossed(word: Word, found: Option[Found]): cstring =
+  ## le glico valsi be pa valsi poi le ctuca cu jarco ke'a ne'i le liste be ro pagbu
+  ##   .i pa valsi poi pa lerfu .a pa sinxa cu sinxa ke'a cu jarco le valsi poi le genturfa'i cu
+  ##       tcidu ke'a ta'i ke'a
+  let gloss =
+    if found.isSome and found.get.gloss.lengthUnits > 0: found.get.gloss
+    else: cstring(LESSON_NONE)
+  if word.sign_s >= 0: word.spoken & cstring(" · ") & gloss else: gloss
 
 
 proc taughtKind(view: View, bar: int): (cstring, cstring) =
@@ -526,16 +591,17 @@ proc taughtKind(view: View, bar: int): (cstring, cstring) =
   case lesson.basis
   of Basis.Name:
     let found = cstring(lesson.lojban).toMeaning
-    if found.isSome: return found.get
+    if found.isSome: return (found.get.gloss, found.get.definition)
     (cstring(lesson.english), cstring(lesson.text))
   of Basis.Marker:
     var glosses: seq[string]
     for k in seen.first .. seen.last: glosses.add $model.words[k].gloss
     let
       word = model.words[seen.first + glosses.marking(Category(seen.category), 0, glosses.high)]
-      found = word.text.toMeaning
+      found = word.spoken.toMeaning
     if found.isNone: return (cstring(lesson.english), cstring(LESSON_NONE))
-    (cstring(lesson.english), cstring(shownMarker($word.text, $found.get[0], $found.get[1])))
+    (cstring(lesson.english),
+        cstring(shownMarker($word.spoken, $found.get.gloss, $found.get.definition)))
   of Basis.Own: (cstring(lesson.english), cstring(lesson.text))
 
 
@@ -598,12 +664,12 @@ proc worded(view: View, index: int): JsObject =
     word = view.model.words[index]
     top = spanned("span", "top")
     body = created("span")
-    found = word.text.toMeaning
+    found = word.spoken.toMeaning
   result = created("li")
   result.attribute("data-p", cstring($index))
   top.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]), word.text).lojbanic
   top.append spanned("span", "sel", word.gloss)
-  top.append spanned("span", "en", if found.isSome: found.get[0] else: cstring(LESSON_NONE))
+  top.append spanned("span", "en", word.glossed(found))
   body.append top
   result.append spanned("i", "sw dotted")
   result.append body
@@ -673,12 +739,32 @@ proc taught(view: View, key: Option[Key]) =
   if chosen.is_word:
     let
       word = model.words[chosen.index]
-      found = word.text.toMeaning
-    head.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]), word.text).lojbanic
+      found = word.spoken.toMeaning
+      is_signed = word.sign_s >= 0
+    head.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]),
+        if is_signed: model.text.slice(word.sign_s, word.sign_e) else: word.text).lojbanic
     head.append spanned("span", "sel", word.gloss)
-    if found.isSome:
-      sheet.append spanned("p", "meaning", cstring($found.get[0] & " · " & $found.get[1]))
+    if is_signed:
+      # ro valsi poi le sinxa cu sinxa ke'a cu ponse pa smuni to `D3 a` pe `#1101` toi
+      for other in model.words:
+        if other.sign_s != word.sign_s or other.sign_e != word.sign_e: continue
+        let meaning = other.spoken.toMeaning
+        sheet.append spanned("p", cstring(if meaning.isSome: "meaning" else: "meaning none"),
+            if meaning.isSome: cstring(shownMarker($other.spoken, $meaning.get.gloss,
+              $meaning.get.definition))
+            else: other.spoken & cstring(" · " & LESSON_NONE))
+    elif found.isSome and found.get.definition.lengthUnits > 0:
+      sheet.append spanned("p", "meaning", found.get.gloss & " · " & found.get.definition)
+    elif found.isSome and found.get.gloss.lengthUnits > 0:
+      sheet.append spanned("p", "meaning", found.get.gloss)
     else: sheet.append spanned("p", "meaning none", cstring(LESSON_NONE))
+    if found.isSome and found.get.parts.lengthUnits > 0:
+      # pa lujvo cu jarco ro pagbu pe vo'a ta'i le selci'a pe `lujvo.txt`
+      let
+        parts = spanned("p", "parts", cstring(LESSON_PARTS & " "))
+        written = spanned("span", "", cstring(($found.get.parts).replace("+", " + ")))
+      parts.append(if found.get.is_english: written else: written.lojbanic)
+      sheet.append parts
   else:
     let
       seen = model.bars[chosen.index]
@@ -1296,8 +1382,15 @@ func shifted*(model: Model, low, high: int, inserted: cstring, text: cstring): M
       continue
     after = e
     index[i] = result.words.len
+    # pa valsi poi zvati lo bartu be le cenba cu stali le sinxa .e le valsi poi ke'a se tcidu
+    #     ta'i ke'a
+    let
+      is_kept = word.sign_s >= 0 and (word.e < low or word.s > high)
+      shift = if word.s > high: d else: 0
     result.words.add Word(s: s, e: e, group: word.group, gloss: word.gloss,
-        text: text.slice(s, e))
+        text: text.slice(s, e), spoken: if is_kept: word.spoken else: text.slice(s, e),
+        sign_s: if is_kept: word.sign_s + shift else: -1,
+        sign_e: if is_kept: word.sign_e + shift else: -1)
   var kept = newSeq[int](model.bars.len)
   for k, bar in model.bars:
     kept[k] = -1

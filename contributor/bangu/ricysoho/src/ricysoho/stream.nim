@@ -205,6 +205,13 @@ type
     breaks*: seq[int]
       ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a ne'i le valsi
       ##   .i le stuzi cu se porsi to `CLL 3.3` toi
+    sign*: Option[Slice[int]]
+      ## le stuzi be le lerfu pe `DIGITS_STREAM` .a le sinxa poi sinxa le valsi
+      ##   .i va'o lo nu le valsi cu vasru no stuzi kei le sinxa cu zvati lo drata stuzi
+      ##   .i no da va'o lo valsi poi se gunma lo jbole'u
+      ##   .i ji'a no da va'o lo valsi poi krasi gi'a fanmo lo klani be lo jdini
+      ##   .i le ctuca pe le papri cu pilno le stuzi mu'i lo nu jarco le smuni be ro valsi poi le
+      ##       sinxa cu sinxa ke'a to `D3 a` pe `#1101` toi
     reading*: Reading  ## le valsi ta'i lo nu `readWord` tcidu `text`
 
   ReadingStream* = object  ## lo jalge be lo nu tcidu lo valsi pe lo porsi
@@ -702,18 +709,28 @@ func occurrenceSigned(sign, word: string, at: int): Occurrence =
   ##   .i le valsi cu vasru ro stuzi pe le sinxa
   ##   .i le lerfu pe le valsi cu du le sinxa
   Occurrence(
-    start: at, finish: at + sign.len, text: sign, stress: none(int), reading: word.readWord,
+    start: at, finish: at + sign.len, text: sign, stress: none(int),
+    sign: some(at ..< at + sign.len), reading: word.readWord,
   )
 
 
-func inferred(words: openArray[string], at: int): seq[Occurrence] =
+func inferred(words: openArray[string], at: int, sign = none(Slice[int])): seq[Occurrence] =
   ## zbasu lo valsi poi lo jdini sinxa cu sinxa ke'a
   ##   .i ro le valsi cu vasru no stuzi gi'e cfari bu'u `at`
   ##   .i le lerfu pe le valsi cu du le valsi
+  ##   .i ro le valsi cu sinxa le sinxa po'u `sign`
   for word in words:
     result.add Occurrence(
-      start: at, finish: at, text: word, stress: none(int), reading: word.readWord,
+      start: at, finish: at, text: word, stress: none(int), sign: sign, reading: word.readWord,
     )
+
+
+func amountOpened(words: openArray[string], at: int, sign: Slice[int]): seq[Occurrence] =
+  ## zbasu lo valsi poi krasi pa jdini klani gi'e cfari bu'u `at`
+  ##   .i ro valsi pe le sinxa po'u `words` cu sinxa le stuzi po'u `sign`
+  ##   .i zo lo .e zo be .e zo li cu sinxa no da
+  WORDS_AMOUNT_OPENING.inferred(at) & words.inferred(at, some(sign)) &
+      WORDS_AMOUNT_LINKING.inferred(at)
 
 
 func wordsWritten(text: string, start, finish: int): ReadingStream =
@@ -843,7 +860,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       if opened.isNone: (opened, opening) = (some(occurrences.len), at)
       if at >= ending_digits: (ending_digits, is_compound) = runDigits(at)
       occurrences.add Occurrence(
-        start: at, finish: at + 1, text: $text[at], stress: none(int),
+        start: at, finish: at + 1, text: $text[at], stress: none(int), sign: some(at .. at),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
       )
       inc at
@@ -856,7 +873,8 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       if text[at] == ',' and count != 3: return refuse(Refusal.Comma, at)
       let word = (if text[at] == ',': WORD_GROUP elif is_compound: WORD_COMPOUND else: WORD_DECIMAL)
       occurrences.add Occurrence(
-        start: at, finish: at + 1, text: $text[at], stress: none(int), reading: word.readWord,
+        start: at, finish: at + 1, text: $text[at], stress: none(int), sign: some(at .. at),
+        reading: word.readWord,
       )
       inc at
       continue
@@ -885,8 +903,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       # le jdini klani poi le jdini sinxa cu krasi ke'a cu vasru le sinxa
       if not (signed.isSome and opened.isNone): closed()
       if is_inner:
-        occurrences.add (@WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[currency.get][1] &
-          @WORDS_AMOUNT_LINKING).inferred(at)
+        occurrences.add LUT_WORDS_BY_SIGN[currency.get][1].amountOpened(at, next ..< next + size)
         signed = currency
       (opened, opening) = (some(occurrences.len), at)
       occurrences.add sign.occurrenceSigned(word, at)
@@ -915,7 +932,7 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
         return refuse(Refusal.Sign, at, sign)
       if opened.isNone: (opened, opening) = (some(occurrences.len), at)
       occurrences.add sign.occurrenceSigned(words[0], at)
-      occurrences.add words[1 .. ^1].inferred(after)
+      occurrences.add words[1 .. ^1].inferred(after, some(at ..< after))
       at = after
       continue
     let sign = LUT_WORDS_BY_SIGN.signAt(text, at)
@@ -933,13 +950,13 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       if (is_after and LUT_CMAVO_BY_SUFFIX.mapIt(it[0]).isBefore(at)) or
           (is_before and isPercentAt(at + size)):
         return refuse(Refusal.Sign, at, text.character(at))
-      let words = @WORDS_AMOUNT_OPENING & LUT_WORDS_BY_SIGN[sign.get][1] & @WORDS_AMOUNT_LINKING
+      let words = LUT_WORDS_BY_SIGN[sign.get][1]
       if is_after:
-        occurrences.insert(words.inferred(opening), opened.get)
+        occurrences.insert(words.amountOpened(opening, at ..< at + size), opened.get)
         occurrences.add WORDS_AMOUNT_CLOSING.inferred(at)
         (opened, signed) = (none(int), none(int))
       else:
-        occurrences.add words.inferred(at + size)
+        occurrences.add words.amountOpened(at + size, at ..< at + size)
         signed = sign
       at += size
       continue

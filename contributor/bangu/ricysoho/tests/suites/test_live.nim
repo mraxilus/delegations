@@ -56,9 +56,9 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, random, sequtils, strutils, unittest]
+import std/[importutils, options, random, sequtils, strutils, unittest]
 
-import ../../src/ricysoho/[grammar, live, nif, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar, live {.all.}, nif, prose, selmaho, stream]
 import ../sample_tatoeba/sentences
 import ./[corpora, reader_nif, texts_built]
 
@@ -609,6 +609,21 @@ suite "Internal: Live text":
       inc count
     # lo bandu cu ralte lo selci'a pe le selci'aste
     check count >= COUNT_CORPORA_LEAST  # `IX.3`
+
+
+  test "Each word that live reader reads from a piece names its sign at bytes of whole text":
+    # le valsi poi pa lerfu .a pa sinxa cu sinxa ke'a cu sinxa le stuzi pe le sinxa ne'i le
+    #     mulselci'a
+    #   .i le ctuca pe le papri cu tcidu le stuzi to `D3 a` pe `#1101` toi
+    privateAccess(ReaderLive)
+    var reader = initReaderLive()
+    reader.text = "mi ponse $5 .e li ½"
+    let
+      whole = readTextParts(reader.text).reading.occurrences
+      piece = reader.readFrom(9, is_final = true).reading.occurrences
+    check piece.len == whole.len - 2
+    check piece.mapIt(it.sign) == whole[2 .. ^1].mapIt(it.sign)
+    check piece.mapIt((it.start, it.finish)) == whole[2 .. ^1].mapIt((it.start, it.finish))
 
 
   test "Text built of words that reach back gives NIF of its parts read whole, and grows":

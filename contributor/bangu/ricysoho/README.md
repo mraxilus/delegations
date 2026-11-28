@@ -569,6 +569,9 @@ ni'o [`linji be lo selci'a`](https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5) 
   .i lo prenu cu ciska ne'i le se ciska poi skari
   .i le ctuca poi zvati le cnita be le se ciska cu glico
   .i le ctuca cu skicu le valsi .a le linji poi le korbi cu pencu ke'a
+  .i pa lujvo cu jarco le glico valsi .e ro pagbu poi le jvoste cu ciska ke'a
+  .i le ctuca be pa lerfu .a pa sinxa cu jarco le smuni be ro valsi poi le lerfu .a le sinxa cu
+      sinxa ke'a
   .i pa sarji pe ro papri cu jorne le re papri
 
 ni'o lo minde po'u `page` zbasu le papri `pages/live.html` .e le papri `pages/layers.html`

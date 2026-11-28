@@ -6,7 +6,9 @@
 
 {.experimental: "strictFuncs".}
 
-import ../ricysoho/[layers, selmaho]
+import std/options
+
+import ../ricysoho/[layers, selmaho, stream, tanru]
 
 
 type  # le ctuca be pa klesi be lo linji
@@ -81,3 +83,12 @@ func marking*(glosses: openArray[string], category: Category, first, last: int):
 func shownMarker*(word, gloss, definition: string): string =
   ## le selci'a poi skicu pa linji ta'i le valsi poi jarco le klesi to `Basis.Marker` toi
   word & " · " & gloss & " · " & definition
+
+
+func toSpoken*(occurrence: Occurrence): string =
+  ## le valsi poi le genturfa'i cu tcidu pa valsi ta'i ke'a
+  ##   .i pa valsi poi pa lerfu .a pa sinxa cu sinxa ke'a cu se tcidu ta'i pa cmavo .a pa brivla
+  ##   .i se ki'u bo le ctuca cu sisku le smuni be le cmavo .a le brivla to `D3 a` pe `#1101` toi
+  ##   .i ja le valsi cu du le lerfu pe le valsi
+  if occurrence.sign.isSome and occurrence.reading.is_word: $occurrence.reading.tanru
+  else: occurrence.text
