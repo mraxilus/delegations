@@ -1670,8 +1670,8 @@ line. `sectionsDoc` of `declarations.nim` reads where its doc stands, at any rea
 read that.
 
 - A section takes a doc at each reach where a name of its kind took one before the rulings (VI.1).
-  The rulings move that doc to the section, and drop no requirement. So a `type` section takes one
-  at every reach, as each type did. A `const`, `let` or `var` section takes one at global reach
+  The rulings move that doc to the section, and drop no reach where a doc was asked. So a `type`
+  section takes one at every reach, as each type did. A `const`, `let` or `var` section takes one at global reach
   alone. A binding inside a routine, or a block that opens a scope, is a local. A binding of the
   entry block can reach the whole module, but V.10 puts it in a routine.
 - Rejected: a doc of a section at global reach alone. It drops the doc of each type inside a
@@ -1704,8 +1704,9 @@ read that.
   doc that the lexer joins over lines below the keyword line moves above the keyword. A one-line
   doc right below the keyword, or above a global one, joins the keyword line where it fits. A doc
   right below the keyword that does not fit, or that runs over lines, moves above the keyword.
-- `nim jsondoc` reads no doc on the keyword line, none right below it and none above it. A `##`
-  above the keyword past code joins the doc of the module. Verified by
+- `nim jsondoc` reads no doc on the keyword line, none right below it and none above it, at
+  global reach and inside a routine. A `##` above the keyword past code joins the doc of the
+  module. Verified by
   `suites/test_declarations.nim`, suite "Article VI.9", with the compiler that builds it.
 - Rejected: a doc of several lines on the keyword line as `#`, with its outline right below it. A
   `#` comment right below the keyword can head the first group of names, so the two read alike.
@@ -1729,8 +1730,10 @@ read that.
 - Of the later reports, 442 read a section with no doc, and 9 the doc of a section out of its
   position. All of them stand in contributor projects, since each section of curator code holds
   its placeholder. Of the earlier reports, 921 go, each of a field, an enum member or a name
-  inside a section. No bare `type` section of the tree stands off global reach, so the doc of
-  such a section adds no report.
+  inside a section.
+- No bare `type` section of the tree stands off global reach, so the doc of such a section adds no
+  report. Verified by hand, 2026-11-28, with a driver that runs `sectionsBare` over the same files.
+  It reads 90 `const`, 2,835 `let` and 716 `var` sections off global reach, and no `type`.
 - Over that tree, `fixDocs` and then `fixDocsMissing` keep each token of code in each file that
   they write, and a second run writes nothing. Verified by hand with a driver, 2026-11-28.
 
