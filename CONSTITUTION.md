@@ -333,11 +333,16 @@ CAYLEYS_WEDGE  # module constant
    `TODO: Document.`, and never leave the doc empty. A generator carries its docs through a
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 
-   A `const`, `let`, `var` or `type` keyword alone on its line opens a section, and the section
-   gets one doc. No name inside it needs a doc, and no field of an object or member of an enum
-   needs one anywhere. A doc that such a name holds stays, and is optional. A section inside a
-   routine, or inside any other block that opens a scope, is local, so it gets none. So does a
-   section of the entry block (V.10).
+   A `const`, `let`, `var` or `type` keyword alone on its line opens a section. The section gets
+   one doc in place of the docs of its names, at each reach where a declaration of its kind gets
+   one. So a `type` section gets one at every reach, and a `const`, `let` or `var` section at
+   module level alone. A binding inside a routine, or inside another block that opens a scope, is
+   a local. A binding of the entry block can reach the whole module, but V.10 puts it in a
+   routine, so its section gets none either.
+
+   No name inside a section needs a doc. In the grammar of Nim, each type stands in a type
+   section, and so does the one-line form `type X = object`. So no field of an object and no
+   member of an enum needs a doc anywhere. A doc that such a name holds stays, and is optional.
 
    The doc of a section and the doc of a value that opens `block` are `#` comments (VI.9). So
    such a doc that waits for text is `# TODO: Document.`.
@@ -371,9 +376,9 @@ CAYLEYS_WEDGE  # module constant
 9. A doc has one position for each shape of declaration, and the expression guide of the
    language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
    value whose `block:` stands on its `=` line, wherever the doc stands. Nor does it read the doc
-   of a section, on its keyword line or above it. So each such doc is a `#` comment, and no
-   comment claims to be a doc that Nim reads. Where a later Nim reads such a doc, the doc takes
-   `##` again.
+   of a section at any reach, on its keyword line, right below it or above it. So each such doc
+   is a `#` comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads
+   such a doc, the doc takes `##` again.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
