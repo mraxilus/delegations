@@ -171,6 +171,18 @@ const  # TODO: Document.
     ## Fields of lock that reader reads, as npm 10.9.9 wrote them for that `lodash`.
   MANIFEST_LODASH = """{"devDependencies": {"lodash": "4.17.15"}}"""
     ## Manifest beside that lock.
+  PATH_MOCKUP = "contributor/ronri/pga_visualiser/pages/mockup.html"  ## Mockup of same project.
+  PATH_MAP = "contributor/ronri/pga_benchmark/pages/derivation-map.svg"  ## SVG of other project.
+  MOCKUP_FOUND = """<div id="mockup-rings"></div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  boot();
+})();
+</script>
+"""
+    ## Lines 136 to 139 and 454 to 456 of mockup, 2026-11-28, which hold 318 lines of JavaScript
+    ##   that no `tsc` emits (#1078).
 
 
 func answering(answer: Answer): proc(argument: string): Answer =
@@ -197,6 +209,11 @@ func manifestNaming(names: openArray[string]): string =
   ## Construct manifest naming each dev dependency.
   let entries = names.mapIt("\"" & it & "\": \"1.0.0\"")
   "{\"devDependencies\": {" & entries.join(", ") & "}}"
+
+
+proc checkAlone(path, text: string): seq[Finding] =
+  ## Run static check over tree that holds entry of path alone.
+  @[entry(path, text)].checkPackagesNode
 
 
 
@@ -506,6 +523,84 @@ suite "Static check":
       "<svg xml:base=\"/pages/\"><script href=\"a.js\"/></svg>", "<div srcdoc=\"a\"></div>",
     ]:
       check checkPage(PATH_PAGE, page).len == 0
+
+  test "JavaScript file is finding outside folder `build/`, and none inside it at any depth":
+    # Case: ruling D4 of #1078, that `koch check` refuses JavaScript that `tsc` does not emit;
+    #   tree held no such file, 2026-11-28. Domain: each extension, in capitals too, in project
+    #   and outside each, and folder or file whose name only holds `build`; then `build/` at root,
+    #   at root of project, above file and below it, and file of other kind.
+    for path in [
+      "contributor/ronri/pga_visualiser/tools/drive/main.js",
+      "contributor/ronri/pga_visualiser/main.mjs", "contributor/ronri/pga_visualiser/main.cjs",
+      "contributor/ronri/pga_visualiser/pages/app.JS", "curator/audit/tools/a.Mjs", "koch.js",
+      ".claude/hooks/start.cjs", "contributor/ronri/pga_visualiser/rebuild/main.js",
+      "contributor/ronri/pga_visualiser/builds/main.js",
+      "contributor/ronri/pga_visualiser/Build/main.js", "contributor/ronri/pga_visualiser/build.js",
+    ]:
+      let found = checkAlone(path, "")
+      check found.len == 1 and found[0].path == path and found[0].line == 0 and
+          found[0].message.endsWith("got `" & path[path.rfind('.') .. ^1] & "`.")
+    for path in [
+      "build/main.js", "contributor/ronri/pga_visualiser/build/main.js",
+      "contributor/ronri/pga_visualiser/build/drive/main.mjs",
+      "contributor/ronri/pga_visualiser/tools/build/main.cjs", "curator/audit/build/a/b/c.JS",
+      "contributor/ronri/pga_visualiser/tools/drive/main.ts",
+      "contributor/ronri/pga_visualiser/tsconfig.json",
+      "contributor/ronri/pga_visualiser/main.js.map",
+    ]:
+      check checkAlone(path, "").len == 0
+
+  test "inline script of page is finding, as in mockup of `pga_visualiser`, and placeholder passes":
+    # Case: ruling D4 of #1078; mockup held 318 lines of JavaScript in script at its line 137,
+    #   2026-11-28, which no check refused. Finding echoes first line of body.
+    let mockup = checkAlone(PATH_MOCKUP, MOCKUP_FOUND)
+    check mockup.len == 1 and mockup[0].line == 2 and
+        mockup[0].message.endsWith("got `(function () {`.")
+    # Domain: placeholder with and without each space of HTML around it, `type="module"`, capitals,
+    #   SVG under prefix and in comment, as each page of tree holds it; then blank script at plain
+    #   path by `src`, `href` or `xlink:href`, and end tag that ends script after space or `/`.
+    for page in [
+      "<script>@SCRIPT@</script>", "<script>\n  @SCRIPT@\n</script>",
+      "<script> \t\r\n\f@SCRIPT@\f\n\r\t </script>", "<script type=\"module\">@SCRIPT@</script>",
+      "<SCRIPT>@SCRIPT@</SCRIPT>", "<svg><script>@SCRIPT@</script></svg>",
+      "<svg:script>@SCRIPT@</svg:script>", "<!-- <script>@SCRIPT@</script> -->",
+      "<script src=\"app.js\"></script>", "<script type=\"module\" src=\"app.js\">\n</script>",
+      "<svg><script href=\"a.js\"></script></svg>",
+      "<svg><script xlink:href=\"a.js\"> </script></svg>", "<script>@SCRIPT@</script >",
+      "<script>@SCRIPT@</script\n>", "<script>@SCRIPT@</script/>", "<noscript>a</noscript>", "",
+    ]:
+      check checkAlone(PATH_PAGE, "\n" & page).len == 0
+      check checkAlone(PATH_MAP, "\n" & page).len == 0
+    # Domain: script, empty or blank, placeholder with more beside it or in other case, script of
+    #   each type, of JSON, import map and plain text too, body beside `src` or `href`, SVG,
+    #   capitals, and comment; then `/>`, which closes no script as HTML reads it, and end tag of
+    #   other name or prefix, or that runs on past `script`, which ends none, so body runs on.
+    for page in [
+      "<script>let x = 1;</script>", "<script></script>", "<script>\n</script>",
+      "<script>@SCRIPT@;</script>", "<script>@SCRIPT@ @SCRIPT@</script>",
+      "<script>@script@</script>", "<script>// @SCRIPT@</script>",
+      "<script type=\"module\">import './a.js';</script>",
+      "<script type=\"application/json\">{\"a\": 1}</script>",
+      "<script type=\"importmap\">{\"imports\": {}}</script>",
+      "<script type=\"text/plain\">a</script>", "<script src=\"app.js\">alert(1)</script>",
+      "<script src=\"app.js\">@SCRIPT@;</script>", "<svg><script>alert(1)</script></svg>",
+      "<svg><script href=\"a.js\">alert(1)</script></svg>", "<svg:script>alert(1)</svg:script>",
+      "<SCRIPT>alert(1)</SCRIPT>", "<Script Type=\"Module\">alert(1)</Script>",
+      "<!-- <script>alert(1)</script> -->", "<script/>alert(1)</script>",
+      "<script href=\"a.js\"/>alert(1)</script>", "<svg><script href=\"a.js\"/><circle/></svg>",
+      "<script>@SCRIPT@</x:script>alert(1)</script>", "<script>@SCRIPT@</scripts>alert(1)</script>",
+      "<script>@SCRIPT@</script\v>alert(1)</script>",
+      "<svg:script>@SCRIPT@</script>alert(1)</svg:script>",
+    ]:
+      for path in [PATH_PAGE, PATH_MAP]:
+        let found = checkAlone(path, "\n" & page)
+        check found.len == 1 and found[0].line == 2 and found[0].path == path
+    # Domain: comment inside script, which HTML reads past first end tag, and `<script>` inside
+    #   it, which reads as script too.
+    let escaped = checkAlone(PATH_PAGE, "\n<script>@SCRIPT@<!--<script></script>a--></script>")
+    check escaped.len == 2 and escaped.allIt(it.line == 2)
+    let lines = checkAlone(PATH_PAGE, "<script>a</script>\n<script>@SCRIPT@</script>\n<script>b")
+    check lines.mapIt(it.line) == @[1, 3]
 
   test "tree routes manifest, script, page and SVG to their parts, and nothing else":
     let tree = treeGood().with(
