@@ -2619,9 +2619,9 @@ a listed package. A page or SVG refuses each `<script>` from another host, and e
   `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: a frame, object or embed at
   no plain path reads as none, since its script runs apart from the page.
 - A `.js`, `.mjs` or `.cjs` file outside a folder `build/` is a finding, beside that of an unread
-  kind. A body runs to the first end tag of its name as written, and `/>` closes none, as in HTML. A
-  script at an address may keep a blank body. A type changes nothing, since a list of the types that
-  a browser runs copies it in part. Cost: an event handler or a `javascript:` address reads as none.
+  kind. The body of a script runs to its first end tag as written, and `/>` closes none, as in HTML.
+  A script at an address may keep a blank body. A type changes nothing, since a list of the types
+  that a browser runs copies it in part. The doc of `packages_node.nim` names each cost of the rule.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
