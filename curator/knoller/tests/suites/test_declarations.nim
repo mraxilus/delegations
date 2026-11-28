@@ -820,7 +820,8 @@ suite "Declarations":
     #   where each name inside it holds doc, and no name, field or enum member inside it needs one.
     #   Domain: each keyword, at top level and under `when`, names with docs and without, value
     #   opening `block`; doc on keyword line, above it and right below it, which count; `#` below
-    #   keyword and doc of module, which do not; local, entry and block section, which take none.
+    #   keyword and doc of module, which do not; local, entry and block section of bindings, which
+    #   take none.
     let breach = "type\n  Box* = object  ## Box.\n    width*: int\n  Kind = enum  ## Kind.\n" &
         "    A, B\nconst\n  N* = 3  ## Size.\n  T = block:\n    1\nlet\n  m* = 1.0\nvar\n  v* = 0\n"
     check checkDocsMissing("a.nim", breach).mapIt((it.line, it.brief)) == @[
@@ -861,6 +862,53 @@ suite "Declarations":
       "proc f*() =\n  ## Do.\n  let\n    x = 1\n  discard x\n",  # local
       "when isMainModule:\n  const\n    N = 3\n  echo N\n",  # entry
       "block:\n  const\n    N = 3\n  echo N\n",  # block opening scope
+    ]:
+      checkpoint kept
+      check kept.isDocumented
+
+
+  test "`type` section takes doc at every reach, and section of bindings at global reach alone":
+    # Section takes doc wherever its names took one before D1 c of #1020 moved their doc to it
+    #   (VI.1): type takes doc at every reach, binding at global reach alone, since one inside
+    #   routine or block is local, and V.10 moves one of entry block into routine. Case held: bare
+    #   `type` inside `proc f` and inside `when isMainModule:`, which knoller at `e56d0fec` passes,
+    #   though knoller at `3fd4d739` reports name inside each.
+    #   Domain: routine, template, `test`, `block`, `if`, `static` and entry block; each keyword,
+    #   bare and on one line; comment above keyword, which counts; generated code, which passes.
+    const openers = [
+      "proc f*() =\n  ## Do.\n",
+      "template t*() =\n  ## Do.\n",
+      "test \"t\":\n",
+      "block:\n",
+      "if true:\n",
+      "static:\n",
+      "when isMainModule:\n",
+    ]
+    for opener in openers:
+      let
+        line = opener.count('\n') + 1  # one-based line of keyword
+        breach = opener & "  type\n    T = int\n  discard T(1)\n"
+        single = opener & "  type T = int\n  discard T(1)\n"
+      checkpoint breach
+      check checkDocsMissing("a.nim", breach).mapIt((it.line, it.brief)) == @[
+        (line, "section takes doc on its keyword line, as `#` comment; got bare `type`"),
+      ]
+      check breach.documented == breach.replace("  type\n", "  type  # TODO: Document.\n")
+      check breach.documented.isDocumented  # second run writes nothing
+      check breach.documented.isSettled  # doc position passes what missing doc writes
+      check checkDocsMissing("a.nim", single).mapIt((it.line, it.brief)) == @[
+        (line, "declaration takes doc comment; got `type T`"),
+      ]  # one line, as before
+      for keyword in ["const", "let", "var"]:
+        check (opener & "  " & keyword & "\n    a = 1\n  discard a\n").isDocumented
+    for kept in [
+      "proc f*() =\n  ## Do.\n  type  # Pair.\n    T = int\n  discard T(1)\n",
+      "proc f*() =\n  ## Do.\n  type\n    ## Pair.\n    T = int\n  discard T(1)\n",
+        # right below counts: doc position moves it
+      "proc f*() =\n  ## Do.\n\n  # Read.\n  type\n    T = int\n  discard T(1)\n",
+        # comment above counts, though it may be stage comment
+      "macro m*(): untyped =\n  ## Emit.\n  quote do:\n    type\n      T = int\n",
+        # generated code, whose generator carries its docs
     ]:
       checkpoint kept
       check kept.isDocumented
