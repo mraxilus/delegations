@@ -132,7 +132,7 @@ proc readSource*(name: string): Source =
   Source(text: readFile(path).replace("\r", ""), digest: output.splitWhitespace[0])
 
 
-func field(line: string, first, last: int): string =
+func field*(line: string, first, last: int): string =
   ## tcidu lo stuzi po'u `first` bi'o `last`
   ##   .i lo namcu pe le pamoi stuzi cu du li 1 ja'i `entries.nim`
   ##   .i lo kutle'u poi zvati lo fanmo be le se tcidu cu selvi'u
