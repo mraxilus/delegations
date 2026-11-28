@@ -25,6 +25,8 @@ import ./report
 const
   DIRECTORY_CASES = "/drive/layers/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
   COUNT_CASES_LEAST = 8  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
+  COUNT_SIGNS_LEAST = 3
+    ## lo du'u le se cipra cu vasru su'o xo kau sinxa poi zvati no valsi to `D3 a` pe `#1101` toi
   MODE_REFUSED = "refused"
     ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
   TYPED = "mi klama le zarci .i do"  ## le selci'a poi le cipra cu ciska ke'a ta'i pa lerfu
@@ -244,8 +246,19 @@ proc runSuite() {.async.} =
         (low, high, put) = diff(source, goal)
       expectThat source.slice(0, low) & put & source.slice(high, source.len) == goal,
           "diff rebuilds text it reaches: " & $goal
-      expectThat model.shifted(low, high, put, goal).isSound,
-          "edit keeps words and bars sound: " & $goal
+      let moved = model.shifted(low, high, put, goal)
+      expectThat moved.isSound, "edit keeps words and bars sound: " & $goal
+      # pa valsi poi zvati lo bartu be le cenba cu stali le sinxa .e le valsi poi ke'a se tcidu
+      #     ta'i ke'a
+      let d = put.len - (high - low)
+      for word in model.words:
+        if word.sign_s < 0 or word.e <= word.s or not (word.e < low or word.s > high): continue
+        let
+          shift = if word.e < low: 0 else: d
+          kept = moved.words.filterIt(it.s == word.s + shift and it.e == word.e + shift)
+        expectThat kept.len == 1 and kept[0].sign_s == word.sign_s + shift and
+            kept[0].sign_e == word.sign_e + shift and kept[0].spoken == word.spoken,
+            "edit keeps sign and spoken word of each word it leaves: " & $goal
   ended "Each edit keeps each word on its letters and each bar on its words"
 
   drawn(cstring("").toModel, none((int, int, bool)))
@@ -378,7 +391,8 @@ proc runSuite() {.async.} =
       node.hovered
       expectThat chosenKey() == "w" & $first, "pointer on sign teaches its first word: " & text
       if i == first: inc signs_drawn
-  expectThat signs_drawn >= 3, "cases hold three signs that lie in no word"
+  expectThat signs_drawn >= COUNT_SIGNS_LEAST,
+      "cases hold " & $COUNT_SIGNS_LEAST & " signs that lie in no word"
   ended "Sign that lies in no word takes pointer, and teaches each word it stands for"
 
   for k, text in texts:
