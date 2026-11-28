@@ -45,10 +45,10 @@ template timeLibrary(label: string, body: untyped) =
       timeRounds("library " & label):
         for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
-          template m(): untyped {.used.} = pool[i]
-            ## Alias element `i` of pool, which `body` reads as `m`.
-          template n(): untyped {.used.} = pool[j]
-            ## Alias element `j` of pool, which binary `body` reads as `n`.
+          template m(): untyped {.used.} = pool[i]  # Read by `body`.
+            ## Alias element `i` of pool.
+          template n(): untyped {.used.} = pool[j]  # Read by binary `body`.
+            ## Alias element `j` of pool.
           results[i] = body
     var
       pool = newSeq[Multivector](OBJECTS)
