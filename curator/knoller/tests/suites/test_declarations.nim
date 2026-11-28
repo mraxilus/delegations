@@ -909,6 +909,8 @@ suite "Declarations":
         # comment above counts, though it may be stage comment
       "macro m*(): untyped =\n  ## Emit.\n  quote do:\n    type\n      T = int\n",
         # generated code, whose generator carries its docs
+      "doAssert compiles(block:\n  type\n    T = int\n  T(1))\n",
+        # inside bracket, part of expression, whose names took none
     ]:
       checkpoint kept
       check kept.isDocumented
