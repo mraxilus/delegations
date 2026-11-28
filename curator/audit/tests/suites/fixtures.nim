@@ -132,6 +132,79 @@ const  # TODO: Document.
       "- The library takes `maps-noalias` only when the Architect applies it there, as " &
       "with each change on the marginalia tab.\n"
     ## Body #845 gives as example of form, applied to #790, byte for byte as Architect wrote it.
+  PREDICTION_TABLES* = """## Prediction
+
+**Subagent:** builder of the weekly release check, fresh context.
+**Basis:** what this delegate knows, with no new read.
+
+**Judgements.** Five claims of yes or no about the work, at a confidence of 55% to 80%.
+
+| # | % | Judgement |
+| --- | :---: | --- |
+| 1 | 80% | Its last commit passes `nim r koch check` with 0 findings. |
+| 2 | 80% | Its notice names each of the five contributor projects as lagging 2.4.2. |
+| 3 | 75% | It adds no network call to the start hook. |
+| 4 | 75% | It tests the search for the latest release with no network. |
+| 5 | 55% | The critic finds a claim of its report that the evidence does not hold. |
+
+**Estimates.** The size of the work, about 15 million tokens, $7.00 and 50 minutes, each with
+its 90% range.
+
+| # | Estimate @ 90% | 5th | 50th | 95th |
+| --- | --- | ---: | ---: | ---: |
+| 6 | The builder uses ~15M tokens. | 5M | 15M | 45M |
+| 7 | The builder costs ~$7.00. | $2.50 | $7.00 | $20.00 |
+| 8 | The builder takes ~50m. | 20m | 50m | 120m |
+
+**Criteria.** How a reader decides each claim above, by its number.
+
+| # | Resolution criterion |
+| --- | --- |
+| 1 | The critic runs `nim r koch check` at that commit. |
+| 2 | Output of `koch check` has a line for each of the five projects. |
+| 3 | The critic finds no HTTP request in the code that `start` runs. |
+| 4 | A test runs the search over a fixed list of versions. |
+| 5 | The report of the critic names such a claim. |
+| 6 | The tokens on the line `**Subagent:**` of the reflection. |
+| 7 | The cost on the line `**Subagent:**` of the reflection. |
+| 8 | The minutes on the line `**Subagent:**` of the reflection. |
+
+**Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the builder.
+"""
+    ## Block of builder of #1050 in layout of comment 7200557915 on #1028, which design of tables
+    ##   rules, word for word, with lines of subagent and basis that its example leaves out.
+  REFLECTION_TABLES_POSTED* = "## Reflection\n\n**Subagent:** builder of the weekly release " &
+    "check, 39,100,000 tokens and $14.40 at list price,\n120 calls, 47 min.\n\n" & """
+**Judgements.** All five claims held, the one at 55% too.
+
+| # | State | % | Judgement | Result |
+| --- | :---: | :---: | --- | --- |
+""" & "| 1 | ✅ | 80% | Its last commit passes `nim r koch check` with 0 findings. | " &
+    "0 findings at `8b5b5a2b`. |\n" & """
+| 2 | ✅ | 80% | Its notice names each of the five contributor projects. | It prints the five pins. |
+| 3 | ✅ | 75% | It adds no network call to the start hook. | `start` reads nimble files alone. |
+| 4 | ✅ | 75% | It tests the search with no network. | 8 tests over 31 releases. |
+| 5 | ✅ | 55% | The critic finds a claim that the evidence does not hold. | It fails two claims. |
+
+**Estimates.** Each result fell inside its 90% range: 39.1 million tokens, $14.40 and 47 minutes.
+
+| # | State | Estimate @ 90% | Result |
+| --- | :---: | --- | --- |
+| 6 | ✅ | The builder uses ~15M tokens. | 39.1M, inside |
+| 7 | ✅ | The builder costs ~$7.00. | $14.40, inside |
+| 8 | ✅ | The builder takes ~50m. | 47m, inside |
+"""
+    ## Reflection on `PREDICTION_TABLES` as comment 7200557915 posts it, with line of subagent:
+    ##   rows 2, 4 and 5 quote part of their claim.
+  QUOTES_PART* = [
+    ("Its notice names each of the five contributor projects.",
+      "Its notice names each of the five contributor projects as lagging 2.4.2."),
+    ("It tests the search with no network.",
+      "It tests the search for the latest release with no network."),
+    ("The critic finds a claim that the evidence does not hold.",
+      "The critic finds a claim of its report that the evidence does not hold."),
+  ]
+    ## Part of claim that rows 2, 4 and 5 of `REFLECTION_TABLES_POSTED` quote, with whole claim.
 
 
 func tableHeader*(source: string): seq[seq[string]] =

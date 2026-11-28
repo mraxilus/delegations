@@ -11,7 +11,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[math, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[claims_log, claims_scores, sums_exact]
+import ../../src/[claims_log, claims_scores, hooks, sums_exact]
 import ./fixtures
 
 
@@ -94,6 +94,23 @@ suite "numbers as Metaculus":
     check initNumber("count of findings: 3, 6 and 11", 3, 6, 11, 9).unitClaim.isNone  # no label
     check initNumber("tool calls: 12, 30 and 60", 12, 30, 60, 20).unitClaim.isNone
     check initNumber("Cost: $0.80, $1 and $2", 0.8, 1, 2, 1).unitClaim.isNone  # label, not `Count:`
+
+
+  test "unit of number that its row names comes first, as cells of estimate give it (#1028)":
+    # Text of estimate names no unit at its start, so row holds unit its cells give; row written
+    #   before unit joined `Number` reads unit its text names, as test above holds.
+    for (unit, name) in [(UnitNumber.Tokens, "tokens"), (UnitNumber.Cost, "cost"),
+        (UnitNumber.Time, "time"), (UnitNumber.Count, "count")]:
+      for text in ["The builder takes ~50m.", TEXT_TOKENS, "Cost: $0.80, $1 and $2"]:
+        var claim = initNumber(text, 1, 2, 3, 2)
+        claim.number.get.unit = unit
+        check claim.unitClaim.get.name == name
+    check initNumber("The builder takes ~50m.", 20, 50, 120, 47).unitClaim.isNone
+    var time = initNumber("The builder takes ~50m.", 20, 50, 120, 47, confidence = 0.9)
+    time.number.get.unit = UnitNumber.Time
+    check time.scoreNumber == initNumber("Time: time to its report, in minutes: 20, 50 and 120",
+      20, 50, 120, 47, confidence = 0.9).scoreNumber
+    check time.scoreNumber.isSome
 
 
   test "number inside its range scores as copy in Python of method of Metaculus gives it":
