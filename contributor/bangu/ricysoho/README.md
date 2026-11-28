@@ -562,8 +562,14 @@ ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 | built file, under `build/` | published at |
 | --- | --- |
 | ricysoho.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+| layers.html | https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5 |
 
-ni'o lo minde po'u `page` zbasu le papri `pages/live.html`
+ni'o [`linji be lo selci'a`](https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5) skari ro valsi ja'i
+    le girzu be le selma'o be ke'a gi'e pixra lo linji pe le tricu ne'i le selci'a
+  .i lo prenu cu ciska ne'i le se ciska poi skari
+  .i pa sarji pe ro papri cu jorne le re papri
+
+ni'o lo minde po'u `page` zbasu le papri `pages/live.html` .e le papri `pages/layers.html`
   .i ko rapli gubgau le papri fi `build/ricysoho.html` ba ro cenba poi galfi lo selja'o be le papri
   .i ko punji `URL` ne'i `pull request` .e lo notci poi cusku lo du'u le selgu'a cu bredi
 
@@ -629,8 +635,4 @@ ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le
   .i le cipra cu fliba ji'a va'o lo nu pa jufra cu krasi lo midju be pa linji
   .i `Architect` jdice di'u bu'u `#818`
 
-ni'o `rictadni` tcidu la lojban. sepi'o le genturfa'i gi'e ralte no fukpi be lo pagbu be le
-    genturfa'i
-  .i lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu lo tcidu be le liste be'o .e lo stodi
-      be le liste be'o `tools/lists.nim`
-  .i no prenu cu tcidu ro lo jufra pe le vi selci'a
+ni'o no prenu cu tcidu ro lo jufra pe le vi selci'a

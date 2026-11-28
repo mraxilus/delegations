@@ -29,7 +29,7 @@
 ##   .i lo javni cu nitcu lo valsi .e lo selma'o vu'o pe le ma'oste ki'u lo nu le gerna pe `CLL`
 ##       tcidu le re datnypau
 ##   .i lo glipau be ro liste cu dunda lo smuni gi'e no roi dunda lo ka drani
-##   .i se ki'u bo lo glipau cu stali `rictadni` noi sisku sepi'o lo glipau
+##   .i se ki'u bo le vi selgu'a cu ralte no glipau
 ##   .i jdima fa lo nu lo samtci poi djica pa stuzi poi selvi'u cu galfi le galfi samtci .e le liste
 ##       ca pa nu ralte
 ##
