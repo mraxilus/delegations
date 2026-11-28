@@ -76,13 +76,13 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[base64, json, os, osproc, strutils, tables, unicode]
+import std/[base64, json, os, osproc, sequtils, strutils, tables, unicode]
 
 import ../src/browser/draw
 import ../src/browser/samples_layers
 import ../src/ricysoho/[layers, live, nif, prose]
 import ../tests/sample_tatoeba/sentences
-import ./[drive, page]
+import ./[drive, lists, meanings, page]
 
 
 const
@@ -270,19 +270,31 @@ func described(text: string): string =
         $bar.parent & " " & $bar.height & "\n"
 
 
+func meant(text: string, found: OrderedTable[string, Meaning]): string =
+  ## ciska le smuni be ro valsi pe le se tcidu pe `text` ta'i pa linji
+  ##   .i lo kunti linji cu sinxa lo valsi poi le liste cu vasru no smuni be ke'a
+  ##   .i le valsi cu se tcidu ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e no
+  ##       lerfu po'u slaka bu
+  for occurrence in text.readTextMarked.occurrences:
+    let
+      word = text[min(occurrence.start, text.len) ..< min(occurrence.finish, text.len)]
+      key = word.toLowerAscii.multiReplace((".", ""), (",", ""))
+    if key in found: result.add found[key].gloss & " · " & found[key].definition
+    result.add "\n"
+
+
 proc writeCasesLayers() =
   ## ciska ro se cipra pe le cipra pe le papri pe lo linji
   ##   .i ciska le selci'a .e ro valsi .e ro linji poi le jbezba cu gunma ke'a
+  ##   .i ciska ji'a le smuni be ro valsi ja'i le liste
   removeDir(DIRECTORY_LAYERS)
   createDir(DIRECTORY_LAYERS)
+  let found = toMeanings(readSource("gismu.txt").text, readSource("cmavo.txt").text)
   var k = 0
-  for (_, text) in SAMPLES:
+  for text in SAMPLES.mapIt(it[1]) & @TEXTS_LAYERS:
     writeFile(DIRECTORY_LAYERS / $k & ".text", text)
     writeFile(DIRECTORY_LAYERS / $k & ".layers", text.described)
-    inc k
-  for text in TEXTS_LAYERS:
-    writeFile(DIRECTORY_LAYERS / $k & ".text", text)
-    writeFile(DIRECTORY_LAYERS / $k & ".layers", text.described)
+    writeFile(DIRECTORY_LAYERS / $k & ".meanings", text.meant(found))
     inc k
   writeFile(DIRECTORY_LAYERS / "count.text", $k)
 

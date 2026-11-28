@@ -20,10 +20,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[jsffi, options, sugar, unicode]
+import std/[algorithm, jsffi, options, sugar, unicode]
 
 import ../ricysoho/[grammar, layers, prose, stream]
-import ./samples_layers
+import ./[lessons, samples_layers]
 
 
 const
@@ -45,7 +45,7 @@ const
       "half", "", "dash"]
     ## lo klesi pe `CSS` pe le tarmi be ro klesi be lo linji
   NAME_CATEGORY: array[Category, cstring] = ["bridi", "romoi", "sumti", "selbri", "tanru",
-      "tanru pagbu", "poi", "nu", "be", "tcita sumti", "tcita", "namcu", "zmadu"]
+      "tanru pagbu", "poi", "nu", "be", "tcita sumti", "tcita", "namcu", "zifre"]
     ## le cmene be ro klesi be lo linji be'o poi le papri cu ciska ke'a
   HUE_CATEGORY: array[Category, cstring] = ["var(--c-bridi)", "var(--c-bridi)",
       "var(--c-sumti)", "var(--c-pred)", "var(--c-pred)", "var(--c-pred)", "var(--c-link)",
@@ -493,6 +493,91 @@ proc built(view: View) =
         width: right - left)
 
 
+var MEANINGS: JsObject
+  ## lo smuni be ro valsi pe le liste ge'u ta'i `JSON` poi le papri cu vasru ke'a
+
+
+proc parsed(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
+  ## le se tcidu be lo selci'a pe `JSON`
+proc keyed(text: cstring): cstring {.importjs: "#.toLowerCase().replace(/[.,]/g, '')".}
+  ## le valsi poi se ciska ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e no lerfu po'u
+  ##     slaka bu
+
+
+proc toMeaning(text: cstring): Option[(cstring, cstring)] =
+  ## le glico valsi .e le smuni be pa valsi pe le liste
+  if MEANINGS.isNil:
+    let node = byId("meanings")
+    MEANINGS = if node.isNull: emptyObject() else: parsed(node.textContent.to(cstring))
+  let entry = MEANINGS[text.keyed]
+  if entry.isUndefined: return none((cstring, cstring))
+  some((entry[0].to(cstring), entry[1].to(cstring)))
+
+
+proc listed(view: View, bar: int): JsObject =
+  ## pa linji poi le ctuca cu skicu ke'a
+  ##   .i ciska le klesi .e le valsi pe le linji .e le selci'a poi skicu le klesi
+  let
+    model = view.model
+    seen = model.bars[bar]
+    category = Category(seen.category)
+    swatch = spanned("i", cstring("sw " & $CLASS_MARK[category]))
+  result = created("li")
+  result.attribute("data-b", cstring($bar))
+  swatch.styled("--k", HUE_CATEGORY[category])
+  result.append swatch
+  result.append spanned("span", "kind", NAME_CATEGORY[category])
+  result.append spanned("q", "",
+      model.text.slice(model.words[seen.first].s, model.words[seen.last].e))
+  result.append spanned("span", "what", cstring(LESSON_CATEGORY[category]))
+
+
+proc taught(view: View, key: Option[Key]) =
+  ## ctuca le valsi .a le linji poi le cuxna cu sinxa ke'a
+  ##   .i pa valsi cu jarco le selma'o .e le glico smuni .e ro linji poi vasru ke'a
+  ##   .i pa linji cu jarco le klesi .e ro linji poi vasru ke'a
+  ##   .i lo linji cu porsi ja'i lo ni gapru
+  let host = byId("lesson")
+  if host.isNull: return
+  if key.isNone:
+    host.replaced spanned("p", "start", cstring(LESSON_START))
+    return
+  let
+    chosen = key.get
+    model = view.model
+    sheet = created("div")
+    list = created("ol")
+  var bars: seq[int]
+  if chosen.is_word:
+    let
+      word = model.words[chosen.index]
+      head = spanned("p", "head")
+      found = word.text.toMeaning
+    head.append spanned("b", cstring("w " & $CLASS_GROUP[Group(word.group)]), word.text)
+    head.append spanned("span", "sel", word.gloss)
+    sheet.append head
+    if found.isSome:
+      let meaning = spanned("p", "meaning", cstring($found.get[0] & " · " & $found.get[1]))
+      meaning.attribute("lang", "en")
+      sheet.append meaning
+    else: sheet.append spanned("p", "meaning none", cstring(LESSON_NONE))
+    sheet.append spanned("p", "title", cstring(LESSON_BARS))
+    bars = view.chains[chosen.index]
+  else:
+    let own = created("ol")
+    own.append view.listed(chosen.index)
+    sheet.append own
+    sheet.append spanned("p", "title", cstring(LESSON_HELD))
+    var parent = model.bars[chosen.index].parent
+    while parent >= 0:
+      bars.add parent
+      parent = model.bars[parent].parent
+  bars.sort(proc(a, b: int): int = cmp(model.bars[a].height, model.bars[b].height))
+  for bar in bars: list.append view.listed(bar)
+  sheet.append list
+  host.replaced sheet
+
+
 func reach(view: View, key: Option[Key]): (seq[int], int, int) =
   ## ro linji poi le cuxna cu vasru ke'a ku'o .e le pamoi valsi .e le romoi valsi
   ##   .i pa valsi cu vasru ro linji poi vasru le valsi
@@ -518,6 +603,7 @@ proc highlighted(view: View, key: Option[Key]) =
     for node in view.box.queryAll(cstring("[data-b=\"" & $bar & "\"]")): node.toggled("hl", true)
   for word in first .. last:
     for node in view.box.queryAll(cstring("[data-w=\"" & $word & "\"]")): node.toggled("hl", true)
+  view.taught(key)
 
 
 func eased(t: float): float =
@@ -772,6 +858,7 @@ proc viewed(host: JsObject, model: Model): View =
     if width != view.width:
       view.width = width
       view.reset)
+  view.taught(none(Key))
   view
 
 

@@ -3,13 +3,16 @@
 ##   .i ro linji cu zvati lo jbini be le linji poi vasru ke'a
 ##   .i ro valsi cu skari ja'i le girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
 ##   .i le selci'a cu du ro selci'a pe le selci'agri to `corpora.nim` toi
+##   .i le genturfa'i cu tcidu ro selci'a pe le ctuca to `lessons.nim` toi
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sets, strutils, unittest]
 
+import ../../src/browser/lessons
 import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru]
 import ./corpora
+from ./reader_prose import errorsMessage
 
 
 const
@@ -138,6 +141,13 @@ suite "Internal: Bars of text":
         of Category.Tag: check family == "tag"
         of Category.Number: check family in ["quantifier", "number", "mex"]
         of Category.Free: check family == "free"
+
+
+  test "Each text of lesson under page reads as lojban":
+    for text in LESSONS:
+      checkpoint text
+      check text.errorsMessage.len == 0  # le genturfa'i cu tcidu le selci'a
+    check "le linji cu cu sinxa".errorsMessage.len > 0  # le cipra cu facki lo srera
 
 
 suite "Chapter 20":

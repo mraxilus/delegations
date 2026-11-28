@@ -42,6 +42,7 @@ import std/[base64, os, osproc, strutils, tables]
 
 import ../src/browser/draw
 import ../src/ricysoho/[nif, prose]
+import ./meanings
 
 
 const
@@ -59,6 +60,7 @@ const
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu lo lertai ke'a
   TOKEN_EMBED = "@EMBED:"
+  TOKEN_MEANINGS = "@MEANINGS@"  ## le sinxa poi le smuni be ro valsi ta'i `JSON` cu basti ke'a
     ## lo krasi be lo sinxa poi pa lertai cu basti ke'a
     ##   .i `@` fanmo le sinxa
   TOKENS = ["@SOURCE@", "@STATUS@", "@DIAGRAM@", "@NIF@", "@SCRIPT@"]
@@ -218,6 +220,8 @@ proc builtLayers*(script: string, faces: Table[string, string]): string =
   if TOKEN_EMBED in result:
     raise newException(ValueError, "Shell should hold no token build fills no more; got `" &
         TOKEN_EMBED & "`.")
+  # lo selci'a pe `JSON` cu vasru no lerpoi po'u zoi gy. </ .gy. gi'e na fanmo le dacti
+  result = result.replace(TOKEN_MEANINGS, meaningsJson().replace("</", "<\\/"))
   result = result.replace(TOKENS[^1], script)
 
 

@@ -11,12 +11,14 @@
 ##   .i pa se tcidu pe pa pu selci'a cu na basti le se tcidu pe pa mupli
 ##   .i le papri cu tcidu le selci'a ba lo nu basti
 ##   .i le cuxna cu muvdu gapru ja cnita ja'i le stuzi poi ri ca zvati
+##   .i le ctuca cu skicu le valsi ja'i le liste gi'e skicu ro linji poi vasru le valsi
 
 {.experimental: "strictFuncs".}
 
-import std/[asyncjs, jsffi, options, random, strutils]
+import std/[algorithm, asyncjs, jsffi, options, random, strutils]
 
-import ../../src/browser/text_layers
+import ../../src/browser/[lessons, text_layers]
+import ../../src/ricysoho/layers
 import ./report
 
 
@@ -65,6 +67,11 @@ proc pressed(editor: JsObject, key: cstring) {.importjs:
   ## rinka pa nu danre pa batke
 proc focused(node: JsObject) {.importjs: "#.focus()".}
   ## punji le cuxna ne'i le dacti
+proc hovered(node: JsObject) {.importjs:
+  "#.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))".}
+  ## rinka pa nu le korbi cu pencu le dacti
+proc left(node: JsObject) {.importjs: "#.dispatchEvent(new MouseEvent('mouseleave'))".}
+  ## rinka pa nu le korbi cu cliva le dacti
 proc caretLeft(): float {.importjs:
   "(function() { var s = getSelection(); var r = document.createRange(); " &
   "r.setStart(s.focusNode, s.focusOffset); r.collapse(true); var b = r.getClientRects()[0]; " &
@@ -100,6 +107,12 @@ proc settled() {.async.} =
     await nextFrame()
 
 
+proc taughtBars(): seq[int] =
+  ## ro linji poi le ctuca cu skicu ke'a ta'i le porsi
+  for item in queryAll("#lesson ol li"):
+    result.add parseInt($item.getAttribute("data-b").to(cstring))
+
+
 proc isSound(model: Model): bool =
   ## jdice lo du'u ro valsi .e ro linji pe le se tcidu cu drani
   ##   .i ro valsi cu vasru su'o pa lerfu gi'e lidne le bavla'i valsi gi'e mintu le pagbu be le
@@ -131,10 +144,11 @@ proc runSuite() {.async.} =
   let
     editor = DOCUMENT.getElementById("editor")
     count = readServed(DIRECTORY_CASES & "count.text").strip.parseInt
-  var texts, expectations: seq[string]
+  var texts, expectations, meanings: seq[string]
   for k in 0 ..< count:
     texts.add readServed(DIRECTORY_CASES & $k & ".text")
     expectations.add readServed(DIRECTORY_CASES & $k & ".layers")
+    meanings.add readServed(DIRECTORY_CASES & $k & ".meanings")
   expectThat count >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
   for k, text in texts:
     let model = cstring(text).toModel
@@ -252,6 +266,72 @@ proc runSuite() {.async.} =
   expectThat abs(caretLeft() - goal_left) <= REACH_MOST,
       "vertical move keeps place that caret took last: " & $caretLeft() & " for " & $goal_left
   ended "Caret moves up and down from place it took last, never from place before"
+
+  # le ctuca cu skicu le valsi poi le korbi cu pencu ke'a
+  let lesson = DOCUMENT.getElementById("lesson")
+  drawn(cstring(texts[0]).toModel, none((int, int, bool)))
+  await nextFrame()
+  expectThat $lesson.textContent.to(cstring) == LESSON_START, "lesson opens with its call to point"
+  for k, text in texts:
+    let
+      model = cstring(text).toModel
+      found = meanings[k].split('\n')
+    drawn(model, none((int, int, bool)))
+    await nextFrame()
+    for i, word in model.words:
+      DOCUMENT.querySelector(cstring("#editor [data-w=\"" & $i & "\"]")).hovered
+      let
+        head = lesson.querySelector(".head b")
+        meaning = lesson.querySelector(".meaning")
+        expected = if found[i].len > 0: found[i] else: LESSON_NONE
+      expectThat not head.isNull and $head.textContent.to(cstring) == $word.text,
+          "lesson names word under pointer: " & $word.text
+      expectThat not meaning.isNull and $meaning.textContent.to(cstring) == expected,
+          "word takes meaning native build gives it: " & $word.text
+      let shown = taughtBars()
+      var holding: seq[int]
+      for b, bar in model.bars:
+        if bar.first <= i and i <= bar.last: holding.add b
+      expectThat shown.sorted == holding, "lesson lists each bar that holds word: " & $word.text
+      for n in 1 ..< shown.len:
+        expectThat model.bars[shown[n - 1]].height <= model.bars[shown[n]].height,
+            "lesson lists smallest bar first: " & $word.text
+      for n, item in queryAll("#lesson ol li"):
+        let what = $item.querySelector(".what").textContent.to(cstring)
+        expectThat what == LESSON_CATEGORY[Category(model.bars[shown[n]].category)],
+            "each bar takes text of its kind: " & $word.text
+  ended "Lesson teaches word under pointer, with meaning native build gives it and each bar of it"
+
+  for k, text in texts:
+    let model = cstring(text).toModel
+    drawn(model, none((int, int, bool)))
+    await nextFrame()
+    for b, bar in model.bars:
+      DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $b & "\"]")).hovered
+      var
+        above: seq[int]
+        parent = bar.parent
+      while parent >= 0:
+        above.add parent
+        parent = model.bars[parent].parent
+      expectThat taughtBars() == @[b] & above, "lesson lists bar, then each bar that holds it: " &
+          text
+  ended "Lesson teaches bar under pointer, then each bar that holds it, smallest first"
+
+  # le ctuca cu stali ba lo nu samcu'a
+  drawn(cstring(texts[0]).toModel, none((int, int, bool)))
+  await nextFrame()
+  let chosen = DOCUMENT.querySelector("#editor [data-w=\"1\"]")
+  chosen.hovered
+  discard chosen.click()
+  editor.firstElementChild.left
+  let held = lesson.querySelector(".head b")
+  expectThat not held.isNull and $held.textContent.to(cstring) == $current().words[1].text,
+      "lesson stays on word clicked once pointer leaves"
+  discard chosen.click()
+  editor.firstElementChild.left
+  expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click lets lesson go"
+  ended "Click keeps lesson on its word once pointer leaves, and second click lets it go"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))
