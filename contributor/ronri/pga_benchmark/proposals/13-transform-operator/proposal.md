@@ -214,31 +214,31 @@ proc transformPoint(p: ptr MultivectorOf[POINT], q: ptr MultivectorOf[MOTOR],
 
 The macro writes out both orders and counts each. The matrix spends 14 multiplies and 10 adds,
 and the chain 18 and 11. So the macro keeps the matrix. Nim prints the code that it emits as
-below, where `Basis(1)`, `Basis(2)`, `Basis(3)` and `Basis(7)` are 𝐞₁, 𝐞₂, 𝐞₃ and 𝐞₃₂₁:
+below:
 
 ```nim
 let
-  doubled_E3 = n[Basis(3)] + n[Basis(3)]
-  pair_E1_E3 = n[Basis(1)] * doubled_E3
-  doubled_E321 = n[Basis(7)] + n[Basis(7)]
-  pair_E2_E321 = n[Basis(2)] * doubled_E321
-  pair_E3_E3 = n[Basis(3)] * n[Basis(3)]
-  pair_E3_E321 = n[Basis(3)] * doubled_E321
-  pair_E321_E321 = n[Basis(7)] * n[Basis(7)]
-  pair_E1_E321 = n[Basis(1)] * doubled_E321
-  pair_E2_E3 = n[Basis(2)] * doubled_E3
+  doubled_E3 = n[Basis.E3] + n[Basis.E3]
+  pair_E1_E3 = n[Basis.E1] * doubled_E3
+  doubled_E321 = n[Basis.E321] + n[Basis.E321]
+  pair_E2_E321 = n[Basis.E2] * doubled_E321
+  pair_E3_E3 = n[Basis.E3] * n[Basis.E3]
+  pair_E3_E321 = n[Basis.E3] * doubled_E321
+  pair_E321_E321 = n[Basis.E321] * n[Basis.E321]
+  pair_E1_E321 = n[Basis.E1] * doubled_E321
+  pair_E2_E3 = n[Basis.E2] * doubled_E3
 let
   entry_0 = pair_E3_E3 + -pair_E321_E321
   entry_1 = pair_E1_E3 + pair_E2_E321
   entry_2 = pair_E1_E321 + -pair_E2_E3
   entry_3 = pair_E3_E3 + pair_E321_E321
-result[Basis(1)] = -(entry_0 * m[Basis(1)]) +
-    -(pair_E3_E321 * m[Basis(2)]) +
-    entry_1 * m[Basis(3)]
-result[Basis(2)] = pair_E3_E321 * m[Basis(1)] +
-    -(entry_0 * m[Basis(2)]) +
-    -(entry_2 * m[Basis(3)])
-result[Basis(3)] = entry_3 * m[Basis(3)]
+result[Basis.E1] = -(entry_0 * m[Basis.E1]) +
+    -(pair_E3_E321 * m[Basis.E2]) +
+    entry_1 * m[Basis.E3]
+result[Basis.E2] = pair_E3_E321 * m[Basis.E1] +
+    -(entry_0 * m[Basis.E2]) +
+    -(entry_2 * m[Basis.E3])
+result[Basis.E3] = entry_3 * m[Basis.E3]
 ```
 
 The chain that the macro drops reads 𝐭 = 𝐧 ⟇ 𝐦 first. Each coefficient of the result then
@@ -246,15 +246,15 @@ multiplies 𝐭 by 𝐧 again, so it reads the pair of 𝐞₃ and 𝐞₃₂₁
 
 ```nim
 let
-  t_E1 = n[Basis(2)] * m[Basis(3)] + -(n[Basis(3)] * m[Basis(2)]) + n[Basis(7)] * m[Basis(1)]
-  t_E2 = -(n[Basis(1)] * m[Basis(3)]) + n[Basis(3)] * m[Basis(1)] + n[Basis(7)] * m[Basis(2)]
-  t_E3 = n[Basis(7)] * m[Basis(3)]
-  t_E321 = -(n[Basis(3)] * m[Basis(3)])
-result[Basis(1)] = t_E1 * n[Basis(7)] + -(t_E2 * n[Basis(3)]) + t_E3 * n[Basis(2)] +
-    -(t_E321 * n[Basis(1)])
-result[Basis(2)] = t_E1 * n[Basis(3)] + t_E2 * n[Basis(7)] + -(t_E3 * n[Basis(1)]) +
-    -(t_E321 * n[Basis(2)])
-result[Basis(3)] = t_E3 * n[Basis(7)] + -(t_E321 * n[Basis(3)])
+  t_E1 = n[Basis.E2] * m[Basis.E3] + -(n[Basis.E3] * m[Basis.E2]) + n[Basis.E321] * m[Basis.E1]
+  t_E2 = -(n[Basis.E1] * m[Basis.E3]) + n[Basis.E3] * m[Basis.E1] + n[Basis.E321] * m[Basis.E2]
+  t_E3 = n[Basis.E321] * m[Basis.E3]
+  t_E321 = -(n[Basis.E3] * m[Basis.E3])
+result[Basis.E1] = t_E1 * n[Basis.E321] + -(t_E2 * n[Basis.E3]) + t_E3 * n[Basis.E2] +
+    -(t_E321 * n[Basis.E1])
+result[Basis.E2] = t_E1 * n[Basis.E3] + t_E2 * n[Basis.E321] + -(t_E3 * n[Basis.E1]) +
+    -(t_E321 * n[Basis.E2])
+result[Basis.E3] = t_E3 * n[Basis.E321] + -(t_E321 * n[Basis.E3])
 ```
 
 On the example, the entries are the matrix of a rigid motion of the plane. Entry 0 is −cos θ, the
