@@ -116,7 +116,7 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    and keep every derived value behind an export.
 
 ```nim
-type
+type  # Define one representation of basis for each job.
   BasisDigits = distinct string  # Readable ordered factors.
   BasisFlags = distinct uint  # Bitwise membership and parity.
   Basis = enum  # Dense runtime index.

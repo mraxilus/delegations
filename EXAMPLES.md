@@ -252,7 +252,7 @@ rigid build, which a build gets by default, comes first.
 
 ```nim
 {.push header: "reference/cayley.h".}
-type
+type  # Define foreign types header declares.
   EntryCayley* {.bycopy, importc: "cayley_entry".} = object
 ...
 proc wedgeReference*(a, b: cint): EntryCayley {.importc: "cayley_wedge".}

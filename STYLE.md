@@ -178,7 +178,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   entry that lacks it:
 
   ```nim
-  type
+  type  # Define entry person keeps for each claim.
     Claim* = object  ## Define one claim that evaluation checks.
       kind*: KindClaim
       path* {.requiresInit.}: string  ## Program that claim runs, relative to its proposal.
@@ -331,7 +331,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     )
   )
 
-  const
+  const  # Name glyphs of math font, and step of twist.
     RANGES_NOTO_SANS_MATH =
         "20-7e a0 a7 33a 33f " &
         "346 34d 391-3a1 2016 " &
