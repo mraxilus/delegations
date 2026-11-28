@@ -465,11 +465,11 @@ proc holdRadius(): tuple[float_nan, root_none, point_nan, point_none, point_imag
 when IS_CONFORMAL:
   proc holdFormsRadius(): int =
     ## Hold typed and whole `|⊘` and alias `normRadius` to one root; count values compared.
-    ##   Seeded vectors, then round points whose 𝐦∘𝐦 takes each sign half the time.
+    ##   Seeded vectors, then round points whose 𝐦∘𝐦 takes each sign in half of samples.
     ##   Typed vector reads table of its own bases, and widened one table of all.
     ##   Exact, as typed and whole forms sum same terms in same order; P04's `checkSame` holds it.
-    func holdForms(vector: MultivectorOf[VECTORS]): bool =
-      ## Hold each form of radius norm to whole one on vector; whether whole one has value.
+    func holdForms(vector: MultivectorOf[VECTORS]): Option[MultivectorScalars] =
+      ## Hold each form of radius norm to whole one on vector; return whole one.
       let
         whole = vector.toMultivector
         (typed, full) = (|⊘vector, |⊘whole)
@@ -477,19 +477,19 @@ when IS_CONFORMAL:
       doAssert typed.isSome == full.isSome and alias_typed.isSome == full.isSome and
           alias_full.isSome == full.isSome,
         &"Each form of radius norm must have value where whole has one; got `{typed}`."
-      if full.isNone: return false
+      if full.isNone: return full
       for basis in [Basis.scalar, Basis.scalarAnti]:
         let value = full.get[basis]
         doAssert typed.get[basis] == value and alias_typed.get[basis] == value and
             alias_full.get[basis] == value,
           &"Each form of radius norm must equal whole one exactly; got `{typed}` for `{basis}`."
-      true
+      full
 
     # Hold forms on seeded vectors, mostly of imaginary radius.
     for _ in 1..SAMPLES:
       var vector: MultivectorOf[VECTORS]
       for basis in VECTORS: vector[basis] = rand(-1.0..1.0)
-      if holdForms(vector): inc result
+      if holdForms(vector).isSome: inc result
 
     # Hold forms on round points of real and imaginary radius, by Table 4.13.
     for i in 1..SAMPLES:
@@ -504,7 +504,7 @@ when IS_CONFORMAL:
         point[basis] = rand(-1.0..1.0)
         distance_squared += point[basis]^2
       point[Basis.infinity] = (distance_squared + sign * radius^2) / 2
-      if holdForms(point): inc result
+      if holdForms(point).isSome: inc result
 
 
 proc holdSuiteSample() =
