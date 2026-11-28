@@ -28,7 +28,7 @@ Every edit quotes text of P04.
 #     read twice.
 #   Neither order wins on every pair of types, so count decides.
 
-type
+type  # Define terms of sandwich of 𝐦 by 𝐧, by output basis.
   TermSandwich = object  ## Define one term c 𝐧ᵢ𝐧ⱼ𝐦ₖ of sandwich of 𝐦 by 𝐧.
     operand: Basis  ## Basis k of transformed multivector 𝐦.
     pair: array[2, Basis]  ## Bases i <= j of operator 𝐧; cross pair i < j reads 2𝐧ᵢ𝐧ⱼ.

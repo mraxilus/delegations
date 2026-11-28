@@ -21,7 +21,7 @@ import std/[random, strformat]
 import pga
 
 
-const
+const  # Bound samples, seed and tolerance of each law.
   SAMPLES = 256  ## Seeded samples each law is checked on, for each pair of types.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   TOLERANCE_ZERO = 1e-12  ## Magnitude below which coefficient of chain counts as unreached.
