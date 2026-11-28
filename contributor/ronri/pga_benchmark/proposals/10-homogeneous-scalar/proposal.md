@@ -150,8 +150,8 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
 - **Callers of `|⊘`.** No function of the library calls it. Two tests do: the test of (4.45), and
   P04's test of typed norms. The catalogue of this project measures `|⊘`, and the bench folds the
   value of an `Option` where it has one.
-- **Time of the radius norm.** In the evaluation, `|⊘` takes 13.47 ns at cga4d against 3.92 ns at
-  pin, so ×3.4, and 18.95 ns at cga5d against 8.35 ns, so ×2.3. The root of the pair spends 3
+- **Time of the radius norm.** In the evaluation, `|⊘` takes 12.95 ns at cga4d against 3.90 ns at
+  pin, so ×3.4, and 18.90 ns at cga5d against 8.48 ns, so ×2.2. The root of the pair spends 3
   divides and 3 tests on its two parts, where pin takes one float root. In return its share of NaN
   falls from 0.53 to 0 at cga4d, and from 0.50 to 0 at cga5d.
 - **An unwrap where a root always exists.** At cga4d and cga5d the root is never none, yet the
