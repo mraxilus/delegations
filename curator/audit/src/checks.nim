@@ -112,6 +112,8 @@ type Check* {.pure.} = enum  ## Define one check of koch, by rule it holds.
   FilesContributor = "contributor files"  ## Curator writes in contributor project alone records.
   NameBranch = "branch name"  ## Branch name follows grammar.
   ScopeBranch = "branch scope"  ## Each path changed stands inside scope of branch.
+  SectionsKept = "kept sections"
+    ## Merge keeps each `##` section of record that one parent added since merge base.
   PinCompiler = "compiler pin"  ## Nimble file pins compiler exactly.
   PinDriver = "driver pin"  ## Driver project pins version, never commit.
   VersionDriver = "driver version"  ## Workflow states driver version pin holds.
