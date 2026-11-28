@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, asyncjs, jsffi, options, random, strutils]
+import std/[algorithm, asyncjs, jsffi, options, random, sequtils, strutils]
 
 import ../../src/browser/[lessons, text_layers]
 import ../../src/ricysoho/layers
@@ -34,7 +34,8 @@ const
     ## lo klesi pe `CSS` pe ro girzu be lo valsi to `text_layers.nim` toi
   SEED = 1055  ## lo tsiju be lo nu cenba poi selzba
   COUNT_EDITS = 60  ## lo klani be lo nu cenba poi selzba ku'o pe ro se cipra
-  CREDIT = ["Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA",
+  CREDIT = ["Meanings come from the word lists of Logical Language Group, Inc.",
+      "Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA",
       "The lists are preliminary.",
       "The group is a source of more information on the lists and on Lojban."]
     ## lo pagbu be le selci'a pe le liste poi le javni pe le liste cu cpedu ke'a
@@ -341,6 +342,10 @@ proc runSuite() {.async.} =
       holding.sort(proc(a, b: int): int = cmp(model.bars[b].height, model.bars[a].height))
       expectThat pathBars() == holding,
           "path names each bar that holds word, largest first: " & $word.text
+      for button in queryAll("#lesson .path button"):
+        let bar = parseInt($button.getAttribute("data-b").to(cstring))
+        expectThat $button.textContent.to(cstring) == bar.nameDrawn,
+            "bar of path takes name it takes under text: " & $word.text
       expectThat partKeys().len == 0, "word lists no parts: " & $word.text
   ended "Lesson teaches word under pointer, its meaning and each bar that holds it as path"
 
@@ -367,6 +372,13 @@ proc runSuite() {.async.} =
       expectThat shownLesson(".head .en") == expected[0] and shownLesson(".meaning") == expected[1],
           "bar takes English name and text native build gives it: " & text
       expectThat pathBars() == above.reversed, "path names each bar that holds bar: " & text
+      expectThat shownLesson("q.words") ==
+          $model.text.slice(model.words[bar.first].s, model.words[bar.last].e),
+          "lesson quotes words of bar: " & text
+      for button in queryAll("#lesson .path button"):
+        let held = parseInt($button.getAttribute("data-b").to(cstring))
+        expectThat $button.textContent.to(cstring) == held.nameDrawn,
+            "bar of path takes name it takes under text: " & text
       expectThat partKeys() == model.parted(b), "lesson lists parts of bar in order: " & text
       for item in queryAll("#lesson ol li"):
         let part = item.getAttribute("data-b")
@@ -377,12 +389,18 @@ proc runSuite() {.async.} =
           expectThat $item.querySelector(".en").textContent.to(cstring) ==
               (if meaning.len > 0: meaning.split(" · ")[0] else: LESSON_NONE),
               "word part takes gloss native build gives it: " & text
+          expectThat $item.querySelector("b").textContent.to(cstring) == $model.words[w].text and
+              $item.querySelector(".sel").textContent.to(cstring) == $model.words[w].gloss,
+              "word part names word and its selma'o: " & text
         else:
           let p = parseInt($part.to(cstring))
           expectThat $item.querySelector(".kind").textContent.to(cstring) == p.nameDrawn and
               $item.querySelector(".en").textContent.to(cstring) == taught[p].split('\t')[0] and
               $item.querySelector(".what").textContent.to(cstring) == taught[p].split('\t')[1],
               "bar part takes names and text native build gives it: " & text
+          expectThat $item.querySelector("q").textContent.to(cstring) ==
+              $model.text.slice(model.words[model.bars[p].first].s,
+              model.words[model.bars[p].last].e), "bar part quotes its words: " & text
   ended "Lesson teaches bar under pointer, its text, each bar that holds it, and each part of it"
 
   # pa nu samcu'a pa pagbu .a pa linji pe le pritu cu muvdu le ctuca
@@ -401,6 +419,25 @@ proc runSuite() {.async.} =
   let first_part = model.parted(deep)[0]
   discard DOCUMENT.querySelector("#lesson ol li").click()
   expectThat chosenKey() == first_part, "click on part moves lesson to it"
+  DOCUMENT.querySelector("#editor [data-w=\"0\"]").hovered
+  editor.firstElementChild.left
+  expectThat chosenKey() == first_part, "part clicked stays once pointer leaves text"
+  let outer = block:
+    var found = -1
+    for b in 0 ..< model.bars.len:
+      if found < 0 and model.parted(b).anyIt(it[0] == 'b'): found = b
+    found
+  expectThat outer >= 0, "first case holds bar with bar among its parts"
+  discard DOCUMENT.querySelector(cstring("#editor .cell [data-b=\"" & $outer & "\"]")).click()
+  editor.firstElementChild.left
+  let row = DOCUMENT.querySelector("#lesson ol li[data-b]")
+  let picked = "b" & $row.getAttribute("data-b").to(cstring)
+  discard row.click()
+  expectThat chosenKey() == picked, "click on bar part moves lesson to it"
+  editor.firstElementChild.left
+  expectThat chosenKey() == picked, "bar part clicked stays once pointer leaves text"
+  expectThat not DOCUMENT.querySelector(cstring("#editor [data-b=\"" & picked[1 .. ^1] &
+      "\"].hl")).isNull, "bar part clicked lights its bar under text"
   var root = deep
   while model.bars[root].parent >= 0: root = model.bars[root].parent
   discard DOCUMENT.querySelector(cstring("#lesson .path button[data-b=\"" & $root & "\"]")).click()

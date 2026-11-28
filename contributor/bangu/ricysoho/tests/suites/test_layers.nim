@@ -180,6 +180,11 @@ suite "Internal: Bars of text":
       check reading.occurrences[at].text == expected
 
 
+  test "Text of marking word names word, then its gloss, then its definition":
+    check shownMarker("noi", "incidental clause", "non-restrictive relative clause") ==
+        "noi · incidental clause · non-restrictive relative clause"
+
+
 suite "Chapter 20":
   test "Each word takes group of its selma'o, brivla predicate and cmene sumti":
     for (selmaho, group) in GROUPS_SELMAHO: check selmaho.toGroup == group
