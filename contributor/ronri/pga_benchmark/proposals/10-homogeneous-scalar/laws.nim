@@ -7,6 +7,8 @@
 ##     ε² = +1, for 𝟙 ⟑ 𝟙 = ε²𝟏.
 ##   Samples cover zero, basis elements and edges of each domain, then seeded pairs and
 ##     multivectors with each coefficient in [-1, 1].
+##   Radius norm `|⊘`, typed and whole, and its alias `normRadius` hold one root of 𝐦∘𝐦 under ⟇.
+##     Float root that pin takes is counted beside it, from 𝐦∘𝐦 itself.
 
 {.experimental: "strictFuncs".}
 
@@ -18,7 +20,7 @@ import std/[complex, fenv, math, options, random, strformat]
 import pga
 
 
-const  # Fix samples and floor of laws, seed, terms of series, and vector whose roots printed NaN.
+const  # Fix samples and floor of laws, seed, terms, vectors, and vector whose roots printed NaN.
   SAMPLES = 4096  ## Seeded samples each law is checked on.
   SAMPLES_FLOOR = SAMPLES div 8  ## Fewest samples guarded law passes, so filtering guard fails.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
@@ -26,6 +28,13 @@ const  # Fix samples and floor of laws, seed, terms of series, and vector whose 
   SUITE_441 = [
     0.26439620787267393, -0.48037647709926767, 0.38634158509384697, -0.18453193800986453,
   ]  ## Vector 441 of pool of `tests/suites.nim` at cga4d, whose roots printed NaN.
+
+  # Choose bases of grade one, so typed radius norm reads table of vector type.
+  VECTORS = block:
+    var bases: Bases
+    for basis in Basis:
+      if basis.grade == Grade(1): bases.incl basis
+    bases
 
 
 
@@ -426,13 +435,17 @@ proc holdRadius(): tuple[float_nan, root_none, point_nan, point_none, point_imag
       for basis in Basis: m[basis] = rand(-1.0..1.0)
       let
         dot_anti = toMultivectorScalars(m ∘ m)
-        radius = sqrtAnti(dot_anti)
-      if (|⊘m)[Basis.scalarAnti].isNaN: inc result.float_nan
+        radius = |⊘m
+        root = sqrtAnti(dot_anti)
+      if sqrt(dot_anti[Basis.scalarAnti]).isNaN: inc result.float_nan
+      doAssert radius.isSome == root.isSome, &"`|⊘` must be root of 𝐦∘𝐦; got `{radius}`."
       if radius.isNone: inc result.root_none
       else:
+        doAssert radius.get =~ root.get, &"`|⊘` must be root of 𝐦∘𝐦; got `{radius}`."
         doAssert productAnti(radius.get, radius.get) =~ dot_anti, "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ must be 𝐦∘𝐦."
         if dot_anti[Basis.scalarAnti] >= 0:
-          doAssert radius.get =~ |⊘m, "Real radius norm must equal library's."
+          doAssert radius.get =~ initMultivectorScalars(0, sqrt(dot_anti[Basis.scalarAnti])),
+            &"Real radius norm must equal float root that pin takes; got `{radius}`."
     for _ in 1..SAMPLES:
       let weight = rand(0.5..2.0)  # Weight other than 1, so rounding of 𝐦∘𝐦 shows.
       var (point, distance_squared) = (initElement(Basis.origin, weight), 0.0)
@@ -440,10 +453,57 @@ proc holdRadius(): tuple[float_nan, root_none, point_nan, point_none, point_imag
         point[basis] = weight * rand(-1.0..1.0)
         distance_squared += point[basis]^2
       point[Basis.infinity] = distance_squared / (2 * weight)
-      let radius = sqrtAnti(toMultivectorScalars(point ∘ point))
-      if (|⊘point)[Basis.scalarAnti].isNaN: inc result.point_nan
+      let
+        dot_anti = toMultivectorScalars(point ∘ point)
+        radius = |⊘point
+      if sqrt(dot_anti[Basis.scalarAnti]).isNaN: inc result.point_nan
       if radius.isNone: inc result.point_none
       elif radius.get[Basis.scalar] > 0: inc result.point_imaginary
+
+
+when IS_CONFORMAL:
+  proc holdFormsRadius(): int =
+    ## Hold typed and whole `|⊘` and alias `normRadius` to one root; count values compared.
+    ##   Seeded vectors, then round points whose 𝐦∘𝐦 takes each sign half the time.
+    ##   Typed vector reads table of its own bases, and widened one table of all.
+
+    func holdForms(vector: MultivectorOf[VECTORS]): bool =
+      ## Hold each form of radius norm to whole one on vector; whether whole one has value.
+      let
+        whole = vector.toMultivector
+        (typed, full) = (|⊘vector, |⊘whole)
+        (alias_typed, alias_full) = (normRadius(vector), normRadius(whole))
+      doAssert typed.isSome == full.isSome and alias_typed.isSome == full.isSome and
+          alias_full.isSome == full.isSome,
+        &"Each form of radius norm must have value where whole has one; got `{typed}`."
+      if full.isNone: return false
+      for basis in [Basis.scalar, Basis.scalarAnti]:
+        let value = full.get[basis]
+        doAssert typed.get[basis] == value and alias_typed.get[basis] == value and
+            alias_full.get[basis] == value,
+          &"Each form of radius norm must equal whole one exactly; got `{typed}` for `{basis}`."
+      true
+
+    # Hold forms on seeded vectors, mostly of imaginary radius.
+    for _ in 1..SAMPLES:
+      var vector: MultivectorOf[VECTORS]
+      for basis in VECTORS: vector[basis] = rand(-1.0..1.0)
+      if holdForms(vector): inc result
+
+    # Hold forms on round points of real and imaginary radius, by Table 4.13.
+    for i in 1..SAMPLES:
+      let
+        sign = if i mod 2 == 0: 1.0 else: -1.0
+        radius = 0.1 + rand(1.0)
+      var
+        point: MultivectorOf[VECTORS]
+        distance_squared = 0.0
+      point[Basis.origin] = 1
+      for basis in Basis.scalar.succ..Basis.origin.pred:
+        point[basis] = rand(-1.0..1.0)
+        distance_squared += point[basis]^2
+      point[Basis.infinity] = (distance_squared + sign * radius^2) / 2
+      if holdForms(point): inc result
 
 
 proc holdSuiteSample() =
@@ -453,8 +513,8 @@ proc holdSuiteSample() =
     for k, coefficient in SUITE_441: 𝐦[Basis(k+1)] = coefficient
     let
       dot_anti = toMultivectorScalars(𝐦 ∘ 𝐦)
-      radius = sqrtAnti(dot_anti)
-    doAssert (|⊘𝐦)[Basis.scalarAnti].isNaN, "Float root of library prints NaN, as found."
+      radius = |⊘𝐦
+    doAssert sqrt(dot_anti[Basis.scalarAnti]).isNaN, "Float root that pin takes prints NaN."
     doAssert radius.isSome, "Complex pair must have root."
     doAssert radius.get =~ initMultivectorScalars(0.6657714603000752, 0),
       &"Radius norm must be imaginary 0.665771𝟏; got `{radius.get.toMultivector}`."
@@ -497,6 +557,9 @@ proc main(): int =
     doAssert tan(initMultivectorScalars(1, 360)).isNone, "Cosine past float range must give none."
 
   let radius = holdRadius()
+  when IS_CONFORMAL:
+    let forms = holdFormsRadius()
+    doAssert forms >= SAMPLES_FLOOR, &"Guard must pass floor of samples; got `{forms}`."
   holdSuiteSample()
   let norms = holdNorms()
   when IS_CONFORMAL: holdPointsRound()
@@ -510,9 +573,11 @@ proc main(): int =
       &"{passed[3]}, tangent {passed[4]}, quotient {passed[5]}, authority {passed[6]}, small " &
       &"part {passed[7]}"
   when IS_CONFORMAL:
-    echo &"  radius of {SAMPLES} multivectors: `|⊘` NaN {radius.float_nan}, antiroot none " &
-        &"{radius.root_none}; of {SAMPLES} null points: `|⊘` NaN {radius.point_nan}, antiroot " &
-        &"none {radius.point_none}, imaginary {radius.point_imaginary}"
+    echo &"  radius of {SAMPLES} multivectors: float root NaN {radius.float_nan}, `|⊘` none " &
+        &"{radius.root_none}; of {SAMPLES} null points: float root NaN {radius.point_nan}, " &
+        &"`|⊘` none {radius.point_none}, imaginary {radius.point_imaginary}"
+    echo &"  forms of `|⊘` of {2 * SAMPLES} vectors and round points: {forms} with value, " &
+        "typed and whole alike"
     echo &"  radius norm of {SAMPLES} multivectors: float root NaN {norms.nan_float}, " &
         &"`normRadius` none {norms.radius_none}"
   0

@@ -10,8 +10,9 @@ no NaN marks a missing value. At cga4d and cga5d the radius norm of an imaginary
 imaginary radius, where pin gives NaN.
 
 **What it costs.** The root and the radius norm return an `Option` in every algebra, so a caller
-at cga4d and cga5d unwraps a root that always exists. The alias `normRadius` stops forwarding to
-its operator `|⊘`. The change builds on P04, whose basis-set forms give the products of pairs.
+at cga4d and cga5d unwraps a root that always exists. The radius norm `|⊘` moves to
+`pga/scalars.nim` in both its forms, since `pga/operators.nim` cannot import the root. The change
+builds on P04, whose basis-set forms give the products of pairs.
 
 ## Problem
 
@@ -63,12 +64,19 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
   geometric product. Its weight norm equals the root of 𝐦 ∘ 𝐦 under the antiproduct, as the wiki
   takes both. So they stay as at pin. A division by the weight norm unitizes a multivector. It
   turns a geometric norm into d𝟏 + 𝟙, where d is the distance, as the wiki unitizes the pair.
-  Under the conformal metric, `normRadius` becomes the root of 𝐦 ∘ 𝐦 under the antiproduct, the
-  radius norm of the book. It reads the squared radius norm `|⊘²` of the library, as `|⊘` does.
+- **Radius norm.** Under the conformal metric, `|⊘` becomes the root of 𝐦 ∘ 𝐦 under the
+  antiproduct, the radius norm of the book. Its whole form and its typed form of P04 both take the
+  root of the squared radius norm `|⊘²`. The alias `normRadius` forwards to it in one line, as the
+  Architect ruled on 2026-11-17. An alias only forwards, and never changes what its operator does.
+- **Place of the radius norm.** `pga/scalars.nim` imports `pga/operators.nim`, which holds the
+  products of pairs. So `pga/operators.nim` cannot import the root, and both forms of `|⊘` move to
+  `pga/scalars.nim`, after `sqrtAnti`. The typed form reads `coefficientOr` of `pga/operators.nim`
+  through `{.all.}`, and the doc of that function names this reader.
 - **Suites.** At pin the suites of the library hold a stand-in root and antiroot, under a TODO
   that waits for this module, and they skip the test of (4.45). The tests of (2.87) to (2.90) call
   the root and the antiroot of this module in their place, and check that each exists. The test of
-  (4.45) holds the antiroot of 𝐦 ∘ 𝐦 under the conformal metric. The TODO keeps `abs` and `div`.
+  (4.45) holds `|⊘` under the conformal metric. The TODO keeps `abs` and `div`. P04's test of typed
+  norms checks first that both forms of `|⊘` have a value, then the value.
 
 The sign of 𝟙 ⟑ 𝟙 is the determinant of the metric on vectors, times (−1)^(n(n − 1)/2) for the
 reverse of n vectors. The rigid metric is degenerate, so there the square is 0. The conformal
@@ -94,6 +102,10 @@ metric has two null vectors whose dot is −1, so its determinant is −1.
 | Each form under ⟇ by a complement at run time | Two swaps in each call, and none by macro |
 | `unitize` by the weight norm | Spends a whole ⟇, and has no value where the weight norm is zero |
 | `sqrtAnti` in a conformal `unitize` | Is 0 at zero radius, and lies on 𝟏 where 𝐮 ∘ 𝐮 is negative |
+| Root in `normRadius`, float root in `\|⊘` | An alias only forwards, as the Architect ruled |
+| `operators.nim` includes `scalars.nim` | It makes one module of two concepts |
+| `\|⊘` as template that finds `sqrtAnti` | It reads a module that it does not import |
+| A module of norms that imports both | It moves five norms that take no root of a pair |
 
 `unitize` keeps `^m`, which leaves a multivector of zero weight norm as it is. Under the conformal
 metric, a division by a root on 𝟏 does not scale the element.
@@ -128,16 +140,16 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
 
 ## Costs
 
-- **One alias.** Under the conformal metric, `normRadius` stops forwarding to its operator `|⊘`,
-  which keeps its float root. It returns `Option[MultivectorScalars]`, so `pga.nim` imports
-  `std/options`. No function or test of the library calls `normRadius`. The catalogue of this
-  project lists it only as an alias, so no expression changes. The table of norm operators in the
-  header of `pga.nim` marks the alias with ‡, and its heading says what the mark means.
-- **Body in an alias.** At pin each alias of `pga.nim` forwards to its operator in one line. Here
-  `normRadius` holds the root in a body of its own. The other form puts the root in `|⊘`, and
-  `pga/operators.nim` imports `pga/scalars.nim`, which imports no operator. The alias then forwards
-  in one line. In that form `laws.nim` compares the radius norm with that root, and not with the
-  float root of `|⊘`, or its conformal claims fail.
+- **One norm outside its module.** `|⊘` stands in `pga/scalars.nim`, and each other norm in
+  `pga/operators.nim`. Under the conformal metric it returns `Option[MultivectorScalars]`, in both
+  forms. `normRadius` returns `auto`, as each alias of P04 does, so `pga.nim` imports no
+  `std/options`.
+- **A private function reached.** The typed `|⊘` reads `coefficientOr` through `{.all.}`, as an
+  internal of a sibling (I.6). The function stays private, and its doc names `pga/scalars.nim`.
+- **Callers of `|⊘`.** No function of the library calls it. Two tests do: the test of (4.45), and
+  P04's test of typed norms. The catalogue of this project measures `|⊘`, and the bench folds the
+  value of an `Option` where it has one. So the bench counts no NaN for `|⊘`, where pin counts one
+  for about half of all multivectors.
 - **An unwrap where a root always exists.** At cga4d and cga5d the root is never none, yet the
   caller unwraps it, since each function has one type in every algebra.
 - **Split-complex root.** At cga3d and cga6d a negative square has no root. So there the radius
@@ -155,7 +167,7 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
 - **Conformal part norms.** At pin each conformal norm of the library is the size of its own part,
   as Table 4.12 defines. The change `conformal-norms` fills the center norm, `normCenter`, in the
   same way. This proposal keeps the four part norms and `normCenter` as at pin. In the conformal
-  algebras, only `normRadius` changes.
+  algebras, only `|⊘` and its alias change.
 - **Bulk and weight norms under the conformal metric.** There the root of the whole dot or antidot
   is no norm of the book. So this proposal gives no conformal bulk or weight norm, and `norm`
   stays that of pin.
@@ -170,26 +182,23 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
   point of radius zero rounds to either side of zero. Of 4 096 such points with a weight of 0.5 to
   2, 163 have no radius norm at cga3d. At cga4d 204 have an imaginary one, and at cga5d 187 do. Pin
   gives NaN for the same points. A caller compares 𝐦 ∘ 𝐦 at the scale of 𝐦 first.
-- **Suites.** The suites of the library call `sqrt` and `sqrtAnti` of `pga/scalars.nim`, and no
-  other of its functions. The laws of the others run from this project alone.
+- **Suites.** The suites of the library call `sqrt`, `sqrtAnti` and `|⊘` of `pga/scalars.nim`, and
+  no other of its functions. The laws of the others run from this project alone.
 
 ## Open decisions
 
-- `normRadius` holds the root in `pga.nim`, as here, or `|⊘` holds it and `normRadius` forwards
-  to it in one line.
+None. The Architect ruled on 2026-11-17 that `|⊘` holds the root and its alias forwards.
 
 ## Landing
 
 - **Order.** After P04, since the module takes its basis-set forms `⟑` and `⟇`.
 - **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
-  `pga.nim`, and `std/options` above them. P04 leaves these lines as at pin, and this edit quotes
-  them so. The change `doc-comments` keeps these lines, so the quotes of
-  this proposal fit after it. If this proposal lands first, that change quotes the import line
-  again. The change `doc-comments-2` edits the export line, so the second of the two to land
-  quotes it again.
-- **Change `doc-comments`.** It also adds a line to the doc of `normRadius`, which this proposal
-  replaces. If that change lands first, the edit of `normRadius` quotes both doc lines, so that no
-  doc line stays under the new body. If this proposal lands first, that edit of the change is void.
+  `pga.nim`. P04 leaves these lines as at pin, and this edit quotes them so. The change
+  `doc-comments` keeps these lines, so the quotes of this proposal fit after it. If this proposal
+  lands first, that change quotes the import line again. The change `doc-comments-2` edits the
+  export line, so the second of the two to land quotes it again.
+- **Change `doc-comments`.** It also adds a line below the first doc line of `normRadius`. This
+  proposal adds its line below the same line, so either order applies with no misfit.
 - **Change `doc-comments-2`.** It adds a doc line to the stand-in `sqrt` of `tests/suites.nim`,
   which this proposal removes. If that change lands first, the edit of the stand-ins quotes that
   line too. If this proposal lands first, that edit of the change is void.
@@ -199,14 +208,15 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
   `@[BasisSigned(...)]`. The second of the two to land writes `BasisSigned(...).toBasesSigned` at
   both lines.
 - **Float width.** Each part of the pair is `Coefficient`, so the arithmetic builds at each width.
-- **P09, P11 and change `conformal-norms`.** Each edits other lines, so either order holds. P11
-  edits `normalizeWeight` and `unitize` of `pga.nim`, and `|∘`, `^∘` and `^` of
-  `pga/operators.nim`. `conformal-norms` edits `normCenter` of `pga.nim`, and `|⊘` of
-  `pga/operators.nim`. If P11 lands too, the `unitize` of `pga.nim` stays `^m`, and calls the `^∘`
-  of P11. In the table of norm operators, P11 quotes the row of `^∘` and the rule under it, and
-  this proposal quotes the heading and the row of `|⊘`. In `tests/suites.nim`, P11 quotes the
-  head of suite `Internal`, `conformal-norms` quotes the last test of Chapter 4, and this proposal
-  quotes the test of (4.45).
+- **P09 and P11.** Each edits other lines, so either order holds. P11 edits `normalizeWeight`
+  and `unitize` of `pga.nim`, and `|∘`, `^∘` and `^` of `pga/operators.nim`. If P11 lands too, the
+  `unitize` of `pga.nim` stays `^m`, and calls the `^∘` of P11. In `tests/suites.nim`, P11 quotes
+  the head of suite `Internal`, and this proposal quotes the test of (4.45).
+- **Change `conformal-norms`.** It edits the doc of the whole `|⊘` in `pga/operators.nim`, and adds
+  the center norm `|⊙` after it. It also adds a test of Table 4.13 that reads `|⊘𝐮` as a
+  multivector. If that change lands first, this proposal quotes its doc of `|⊘`, and keeps `|⊙`
+  after `|□`. Its test then reads the value of the `Option`. If this proposal lands first, that
+  change adds `|⊙` after `|□`, and its test reads that value.
 
 ## Evidence
 
@@ -239,6 +249,8 @@ The laws:
 - Under the conformal metric, the radius norm squared under ⟇ gives 𝐦 ∘ 𝐦 back. It has a value
   exactly where the pair has a root. Round points of radius r take 2aʷaᵘ − |a|² = ±r², as Table
   4.13 gives, and the radius norm of each is r𝟙, r𝟏 or none.
+- The typed `|⊘`, the whole `|⊘` and `normRadius` give one value, exactly, or none together. A
+  typed vector holds it against its widened copy, on seeded vectors and on round points.
 
 A copy whose root takes the smaller part by its own root fails the law of the small part at cga3d
 and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
