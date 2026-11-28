@@ -86,7 +86,7 @@ const
 | ✅ | 85% | The diff weakens no test. | Each assertion stands. |
 | ✅ | 90% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
 | ✅ | 90% | cost at list price: $0.40, $0.90 and $2.00 | $1.10, inside |
-| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15m, inside |
+| ✅ | 90% | time to its report, in minutes: 5, 12 and 30 | 15 min, inside |
 | ⬜ | 90% | Count: findings that the report ranks: 3, 6 and 11 | 12, above the 95th |
 """
     ## Reflection on `PREDICTION_BULLETS`.
@@ -106,7 +106,7 @@ const
 | --- | --- | ---: | ---: | ---: |
 | 2 | The reviewer uses ~160k tokens. | 100k | 160k | 300k |
 | 3 | The reviewer costs ~$0.90. | $0.40 | $0.90 | $2.00 |
-| 4 | The reviewer takes ~12m. | 5m | 12m | 30m |
+| 4 | The reviewer takes ~12 min. | 5 min | 12 min | 30 min |
 | 5 | The report ranks ~6 findings. | 3 | 6 | 11 |
 
 **Criteria.** By number.
@@ -136,7 +136,7 @@ const
 | --- | :---: | --- | --- |
 | 2 | ✅ | The reviewer uses ~160k tokens. | 170,000, inside |
 | 3 | ✅ | The reviewer costs ~$0.90. | $1.10, inside |
-| 4 | ✅ | The reviewer takes ~12m. | 15m, inside |
+| 4 | ✅ | The reviewer takes ~12 min. | 15 min, inside |
 | 5 | ⬜ | The report ranks ~6 findings. | 12, above the 95th |
 """
     ## Reflection on `PREDICTION_TABLE`, each result as `REFLECTION_BULLETS` gives it.
@@ -499,7 +499,7 @@ suite "Log of claims":
       unit: UnitNumber.Cost))
     check claims[7].number == some(Number(low: 20, median: 50, high: 120, outcome: some(47.0),
       unit: UnitNumber.Time))
-    check claims[7].result == "47m, inside"
+    check claims[7].result == "47 min, inside"
 
 
   test "claim of bullets and its claim of tables give equal rows, but text of number (#1028)":
@@ -534,9 +534,9 @@ suite "Log of claims":
       ("cost at list price: $0.40, $0.90 and $2.00", @[("$1.10, inside", some(1.1)),
         ("1.10, inside", some(1.1)), ("$1.1k", some(1100.0)), ("1.10m", none(float)),
         ("about $1", none(float))]),
-      ("time to its report, in minutes: 5, 12 and 30", @[("15m, inside", some(15.0)),
-        ("15, inside", some(15.0)), ("1.5h, inside", some(90.0)), ("0.25h", some(15.0)),
-        ("$15", none(float))]),
+      ("time to its report, in minutes: 5, 12 and 30", @[("15 min, inside", some(15.0)),
+        ("15, inside", some(15.0)), ("1.5 h, inside", some(90.0)), ("0.25 h", some(15.0)),
+        ("$15", none(float)), ("15m, inside", none(float)), ("1.5h", none(float))]),
       ("Count: findings that the report ranks: 3, 6 and 11", @[
         ("12, above the 95th", some(12.0)), ("1.2k", some(1200.0)), ("$12", none(float)),
         ("12m", none(float))]),
@@ -557,7 +557,8 @@ suite "Log of claims":
     # Number whose text names no unit takes value of any mark, and no unit, so it takes no score.
     const unnamed = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
       "- Cost: $0.40, $0.90 and $2.00, as the 5th, 50th and 95th percentiles.\n"
-    for (cell, outcome) in [("$1.10, inside", 1.1), ("1.10", 1.1), ("15m", 15.0), ("1.1k", 1100.0)]:
+    for (cell, outcome) in [("$1.10, inside", 1.1), ("1.10", 1.1), ("15 min", 15.0),
+        ("1.1k", 1100.0)]:
       let claims = transcriptOne(unnamed, "reviewer", "## Reflection\n\n| State | Confidence | " &
         "Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 90% | $0.40, $0.90 and $2.00 | " &
         cell & " |\n").claimsRead
@@ -584,8 +585,9 @@ suite "Log of claims":
         ("tokens summed over its requests: 100,000, 160,000 and 300,000", "170 000",
           some(170_000.0)),
         ("tokens summed over its requests: 100,000, 160,000 and 300,000", "170 K", none(float)),
-        ("time to its report, in minutes: 5, 12 and 30", "1.5 h, inside", none(float)),
-        ("time to its report, in minutes: 5, 12 and 30", "15 min", none(float))]:
+        ("time to its report, in minutes: 5, 12 and 30", "1.5 h, inside", some(90.0)),
+        ("time to its report, in minutes: 5, 12 and 30", "15 min", some(15.0)),
+        ("time to its report, in minutes: 5, 12 and 30", "15 m", none(float))]:
       let
         reflection = "## Reflection\n\n**Subagent:** reviewer of the diff, 170,000 tokens and " &
           "$1.10 at list price.\n\n| State | Confidence | Predicted | Result |\n" &
@@ -607,7 +609,7 @@ suite "Log of claims":
         (time, "15k", none(float)), (cost, "1.1 k", none(float)), (cost, "$1.1 k", some(1100.0)),
         (tokens, "39 100,000, inside", none(float)), (tokens, "39.1\u00A0M", none(float)),
         (tokens, "170\u202F000", none(float)), (tokens, "170 k", some(170_000.0)),
-        (time, "1,5h", none(float)), (time, "15, inside", some(15.0))]:
+        (time, "1,5 h", none(float)), (time, "15, inside", some(15.0))]:
       let
         reflection = "## Reflection\n\n**Subagent:** reviewer of the diff, 170,000 tokens and " &
           "$1.10 at list price.\n\n| State | Confidence | Predicted | Result |\n" &
@@ -626,12 +628,12 @@ suite "Log of claims":
   test "each state writes its row, and estimate that waits or is annulled takes no outcome":
     var whole = REFLECTION_TABLES_POSTED
     for (part, claim) in QUOTES_PART: whole = whole.replace(part, claim)
-    const row = "| 8 | ✅ | The builder takes ~50m. | 47m, inside |"
+    const row = "| 8 | ✅ | The builder takes ~50 min. | 47 min, inside |"
     for (marker, state) in [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
         ("⏸️", State.Waiting)]:
-      for (cell, outcome) in [("47m, inside", some(47.0)), ("waits on the merge", none(float))]:
+      for (cell, outcome) in [("47 min, inside", some(47.0)), ("waits on the merge", none(float))]:
         let
-          changed = whole.replace(row, row.replace("✅", marker).replace("47m, inside", cell))
+          changed = whole.replace(row, row.replace("✅", marker).replace("47 min, inside", cell))
           claims = transcriptOne(PREDICTION_TABLES, "builder", changed).claimsRead
         check claims.len == 8
         check claims[7].state == state
