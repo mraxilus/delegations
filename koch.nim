@@ -84,6 +84,7 @@ import ./curator/audit/src/[
   role,
   schemas,
   scope,
+  sections_kept,
   symbols,
   tree,
 ]
@@ -98,7 +99,7 @@ Verbs:
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
-  check-commits  commits since base: subject form, scope, test before fix, body, record apart
+  check-commits  commits since base: subject, scope, test before fix, body, record apart, merges
   check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line, label, title and form of body, from ROLE_* env
@@ -505,6 +506,7 @@ proc checkInPlace(options: Options; branch, base: string): int =
   found.add findingsPruned(options.root, tree)
   found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
   found.add checkHistory(branch, commitsBranch(options.root, base))
+  found.add checkMerges(readMerges(options.root, base))
   found.add checkBase(readDrift(options.root, base))
   found.add checkSchemas(options.root, base)
 
@@ -590,6 +592,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Branch, Base, FormFinding}): return options.refused
     let commits = commitsBranch(options.root, options.baseOrDefault)
     found = checkHistory(options.branchOrDefault, commits)
+    found.add checkMerges(readMerges(options.root, options.baseOrDefault))
   of "check-drift":
     if not options.isReadAll({Root, Base, FormFinding}): return options.refused
     found = checkBase(readDrift(options.root, options.baseOrDefault))

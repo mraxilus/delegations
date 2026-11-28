@@ -3037,9 +3037,9 @@ suite "Hooks":
   test "claim with no mark ends before one final full stop of its bullet (7017902016 of #969)":
     # Ruling 7017902016 of #969: claim with no percentage, no percentiles and no resolution
     #   criterion ends before one final full stop of its bullet. Case as found is stop of entry
-    #   882 of copy of transcript of delegate on #962 (record, Blocks of subagents): reflection
-    #   quoted two bullets of block of entry 817 that hold no mark, and cut final full stop of
-    #   each, which build `b8491db8` refused.
+    #   882 of copy of transcript of delegate on #962 (record at `522cae46`, Runs of block check):
+    #   reflection quoted two bullets of block of entry 817 that hold no mark, and cut final full
+    #   stop of each, which build `b8491db8` refused.
     let
       asked = lineUser("Research the practice of forecasting.", "human")
       calls = lineUser("<task-notification>timer</task-notification>", "task-notification") &

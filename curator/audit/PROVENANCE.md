@@ -753,8 +753,6 @@ holds an uncovered character, in a comment or not, has its comments scanned.
   Each median is of ten runs.
 - Rejected: a comment scan of every source first. Measured the same way, it added about 0.45 s
   to the median.
-- On 2026-10-04 at `de0c189`, the check reports no finding in any project. `nim r koch
-  check-files` repeats it.
 
 ## Font stacks
 
@@ -1223,7 +1221,6 @@ scope, one test to one fix, with nothing between them. So the priority of the Ar
 - The subjects keep each line of history together (`git log --topo-order`). In order of date, a
   merge of a branch built at the same time puts its commits between a test and its fix. Verified
   by `suites/test_tree.nim`, with two branches whose dates interleave.
-
 - Rejected: any earlier `test` of the scope on the branch. One token test then satisfies every
   later fix, so it measures the order of kinds and nothing of the pairing.
 - Rejected: a match across the history of `main`, which needs the whole log. It would still
@@ -1256,6 +1253,32 @@ them, most of them renames that the record cites. A rename and its record then t
 - The message hook reads the body and the staged paths, so a delegate hears both before the
   commit lands. `check` and `check-commits` read each commit of the branch through `diff-tree`.
 - Verified by `suites/test_commits.nim` and `suites/test_hooks.nim`.
+
+**Each merge keeps each `##` section that one parent added to a `PROVENANCE.md`, as the Architect
+ruled D5 a on #1086.** A merge is each commit of two parents or more in `origin/main..HEAD`, and
+`check-commits` alone runs the check. A heading that a parent holds and no merge base holds is one
+that it added, so a heading that one parent removed passes. The finding names the record, the
+heading and the merge (`sections_kept.nim`). The check reads no text in a kept section.
+
+- Choice: where a parent deleted a record that the merge lacks, the merge takes that deletion. A
+  move of a project deletes the record at its old path. Cost: a section that the other parent added
+  goes with it. A merge that deletes a record both parents hold passes too, where neither added one.
+- The finding names no path, so duty 3 holds none of it, and it names no line. In the case as found,
+  a curator branch lost sections of a contributor record, and a finding at that path is held.
+- Cost: the check reads each merge and not HEAD, so a later commit that restores the section clears
+  no finding (by hand, git 2.43.0, 2026-11-28). The remedy is an amend of the merge before its push,
+  so a branch that pushed one keeps its finding. No branch on GitHub held one on 2026-11-28.
+- Cost: an octopus merge takes the base of all its parents, so it can name a loss that two merges
+  would not. A heading in a `~~~` fence reads as a section, as it does for the stamp.
+- Assumed: the merge ref of the runner and the second tree pass, as a clean merge keeps added lines.
+- Over the 14 merges of `curator/walk-rules-int` at `1c103001` past `6c833a6b`, `koch check-commits`
+  took a median of 1.50 s before the check and 2.69 s with it. Each took ten alternating runs, with
+  `date +%s.%N`, git 2.43.0 and Nim 2.4.2 on 2026-11-28. The time `koch check` adds is unmeasured.
+- Verified by `suites/test_sections_kept.nim`, over real git. It holds the case as found, each state
+  of one heading at the merge base, each parent and the merge, and merges of other branches. By hand
+  on 2026-11-28, two breaks of `sections_kept.nim` each fail it. One puts the finding at the path of
+  the record, and one takes no deletion. At `5ffcb104`, against `5068b537`, `koch check-commits`
+  names `## Live replies` and `## Tag page` of `rictadni`, and `## Node packages` of the audit.
 
 ## Role
 
@@ -1384,7 +1407,7 @@ event runs the check again after a rename. The Architect ruled this check on 202
 
 - `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
 - Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
-  few runes. `check-commits` skips merge commits, so no check reads that width.
+  few runes. `check-commits` reads no subject of a merge commit, so no check reads that width.
 - Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
   grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
   branch, and a width over the limit.
@@ -4291,40 +4314,17 @@ of `No prediction` passes where no call took a block, and a cell of `-` is refus
   pairing, since a block names one kind. A plain label opens with a capital, and each bold one
   with a mark. So the plain form of a label, tried first, changes no label.
 
-**Figures of the frozen copy of the transcript of the delegate on #962.** The copy holds 1,384
-entries of 8,098,272 bytes, from 2026-11-18T09:34Z to 2026-11-19T09:19Z. Each read ran on
-2026-11-19, and again on 2026-11-20 with the same output. The tree keeps no copy of a
-transcript, so another copy gives its own figures.
+**Figures of the frozen copy of the transcript of the delegate on #962, read on 2026-11-19 and
+2026-11-20.** The copy holds 1,384 entries. The tree keeps no copy of a transcript, so another
+copy gives its own figures. The `json` module of Python 3.13 read it, and `Pruned` names the rest.
 
-- The `json` module of Python 3.13 reads each line. The 672 `assistant` entries hold 314
-  messages, one item to an entry, and each message carries one stop reason. 41 of the 54 messages
-  that end a turn hold more than one entry, so a read with no `message.id` ends 41 turns twice.
-- By that read, 12 `user` entries of text stand inside a model turn whose model goes on. They are
-  6 skill bodies, 3 notes of a skill that runs again, 2 compaction summaries and 1 restart notice.
-- By that read, 10 hand-backs: 9 `user` entries, and 1 attachment `queued_command`. The results of
-  10 of the 11 `Agent` calls carry the status `async_launched`, and each `agentId` is the `from` of
-  a later hand-back. The call of `web-fetch` in the foreground has the status `completed`, and its
-  result holds its report. No result of an `Agent` call has `is_error`, so no call is skipped.
-- By that read, each of the 14 lines `**Subagent:**` writes its kind in lower case with no marks.
-  No claim of a `## Prediction` block opens with a bold label or a label of other marks. No claim
-  holds `\|` or percentiles, and no item stands right under a claim. One claim holds
-  `resolution criterion` with no full stop before it, so it ends nothing.
-- A tool that includes `hooks.nim` at `ff2fa434` runs `toSubagents`, `kindNamed`, `blocksTaken` and
-  `claims` over the copy, and gives the same output at `7a912117`. Entries count from 1. The 8
-  blocks name `reviewer` and `builder` in entry 370, then `critic`, `builder`, `builder`, `critic`,
-  `builder` and `researcher`. Only the last, in entry 817, serves a call, the call of `researcher`
-  in entry 821. They hold 55 claims, 51 with a label, which `claims` reads as 106 forms of a cell.
-- A replay runs `koch hook stop` at each of the 54 stops that the entries `stop_hook_summary` mark.
-  It reads the copy up to the last `assistant` entry before the stop, from a checkout on
-  `curator/subagent-blocks`. It sets `stop_hook_active` in each reply to a refusal of `stop`.
-- Of the 54 stops at `ff2fa434`, 33 pass and 8 pass unread. The other checks alone refuse the 8
-  stops whose feedback of `stop` the copy holds. The block checks refuse 5, for 3 missing
-  predictions and 27 cells that are no whole claim of a block that a call took. Each of the 27
-  keeps its confidence, and no report of a critic lacks its reflection.
-- At each of those 5, each block of the delegate stands in the turn of a call, in a later turn, or
-  in a fence. So each of the 7 cells of the stop of entry 413 is a claim, with its confidence, of
-  a block that no call took. At the stop of entry 882, the reflection quotes 8 claims whole, 2
-  before a full stop.
+- 41 of the 54 messages that end a turn hold more than one entry, so a read with no `message.id`
+  ends 41 turns twice. 12 `user` entries of text stand inside a model turn whose model goes on.
+- 10 of the 11 `Agent` calls carry the status `async_launched`, and each `agentId` is the `from` of
+  a later hand-back. The call of `web-fetch` in the foreground has the status `completed`.
+- Of the 54 stops at `ff2fa434`, a replay of `koch hook stop` passes 33, and 8 pass unread. The
+  other checks alone refuse 8. The block checks refuse 5, for 3 missing predictions and 27 cells
+  that are no whole claim of a block that a call took.
 - Cost: `koch hook stop` on the whole copy takes a median of 241 ms at `ff2fa434`. The 20 runs
   ran on 2026-11-20, on 4 cores of a Xeon at 2.10 GHz.
 
