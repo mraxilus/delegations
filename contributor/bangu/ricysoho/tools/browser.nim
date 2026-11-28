@@ -76,10 +76,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[base64, json, os, osproc, strutils, tables]
+import std/[base64, json, os, osproc, strutils, tables, unicode]
 
 import ../src/browser/draw
-import ../src/ricysoho/[live, nif, prose]
+import ../src/browser/samples_layers
+import ../src/ricysoho/[layers, live, nif, prose]
 import ../tests/sample_tatoeba/sentences
 import ./[drive, page]
 
@@ -96,6 +97,17 @@ const
   DIRECTORY_LIVE = DIRECTORY_DRIVE / "live"
     ## lo vasru be lo selci'a pe le cipra pe lo mivyselci'a ge'u ge'u .e le selci'a be fi `NIF` be'o
     ##     pe ro le selci'a
+  DIRECTORY_LAYERS = DIRECTORY_DRIVE / "layers"
+    ## lo vasru be lo se cipra pe le cipra pe le papri pe lo linji
+  TEXTS_LAYERS = [
+    "mi klama le",  # le gerna cu sisti bu'u le fanmo
+    "mi klama le zarci .i do kla",  # pa valsi cu srera
+    "mi klama le .i do cadzu",  # pa jufra cu lidne pa srera
+    "mi klama\nle zarci",  # pa linji fanmo
+    "coi \u{1F600} mi klama",  # pa lerfu poi zmadu `U+FFFF`
+    "",
+  ]
+    ## lo selci'a poi le cipra pe le papri pe lo linji cu cipra ke'a ku'o jmina lo mupli pe le papri
   DIRECTORY_CASES = DIRECTORY_DRIVE / "page"  ## lo vasru be lo se cipra pe le cipra pe le papri
   MODE_REFUSED = "refused"
     ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
@@ -119,6 +131,7 @@ const
     ## lo se tcidu be le crepu be'o poi `koch drive` pilno ke'a
   PAGE_CONTROL = "control"  ## lo cmene poi `written.json` dunda ke'a le tropapri
   PAGE_LIVE = "live"  ## lo cmene poi `written.json` dunda ke'a le papri pe lo mivyselci'a
+  PAGE_LAYERS = "layers"  ## lo cmene poi `written.json` dunda ke'a le papri pe lo linji
   DIRECTORY_FILES = "files"
     ## lo vasru poi zvati lo mlana be `written.json` gi'e vasru ro lertai poi le papri cu cusku ke'a
     ##   .i lo datnyvei pe ro lertai cu selcme lo snina'u pe lo stuzi pe le lertai
@@ -233,6 +246,45 @@ proc writeCase(k: int, kind: string, pieces: seq[string], nif, tail: string) =
   writeFile(path & ".status", drawing.status)
   writeFile(path & ".merged.html", merged.html)
   writeFile(path & ".merged.status", merged.status)
+
+
+func described(text: string): string =
+  ## ciska ro valsi .e ro linji pe le se tcidu pe `text` ta'i lo linji
+  ##   .i le stuzi pe ro valsi cu se kancu ta'i lo pagbu pe `UTF-16` to `suite_layers.nim` toi
+  let reading = text.readTextMarked
+  var
+    units = newSeq[int](text.len + 1)
+    (at, count) = (0, 0)
+  while at < text.len:
+    let size = text.runeLenAt(at)
+    for k in 0 ..< size: units[at + k] = count
+    count += (if int32(text.runeAt(at)) > 0xFFFF: 2 else: 1)
+    at += size
+  units[text.len] = count
+  for occurrence in reading.occurrences:
+    result.add "w " & $units[min(occurrence.start, text.len)] & " " &
+        $units[min(occurrence.finish, text.len)] & " " & $ord(occurrence.reading.toGroup) & " " &
+        occurrence.reading.toGloss & "\n"
+  for bar in reading.toLayers.bars:
+    result.add "b " & $ord(bar.category) & " " & $bar.first & " " & $bar.last & " " &
+        $bar.parent & " " & $bar.height & "\n"
+
+
+proc writeCasesLayers() =
+  ## ciska ro se cipra pe le cipra pe le papri pe lo linji
+  ##   .i ciska le selci'a .e ro valsi .e ro linji poi le jbezba cu gunma ke'a
+  removeDir(DIRECTORY_LAYERS)
+  createDir(DIRECTORY_LAYERS)
+  var k = 0
+  for (_, text) in SAMPLES:
+    writeFile(DIRECTORY_LAYERS / $k & ".text", text)
+    writeFile(DIRECTORY_LAYERS / $k & ".layers", text.described)
+    inc k
+  for text in TEXTS_LAYERS:
+    writeFile(DIRECTORY_LAYERS / $k & ".text", text)
+    writeFile(DIRECTORY_LAYERS / $k & ".layers", text.described)
+    inc k
+  writeFile(DIRECTORY_LAYERS / "count.text", $k)
 
 
 proc writeCasesPage() =
@@ -381,6 +433,21 @@ proc collectPages(chromium: string, faces: Table[string, string]): int =
     declared.add %*{"family": rule["family"], "weight": rule["weight"], "range": rule["range"],
         "file": file}
   written[PAGE_LIVE] = %*{"runs": live["runs"], "declared": declared, "refused": live["refused"]}
+  let layers = chromium.collected(SKELETON_HOSTED[0] & SKELETON_HOSTED[1] &
+      builtLayers(compiledLayers(), faces) & SKELETON_HOSTED[2])
+  if layers.isNil:
+    stderr.writeLine "Collector should post what page of text layers draws."
+    return 1
+  var declared_layers = newJArray()
+  for rule in layers["rules"]:
+    let file = rule["source"].getStr.toFile
+    if file.len == 0:
+      stderr.writeLine "Font face of page should be inlined as `data:` source of font."
+      return 1
+    declared_layers.add %*{"family": rule["family"], "weight": rule["weight"],
+        "range": rule["range"], "file": file}
+  written[PAGE_LAYERS] = %*{"runs": layers["runs"], "declared": declared_layers,
+      "refused": layers["refused"]}
   if PATH_CONTROL.fileExists:
     let control = chromium.collected(PATH_CONTROL.readFile)
     if control.isNil:
@@ -405,16 +472,19 @@ proc runDrive*(): int =
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
   let faces = fontFaces()
   writeFile(PATH_PAGE, builtPage(compiledPage(), faces))
-  for name in ["suite_script", "suite_live", "suite_page"]:
+  for name in ["suite_script", "suite_live", "suite_page", "suite_layers"]:
     if compileJs("tests" / "browser" / name & ".nim", DIRECTORY_DRIVE / name & ".js",
         ["testing"]) != 0:
       return 1
   if compileJs(PATH_COLLECTOR, DIRECTORY_DRIVE / "collector.js") != 0: return 1
   writeTextsLive()
   writeCasesPage()
+  writeCasesLayers()
   let chromium = findChromium()
   if chromium.len == 0: return 1
   for (name, mode) in SUITES: result = max(result, chromium.runSuite(name, mode))
   let suite_page = builtPage(readFile(DIRECTORY_DRIVE / "suite_page.js"), faces)
   for mode in ["", MODE_REFUSED]: result = max(result, chromium.runSuitePage(suite_page, mode))
+  let suite_layers = builtLayers(readFile(DIRECTORY_DRIVE / "suite_layers.js"), faces)
+  for mode in ["", MODE_REFUSED]: result = max(result, chromium.runSuitePage(suite_layers, mode))
   result = max(result, chromium.collectPages(faces))

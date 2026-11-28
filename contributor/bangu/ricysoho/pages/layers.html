@@ -1,0 +1,204 @@
+<!-- le calku pe le papri poi skari lo valsi gi'e pixra lo linji pe lo tricu ne'i le selci'a
+       .i le calku cu vasru lo lertai .e lo tarmi pe `CSS` ge'u .e le stuzi be lo nu ciska
+       .i ro lertai cu ponse pa sinxa pe lo nu punji
+       .i le samtci cu ponse pa sinxa pe vo'a
+       .i lo minde po'u `page` pe `tools/build.nim` basti le sinxa
+       .i le calku cu vasru no `doctype` .e no `html` .e no `head` .e no `body`
+       .i lo sabji be le papri cu punji le papri ne'i lo selci'a be fi `HTML` be'o pe vo'a ca lo nu
+           gubgau -->
+<title>linji be lo selci'a</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face { font-family: "Noto Sans"; font-weight: 400;
+  src: url(@EMBED:NotoSans-Regular.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Sans"; font-weight: 600;
+  src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Serif"; font-weight: 600;
+  src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Commit Mono"; font-weight: 400;
+  src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
+@font-face { font-family: "Commit Mono"; font-weight: 700;
+  src: url(@EMBED:commit-mono-latin-700-normal.woff2@) format("woff2"); }
+
+/* lo skari pe lo girzu be lo valsi cu skari ji'a lo linji pe lo klesi poi mintu */
+:root {
+  --bg: #f4f6f9; --surface: #ffffff; --ink: #1a2130; --muted: #5a6475; --rule: #ccd3de;
+  --accent: #2650c4; --accent-wash: #e5ebfa; --fail: #b3261e; --fail-wash: #fbe8e6;
+  --c-pred: #277c99; --c-sumti: #991451; --c-num: #524806; --c-tag: #418032; --c-link: #513f91;
+  --c-bridi: #5a6475;
+  --serif: "Noto Serif", serif;
+  --sans: "Noto Sans", sans-serif;
+  --mono: "Commit Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11141a; --surface: #181c24; --ink: #e4e8ef; --muted: #98a2b3; --rule: #2f3644;
+    --accent: #8aa8ff; --accent-wash: #1c2640; --fail: #ff8b73; --fail-wash: #3a1f1c;
+    --c-pred: #77d2f5; --c-sumti: #faa9c1; --c-num: #ebd229; --c-tag: #5cbb45; --c-link: #9d95d3;
+    --c-bridi: #98a2b3;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11141a; --surface: #181c24; --ink: #e4e8ef; --muted: #98a2b3; --rule: #2f3644;
+  --accent: #8aa8ff; --accent-wash: #1c2640; --fail: #ff8b73; --fail-wash: #3a1f1c;
+  --c-pred: #77d2f5; --c-sumti: #faa9c1; --c-num: #ebd229; --c-tag: #5cbb45; --c-link: #9d95d3;
+  --c-bridi: #98a2b3;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.page { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-family: var(--serif); font-weight: 600; font-size: 2rem; line-height: 1.15; margin: 0;
+  text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* le sarji be lo papri: le cmene be le se finti, ba bo ro papri */
+.views { display: flex; flex-wrap: wrap; gap: 4px 18px; padding-block: 0 10px;
+  border-bottom: 1px solid var(--rule); font-size: .9rem; }
+.views a, .views span { color: var(--muted); text-decoration: none; }
+.views > :first-child { font-family: var(--serif); font-weight: 600; color: var(--ink);
+  margin-right: auto; }
+.views a:hover { color: var(--accent); }
+.views .here { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 16px 16px 20px; display: grid; gap: 12px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; min-width: 0; }
+.label { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); min-width: 92px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn { border: 1px solid var(--rule); background: var(--surface); border-radius: 999px;
+  padding: 3px 11px; cursor: pointer; font-size: .85rem; }
+.chip-btn:hover { border-color: var(--accent); }
+.chip-btn[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent);
+  color: var(--accent); }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; cursor: pointer; }
+.status { font-size: .86rem; color: var(--muted); margin: 0; }
+.status.bad { color: var(--fail); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .86rem; }
+.legend b { font-weight: 600; }
+.legend .key { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 6px; border-radius: 3px; display: inline-block; background: var(--k); }
+.sw.dash { background: repeating-linear-gradient(90deg, var(--k) 0 4px, transparent 4px 7px); }
+.sw.half { background: color-mix(in oklab, var(--k) 55%, var(--surface)); }
+.sw.thin { height: 3px; }
+
+/* le stuzi be lo nu ciska cu du le se ciska poi skari */
+.editor { position: relative; min-height: 96px; padding: 10px 12px 6px;
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); cursor: text;
+  overflow-x: auto; }
+.editor:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.editor.empty::before { content: "ko ciska lo jboselci'a"; position: absolute; left: 12px;
+  top: 10px; font: 20px/1.3 var(--sans); color: var(--muted); pointer-events: none; }
+.editor .w { cursor: text; }
+.editor .ann { user-select: none; -webkit-user-select: none; cursor: default; }
+
+/* lo valsi */
+.w { border-radius: 3px; transition: background-color .12s, opacity .12s; }
+.w.g-pred { color: var(--c-pred); } .w.g-sumti { color: var(--c-sumti); }
+.w.g-num { color: var(--c-num); } .w.g-tag { color: var(--c-tag); }
+.w.g-link { color: var(--c-link); } .w.g-struct { color: var(--muted); }
+.w.g-free { color: var(--muted); font-style: italic; }
+.w.g-bad { color: var(--fail); text-decoration: wavy underline; }
+.w.tail { opacity: .6; }
+.tx.raw { color: var(--muted); }
+.w.hl { background: var(--accent-wash); }
+.dimmed .w:not(.hl) { opacity: .38; }
+
+/* ro valsi cu du pa tanxe be lo selci'a
+   .i ro selma'o .e ro linji cu zvati lo bartu be lo se ciska */
+.flow { font: 20px/1.3 var(--sans); }
+.tk { display: inline-block; vertical-align: top; white-space: nowrap; margin-bottom: 10px; }
+.col { display: inline-block; vertical-align: top; position: relative; white-space: pre;
+  min-width: calc(var(--n, 0) * var(--gl-ch, 6.5px)); padding-bottom: var(--pb, 0px); }
+.col .tx { white-space: pre; min-height: 1.3em; }
+.ann { position: absolute; left: 0; right: 0; top: 1.3em; }
+.ann > span { position: absolute; left: 0; right: 0; }
+.ann .gl { top: 0; height: 17px; padding-top: 1px; font: 10.5px/13px var(--mono);
+  color: var(--muted); white-space: pre; letter-spacing: .02em;
+  font-variant-ligatures: common-ligatures contextual; }
+.ann .gl::before { content: attr(data-gl); }
+.cell { height: var(--h, 7px); }
+.cell i { position: absolute; left: 0; right: 0; height: 3px; top: calc((var(--h, 7px) - 3px) / 2);
+  background: transparent; }
+.cell i.thin, .cell i.dot { height: 2px; top: calc((var(--h, 7px) - 2px) / 2); }
+.cell i.s { left: 1px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.cell i.e { right: 1px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+.cell i[data-b] { cursor: pointer; }
+.dimmed .cell i:not(.hl) { opacity: .25; }
+.no-gloss { --gl: 0px; } .no-gloss .ann .gl { display: none; } .no-gloss .col { min-width: 0; }
+.no-bars { --bars: 0; } .no-bars .cell { display: none; }
+.cell i b { position: absolute; top: -5px; left: 0; font: 600 10px/13px var(--sans);
+  letter-spacing: .02em; color: var(--k); white-space: pre; z-index: 1; pointer-events: none; }
+.cell i.thin b, .cell i.dot b { top: -5.5px; }
+.cell i b span { opacity: 0; background: var(--surface); }
+.cell i b span::before { content: attr(data-c); }
+.cell i::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+  background: var(--k); border-radius: inherit; }
+.cell i.solo::before { visibility: hidden; }
+.cell i .fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px;
+  background: var(--k); pointer-events: none; }
+.cell i.half::before, .cell i.half .fill {
+  background: color-mix(in oklab, var(--k) 55%, var(--surface)); }
+.cell i.dash::before, .cell i.dash .fill {
+  background: repeating-linear-gradient(90deg, var(--k) 0 5px, transparent 5px 8px); }
+.cell i.dot::before, .cell i.dot .fill {
+  background: repeating-linear-gradient(90deg, var(--k) 0 2px, transparent 2px 5px); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div class="page" lang="jbo">
+  <nav class="views" aria-label="lo papri">
+    <span>ricyso'o</span>
+    <a href="https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4">tricu be lo mivyselci'a</a>
+    <span class="here" aria-current="page">linji be lo selci'a</span>
+  </nav>
+  <header>
+    <h1>linji be lo selci'a</h1>
+    <p class="lede">ko ciska lo jboselci'a ne'i le tanxe .i le genturfa'i cu tcidu le selci'a ca
+      lo nu do ciska .i ro valsi cu skari ja'i le girzu be ke'a .i ro linji poi cnita lo valsi cu
+      sinxa pa pagbu be le tricu .i ko pencu pa valsi .a pa linji .i ro linji poi vasru ke'a cu
+      carmi .i ko samcu'a .i le papri cu cmene ro linji poi vasru ke'a</p>
+  </header>
+
+  <section class="panel" aria-label="le se ciska">
+    <div class="row"><span class="label">mupli</span><div class="chips" id="samples">
+    </div></div>
+    <div class="row"><span class="label">viska</span><div class="toggles">
+      <label class="toggle"><input type="checkbox" id="show-gloss" checked> le selma'o be ro
+        valsi</label>
+      <label class="toggle"><input type="checkbox" id="show-bars" checked> le linji</label>
+    </div></div>
+    <div class="editor" id="editor" contenteditable="true" spellcheck="false" autocapitalize="off"
+      autocorrect="off" role="textbox" aria-multiline="true" aria-label="lo jboselci'a"
+      aria-describedby="status"></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" aria-label="lo skari">
+    <div class="row"><span class="label">valsi</span><div class="legend">
+      <b class="w g-pred">selbri</b> <b class="w g-sumti">sumti</b> <b class="w g-num">namcu</b>
+      <b class="w g-tag">tcita</b> <b class="w g-link">jorne</b> <b class="w g-free">zifre</b>
+      <b class="w g-struct">morna</b></div></div>
+    <div class="row"><span class="label">linji</span><div class="legend">
+      <span class="key"><i class="sw thin" style="--k: var(--c-bridi)"></i>bridi</span>
+      <span class="key"><i class="sw" style="--k: var(--c-sumti)"></i>sumti</span>
+      <span class="key"><i class="sw" style="--k: var(--c-pred)"></i>selbri .e tanru</span>
+      <span class="key"><i class="sw half" style="--k: var(--c-pred)"></i>tanru pagbu</span>
+      <span class="key"><i class="sw" style="--k: var(--c-link)"></i>poi .e nu</span>
+      <span class="key"><i class="sw half" style="--k: var(--c-link)"></i>be</span>
+      <span class="key"><i class="sw" style="--k: var(--c-tag)"></i>tcita sumti</span>
+      <span class="key"><i class="sw half" style="--k: var(--c-tag)"></i>tcita</span>
+      <span class="key"><i class="sw" style="--k: var(--c-num)"></i>namcu</span>
+      <span class="key"><i class="sw dash" style="--k: var(--muted)"></i>zifre</span>
+    </div></div>
+  </section>
+</div>
+<script>@SCRIPT@</script>

@@ -3768,6 +3768,43 @@ ni'o **le papri cu se gubgau
   .i se ki'u bo lo cenba poi galfi le papri cu se rapli gubgau ta'i lo xance to
       `CONTRIBUTOR.md, Before you open a pull request` toi
 
+## ni'o ni'o ni'o lo linji be lo selci'a
+
+ni'o **le papri po'u `pages/layers.html` cu skari ro valsi ja'i le girzu be le selma'o be ke'a gi'e
+    pixra lo linji pe le tricu ne'i le selci'a**
+  .i ro linji cu sinxa pa porsi be lo jgena poi pa ckini be lo javni cu cmene ke'a
+  .i lo jgena poi vasru re jgena pe le ckini cu cfari pa cnino linji
+  .i ro valsi cu skari ja'i lo girzu be le selma'o be ke'a to `D3 a` pe `#1055` toi
+      Verified by `suites/test_layers.nim`.
+
+ni'o **ro linji cu vasru ro valsi pe le jgena poi le linji cu sinxa ke'a gi'e zvati lo jbini be le
+    linji poi vasru ke'a**
+  .i le cipra cu tcidu 1944 selci'a pe le selci'agri gi'e cipra 20599 linji
+  .i le gerna cu sisti pu le fanmo be 82 le selci'a Verified by `suites/test_layers.nim`.
+
+ni'o **le papri cu tcidu le selci'a ta'i `readTextMarked`**
+  .i lo srejge cu se cmene no da
+  .i se ki'u bo lo jufra poi lidne pa srera cu ponse lo linji pe vo'a
+  .i pa gunka cu tcidu le selci'a
+  .i va'o lo nu le papri cu ponse no gunka kei le papri cu tcidu ba lo nu le nu ciska cu denpa
+  .i pa se tcidu pe pa pu selci'a cu muvdu ja'i ro nu cenba poi ba fasnu
+  .i ku'i ri na basti pa se tcidu pe le selci'a poi ca zvati
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **le stuzi be lo nu ciska cu du le se ciska poi skari to `D2` pe `#1055` toi**
+  .i ro nu cenba cu cenba le selci'a gi'e rinka lo nu le papri cu pixra le selci'a
+  .i ro valsi cu du pa tanxe be lo selci'a
+  .i ro selma'o .e ro linji cu zvati lo bartu be le se ciska gi'e se ciska fi `CSS` po'o
+  .i se ki'u bo lo samtci pe lo jbobatke cu tcidu le selci'a po'o
+  .i le papri cu pixra lo valsi .e lo linji poi le jbezba cu gunma ke'a
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **re batke cu jitro le selma'o .e le linji to `D4` pe `#1055` toi**
+  .i ro batke cu jetnu ca lo nu le papri cu cfari Verified by `browser/suite_layers.nim`.
+
+ni'o pa sarji pe ro papri cu jorne le re papri to `D5` pe `#1055` toi
+  .i le sarji cu cmene ro papri gi'e sinxa le papri poi ca zvati
+
 ## ni'o ni'o ni'o lo cipra
 
 ni'o **pa cmalu samtci cu jitro ro cipra ta'i pa samtci**
@@ -4952,3 +4989,6 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
+- ny.mai **le bangu be le ctuca poi zvati le cnita be le selci'a**
+  .i le papri ka'e ctuca le smuni be pa valsi .e pa linji
+  .i `D6` pe `#1055` cu cuxna le bangu
