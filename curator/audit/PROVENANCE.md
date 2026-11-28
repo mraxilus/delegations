@@ -2628,7 +2628,7 @@ nothing else, because what a check needs differs for each project, while the nam
 **Scripts take base JavaScript, Node built-ins and three tools alone** (CONTRIBUTOR.md, TypeScript
 and Node). `checkPackagesNode` runs in the static pass. A manifest refuses each runtime package, and
 each dev dependency off `PACKAGES_ALLOWED`. A TypeScript import names a path, a `node:` built-in or
-a listed package. A page or SVG refuses each `<script>` from another host.
+a listed package. A page or SVG refuses each `<script>` from another host, or with a body (#1078).
 
 - A scanner reads each import, since koch holds no parser of TypeScript. It holds a stack of
   strings, templates, comments and regular expressions, so `'stands to start from'` names no
@@ -2640,8 +2640,11 @@ a listed package. A page or SVG refuses each `<script>` from another host.
   opens with no `//`. The rule decodes nothing, since each decode copies the browser in part, and
   each part left out is a way past. `<script>`, `<base>` and `xml:base` take it under any prefix, in
   a comment too, and a tag reads as HTML reads it. `srcdoc`, `<!ENTITY`, `<!ATTLIST` and
-  `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: inline script reads as
-  none. So does a frame, object or embed at no plain path, whose script runs apart from the page.
+  `<?xml-stylesheet`, whose XSLT can build a script, are findings. Cost: a frame, object or embed at
+  no plain path reads as none, since its script runs apart from the page.
+- A `.js`, `.mjs` or `.cjs` file outside a folder `build/` is a finding, beside that of an unread
+  kind. A body of a script but `@SCRIPT@` is one, a script at an address may keep a blank body, and
+  a type changes nothing. The doc of `packages_node.nim` names the end of a body and each cost.
 
 **`koch advisories` asks npm for each lock, and the `npm` workflow runs it each Monday.** The
 answer moves with no commit here, so `check` never runs it. `npm audit --package-lock-only
@@ -2657,8 +2660,8 @@ named project with no lock, so the issue never closes for work not done.
   its lock leaves the matrix, so a curator closes its open issue by hand.
 - Rejected: `npm outdated`, which prints `{}` over a lock with no `node_modules` (npm 10.9.9).
 - Cost: one ask for each lock and for each dev dependency, 4.8 s over the three locks, 2026-11-27.
-- Verified by `suites/test_packages_node.nim`, and by `nim r koch check-files` at `fd562645` with 0
-  findings over the three node projects, 2026-11-27. By hand that day, 131 of 132 mutants of the
+- Verified by `suites/test_packages_node.nim`, and by `nim r koch check` at `e6936a30`, 2026-11-28,
+  whose one finding is held for `pga_visualiser`. By hand on 2026-11-27, 131 of 132 mutants of the
   curator and six reviews fail the suite, and the one left changes no verdict. With npm 10.9.9, the
   verb exits 0 over the tree, and `list-projects --all --node` names the three. It exits 1 on a copy
   whose lock holds `lodash` 4.17.15. It exits 2 with the registry at a dead address, and on a named
@@ -2683,8 +2686,7 @@ passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `sys
 **It is a matrix, each project on its own pin, where `check-types` is one plain job.** `drive`
 calls `web`, which runs `nim js` over `bridge.nim`, and that compiles project code and
 everything it imports. So a project whose code only its own pin can compile fails on the
-compiler of koch. `pga_visualiser` failed so inside `multivectors.nim` of `pga`, while it pinned
-a commit whose syntax no release could lex.
+compiler of koch.
 
 The type check rests on a verb that compiles no project code, and `drive` breaks that condition.
 So `koch drive` is planned like `test`, and `list-projects --drive` filters what `list-projects`
