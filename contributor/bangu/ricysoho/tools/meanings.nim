@@ -32,6 +32,9 @@ const  # le stuzi be ro datnypau ne'i le re liste
     ## le stuzi be le valsi .e le glico valsi .e le smuni ne'i `gismu.txt`
   COLUMNS_CMAVO* = [(1, 11), (21, 61), (63, 158)]
     ## le stuzi be le valsi .e le glico valsi .e le smuni ne'i `cmavo.txt`
+  COLUMN_SELMAHO = (12, 20)
+    ## le stuzi be le selma'o ne'i `cmavo.txt`
+    ##   .i lo tarmi bu cu sinxa lo ma'orgunma .a lo jufpau
 
 
 
@@ -41,10 +44,14 @@ func toMeanings*(gismu, cmavo: string): OrderedTable[string, Meaning] =
   ## tcidu ro smuni pe `gismu.txt` .e `cmavo.txt`
   ##   .i le sedli'i cu na se tcidu
   ##   .i le valsi cu vasru no lerfu po'u denpa bu
+  ##   .i pa linji pe `cmavo.txt` poi skicu pa ma'orgunma .a pa jufpau cu na se tcidu
+  ##   .i ki'u bo le genturfa'i cu tcidu ro cmavo pe le gunma to `toEntriesCmavo` toi
   for (text, columns) in [(gismu, COLUMNS_GISMU), (cmavo, COLUMNS_CMAVO)]:
     for line in text.splitLines[1 .. ^1]:
       let word = line.field(columns[0][0], columns[0][1]).replace(".", "")
       if word.len == 0: continue
+      if columns == COLUMNS_CMAVO and '*' in line.field(COLUMN_SELMAHO[0], COLUMN_SELMAHO[1]):
+        continue
       result[word] = Meaning(gloss: line.field(columns[1][0], columns[1][1]),
           definition: line.field(columns[2][0], columns[2][1]))
 
