@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "typed-sums",
   "path": "proposals/14-typed-sums",
-  "edits_digest": "09d7b4f4f1685cb4",
+  "edits_digest": "3f558dfaeea439c6",
   "taken": {
     "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
@@ -2782,7 +2782,7 @@
       "at_most": 1.1,
       "passed": true,
       "detail": [
-        "cga5d peak 210.2 → 210.4 MiB, 5.03 → 4.76 s, ×1.00"
+        "cga5d peak 210.4 → 210.7 MiB, 2.81 → 2.86 s, ×1.00"
       ]
     },
     {
@@ -2792,7 +2792,7 @@
       "at_most": 1.2,
       "passed": true,
       "detail": [
-        "cga6d peak 615.0 → 615.5 MiB, 15.70 → 14.68 s, ×0.94"
+        "cga6d peak 615.4 → 616.1 MiB, 9.40 → 9.45 s, ×1.00"
       ]
     }
   ]

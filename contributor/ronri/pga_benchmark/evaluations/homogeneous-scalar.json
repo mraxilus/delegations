@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "homogeneous-scalar",
   "path": "proposals/10-homogeneous-scalar",
-  "edits_digest": "71a8a5af4184004a",
+  "edits_digest": "4cd7b97b0168471d",
   "taken": {
     "date": "2026-11-26",
     "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
