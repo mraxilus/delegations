@@ -7,7 +7,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets, strutils, unittest]
+import std/[options, sequtils, sets, strutils, unittest]
 
 import ../../src/browser/lessons
 import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru]
@@ -26,6 +26,9 @@ const
     ## lo klani be lo selci'a poi le gerna cu sisti bu'u ke'a
     ##   .i le selci'a cu se tcidu ta'i lo nu sinxa lo srera
     ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 82
+  WORDS_BACK = ["ri", "ra", "ru"]
+    ## lo cmavo pe `KOhA` poi sinxa pa sumti poi pu se cusku to `CLL 7.5` toi
+    ##   .i lo tadni cu sisku le sumti
   GROUPS_SELMAHO = [
     (Selmaho.Koha, Group.Sumti),  # `CLL 7.1`
     (Selmaho.Le, Group.Sumti),  # `CLL 6.2`
@@ -148,6 +151,13 @@ suite "Internal: Bars of text":
       checkpoint text
       check text.errorsMessage.len == 0  # le genturfa'i cu tcidu le selci'a
     check "le linji cu cu sinxa".errorsMessage.len > 0  # le cipra cu facki lo srera
+
+
+  test "No text of lesson holds ri, ra or ru, whose sumti learner must find":
+    for text in LESSONS:
+      checkpoint text
+      check text.readStream.occurrences.allIt(it.text notin WORDS_BACK)
+    check not "ko samcu'a ri".readStream.occurrences.allIt(it.text notin WORDS_BACK)
 
 
 suite "Chapter 20":
