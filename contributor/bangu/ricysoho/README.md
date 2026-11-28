@@ -567,6 +567,8 @@ ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 ni'o [`linji be lo selci'a`](https://claude.ai/artifact/JBUrkStKSKwpnr1DdCaow5) skari ro valsi ja'i
     le girzu be le selma'o be ke'a gi'e pixra lo linji pe le tricu ne'i le selci'a
   .i lo prenu cu ciska ne'i le se ciska poi skari
+  .i le ctuca poi zvati le cnita be le se ciska cu skicu le valsi .a le linji poi le korbi cu pencu
+      ke'a
   .i pa sarji pe ro papri cu jorne le re papri
 
 ni'o lo minde po'u `page` zbasu le papri `pages/live.html` .e le papri `pages/layers.html`

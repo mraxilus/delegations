@@ -3773,6 +3773,27 @@ ni'o **re batke cu jitro le selma'o .e le linji to `D4` pe `#1055` toi**
 ni'o pa sarji pe ro papri cu jorne le re papri to `D5` pe `#1055` toi
   .i le sarji cu cmene ro papri gi'e sinxa le papri poi ca zvati
 
+ni'o **le ctuca poi zvati le cnita be le se ciska cu skicu le valsi .a le linji poi le korbi cu
+    pencu ke'a to `D2` pe `#1055` toi**
+  .i pa nu samcu'a cu rinka lo nu le ctuca cu stali
+  .i pa valsi cu jarco le selma'o .e le glico smuni .e ro linji poi vasru ke'a
+  .i pa linji cu jarco le klesi .e ro linji poi vasru ke'a
+  .i ro linji cu porsi ja'i lo ni gapru gi'e ponse pa jboselci'a poi skicu le klesi
+      Verified by `browser/suite_layers.nim`.
+
+ni'o **le ctuca cu jboselci'a gi'e jarco lo glico smuni to `D6 b` pe `#1055` toi**
+  .i le genturfa'i cu tcidu ro jboselci'a pe le ctuca Verified by `suites/test_layers.nim`.
+  .i le smuni cu selzba fi `gismu.txt` .e `cmavo.txt` pe `1.5+dfsg.1-4` pe `lojban-common`
+  .i le stosni pe `lists.nim` cu stodi le re datnyvei
+  .i ro gismu .e ro cmavo pe le liste pe le genturfa'i cu ponse lo smuni
+      Verified by `suites/test_meanings.nim`.
+  .i le genturfa'i cu ralte no smuni
+  .i se ki'u bo le smuni cu zvati le papri po'o gi'e se zbasu ca lo nu zbasu le papri
+  .i `Logical Language Group` rinka lo nu le datni cu zifre fi ro da
+  .i le girzu cu cpedu lo nu lo selzba be fi le datni cu cusku le krasi .e le cmene .e le judri be
+      le girzu
+  .i le papri cu cusku ro di'u
+
 ## ni'o ni'o ni'o lo cipra
 
 ni'o **pa cmalu samtci cu jitro ro cipra ta'i pa samtci**
@@ -4953,6 +4974,3 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i se ki'u bo le gerna cu to'e curmi zoi gy. zo €5 cu valsi .gy. .e zoi gy. zo ½ cu valsi .gy.
       Verified by `suites/test_prose.nim`.
   .i `Architect` jdice no da fi le nu zo zo sitna ro valsi pe le sinxa
-- ny.mai **le bangu be le ctuca poi zvati le cnita be le selci'a**
-  .i le papri ka'e ctuca le smuni be pa valsi .e pa linji
-  .i `D6` pe `#1055` cu cuxna le bangu
