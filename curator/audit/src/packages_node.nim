@@ -59,6 +59,10 @@
 ##   Cost: `<script href="a.js"/>` before more markup is refused, though XML closes it; `</script>`
 ##     closes it as HTML and XML both read it. `<script>` in text or attribute is refused too.
 ##   Cost: event handler attribute and `javascript:` address run JavaScript too, and read as none.
+##   Cost: JavaScript that Nim writes into page, as control page of `font_stacks.nim`, reads as
+##     none, since rule reads files of pages alone.
+##   Cost: body beside `src` is refused, though browser runs none of it, as no `tsc` checks it.
+##   Cost: file whose whole name is `.js` takes finding of unread file kind alone.
 ##   Cost: `.js` file takes finding of unread file kind of `layout.nim` too, so one file gives two.
 ##   Cost: run asks npm once for each lock and once for each dev dependency of it.
 
@@ -114,8 +118,8 @@ const  # TODO: Document.
   DIRECTORY_BUILD = "build"  ## Folder, at any depth, that `tsc` emits JavaScript into.
   PLACEHOLDER_SCRIPT = "@SCRIPT@"  ## Token of page that build fills with compiled TypeScript.
   RUNES_EXCERPT = 60
-    ## Runes of first line of body that finding echoes at most, as excerpt of `commits.nim` does;
-    ##   body can run to hundreds of lines.
+    ## Runes of first line of body that finding echoes at most, where excerpt of `commits.nim` cuts
+    ##   60 bytes; body can run to hundreds of lines.
 
 
 type  # TODO: Document.
