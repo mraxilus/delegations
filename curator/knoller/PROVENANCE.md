@@ -1671,9 +1671,9 @@ read that.
 
 - A section takes a doc at each reach where a name of its kind took one before the rulings (VI.1).
   The rulings move that doc to the section, and drop no reach where a doc was asked. So a `type`
-  section takes one at every reach, as each type did. A `const`, `let` or `var` section takes one at global reach
-  alone. A binding inside a routine, or a block that opens a scope, is a local. A binding of the
-  entry block can reach the whole module, but V.10 puts it in a routine.
+  section takes one at every reach, as each type did. A `const`, `let` or `var` section takes one
+  at global reach alone. A binding inside a routine, or a block that opens a scope, is a local. A
+  binding of the entry block can reach the whole module, but V.10 puts it in a routine.
 - Rejected: a doc of a section at global reach alone. It drops the doc of each type inside a
   routine or the entry block, which knoller at `3fd4d739` asks for.
 - Doc position reads the doc of a section at every reach, since `nim doc` reads it at none (VI.9).

@@ -287,7 +287,7 @@ each rule where the sentence ends, as in
 | `call-wrapping` | A call splits only where it must, or where its last comma asks. |
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
-| `missing-doc` | A section takes a doc at each reach that VI.1 gives, and so does each declaration outside one. `TODO: Document.` waits. |
+| `missing-doc` | A section takes a doc where VI.1 asks, as does a name outside one. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `stage-comment` | A stage of three lines of code or more opens with a comment if another does. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
