@@ -611,7 +611,7 @@ func ownership(source: string, found: seq[Placement]): tuple[owned: seq[bool], h
     while below < lines.len and lines[below].strip.len == 0: inc below
     if below < lines.len and isDoc(code[below], kept[below]): result.owned[below] = true
   result.heading = lines.len
-  for k in 0 ..< lines.len:
+  for k in 0..<lines.len:
     if code[k].strip.len > 0 or kept[k].strip.startsWith("##"):
       result.heading = k
       break
@@ -649,7 +649,7 @@ func commentAbove(
     while start > 0 and start.isLineDoc and (isLineDoc(start - 1) or isTrailingDoc(start - 1)):
       dec start
     if start == heading or owned[start] or
-        toSeq(start .. k).anyIt(not it.isLineDoc or lines[it].indentWidth != indent):
+        toSeq(start..k).anyIt(not it.isLineDoc or lines[it].indentWidth != indent):
       break
     result.is_hashed = true
     result.top = start
@@ -719,7 +719,7 @@ func blocks(source: string; found: seq[Placement]; declaring: seq[string]): seq[
     (b.above, b.is_hashed) = commentAbove(lines, code, kept, owned, heading, b.line)
     let
       top = b.above
-      opener = if top > 0: code[top - 1].strip else: ""
+      opener = if top > 0: code[top-1].strip else: ""
     b.is_clear = top == 0 or lines[top - 1].strip.len == 0 or
       (opener.len > 0 and lines[top - 1].indentWidth < indent and
         (opener.endsWith(":") or opener.endsWith("=") or opener in KEYWORDS_SECTION))
@@ -1327,19 +1327,19 @@ func checkDocs*(path, source: string): seq[Report] =
           move.got & "`."
       of Shape.SectionHash:
         "Doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
-          "`##` on `" & move.got & "`."
+            "`##` on `" & move.got & "`."
       of Shape.SectionOutline:
         "Doc of section over lines stands above its keyword, as `#` comment; got it on " &
-          "keyword line of `" & move.got & "`."
+            "keyword line of `" & move.got & "`."
       of Shape.SectionAbove:
         "One-line doc of section stands on its keyword line where it fits, as `#` comment; got " &
-          "it above `" & move.got & "`."
+            "it above `" & move.got & "`."
       of Shape.SectionHashAbove:
         "Doc above keyword of section is `#` comment, since `nim doc` reads none there; got " &
-          "`##` above `" & move.got & "`."
+            "`##` above `" & move.got & "`."
       of Shape.SectionBelow:
         "Doc of section stands on its keyword line, or above it where that line is too long; " &
-          "got it below `" & move.got & "`."
+            "got it below `" & move.got & "`."
     result.add initReport(path, move.line + 1, Rule.PositionDoc, message)
 
 

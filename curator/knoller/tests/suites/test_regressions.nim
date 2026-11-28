@@ -571,7 +571,7 @@ suite "Regressions":
 
   test "10. power operator is tight, and exponent that would merge takes parentheses (ruling 12)":
     holds POWERS, HEAD & "let  # TODO: Document.\n  p = -1^k  ## Sign.\n" &
-      "  q = -1^(a * b)  ## Sign.\n  r = a^(-b)  ## Power.\n"  # section takes its doc
+        "  q = -1^(a * b)  ## Sign.\n  r = a^(-b)  ## Power.\n"  # section takes its doc
     holds ANTISCALAR, ANTISCALAR  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
 
 

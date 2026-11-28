@@ -574,8 +574,8 @@ suite "Declarations":
     #   and too wide to join.
     let
       camera = "const\n  ## Fix rates held key moves camera at, per second of holding.\n" &
-        "  ##   Shared by both front-ends, unlike drags.\n" &
-        "  TURN_SECOND* = 1.4  ## Azimuth held arrow turns through per second, in radians.\n"
+          "  ##   Shared by both front-ends, unlike drags.\n" &
+          "  TURN_SECOND* = 1.4  ## Azimuth held arrow turns through per second, in radians.\n"
           # lines 153 to 165 of `camera.nim`, outline cut to two lines and names to one
       wide = "x".repeat(92)
       code = "const A* = 1  ## A.\n\n"
@@ -584,8 +584,8 @@ suite "Declarations":
         "got it below `const`"),
     ]
     check camera.fixed == "# Fix rates held key moves camera at, per second of holding.\n" &
-      "#   Shared by both front-ends, unlike drags.\nconst\n" &
-      "  TURN_SECOND* = 1.4  ## Azimuth held arrow turns through per second, in radians.\n"
+        "#   Shared by both front-ends, unlike drags.\nconst\n" &
+        "  TURN_SECOND* = 1.4  ## Azimuth held arrow turns through per second, in radians.\n"
     check camera.fixed.isSettled
     check camera.fixed.spellingsCode == camera.spellingsCode
     for (breach, settled, brief) in [
@@ -593,61 +593,61 @@ suite "Declarations":
         "type\n  ## Group.\n  A = int  ## One.\n",
         "type  # Group.\n  A = int  ## One.\n",
         "doc of section stands on its keyword line, or above it where that line is too long; " &
-          "got it below `type`",
+        "got it below `type`",
       ),  # one line right below keyword joins it
       (
         "type\n  ## " & wide & ".\n  A = int\n",
         "# " & wide & ".\ntype\n  A = int\n",
         "doc of section stands on its keyword line, or above it where that line is too long; " &
-          "got it below `type`",
+        "got it below `type`",
       ),  # too wide to join, so above
       (
         "const  ## Sizes.\n  N* = 3\n",
         "const  # Sizes.\n  N* = 3\n",
         "doc on keyword line of section is `#` comment, since `nim doc` reads none there; got " &
-          "`##` on `const`",
+        "`##` on `const`",
       ),
       (
         "let  ## Doc,\n  ##   of two lines.\n  m* = 1\n",
         "# Doc,\n#   of two lines.\nlet\n  m* = 1\n",
         "doc of section over lines stands above its keyword, as `#` comment; got it on keyword " &
-          "line of `let`",
+        "line of `let`",
       ),  # lexer joins outline to doc on keyword line
       (
         code & "## Sizes.\nvar\n  v* = 1\n",
         code & "var  # Sizes.\n  v* = 1\n",
         "one-line doc of section stands on its keyword line where it fits, as `#` comment; got " &
-          "it above `var`",
+        "it above `var`",
       ),
       (
         code & "# Sizes.\nvar\n  v* = 1\n",
         code & "var  # Sizes.\n  v* = 1\n",
         "one-line doc of section stands on its keyword line where it fits, as `#` comment; got " &
-          "it above `var`",
+        "it above `var`",
       ),
       (
         code & "## Sizes,\n##   held twice.\nconst\n  N* = 3\n",
         code & "# Sizes,\n#   held twice.\nconst\n  N* = 3\n",
         "doc above keyword of section is `#` comment, since `nim doc` reads none there; got `##` " &
-          "above `const`",
+        "above `const`",
       ),
       (
         code & "## " & wide & ".\nconst\n  N* = 3\n",
         code & "# " & wide & ".\nconst\n  N* = 3\n",
         "doc above keyword of section is `#` comment, since `nim doc` reads none there; got `##` " &
-          "above `const`",
+        "above `const`",
       ),  # too wide to join
       (
         "when true:\n  const\n    ## Doc.\n    N* = 3\n",
         "when true:\n  const  # Doc.\n    N* = 3\n",
         "doc of section stands on its keyword line, or above it where that line is too long; " &
-          "got it below `const`",
+        "got it below `const`",
       ),  # `when` opens no scope
       (
         "const\n  ## Doc.\n  B* = block:\n    2\n",
         "const\n  # Doc.\n  B* = block:\n    2\n",
         "doc above value opening `block` is `#` comment, since `nim doc` reads none there; got " &
-          "`##` above `const B`",
+        "`##` above `const B`",
       ),  # `##` right below keyword, above value opening `block`, is that value's
     ]:
       checkpoint breach
@@ -695,26 +695,26 @@ suite "Declarations":
   test "declaration of each kind with no doc takes `TODO: Document.` where doc position puts it":
     # Field and enum member take none (`D2 a` of #1020).
     let breach = "const N* = 3\ntype Shape {.pure.} = enum\n  Round\ntype Box* = object\n" &
-      "  width*: int\nproc area*(b: Box): int =\n  b.width\nfunc scale*(\n" &
-      "  b: Box, factor: int,\n): Box =\n  b\nconst NAME = \"" & "x".repeat(70) & "\"\n" &
-      "let why = 1  # Reason.\n"
+        "  width*: int\nproc area*(b: Box): int =\n  b.width\nfunc scale*(\n" &
+        "  b: Box, factor: int,\n): Box =\n  b\nconst NAME = \"" & "x".repeat(70) & "\"\n" &
+        "let why = 1  # Reason.\n"
     let found = checkDocsMissing("a.nim", breach)
     check found.mapIt(it.line) == @[1, 2, 4, 6, 8, 12, 13]
     check found.mapIt(it.brief)[0 .. 1] == @[
       "declaration takes doc comment; got `const N`",
       "declaration takes doc comment; got `type Shape`",
     ]
-    check found.mapIt(it.brief)[3 .. 4] == @[
+    check found.mapIt(it.brief)[3..4] == @[
       "declaration takes doc comment; got `proc area`",
       "declaration takes doc comment; got `func scale`",
     ]
     check breach.documented == "const N* = 3  ## TODO: Document.\n" &
-      "type Shape {.pure.} = enum  ## TODO: Document.\n  Round\n" &
-      "type Box* = object  ## TODO: Document.\n  width*: int\n" &
+        "type Shape {.pure.} = enum  ## TODO: Document.\n  Round\n" &
+        "type Box* = object  ## TODO: Document.\n  width*: int\n" &
       "proc area*(b: Box): int =\n  ## TODO: Document.\n  b.width\n" &
       "func scale*(\n  b: Box, factor: int,\n): Box =\n  ## TODO: Document.\n  b\n" &
-      "const NAME = \"" & "x".repeat(70) & "\"\n  ## TODO: Document.\n" &
-      "let why = 1  # Reason.\n  ## TODO: Document.\n"  # joined where it fits, else next line
+        "const NAME = \"" & "x".repeat(70) & "\"\n  ## TODO: Document.\n" &
+        "let why = 1  # Reason.\n  ## TODO: Document.\n"  # joined where it fits, else next line
     check breach.documented.isDocumented  # second run writes nothing
     check fixDocsMissing("a.nim", breach).fixed.mapIt(it.rule).deduplicate == @[Rule.DocMissing]
 
@@ -726,7 +726,7 @@ suite "Declarations":
     #   opening `block`; doc on keyword line, above it and right below it, which count; `#` below
     #   keyword and doc of module, which do not; local, entry and block section, which take none.
     let breach = "type\n  Box* = object  ## Box.\n    width*: int\n  Kind = enum  ## Kind.\n" &
-      "    A, B\nconst\n  N* = 3  ## Size.\n  T = block:\n    1\nlet\n  m* = 1.0\nvar\n  v* = 0\n"
+        "    A, B\nconst\n  N* = 3  ## Size.\n  T = block:\n    1\nlet\n  m* = 1.0\nvar\n  v* = 0\n"
     check checkDocsMissing("a.nim", breach).mapIt((it.line, it.brief)) == @[
       (1, "section takes doc on its keyword line, as `#` comment; got bare `type`"),
       (6, "section takes doc on its keyword line, as `#` comment; got bare `const`"),
@@ -734,8 +734,10 @@ suite "Declarations":
       (12, "section takes doc on its keyword line, as `#` comment; got bare `var`"),
     ]
     let documented = breach.multiReplace(
-      ("type\n", "type  # TODO: Document.\n"), ("const\n", "const  # TODO: Document.\n"),
-      ("let\n", "let  # TODO: Document.\n"), ("var\n", "var  # TODO: Document.\n"),
+      ("type\n", "type  # TODO: Document.\n"),
+      ("const\n", "const  # TODO: Document.\n"),
+      ("let\n", "let  # TODO: Document.\n"),
+      ("var\n", "var  # TODO: Document.\n"),
     )
     check breach.documented == documented
     check documented.isDocumented  # second run writes nothing
@@ -809,7 +811,7 @@ suite "Declarations":
       "doc holds `TODO: Document.` and nothing else; got `## TODO: Define via macro.`",
     ]
     check breach.documented == "# TODO: Make distinct.\n" &
-      "type Bases* = set[int]  ## TODO: Document.\n# TODO: Define via macro.\n" &
+        "type Bases* = set[int]  ## TODO: Document.\n# TODO: Define via macro.\n" &
       "func f*(): int =\n  ## TODO: Document.\n  1\n"  # note keeps design journal (VIII.3)
     check breach.documented.isDocumented
     check "type  # Bases.\n  Bases* = set[int]  ## TODO: Make distinct.\n".isDocumented
@@ -833,7 +835,7 @@ suite "Declarations":
   test "value or signature running on reads doc where it ends":
     for kept in [
       "const DIRECTORY_CACHE* = \".cache/knoller/nim\"\n" &
-        "  ## Default cache, under home and beside Nim's own `~/.cache/nim`.\n",
+      "  ## Default cache, under home and beside Nim's own `~/.cache/nim`.\n",
         # `compilers.nim` of `knoller`, out of its section: value of string alone
       "const MATRIX_REST {.used.}: Matrix =  # Used in `plan.nim`.\n" &
         "  [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]\n" &
@@ -883,7 +885,7 @@ suite "Declarations":
       wide = "const PAGE* = \"\"\"\n<p>\n\"\"\" & \"" & "x".repeat(80) & "\"\n"
       body = "func page*(): string = \"\"\"\n<main>\n\"\"\"\n"
     check value.documented ==
-      value.replace("\"\"\"\nconst NEXT", "\"\"\"  ## TODO: Document.\nconst NEXT")
+        value.replace("\"\"\"\nconst NEXT", "\"\"\"  ## TODO: Document.\nconst NEXT")
     check wide.documented == wide & "  ## TODO: Document.\n"  # joined line would not fit
     check body.documented == body & "  ## TODO: Document.\n"  # first line after body string
     for source in [value, wide, body]: check source.documented.isDocumented
@@ -1055,7 +1057,7 @@ suite "Article VI.9":
     for source in ["## Doc.\nconst M* = 13\n", "\n## Doc.\nconst M* = 13\n"]:
       check source.docsRead == ("Module.Doc.", @[("M", "")])  # above keyword joins module's
     check "const A* = 1  ## A.\n\n## Doc.\nconst\n  Q* = 16\n".docsRead ==
-      ("Module.Doc.", @[("A", "A."), ("Q", "")])  # above section keyword past code joins module's
+        ("Module.Doc.", @[("A", "A."), ("Q", "")])  # above section keyword past code joins module's
     check "proc n*() =\n  ## Do.\n  ## Doc.\n  const O = 1\n  discard O\n".docsRead.docs ==
       @[("n", "Do. Doc.")]  # above local with no blank line joins routine's
     check "proc n*() =\n  ## Do.\n\n  ## Doc.\n  const O = 1\n  discard O\n".docsRead.docs ==
