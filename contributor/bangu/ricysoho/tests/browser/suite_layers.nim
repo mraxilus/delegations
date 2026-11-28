@@ -141,6 +141,11 @@ proc shownLesson(selector: cstring): string =
   if node.isNull: "" else: $node.textContent.to(cstring)
 
 
+proc shownLessons(selector: cstring): seq[string] =
+  ## le selci'a pe ro dacti pe le ctuca poi mapti `selector` ta'i le porsi
+  for node in queryAll(cstring("#lesson " & $selector)): result.add $node.textContent.to(cstring)
+
+
 func parted(model: Model, bar: int): seq[string] =
   ## ro pagbu be pa linji ta'i le porsi pe le se ciska
   ##   .i pa pagbu cu du pa linji poi le linji cu vasru ke'a .a pa valsi poi no ri cu vasru
@@ -330,12 +335,15 @@ proc runSuite() {.async.} =
     await nextFrame()
     for i, word in model.words:
       DOCUMENT.querySelector(cstring("#editor [data-w=\"" & $i & "\"]")).hovered
-      let expected = if found[i].len > 0: found[i] else: LESSON_NONE
+      let expected = found[i].split('\t')
       expectThat chosenKey() == "w" & $i, "lesson takes word under pointer: " & $word.text
-      expectThat shownLesson(".head b") == $word.text and shownLesson(".head .sel") == $word.gloss,
-          "lesson names word and its selma'o: " & $word.text
-      expectThat shownLesson(".meaning") == expected,
-          "word takes meaning native build gives it: " & $word.text
+      expectThat shownLesson(".head b") == expected[0] and shownLesson(".head .sel") == $word.gloss,
+          "lesson names word, or digit or sign that stands for it, and its selma'o: " & $word.text
+      expectThat shownLessons(".meaning") == expected[3 .. ^1],
+          "word takes meaning native build gives it, for each word of its sign: " & $word.text
+      expectThat shownLesson(".parts") ==
+          (if expected[2].len > 0: LESSON_PARTS & " " & expected[2] else: ""),
+          "lujvo takes parts that list gives it, and other word none: " & $word.text
       var holding: seq[int]
       for b, bar in model.bars:
         if bar.first <= i and i <= bar.last: holding.add b
@@ -348,6 +356,30 @@ proc runSuite() {.async.} =
             "bar of path takes name it takes under text: " & $word.text
       expectThat partKeys().len == 0, "word lists no parts: " & $word.text
   ended "Lesson teaches word under pointer, its meaning and each bar that holds it as path"
+
+  # lo sinxa poi zvati no valsi cu cuxna le pamoi valsi pe vo'a
+  #   .i `Architect` jdice di'u bu'u `#1101` ta'i `D3 a`
+  var signs_drawn = 0
+  for k, text in texts:
+    let model = cstring(text).toModel
+    drawn(model, none((int, int, bool)))
+    await nextFrame()
+    for i, word in model.words:
+      if word.sign_s < 0 or model.words.anyIt(it.s == word.sign_s and it.e == word.sign_e):
+        continue
+      var first = i  # le pamoi valsi pe le sinxa
+      while first > 0 and model.words[first - 1].sign_s == word.sign_s and
+          model.words[first - 1].sign_e == word.sign_e: dec first
+      let node = DOCUMENT.querySelector(cstring("#editor .sign[data-w=\"" & $first & "\"]"))
+      expectThat not node.isNull and
+          $node.textContent.to(cstring) == $model.text.slice(word.sign_s, word.sign_e),
+          "sign that lies in no word draws with its first word: " & text
+      if node.isNull: continue
+      node.hovered
+      expectThat chosenKey() == "w" & $first, "pointer on sign teaches its first word: " & text
+      if i == first: inc signs_drawn
+  expectThat signs_drawn >= 3, "cases hold three signs that lie in no word"
+  ended "Sign that lies in no word takes pointer, and teaches each word it stands for"
 
   for k, text in texts:
     let
@@ -386,8 +418,7 @@ proc runSuite() {.async.} =
           let
             w = parseInt($item.getAttribute("data-p").to(cstring))
             meaning = meanings[k].split('\n')[w]
-          expectThat $item.querySelector(".en").textContent.to(cstring) ==
-              (if meaning.len > 0: meaning.split(" · ")[0] else: LESSON_NONE),
+          expectThat $item.querySelector(".en").textContent.to(cstring) == meaning.split('\t')[1],
               "word part takes gloss native build gives it: " & text
           expectThat $item.querySelector("b").textContent.to(cstring) == $model.words[w].text and
               $item.querySelector(".sel").textContent.to(cstring) == $model.words[w].gloss,

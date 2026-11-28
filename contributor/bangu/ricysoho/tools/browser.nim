@@ -76,7 +76,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[base64, json, os, osproc, sequtils, strutils, tables, unicode]
+import std/[base64, json, options, os, osproc, sequtils, strutils, tables, unicode]
 
 import ../src/browser/[draw, lessons, samples_layers]
 import ../src/ricysoho/[layers, live, nif, prose]
@@ -107,6 +107,9 @@ const
     "mi pu klama 10\u20AC",  # lo valsi poi pa jdini sinxa cu sinxa ke'a gi'e vasru no stuzi
     "mi BAcru .i la .alis. cu ba'o kla,ma",  # lo barda lerfu .e slaka bu
     "la .constructor. cu zdani",  # pa cmene poi du lo cmene be lo ckaji be ro dacti pe `JavaScript`
+    "mi pilno li 1.5 .e li 1.2.3 .e li 1,000 .e li -3",  # lo lerfu .e lo sinxa poi sinxa lo cmavo
+    "mi ponse $5 .e li ½ .e li 50% .e ¥2",  # lo sinxa poi sinxa so'i valsi gi'a zvati no valsi
+    "lo badgai cu cimnalsra",  # lo lujvo poi lo glikikyvla cu ciska le pagbu .e lo lujvo poi kunti
     "",
   ]
     ## lo selci'a poi le cipra pe le papri pe lo linji cu cipra ke'a ku'o jmina lo mupli pe le papri
@@ -273,13 +276,31 @@ func described(text: string): string =
 
 
 func meant(text: string, found: OrderedTable[string, Meaning]): string =
-  ## ciska le smuni be ro valsi pe le se tcidu pe `text` ta'i pa linji
-  ##   .i lo kunti linji cu sinxa lo valsi poi le liste cu vasru no smuni be ke'a
-  ##   .i le valsi cu du le lerfu poi le genturfa'i cu tcidu ke'a to `Occurrence.text` toi
-  for occurrence in text.readTextMarked.occurrences:
-    if occurrence.text in found:
-      result.add found[occurrence.text].gloss & " · " & found[occurrence.text].definition
-    result.add "\n"
+  ## ciska le ctuca be ro valsi pe le se tcidu pe `text` ta'i pa linji
+  ##   .i lo tabmlu cu sepli le stedu .e le glico valsi pe le pagbu .e le pagbu be le lujvo .e ro
+  ##       smuni
+  ##   .i le valsi cu du le valsi poi le genturfa'i cu tcidu ke'a ta'i ke'a to `toSpoken` toi
+  ##   .i pa valsi poi pa lerfu .a pa sinxa cu sinxa ke'a cu jarco le smuni be ro valsi pe le sinxa
+  let occurrences = text.readTextMarked.occurrences
+  for occurrence in occurrences:
+    let
+      spoken = occurrence.toSpoken
+      is_signed = occurrence.sign.isSome
+      meaning = found.getOrDefault(spoken)
+      gloss = if spoken in found and meaning.gloss.len > 0: meaning.gloss else: LESSON_NONE
+    var lines: seq[string]
+    if is_signed:
+      for other in occurrences:
+        if other.sign != occurrence.sign: continue
+        let word = other.toSpoken
+        lines.add(if word in found: shownMarker(word, found[word].gloss, found[word].definition)
+            else: word & " · " & LESSON_NONE)
+    elif spoken in found and meaning.definition.len > 0:
+      lines.add meaning.gloss & " · " & meaning.definition
+    else: lines.add gloss
+    result.add [if is_signed: text[occurrence.sign.get] else: occurrence.text,
+        if is_signed: spoken & " · " & gloss else: gloss,
+        meaning.parts.replace("+", " + ")].join("\t") & "\t" & lines.join("\t") & "\n"
 
 
 func kinded(text: string, found: OrderedTable[string, Meaning]): string =
@@ -297,7 +318,7 @@ func kinded(text: string, found: OrderedTable[string, Meaning]): string =
       if lesson.lojban in found:
         (english, shown) = (found[lesson.lojban].gloss, found[lesson.lojban].definition)
     of Basis.Marker:
-      let word = reading.occurrences[glosses.marking(bar.category, bar.first, bar.last)].text
+      let word = reading.occurrences[glosses.marking(bar.category, bar.first, bar.last)].toSpoken
       shown = if word in found: shownMarker(word, found[word].gloss, found[word].definition)
           else: LESSON_NONE
     of Basis.Own: discard
