@@ -1629,10 +1629,10 @@ fixer of one writes, the check of the other passes.
 - `sections` walks up from a line to the keyword of its section. It stops at an enclosing line
   that ends on `=` or opens `block`, other than the keyword alone. So a statement in the body of a
   value declares nothing, as a labelled `block` or an assignment that opens `block`.
-- Missing doc writes `# TODO: Document.` above a global such value on its keyword line, with the
-  blank line where it is due. Inside a section the doc of such a value is optional, so missing doc
-  writes none there (Section docs). A comment above counts as the doc, and so does a `##` that doc
-  position moves there.
+- Missing doc writes `# TODO: Document.` above a global such value that its keyword line
+  declares, as `const V = block:`, with the blank line where it is due. Inside a section the doc
+  of such a value is optional, so missing doc writes none there (Section docs). A comment above
+  counts as the doc, and so does a `##` that doc position moves there.
 - Doc position moves a `##` doc that trails `block:` or stands first in the body. It moves the
   doc to the lines above the declaration, with each line that the lexer joins to it. Each run of
   `#` that opens a doc line there becomes one `#`, and the blank line comes where it is due.
@@ -1684,6 +1684,9 @@ read that.
   block, as of `suite`, stands there too. So a `##` right below a local keyword is the doc of the
   section, even under such a comment. Missing doc counts that comment as the doc of a local `type`
   section.
+- Cost: a call of a template whose body is `untyped` opens no scope at global reach. But `reach`
+  reads each block opener but `when` as a scope. So a section in such a body takes no doc, though
+  its names can be global.
 - Neither rule reads a section in the body of `quote do:`, whose reach is where the macro expands
   (`generated`). Nor does either read a section that opens inside a bracket, which is part of an
   expression (`linesNested`). Knoller at `3fd4d739` asks for no doc of a name in either place.
@@ -1732,10 +1735,11 @@ read that.
   its placeholder. Of the earlier reports, 921 go, each of a field, an enum member or a name
   inside a section.
 - No bare `type` section of the tree stands off global reach, so the doc of such a section adds no
-  report. Verified by hand, 2026-11-28, with a driver that runs `sectionsBare` over the same files.
+  report. Verified by hand, 2026-11-28, with a driver that runs `sectionsBare` over the same files
+  at `91afb878`.
   It reads 90 `const`, 2,835 `let` and 716 `var` sections off global reach, and no `type`.
-- Over that tree, `fixDocs` and then `fixDocsMissing` keep each token of code in each file that
-  they write, and a second run writes nothing. Verified by hand with a driver, 2026-11-28.
+- Over the tree at `91afb878`, `fixDocs` and then `fixDocsMissing` keep each token of code in each
+  file that they write. A second run writes nothing. Verified by hand with a driver, 2026-11-28.
 
 ## Stages
 
