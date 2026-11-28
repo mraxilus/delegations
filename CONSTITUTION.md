@@ -377,9 +377,11 @@ CAYLEYS_WEDGE  # module constant
    language fixes it. A reader then finds every doc where the last one was. Nim reads no doc of a
    value whose `block:` stands on its `=` line, wherever the doc stands. Nor does it read the doc
    of a section at any reach, on its keyword line, right below it or above it. So each such doc
-   is a `#` comment, and no comment claims to be a doc that Nim reads. Inside a routine or a
-   block, a comment above the keyword stays as it stands, since a stage comment can stand there
-   (VI.4). Where a later Nim reads such a doc, the doc takes `##` again.
+   is a `#` comment, and no comment claims to be a doc that Nim reads. Where a later Nim reads
+   such a doc, the doc takes `##` again.
+
+   Inside a routine or a block, a comment above the keyword of a section stays as it stands,
+   since a stage comment can stand there (VI.4).
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
