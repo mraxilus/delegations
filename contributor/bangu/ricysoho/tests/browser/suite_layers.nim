@@ -34,6 +34,12 @@ const
     ## lo klesi pe `CSS` pe ro girzu be lo valsi to `text_layers.nim` toi
   SEED = 1055  ## lo tsiju be lo nu cenba poi selzba
   COUNT_EDITS = 60  ## lo klani be lo nu cenba poi selzba ku'o pe ro se cipra
+  CREDIT = ["Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA",
+      "le liste cu na mulno", "le girzu cu krasi lo zmadu datni be le liste .e la lojban."]
+    ## lo pagbu be le selci'a poi le javni pe le liste cu cpedu ke'a
+    ##   .i le papri cu cusku le cmene .e le judri be le girzu
+    ##   .i le papri cu cusku ji'a lo du'u le liste cu na mulno kei .e lo du'u le girzu cu krasi
+    ##       lo zmadu datni
   LETTERS = ["a", " ", "'", ".", "\n", "mi", "😀"]
     ## lo pagbu be lo selci'a poi lo nu cenba cu punji ke'a
     ##   .i pa pagbu cu vasru pa lerfu poi zmadu `U+FFFF`
@@ -364,6 +370,11 @@ proc runSuite() {.async.} =
   editor.firstElementChild.left
   expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click on bar lets lesson go"
   ended "Click keeps lesson on its word or bar once pointer leaves, and second click lets it go"
+
+  let credit = $DOCUMENT.querySelector(".lesson .credit").textContent.to(cstring)
+  for part in CREDIT:
+    expectThat part in credit.splitWhitespace.join(" "), "credit holds: " & part
+  ended "Credit names group and its address, says lists are preliminary, and names group as source"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))
