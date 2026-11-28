@@ -1254,29 +1254,28 @@ them, most of them renames that the record cites. A rename and its record then t
   commit lands. `check` and `check-commits` read each commit of the branch through `diff-tree`.
 - Verified by `suites/test_commits.nim` and `suites/test_hooks.nim`.
 
-**Each merge of the branch keeps each `##` section that one parent added to a record, as the
-Architect ruled D5 a on #1086.** A merge is each commit of two parents or more in
-`origin/main..HEAD`. A heading that a parent holds and no merge base holds is one that the parent
-added, so a heading that one parent removed passes. Where the merge lacks such a heading, the
-finding names the record, the heading and the merge (`sections_kept.nim`). The check reads no text
-inside a kept section, as the ruling asks.
+**Each merge of the branch keeps each `##` section that one parent added to a `PROVENANCE.md`, as
+the Architect ruled D5 a on #1086.** A merge is each commit of two parents or more in
+`origin/main..HEAD`, and `check-commits` runs the check, which takes no verb of its own. A heading
+that a parent holds and no merge base holds is one that the parent added, so a heading that one
+parent removed passes. The finding names the record, the heading and the merge
+(`sections_kept.nim`). The check reads no text inside a kept section, as the ruling asks.
 
 - Choice: where a parent deleted a record that the merge lacks, the merge takes that deletion. A
-  move of a project deletes the record at its old path. The merge carries the sections of the other
-  parent to the new path, which a check by path cannot follow. So a finding would refuse each move
-  that `main` touched. Cost: a section that the other parent added goes with such a record.
-- The finding names no path of the tree, so duty 3 holds none of it. In the case as found, a
-  curator branch lost sections of a contributor record, and a finding at that path is held.
-- Cost: the check reads the merge and not HEAD, so a later commit that restores the section clears
-  no finding. A run by hand with git 2.43.0 showed it on 2026-11-28. The remedy is an amend of the
-  merge while it is the head, before the push.
+  move of a project deletes the record at its old path. Cost: a section that the other parent added
+  goes with it. A merge that deletes a record both parents hold passes too, where neither added one.
+- The finding names no path, so duty 3 holds none of it, and it names no line. In the case as found,
+  a curator branch lost sections of a contributor record, and a finding at that path is held.
+- Cost: the check reads each merge and not HEAD, so a later commit that restores the section clears
+  no finding (by hand, git 2.43.0, 2026-11-28). The remedy is an amend of the merge before its push,
+  so a branch that pushed one keeps its finding. No branch on GitHub held one on 2026-11-28.
+- Cost: an octopus merge takes the base of all its parents, so it can name a loss that two merges
+  would not. A heading in a `~~~` fence reads as a section, as it does for the stamp.
 - Assumed: the merge ref of the runner and the merge of the second tree pass. Each is clean, and a
   clean three-way merge keeps each line that one side added.
-- Cost: a record is read only where a parent changed it since the merge base, and the merge
-  differs from that parent. Over the 14 merges of `curator/walk-rules-int` at `1c103001`,
-  `koch check-commits` took a median of 1.50 s before the check and 2.69 s with it. Each took
-  ten alternating runs on 2026-11-28, with `date +%s.%N` and git 2.43.0, on the machine of
-  Figures at a load average near 2.5. So `koch check` takes about 1.2 s more.
+- Over the 14 merges of `curator/walk-rules-int` at `1c103001` past `6c833a6b`, `koch check-commits`
+  took a median of 1.50 s before the check and 2.69 s with it. Each took ten alternating runs, with
+  `date +%s.%N`, git 2.43.0 and Nim 2.4.2 on 2026-11-28. The time `koch check` adds is unmeasured.
 - Verified by hand on 2026-11-28: at `5ffcb104`, against `5068b537`, `koch check-commits` names
   `## Live replies` and `## Tag page` of `rictadni`, and `## Node packages` of the audit.
 - Verified by `suites/test_sections_kept.nim`, over real git. It holds the case as found, each
@@ -4316,7 +4315,7 @@ of `No prediction` passes where no call took a block, and a cell of `-` is refus
 
 **Figures of the frozen copy of the transcript of the delegate on #962, read on 2026-11-19 and
 2026-11-20.** The copy holds 1,384 entries. The tree keeps no copy of a transcript, so another
-copy gives its own figures. The commit that the `Pruned` row names holds each figure of that read.
+copy gives its own figures. The `json` module of Python 3.13 read it, and `Pruned` names the rest.
 
 - 41 of the 54 messages that end a turn hold more than one entry, so a read with no `message.id`
   ends 41 turns twice. 12 `user` entries of text stand inside a model turn whose model goes on.
