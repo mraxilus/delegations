@@ -34,8 +34,7 @@ const  # ro glico selci'a .e ro javni pe le ctuca
         text: "The relation that a bridi claims. Each of its places takes a sumti."),
     Lesson(lojban: "tanru", basis: Basis.Name),
     Lesson(lojban: "tanru pagbu", english: "compound part", basis: Basis.Own,
-        text: "One part of a tanru. The last part is the head, and each part before it " &
-        "narrows its sense."),
+        text: "One part of a tanru, or of a selbri that a connective joins."),
     Lesson(lojban: "poi", english: "relative clause", basis: Basis.Marker),
     Lesson(lojban: "nu", english: "abstraction", basis: Basis.Marker),
     Lesson(lojban: "be", english: "link", basis: Basis.Marker),
