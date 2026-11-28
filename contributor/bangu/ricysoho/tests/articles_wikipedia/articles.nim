@@ -13,7 +13,7 @@
 {.experimental: "strictFuncs".}
 
 
-type
+type  # lo klesi pe lo prosa pe `Wikipedia`
   ArticleWikipedia* = object
     ## pa prosa
     ##   .i le klesi cu vasru lo cmene .e le terga'i poi le selci'a cu selkra ke'a
@@ -34,7 +34,7 @@ type
       ##   .i va'o lo nu le ju'agri cu se tcidu kei le seljdi cu kunti
 
 
-const
+const  # lo prosa pe `Wikipedia`
   ARTICLES_WIKIPEDIA* = [
     ArticleWikipedia(title: "cmaci", revision: 114271),
     ArticleWikipedia(title: "eliogabalus", revision: 107948),

@@ -75,7 +75,7 @@ import ../ricysoho/nif
 import ./draw
 
 
-const
+const  # lo stodi pe le papri
   LENGTH_MOST* = 2000
     ## lo du'u le stuzi be lo nu ciska cu vasru su'e xo kau lerfu
     ##   .i le namcu cu mintu `maxlength` pe le stuzi to `pages/live.html` toi
@@ -100,7 +100,7 @@ type StatePage = object  ## lo selra'e be le papri be'o pe le mivyseltcidu be le
   is_waiting: bool  ## lo nu pixra cu denpa lo bavla'i nu jarco
 
 
-var
+var  # lo selra'e pe le papri
   STATE = StatePage(nif: cstring(HEADER), tail: "")  ## lo selra'e be le papri
   DRAWING: Future[void]
     ## lo nu pixra poi denpa lo bavla'i nu jarco

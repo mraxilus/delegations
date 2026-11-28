@@ -42,7 +42,7 @@ import std/[algorithm, json, os, osproc, sequtils, strutils]
 import ./[literals, tatoeba]
 
 
-type
+type  # lo klesi pe lo prosa pe `Wikipedia`
   Paragraph* = object
     ## pa ju'agri pe pa prosa
     ##   .i le klesi cu vasru lo selci'a .e lo seljdi poi le genturfa'i cu dunda ke'a le ju'agri
@@ -63,7 +63,7 @@ type
       ## `SHA-256` pe lo selsku be `sha256sum` poi tcidu ro danfu ja'i lo porsi be lo cmene
 
 
-const
+const  # lo stodi pe le danfu pe `Wikipedia`
   DIGEST_WIKIPEDIA* = "6bbe766025354f3dd9e7335ccd779cc868dbaddd9d8f2071eeb9680a0a3d0c21"
     ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li 4044 .a li 19 .a li
     ##     70

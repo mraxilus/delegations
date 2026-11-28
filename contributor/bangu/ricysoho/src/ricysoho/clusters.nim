@@ -36,11 +36,11 @@
 {.experimental: "strictFuncs".}
 
 
-type
+type  # lo klesi pe lo seljdi be lo lerfu remei
   PairsJudged = array['a' .. 'z', array['a' .. 'z', bool]]  ## lo seljdi be fi ro lerfu remei
 
 
-const
+const  # lo selcmi be lo lerfu pe `CLL 3`
   VOWELS* = {'a', 'e', 'i', 'o', 'u'}
     ## lo karsna poi zbasu lo slaka
     ##   .i `y` na cmima to `CLL 3.1` toi

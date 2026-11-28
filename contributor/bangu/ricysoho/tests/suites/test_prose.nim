@@ -26,7 +26,7 @@ import ../../src/ricysoho/[grammar, prose, selmaho, stream, tanru]
 import ../../src/ricysoho/lists/cmavo
 
 
-const
+const  # lo mupli pe `CLL` .e lo stodi pe le cipra pe le prosa
   EXAMPLES = [
     "bridi zei valsi", "xy. zei kantu", "kulnr,farsi zei lolgai",
     "na'e zei .a zei na'e zei by. livgyterbilma", ".cerman. zei jamkarce",
@@ -291,7 +291,7 @@ suite "Chapter 19":
 
 
 
-const
+const  # lo jdini sinxa .e lo namcu pe le cipra pe le prosa
   SIGNS_PROSE = [
     ("€", "ronru'u"), ("$", "rupnu"), ("£", "rupnu"), ("¢", "fepni"),
     ("¥", "ponjo ja jungo rupnu"),

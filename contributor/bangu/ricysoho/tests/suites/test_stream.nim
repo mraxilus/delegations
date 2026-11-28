@@ -28,7 +28,7 @@ import ../../src/ricysoho/[dictionary, forms, selmaho, stream, tanru]
 import ../../src/ricysoho/lists/[cmavo, gismu]
 
 
-const
+const  # lo stodi pe le cipra pe le porsi be lo valsi
   LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
   MARKS_NUMBERED = ['1', '.', ',', ' ']
@@ -492,7 +492,7 @@ func capitalized(word: string, span: Slice[int]): string =
 
 #[ ni'o ni'o ni'o lo se cipra ]#
 
-let
+let  # lo valsi pe le liste
   # lo stuzi be ro gismu pe le liste ne'i le liste
   #   .i lo cmavo poi ponse lo rafsi cu selvi'u
   INDEXES_GISMU = block:
@@ -530,7 +530,7 @@ proc drawLujvo(): seq[string] =
     result.add $Tanru(parts: newSeqWith(rand(2 .. 3), INDEXES_GISMU.sample.toPart))
 
 
-let
+let  # lo cunjvo .e lo klesi be lo valsi
   WORDS_LUJVO = drawLujvo()
     ## lo cunjvo poi lo flalu cu tcidu ke'a
     ##   .i le lujvo cu selcu'a pa roi

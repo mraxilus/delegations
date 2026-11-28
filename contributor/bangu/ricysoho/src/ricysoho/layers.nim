@@ -38,7 +38,7 @@ import std/options
 import ./[forms, grammar, prose, selmaho, tanru]
 
 
-type
+type  # lo klesi pe lo linji .e lo girzu
   Category* {.pure.} = enum  ## lo klesi be pa linji be'o poi pa prenu cu viska ke'a
     Bridi  ## pa bridi to `sentence` toi
     Tail  ## lo romoi pagbu be pa bridi to `bridi-tail` toi

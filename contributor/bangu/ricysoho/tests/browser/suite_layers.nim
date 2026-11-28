@@ -22,7 +22,7 @@ import ../../src/ricysoho/layers
 import ./report
 
 
-const
+const  # lo stodi pe le cipra pe le papri pe lo linji
   DIRECTORY_CASES = "/drive/layers/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
   COUNT_CASES_LEAST = 8  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
   COUNT_SIGNS_LEAST = 3

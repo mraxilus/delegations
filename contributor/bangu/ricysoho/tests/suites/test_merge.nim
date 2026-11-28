@@ -93,7 +93,7 @@ from std/unicode import validateUtf8
 from ./reader_prose import errorsMessage
 
 
-const
+const  # lo stodi pe le cipra pe lo nu jmina
   SEED = 859  ## lo tsiju be lo selci'a poi selzba
   COUNT_BUILT = 1500
     ## lo klani be lo selci'a poi selzba fi lo valsi poi galfi lo pu valsi

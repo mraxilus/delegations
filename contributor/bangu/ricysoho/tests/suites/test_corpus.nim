@@ -56,7 +56,7 @@ import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 import ../cll/examples
 
 
-const
+const  # lo stodi pe le cipra pe le mupli pe `CLL`
   LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
   COUNT_DIGITS_LEAST = 200

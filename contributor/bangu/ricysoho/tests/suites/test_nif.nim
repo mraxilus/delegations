@@ -41,7 +41,7 @@ from std/unicode import validateUtf8
 from ./reader_prose import errorsMessage, faultsNumbersMessage, textsRecord
 
 
-const
+const  # lo mupli pe `NIF`
   EXAMPLE_NIF_SIGN = (
     text: "€5",
     module: "(.nif27)\n(.lang \"cll-21.1\")\n(sumti_6 0 (LE 3 3 \"lo\") (tanru_unit_1 111 " &

@@ -51,7 +51,7 @@ import ../../tools/lists
 import ./texts_outside
 
 
-const
+const  # lo stodi .e lo mupli linji pe le cipra pe le liste
   SEED = 1997
     ## lo tsiju be ro cuncu'a
     ##   .i le tsiju cu du lo namcu pe lo nanca poi `CLL` pamoi se cupra ca ke'a

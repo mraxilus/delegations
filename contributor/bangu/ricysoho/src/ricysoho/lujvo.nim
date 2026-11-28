@@ -77,7 +77,7 @@ import std/[options, sequtils, strutils]
 import ./[clusters, forms]
 
 
-type
+type  # lo klesi pe lo rafsi .e lo lerjo'e
   Hyphen* {.pure.} = enum  ## lo lerjo'e poi lo rafsi cu lidne ke'a to `CLL 4.6` toi
     None, Y, R, N
 
@@ -90,7 +90,7 @@ type
       ##   .i lo romoi rafsi cu lidne `None`
 
 
-const
+const  # lo stodi pe lo lerjo'e .e lo namcu pe `CLL 4.12`
   LUT_LETTER_BY_HYPHEN*: array[Hyphen, string] = ["", "y", "r", "n"]
     ## lo lerfu poi lo lerjo'e cu ciska ke'a
   LUT_VALUE_BY_FORM: array[Form, int] = [

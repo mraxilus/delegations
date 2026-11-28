@@ -35,7 +35,7 @@ import ../../src/ricysoho/lists/[cmavo, gismu]
 import ./texts_outside
 
 
-const
+const  # lo selma'o pe `CLL 20` .e lo lerfu pe le cipra
   CATALOGUE = [
     "A", "BAI", "BAhE", "BE", "BEI", "BEhO", "BIhE", "BIhI", "BO", "BOI", "BU", "BY", "CAI",
     "CAhA", "CEI", "CEhE", "CO", "COI", "CU", "CUhE", "DAhO", "DOI", "DOhU", "FA", "FAhA",

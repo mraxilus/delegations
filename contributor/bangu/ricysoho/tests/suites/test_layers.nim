@@ -15,7 +15,7 @@ import ../../src/ricysoho/[forms, grammar, layers, prose, selmaho, stream, tanru
 import ./corpora
 
 
-const
+const  # lo stodi pe le cipra pe lo linji
   COUNT_TEXTS_LEAST = 1900
     ## lo klani be lo selci'a poi le cipra cu tcidu ke'a
     ##   .i ca lo nu le cipra cu se jmina kei le klani cu du li 1944

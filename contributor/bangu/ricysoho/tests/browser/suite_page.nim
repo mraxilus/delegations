@@ -46,7 +46,7 @@ import ../../src/browser/page
 import ./report
 
 
-const
+const  # lo stodi pe le cipra pe le papri
   DIRECTORY_CASES = "/drive/page/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
   COUNT_CASES_LEAST = 9  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
   MODE_REFUSED = "refused"

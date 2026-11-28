@@ -47,7 +47,7 @@ import ../../src/ricysoho/[grammar, merge, nif, nif_read, prose, selmaho, stream
 export merge, nif_read
 
 
-const
+const  # lo stodi pe le tcidu be fi `NIF`
   SIGNS_CURRENCY = ["€", "$", "£", "¢", "¥"]
     ## lo jdini sinxa poi le genturfa'i cu tcidu ke'a to `D1 a` pe `#1003` toi
     ##   .i ro stuzi pe le sinxa cu zvati no valsi

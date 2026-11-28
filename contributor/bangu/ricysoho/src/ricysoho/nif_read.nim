@@ -61,7 +61,7 @@
 import std/strutils
 
 
-type
+type  # lo klesi pe le tcidu be fi `NIF`
   KindNif* {.pure.} = enum  ## lo klesi be lo jgena poi le tcidu cu dunda ke'a
     Compound
       ## lo jgena poi vasru lo tcita .e lo jgena mu'u `(tag child ...)`
@@ -88,7 +88,7 @@ type
     at: int
 
 
-const
+const  # lo lerfu pe `NIF`
   WHITESPACE = {' ', '\t', '\n', '\r'}
     ## lo kutle'u pe `NIF` zi'e noi fendi lo valsi to `Whitespace` toi
   CONTROLS = {'(', ')', '[', ']', '{', '}', '~', '#', '\'', '"', '\\', ':', '@'}

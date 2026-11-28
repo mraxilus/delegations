@@ -33,7 +33,7 @@ from std/posix import Pid, SIGKILL, kill
 import ../../tools/drive
 
 
-const
+const  # lo stodi pe le cipra pe le minde po'u `drive`
   DIRECTORY_FAKE = "build" / "drive" / "fake"
     ## lo vasru poi le fukpi be `Chromium` cu gunka ne'i ke'a
     ##   .i `runPage` sabji le vasru

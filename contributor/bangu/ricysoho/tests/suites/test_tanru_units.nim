@@ -35,7 +35,7 @@ import std/[options, sequtils, strutils, unittest]
 import ../../src/ricysoho/[dictionary, forms, tanru, tanru_units]
 
 
-const
+const  # lo stodi pe le cipra pe lo taurpau
   LENGTH_CHAIN = 4
     ## lo zmaraiterkancu be lo cmavo be `SE` be'o pe pa porsi poi lo jvacipra pe lo nu jmina cu
     ##     fendi ke'a

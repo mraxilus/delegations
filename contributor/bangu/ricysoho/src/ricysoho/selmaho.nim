@@ -37,7 +37,7 @@
 import std/[enumutils, options, strutils]
 
 
-type
+type  # lo klesi pe lo selma'o
   Selmaho* {.pure.} = enum  ## lo selma'o noi genlei lo cmavo gi'e selcme fi `CLL 20`
     A,
     Bai, Bahe, Be, Bei, Beho, Bihe, Bihi, Bo, Boi, Bu, By,

@@ -29,7 +29,7 @@ type SentenceTatoeba* = object
     ##   .i va'o lo nu le jufra cu se tcidu kei le seljdi cu kunti
 
 
-const
+const  # lo jufra pe `Tatoeba` .e lo te kancu be lo tcila
   COUNT_FEATURES_TATOEBA* = 601
     ## lo te kancu be lo tcila pe lo se tcidu zi'e poi le mupli cu jarco ke'a ca lo nu ciska
   SENTENCES_TATOEBA* = [

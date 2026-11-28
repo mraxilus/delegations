@@ -95,7 +95,7 @@ import ./[dictionary, grammar, nif, nif_read, prose, selmaho, tanru]
 from ./nif_read {.all.} import toSumti
 
 
-type
+type  # lo klesi pe lo nu jmina lo pagbu
   MergeNif* = object
     ## lo jalge be lo nu jmina lo pagbu
     ##   .i le jalge cu du lo selci'a be fi `NIF` be'o pe lo tricu ge'u .a lo nu to'e curmi lo
@@ -120,7 +120,7 @@ type
       reason*: string  ## lo seltcu be le selci'a be fi `NIF`
 
 
-const
+const  # lo selma'o .e lo minde pe lo nu jmina
   DIRECTIVES = 2
     ## lo klani be lo minde poi krasi lo selci'a be fi `NIF`
     ##   .i le minde cu cusku lo namcu pe le tarmi .e lo bangu to `HEADER` toi

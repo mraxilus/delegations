@@ -53,7 +53,7 @@ import ../../src/ricysoho/[live, nif]
 import ./report
 
 
-const
+const  # lo stodi pe le cipra pe lo mivyselci'a
   PATH_COUNT = "/drive/live/count.text"
     ## lo du'u le sabji samtci cu sabji xo kau selci'a le cipra
   PIECE_MIDDLE = 7

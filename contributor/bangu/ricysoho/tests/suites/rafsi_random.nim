@@ -17,7 +17,7 @@ import std/[options, random, strutils]
 import ../../src/ricysoho/forms
 
 
-const
+const  # lo lerfu .e lo tarmi pe lo cunso rafsi
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
     ## lo 17 zunsna poi `C` sinxa ke'a ja'i `CLL 4.1 rule 3`
   ORDER_VOWELS = "aeiou"

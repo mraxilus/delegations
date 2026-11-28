@@ -76,7 +76,7 @@ import std/[algorithm, asyncjs, jsffi, unicode]
 import ../ricysoho/[live, nif]
 
 
-type
+type  # lo klesi pe lo nu cpedu .e lo linji pe `NIF`
   Asked = enum  ## lo selcpe be le papri bei le tcidu
     Push = "push", Finish = "finish", Nif = "nif"
 
@@ -128,7 +128,7 @@ const NAME_WORKER = "ricyso'o live"
   ##       na sidju pa gunka poi le papri cu dunda lo selgu'a pe le papri ke'a
 
 
-let
+let  # lo dacti pe le papri .e le gunka
   DOCUMENT {.nodecl, importc: "document".}: JsObject
     ## `document` pe le papri
     ##   .i no da zasti ne'i lo gunka
@@ -217,7 +217,7 @@ proc toObject(change: ChangeNif, units: int): JsObject =
 
 #[ ni'o ni'o ni'o lo gunka ]#
 
-var
+var  # lo selra'e pe le gunka
   READER_WORKER = initReaderLive()
     ## lo tcidu ne'i lo gunka be lo mivyselci'a
     ##   .i tcidu no da ne'i le papri

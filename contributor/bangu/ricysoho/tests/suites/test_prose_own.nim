@@ -21,7 +21,7 @@ import ../../src/ricysoho/prose
 import ./reader_prose
 
 
-const
+const  # lo stodi pe le cipra pe le prosa pe la lojban.
   DIRECTORY_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
     ## le genja be le vi selgu'a
   RECORDS = ["README.md", "PROVENANCE.md", "GLOSSARY.md"]

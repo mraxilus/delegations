@@ -37,7 +37,7 @@ import ../cll/examples
 import ../sample_tatoeba/sentences
 
 
-type
+type  # lo klesi pe lo mupli pe `CLL`
   Example = object
     ## skicu pa mupli pe `CLL` sepi'o le ckupaupau poi vasru le mupli ku'o .e le namcu .e le
     ##     jboselci'a pe le mupli
@@ -48,7 +48,7 @@ type
       ##   .i lo kurfa grile'u cu sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a
 
 
-const
+const  # lo stodi pe le cipra pe le gerna
   TERMINATORS_ELIDABLE = {
     Selmaho.Beho, Selmaho.Boi, Selmaho.Dohu, Selmaho.Fehu, Selmaho.Gehu, Selmaho.Kehe,
     Selmaho.Kei, Selmaho.Ku, Selmaho.Kuhe, Selmaho.Kuho, Selmaho.Lihu, Selmaho.Loho,

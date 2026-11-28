@@ -88,7 +88,7 @@ import std/[options, strutils, tables, unicode]
 import ../ricysoho/[grammar, merge, nif_read]
 
 
-type
+type  # lo klesi pe le pixra be lo tricu
   KindPlace* {.pure.} = enum  ## lo klesi be lo selpu'i be le pixra
     Rule  ## lo tanxe be pa javni .a pa porsi be lo javni
     Error  ## lo tanxe be pa srejge be'o .a lo karda pe pa srejge poi vasru no valsi
@@ -143,7 +143,7 @@ type
       ##   .i se ki'u bo le pixra cu vasru no pagbu
 
 
-const
+const  # lo stodi pe le pixra be lo tricu
   COLUMN* = 144  ## lo ni lo rajypau pe pa karda cu ganra
   WIDTH_PLACE* = 136  ## lo ni lo tanxe .e lo karda cu ganra
   HEIGHT_BOX* = 40  ## lo ni lo tanxe cu rajycla

@@ -25,7 +25,7 @@ when compileOption("profiler"):
 import std/[strutils, unittest]
 
 
-const
+const  # lo stodi pe le cipra pe `README.md`
   TEXT_README = staticRead("../../README.md")  ## `README.md` ta'i lo nu selvei
   OPENING_COMMAND = "$ "
     ## lo krasi be lo pamoi linji be lo minde be'o ne'i lo girzu be lo linji be'o pe `README.md`

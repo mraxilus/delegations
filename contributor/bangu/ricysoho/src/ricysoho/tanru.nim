@@ -114,7 +114,7 @@ import std/[options, sequtils, strutils]
 import ./[clusters, dictionary, forms, fuhivla, lujvo {.all.}, selmaho]
 
 
-type
+type  # lo klesi pe le tanru
   Part* = object
     ## lo valsi pe lo tanru
     ##   .i le valsi cu du lo valsi pe lo liste .a lo lerfu poi na sinxa pa valsi pe lo liste
@@ -228,7 +228,7 @@ type
         ##   .i le datnypau cu kunti va'o lo nu le mulselci'a cu srera
 
 
-const
+const  # lo lerfu pe lo valsi .e le porsi
   LETTERS* = {
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't',
     'u', 'v', 'x', 'y', 'z', '\'',

@@ -15,7 +15,7 @@ import std/unittest
 import ../../src/ricysoho/clusters
 
 
-const
+const  # lo zunsna pe `CLL 3.1` .e `CLL 3.6`
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## le 17 zunsna ta'i lo porsi pe `CLL 3.1`
   VOICED = "bdgjvz"  ## lo voksa zunsna pe le liste pe `CLL 3.6`
   UNVOICED = "cfkpstx"  ## lo na'e voksa zunsna pe le liste pe `CLL 3.6`

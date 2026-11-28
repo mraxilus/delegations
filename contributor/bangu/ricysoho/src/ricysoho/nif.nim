@@ -175,7 +175,7 @@ import std/[options, strutils]
 import ./[dictionary, grammar, prose, selmaho, stream, tanru]
 
 
-type
+type  # lo klesi pe lo genvla pe `NIF`
   WordNif* = tuple[start, finish: int, letters: string]
     ## pa valsi pe pa genvla poi `NIF` dunda ke'a
     ##   .i `NIF` dunda le valsi ta'i lo stuzi poi le valsi cu krasi bu'u ke'a ku'o .e lo stuzi poi
@@ -195,7 +195,7 @@ type
     terminals*: seq[TerminalNif]
 
 
-const
+const  # lo stodi pe le ciska be fi `NIF`
   CONTROLS = {'(', ')', '[', ']', '{', '}', '~', '#', '\'', '"', '\\', ':', '@'}
     ## lo midle'u pe `NIF`
     ##   .i lo lerpoi .e lo cmene cu vasru le midle'u ta'i lo basti sinxa po'o to
