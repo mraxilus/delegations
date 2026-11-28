@@ -116,6 +116,13 @@ type  # TODO: Document.
     Template  ## Template that backtick opens.
     Comment  ## Comment that `/*` opens.
 
+  Tag = object  ## Define one tag of page or SVG, as HTML reads it.
+    name: string  ## Name past any prefix, in lowercase, as `script` of `svg:script`.
+    written: string  ## Name as written, prefix included, in lowercase.
+    line: int  ## One-based line of its `<`.
+    attributes: seq[tuple[name, value: string]]  ## Each attribute, name in lowercase.
+    ending: int  ## Index of `>` that ends it; length of text where none does.
+
 
 
 #[ Static Check ]#
@@ -322,13 +329,13 @@ proc checkManifest*(path, text: string): seq[Finding] =
       )
 
 
-func attributes(text: string; at: int): seq[tuple[name, value: string]] =
-  ## Read each attribute of tag from `at`, past its name, to `>` that ends it, as HTML reads it:
-  ##   `a="v"`, `a='v'`, `a=v` or bare `a`, names lowercase.
+func attributes(text: string; cursor: var int): seq[tuple[name, value: string]] =
+  ## Read each attribute of tag from `cursor`, past its name, to `>` that ends it, as HTML reads
+  ##   it: `a="v"`, `a='v'`, `a=v` or bare `a`, names lowercase; `cursor` stops at that `>`, or
+  ##   at or past end of text where none ends tag.
   ##   Quote opens value only past `=` and its spaces; elsewhere it is character of name or of bare
   ##     value. Spaces are those of HTML alone, since wider set opens quote that browser reads as
   ##     bare, and so ends tag before browser does, which hides each attribute after.
-  var cursor = at
   while cursor < text.len:
     while cursor < text.len and text[cursor] in SPACES_HTML + {'/'}: inc cursor
     if cursor >= text.len or text[cursor] == '>': return
@@ -370,11 +377,15 @@ func isPathPlain(value: string): bool =
   path.allCharsInSet(CHARS_PATH) and not path.startsWith("//")
 
 
-func tags(
-  text: string
-): seq[tuple[name: string, line: int, attributes: seq[tuple[name, value: string]]]] =
-  ## Read each tag of text as its name past any prefix, as `script` of `svg:script`, in lowercase,
-  ##   with its line and attributes. Name ends at space of HTML, `/` or `>`, as HTML reads it.
+func isAddressScript(attribute: string): bool =
+  ## Decide whether attribute of script names its address: `src`, or `href` under any prefix, as
+  ##   `xlink:href` of SVG.
+  attribute in ["src", "href"] or attribute.endsWith(":href")
+
+
+func tags(text: string): seq[Tag] =
+  ## Read each tag of text, with its line, attributes and end; name ends at space of HTML, `/` or
+  ##   `>`, as HTML reads it.
   let lowered = text.toLowerAscii
   var
     at = lowered.find('<')
@@ -386,9 +397,15 @@ func tags(
     counted = at
     var ending = at + 1
     while ending < text.len and text[ending] notin SPACES_HTML + {'>', '/'}: inc ending
-    let written = lowered[at + 1 ..< ending]
-    result.add (
-      name: written[written.rfind(':') + 1 .. ^1], line: line, attributes: text.attributes(ending)
+    let
+      written = lowered[at + 1 ..< ending]
+      attributes = text.attributes(ending)
+    result.add Tag(
+      name: written[written.rfind(':') + 1 .. ^1],
+      written: written,
+      line: line,
+      attributes: attributes,
+      ending: min(ending, text.len),
     )
     at = lowered.find('<', at + 1)
 
@@ -399,24 +416,24 @@ func checkPage*(path, text: string): seq[Finding] =
   ##   style sheet of XML, which can name address; at line of each.
   ##   Script takes address from `src`, or from `href` under any prefix, as `xlink:href` of SVG.
   ##   Tag inside comment takes same rule, though browser loads none of it.
-  for (name, line, attributes) in text.tags:
-    for (attribute, value) in attributes:
+  for tag in text.tags:
+    for (attribute, value) in tag.attributes:
       let is_address =
-        case name
-        of "script": attribute in ["src", "href"] or attribute.endsWith(":href")
+        case tag.name
+        of "script": attribute.isAddressScript
         of "base": attribute == "href"
         else: attribute == "xml:base"
       if is_address and not value.isPathPlain:
         result.add finding(
           path,
-          line,
+          tag.line,
           "Page loads script from other host, or may; take base JavaScript, or script of " &
             "project at plain path" & CITE_RULE & "; got `" & value.escape("", "") & "`.",
         )
-      elif name == "iframe" and attribute == "srcdoc":
+      elif tag.name == "iframe" and attribute == "srcdoc":
         result.add finding(
           path,
-          line,
+          tag.line,
           "Frame holds document in `srcdoc`, which can load script from other host in origin of " &
             "page; frame page of project at plain path by `src`" & CITE_RULE & "; got `srcdoc`.",
         )
