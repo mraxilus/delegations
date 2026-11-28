@@ -113,6 +113,18 @@ proc taughtBars(): seq[int] =
     result.add parseInt($item.getAttribute("data-b").to(cstring))
 
 
+proc titled(): string =
+  ## le cmene be le liste be lo linji poi le ctuca cu skicu ke'a
+  let title = DOCUMENT.querySelector("#lesson .title")
+  if title.isNull: "" else: $title.textContent.to(cstring)
+
+
+proc nameDrawn(bar: int): string =
+  ## le cmene poi le linji cu ponse ke'a ne'i le se ciska
+  $DOCUMENT.querySelector(cstring("#editor [data-b=\"" & $bar & "\"][data-n]")).getAttribute(
+      "data-n").to(cstring)
+
+
 proc isSound(model: Model): bool =
   ## jdice lo du'u ro valsi .e ro linji pe le se tcidu cu drani
   ##   .i ro valsi cu vasru su'o pa lerfu gi'e lidne le bavla'i valsi gi'e mintu le pagbu be le
@@ -288,6 +300,7 @@ proc runSuite() {.async.} =
           "lesson names word under pointer: " & $word.text
       expectThat not meaning.isNull and $meaning.textContent.to(cstring) == expected,
           "word takes meaning native build gives it: " & $word.text
+      expectThat titled() == LESSON_BARS, "bars of word take their title: " & $word.text
       let shown = taughtBars()
       var holding: seq[int]
       for b, bar in model.bars:
@@ -300,6 +313,8 @@ proc runSuite() {.async.} =
         let what = $item.querySelector(".what").textContent.to(cstring)
         expectThat what == LESSON_CATEGORY[Category(model.bars[shown[n]].category)],
             "each bar takes text of its kind: " & $word.text
+        expectThat $item.querySelector(".kind").textContent.to(cstring) == shown[n].nameDrawn,
+            "each bar takes name it takes under text: " & $word.text
   ended "Lesson teaches word under pointer, with meaning native build gives it and each bar of it"
 
   for k, text in texts:
@@ -316,6 +331,14 @@ proc runSuite() {.async.} =
         parent = model.bars[parent].parent
       expectThat taughtBars() == @[b] & above, "lesson lists bar, then each bar that holds it: " &
           text
+      expectThat titled() == LESSON_HELD, "bars that hold bar take their title: " & text
+      for n, item in queryAll("#lesson ol li"):
+        let shown = (@[b] & above)[n]
+        expectThat $item.querySelector(".what").textContent.to(cstring) ==
+            LESSON_CATEGORY[Category(model.bars[shown].category)],
+            "each bar takes text of its kind: " & text
+        expectThat $item.querySelector(".kind").textContent.to(cstring) == shown.nameDrawn,
+            "each bar takes name it takes under text: " & text
   ended "Lesson teaches bar under pointer, then each bar that holds it, smallest first"
 
   # le ctuca cu stali ba lo nu samcu'a
@@ -331,7 +354,16 @@ proc runSuite() {.async.} =
   discard chosen.click()
   editor.firstElementChild.left
   expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click lets lesson go"
-  ended "Click keeps lesson on its word once pointer leaves, and second click lets it go"
+  let bar = DOCUMENT.querySelector("#editor .cell [data-b=\"0\"]")
+  bar.hovered
+  discard bar.click()
+  editor.firstElementChild.left
+  expectThat taughtBars().len > 0 and taughtBars()[0] == 0,
+      "lesson stays on bar clicked once pointer leaves"
+  discard bar.click()
+  editor.firstElementChild.left
+  expectThat $lesson.textContent.to(cstring) == LESSON_START, "second click on bar lets lesson go"
+  ended "Click keeps lesson on its word or bar once pointer leaves, and second click lets it go"
 
   for (id, class_name) in [("show-gloss", "no-gloss"), ("show-bars", "no-bars")]:
     let toggle = DOCUMENT.getElementById(cstring(id))

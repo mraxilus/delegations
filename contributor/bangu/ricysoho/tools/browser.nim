@@ -105,6 +105,9 @@ const
     "mi klama le .i do cadzu",  # pa jufra cu lidne pa srera
     "mi klama\nle zarci",  # pa linji fanmo
     "coi \u{1F600} mi klama",  # pa lerfu poi zmadu `U+FFFF`
+    "mi pu klama 10\u20AC",  # lo valsi poi pa jdini sinxa cu sinxa ke'a gi'e vasru no stuzi
+    "mi BAcru .i la .alis. cu ba'o kla,ma",  # lo barda lerfu .e slaka bu
+    "la .constructor. cu zdani",  # pa cmene poi du lo cmene be lo ckaji be ro dacti pe `JavaScript`
     "",
   ]
     ## lo selci'a poi le cipra pe le papri pe lo linji cu cipra ke'a ku'o jmina lo mupli pe le papri
@@ -273,13 +276,10 @@ func described(text: string): string =
 func meant(text: string, found: OrderedTable[string, Meaning]): string =
   ## ciska le smuni be ro valsi pe le se tcidu pe `text` ta'i pa linji
   ##   .i lo kunti linji cu sinxa lo valsi poi le liste cu vasru no smuni be ke'a
-  ##   .i le valsi cu se tcidu ta'i lo cmalu lerfu gi'e vasru no lerfu po'u denpa bu .e no
-  ##       lerfu po'u slaka bu
+  ##   .i le valsi cu du le lerfu poi le genturfa'i cu tcidu ke'a to `Occurrence.text` toi
   for occurrence in text.readTextMarked.occurrences:
-    let
-      word = text[min(occurrence.start, text.len) ..< min(occurrence.finish, text.len)]
-      key = word.toLowerAscii.multiReplace((".", ""), (",", ""))
-    if key in found: result.add found[key].gloss & " · " & found[key].definition
+    if occurrence.text in found:
+      result.add found[occurrence.text].gloss & " · " & found[occurrence.text].definition
     result.add "\n"
 
 
